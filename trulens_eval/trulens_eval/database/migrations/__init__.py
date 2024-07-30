@@ -19,10 +19,8 @@ logger = logging.getLogger(__name__)
 
 @contextmanager
 def alembic_config(
-    engine: Engine,
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ) -> Iterator[Config]:
-
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
     config = Config(os.path.join(alembic_dir, "alembic.ini"))
@@ -40,7 +38,7 @@ def alembic_config(
 def upgrade_db(
     engine: Engine,
     revision: str = "head",
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.upgrade(config, revision)
@@ -49,15 +47,14 @@ def upgrade_db(
 def downgrade_db(
     engine: Engine,
     revision: str = "base",
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.downgrade(config, revision)
 
 
 def get_current_db_revision(
-    engine: Engine,
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
 ) -> Optional[str]:
     with engine.connect() as conn:
         return MigrationContext.configure(
@@ -77,8 +74,10 @@ def get_revision_history(
         return list(
             reversed(
                 [
-                    rev.revision for rev in
-                    scripts.iterate_revisions(lower="base", upper="head")
+                    rev.revision
+                    for rev in scripts.iterate_revisions(
+                        lower="base", upper="head"
+                    )
                 ]
             )
         )
@@ -98,9 +97,7 @@ class DbRevisions(BaseModel):
 
     @classmethod
     def load(
-        cls,
-        engine: Engine,
-        prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+        cls, engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
     ) -> DbRevisions:
         return cls(
             current=get_current_db_revision(engine, prefix=prefix),

@@ -8,7 +8,6 @@ Here is a guide to logging in _Snowflake_.
 
 ## Install the [Snowflake SQLAlchemy toolkit](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy) with the Python Connector
 
-
 !!! note
 
     Only snowflake-sqlalchemy version 1.6.1 or greater is supported.
@@ -35,7 +34,7 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     ).format(
         user='<user>',
         password='<password>',
-        account_identifier='<account-identifer>',
+        account_identifier='<account-identifier>',
         database='<database>',
         schema='<schema>',
         warehouse='<warehouse>',

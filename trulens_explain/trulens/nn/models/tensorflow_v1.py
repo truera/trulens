@@ -1,8 +1,8 @@
 import sys
 from typing import Tuple
 
-import numpy as np
 import tensorflow as tf
+
 from trulens.nn.backend import get_backend
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
@@ -13,14 +13,14 @@ from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
-from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import Tensor
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
+from trulens.utils.typing import many_of_om
+from trulens.utils.typing import om_of_many
 
 
 class TensorflowModelWrapper(ModelWrapper):
@@ -37,7 +37,7 @@ class TensorflowModelWrapper(ModelWrapper):
         output_tensors,
         internal_tensor_dict=None,
         session=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Parameters
@@ -70,21 +70,23 @@ class TensorflowModelWrapper(ModelWrapper):
 
         if input_tensors is None:
             raise ValueError(
-                'Tensorflow1 model wrapper must pass the input_tensors parameter'
+                "Tensorflow1 model wrapper must pass the input_tensors parameter"
             )
         if output_tensors is None:
             raise ValueError(
-                'Tensorflow1 model wrapper must pass the output_tensors parameter'
+                "Tensorflow1 model wrapper must pass the output_tensors parameter"
             )
 
         self._graph = graph
 
         self._inputs = (
-            input_tensors if isinstance(input_tensors, DATA_CONTAINER_TYPE) else
-            [input_tensors]
+            input_tensors
+            if isinstance(input_tensors, DATA_CONTAINER_TYPE)
+            else [input_tensors]
         )
         self._outputs = (
-            output_tensors if isinstance(output_tensors, DATA_CONTAINER_TYPE)
+            output_tensors
+            if isinstance(output_tensors, DATA_CONTAINER_TYPE)
             else [output_tensors]
         )
 
@@ -106,7 +108,7 @@ class TensorflowModelWrapper(ModelWrapper):
                 return self._graph.get_tensor_by_name(name)
 
             except KeyError:
-                raise ValueError('No such layer tensor:', name)
+                raise ValueError("No such layer tensor:", name)
 
     def _get_layers(self, cut):
         if isinstance(cut, InputCut):
@@ -116,13 +118,13 @@ class TensorflowModelWrapper(ModelWrapper):
             return self._outputs
 
         elif isinstance(cut, LogitCut):
-            if 'logits' in self._internal_tensors:
-                layers = self._internal_tensors['logits']
+            if "logits" in self._internal_tensors:
+                layers = self._internal_tensors["logits"]
 
             else:
                 raise ValueError(
-                    '`LogitCut` was used, but the model has not specified the '
-                    'tensors that correspond to the logit output.'
+                    "`LogitCut` was used, but the model has not specified the "
+                    "tensors that correspond to the logit output."
                 )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
@@ -136,16 +138,16 @@ class TensorflowModelWrapper(ModelWrapper):
     def _prepare_feed_dict_with_intervention(
         self, model_args, model_kwargs, intervention, doi_tensors
     ):
-
         B = get_backend()
 
         feed_dict = {}
         input_tensors = model_args
 
-        if isinstance(
-                input_tensors,
-                DATA_CONTAINER_TYPE) and len(input_tensors) > 0 and isinstance(
-                    input_tensors[0], DATA_CONTAINER_TYPE):
+        if (
+            isinstance(input_tensors, DATA_CONTAINER_TYPE)
+            and len(input_tensors) > 0
+            and isinstance(input_tensors[0], DATA_CONTAINER_TYPE)
+        ):
             input_tensors = input_tensors[0]
 
         num_args = len(input_tensors)
@@ -165,8 +167,10 @@ class TensorflowModelWrapper(ModelWrapper):
         # set the first few tensors from args
         feed_dict.update(
             {
-                input_tensor: xi for input_tensor, xi in
-                zip(self._inputs[0:num_args], input_tensors)
+                input_tensor: xi
+                for input_tensor, xi in zip(
+                    self._inputs[0:num_args], input_tensors
+                )
             }
         )
 
@@ -202,11 +206,11 @@ class TensorflowModelWrapper(ModelWrapper):
 
             # TODO: Figure out a way to run the check below for InputCut. It currently
             # does not work for those cuts.
-            #if len(args) + len(kwargs) != len(doi_tensors):
+            # if len(args) + len(kwargs) != len(doi_tensors):
             #    raise ValueError(f"Expected to get {len(doi_tensors)} inputs for intervention but got {len(args)} args and {len(kwargs)} kwargs.")
 
             intervention_dict.update(
-                {k: v for k, v in zip(doi_tensors[0:len(args)], args)}
+                {k: v for k, v in zip(doi_tensors[0 : len(args)], args)}
             )
             intervention_dict.update({_tensor(k): v for k, v in kwargs.items()})
 
@@ -224,8 +228,13 @@ class TensorflowModelWrapper(ModelWrapper):
         return feed_dict, intervention
 
     def _fprop(
-        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: TensorArgs
+        self,
+        *,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: TensorArgs,
     ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
@@ -248,13 +257,15 @@ class TensorflowModelWrapper(ModelWrapper):
         # `to_tensors` cannot be computed via a `keras.backend.function` and
         # thus need to be taken from the input, `x`.
         identity_map = {
-            i: j for i, to_tensor in enumerate(to_tensors)
+            i: j
+            for i, to_tensor in enumerate(to_tensors)
             for j, from_tensor in enumerate(doi_tensors)
             if to_tensor == from_tensor
         }
 
         non_identity_to_tensors = [
-            to_tensor for i, to_tensor in enumerate(to_tensors)
+            to_tensor
+            for i, to_tensor in enumerate(to_tensors)
             if i not in identity_map
         ]
 
@@ -292,12 +303,18 @@ class TensorflowModelWrapper(ModelWrapper):
                 except tf.errors.FailedPreconditionError:
                     tb = sys.exc_info()[2]
                     raise RuntimeError(
-                        'Encountered uninitialized session variables. This could be caused by not saving all variables, or from other tensorflow default session implementation issues. Try passing in the session to the ModelWrapper __init__ function.'
+                        "Encountered uninitialized session variables. This could be caused by not saving all variables, or from other tensorflow default session implementation issues. Try passing in the session to the ModelWrapper __init__ function."
                     ).with_traceback(tb)
 
     def _qoi_bprop(
-        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: TensorArgs
+        self,
+        *,
+        qoi: QoI,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: TensorArgs,
     ) -> Outputs[Inputs[TensorLike]]:
         """
         See ModelWrapper.qoi_bprop .
@@ -317,9 +334,7 @@ class TensorflowModelWrapper(ModelWrapper):
         z_grads = []
 
         with self._graph.as_default():
-
             for z in attribution_tensors:
-
                 gradient_tensor_key = (z, frozenset(to_tensors))
 
                 if gradient_tensor_key in self._cached_gradient_tensors:

@@ -6,9 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 from merkle_json import MerkleJson
 import pandas as pd
 
-from trulens_eval import __version__
 from trulens_eval import app as mod_app
-from trulens_eval.database.legacy import migration
 from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
@@ -43,7 +41,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 
 class DB(SerialModel, abc.ABC):
     """Abstract definition of databases used by trulens_eval.
-    
+
     [SQLAlchemyDB][trulens_eval.database.sqlalchemy.SQLAlchemyDB] is the main
     and default implementation of this interface.
     """
@@ -53,7 +51,7 @@ class DB(SerialModel, abc.ABC):
 
     table_prefix: str = DEFAULT_DATABASE_PREFIX
     """Prefix for table names for trulens_eval to use.
-    
+
     May be useful in some databases where trulens is not the only app.
     """
 
@@ -69,7 +67,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def migrate_database(self, prior_prefix: Optional[str] = None):
         """Migrade the stored data to the current configuration of the database.
-        
+
         Args:
             prior_prefix: If given, the database is assumed to have been
                 reconfigured from a database with the given prefix. If not
@@ -82,7 +80,7 @@ class DB(SerialModel, abc.ABC):
     def check_db_revision(self):
         """Check that the database is up to date with the current trulens_eval
         version.
-        
+
         Raises:
             ValueError: If the database is not up to date.
         """
@@ -95,7 +93,7 @@ class DB(SerialModel, abc.ABC):
     ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
-        
+
         Args:
             record: The record to insert or update.
 
@@ -128,7 +126,7 @@ class DB(SerialModel, abc.ABC):
         self, feedback_definition: mod_feedback_schema.FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """
-        Upsert a `feedback_definition` into the databaase.
+        Upsert a `feedback_definition` into the database.
 
         Args:
             feedback_definition: The feedback definition to insert or update.
@@ -145,11 +143,12 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
-        
+
         Args:
             feedback_definition_id: if provided, only the
                 feedback definition with the given id is returned. Otherwise,
@@ -182,15 +181,19 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: Optional[bool] = None
+        shuffle: Optional[bool] = None,
     ) -> pd.DataFrame:
         """Get feedback results matching a set of optional criteria:
 
@@ -224,19 +227,23 @@ class DB(SerialModel, abc.ABC):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: bool = False
+        shuffle: bool = False,
     ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
-        
+
         See [get_feedback][trulens_eval.database.base.DB.get_feedback] for the meaning of
         the the arguments.
 
@@ -252,12 +259,12 @@ class DB(SerialModel, abc.ABC):
         self, app_id: mod_types_schema.AppID
     ) -> Optional[JSONized[mod_app.App]]:
         """Get the app with the given id from the database.
-        
+
         Returns:
             The jsonized version of the app with the given id. Deserialization
                 can be done with
                 [App.model_validate][trulens_eval.app.App.model_validate].
-        
+
         """
         raise NotImplementedError()
 
@@ -272,10 +279,10 @@ class DB(SerialModel, abc.ABC):
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records fom the database.
-        
+
         Args:
             app_ids: If given, retrieve only the records for the given apps.
                 Otherwise all apps are retrieved.
@@ -283,7 +290,7 @@ class DB(SerialModel, abc.ABC):
             offset: Database row offset.
 
             limit: Limit on rows (records) returned.
-        
+
         Returns:
             A dataframe with the records.
 

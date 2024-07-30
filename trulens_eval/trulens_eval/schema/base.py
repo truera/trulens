@@ -40,13 +40,13 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
     cost: float = 0.0
     """Cost in USD."""
 
-    def __add__(self, other: 'Cost') -> 'Cost':
+    def __add__(self, other: Cost) -> Cost:
         kwargs = {}
         for k in self.model_fields.keys():
             kwargs[k] = getattr(self, k) + getattr(other, k)
         return Cost(**kwargs)
 
-    def __radd__(self, other: 'Cost') -> 'Cost':
+    def __radd__(self, other: Cost) -> Cost:
         # Makes sum work on lists of Cost.
 
         if other == 0:
@@ -57,7 +57,7 @@ class Cost(serial.SerialModel, pydantic.BaseModel):
 
 class Perf(serial.SerialModel, pydantic.BaseModel):
     """Performance information.
-    
+
     Presently only the start and end times, and thus latency.
     """
 
@@ -78,7 +78,7 @@ class Perf(serial.SerialModel, pydantic.BaseModel):
     @staticmethod
     def now(latency: Optional[datetime.timedelta] = None) -> Perf:
         """Create a `Perf` instance starting now and ending now plus latency.
-         
+
         Args:
             latency: Latency in seconds. If given, end time will be now plus
                 latency. Otherwise end time will be a minimal interval plus start_time.

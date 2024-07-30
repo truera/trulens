@@ -3,7 +3,7 @@ start of docs/trulens_eval/intro.md
 NOTE: This content is from docs/trulens_eval/intro.md and is merged into
 trulens_eval/README.md . If you are editing README.md, your changes will be overwritten.
 -->
-# Welcome to TruLens-Eval!
+# Welcome to TruLens-Eval
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
 
@@ -16,7 +16,7 @@ Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
 you to identify failure modes & systematically iterate to improve your
 application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/), 
+Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
 

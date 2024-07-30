@@ -1,10 +1,10 @@
 """
-Type aliases and data container classes. 
+Type aliases and data container classes.
 
 Large part of these utilities are meant to support a design decision: public
-methods are permissive in the types they accept while private methods are not. 
+methods are permissive in the types they accept while private methods are not.
 
-For example, 
+For example,
 
     attributions(*model_args: ArgsLike, **model_kwargs: ModelKwargs)
 
@@ -13,15 +13,15 @@ numpy array. For models that take in multiple inputs, model_args must be some
 iterable over Tensors or numpy arrays. The implication is that the user can call
 this method as in "attributions(inputA)" instead of attributions([inputA]). The
 other permissibility is that both backend Tensors and numpy arrays are supported
-and the method returns results in the same type. 
+and the method returns results in the same type.
 
 List of flexible typings:
 
-    - Single vs. Multiple Inputs -- Can pass in a single value instad of list.
+    - Single vs. Multiple Inputs -- Can pass in a single value instead of list.
       This is indicated by the `ArgsLike` type alias (paraphrased):
 
       ``` ArgsLike[V] = Union[
-        V, Inputs[V] # len != 1 
+        V, Inputs[V] # len != 1
       ]
       ```
 
@@ -66,7 +66,7 @@ List of flexible typings:
       a Tensors (includes ModelInputs) structure. These correspond to single
       positional arg, multiple positional args, keyword args, and (both
       positional and keyword args).
-    
+
         - ModelWrapper.fprop: intervention argument, see InterventionLike
           (paraphrased):
 
@@ -104,13 +104,13 @@ Dealing with Magic Numbers for Axes Indices
     Some multi-dimensional (or nested) containers contain type hint and
     annotations for order of axes. For example AttributionResults:
 
-    AttributionResult.axes == 
+    AttributionResult.axes ==
 
     {'attributions': [
         trulens.utils.typing.Outputs,
         trulens.utils.typing.Inputs,
         typing.Union[numpy.ndarray, ~Tensor] # == TensorLike
-     ], 
+     ],
      'gradients': [
          trulens.utils.typing.Outputs,
          trulens.utils.typing.Inputs,
@@ -126,7 +126,7 @@ Dealing with Magic Numbers for Axes Indices
      You can then lookup an axis of interest:
 
      - gradients_axes = AttributionResult.axes['gradients']
-     - gradients_axes.index(Outputs) == 0 
+     - gradients_axes.index(Outputs) == 0
      - gradients_axes.index(TensorLike) == 3
 
 """
@@ -141,8 +141,16 @@ from dataclasses import dataclass
 from dataclasses import field
 from inspect import signature
 from typing import (
-    Callable, Dict, Generic, Iterable, List, Optional, Tuple, Type, TypeVar,
-    Union
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
 )
 
 import numpy as np
@@ -160,18 +168,15 @@ U = TypeVar("U")
 
 
 # Lists that represent multiple inputs to some neural layer.
-class Inputs(Generic[V], List[V]):
-    ...
+class Inputs(Generic[V], List[V]): ...
 
 
 # Lists that represent model outputs or quantities of interest if multiple.
-class Outputs(Generic[V], List[V]):
-    ...
+class Outputs(Generic[V], List[V]): ...
 
 
 # Lists that represent instances of a uniform distribution.
-class Uniform(Generic[V], List[V]):
-    ...
+class Uniform(Generic[V], List[V]): ...
 
 
 # "One or More" OM[C, V] (V for Value, C for Container)
@@ -182,16 +187,17 @@ OM = Union[V, C]  # actually C[V] but cannot get python to accept that
 #   inputs.
 
 # "One or More" where the container type is itself a one or more.
-OMNested = Union[OM[V, C], 'OMNested[C, V]']
+OMNested = Union[OM[V, C], "OMNested[C, V]"]
 
 # Each backend should define this.
 Tensor = TypeVar("Tensor")
 
-ModelLike = Union['tf.Graph',  # tf1 
-                  'keras.Model',  # keras
-                  'tensorflow.keras.Model',  # tf2
-                  'torch.nn.Module',  # pytorch
-                 ]
+ModelLike = Union[
+    "tf.Graph",  # tf1
+    "keras.Model",  # keras
+    "tensorflow.keras.Model",  # tf2
+    "torch.nn.Module",  # pytorch
+]
 
 # Atomic model inputs (at least from our perspective)
 TensorLike = Union[np.ndarray, Tensor]
@@ -263,7 +269,7 @@ def nested_map(
     fn: Callable[[U], V],
     *,
     check_accessor: Callable[[C], V] = None,
-    nest: int = 999
+    nest: int = 999,
 ) -> OMNested[C, V]:
     """
     Applies fn to non-container elements in y. This works on "one or more" and
@@ -279,7 +285,7 @@ def nested_map(
     check_accessor: function
         A way to make instance checks from the container level.
     nest: int
-        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE. 
+        Another way to specify which level to apply the function. This is the only way to apply a fn on a DATA_CONTAINER_TYPE.
         Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
@@ -291,8 +297,9 @@ def nested_map(
     if check_accessor is not None:
         try:
             check_y = check_accessor(y)
-            if not isinstance(check_y,
-                              DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE):
+            if not isinstance(
+                check_y, DATA_CONTAINER_TYPE + MAP_CONTAINER_TYPE
+            ):
                 return fn(y)
         except:
             pass
@@ -316,9 +323,9 @@ def nested_map(
         return fn(y)
 
 
-def nested_zip(y1: OMNested[C, U],
-               y2: OMNested[C, V],
-               nest=999) -> OMNested[C, Tuple[U, V]]:
+def nested_zip(
+    y1: OMNested[C, U], y2: OMNested[C, V], nest=999
+) -> OMNested[C, Tuple[U, V]]:
     """
     zips at the element level each element in y1 witheach element in y2. This works on "one or more" and even mested om.
 
@@ -329,7 +336,7 @@ def nested_zip(y1: OMNested[C, U],
     y2:  non-collective object or a nested list/tuple of objects
         The leaf objects will be zipped.
     nest: int
-        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE. 
+        A way to specify which level to apply the zip. This is the only way to apply a zip on a DATA_CONTAINER_TYPE.
         Currently MAP_CONTAINER_TYPE is not included in the nesting levels as they usually wrap tensors and functionally are not an actual container.
     Returns
     ------
@@ -354,9 +361,9 @@ def nested_zip(y1: OMNested[C, U],
 
 
 def nested_cast(
-    backend: 'Backend',
+    backend: "Backend",
     args: OMNested[C, TensorLike],
-    astype: Type  # : select one of the two types of TensorLike
+    astype: Type,  # : select one of the two types of TensorLike
 ) -> Union[OMNested[C, Tensor], OMNested[C, np.ndarray]]:  # : of selected type
     """Transform set of values to the given type wrapping around List/Tuple if
     needed."""
@@ -400,8 +407,9 @@ def nested_str(items: OMNested[C, TensorLike]) -> str:
 ## Utilities for dealing with TensorLike
 
 
-def TensorLike_caster(backend: 'Backend',
-                      astype: Type) -> Callable[[TensorLike], TensorLike]:
+def TensorLike_caster(
+    backend: "Backend", astype: Type
+) -> Callable[[TensorLike], TensorLike]:
     """Return a method that lets one cast a TensorLike to the specified type by
     the given backend."""
 
@@ -434,12 +442,12 @@ def om_assert_matched_pair(a1, a2):
         ), f"OM's are of different lengths: {len(a1)} vs {len(a2)}"
 
         for i, (a, b) in enumerate(zip(a1, a2)):
-            assert type(a) == type(
-                b
+            assert (
+                type(a) == type(b)
             ), f"OM's elements {i} are of different types: {type(a)} vs {type(b)}"
 
 
-def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
+def many_of_om(args: OM[C, V], innertype: Type = None) -> "C[V]":
     """
     Convert "one or more" (possibly a single V/TensorLike) to List/C[V]. For cases
     where the element type V is also expected to be a container, provide the
@@ -447,9 +455,9 @@ def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
 
     Opposite of `om_of_many`.
     """
-    if isinstance(args, DATA_CONTAINER_TYPE) and (innertype is None or
-                                                  len(args) == 0 or isinstance(
-                                                      args[0], innertype)):
+    if isinstance(args, DATA_CONTAINER_TYPE) and (
+        innertype is None or len(args) == 0 or isinstance(args[0], innertype)
+    ):
         return args
     elif innertype is None or isinstance(args, innertype):
         return [args]  # want C(args) but cannot materialize C in python
@@ -457,11 +465,11 @@ def many_of_om(args: OM[C, V], innertype: Type = None) -> 'C[V]':
         raise ValueError(f"Unhandled One-Or-More type {type(args)}")
 
 
-def om_of_many(inputs: 'C[V]') -> OM[C, V]:
+def om_of_many(inputs: "C[V]") -> OM[C, V]:
     """
     If there is more than 1 thing in container, will remain a container,
     otherwise will become V (typically TensorLike).
-    
+
     Opposite of `many_of_om`.
     """
 
@@ -478,7 +486,6 @@ def om_of_many(inputs: 'C[V]') -> OM[C, V]:
 
 
 class IndexableUtils:
-
     def with_(l: Indexable[V], i: int, v: V) -> Indexable[V]:
         """Copy of the given list or tuple with the given index replaced by the
         given value."""
@@ -499,18 +506,14 @@ class IndexableUtils:
 
 
 class IterableUtils:
-
     def then_(iter1: Iterable[V], iter2: Iterable[V]) -> Iterable[V]:
         """Iterate through the given iterators, one after the other."""
 
-        for x in iter1:
-            yield x
-        for x in iter2:
-            yield x
+        yield from iter1
+        yield from iter2
 
 
 class DictUtils:
-
     def with_(d: Dict[K, V], k: K, v: V) -> Dict[K, V]:
         """Copy of the given dictionary with the given key replaced by the given value."""
 
@@ -537,32 +540,32 @@ class Lens(Generic[C, V]):  # Container C with values V
     # returning a new container.
 
     @staticmethod
-    def lenses_elements(c: List[V]) -> Iterable['Lens[List[V], V]']:
+    def lenses_elements(c: List[V]) -> Iterable["Lens[List[V], V]"]:
         """Lenses focusing on elements of a list."""
 
         for i in range(len(c)):
             yield Lens(
                 lambda l, i=i: l[i],
-                lambda l, v, i=i: IndexableUtils.with_(l, i, v)
+                lambda l, v, i=i: IndexableUtils.with_(l, i, v),
             )
 
     @staticmethod
-    def lenses_values(c: Dict[K, V]) -> Iterable['Lens[Dict[K, V], V]']:
+    def lenses_values(c: Dict[K, V]) -> Iterable["Lens[Dict[K, V], V]"]:
         """Lenses focusing on values in a dictionary."""
 
         for k in c.keys():
             yield Lens(
                 get=lambda d, k=k: d[k],
-                set=lambda d, v, k=k: DictUtils.with_(d, k, v)
+                set=lambda d, v, k=k: DictUtils.with_(d, k, v),
             )
 
     @staticmethod
-    def compose(l1: 'Lens[C1, C2]', l2: 'Lens[C2, V]') -> 'Lens[C1, V]':
+    def compose(l1: "Lens[C1, C2]", l2: "Lens[C2, V]") -> "Lens[C1, V]":
         """Compose two lenses."""
 
         return Lens(
             lambda c: l2.get(l1.get(c)),
-            lambda c, e: l1.set(c, l2.set(l1.get(c), e))
+            lambda c, e: l1.set(c, l2.set(l1.get(c), e)),
         )
 
 
@@ -570,7 +573,7 @@ class Tensors(ABC):
     """Model inputs or internal layer inputs."""
 
     @abstractmethod
-    def as_model_inputs(self) -> 'ModelInputs':
+    def as_model_inputs(self) -> "ModelInputs":
         pass
 
 
@@ -582,12 +585,12 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
     kwargs: KwargsLike = field(default_factory=dict)
 
     # lens focusing on the args field of this container.
-    lens_args: Lens[
-        'TensorAKs',
-        ArgsLike] = Lens(lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs))
+    lens_args: Lens["TensorAKs", ArgsLike] = Lens(
+        lambda s: s.args, lambda s, a: TensorAKs(a, s.kwargs)
+    )
 
     # lens focusing on the kwargs field of this container.
-    lens_kwargs: Lens['TensorAKs', KwargsLike] = Lens(
+    lens_kwargs: Lens["TensorAKs", KwargsLike] = Lens(
         lambda s: s.kwargs, lambda s, kw: TensorAKs(s.args, kw)
     )
 
@@ -615,17 +618,18 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
             (
                 Lens.compose(TensorAKs.lens_args, l)
                 for l in Lens.lenses_elements(self.args)
-            ), (
+            ),
+            (
                 Lens.compose(TensorAKs.lens_kwargs, l)
                 for l in Lens.lenses_values(self.kwargs)
-            )
+            ),
         )
 
     def values(self):
         """Get the contained values."""
 
-        for l in self.lenses_values():
-            yield l.get(self)
+        for val in self.lenses_values():
+            yield val.get(self)
 
     def map(self, f):
         """Produce a new set of args by transforming each value with the given function."""
@@ -658,7 +662,7 @@ class TensorAKs(Tensors):  # "Tensor Args and Kwargs"
 
         return f(*self.args, **self.kwargs)
 
-    def as_model_inputs(self) -> 'ModelInputs':
+    def as_model_inputs(self) -> "ModelInputs":
         return ModelInputs(self.args, self.kwargs)
 
 
@@ -668,7 +672,7 @@ class TensorArgs(TensorAKs):
     arguments are only for model inputs."""
 
     def __init__(self, args: List[TensorLike]):
-        super(TensorArgs, self).__init__(args, {})
+        super().__init__(args, {})
 
 
 class ModelInputs(TensorAKs):
@@ -689,11 +693,14 @@ def accepts_model_inputs(func: Callable) -> bool:
 
 # Baselines are either explicit or computable from the same data as sent to DoI
 # __call__ .
-BaselineLike = Union[ArgsLike[TensorLike],
-                     Callable[[ArgsLike[TensorLike], Optional[ModelInputs]],
-                              ArgsLike[TensorLike]]]
+BaselineLike = Union[
+    ArgsLike[TensorLike],
+    Callable[
+        [ArgsLike[TensorLike], Optional[ModelInputs]], ArgsLike[TensorLike]
+    ],
+]
 
-# Interventions for fprop specifiy either activations at some non-InputCut or
+# Interventions for fprop specify either activations at some non-InputCut or
 # model inputs if DoI is InputCut (these include both args and kwargs).
 # Additionally, some backends (tf1) provide interventions as kwargs instead.
 InterventionLike = Union[ArgsLike[TensorLike], KwargsLike, Tensors]

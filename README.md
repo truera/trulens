@@ -30,14 +30,14 @@ community](https://communityinviter.com/apps/aiqualityforum/josh)!
 
 **Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
-retreivers, knowledge sources and more, *TruLens-Eval* is the tool you need to
+retreivers, knowledge sources and more, _TruLens-Eval_ is the tool you need to
 understand its performance.
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
 you to identify failure modes & systematically iterate to improve your
 application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/), 
+Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens_eval/getting_started/core_concepts/feedback_functions/),
 [The RAG Triad](https://www.trulens.org/trulens_eval/getting_started/core_concepts/rag_triad/),
 and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens_eval/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
@@ -92,7 +92,6 @@ guide](https://www.trulens.org/trulens_eval/contributing/) for more details.
 end of trulens_eval/gh_top_intro.md
 -->
 
-
 <!---
 start of trulens_explain/gh_top_intro.md
 NOTE: This content is from trulens_explain/gh_top_intro.md and is merged into
@@ -112,12 +111,14 @@ These installation instructions assume that you have conda installed and added
 to your path.
 
 0. Create a virtual environment (or modify an existing one).
+
 ```bash
 conda create -n "<my_name>" python=3  # Skip if using existing environment.
 conda activate <my_name>
 ```
- 
+
 1. Install dependencies.
+
 ```bash
 conda install tensorflow-gpu=1  # Or whatever backend you're using.
 conda install keras             # Or whatever backend you're using.
@@ -125,6 +126,7 @@ conda install matplotlib        # For visualizations.
 ```
 
 2. [Pip installation] Install the trulens pip package from PyPI.
+
 ```bash
 pip install trulens
 ```

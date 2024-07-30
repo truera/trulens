@@ -6,12 +6,13 @@ import traceback
 from typing import Iterable, Tuple
 
 import numpy as np
+
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import nested_map
-from trulens.utils.typing import om_of_many
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import Tensors
+from trulens.utils.typing import nested_map as nested_map
+from trulens.utils.typing import om_of_many
 
 # Do not use directly, use get_backend
 _TRULENS_BACKEND_IMPL = None
@@ -26,7 +27,6 @@ _TRULENS_BACKEND_IMPL = None
 
 
 class OutOfMemory(RuntimeError):
-
     def __init__(self, settings, **kwargs):
         self.kwargs = kwargs
         self.settings = settings
@@ -44,7 +44,7 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
     """
     Context manager to catch device memory issues and report better suggestions
     than default exceptions.
-    
+
     Usage:
 
         with memory_suggestions("batch size=1000"):
@@ -86,9 +86,9 @@ def memory_suggestions(*settings, call_before=None, call_after=None, **kwargs):
             call_after(state)
 
 
-def rebatch(vals: Tensors,
-            *extra_vals: Tuple[Tensors, ...],
-            batch_size=None) -> Iterable[Tuple[Tensors, ...]]:
+def rebatch(
+    vals: Tensors, *extra_vals: Tuple[Tensors, ...], batch_size=None
+) -> Iterable[Tuple[Tensors, ...]]:
     """Rebatch the values in `vals` into bins of size `batch_size`. If more sets
     of values are given in `extra_vals`, those are batched into the same bins as
     well."""
@@ -99,12 +99,13 @@ def rebatch(vals: Tensors,
         batch_size = original_batch_size
 
     def take(batch_idx):
-
         def f(val):
             if val.shape[0] != original_batch_size:
                 return val
             else:
-                return val[batch_idx * batch_size:(batch_idx + 1) * batch_size]
+                return val[
+                    batch_idx * batch_size : (batch_idx + 1) * batch_size
+                ]
 
         return f
 
@@ -169,39 +170,39 @@ class Backend(Enum):
     @classmethod
     def from_name(cls, name):
         name = name.lower()
-        if name == 'pytorch' or name == 'torch':
+        if name == "pytorch" or name == "torch":
             return Backend.PYTORCH
-        elif name == 'tensorflow' or name == 'tf':
+        elif name == "tensorflow" or name == "tf":
             return Backend.TENSORFLOW
-        elif name == 'keras':
+        elif name == "keras":
             return Backend.KERAS
-        elif name == 'tf.keras' or name == 'tf_keras':
+        elif name == "tf.keras" or name == "tf_keras":
             return Backend.TF_KERAS
         else:
             return Backend.UNKNOWN
 
     def is_keras_derivative(self):
         return (
-            self.value == Backend.KERAS.value or
-            self.value == Backend.TF_KERAS.value
+            self.value == Backend.KERAS.value
+            or self.value == Backend.TF_KERAS.value
         )
 
 
 def get_backend(suppress_warnings=False):
     global _TRULENS_BACKEND_IMPL
-    if 'TRULENS_BACKEND' in os.environ.keys():
-        _TRULENS_BACKEND = Backend.from_name(os.environ['TRULENS_BACKEND'])
+    if "TRULENS_BACKEND" in os.environ.keys():
+        _TRULENS_BACKEND = Backend.from_name(os.environ["TRULENS_BACKEND"])
     else:
         _TRULENS_BACKEND = Backend.UNKNOWN
     try:
         if _TRULENS_BACKEND == Backend.PYTORCH:
             _TRULENS_BACKEND_IMPL = importlib.import_module(
-                name='trulens.nn.backend.pytorch_backend.pytorch'
+                name="trulens.nn.backend.pytorch_backend.pytorch"
             )
 
         elif _TRULENS_BACKEND.is_keras_derivative():
             _TRULENS_BACKEND_IMPL = importlib.import_module(
-                name='trulens.nn.backend.keras_backend.keras'
+                name="trulens.nn.backend.keras_backend.keras"
             )
             # KerasBackend has multiple backend implementations of the keras
             # library, so reload should be called to refresh if backend changes
@@ -211,26 +212,27 @@ def get_backend(suppress_warnings=False):
 
         elif _TRULENS_BACKEND == Backend.TENSORFLOW:
             _TRULENS_BACKEND_IMPL = importlib.import_module(
-                name='trulens.nn.backend.tf_backend.tf'
+                name="trulens.nn.backend.tf_backend.tf"
             )
 
         elif _TRULENS_BACKEND == Backend.UNKNOWN:
             if not suppress_warnings:
                 tru_logger.warning(
-                    'The current backend is unset or unknown. Trulens will '
-                    'attempt to use any previously loaded backends, but may '
-                    'cause problems. Valid backends are `pytorch`, '
-                    '`tensorflow`, `keras`, and `tf.keras`. You can manually '
-                    'set this with '
-                    '`os.environ[\'TRULENS_BACKEND\']=backend_str`. Current '
-                    'loaded backend is {}.'.format(str(_TRULENS_BACKEND_IMPL))
+                    "The current backend is unset or unknown. Trulens will "
+                    "attempt to use any previously loaded backends, but may "
+                    "cause problems. Valid backends are `pytorch`, "
+                    "`tensorflow`, `keras`, and `tf.keras`. You can manually "
+                    "set this with "
+                    "`os.environ['TRULENS_BACKEND']=backend_str`. Current "
+                    "loaded backend is {}.".format(str(_TRULENS_BACKEND_IMPL))
                 )
 
     except (ImportError, ModuleNotFoundError):
         _TRULENS_BACKEND_IMPL = None
         tru_logger.error(
-            'Error processing backend {}. Backend is reset to None'.
-            format(_TRULENS_BACKEND)
+            "Error processing backend {}. Backend is reset to None".format(
+                _TRULENS_BACKEND
+            )
         )
         tru_logger.error(traceback.format_exc())
 
@@ -238,34 +240,34 @@ def get_backend(suppress_warnings=False):
 
 
 _ALL_BACKEND_API_FUNCTIONS = [
-    'set_seed',
-    'is_deterministic',
-    'dim_order',
-    'channel_axis',
-    'floatX',
-    'backend',
-    'gradient',
-    'as_array',
-    'as_tensor',
-    'is_tensor',
-    'int_shape',
-    'shape',
-    'expand_dims',
-    'reshape',
-    'mean',
-    'sum',
-    'abs',
-    'max',
-    'ones_like',
-    'zeros_like',
-    'random_normal_like',
-    'clone',
-    'stack',
-    'tile',
-    'concat',
-    'sign',
-    'sigmoid',
-    'softmax',
-    'maximum',
-    'minimum',
+    "set_seed",
+    "is_deterministic",
+    "dim_order",
+    "channel_axis",
+    "floatX",
+    "backend",
+    "gradient",
+    "as_array",
+    "as_tensor",
+    "is_tensor",
+    "int_shape",
+    "shape",
+    "expand_dims",
+    "reshape",
+    "mean",
+    "sum",
+    "abs",
+    "max",
+    "ones_like",
+    "zeros_like",
+    "random_normal_like",
+    "clone",
+    "stack",
+    "tile",
+    "concat",
+    "sign",
+    "sigmoid",
+    "softmax",
+    "maximum",
+    "minimum",
 ]

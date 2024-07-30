@@ -24,6 +24,7 @@ from trulens_eval.utils.asynchro import sync
 
 class TestTruChain(JSONTestCase):
     """Test TruChain class."""
+
     # TODO: See problem in TestTruLlama.
     # USE IsolatedAsyncioTestCase
 
@@ -33,10 +34,11 @@ class TestTruChain(JSONTestCase):
         Tru().reset_database()
 
     def setUp(self):
-
         check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
-            "PINECONE_ENV"
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY",
+            "PINECONE_API_KEY",
+            "PINECONE_ENV",
         )
 
     @optional_test
@@ -59,7 +61,6 @@ class TestTruChain(JSONTestCase):
         chain2 = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
     def _create_basic_chain(self, app_id: str = None):
-
         from langchain_openai import ChatOpenAI
 
         # Create simple QA chain.
@@ -196,7 +197,7 @@ class TestTruChain(JSONTestCase):
         # Results are not the same as they involve different prompts but should
         # not be empty at least:
         self.assertGreater(len(res1.generations[0].text), 5)
-        self.assertGreater(len(res2['text']), 5)
+        self.assertGreater(len(res2["text"]), 5)
 
         # And cost tracking should have counted some number of tokens.
         # TODO: broken
@@ -246,20 +247,18 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.model_dump(),
             sync_record.model_dump(),
-            skips=set(
-                [
-                    "id",
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "app_id",
-                    "cost"  # TODO(piotrm): cost tracking not working with async
-                ]
-            )
+            skips={
+                "id",
+                "name",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "tid",
+                "pid",
+                "app_id",
+                "cost",  # TODO(piotrm): cost tracking not working with async
+            },
         )
 
     @optional_test
@@ -281,7 +280,7 @@ class TestTruChain(JSONTestCase):
             temperature=0.0, streaming=True, callbacks=[async_callback]
         )
         agent = LLMChain(llm=llm, prompt=prompt)
-        agent_recorder = tru.Chain(agent)  #, feedbacks=[f_lang_match])
+        agent_recorder = tru.Chain(agent)  # , feedbacks=[f_lang_match])
 
         message = "What is 1+2? Explain your answer."
         with agent_recorder as recording:
@@ -299,25 +298,23 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.model_dump(),
             sync_record.model_dump(),
-            skips=set(
-                [
-                    "id",
-                    "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "run_id"
-                ]
-            )
+            skips={
+                "id",
+                "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
+                "name",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "tid",
+                "pid",
+                "run_id",
+            },
         )
 
         # Check that we counted the number of chunks at least.
         self.assertGreater(async_record.cost.n_stream_chunks, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

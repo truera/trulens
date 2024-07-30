@@ -5,8 +5,7 @@ from trulens.nn.quantities import MaxClassQoI
 from trulens.nn.slices import InputCut
 
 
-class BatchTestBase(object):
-
+class BatchTestBase:
     def setUp(self):
         np.random.seed(2020)
 
@@ -17,8 +16,8 @@ class BatchTestBase(object):
 
         # Make weights for a linear model for testing.
         self.model_lin_weights = np.random.normal(
-            scale=2. / (self.input_size + self.output_size),
-            size=(self.input_size, self.output_size)
+            scale=2.0 / (self.input_size + self.output_size),
+            size=(self.input_size, self.output_size),
         )
         self.model_lin_bias = np.random.uniform(-0.5, 0.5, (self.output_size,))
 
@@ -26,22 +25,22 @@ class BatchTestBase(object):
 
         # Make weights for a deeper model for testing.
         self.model_deep_weights_1 = np.random.normal(
-            scale=2. / (self.input_size + self.internal1_size),
-            size=(self.input_size, self.internal1_size)
+            scale=2.0 / (self.input_size + self.internal1_size),
+            size=(self.input_size, self.internal1_size),
         )
         self.model_deep_bias_1 = np.random.uniform(
             -0.5, 0.5, (self.internal1_size,)
         )
         self.model_deep_weights_2 = np.random.normal(
-            scale=2. / (self.internal1_size + self.internal2_size),
-            size=(self.internal1_size, self.internal2_size)
+            scale=2.0 / (self.internal1_size + self.internal2_size),
+            size=(self.internal1_size, self.internal2_size),
         )
         self.model_deep_bias_2 = np.random.uniform(
             -0.5, 0.5, (self.internal2_size,)
         )
         self.model_deep_weights_3 = np.random.normal(
-            scale=2. / (self.internal2_size + self.output_size),
-            size=(self.internal2_size, self.output_size)
+            scale=2.0 / (self.internal2_size + self.output_size),
+            size=(self.internal2_size, self.output_size),
         )
         self.model_deep_bias_3 = np.random.uniform(
             -0.5, 0.5, (self.output_size,)

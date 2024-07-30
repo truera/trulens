@@ -10,8 +10,7 @@ from trulens.nn.slices import LogitCut
 from trulens.utils.typing import ModelInputs
 
 
-class ModelWrapperTestBase(object):
-
+class ModelWrapperTestBase:
     def setUp(self):
         # `self.model` should be implemented in the respective backend to match
         # the following network:
@@ -33,11 +32,11 @@ class ModelWrapperTestBase(object):
         #          1 | /   \ | 1
         # Input:     o       o    cut identifier: `self.layer0`
 
-        self.layer1_weights = np.array([[1., 0.], [-1., 1.]])
-        self.layer2_weights = np.array([[1., 1.], [0., 1.]])
-        self.layer3_weights = np.array([[1.], [2.]])
-        self.internal_bias = np.array([0., 0.])
-        self.bias = np.array([0.])
+        self.layer1_weights = np.array([[1.0, 0.0], [-1.0, 1.0]])
+        self.layer2_weights = np.array([[1.0, 1.0], [0.0, 1.0]])
+        self.layer3_weights = np.array([[1.0], [2.0]])
+        self.internal_bias = np.array([0.0, 0.0])
+        self.bias = np.array([0.0])
 
         # `self.model_kwargs`` should implement exponential with five types of inputs:
         #   args[0] - (batchable) X
@@ -57,11 +56,17 @@ class ModelWrapperTestBase(object):
                 self.model.fprop(
                     (
                         np.array(
-                            [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]
+                            [
+                                [2.0, 1.0],
+                                [1.0, 2.0],
+                                [1.0, 1.0],
+                                [1.0, 0.0],
+                                [0.0, -1.0],
+                            ]
                         ),
                     )
                 ),
-                np.array([5., 4., 2., 3., 3.])[:, None]
+                np.array([5.0, 4.0, 2.0, 3.0, 3.0])[:, None],
             )
         )
 
@@ -71,15 +76,27 @@ class ModelWrapperTestBase(object):
                 self.model.fprop(
                     (
                         np.array(
-                            [[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]
+                            [
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                            ]
                         ),
                     ),
                     doi_cut=Cut(self.layer1),
                     intervention=np.array(
-                        [[1., 1.], [0., 2.], [-1., 1.], [-1., 2.], [0., -1.]]
-                    )
+                        [
+                            [1.0, 1.0],
+                            [0.0, 2.0],
+                            [-1.0, 1.0],
+                            [-1.0, 2.0],
+                            [0.0, -1.0],
+                        ]
+                    ),
                 ),
-                np.array([5., 4., 0., 2., 0.])[:, None]
+                np.array([5.0, 4.0, 0.0, 2.0, 0.0])[:, None],
             )
         )
 
@@ -89,11 +106,20 @@ class ModelWrapperTestBase(object):
                 self.model.fprop(
                     (
                         np.array(
-                            [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]
+                            [
+                                [2.0, 1.0],
+                                [1.0, 2.0],
+                                [1.0, 1.0],
+                                [1.0, 0.0],
+                                [0.0, -1.0],
+                            ]
                         ),
                     ),
-                    to_cut=Cut(self.layer2)
-                ), np.array([[1., 2.], [0., 2.], [0., 1.], [1., 1.], [1., 1.]])
+                    to_cut=Cut(self.layer2),
+                ),
+                np.array(
+                    [[1.0, 2.0], [0.0, 2.0], [0.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
+                ),
             )
         )
 
@@ -103,23 +129,53 @@ class ModelWrapperTestBase(object):
                 self.model.fprop(
                     (
                         np.array(
-                            [[0., 0.], [0., 0.], [0., 0.], [0., 0.], [0., 0.]]
+                            [
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 0.0],
+                            ]
                         ),
                     ),
                     doi_cut=Cut(self.layer1),
                     to_cut=Cut(self.layer1),
                     intervention=np.array(
-                        [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]
-                    )
+                        [
+                            [2.0, 1.0],
+                            [1.0, 2.0],
+                            [1.0, 1.0],
+                            [1.0, 0.0],
+                            [0.0, -1.0],
+                        ]
+                    ),
                 ),
-                np.array([[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]])
+                np.array(
+                    [
+                        [2.0, 1.0],
+                        [1.0, 2.0],
+                        [1.0, 1.0],
+                        [1.0, 0.0],
+                        [0.0, -1.0],
+                    ]
+                ),
             )
         )
 
     def test_fprop_multiple_outputs(self):
         r = self.model.fprop(
-            (np.array([[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]),),
-            to_cut=Cut([self.layer2, 'logits'])
+            (
+                np.array(
+                    [
+                        [2.0, 1.0],
+                        [1.0, 2.0],
+                        [1.0, 1.0],
+                        [1.0, 0.0],
+                        [0.0, -1.0],
+                    ]
+                ),
+            ),
+            to_cut=Cut([self.layer2, "logits"]),
         )
 
         self.assertEqual(len(r), 2)
@@ -127,12 +183,13 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 r[0],
-                np.array([[1., 2.], [0., 2.], [0., 1.], [1., 1.], [1., 1.]])
+                np.array(
+                    [[1.0, 2.0], [0.0, 2.0], [0.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
+                ),
             )
         )
         self.assertTrue(
-            np.allclose(r[1],
-                        np.array([5., 4., 2., 3., 3.])[:, None])
+            np.allclose(r[1], np.array([5.0, 4.0, 2.0, 3.0, 3.0])[:, None])
         )
 
     def test_fprop_logits_default(self):
@@ -141,34 +198,40 @@ class ModelWrapperTestBase(object):
                 self.model.fprop(
                     (
                         np.array(
-                            [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]
+                            [
+                                [2.0, 1.0],
+                                [1.0, 2.0],
+                                [1.0, 1.0],
+                                [1.0, 0.0],
+                                [0.0, -1.0],
+                            ]
                         ),
                     ),
-                    to_cut=LogitCut()
+                    to_cut=LogitCut(),
                 ),
-                np.array([5., 4., 2., 3., 3.])[:, None]
+                np.array([5.0, 4.0, 2.0, 3.0, 3.0])[:, None],
             )
         )
 
     def test_fprop_kwargs(self):
         """Test fprop on InputCut DoI for a model with both args and kwargs."""
 
-        if not hasattr(self, 'model_kwargs'):
+        if not hasattr(self, "model_kwargs"):
             # TODO: implement these tests for keras
             return
 
         B = get_backend()
 
         # Capital vars are batched, lower-case ones are not.
-        X = np.array([[1., 2., 3.], [4., 5., 6.]])
+        X = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         Coeffs = np.array([[0.5, 1.0, 1.5], [2.0, 2.5, 3.0]])
         divisor = np.array([[3.0]])
-        Degree = np.array([[1., 2., 3.], [4., 5., 6.]])
+        Degree = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         offset = np.array([[4.0]])
 
         actual = self.model_kwargs.fprop(
             model_args=(X, Coeffs, divisor),  # cannot swap contents
-            model_kwargs=dict(Degree=Degree, offset=offset)  # between these
+            model_kwargs=dict(Degree=Degree, offset=offset),  # between these
         )
 
         # Expect handling as in numpy broadcasting of the non-batched divisor, offset:
@@ -179,7 +242,7 @@ class ModelWrapperTestBase(object):
     def test_fprop_kwargs_intervention(self):
         """Test fprop with InputCut and intervention/input with both args and kwargs."""
 
-        if not hasattr(self, 'model_kwargs'):
+        if not hasattr(self, "model_kwargs"):
             # TODO: implement these tests for keras
             return
 
@@ -197,26 +260,29 @@ class ModelWrapperTestBase(object):
         offset = np.array([[4.0]])
 
         actual = self.model_kwargs.fprop(
-            (X, Coeffs, divisor),               # ignored but still need to be provided
-            dict(Degree=Degree, offset=offset), # ignored but still need to be provided
+            (X, Coeffs, divisor),  # ignored but still need to be provided
+            dict(
+                Degree=Degree, offset=offset
+            ),  # ignored but still need to be provided
             doi_cut=InputCut(),
-            intervention=ModelInputs(           # slightly modified model inputs
-                args=(X+1.0, Coeffs+2.0, divisor+3.0),
-                kwargs=dict(Degree=Degree+4.0, offset=offset+5.0)
-            )
+            intervention=ModelInputs(  # slightly modified model inputs
+                args=(X + 1.0, Coeffs + 2.0, divisor + 3.0),
+                kwargs=dict(Degree=Degree + 4.0, offset=offset + 5.0),
+            ),
         )
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting.
-        expected = ((X + 1.0)**(Degree + 4.0)
-                   ) * (Coeffs + 2.0) / (divisor + 3.0) + (offset + 5.0)
+        expected = ((X + 1.0) ** (Degree + 4.0)) * (Coeffs + 2.0) / (
+            divisor + 3.0
+        ) + (offset + 5.0)
 
         self.assertTrue(np.allclose(actual, expected))
 
     def test_tile(self):
         """Test tiling utility for aligning interventions with inputs."""
 
-        if not hasattr(self, 'model_kwargs'):
+        if not hasattr(self, "model_kwargs"):
             # TODO: implement these tests for keras
             return
 
@@ -238,15 +304,16 @@ class ModelWrapperTestBase(object):
         # batch of 4 at intervention, Coeffs, Degree, but not (divisor, offset) should get tiled 2 times.
         X_intervention = np.array(
             [
-                [1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0],
-                [10.0, 11.0, 12.0]
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+                [7.0, 8.0, 9.0],
+                [10.0, 11.0, 12.0],
             ]
         )
 
         # fprop no longer tiles, call the tiling method manually:
         temp_inputs = ModelInputs(
-            args=[X, Coeffs, divisor],
-            kwargs=dict(Degree=Degree, offset=offset)
+            args=[X, Coeffs, divisor], kwargs=dict(Degree=Degree, offset=offset)
         )
         temp_intervention = ModelInputs(args=[X_intervention])
         temp_inputs_tiled = tile(what=temp_inputs, onto=temp_intervention)
@@ -255,14 +322,15 @@ class ModelWrapperTestBase(object):
             temp_inputs_tiled.args,
             temp_inputs_tiled.kwargs,
             doi_cut=Cut(self.model_kwargs_layer1),
-            intervention=X_intervention
+            intervention=X_intervention,
         )
 
         # Expect handling of the non-batched values (divisor, offset) as in
         # numpy broadcasting while Degree and Coeffs should be tiled twice to
         # match intervention.
-        expected = (X_intervention**np.tile(Degree, (2, 1))
-                   ) * np.tile(Coeffs, (2, 1)) / divisor + offset
+        expected = (X_intervention ** np.tile(Degree, (2, 1))) * np.tile(
+            Coeffs, (2, 1)
+        ) / divisor + offset
 
         self.assertTrue(np.allclose(actual, expected))
 
@@ -272,8 +340,9 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 self.model.qoi_bprop(
-                    MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),)
-                ), np.array([[3., -1.], [0., 2.]])
+                    MaxClassQoI(), (np.array([[2.0, 1.0], [1.0, 2.0]]),)
+                ),
+                np.array([[3.0, -1.0], [0.0, 2.0]]),
             )
         )
 
@@ -281,9 +350,11 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 self.model.qoi_bprop(
-                    MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
-                    attribution_cut=Cut(self.layer1)
-                ), np.array([[3., 2.], [2., 2.]])
+                    MaxClassQoI(),
+                    (np.array([[2.0, 1.0], [1.0, 2.0]]),),
+                    attribution_cut=Cut(self.layer1),
+                ),
+                np.array([[3.0, 2.0], [2.0, 2.0]]),
             )
         )
 
@@ -291,9 +362,11 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 self.model.qoi_bprop(
-                    MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
-                    to_cut=Cut(self.layer2)
-                ), np.array([[1., 0.], [0., 1.]])
+                    MaxClassQoI(),
+                    (np.array([[2.0, 1.0], [1.0, 2.0]]),),
+                    to_cut=Cut(self.layer2),
+                ),
+                np.array([[1.0, 0.0], [0.0, 1.0]]),
             )
         )
 
@@ -301,10 +374,12 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 self.model.qoi_bprop(
-                    MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
+                    MaxClassQoI(),
+                    (np.array([[2.0, 1.0], [1.0, 2.0]]),),
                     attribution_cut=InputCut(),
-                    to_cut=InputCut()
-                ), np.array([[1., 0.], [0., 1.]])
+                    to_cut=InputCut(),
+                ),
+                np.array([[1.0, 0.0], [0.0, 1.0]]),
             )
         )
 
@@ -312,40 +387,45 @@ class ModelWrapperTestBase(object):
         self.assertTrue(
             np.allclose(
                 self.model.qoi_bprop(
-                    MaxClassQoI(), (np.array([[0., 0.], [0., 0.]]),),
+                    MaxClassQoI(),
+                    (np.array([[0.0, 0.0], [0.0, 0.0]]),),
                     attribution_cut=Cut(self.layer1),
                     doi_cut=Cut(self.layer1),
-                    intervention=np.array([[2., 1.], [1., 2.]])
-                ), np.array([[3., 2.], [3., 2.]])
+                    intervention=np.array([[2.0, 1.0], [1.0, 2.0]]),
+                ),
+                np.array([[3.0, 2.0], [3.0, 2.0]]),
             )
         )
 
     def test_qoibprop_multiple_inputs(self):
         r = self.model.qoi_bprop(
-            MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
-            attribution_cut=Cut([self.layer0, self.layer1])
+            MaxClassQoI(),
+            (np.array([[2.0, 1.0], [1.0, 2.0]]),),
+            attribution_cut=Cut([self.layer0, self.layer1]),
         )
 
         self.assertEqual(len(r), 2)
-        self.assertTrue(np.allclose(r[0], np.array([[3., -1.], [0., 2.]])))
-        self.assertTrue(np.allclose(r[1], np.array([[3., 2.], [2., 2.]])))
+        self.assertTrue(np.allclose(r[0], np.array([[3.0, -1.0], [0.0, 2.0]])))
+        self.assertTrue(np.allclose(r[1], np.array([[3.0, 2.0], [2.0, 2.0]])))
 
     def test_out_cut(self):
         input_array = np.array(
-            [[2., 1.], [1., 2.], [1., 1.], [1., 0.], [0., -1.]]
+            [[2.0, 1.0], [1.0, 2.0], [1.0, 1.0], [1.0, 0.0], [0.0, -1.0]]
         )
 
-        input_infl = InputAttribution(self.model,
-                                      self.out).attributions(input_array)
-        input_infl_none_out = InputAttribution(self.model
-                                              ).attributions(input_array)
+        input_infl = InputAttribution(self.model, self.out).attributions(
+            input_array
+        )
+        input_infl_none_out = InputAttribution(self.model).attributions(
+            input_array
+        )
         np.testing.assert_array_equal(input_infl, input_infl_none_out)
 
         internal_infl = InternalInfluence(
-            self.model, cuts=(None, self.out), qoi='max', doi='point'
+            self.model, cuts=(None, self.out), qoi="max", doi="point"
         ).attributions(input_array)
         internal_infl_none_out = InternalInfluence(
-            self.model, cuts=None, qoi='max', doi='point'
+            self.model, cuts=None, qoi="max", doi="point"
         ).attributions(input_array)
         np.testing.assert_array_equal(internal_infl, internal_infl_none_out)
 

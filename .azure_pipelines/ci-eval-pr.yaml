@@ -88,7 +88,7 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install -r requirements.test.txt --verbose 
+          pip install -r requirements.test.txt --verbose
 
         displayName: Install testing packages
 
@@ -99,7 +99,7 @@ jobs:
           python --version
           pip --version
           pip list --verbose
-  
+
         displayName: Describe python env
 
       - bash: |
@@ -157,7 +157,7 @@ jobs:
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true
-  
+
           # tests make use of various APIs:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
@@ -166,4 +166,3 @@ jobs:
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
         displayName: Unit tests with optional packages
-

@@ -1,26 +1,25 @@
 import os
 
-from tests.unit.determinism_test_base import DeterminismTestBase
 from trulens.nn.models import get_model_wrapper
 
-os.environ['TRULENS_BACKEND'] = 'pytorch'
+from tests.unit.determinism_test_base import DeterminismTestBase
 
-from unittest import main
+os.environ["TRULENS_BACKEND"] = "pytorch"
+
 from unittest import TestCase
+from unittest import main
 
 import torch
 from torch.nn import Module
 
 
 class DeterminismTest(DeterminismTestBase, TestCase):
-
     def setUp(self):
-        super(DeterminismTest, self).setUp()
+        super().setUp()
 
         class NonDet(Module):
-
             def __init__(this):
-                super(NonDet, this).__init__()
+                super().__init__()
                 # other non-deterministic layers?
                 this.dropout1 = torch.nn.Dropout()
                 this.dropout2 = torch.nn.Dropout()
@@ -31,5 +30,5 @@ class DeterminismTest(DeterminismTestBase, TestCase):
         self.model_nondet = get_model_wrapper(NonDet())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

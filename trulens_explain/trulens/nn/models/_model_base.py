@@ -1,45 +1,45 @@
-""" 
+"""
 The TruLens library is designed to support models implemented via a variety of
-different popular python neural network frameworks: Keras (with TensorFlow or 
-Theano backend), TensorFlow, and Pytorch. In order provide the same 
-functionality to models made with frameworks that implement things (e.g., 
-gradient computations) a number of different ways, we provide an adapter class 
-to provide a unified model API. In order to compute attributions for a model, 
+different popular python neural network frameworks: Keras (with TensorFlow or
+Theano backend), TensorFlow, and Pytorch. In order provide the same
+functionality to models made with frameworks that implement things (e.g.,
+gradient computations) a number of different ways, we provide an adapter class
+to provide a unified model API. In order to compute attributions for a model,
 it should be wrapped as a `ModelWrapper` instance.
 """
+
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
-from typing import List, Optional, Tuple, Type, Union
+from typing import Optional, Tuple, Union
 
-import numpy as np
 from trulens.nn.backend import get_backend
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import OM
+from trulens.utils.typing import ArgsLike
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
-from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import nested_cast
-from trulens.utils.typing import OM
-from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Tensors
+from trulens.utils.typing import many_of_om
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import om_of_many
 
 
 class ModelWrapper(AbstractBaseClass):
     """
-    A wrapper interface for models that exposes the components needed for 
-    computing attributions. This is intended to produce a consistent 
-    functionality for all models regardless of the backend/library the model is 
+    A wrapper interface for models that exposes the components needed for
+    computing attributions. This is intended to produce a consistent
+    functionality for all models regardless of the backend/library the model is
     implemented with.
     """
 
@@ -58,12 +58,12 @@ class ModelWrapper(AbstractBaseClass):
         internal_tensor_dict=None,
         default_feed_dict=None,
         session=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Parameters:
             model:
-                The model to wrap. For the TensorFlow 1 backend, this is 
+                The model to wrap. For the TensorFlow 1 backend, this is
                 expected to be a graph object.
 
             logit_layer:
@@ -72,8 +72,8 @@ class ModelWrapper(AbstractBaseClass):
 
             replace_softmax:
                 _Supported for Keras models only._ If true, the activation
-                function in the softmax layer (specified by `softmax_layer`) 
-                will be changed to a `'linear'` activation. 
+                function in the softmax layer (specified by `softmax_layer`)
+                will be changed to a `'linear'` activation.
 
             softmax_layer:
                 _Supported for Keras models only._ Specifies the layer that
@@ -110,7 +110,7 @@ class ModelWrapper(AbstractBaseClass):
                 graph.
 
             session:
-                _Optional, for use with TensorFlow 1 graph models only._ A 
+                _Optional, for use with TensorFlow 1 graph models only._ A
                 `tf.Session` object to run the model graph in. If `None`, a new
                 temporary session will be generated every time the model is run.
         """
@@ -147,11 +147,13 @@ class ModelWrapper(AbstractBaseClass):
         to_cut: Optional[Cut] = None,
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
-        **kwargs
-    ) -> Union[ArgsLike[TensorLike],  # attribution_cut is None
-               Tuple[ArgsLike[TensorLike],
-                     ArgsLike[TensorLike]]  # attribution_cut is not None
-              ]:
+        **kwargs,
+    ) -> Union[
+        ArgsLike[TensorLike],  # attribution_cut is None
+        Tuple[
+            ArgsLike[TensorLike], ArgsLike[TensorLike]
+        ],  # attribution_cut is not None
+    ]:
         """
         **_Used internally by `AttributionMethod`._**
 
@@ -168,10 +170,10 @@ class ModelWrapper(AbstractBaseClass):
         for integrated gradients which produces one instance for each unit of
         resolution). If we have dimensions:
 
-            intervention: (B1, ...) 
-            
+            intervention: (B1, ...)
+
             model_inputs: (B2, ...)
-            
+
             doi_cut: (B2, ...)
 
         Then model_inputs are tiled B1/B2 times so that evaluating model on
@@ -180,14 +182,14 @@ class ModelWrapper(AbstractBaseClass):
         intervention.
 
         Parameters:
-            model_args, model_kwargs: 
+            model_args, model_kwargs:
                 The args and kwargs given to the call method of a model. This
                 should represent the instances to obtain attributions for,
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in
                 addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+                the input shape of `self.model`.
 
             doi_cut:
                 Cut defining where the Distribution of Interest is applied. The
@@ -199,14 +201,14 @@ class ModelWrapper(AbstractBaseClass):
                 Cut defining the layer(s) up to which forward propagation should
                 be done. This will be the layer over which a quantity of
                 interest can be defined. If `to_cut` is `None`, the output of
-                the model will be used (i.e., `OutputCut()`). 
-            
+                the model will be used (i.e., `OutputCut()`).
+
             attribution_cut:
                 Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
                 `doi_cut`. `attribution_cut` should not preceed `doi_cut` in the
-                model architecture. 
-            
+                model architecture.
+
             intervention:
                 The intervention created from the Distribution of Interest. If
                 `intervention` is `None`, then it is equivalent to the point
@@ -232,7 +234,7 @@ class ModelWrapper(AbstractBaseClass):
             doi_cut=doi_cut,
             model_args=model_args,
             model_kwargs=model_kwargs,
-            intervention=intervention
+            intervention=intervention,
         )
 
         B = get_backend()
@@ -246,14 +248,17 @@ class ModelWrapper(AbstractBaseClass):
             to_cut=to_cut,
             attribution_cut=attribution_cut,
             intervention=intervention,
-            **kwargs
+            **kwargs,
         )
         rets = (to_cut.access_layer(rets[0]), doi_cut.access_layer(rets[1]))
         rets = tuple(
             map(
                 lambda ret: om_of_many(
                     nested_cast(backend=B, astype=return_type, args=ret)
-                ) if ret is not None else None, rets
+                )
+                if ret is not None
+                else None,
+                rets,
             )
         )
 
@@ -263,8 +268,12 @@ class ModelWrapper(AbstractBaseClass):
             return rets
 
     def _fprop_organize_vals(
-        self, *, doi_cut: Cut, model_args: ArgsLike, model_kwargs: KwargsLike,
-        intervention: InterventionLike
+        self,
+        *,
+        doi_cut: Cut,
+        model_args: ArgsLike,
+        model_kwargs: KwargsLike,
+        intervention: InterventionLike,
     ) -> Tuple[ModelInputs, Tensors]:
         """Boundary between public typing of fprop and internal typing in
         _fprop. Converts the variants in the public signature to the specific
@@ -325,9 +334,9 @@ class ModelWrapper(AbstractBaseClass):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: TensorArgs,  # TensorLike contents only
-        **kwargs
+        **kwargs,
     ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
-        """Implementation of fprop; arguments, return, and their types are clarified. """
+        """Implementation of fprop; arguments, return, and their types are clarified."""
 
         # Should not have to use DATA_CONTAINER_TYPE internally.
 
@@ -342,11 +351,11 @@ class ModelWrapper(AbstractBaseClass):
         to_cut: Optional[Cut] = None,
         attribution_cut: Optional[Cut] = None,
         intervention: InterventionLike = None,
-        **kwargs
+        **kwargs,
     ) -> OM[Outputs, OM[Inputs, TensorLike]]:
         """
         **_Used internally by `AttributionMethod`._**
-        
+
         Runs the model beginning at `doi_cut` on input `intervention`, and
         returns the gradients calculated from `to_cut` with respect to
         `attribution_cut` of the quantity of interest.
@@ -354,16 +363,16 @@ class ModelWrapper(AbstractBaseClass):
         Parameters:
             qoi: a Quantity of Interest
                 This method will accumulate all gradients of the qoi w.r.t
-                `attribution_cut`. 
+                `attribution_cut`.
 
-            model_args, model_kwargs: 
+            model_args, model_kwargs:
                 The args and kwargs given to the call method of a model. This
                 should represent the instances to obtain attributions for,
                 assumed to be a *batched* input. if `self.model` supports
                 evaluation on *data tensors*, the  appropriate tensor type may
                 be used (e.g., Pytorch models may accept Pytorch tensors in
                 addition to `np.ndarray`s). The shape of the inputs must match
-                the input shape of `self.model`. 
+                the input shape of `self.model`.
 
             doi_cut:
                 Cut defining where the Distribution of Interest is applied. The
@@ -377,12 +386,12 @@ class ModelWrapper(AbstractBaseClass):
                 (i.e., `OutputCut()`). `to_cut` cannot preceed `doi_cut` in the
                 model architecture, i.e. the gradient of `doi_cut` w.r.t.
                 `attribution_cut` must be defined.
-            
+
             attribution_cut:
                 Cut defining where the attributions are collected. If
                 `attribution_cut` is `None`, it will be assumed to be the
                 `doi_cut`.
-            
+
             intervention:
                 The intervention created from the Distribution of Interest. If
                 `intervention` is `None`, then it is equivalent to the point
@@ -396,7 +405,7 @@ class ModelWrapper(AbstractBaseClass):
             (backend.Tensor or np.ndarray) for each attribution_cut input, for each qoi output
                 the gradients of `qoi` w.r.t. `attribution_cut`, keeping same
                 type as the input.
-                If attribution_cut has multiple inputs, return a list for each. 
+                If attribution_cut has multiple inputs, return a list for each.
                 If qoi has multiple outputs, returns a list of the above for each.
         """
 
@@ -411,7 +420,7 @@ class ModelWrapper(AbstractBaseClass):
             doi_cut=doi_cut,
             model_args=model_args,
             model_kwargs=model_kwargs,
-            intervention=intervention
+            intervention=intervention,
         )
 
         # Will cast results to this data container type.
@@ -424,11 +433,12 @@ class ModelWrapper(AbstractBaseClass):
             to_cut=to_cut,
             attribution_cut=attribution_cut,
             intervention=intervention,
-            **kwargs
+            **kwargs,
         )
 
-        attrs: Outputs[OM[Inputs,
-                          TensorLike]] = [om_of_many(attr) for attr in attrs]
+        attrs: Outputs[OM[Inputs, TensorLike]] = [
+            om_of_many(attr) for attr in attrs
+        ]
         attrs: OM[Outputs, OM[Inputs]] = om_of_many(attrs)
 
         # Call the implementation and transform its results to the same type as model_inputs.
@@ -438,12 +448,19 @@ class ModelWrapper(AbstractBaseClass):
 
     @abstractmethod
     def _qoi_bprop(
-        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
-        attribution_cut: Cut, intervention: TensorArgs, **kwargs
+        self,
+        *,
+        qoi: QoI,
+        model_inputs: ModelInputs,
+        doi_cut: Cut,
+        to_cut: Cut,
+        attribution_cut: Cut,
+        intervention: TensorArgs,
+        **kwargs,
     ) -> Outputs[
-            Inputs[TensorLike]
+        Inputs[TensorLike]
     ]:  # One outer element for each QoI output, one inner element for each attribution_cut input.
-        """Implementation of qoi_bprop; arguments, return, and their types are clarified. """
+        """Implementation of qoi_bprop; arguments, return, and their types are clarified."""
         # Should not have to use DATA_CONTAINER_TYPE internally.
 
         raise NotImplementedError

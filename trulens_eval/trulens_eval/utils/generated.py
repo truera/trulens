@@ -18,9 +18,10 @@ class ParseError(Exception):
         self, expected: str, text: str, pattern: Optional[re.Pattern] = None
     ):
         super().__init__(
-            f"Tried to find {expected}" +
-            (f" using pattern {pattern.pattern}" if pattern else "") + " in\n" +
-            retab(tab='  ', s=text)
+            f"Tried to find {expected}"
+            + (f" using pattern {pattern.pattern}" if pattern else "")
+            + " in\n"
+            + retab(tab="  ", s=text)
         )
         self.text = text
         self.pattern = pattern
@@ -30,7 +31,7 @@ def validate_rating(rating) -> float:
     """Validate a rating is between 0 and 10."""
 
     if not 0 <= rating <= 10:
-        raise ValueError('Rating must be between 0 and 10')
+        raise ValueError("Rating must be between 0 and 10")
 
     return rating
 
@@ -50,7 +51,7 @@ PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 
 def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
-    
+
     If the string does not match an integer/a float or matches an integer/a float outside the
     0-10 range, raises an error instead. If multiple numbers are found within
     the expected 0-10 range, the smallest is returned.
@@ -59,8 +60,8 @@ def re_0_10_rating(s: str) -> int:
         s: String to extract rating from.
 
     Returns:
-        int: Extracted rating. 
-    
+        int: Extracted rating.
+
     Raises:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """

@@ -7,7 +7,7 @@ from trulens_eval.tru import Tru
 
 def init_from_args():
     """Parse command line arguments and initialize Tru with them.
-    
+
     As Tru is a singleton, further Tru() uses will get the same configuration.
     """
 

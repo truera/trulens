@@ -8,7 +8,7 @@ capture the majority of what we want from an AI system, such as an LLM app.
 
 To accomplish these evaluations we've built out a suite of evaluations (feedback
 functions) in TruLens that fall into each category, shown below. These feedback
-funcitons provide a starting point for ensuring your LLM app is performant and
+functions provide a starting point for ensuring your LLM app is performant and
 aligned.
 
 ![Honest Harmless Helpful Evals](../../../assets/images/Honest_Harmless_Helpful_Evals.jpg)

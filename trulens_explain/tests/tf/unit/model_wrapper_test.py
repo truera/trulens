@@ -1,14 +1,13 @@
 import os
 
-os.environ['TRULENS_BACKEND'] = 'tensorflow'
+os.environ["TRULENS_BACKEND"] = "tensorflow"
 
 from tensorflow.python.util import deprecation
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-import importlib
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import tensorflow as tf
 
@@ -26,13 +25,12 @@ from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
-
     def setUp(self):
-        super(ModelWrapperTest, self).setUp()
+        super().setUp()
 
         graph = Graph()
         with graph.as_default():
-            x = placeholder('float32', (None, 2))
+            x = placeholder("float32", (None, 2))
             z1 = relu(x @ self.layer1_weights + self.internal_bias)
             z2 = relu(z1 @ self.layer2_weights + self.internal_bias)
             y = z2 @ self.layer3_weights + self.bias
@@ -41,11 +39,11 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
             graph,
             input_tensors=x,
             output_tensors=y,
-            internal_tensor_dict=dict(x=x, z1=z1, z2=z2, logits=y)
+            internal_tensor_dict=dict(x=x, z1=z1, z2=z2, logits=y),
         )
 
-        self.layer0 = 'x'
-        self.layer1 = 'z1'
+        self.layer0 = "x"
+        self.layer1 = "z1"
         self.layer2 = z2.name
         self.out = y.name
 
@@ -83,5 +81,5 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         """
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,18 +1,17 @@
-from unittest import main
 from unittest import TestCase
 
 from keras.layers import Dense
 from keras.layers import Input
 from keras.models import Model
-from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.backend import Backend
 from trulens.nn.models.keras import KerasModelWrapper
 
+from tests.unit.environment_test_base import EnvironmentTestBase
+
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
-
     def setUp(self):
-        super(EnvironmentTest, self).setUp()
+        super().setUp()
         # Make a linear model for testing.
         x_lin = Input((self.input_size,))
         y_lin = Dense(self.output_size)(x_lin)

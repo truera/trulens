@@ -1,9 +1,9 @@
 import os
 
-os.environ['TRULENS_BACKEND'] = 'pytorch'
+os.environ["TRULENS_BACKEND"] = "pytorch"
 
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import numpy as np
 from torch import cat
@@ -20,13 +20,10 @@ from trulens.nn.slices import InputCut
 
 
 class FfnEdgeCaseArchitecturesTest(TestCase):
-
     def test_multiple_inputs(self):
-
         class M(Module):
-
             def __init__(this):
-                super(M, this).__init__()
+                super().__init__()
                 this.z1 = Linear(5, 6)
                 this.z3 = Linear(7, 7)
                 this.y = Linear(7, 3)
@@ -42,8 +39,8 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         infl = InternalInfluence(model, InputCut(), ClassQoI(1), PointDoi())
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')
+            np.array([[1.0, 2.0, 3.0, 4.0, 5.0]]).astype("float32"),
+            np.array([[1.0]]).astype("float32"),
         )
 
         self.assertEqual(len(res), 2)
@@ -51,16 +48,13 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         self.assertEqual(res[1].shape, (1, 1))
 
     def test_internal_multiple_inputs(self):
-
         class ConcatenateLayer(Module):
-
             def forward(this, x1, x2):
                 return cat((x1, x2), 1)
 
         class M(Module):
-
             def __init__(this):
-                super(M, this).__init__()
+                super().__init__()
                 this.z1 = Linear(5, 6)
                 this.concat = ConcatenateLayer()
                 this.z3 = Linear(7, 7)
@@ -75,12 +69,12 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         model = get_model_wrapper(M())
 
         infl = InternalInfluence(
-            model, Cut('concat', anchor='in'), ClassQoI(1), PointDoi()
+            model, Cut("concat", anchor="in"), ClassQoI(1), PointDoi()
         )
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')
+            np.array([[1.0, 2.0, 3.0, 4.0, 5.0]]).astype("float32"),
+            np.array([[1.0]]).astype("float32"),
         )
 
         self.assertEqual(len(res), 2)
@@ -88,11 +82,9 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         self.assertEqual(res[1].shape, (1, 1))
 
     def test_internal_slice_multiple_layers(self):
-
         class M(Module):
-
             def __init__(this):
-                super(M, this).__init__()
+                super().__init__()
                 this.cut_layer1 = Linear(5, 6)
                 this.cut_layer2 = Linear(1, 2)
                 this.z3 = Linear(2, 4)
@@ -110,12 +102,12 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         model = get_model_wrapper(M())
 
         infl = InternalInfluence(
-            model, Cut(['cut_layer1', 'cut_layer2']), ClassQoI(1), PointDoi()
+            model, Cut(["cut_layer1", "cut_layer2"]), ClassQoI(1), PointDoi()
         )
 
         res = infl.attributions(
-            np.array([[1., 2., 3., 4., 5.]]).astype('float32'),
-            np.array([[1.]]).astype('float32')
+            np.array([[1.0, 2.0, 3.0, 4.0, 5.0]]).astype("float32"),
+            np.array([[1.0]]).astype("float32"),
         )
 
         self.assertEqual(len(res), 2)
@@ -123,22 +115,20 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
         self.assertEqual(res[1].shape, (1, 2))
 
     def test_anchors(self):
-
         class M(Module):
-
             def __init__(this):
-                super(M, this).__init__()
+                super().__init__()
                 this.z1 = Linear(2, 2)
                 this.z2 = ReLU()
                 this.y = Linear(2, 1)
 
                 B = get_backend()
                 this.z1.weight.data = B.as_tensor(
-                    np.array([[1., 0.], [0., -1.]]).T
+                    np.array([[1.0, 0.0], [0.0, -1.0]]).T
                 )
-                this.z1.bias.data = B.as_tensor(np.array([0., 0.]))
-                this.y.weight.data = B.as_tensor(np.array([[1.], [1.]]).T)
-                this.y.bias.data = B.as_tensor(np.array([0.]))
+                this.z1.bias.data = B.as_tensor(np.array([0.0, 0.0]))
+                this.y.weight.data = B.as_tensor(np.array([[1.0], [1.0]]).T)
+                this.y.bias.data = B.as_tensor(np.array([0.0]))
 
             def forward(this, x):
                 z1 = this.z1(x)
@@ -149,34 +139,32 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         infl_out = InternalInfluence(
             model,
-            Cut('z2', anchor='out'),
+            Cut("z2", anchor="out"),
             ClassQoI(0),
             PointDoi(),
-            multiply_activation=False
+            multiply_activation=False,
         )
 
         infl_in = InternalInfluence(
             model,
-            Cut('z2', anchor='in'),
+            Cut("z2", anchor="in"),
             ClassQoI(0),
             PointDoi(),
-            multiply_activation=False
+            multiply_activation=False,
         )
 
-        res_out = infl_out.attributions(np.array([[1., 1.]]))
-        res_in = infl_in.attributions(np.array([[1., 1.]]))
+        res_out = infl_out.attributions(np.array([[1.0, 1.0]]))
+        res_in = infl_in.attributions(np.array([[1.0, 1.0]]))
 
         self.assertEqual(res_out.shape, (1, 2))
         self.assertEqual(res_in.shape, (1, 2))
-        self.assertTrue(np.allclose(res_out, np.array([[1., 1.]])))
-        self.assertTrue(np.allclose(res_in, np.array([[1., 0.]])))
+        self.assertTrue(np.allclose(res_out, np.array([[1.0, 1.0]])))
+        self.assertTrue(np.allclose(res_in, np.array([[1.0, 0.0]])))
 
     def test_catch_cut_name_error(self):
-
         class M(Module):
-
             def __init__(this):
-                super(M, this).__init__()
+                super().__init__()
                 this.z1 = Linear(2, 2)
                 this.z2 = ReLU()
                 this.y = Linear(2, 1)
@@ -190,11 +178,11 @@ class FfnEdgeCaseArchitecturesTest(TestCase):
 
         with self.assertRaises(ValueError):
             infl = InternalInfluence(
-                model, Cut('not_a_real_layer'), ClassQoI(0), PointDoi()
+                model, Cut("not_a_real_layer"), ClassQoI(0), PointDoi()
             )
 
-            infl.attributions(np.array([[1., 1.]]).astype('float32'))
+            infl.attributions(np.array([[1.0, 1.0]]).astype("float32"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

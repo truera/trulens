@@ -5,7 +5,6 @@ from trulens.nn.backend import get_backend
 
 
 class BackendTestBase(TestCase):
-
     def setUp(self):
         B = get_backend()
 

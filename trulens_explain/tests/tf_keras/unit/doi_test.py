@@ -1,9 +1,9 @@
 import os
 
-os.environ['TRULENS_BACKEND'] = 'tf.keras'
+os.environ["TRULENS_BACKEND"] = "tf.keras"
 
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from tensorflow.python.util import deprecation
 
@@ -12,14 +12,14 @@ deprecation._PRINT_DEPRECATION_WARNINGS = False
 from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.models import Model
-from tests.unit.doi_test_base import DoiTestBase
 from trulens.nn.models.keras import KerasModelWrapper
+
+from tests.unit.doi_test_base import DoiTestBase
 
 
 class DoiTest(DoiTestBase, TestCase):
-
     def setUp(self):
-        super(DoiTest, self).setUp()
+        super().setUp()
 
         l0 = Input((1,))
         l1 = Lambda(lambda input: self.l1_coeff * (input**self.l1_exp))(l0)
@@ -32,5 +32,5 @@ class DoiTest(DoiTestBase, TestCase):
         self.layer2 = 2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

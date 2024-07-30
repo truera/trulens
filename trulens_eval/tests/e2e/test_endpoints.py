@@ -7,14 +7,13 @@ various secrets configured. See `setUp` below.
 
 import os
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 from tests.unit.test import optional_test
 
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys
-from trulens_eval.utils.asynchro import sync
 
 pp = PrettyPrinter()
 
@@ -26,25 +25,21 @@ class TestEndpoints(TestCase):
         check_keys(
             # for non-azure openai tests
             "OPENAI_API_KEY",
-
             # for huggingface tests
             "HUGGINGFACE_API_KEY",
-
             # for bedrock tests
             "AWS_REGION_NAME",
             "AWS_ACCESS_KEY_ID",
             "AWS_SECRET_ACCESS_KEY",
             "AWS_SESSION_TOKEN",
-
             # for azure openai tests
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
             "AZURE_OPENAI_DEPLOYMENT_NAME",
-
             # for snowflake cortex
             "SNOWFLAKE_ACCOUNT",
             "SNOWFLAKE_USER",
-            "SNOWFLAKE_USER_PASSWORD"
+            "SNOWFLAKE_USER_PASSWORD",
         )
 
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
@@ -56,23 +51,26 @@ class TestEndpoints(TestCase):
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(
-            cost.n_successful_requests, 1,
-            "Expected exactly one successful request."
+            cost.n_successful_requests,
+            1,
+            "Expected exactly one successful request.",
         )
         self.assertEqual(
             cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
         )
         self.assertEqual(
-            cost.n_stream_chunks, 0,
-            "Expected zero chunks when not using streaming mode."
+            cost.n_stream_chunks,
+            0,
+            "Expected zero chunks when not using streaming mode.",
         )
         self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
         self.assertGreater(
             cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
         )
         self.assertGreater(
-            cost.n_completion_tokens, 0.0,
-            "Expected non-zero completion tokens."
+            cost.n_completion_tokens,
+            0.0,
+            "Expected non-zero completion tokens.",
         )
 
         if with_cost:
@@ -92,16 +90,19 @@ class TestEndpoints(TestCase):
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(
-            cost.n_successful_requests, 1,
-            "Expected exactly one successful request."
+            cost.n_successful_requests,
+            1,
+            "Expected exactly one successful request.",
         )
         self.assertEqual(
-            cost.n_classes, 3,
-            "Expected exactly three classes for sentiment classification."
+            cost.n_classes,
+            3,
+            "Expected exactly three classes for sentiment classification.",
         )
         self.assertEqual(
-            cost.n_stream_chunks, 0,
-            "Expected zero chunks for classification endpoints."
+            cost.n_stream_chunks,
+            0,
+            "Expected zero chunks for classification endpoints.",
         )
         self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
         self.assertEqual(
@@ -157,7 +158,7 @@ class TestEndpoints(TestCase):
 
         provider = AzureOpenAI(
             model_engine=AzureOpenAI.DEFAULT_MODEL_ENGINE,
-            deployment_name=os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']
+            deployment_name=os.environ["AZURE_OPENAI_DEPLOYMENT_NAME"],
         )
 
         self._test_llm_provider_endpoint(provider)
@@ -178,8 +179,8 @@ class TestEndpoints(TestCase):
         provider = LiteLLM(
             f"azure/{os.environ['AZURE_OPENAI_DEPLOYMENT_NAME']}",
             completion_kwargs=dict(
-                api_base=os.environ['AZURE_OPENAI_ENDPOINT']
-            )
+                api_base=os.environ["AZURE_OPENAI_ENDPOINT"]
+            ),
         )
 
         self._test_llm_provider_endpoint(provider)
@@ -221,5 +222,5 @@ class TestEndpoints(TestCase):
         self._test_llm_provider_endpoint(provider)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

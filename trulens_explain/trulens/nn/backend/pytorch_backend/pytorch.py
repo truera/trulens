@@ -1,5 +1,4 @@
-"""Pytorch backend
-"""
+"""Pytorch backend"""
 # pylint: disable=no-member
 # pylint: disable=not-callable
 
@@ -7,16 +6,17 @@ from typing import Sequence, Union
 
 import numpy as np
 import torch
+
+import trulens.nn.backend as base_backend
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 from trulens.nn.backend import Backend
-import trulens.nn.backend as base_backend
 
 __all__ = _ALL_BACKEND_API_FUNCTIONS
 
 floatX = torch.get_default_dtype()
 floatX_size = torch.tensor([], dtype=floatX).element_size()
 Tensor = torch.Tensor
-dim_order = 'channels_first'
+dim_order = "channels_first"
 channel_axis = 1
 backend = Backend.PYTORCH
 
@@ -64,7 +64,7 @@ def get_default_device(device: DeviceLike = None):
     if torch.cuda.is_available():
         return torch.device("cuda", torch.cuda.current_device())
     else:
-        return torch.device('cpu')
+        return torch.device("cpu")
 
 
 def memory_suggestions(*settings, device=None):
@@ -72,7 +72,7 @@ def memory_suggestions(*settings, device=None):
         *settings,
         call_before=lambda: set_default_device(device),
         call_after=lambda old_device: set_default_device(old_device),
-        device=device
+        device=device,
     )
 
 
@@ -83,14 +83,14 @@ def gradient(scalar: Tensor, wrt: Tensor):
     Parameters
     ----------
     scalar : backend.Tensor
-        The scalar tensor result of a computation for which the gradient will be 
+        The scalar tensor result of a computation for which the gradient will be
         computed.
     wrt : backend.Tensor
         Tensor that the gradient is taken with respect to.
 
     Returns
     -------
-    list 
+    list
         A list of computed gradient; same shape as wrt
     """
     grads = torch.autograd.grad(
@@ -127,7 +127,8 @@ def as_array(t: Tensor, dtype=None):
 
     return (
         t.cpu().detach().numpy()
-        if dtype is None else t.cpu().detach().numpy().astype(dtype)
+        if dtype is None
+        else t.cpu().detach().numpy().astype(dtype)
     )
 
 
@@ -140,7 +141,7 @@ def as_tensor(x: np.ndarray, dtype=None, device=None):
     x : np.array
     device : string, optional
         Which device to  associate with the tensor. If None, then
-        use the first available cuda device ('cuda:0'), otherwise cpu. 
+        use the first available cuda device ('cuda:0'), otherwise cpu.
         By default None
 
     Returns
@@ -151,7 +152,7 @@ def as_tensor(x: np.ndarray, dtype=None, device=None):
     if is_tensor(x):
         return x
 
-    if dtype is None and x.dtype.kind == 'f':
+    if dtype is None and x.dtype.kind == "f":
         dtype = floatX
 
     return torch.tensor(x, dtype=dtype).to(get_default_device())
@@ -226,8 +227,8 @@ def sum(t, axis=None, keepdims=False):
         The dimensions to sum over, or if None sum over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1 for each element in axis. If `keepdims` is `True`, 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1 for each element in axis. If `keepdims` is `True`,
         the reduced dimension is  retained with length 1., by default False
 
     Returns
@@ -249,7 +250,7 @@ def sum(t, axis=None, keepdims=False):
 def max(t, axis=None, keepdims=False):
     """
     max Maximum values of tensor, element-wise
-    
+
     Parameters
     ----------
     t : backend.Tensor
@@ -257,8 +258,8 @@ def max(t, axis=None, keepdims=False):
         The dimension to max over, or if None max over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is retained 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1. If `keepdims` is `True`, the reduced dimension is retained
         with length 1., by default False
 
     Returns
@@ -284,13 +285,13 @@ def min(t, axis=None, keepdims=False):
         The dimension to min over, or if None min over all
         dimensions. By default None
     keepdims : bool, optional
-        If `keepdims` is `False`, the rank of the tensor is reduced 
-        by 1. If `keepdims` is `True`, the reduced dimension is retained 
+        If `keepdims` is `False`, the rank of the tensor is reduced
+        by 1. If `keepdims` is `True`, the reduced dimension is retained
         with length 1., by default False
     return_indices : bool, optional
-        if `return_indices` is `True`, returns a tuple (values, indices) 
-        where values is the minimum value of each row of the input tensor 
-        in the given dimension dim. And indices is the index location of 
+        if `return_indices` is `True`, returns a tuple (values, indices)
+        where values is the minimum value of each row of the input tensor
+        in the given dimension dim. And indices is the index location of
         each minimum value found (argmin). by default False
 
     Returns
@@ -308,12 +309,12 @@ def min(t, axis=None, keepdims=False):
 def maximum(x, y):
     """
     maximum Element-wise maximum of two input tensors
-    
+
     Parameters
     ----------
     x : backend.Tensor
     y : backend.Tensor
-    
+
     Returns
     -------
     backend.Tensor
@@ -325,12 +326,12 @@ def maximum(x, y):
 def minimum(x, y):
     """
     minimum Element-wise minimum of two input tensors
-    
+
     Parameters
     ----------
     x : backend.Tensor
     y : backend.Tensor
-    
+
     Returns
     -------
     backend.Tensor
@@ -359,17 +360,17 @@ def ones_like(t, dtype=None, requires_grad=False):
     """
     ones_like Create a tensor of ones with the same shape of the input tensor
     on the same device
-    
+
     Parameters
     ----------
     t : backend.Tensor
     dtype : torch.dtype, optional
-        The desired data type of returned Tensor. If None, 
+        The desired data type of returned Tensor. If None,
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
-        If autograd should record operations on the returned 
+        If autograd should record operations on the returned
         tensor, by default False
-    
+
     Returns
     -------
     backend.Tensor
@@ -382,17 +383,17 @@ def zeros_like(t, dtype=None, requires_grad=False):
     """
     zeros_like Create a tensor of ones with the same shape of the input tensor
     on the same device
-    
+
     Parameters
     ----------
     t : backend.Tensor
     dtype : torch.dtype, optional
-        The desired data type of returned Tensor. If None, 
+        The desired data type of returned Tensor. If None,
         defaults to the dtype of input, by default None
     requires_grad : bool, optional
-        If autograd should record operations on the returned 
+        If autograd should record operations on the returned
         tensor, by default False
-    
+
     Returns
     -------
     backend.Tensor
@@ -408,7 +409,7 @@ def zeros_like(t, dtype=None, requires_grad=False):
     )
 
 
-def random_normal_like(t, mean=0., var=1.):
+def random_normal_like(t, mean=0.0, var=1.0):
     return torch.empty_like(t).normal_(mean, std=np.sqrt(var))
 
 
@@ -447,7 +448,7 @@ def sign(t):
 
 def sigmoid(t, axis=None):
     """
-    sigmoid Sigmoid function 
+    sigmoid Sigmoid function
 
     Parameters
     ----------
@@ -480,7 +481,7 @@ def stack(t):
 
 
 def tile(t: Tensor, shape):
-    """ Same as np.tile ."""
+    """Same as np.tile ."""
 
     return t.repeat(shape)
 
@@ -491,7 +492,7 @@ def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
 
     Parameters
     ----------
-    ts : Sequence[backend.Tensor] 
+    ts : Sequence[backend.Tensor]
         The sequence of tensors to concatenante.
     axis : int, optional
         The dimensions along which to concatenate.
@@ -499,7 +500,7 @@ def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
     Returns
     -------
     backend.Tensor
-    
+
     """
     return torch.cat(ts, axis=axis)
 
@@ -507,14 +508,14 @@ def concat(ts: Sequence[Tensor], axis: int = 0) -> Tensor:
 def softmax(t, axis=-1):
     """
     softmax Softmax of a tensor
-    
+
     Parameters
     ----------
     t : backend.Tensor
     axis : int, optional
-        The dimension softmax would be performed on. 
+        The dimension softmax would be performed on.
         The default is -1 which indicates the last dimension, by default -1
-    
+
     Returns
     -------
     backend.Tensor
@@ -525,7 +526,7 @@ def softmax(t, axis=-1):
 def is_tensor(x):
     """
     is_tensor returns if x is a Tensor
-    
+
     Parameters
     ----------
     x : backend.Tensor or other

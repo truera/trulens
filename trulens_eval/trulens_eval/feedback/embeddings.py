@@ -3,26 +3,26 @@ from typing import Dict, Tuple, Union
 import numpy as np
 from pydantic import PrivateAttr
 
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.imports import REQUIREMENT_SKLEARN
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
-    import sklearn
+    pass
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.legacy import ServiceContext
 
 
 class Embeddings(WithClassInfo, SerialModel):
-    """Embedding related feedback function implementations.
-    """
-    _embed_model: 'Embedder' = PrivateAttr()
+    """Embedding related feedback function implementations."""
 
-    def __init__(self, embed_model: 'Embedder' = None):
-        """Instantiates embeddings for feedback functions. 
+    _embed_model: "Embedder" = PrivateAttr()
+
+    def __init__(self, embed_model: "Embedder" = None):
+        """Instantiates embeddings for feedback functions.
         ```
         f_embed = feedback.Embeddings(embed_model=embed_model)
         ```
@@ -42,7 +42,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
@@ -67,13 +67,14 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -87,7 +88,9 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.cosine_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
@@ -98,7 +101,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
@@ -123,13 +126,14 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -143,7 +147,9 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.manhattan_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
@@ -154,11 +160,11 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
             from langchain.embeddings.openai import OpenAIEmbeddings
-            
+
             ```python
             model_name = 'text-embedding-ada-002'
 
@@ -179,13 +185,14 @@ class Embeddings(WithClassInfo, SerialModel):
             Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -199,6 +206,8 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.euclidean_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)

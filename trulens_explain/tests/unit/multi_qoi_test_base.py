@@ -1,4 +1,3 @@
-from unittest import main
 from unittest import TestCase
 
 import numpy as np
@@ -13,7 +12,6 @@ from trulens.utils.typing import Tensor
 
 
 class PerTimestepQoI(QoI):
-
     def __call__(self, x):
         if isinstance(x, tuple):
             x = x[0]  # torch RNN layer outputs tuple of (vals, hidden_states)
@@ -27,7 +25,6 @@ class PerTimestepQoI(QoI):
 
 
 class RNNLinearDoi(DoI):
-
     def __init__(self, baseline=None, resolution=10, cut: Cut = None):
         """
         __init__ Constructor
@@ -40,13 +37,12 @@ class RNNLinearDoi(DoI):
         resolution : int
             Number of points returned by each call to this DoI
         """
-        super(RNNLinearDoi, self).__init__(cut)
+        super().__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
         self.B = get_backend()
 
     def calc_doi(self, x_input, tf_cell=False) -> OM[Outputs, Tensor]:
-
         x = x_input[0] if tf_cell else x_input
         batch_size = len(x)
 
@@ -68,9 +64,9 @@ class RNNLinearDoi(DoI):
         if not self.B.is_tensor(x) and self.B.is_tensor(baseline):
             baseline = self.B.as_array(baseline)
 
-        r = self._resolution - 1.
+        r = self._resolution - 1.0
         doi_out = [
-            (1. - i / r) * x + i / r * baseline
+            (1.0 - i / r) * x + i / r * baseline
             for i in range(self._resolution)
         ]
         if tf_cell:
@@ -81,9 +77,8 @@ class RNNLinearDoi(DoI):
         return self.calc_doi(x, tf_cell=False)
 
     def get_activation_multiplier(self, activation):
-
         batch_size = len(activation)
-        if (self._baseline is None):
+        if self._baseline is None:
             baseline = np.zeros_like(activation)
         else:
             baseline = self._baseline
@@ -92,10 +87,10 @@ class RNNLinearDoi(DoI):
         tile_dims[0] = batch_size
         baseline = baseline[0, ...]
         baseline = np.tile(baseline, tuple(tile_dims))
-        if (self.B.is_tensor(activation) and not self.B.is_tensor(baseline)):
+        if self.B.is_tensor(activation) and not self.B.is_tensor(baseline):
             baseline = self.B.as_tensor(baseline)
 
-        if (not self.B.is_tensor(activation) and self.B.is_tensor(baseline)):
+        if not self.B.is_tensor(activation) and self.B.is_tensor(baseline):
             baseline = self.B.as_array(baseline)
 
         batch_size = len(activation)
@@ -103,24 +98,29 @@ class RNNLinearDoi(DoI):
 
 
 class MultiQoiTestBase(TestCase):
-
     def per_timestep_qoi(
-        self, model_wrapper, num_classes, num_features, num_timesteps,
-        batch_size
+        self,
+        model_wrapper,
+        num_classes,
+        num_features,
+        num_timesteps,
+        batch_size,
     ):
-        cuts = (Cut('rnn', 'in', None), Cut('dense', 'out', None))
+        cuts = (Cut("rnn", "in", None), Cut("dense", "out", None))
 
         infl = InternalInfluence(
             model_wrapper, cuts, PerTimestepQoI(), RNNLinearDoi()
         )
 
         input_attrs = infl.attributions(
-            np.ones((batch_size, num_timesteps, num_features)
-                   ).astype('float32')
+            np.ones((batch_size, num_timesteps, num_features)).astype("float32")
         )
 
         original_output_shape = (
-            num_classes * num_timesteps, batch_size, num_timesteps, num_features
+            num_classes * num_timesteps,
+            batch_size,
+            num_timesteps,
+            num_features,
         )
         self.assertEqual(np.stack(input_attrs).shape, original_output_shape)
 
@@ -130,9 +130,13 @@ class MultiQoiTestBase(TestCase):
         attr_shape.append(num_classes)
         attr_shape = tuple(attr_shape)
         self.assertEqual(
-            attr_shape, (
-                batch_size, num_timesteps, num_features, num_timesteps,
-                num_classes
-            )
+            attr_shape,
+            (
+                batch_size,
+                num_timesteps,
+                num_features,
+                num_timesteps,
+                num_classes,
+            ),
         )
         input_attrs = np.reshape(rotated, attr_shape)

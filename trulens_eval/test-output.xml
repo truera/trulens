@@ -1,0 +1,198 @@
+<test-run id="2" testcasecount="1" result="Passed" start-time="2024-07-08 22:45:12.158813" end-time="2024-07-08 22:45:29.189389" duration="17" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" clr-version="3.11.9 (main, May 23 2024, 14:52:59) [Clang 15.0.0 (clang-1500.3.9.4)]" engine-version="3.6.2"><command-line>/Users/chu/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/pytest/__main__.py tests/docs_notebooks/test_notebooks.py -k test_all_tools</command-line><filter><test re="0">tests/docs_notebooks/test_notebooks.py</test><name re="0">test_all_tools</name></filter><test-suite id="tests/docs_notebooks/test_notebooks.py::DocsNotebookTests" name="tests/docs_notebooks/test_notebooks.py::DocsNotebookTests" fullname="tests/docs_notebooks/test_notebooks.py::DocsNotebookTests" methodname="" classname="" runstate="Runnable" type="Assembly" testcasecount="1" result="Passed" label="" start-time="2024-07-08 22:45:19.370156" end-time="2024-07-08 22:45:29.189264" duration="9.819108" asserts="0" total="1" passed="0" failed="1" warnings="0" inconclusive="0" skipped="0"><properties><property name="python_version" value="3.11.9 (main, May 23 2024, 14:52:59) [Clang 15.0.0 (clang-1500.3.9.4)]" /></properties><test-case id="100" name="tests/docs_notebooks/test_notebooks.py::DocsNotebookTests::test_all_tools" fullname="tests/docs_notebooks/test_notebooks.py::DocsNotebookTests::test_all_tools" methodname="test_all_tools" classname="DocsNotebookTests" runstate="Runnable" seed="1" result="Failed" label="" start-time="2024-07-08 22:45:19.370156" end-time="2024-07-08 22:45:29.189264" duration="9.819108" asserts="0"><properties><property name="python-version" value="3.11.9 (main, May 23 2024, 14:52:59) [Clang 15.0.0 (clang-1500.3.9.4)]" /><property name="fspath" value="tests/docs_notebooks/test_notebooks.py" /></properties><environment framework-version="3.6.2" clr-version="3.11.9 (main, May 23 2024, 14:52:59) [Clang 15.0.0 (clang-1500.3.9.4)]" os-version="23.5.0" platform="Darwin" cwd="/Users/chu/Documents/trulens/trulens_eval" machine-name="arm64" user="" user-domain="" culture="en_US" uiculture="en_US" os-architecture="64bit" /><failure><message><![CDATA[self = &lt;tests.docs_notebooks.test_notebooks.DocsNotebookTests testMethod=test_all_tools&gt;
+
+    def test(self):
+        OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
+        HUGGINGFACE_API_KEY = os.environ['HUGGINGFACE_API_KEY']
+
+        notebook_preprocessor = VariableSettingPreprocessor
+        notebook_preprocessor_kwargs = {
+            'timeout':
+                600,
+            'kernel_name':
+                'trulens-llm',
+            'code_to_run_before_each_cell':
+                [
+                    f"import os",
+                    f"os.environ['OPENAI_API_KEY']='{OPENAI_API_KEY}'",
+                    f"os.environ['HUGGINGFACE_API_KEY']='{HUGGINGFACE_API_KEY}'",
+                ]
+        }
+        if db_compat_version is not None:
+            notebook_preprocessor = DBMigrationPreprocessor
+            notebook_preprocessor_kwargs['db_compat_version'
+                                        ] = db_compat_version
+        with open(f'./tests/docs_notebooks/notebooks_to_test/{filename}') as f:
+            nb = read(f, as_version=4)
+            notebook_preprocessor(**notebook_preprocessor_kwargs
+&gt;                                ).preprocess(nb, {})
+
+tests/docs_notebooks/test_notebooks.py:89:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py:103: in preprocess
+    self.preprocess_cell(cell, resources, index)
+tests/docs_notebooks/test_notebooks.py:32: in preprocess_cell
+    ret = super().preprocess_cell(cell, resources, index, **kwargs)
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nbconvert/preprocessors/execute.py:124: in preprocess_cell
+    cell = self.execute_cell(cell, index, store_history=True)
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/jupyter_core/utils/__init__.py:165: in wrapped
+    return loop.run_until_complete(inner)
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nest_asyncio.py:98: in run_until_complete
+    return f.result()
+../../../.pyenv/versions/3.11.9/lib/python3.11/asyncio/futures.py:203: in result
+    raise self._exception.with_traceback(self._exception_tb)
+../../../.pyenv/versions/3.11.9/lib/python3.11/asyncio/tasks.py:277: in __step
+    result = coro.send(None)
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nbclient/client.py:1062: in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;tests.docs_notebooks.test_notebooks.VariableSettingPreprocessor object at 0x365243690&gt;
+cell = {'cell_type': 'code', 'execution_count': 7, 'metadata': {'execution': {'iopub.status.busy': '2024-07-08T22:45:27.48146...plitter()\ndocuments = text_splitter.split_documents(docs)\nvectorstore = FAISS.from_documents(documents, embeddings)"}, cell_index = 12
+exec_reply = {'buffers': [], 'content': {'ename': 'AuthenticationError', 'engine_info': {'engine_id': -1, 'engine_uuid': '924a594a-...e, 'engine': '924a594a-3b85-4696-953f-005af4b55d22', 'started': '2024-07-08T22:45:27.481543Z', 'status': 'error'}, ...}
+
+    async def _check_raise_for_error(
+        self, cell: NotebookNode, cell_index: int, exec_reply: dict[str, t.Any] | None
+    ) -&gt; None:
+        if exec_reply is None:
+            return None
+
+        exec_reply_content = exec_reply["content"]
+        if exec_reply_content["status"] != "error":
+            return None
+
+        cell_allows_errors = (not self.force_raise_errors) and (
+            self.allow_errors
+            or exec_reply_content.get("ename") in self.allow_error_names
+            or "raises-exception" in cell.metadata.get("tags", [])
+        )
+        await run_hook(
+            self.on_cell_error, cell=cell, cell_index=cell_index, execute_reply=exec_reply
+        )
+        if not cell_allows_errors:
+&gt;           raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+E           nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+E           ------------------
+E           import os
+E           os.environ['OPENAI_API_KEY']='.'
+E           os.environ['HUGGINGFACE_API_KEY']='.'
+E           from langchain_openai import OpenAIEmbeddings
+E
+E           embeddings = OpenAIEmbeddings()
+E
+E           from langchain_community.vectorstores import FAISS
+E           from langchain_text_splitters import RecursiveCharacterTextSplitter
+E
+E
+E           text_splitter = RecursiveCharacterTextSplitter()
+E           documents = text_splitter.split_documents(docs)
+E           vectorstore = FAISS.from_documents(documents, embeddings)
+E           ------------------
+E
+E
+E           &#x1b;[0;31m---------------------------------------------------------------------------&#x1b;[0m
+E           &#x1b;[0;31mAuthenticationError&#x1b;[0m                       Traceback (most recent call last)
+E           Cell &#x1b;[0;32mIn[7], line 14&#x1b;[0m
+E           &#x1b;[1;32m     12&#x1b;[0m text_splitter &#x1b;[38;5;241m=&#x1b;[39m RecursiveCharacterTextSplitter()
+E           &#x1b;[1;32m     13&#x1b;[0m documents &#x1b;[38;5;241m=&#x1b;[39m text_splitter&#x1b;[38;5;241m.&#x1b;[39msplit_documents(docs)
+E           &#x1b;[0;32m---&gt; 14&#x1b;[0m vectorstore &#x1b;[38;5;241m=&#x1b;[39m &#x1b;[43mFAISS&#x1b;[49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mfrom_documents&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mdocuments&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43membeddings&#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/langchain_core/vectorstores.py:550&#x1b;[0m, in &#x1b;[0;36mVectorStore.from_documents&#x1b;[0;34m(cls, documents, embedding, **kwargs)&#x1b;[0m
+E           &#x1b;[1;32m    548&#x1b;[0m texts &#x1b;[38;5;241m=&#x1b;[39m [d&#x1b;[38;5;241m.&#x1b;[39mpage_content &#x1b;[38;5;28;01mfor&#x1b;[39;00m d &#x1b;[38;5;129;01min&#x1b;[39;00m documents]
+E           &#x1b;[1;32m    549&#x1b;[0m metadatas &#x1b;[38;5;241m=&#x1b;[39m [d&#x1b;[38;5;241m.&#x1b;[39mmetadata &#x1b;[38;5;28;01mfor&#x1b;[39;00m d &#x1b;[38;5;129;01min&#x1b;[39;00m documents]
+E           &#x1b;[0;32m--&gt; 550&#x1b;[0m &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28;43mcls&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mfrom_texts&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mtexts&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43membedding&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mmetadatas&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mmetadatas&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[38;5;241;43m*&#x1b;[39;49m&#x1b;[38;5;241;43m*&#x1b;[39;49m&#x1b;[43mkwargs&#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/langchain_community/vectorstores/faiss.py:930&#x1b;[0m, in &#x1b;[0;36mFAISS.from_texts&#x1b;[0;34m(cls, texts, embedding, metadatas, ids, **kwargs)&#x1b;[0m
+E           &#x1b;[1;32m    903&#x1b;[0m &#x1b;[38;5;129m@classmethod&#x1b;[39m
+E           &#x1b;[1;32m    904&#x1b;[0m &#x1b;[38;5;28;01mdef&#x1b;[39;00m &#x1b;[38;5;21mfrom_texts&#x1b;[39m(
+E           &#x1b;[1;32m    905&#x1b;[0m     &#x1b;[38;5;28mcls&#x1b;[39m,
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m    910&#x1b;[0m     &#x1b;[38;5;241m*&#x1b;[39m&#x1b;[38;5;241m*&#x1b;[39mkwargs: Any,
+E           &#x1b;[1;32m    911&#x1b;[0m ) &#x1b;[38;5;241m-&#x1b;[39m&#x1b;[38;5;241m&gt;&#x1b;[39m FAISS:
+E           &#x1b;[1;32m    912&#x1b;[0m &#x1b;[38;5;250m    &#x1b;[39m&#x1b;[38;5;124;03m"""Construct FAISS wrapper from raw documents.&#x1b;[39;00m
+E           &#x1b;[1;32m    913&#x1b;[0m
+E           &#x1b;[1;32m    914&#x1b;[0m &#x1b;[38;5;124;03m    This is a user friendly interface that:&#x1b;[39;00m
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m    928&#x1b;[0m &#x1b;[38;5;124;03m            faiss = FAISS.from_texts(texts, embeddings)&#x1b;[39;00m
+E           &#x1b;[1;32m    929&#x1b;[0m &#x1b;[38;5;124;03m    """&#x1b;[39;00m
+E           &#x1b;[0;32m--&gt; 930&#x1b;[0m     embeddings &#x1b;[38;5;241m=&#x1b;[39m &#x1b;[43membedding&#x1b;[49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43membed_documents&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mtexts&#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E           &#x1b;[1;32m    931&#x1b;[0m     &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28mcls&#x1b;[39m&#x1b;[38;5;241m.&#x1b;[39m__from(
+E           &#x1b;[1;32m    932&#x1b;[0m         texts,
+E           &#x1b;[1;32m    933&#x1b;[0m         embeddings,
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m    937&#x1b;[0m         &#x1b;[38;5;241m*&#x1b;[39m&#x1b;[38;5;241m*&#x1b;[39mkwargs,
+E           &#x1b;[1;32m    938&#x1b;[0m     )
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/langchain_openai/embeddings/base.py:489&#x1b;[0m, in &#x1b;[0;36mOpenAIEmbeddings.embed_documents&#x1b;[0;34m(self, texts, chunk_size)&#x1b;[0m
+E           &#x1b;[1;32m    486&#x1b;[0m &#x1b;[38;5;66;03m# NOTE: to keep things simple, we assume the list may contain texts longer&#x1b;[39;00m
+E           &#x1b;[1;32m    487&#x1b;[0m &#x1b;[38;5;66;03m#       than the maximum context and use length-safe embedding function.&#x1b;[39;00m
+E           &#x1b;[1;32m    488&#x1b;[0m engine &#x1b;[38;5;241m=&#x1b;[39m cast(&#x1b;[38;5;28mstr&#x1b;[39m, &#x1b;[38;5;28mself&#x1b;[39m&#x1b;[38;5;241m.&#x1b;[39mdeployment)
+E           &#x1b;[0;32m--&gt; 489&#x1b;[0m &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43m_get_len_safe_embeddings&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mtexts&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mengine&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mengine&#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/langchain_openai/embeddings/base.py:347&#x1b;[0m, in &#x1b;[0;36mOpenAIEmbeddings._get_len_safe_embeddings&#x1b;[0;34m(self, texts, engine, chunk_size)&#x1b;[0m
+E           &#x1b;[1;32m    345&#x1b;[0m batched_embeddings: List[List[&#x1b;[38;5;28mfloat&#x1b;[39m]] &#x1b;[38;5;241m=&#x1b;[39m []
+E           &#x1b;[1;32m    346&#x1b;[0m &#x1b;[38;5;28;01mfor&#x1b;[39;00m i &#x1b;[38;5;129;01min&#x1b;[39;00m _iter:
+E           &#x1b;[0;32m--&gt; 347&#x1b;[0m     response &#x1b;[38;5;241m=&#x1b;[39m &#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mclient&#x1b;[49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mcreate&#x1b;[49m&#x1b;[43m(&#x1b;[49m
+E           &#x1b;[1;32m    348&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[38;5;28;43minput&#x1b;[39;49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mtokens&#x1b;[49m&#x1b;[43m[&#x1b;[49m&#x1b;[43mi&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43m:&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mi&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[38;5;241;43m+&#x1b;[39;49m&#x1b;[43m &#x1b;[49m&#x1b;[43m_chunk_size&#x1b;[49m&#x1b;[43m]&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[38;5;241;43m*&#x1b;[39;49m&#x1b;[38;5;241;43m*&#x1b;[39;49m&#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43m_invocation_params&#x1b;[49m
+E           &#x1b;[1;32m    349&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E           &#x1b;[1;32m    350&#x1b;[0m     &#x1b;[38;5;28;01mif&#x1b;[39;00m &#x1b;[38;5;129;01mnot&#x1b;[39;00m &#x1b;[38;5;28misinstance&#x1b;[39m(response, &#x1b;[38;5;28mdict&#x1b;[39m):
+E           &#x1b;[1;32m    351&#x1b;[0m         response &#x1b;[38;5;241m=&#x1b;[39m response&#x1b;[38;5;241m.&#x1b;[39mmodel_dump()
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/openai/resources/embeddings.py:114&#x1b;[0m, in &#x1b;[0;36mEmbeddings.create&#x1b;[0;34m(self, input, model, dimensions, encoding_format, user, extra_headers, extra_query, extra_body, timeout)&#x1b;[0m
+E           &#x1b;[1;32m    108&#x1b;[0m         embedding&#x1b;[38;5;241m.&#x1b;[39membedding &#x1b;[38;5;241m=&#x1b;[39m np&#x1b;[38;5;241m.&#x1b;[39mfrombuffer(  &#x1b;[38;5;66;03m# type: ignore[no-untyped-call]&#x1b;[39;00m
+E           &#x1b;[1;32m    109&#x1b;[0m             base64&#x1b;[38;5;241m.&#x1b;[39mb64decode(data), dtype&#x1b;[38;5;241m=&#x1b;[39m&#x1b;[38;5;124m"&#x1b;[39m&#x1b;[38;5;124mfloat32&#x1b;[39m&#x1b;[38;5;124m"&#x1b;[39m
+E           &#x1b;[1;32m    110&#x1b;[0m         )&#x1b;[38;5;241m.&#x1b;[39mtolist()
+E           &#x1b;[1;32m    112&#x1b;[0m     &#x1b;[38;5;28;01mreturn&#x1b;[39;00m obj
+E           &#x1b;[0;32m--&gt; 114&#x1b;[0m &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43m_post&#x1b;[49m&#x1b;[43m(&#x1b;[49m
+E           &#x1b;[1;32m    115&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[38;5;124;43m"&#x1b;[39;49m&#x1b;[38;5;124;43m/embeddings&#x1b;[39;49m&#x1b;[38;5;124;43m"&#x1b;[39;49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    116&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43mbody&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mmaybe_transform&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mparams&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43membedding_create_params&#x1b;[49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mEmbeddingCreateParams&#x1b;[49m&#x1b;[43m)&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    117&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43moptions&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mmake_request_options&#x1b;[49m&#x1b;[43m(&#x1b;[49m
+E           &#x1b;[1;32m    118&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mextra_headers&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mextra_headers&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    119&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mextra_query&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mextra_query&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    120&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mextra_body&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mextra_body&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    121&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mtimeout&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mtimeout&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    122&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mpost_parser&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mparser&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    123&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43m)&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    124&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43mcast_to&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mCreateEmbeddingResponse&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    125&#x1b;[0m &#x1b;[43m&#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/openai/_base_client.py:1261&#x1b;[0m, in &#x1b;[0;36mSyncAPIClient.post&#x1b;[0;34m(self, path, cast_to, body, options, files, stream, stream_cls)&#x1b;[0m
+E           &#x1b;[1;32m   1247&#x1b;[0m &#x1b;[38;5;28;01mdef&#x1b;[39;00m &#x1b;[38;5;21mpost&#x1b;[39m(
+E           &#x1b;[1;32m   1248&#x1b;[0m     &#x1b;[38;5;28mself&#x1b;[39m,
+E           &#x1b;[1;32m   1249&#x1b;[0m     path: &#x1b;[38;5;28mstr&#x1b;[39m,
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m   1256&#x1b;[0m     stream_cls: &#x1b;[38;5;28mtype&#x1b;[39m[_StreamT] &#x1b;[38;5;241m|&#x1b;[39m &#x1b;[38;5;28;01mNone&#x1b;[39;00m &#x1b;[38;5;241m=&#x1b;[39m &#x1b;[38;5;28;01mNone&#x1b;[39;00m,
+E           &#x1b;[1;32m   1257&#x1b;[0m ) &#x1b;[38;5;241m-&#x1b;[39m&#x1b;[38;5;241m&gt;&#x1b;[39m ResponseT &#x1b;[38;5;241m|&#x1b;[39m _StreamT:
+E           &#x1b;[1;32m   1258&#x1b;[0m     opts &#x1b;[38;5;241m=&#x1b;[39m FinalRequestOptions&#x1b;[38;5;241m.&#x1b;[39mconstruct(
+E           &#x1b;[1;32m   1259&#x1b;[0m         method&#x1b;[38;5;241m=&#x1b;[39m&#x1b;[38;5;124m"&#x1b;[39m&#x1b;[38;5;124mpost&#x1b;[39m&#x1b;[38;5;124m"&#x1b;[39m, url&#x1b;[38;5;241m=&#x1b;[39mpath, json_data&#x1b;[38;5;241m=&#x1b;[39mbody, files&#x1b;[38;5;241m=&#x1b;[39mto_httpx_files(files), &#x1b;[38;5;241m*&#x1b;[39m&#x1b;[38;5;241m*&#x1b;[39moptions
+E           &#x1b;[1;32m   1260&#x1b;[0m     )
+E           &#x1b;[0;32m-&gt; 1261&#x1b;[0m     &#x1b;[38;5;28;01mreturn&#x1b;[39;00m cast(ResponseT, &#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43mrequest&#x1b;[49m&#x1b;[43m(&#x1b;[49m&#x1b;[43mcast_to&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mopts&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mstream&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mstream&#x1b;[49m&#x1b;[43m,&#x1b;[49m&#x1b;[43m &#x1b;[49m&#x1b;[43mstream_cls&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mstream_cls&#x1b;[49m&#x1b;[43m)&#x1b;[49m)
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/openai/_base_client.py:942&#x1b;[0m, in &#x1b;[0;36mSyncAPIClient.request&#x1b;[0;34m(self, cast_to, options, remaining_retries, stream, stream_cls)&#x1b;[0m
+E           &#x1b;[1;32m    933&#x1b;[0m &#x1b;[38;5;28;01mdef&#x1b;[39;00m &#x1b;[38;5;21mrequest&#x1b;[39m(
+E           &#x1b;[1;32m    934&#x1b;[0m     &#x1b;[38;5;28mself&#x1b;[39m,
+E           &#x1b;[1;32m    935&#x1b;[0m     cast_to: Type[ResponseT],
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m    940&#x1b;[0m     stream_cls: &#x1b;[38;5;28mtype&#x1b;[39m[_StreamT] &#x1b;[38;5;241m|&#x1b;[39m &#x1b;[38;5;28;01mNone&#x1b;[39;00m &#x1b;[38;5;241m=&#x1b;[39m &#x1b;[38;5;28;01mNone&#x1b;[39;00m,
+E           &#x1b;[1;32m    941&#x1b;[0m ) &#x1b;[38;5;241m-&#x1b;[39m&#x1b;[38;5;241m&gt;&#x1b;[39m ResponseT &#x1b;[38;5;241m|&#x1b;[39m _StreamT:
+E           &#x1b;[0;32m--&gt; 942&#x1b;[0m     &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28;43mself&#x1b;[39;49m&#x1b;[38;5;241;43m.&#x1b;[39;49m&#x1b;[43m_request&#x1b;[49m&#x1b;[43m(&#x1b;[49m
+E           &#x1b;[1;32m    943&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mcast_to&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mcast_to&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    944&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43moptions&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43moptions&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    945&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mstream&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mstream&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    946&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mstream_cls&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mstream_cls&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    947&#x1b;[0m &#x1b;[43m        &#x1b;[49m&#x1b;[43mremaining_retries&#x1b;[49m&#x1b;[38;5;241;43m=&#x1b;[39;49m&#x1b;[43mremaining_retries&#x1b;[49m&#x1b;[43m,&#x1b;[49m
+E           &#x1b;[1;32m    948&#x1b;[0m &#x1b;[43m    &#x1b;[49m&#x1b;[43m)&#x1b;[49m
+E
+E           File &#x1b;[0;32m~/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/openai/_base_client.py:1041&#x1b;[0m, in &#x1b;[0;36mSyncAPIClient._request&#x1b;[0;34m(self, cast_to, options, remaining_retries, stream, stream_cls)&#x1b;[0m
+E           &#x1b;[1;32m   1038&#x1b;[0m         err&#x1b;[38;5;241m.&#x1b;[39mresponse&#x1b;[38;5;241m.&#x1b;[39mread()
+E           &#x1b;[1;32m   1040&#x1b;[0m     log&#x1b;[38;5;241m.&#x1b;[39mdebug(&#x1b;[38;5;124m"&#x1b;[39m&#x1b;[38;5;124mRe-raising status error&#x1b;[39m&#x1b;[38;5;124m"&#x1b;[39m)
+E           &#x1b;[0;32m-&gt; 1041&#x1b;[0m     &#x1b;[38;5;28;01mraise&#x1b;[39;00m &#x1b;[38;5;28mself&#x1b;[39m&#x1b;[38;5;241m.&#x1b;[39m_make_status_error_from_response(err&#x1b;[38;5;241m.&#x1b;[39mresponse) &#x1b;[38;5;28;01mfrom&#x1b;[39;00m &#x1b;[38;5;28;01mNone&#x1b;[39;00m
+E           &#x1b;[1;32m   1043&#x1b;[0m &#x1b;[38;5;28;01mreturn&#x1b;[39;00m &#x1b;[38;5;28mself&#x1b;[39m&#x1b;[38;5;241m.&#x1b;[39m_process_response(
+E           &#x1b;[1;32m   1044&#x1b;[0m     cast_to&#x1b;[38;5;241m=&#x1b;[39mcast_to,
+E           &#x1b;[1;32m   1045&#x1b;[0m     options&#x1b;[38;5;241m=&#x1b;[39moptions,
+E           &#x1b;[0;32m   (...)&#x1b;[0m
+E           &#x1b;[1;32m   1048&#x1b;[0m     stream_cls&#x1b;[38;5;241m=&#x1b;[39mstream_cls,
+E           &#x1b;[1;32m   1049&#x1b;[0m )
+E
+E           &#x1b;[0;31mAuthenticationError&#x1b;[0m: Error code: 401 - {'error': {'message': 'Incorrect API key provided: .. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_api_key'}}
+
+../../../.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nbclient/client.py:918: CellExecutionError]]></message><stack-trace><![CDATA[/Users/chu/.pyenv/versions/trulens_demo_311/lib/python3.11/site-packages/nbclient/client.py:918: nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:]]></stack-trace></failure><reason><message><![CDATA[]]></message></reason><output><![CDATA[]]></output></test-case><environment framework-version="3.6.2" clr-version="3.11.9 (main, May 23 2024, 14:52:59) [Clang 15.0.0 (clang-1500.3.9.4)]" os-version="23.5.0" platform="Darwin" cwd="/Users/chu/Documents/trulens/trulens_eval" machine-name="arm64" user="" user-domain="" culture="en_US" uiculture="en_US" os-architecture="64bit" /></test-suite></test-run>

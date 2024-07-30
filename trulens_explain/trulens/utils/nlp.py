@@ -1,4 +1,4 @@
-"""Utilities for using trulens with NLP models. """
+"""Utilities for using trulens with NLP models."""
 
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -10,9 +10,9 @@ from trulens.utils.typing import TensorLike
 
 
 def token_baseline_swap(
-    token_pairs: List[Tuple[int, int]], input_accessor: Callable[[ModelInputs],
-                                                                 Tensor],
-    ids_to_embeddings: Optional[Callable[[int], Tensor]]
+    token_pairs: List[Tuple[int, int]],
+    input_accessor: Callable[[ModelInputs], Tensor],
+    ids_to_embeddings: Optional[Callable[[int], Tensor]],
 ):
     """
     Baseline constructor that does nothing except swap the given tokens.
@@ -24,7 +24,7 @@ def token_baseline_swap(
         # :baseline_like
         input_ids = B.clone(input_accessor(model_inputs))
 
-        for (token1, token2) in token_pairs:
+        for token1, token2 in token_pairs:
             ids_token1 = input_ids == token1
             ids_token2 = input_ids == token2
 
@@ -50,9 +50,10 @@ def token_baseline_swap(
 
 
 def token_baseline(
-    keep_tokens: Set[int], replacement_token: int,
+    keep_tokens: Set[int],
+    replacement_token: int,
     input_accessor: Callable[[ModelInputs], Tensor],
-    ids_to_embeddings: Optional[Callable[[int], Tensor]]
+    ids_to_embeddings: Optional[Callable[[int], Tensor]],
 ):
     """
     Utility for constructing baselines for models with an embedding layer.

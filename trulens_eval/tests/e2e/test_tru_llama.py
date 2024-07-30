@@ -15,7 +15,6 @@ from trulens_eval.utils.asynchro import sync
 # All tests require optional packages.
 @optional_test
 class TestLlamaIndex(JSONTestCase):
-
     # TODO: Figure out why use of async test cases causes "more than one record
     # collected"
     # Need to use this:
@@ -27,8 +26,9 @@ class TestLlamaIndex(JSONTestCase):
 
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
+
         os.system(
-            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+            "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
         )
 
         documents = SimpleDirectoryReader("data").load_data()
@@ -46,8 +46,9 @@ class TestLlamaIndex(JSONTestCase):
 
         tru_query_engine_recorder = TruLlama(query_engine)
         llm_response_async, record_async = sync(
-            tru_query_engine_recorder.awith_record, query_engine.aquery,
-            "What did the author do growing up?"
+            tru_query_engine_recorder.awith_record,
+            query_engine.aquery,
+            "What did the author do growing up?",
         )
 
         query_engine = self.index.as_query_engine()
@@ -62,19 +63,17 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             record_sync.model_dump(),
             record_async.model_dump(),
-            skips=set(
-                [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "cost",  # cost is not being correctly tracked in async
-                    "main_output"  # response is not deterministic, so cannot easily compare across runs
-                ]
-            )
+            skips={
+                "calls",  # async/sync have different set of internal calls, so cannot easily compare
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "cost",  # cost is not being correctly tracked in async
+                "main_output",  # response is not deterministic, so cannot easily compare across runs
+            },
         )
 
     @unittest.skip("Streaming records not yet recorded properly.")
@@ -103,23 +102,21 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             llm_response_stream.get_response(),
             llm_response.response,
-            numeric_places=2  # node scores and token counts are imprecise
+            numeric_places=2,  # node scores and token counts are imprecise
         )
 
         self.assertJSONEqual(
             record_stream,
             record,
-            skips=set(
-                [
-                    # "calls",
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
-                ]
-            )
+            skips={
+                # "calls",
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+            },
         )
 
     async def test_chat_engine_async(self):
@@ -146,25 +143,23 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             llm_response_sync,
             llm_response_async,
-            numeric_places=2  # node scores and token counts are imprecise
+            numeric_places=2,  # node scores and token counts are imprecise
         )
 
         self.assertJSONEqual(
             record_sync.model_dump(),
             record_async.model_dump(),
-            skips=set(
-                [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id"
-                ]
-            )
+            skips={
+                "calls",  # async/sync have different set of internal calls, so cannot easily compare
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+            },
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
