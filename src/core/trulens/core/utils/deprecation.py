@@ -3,25 +3,55 @@
 import warnings
 import inspect
 from trulens.core.utils import imports as imports_utils
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Callable, Type, Dict, Any
+import functools
 
-def class_moved(cls, old_location: str, new_location: str):
+
+def function_moved(func: Callable, old: str, new: str):
+    """Issue a warning upon function call that has been moved to a new location.
+    
+    Issues the warning only once.
+    """
+
+    assert hasattr(func, "__name__"), "Cannot create dep message without function name."
+
+    message = (f"Function `{func.__name__}` has moved:\n"
+               f"\tOld import: `from {old} import {func.__name__}`\n"
+               f"\tNew import: `from {new} import {func.__name__}`\n ")
+
+    warned = False
+
+    @functools.wraps(func)
+    def _movedfunction(*args, **kwargs):
+        nonlocal warned
+
+        if not warned:
+            warnings.warn(message, DeprecationWarning, stacklevel=2)
+            warned = True
+
+        return func(*args, **kwargs)
+
+    _movedfunction.__doc__ = message
+
+    return _movedfunction
+
+
+def class_moved(cls: Type, old_location: str, new_location: str):
     """Issue a warning upon class instantioation that has been moved to a new
     location.
     
     Issues the warning only once.
     """
 
-    message = (
-        f"Class `{cls.__name__}` has moved:\n"
-        f"\tOld import: `from {old_location} import {cls.__name__}`\n"
-        f"\tNew import: `from {new_location} import {cls.__name__}`\n "
-    )
+    message = (f"Class `{cls.__name__}` has moved:\n"
+               f"\tOld import: `from {old_location} import {cls.__name__}`\n"
+               f"\tNew import: `from {new_location} import {cls.__name__}`\n ")
 
     warned = False
     moved_class = cls
 
     class _MovedClass(moved_class):
+
         def __new__(cls, *args, **kwargs):
             nonlocal warned
 
@@ -35,9 +65,13 @@ def class_moved(cls, old_location: str, new_location: str):
 
     return _MovedClass
 
-def moved(globals_dict, old: str, new: str, names: Optional[Iterable[str]] = None):
-    """Replace all classes in the given dictionary with ones that issue a
-    deprecation warning upon initialization.
+
+def moved(globals_dict: Dict[str, Any],
+          old: str,
+          new: str,
+          names: Optional[Iterable[str]] = None):
+    """Replace all classes or function in the given dictionary with ones that
+    issue a deprecation warning upon initialization or invocation.
     
     You can use this with module `globals_dict=globals()` and `names=__all__` to
     deprecate all exposed module members. 
@@ -49,7 +83,8 @@ def moved(globals_dict, old: str, new: str, names: Optional[Iterable[str]] = Non
 
         new: The new location of the classes.
 
-        names: The names of the classes to update. If None, all classes are updated.
+        names: The names of the classes or functions to update. If None, all
+            classes and functions are updated.
     """
 
     if names is None:
@@ -57,10 +92,13 @@ def moved(globals_dict, old: str, new: str, names: Optional[Iterable[str]] = Non
 
     for name in names:
         val = globals_dict[name]
-        if not inspect.isclass(val):
-            # Don't currently have a good way to make aliases for non classes.
+        if isinstance(val, imports_utils.Dummy):
+            # skip dummies
             continue
 
-        cls = globals_dict[name]
-        if not isinstance(cls, imports_utils.Dummy):
-            globals_dict[name] = class_moved(cls, old, new)
+        if inspect.isclass(val):
+            globals_dict[name] = class_moved(val, old, new)
+        elif inspect.isfunction(val):
+            globals_dict[name] = function_moved(val, old, new)
+        else:
+            pass
