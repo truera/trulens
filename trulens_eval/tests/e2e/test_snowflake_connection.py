@@ -43,20 +43,21 @@ class TestSnowflakeConnection(TestCase):
         """
         Check that we can connect to a Snowflake backend and have created the required schema.
         """
-        app_name = str(uuid.uuid4()).replace("-", "_").upper()
+        app_name = str(uuid.uuid4()).replace("-", "_")
+        schema_name = Tru._validate_and_compute_schema_name(app_name)
         try:
-            self.assertNotIn(app_name, self._list_schemas())
+            self.assertNotIn(schema_name, self._list_schemas())
             tru = Tru(
                 snowflake_connection_parameters=self.
                 _snowflake_connection_parameters,
                 name=app_name
             )
-            self.assertIn(app_name, self._list_schemas())
+            self.assertIn(schema_name, self._list_schemas())
         finally:
-            if app_name in self._list_schemas():
+            if schema_name in self._list_schemas():
                 schema = self._snowflake_root.databases[
                     self._snowflake_connection_parameters["database"]
-                ].schemas[app_name]
+                ].schemas[schema_name]
                 schema.delete()
 
 

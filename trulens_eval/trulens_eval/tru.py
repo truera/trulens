@@ -10,6 +10,7 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from pprint import PrettyPrinter
+import re
 import socket
 import subprocess
 import sys
@@ -189,8 +190,13 @@ class Tru(python.SingletonPerName):
                     "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
                 )
             if not name:
-                raise ValueError("`name` must be set if `snowflake_connection_parameters` is set!")
-            database_url = self._create_snowflake_database_url(snowflake_connection_parameters, name)
+                raise ValueError(
+                    "`name` must be set if `snowflake_connection_parameters` is set!"
+                )
+            schema_name = self._validate_and_compute_schema_name(name)
+            database_url = self._create_snowflake_database_url(
+                snowflake_connection_parameters, schema_name
+            )
 
         database_args.update(
             {
@@ -232,34 +238,51 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
-    
-    def _create_snowflake_database_url(self, snowflake_connection_parameters: Dict[str, str], name: str) -> str:
+
+    @staticmethod
+    def _validate_and_compute_schema_name(name):
+        if not re.match(r"^[A-Za-z0-9_]+$", name):
+            raise ValueError(
+                "`name` must contain only alphanumeric and underscore characters!"
+            )
+        return f"TRULENS_APP__{name.upper()}"
+
+    @staticmethod
+    def _create_snowflake_database_url(
+        snowflake_connection_parameters: Dict[str, str], schema_name: str
+    ) -> str:
         from snowflake.sqlalchemy import URL
 
-        self._create_snowflake_schema_if_not_exists(snowflake_connection_parameters, name)
+        Tru._create_snowflake_schema_if_not_exists(
+            snowflake_connection_parameters, schema_name
+        )
         return URL(
             account=snowflake_connection_parameters["account"],
             user=snowflake_connection_parameters["user"],
             password=snowflake_connection_parameters["password"],
             database=snowflake_connection_parameters["database"],
-            schema=name,
-            warehouse=snowflake_connection_parameters.get(
-                "warehouse", None
-            ),
+            schema=schema_name,
+            warehouse=snowflake_connection_parameters.get("warehouse", None),
             role=snowflake_connection_parameters.get("role", None),
         )
 
-    def _create_snowflake_schema_if_not_exists(self, snowflake_connection_parameters: Dict[str, str], name: str):
+    @staticmethod
+    def _create_snowflake_schema_if_not_exists(
+        snowflake_connection_parameters: Dict[str, str], schema_name: str
+    ):
         from snowflake.core import CreateMode
         from snowflake.core import Root
         from snowflake.core.schema import Schema
         from snowflake.snowpark import Session
 
-        session = Session.builder.configs(snowflake_connection_parameters).create()
+        session = Session.builder.configs(snowflake_connection_parameters
+                                         ).create()
         root = Root(session)
-        schema = Schema(name=name)
-        root.databases[snowflake_connection_parameters["database"]].schemas.create(schema, mode=CreateMode.if_not_exists)
-
+        schema = Schema(name=schema_name)
+        root.databases[snowflake_connection_parameters["database"]
+                      ].schemas.create(
+                          schema, mode=CreateMode.if_not_exists
+                      )
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
