@@ -1,0 +1,36 @@
+line-length = 80
+include = [
+  "src/*.py",
+  "tests/*.py",
+  "tests/*.ipynb",
+  "examples/*.py",
+  "examples/*.ipynb",
+]
+extend-exclude = [
+  "*.ipynb",
+  "examples/expositional/*",
+  "examples/experimental/*",
+]
+
+[lint]
+preview = true
+ignore = [
+  "E731",
+]
+extend-select = [
+  "I",
+  "E303",
+]
+
+[lint.isort]
+force-single-line = true
+force-sort-within-sections = true
+single-line-exclusions = [
+  "typing",
+]
+known-first-party = [
+  "src",
+]
+
+[lint.pydocstyle]
+convention = "google"
