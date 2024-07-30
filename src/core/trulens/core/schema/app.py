@@ -8,7 +8,7 @@ from typing import Any, Callable, ClassVar, Optional, Sequence
 import dill
 import humanize
 from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
@@ -34,11 +34,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[mod_feedback_schema.FeedbackDefinition] = []
+    feedback_definitions: Sequence[feedback_schema.FeedbackDefinition] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: mod_feedback_schema.FeedbackMode = (
-        mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    feedback_mode: feedback_schema.FeedbackMode = (
+        feedback_schema.FeedbackMode.WITH_APP_THREAD
     )
     """How to evaluate feedback functions upon producing a record."""
 
@@ -83,7 +83,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_id: Optional[mod_types_schema.AppID] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
+        feedback_mode: feedback_schema.FeedbackMode = feedback_schema.FeedbackMode.WITH_APP_THREAD,
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):

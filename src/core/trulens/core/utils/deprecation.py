@@ -1,10 +1,22 @@
 """Utilities for handling deprecation."""
 
+from enum import Enum
 import warnings
 import inspect
 from trulens.core.utils import imports as imports_utils
-from typing import Optional, Iterable, Callable, Type, Dict, Any
+from typing import Optional, Iterable, Callable, Type, Dict, Any, Union
 import functools
+
+
+def has_deprecated(obj: Union[Callable, Type]) -> bool:
+    """Check if a function or class has been deprecated."""
+
+    return has_moved(obj)
+
+def has_moved(obj: Union[Callable, Type]) -> bool:
+    """Check if a function or class has been moved."""
+
+    return hasattr(obj, "__doc__") and obj.__doc__ is not None and "has moved:\n" in obj.__doc__
 
 
 def function_moved(func: Callable, old: str, new: str):
@@ -49,6 +61,10 @@ def class_moved(cls: Type, old_location: str, new_location: str):
 
     warned = False
     moved_class = cls
+
+    if issubclass(cls, Enum):
+        # Enums cannot be extended.
+        return cls
 
     class _MovedClass(moved_class):
 

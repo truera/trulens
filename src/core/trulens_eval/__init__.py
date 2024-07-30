@@ -45,9 +45,10 @@ from trulens.core.app import custom as mod_tru_custom_app
 from trulens.core.app import virtual as mod_tru_virtual
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.feedback import provider as mod_provider
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core import schema as core_schema
 from trulens.core.utils import imports as imports_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import threading as threading_utils
 
 # Optional provider types.
 
@@ -99,11 +100,11 @@ Tru = mod_tru.Tru
 TruBasicApp = mod_tru_basic_app.TruBasicApp
 TruCustomApp = mod_tru_custom_app.TruCustomApp
 TruVirtual = mod_tru_virtual.TruVirtual
-TP = mod_threading_utils.TP
+TP = threading_utils.TP
 Feedback = mod_feedback.Feedback
 Provider = mod_provider.Provider
-FeedbackMode = mod_feedback_schema.FeedbackMode
-# Select = mod_feedback_schema.Select
+FeedbackMode = feedback_schema.FeedbackMode
+Select = core_schema.Select
 
 __all__ = [
     "Tru",  # main interface
@@ -121,7 +122,7 @@ __all__ = [
 
     # feedback setup
     "Feedback",
-#    "Select",
+    "Select",
 
     # feedback providers
     "Provider",
