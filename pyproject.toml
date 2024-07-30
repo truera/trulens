@@ -50,8 +50,8 @@ mkdocs-jupyter = "^0.24.8"
 mkdocs-include-markdown-plugin = "^6.2.1"
 python-markdown-math = "^0.8"
 markdown-include = "^0.8.1"
-jupyter-contrib-nbextensions = "^0.7.0"
 notebook = "^7.2.1"
+black = "^24.4.2"
 
 [tool.poetry.group.instrument.dependencies]
 trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }

@@ -19,16 +19,16 @@ class LLMProvider(Provider):
 
     This is an abstract class and needs to be initialized as one of these:
 
-    * [OpenAI][trulens.external.provider.openai.OpenAI] and subclass
-      [AzureOpenAI][trulens.external.provider.openai.AzureOpenAI].
+    * [OpenAI][trulens.providers.openai.OpenAI] and subclass
+      [AzureOpenAI][trulens.providers.openai.AzureOpenAI].
 
-    * [Bedrock][trulens.external.provider.bedrock.Bedrock].
+    * [Bedrock][trulens.providers.bedrock.Bedrock].
 
-    * [LiteLLM][trulens.external.provider.litellm.LiteLLM]. LiteLLM provides an
+    * [LiteLLM][trulens.providers.litellm.LiteLLM]. LiteLLM provides an
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
 
-    * [Langchain][trulens.external.provider.langchain.Langchain].
+    * [Langchain][trulens.providers.langchain.Langchain].
 
     """
 

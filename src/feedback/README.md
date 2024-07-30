@@ -162,7 +162,7 @@ feedback_implementation1 = provider.somemethod
 feedback_implementation2 = somefunction
 ```
 
-For provided feedback functions, `somepackage` is `trulens.external` and
+For provided feedback functions, `somepackage` is `trulens.feedback` and
 `someproviderclass` is `OpenAI` or one of the other `Provider` subclasses.
 Custom feedback functions likewise need to be importable functions or methods of
 a provider subclass that can be imported. Critically, functions or classes

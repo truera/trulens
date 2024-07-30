@@ -1,6 +1,6 @@
 # 🦑 Tru
 
-::: src.core.trulens.core.tru.Tru
+::: trulens.core.tru.Tru
     options:
         # members: true
         filters:

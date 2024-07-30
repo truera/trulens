@@ -29,7 +29,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 Install `trulens` package into your directory, along with relevant dependencies.
 
 ```bash
-poetry install
+poetry install --sync
 ```
 
 ## Install pre-commit hooks
@@ -91,12 +91,12 @@ make coverage
 Generate the poetry lockfile for all subdirectories
 
 ```bash
-make poetry-lock
+make lock
 ```
 
 ### Build all packages
 
-Generate the poetry lockfile for all subdirectories
+Builds `trulens` and all subpackages to `dist/*`
 
 ```bash
 make build

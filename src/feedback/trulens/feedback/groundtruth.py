@@ -150,7 +150,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.
@@ -228,7 +228,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
 
         Args:
@@ -277,7 +277,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt (str): A text prompt to an agent.

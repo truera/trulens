@@ -10,11 +10,11 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 	poetry install --sync
 
 # Lock the poetry dependencies for all the subprojects.
-poetry-lock-all: $(POETRY_DIRS)
+lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		poetry lock -C $$dir; \
 	done
-
+	poetry .env/create
 
 # Run the ruff linter.
 lint: .env/create
@@ -34,6 +34,11 @@ run-precommit: precommit-hooks
 lab: .env/create
 	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
+# Build the documentation website.
+docs: .env/create $(shell find docs -type f) mkdocs.yml
+	poetry run mkdocs build --clean
+	rm -Rf site/overrides
+
 # Serve the documentation website.
 docs-serve: .env/create
 	poetry run mkdocs serve -a 127.0.0.1:8000
@@ -47,10 +52,6 @@ docs-serve-debug: .env/create
 docs-serve-dirty: .env/create
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
-# Build the documentation website.
-docs: .env/create $(shell find docs -type f) mkdocs.yml
-	poetry run mkdocs build --clean
-	rm -Rf site/overrides
 
 docs-upload: .env/create $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
@@ -65,10 +66,10 @@ trubot:
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
-required-env:
+required-env: .env/create
 	poetry install --only required,tests --sync
 
-optional-env:
+optional-env: .env/create
 	poetry install --sync --verbose
 
 coverage:
@@ -109,7 +110,7 @@ build-dashboard: .env/create
 	rm -rf src/dashboard/*.egg-info
 	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist;
 
-build: $(POETRY_DIRS)
+build: $(POETRY_DIRS) clean lock
 	for dir in $(POETRY_DIRS); do \
 		pushd $$dir; \
 		poetry build -o $(REPO_ROOT)/dist; \
@@ -117,6 +118,7 @@ build: $(POETRY_DIRS)
 	done
 	make build-dashboard
 
+## Step: Upload wheels to pypi
 ## Usage: TOKEN=... make upload
-upload:
+upload: build
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/*.whl

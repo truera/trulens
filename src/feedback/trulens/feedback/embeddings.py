@@ -65,7 +65,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.
@@ -124,7 +124,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.
@@ -183,7 +183,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.

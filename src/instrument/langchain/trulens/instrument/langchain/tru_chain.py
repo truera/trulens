@@ -130,7 +130,7 @@ class TruChain(mod_app.App):
 
         Consider an example LangChain RAG application. For the complete code
         example, see [LangChain
-        Quickstart](https://www.trulens.org/trulens_eval/getting_started/quickstarts/langchain_quickstart/).
+        Quickstart](https://www.trulens.org/trulens/getting_started/quickstarts/langchain_quickstart/).
 
         ```python
         from langchain import hub

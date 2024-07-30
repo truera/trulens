@@ -69,7 +69,24 @@ plugins:
             - https://typing-extensions.readthedocs.io/en/latest/objects.inv
             - https://docs.llamaindex.ai/en/stable/objects.inv
             - https://docs.sqlalchemy.org/en/20/objects.inv
+          paths:
+            - src/core
+            - src/feedback
+            - src/dashboard
+            - src/benchmark
+            - src/instrument/langchain
+            - src/instrument/llamaindex
+            - src/instrument/nemo
+            - src/providers/bedrock
+            - src/providers/cortex
+            - src/providers/huggingface
+            - src/providers/huggingface-local
+            - src/providers/langchain
+            - src/providers/litellm
+            - src/providers/openai
           options:
+            heading_level: 2
+            annotations_path: brief
             extensions:
               - pydantic: { schema: true }
 
@@ -112,10 +129,6 @@ plugins:
               - "!^tru_class_info" # don't show tru_class_info
               - "^__init__$" # but always include __init__ modules and methods
               - "^__call__$" # and __call__ methods
-
-          paths:
-            - trulens_explain
-            - trulens
           #selection:
 
   - redirects:
@@ -250,7 +263,7 @@ nav:
           - 🦙 TruLlama: trulens/api/app/trullama.md
           - TruRails: trulens/api/app/trurails.md
           - TruCustom: trulens/api/app/trucustom.md
-          - ⬚ TruVirtual: trulens/api/app/truvirtual.md
+          - TruVirtual: trulens/api/app/truvirtual.md
       - Feedback: trulens/api/feedback.md
       - 💾 Record: trulens/api/record.md
       - Provider:

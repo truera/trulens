@@ -1,5 +1,5 @@
-# Tru Basic App
+# TruBasicApp
 
-::: src.core.trulens.core.app.basic.TruBasicApp
+::: trulens.core.app.basic.TruBasicApp
     options:
       inherited_members: true

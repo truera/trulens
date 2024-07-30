@@ -29,7 +29,7 @@ blank.
 
 If you need to change this prefix after migration, you may need to specify the
 old prefix when invoking
-[migrate_database][src.core.trulens.core.tru.Tru.migrate_database]:
+[migrate_database][trulens.core.tru.Tru.migrate_database]:
 
 ```python
 tru = Tru(
@@ -63,8 +63,8 @@ copy_database(
 )
 ```
 
-::: src.core.trulens.core.tru.Tru.migrate_database
+::: trulens.core.tru.Tru.migrate_database
 
-::: src.core.trulens.core.database.utils.copy_database
+::: trulens.core.database.utils.copy_database
 
-::: src.core.trulens.core.database.migrations.data
+::: trulens.core.database.migrations.data

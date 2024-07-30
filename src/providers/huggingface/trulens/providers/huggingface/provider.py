@@ -155,7 +155,7 @@ class HuggingfaceBase(Provider):
             ```
 
             The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens_eval/feedback_function_guide/)
+            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             text1 (str): Text to evaluate.
@@ -365,7 +365,7 @@ class HuggingfaceBase(Provider):
             ```
 
             The `on(...)` selector can be changed. See [Feedback Function Guide:
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             text: A text prompt that may contain a PII.
@@ -409,7 +409,7 @@ class HuggingfaceBase(Provider):
 
             The `on(...)` selector can be changed. See [Feedback Function Guide
             :
-            Selectors](https://www.trulens.org/trulens_eval/feedback_function_guide/#selector-details)
+            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
             Args:
                 text: A text prompt that may contain a name.

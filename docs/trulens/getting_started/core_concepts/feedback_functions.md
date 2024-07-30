@@ -18,7 +18,7 @@ and represent the core use cases your app is expected to complete. This allows
 you to deeply understand the performance of your app, but lacks scale.
 
 See this [example
-notebook](https://www.trulens.org/trulens_eval/groundtruth_evals/) to learn how
+notebook](https://www.trulens.org/trulens/groundtruth_evals/) to learn how
 to run ground truth evaluations with TruLens.
 
 ## User Feedback (Human) Evaluations
@@ -30,7 +30,7 @@ scalable than ground truth evals, but struggles with variance and can still be
 expensive to collect.
 
 See this [example
-notebook](https://www.trulens.org/trulens_eval/human_feedback/) to learn how to
+notebook](https://www.trulens.org/trulens/human_feedback/) to learn how to
 log human feedback with TruLens.
 
 ## Traditional NLP Evaluations
@@ -61,5 +61,5 @@ justify high or low evaluation scores that are useful for debugging.
 
 Depending on the size and nature of the LLM, these evaluations can be quite expensive at scale.
 
-See this [example notebook](https://www.trulens.org/trulens_eval/quickstart/) to
+See this [example notebook](https://www.trulens.org/trulens/quickstart/) to
 learn how to run LLM-based evaluations with TruLens.

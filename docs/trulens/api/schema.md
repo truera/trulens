@@ -1,6 +1,6 @@
 # Serial Schema
 
-::: src.core.trulens.core.schema.base
+::: trulens.core.schema.base
     options:
         members:
             - RecordID

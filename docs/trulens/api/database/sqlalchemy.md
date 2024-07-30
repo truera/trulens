@@ -1,5 +1,5 @@
 # 🧪 SQLAlchemy Databases
 
-::: src.core.trulens.core.database.sqlalchemy
+::: trulens.core.database.sqlalchemy
 
-::: src.core.trulens.core.database.orm
+::: trulens.core.database.orm

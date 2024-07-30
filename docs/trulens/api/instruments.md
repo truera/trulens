@@ -1,3 +1,3 @@
 # 𝄢 Instruments
 
-::: src.core.trulens.core.instruments
+::: trulens.core.instruments

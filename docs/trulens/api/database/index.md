@@ -1,1 +1,1 @@
-::: src.core.trulens.core.database.base
+::: trulens.core.database.base

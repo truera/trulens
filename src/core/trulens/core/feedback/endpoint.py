@@ -101,7 +101,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     class EndpointSetup:
         """Class for storing supported endpoint information.
 
-        See [track_all_costs][trulens.external.provider.endpoint.base.Endpoint.track_all_costs]
+        See [track_all_costs][trulens.core.feedback.endpoint.Endpoint.track_all_costs]
         for usage.
         """
 
@@ -109,30 +109,31 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         module_name: str
         class_name: str
 
+    # TODO: factor this out
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag="with_openai",
-            module_name="trulens.external.provider.endpoint.openai",
+            module_name="trulens.providers.openai.endpoint",
             class_name="OpenAIEndpoint",
         ),
         EndpointSetup(
             arg_flag="with_hugs",
-            module_name="trulens.external.provider.endpoint.hugs",
+            module_name="trulens.providers.huggingface.endpoint",
             class_name="HuggingfaceEndpoint",
         ),
         EndpointSetup(
             arg_flag="with_litellm",
-            module_name="trulens.external.provider.endpoint.litellm",
+            module_name="trulens.providers.litellm.endpoint",
             class_name="LiteLLMEndpoint",
         ),
         EndpointSetup(
             arg_flag="with_bedrock",
-            module_name="trulens.external.provider.endpoint.bedrock",
+            module_name="trulens.providers.bedrock.endpoint",
             class_name="BedrockEndpoint",
         ),
         EndpointSetup(
             arg_flag="with_cortex",
-            module_name="trulens.external.provider.endpoint.cortex",
+            module_name="trulens.providers.cortex.endpoint",
             class_name="CortexEndpoint",
         ),
     ]
