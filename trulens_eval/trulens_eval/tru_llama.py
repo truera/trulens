@@ -528,4 +528,6 @@ class TruLlama(mod_app.App):
         )
 
 
+import trulens_eval  # noqa: F401
+
 TruLlama.model_rebuild()

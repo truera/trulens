@@ -166,4 +166,6 @@ class TruBasicApp(mod_app.App):
         self._throw_dep_message(method="call", is_async=False, with_record=True)
 
 
+import trulens_eval  # noqa: F401
+
 TruBasicApp.model_rebuild()

@@ -569,4 +569,6 @@ class TruVirtual(mod_app.App):
         return record
 
 
+import trulens_eval  # noqa: F401
+
 TruVirtual.model_rebuild()

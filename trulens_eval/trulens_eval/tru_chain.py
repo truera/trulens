@@ -415,4 +415,6 @@ class TruChain(mod_app.App):
         )
 
 
+import trulens_eval  # noqa: F401
+
 TruChain.model_rebuild()

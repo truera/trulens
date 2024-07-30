@@ -539,4 +539,7 @@ class instrument(base_instrument):
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
 
+import trulens_eval  # noqa: F401
+
+
 TruCustomApp.model_rebuild()

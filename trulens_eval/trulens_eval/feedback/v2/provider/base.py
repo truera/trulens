@@ -10,6 +10,7 @@ from trulens_eval.feedback.base import WithPrompt
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
+
 # Level 4 feedback abstraction
 
 
