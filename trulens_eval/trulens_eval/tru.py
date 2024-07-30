@@ -111,6 +111,8 @@ class Tru(python.SingletonPerName):
             written to database (defaults to `False`)
 
         database_args: Additional arguments to pass to the database constructor.
+        
+        snowflake_connection_parameters: Connection arguments to Snowflake database to use.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -163,6 +165,7 @@ class Tru(python.SingletonPerName):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        snowflake_connection_parameters: Optional[Dict[str, str]] = None,
     ):
         """
         Args:
@@ -172,6 +175,23 @@ class Tru(python.SingletonPerName):
 
         if database_args is None:
             database_args = {}
+
+        if snowflake_connection_parameters is not None:
+            if database is not None:
+                raise ValueError("`database` must be `None` if `snowflake_connection_parameters` is set!")
+            if database_url is not None:
+                raise ValueError("`database_url` must be `None` if `snowflake_connection_parameters` is set!")
+
+            from snowflake.sqlalchemy import URL
+
+            database_url = URL(
+                account=snowflake_connection_parameters["account"],
+                user=snowflake_connection_parameters["user"],
+                password=snowflake_connection_parameters["password"],
+                database=snowflake_connection_parameters["database"],
+                warehouse=snowflake_connection_parameters.get("warehouse", None),
+                role=snowflake_connection_parameters.get("role", None),
+            )
 
         database_args.update(
             {
@@ -442,7 +462,6 @@ class Tru(python.SingletonPerName):
                         return temp
 
                 return temp
-
 
             fut: Future[mod_feedback_schema.FeedbackResult] = \
                 tp.submit(run_and_call_callback, ffunc=ffunc, app=app, record=record)
@@ -1084,7 +1103,7 @@ class Tru(python.SingletonPerName):
         else:
             print("Credentials file already exists. Skipping writing process.")
 
-        #run leaderboard with subprocess
+        # run leaderboard with subprocess
         leaderboard_path = static_resource('Leaderboard.py')
 
         if Tru._dashboard_proc is not None:
