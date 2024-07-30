@@ -36,7 +36,7 @@ class OpenAI(LLMProvider):
 
     Args:
         model_engine: The OpenAI completion model. Defaults to
-            `gpt-3.5-turbo`
+            `gpt-4o-mini`
 
         **kwargs: Additional arguments to pass to the
             [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint]
@@ -45,7 +45,7 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
