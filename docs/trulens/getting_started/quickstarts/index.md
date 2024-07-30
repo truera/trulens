@@ -6,10 +6,10 @@ the content in this section here then uncomment out the appropriate line in
 
 Quickstart notebooks in this section:
 
-- trulens_eval/quickstart.ipynb
-- trulens_eval/langchain_quickstart.ipynb
-- trulens_eval/llama_index_quickstart.ipynb
-- trulens_eval/text2text_quickstart.ipynb
-- trulens_eval/groundtruth_evals.ipynb
-- trulens_eval/human_feedback.ipynb
-- trulens_eval/prototype_evals.ipynb
+- trulens/quickstart.ipynb
+- trulens/langchain_quickstart.ipynb
+- trulens/llama_index_quickstart.ipynb
+- trulens/text2text_quickstart.ipynb
+- trulens/groundtruth_evals.ipynb
+- trulens/human_feedback.ipynb
+- trulens/prototype_evals.ipynb

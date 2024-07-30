@@ -5,7 +5,7 @@ Interested in contributing to TruLens? Here's how to get started!
 ## What can you work on?
 
 1. 💪 Add new [feedback
-   functions](https://www.trulens.org/trulens_eval/api/providers)
+   functions](https://www.trulens.org/trulens/api/providers)
 2. 🤝 Add new feedback function providers.
 3. 🐛 Fix bugs
 4. 🎉 Add usage examples
@@ -17,7 +17,7 @@ Also, join the [AI Quality Slack
 community](https://communityinviter.com/apps/aiqualityforum/josh) for ideas and
 discussions.
 
-## 💪 Add new [feedback functions](https://www.trulens.org/trulens_eval/api/providers)
+## 💪 Add new [feedback functions](https://www.trulens.org/trulens/api/providers)
 
 Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
 may require new evaluations. We'd love your contribution to extend the feedback
@@ -26,7 +26,7 @@ functions library so others can benefit!
 - To add a feedback function for an existing model provider, you can add it to
   an existing provider module. You can read more about the structure of a
   feedback function in this
-  [guide](https://www.trulens.org/trulens_eval/custom_feedback_functions/).
+  [guide](https://www.trulens.org/trulens/custom_feedback_functions/).
 - New methods can either take a single text (str) as a parameter or two
   different texts (str), such as prompt and retrieved context. It should return
   a float, or a dict of multiple floats. Each output value should be a float on
@@ -112,7 +112,7 @@ problematic designs. See [Tech debt index](techdebt.md).
 
 ### ⛅ Optional Packages
 
-Limit the packages installed by default when installing _TruLens-Eval_. For
+Limit the packages installed by default when installing _TruLens_. For
 optional functionality, additional packages can be requested for the user to
 install and their usage is aided by an optional imports scheme. See [Optional
 Packages](optional.md) for details.

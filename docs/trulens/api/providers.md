@@ -1,11 +1,11 @@
 # 📖 Stock Feedback Functions
 
-::: src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface
+::: trulens.providers.huggingface.provider.Huggingface
 
-::: src.provider.openai.trulens.provider.openai.provider.OpenAI
+::: trulens.providers.openai.provider.OpenAI
 
-::: src.feedback.trulens.feedback.llm_provider
+::: trulens.feedback.llm_provider
 
-::: src.feedback.trulens.feedback.groundtruth
+::: trulens.feedback.groundtruth
 
-::: src.feedback.trulens.feedback.embeddings
+::: trulens.feedback.embeddings

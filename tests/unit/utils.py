@@ -2,7 +2,7 @@ from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import os
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 import unittest
 from unittest import TestCase
 
@@ -14,13 +14,14 @@ from trulens.core.utils.serial import Lens
 # Env var that were to evaluate to true indicates that optional tests are to be
 # run.
 OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
+ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
 
 
 def optional_test(testmethodorclass):
     """
     Only run the decorated test if the environment variable with_optional
     evalutes true. These are meant to be run only in an environment where
-    optional packages have been installed.
+    all optional packages have been installed.
     """
 
     return unittest.skipIf(
@@ -33,10 +34,14 @@ def requiredonly_test(testmethodorclass):
     Only runs the decorated test if the environment variable with_optional
     evalutes to false or is not set. Decorated tests are meant to run
     specifically when optional imports are not installed.
+
+    ALLOW_EXTRA_DEPS will allow optional imports to be installed
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR), "not an optional test"
+        os.environ.get(OPTIONAL_ENV_VAR)
+        or os.environ.get(ALLOW_OPTIONAL_ENV_VAR),
+        "not an optional test",
     )(testmethodorclass)
 
 
@@ -50,7 +55,12 @@ def module_installed(module: str) -> bool:
 
 class JSONTestCase(TestCase):
     def assertJSONEqual(
-        self, j1, j2, path: Lens = None, skips=None, numeric_places: int = 7
+        self,
+        j1,
+        j2,
+        path: Optional[Lens] = None,
+        skips=None,
+        numeric_places: int = 7,
     ) -> None:
         skips = skips or set([])
         path = path or Lens()

@@ -1,3 +1,3 @@
 # Streamlit
 
-::: src.dashboard.trulens.dashboard.streamlit
+<!-- ::: trulens.dashboard.run -->

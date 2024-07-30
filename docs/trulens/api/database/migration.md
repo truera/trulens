@@ -1,11 +1,11 @@
 # 🕸✨ Database Migration
 
-When upgrading _TruLens-Eval_, it may sometimes be required to migrade the
+When upgrading _TruLens_, it may sometimes be required to migrade the
 database to incorporate changes in existing database created from the previously
 installed version. The changes to database schemas is handled by
 [Alembic](https://github.com/sqlalchemy/alembic/) while some data changes are
 handled by converters in [the data
-module][trulens_eval.database.migrations.data].
+module][trulens.core.database.migrations.data].
 
 ## Upgrading to the latest schema revision
 
@@ -21,7 +21,7 @@ tru.migrate_database()
 
 ## Changing database prefix
 
-Since `0.28.0`, all tables used by _TruLens-Eval_ are prefixed with "trulens_"
+Since `0.28.0`, all tables used by _TruLens_ are prefixed with "trulens_"
 including the special `alembic_version` table used for tracking schema changes.
 Upgrading to `0.28.0` for the first time will require a migration as specified
 above. This migration assumes that the prefix in the existing database was
@@ -29,7 +29,7 @@ blank.
 
 If you need to change this prefix after migration, you may need to specify the
 old prefix when invoking
-[migrate_database][src.core.trulens.core.tru.Tru.migrate_database]:
+[migrate_database][trulens.core.tru.Tru.migrate_database]:
 
 ```python
 tru = Tru(
@@ -63,8 +63,8 @@ copy_database(
 )
 ```
 
-::: src.core.trulens.core.tru.Tru.migrate_database
+::: trulens.core.tru.Tru.migrate_database
 
-::: src.core.trulens.core.database.utils.copy_database
+::: trulens.core.database.utils.copy_database
 
-::: src.core.trulens.core.database.migrations.data
+::: trulens.core.database.migrations.data

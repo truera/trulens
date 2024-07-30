@@ -319,7 +319,7 @@ class TruCustomApp(App):
         ```
 
         See [Feedback
-        Functions](https://www.trulens.org/trulens_eval/api/feedback/) for
+        Functions](https://www.trulens.org/trulens/api/feedback/) for
         instantiating feedback functions.
 
     Args:

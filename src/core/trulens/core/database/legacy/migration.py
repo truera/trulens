@@ -189,6 +189,9 @@ def _get_compatibility_version(version: str) -> str:
                 # The m_version from m_version_str is larger than this version
                 # check the next m_version.
                 break
+    raise VersionException(
+        f"Could not find a compatibility version for version {version}"
+    )
 
 
 def _migration_checker(db, warn: bool = False) -> None:
@@ -283,7 +286,7 @@ def _serialization_asserts(db) -> None:
         db (DB): the db object
     """
     global saved_db_locations
-    conn, c = db._connect()
+    _, c = db._connect()
     SAVED_DB_FILE_LOC = saved_db_locations[db.filename]
     validation_fail_advice = (
         f"Please open a ticket on trulens github page including details on the old and new trulens versions. "

@@ -5,11 +5,14 @@ Tests for TruLlama.
 import unittest
 from unittest import main
 
+from llama_index.core import SimpleDirectoryReader
+from llama_index.core import VectorStoreIndex
 from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
+from trulens.instrument.llamaindex import TruLlama
 
-from tests.unit.test import JSONTestCase
-from tests.unit.test import optional_test
+from tests.unit.utils import JSONTestCase
+from tests.unit.utils import optional_test
 
 
 # All tests require optional packages.
@@ -24,9 +27,6 @@ class TestLlamaIndex(JSONTestCase):
         check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
         import os
 
-        from llama_index.core import SimpleDirectoryReader
-        from llama_index.core import VectorStoreIndex
-
         os.system(
             "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
         )
@@ -36,8 +36,6 @@ class TestLlamaIndex(JSONTestCase):
 
     def test_query_engine_async(self):
         # Check that the instrumented async aquery method produces the same result as the query method.
-
-        from trulens.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
 
@@ -53,7 +51,7 @@ class TestLlamaIndex(JSONTestCase):
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
-        llm_response_sync, record_sync = tru_query_engine_recorder.with_record(
+        _, record_sync = tru_query_engine_recorder.with_record(
             query_engine.query, "What did the author do growing up?"
         )
 
@@ -82,8 +80,6 @@ class TestLlamaIndex(JSONTestCase):
     def test_query_engine_stream(self):
         # Check that the instrumented query method produces the same result
         # regardless of streaming option.
-
-        from trulens.instrument.llamaindex import TruLlama
 
         query_engine = self.index.as_query_engine()
         tru_query_engine_recorder = TruLlama(query_engine)
@@ -125,8 +121,6 @@ class TestLlamaIndex(JSONTestCase):
 
     async def test_chat_engine_async(self):
         # Check that the instrumented async achat method produces the same result as the chat method.
-
-        from trulens.instrument.llamaindex import TruLlama
 
         chat_engine = self.index.as_chat_engine()
         tru_chat_engine_recorder = TruLlama(chat_engine)

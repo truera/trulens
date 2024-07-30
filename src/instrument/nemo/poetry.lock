@@ -830,13 +830,13 @@ socks = ["socksio (==1.*)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "0.24.2"
+version = "0.24.3"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "huggingface_hub-0.24.2-py3-none-any.whl", hash = "sha256:abdf3244d3a274c4b1fbc5c4a1ef700032b3f60ba93cc63e4f036fd082aa2805"},
-    {file = "huggingface_hub-0.24.2.tar.gz", hash = "sha256:92be892405d2f6a7a8479016f9a5662354f202b2c6c1ff499609621aed1fae10"},
+    {file = "huggingface_hub-0.24.3-py3-none-any.whl", hash = "sha256:69ecce486dd6cdad69937ba76779e893c224a670a9d947636c1d5cbd049e44d8"},
+    {file = "huggingface_hub-0.24.3.tar.gz", hash = "sha256:bfdc05cc9b64a0e24e8614a44222698799183268f6b68be209aa2df70cff2cde"},
 ]
 
 [package.dependencies]
@@ -2474,12 +2474,13 @@ alembic = "^1.11.2"
 dill = "^0.3.7"
 merkle-json = "^1.0.0"
 munch = "^3.0.0"
+nest-asyncio = "^1.5.8"
 numpy = "^1.23.5"
 psutil = "^5.9.8"
 pydantic = "^2"
+python-dotenv = "^1.0.0"
 sqlalchemy = "^2.0.19"
 tqdm = "^4.66.1"
-trulens-utils = "0.33.0"
 typing_extensions = "^4.9.0"
 
 [package.source]
@@ -2491,12 +2492,12 @@ name = "trulens-instrument-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = ">=3.9,<3.13"
+python-versions = "^3.9,<3.13"
 files = []
 develop = false
 
 [package.dependencies]
-langchain-core = "^0.1.6"
+langchain = "^0.1.6"
 pydantic = "^2"
 trulens-core = "^0.33.0"
 typing-inspect = "^0.8.0"
@@ -2504,19 +2505,6 @@ typing-inspect = "^0.8.0"
 [package.source]
 type = "directory"
 url = "../langchain"
-
-[[package]]
-name = "trulens-utils"
-version = "0.33.0"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "*"
-files = []
-develop = true
-
-[package.source]
-type = "directory"
-url = "../../utils"
 
 [[package]]
 name = "typer"

@@ -10,10 +10,10 @@ to your path.
     conda activate <my_name>
     ```
 
-2. [Pip installation] Install the trulens-eval pip package from PyPI.
+2. [Pip installation] Install the trulens pip package from PyPI.
 
     ```bash
-    pip install trulens-eval
+    pip install trulens
     ```
 
 3. [Local installation] If you would like to develop or modify TruLens, you can
@@ -26,6 +26,6 @@ to your path.
 4. [Local installation] Install the TruLens repo.
 
     ```bash
-    cd trulens/trulens_eval
+    cd trulens
     pip install -e .
     ```

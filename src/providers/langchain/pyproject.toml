@@ -1,16 +1,20 @@
 [build-system]
-requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry]
 name = "trulens-provider-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = ["Truera Inc <all@truera.com>"]
+authors = [
+  "Truera Inc <all@truera.com>",
+]
 license = "MIT"
 readme = "README.md"
 packages = [
-  {include = "trulens"},
+  { include = "trulens" },
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -23,8 +27,8 @@ classifiers = [
 python = "^3.9"
 trulens-core = "^0.33.0"
 trulens-feedback = "^0.33.0"
-langchain-core = "^0.1.6"
+langchain = "^0.1.6"
 
 [tool.poetry.group.dev.dependencies]
-trulens-core = {path = "../../core"}
-trulens-feedback = {path = "../../feedback"}
+trulens-core = { path = "../../core" }
+trulens-feedback = { path = "../../feedback" }

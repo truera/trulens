@@ -118,7 +118,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
     """Feedback function container.
 
     Typical usage is to specify a feedback implementation function from a
-    [Provider][trulens.external.provider.Provider] and the mapping of
+    [Provider][trulens.core.feedback.provider.Provider] and the mapping of
     selectors describing how to construct the arguments to the implementation:
 
     Example:

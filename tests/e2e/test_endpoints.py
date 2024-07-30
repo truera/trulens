@@ -13,7 +13,7 @@ from unittest import main
 from trulens.core.feedback import Endpoint
 from trulens.core.utils.keys import check_keys
 
-from tests.unit.test import optional_test
+from tests.unit.utils import optional_test
 
 pp = PrettyPrinter()
 

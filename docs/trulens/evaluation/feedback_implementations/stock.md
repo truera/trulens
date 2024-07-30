@@ -4,9 +4,9 @@
 
 ### 🤗 Huggingface
 
-API Reference: [Huggingface][src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface].
+API Reference: [Huggingface][trulens.providers.huggingface.provider.Huggingface].
 
-::: src.provider.huggingface.trulens.provider.huggingface.provider.Huggingface
+::: trulens.providers.huggingface.provider.Huggingface
     options:
         heading_level: 4
         show_bases: false
@@ -31,9 +31,9 @@ API Reference: [Huggingface][src.provider.huggingface.trulens.provider.huggingfa
 
 ### OpenAI
 
-API Reference: [OpenAI][src.provider.openai.trulens.provider.openai.provider.OpenAI].
+API Reference: [OpenAI][trulens.providers.openai.provider.OpenAI].
 
-::: src.provider.openai.trulens.provider.openai.provider.OpenAI
+::: trulens.providers.openai.provider.OpenAI
     options:
         heading_level: 4
         show_bases: false
@@ -58,9 +58,9 @@ API Reference: [OpenAI][src.provider.openai.trulens.provider.openai.provider.Ope
 
 ## Generation-based: LLMProvider
 
-API Reference: [LLMProvider][src.feedback.trulens.feedback.llm_provider.LLMProvider].
+API Reference: [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
 
-::: src.feedback.trulens.feedback.llm_provider.LLMProvider
+::: trulens.feedback.llm_provider.LLMProvider
     options:
         heading_level: 4
         show_bases: false
@@ -85,9 +85,9 @@ API Reference: [LLMProvider][src.feedback.trulens.feedback.llm_provider.LLMProvi
 
 ## Embedding-based
 
-API Reference: [Embeddings][src.feedback.trulens.feedback.embeddings].
+API Reference: [Embeddings][trulens.feedback.embeddings].
 
-::: src.feedback.trulens.feedback.embeddings
+::: trulens.feedback.embeddings
     options:
         heading_level: 4
         show_bases: false
@@ -114,9 +114,9 @@ API Reference: [Embeddings][src.feedback.trulens.feedback.embeddings].
 
 ### Ground Truth Agreement
 
-API Reference: [GroundTruthAgreement][src.feedback.trulens.feedback.groundtruth]
+API Reference: [GroundTruthAgreement][trulens.feedback.groundtruth]
 
-::: src.feedback.trulens.feedback.groundtruth
+::: trulens.feedback.groundtruth
     options:
         heading_level: 4
         show_bases: false

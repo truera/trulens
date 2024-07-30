@@ -68,7 +68,7 @@ from all invocations of `retrieve`.
 context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
 ```
 
-See also other [Select][trulens_eval.schema.feedback.Select] shortcuts.
+See also other [Select][trulens.core.Select] shortcuts.
 
 ### Understanding the structure of your app
 

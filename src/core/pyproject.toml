@@ -1,16 +1,20 @@
 [build-system]
-requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry]
 name = "trulens-core"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = ["Truera Inc <all@truera.com>"]
+authors = [
+  "Truera Inc <all@truera.com>",
+]
 license = "MIT"
 readme = "README.md"
 packages = [
-  {include = "trulens"},
+  { include = "trulens" },
 ]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -31,3 +35,12 @@ pydantic = "^2"
 merkle-json = "^1.0.0"
 sqlalchemy = "^2.0.19"
 alembic = "^1.11.2"
+nest-asyncio = "^1.5.8"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.optional]
+optional = true
+
+[tool.poetry.group.optional.dependencies]
+openai = "^1.37.1"
+httpx = "^0.27.0"

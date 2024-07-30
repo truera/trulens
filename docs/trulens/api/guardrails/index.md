@@ -1,3 +1,3 @@
 # TruLens Guardrails
 
-::: src.core.trulens.core.guardrails.base
+::: trulens.core.guardrails.base

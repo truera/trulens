@@ -1,6 +1,6 @@
 # 🦴 Anatomy of Feedback Functions
 
-The [Feedback][trulens_eval.feedback.feedback.Feedback] class contains the
+The [Feedback][trulens.core.feedback.feedback.Feedback] class contains the
 starting point for feedback function specification and evaluation. A typical
 use-case looks like this:
 
@@ -30,7 +30,7 @@ Read more about [feedback providers](../../api/providers.md).
 
 ## Feedback implementations
 
-[OpenAI.context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance]
+[OpenAI.context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
 is an example of a feedback function implementation.
 
 Feedback implementations are simple callables that can be run
@@ -42,7 +42,7 @@ def context_relevance(self, prompt: str, context: str) -> float:
 ```
 
 That is,
-[context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance]
+[context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
 is a plain python method that accepts the prompt and context, both strings, and
 produces a float (assumed to be between 0.0 and 1.0).
 
@@ -56,16 +56,16 @@ Feedback object with a feedback implementation.
 ## Argument specification
 
 The next line,
-[on_input_output][trulens_eval.feedback.feedback.Feedback.on_input_output],
+[on_input_output][trulens.core.feedback.feedback.Feedback.on_input_output],
 specifies how the
-[context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance]
+[context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
 arguments are to be determined from an app record or app definition. The general
 form of this specification is done using
-[on][trulens_eval.feedback.feedback.Feedback.on] but several shorthands are
+[on][trulens.core.feedback.feedback.Feedback.on] but several shorthands are
 provided. For example,
-[on_input_output][trulens_eval.feedback.feedback.Feedback.on_input_output]
+[on_input_output][trulens.core.feedback.feedback.Feedback.on_input_output]
 states that the first two argument to
-[context_relevance][trulens_eval.feedback.provider.openai.OpenAI.context_relevance]
+[context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]
 (`prompt` and `context`) are to be the main app input and the main output,
 respectively.
 
@@ -79,7 +79,7 @@ The last line `aggregate(numpy.mean)` specifies how feedback outputs are to be
 aggregated. This only applies to cases where the argument specification names
 more than one value for an input. The second specification, for `statement` was
 of this type. The input to
-[aggregate][trulens_eval.feedback.feedback.Feedback.aggregate] must be a method
+[aggregate][trulens.core.feedback.feedback.Feedback.aggregate] must be a method
 which can be imported globally. This requirement is further elaborated in the
 next section. This function is called on the `float` results of feedback
 function evaluations to produce a single float. The default is

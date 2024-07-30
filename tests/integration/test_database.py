@@ -70,7 +70,7 @@ class TestDBSpecifications(TestCase):
                         print(df)
 
     def test_copy(self) -> None:
-        """Test copying of databases via [copy_database][trulens_eval.database.utils.copy_database]."""
+        """Test copying of databases via [copy_database][trulens.core.database.utils.copy_database]."""
 
         db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
         # sqlite_memory might have problems with multithreading of tests

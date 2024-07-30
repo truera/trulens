@@ -1,5 +1,5 @@
 """
-# Trulens-eval LLM Evaluation Library
+# Trulens Core LLM Evaluation Library
 
 This top-level import includes everything to get started.
 """

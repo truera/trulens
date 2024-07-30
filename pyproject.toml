@@ -1,37 +1,42 @@
 [build-system]
-requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.mypy]
-files = ["src", "tests"]
-mypy_path = "src"
-namespace_packages = true
-explicit_package_bases = true
+requires = [
+  "poetry-core",
+]
 
 [tool.poetry]
 name = "trulens"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
-authors = ["Truera Inc <all@truera.com>"]
+authors = [
+  "Truera Inc <all@truera.com>",
+]
 license = "MIT"
 readme = "README.md"
 packages = [
-  {from = "_trulens", include = "trulens"},
+  { from = "_trulens", include = "trulens" },
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-trulens-core = "0.33.0"
-trulens-feedback = "0.33.0"
-trulens-dashboard = {version = "0.33.0", python = "!=3.9.7"}
+python = "^3.9,!=3.9.7"
+trulens-core = "^0.33"
+trulens-feedback = "^0.33"
+trulens-dashboard = "^0.33"
 
 [tool.poetry.group.benchmark.dependencies]
-trulens-benchmark = {path = "src/benchmark", develop = true}
+trulens-benchmark = { path = "src/benchmark", develop = true }
+
+[tool.poetry.group.db-tests.dependencies]
+psycopg2-binary = "^2.9.9"
+pymysql = "^1.1.1"
+cryptography = "^41.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 ruff = "^0.5.5"
 mypy = "^1.11.0"
+build = "^1.2.1"
+twine = "^5.1.1"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.0"
@@ -45,32 +50,31 @@ mkdocs-jupyter = "^0.24.8"
 mkdocs-include-markdown-plugin = "^6.2.1"
 python-markdown-math = "^0.8"
 markdown-include = "^0.8.1"
-jupyter-contrib-nbextensions = "^0.7.0"
 notebook = "^7.2.1"
 black = "^24.4.2"
 
 [tool.poetry.group.instrument.dependencies]
-trulens-instrument-langchain = {path = "src/instrument/langchain", develop = true, python = "<3.13"}
-trulens-instrument-llamaindex = {path = "src/instrument/llamaindex", develop = true}
-trulens-instrument-nemo = {path = "src/instrument/nemo", develop = true, python = "<3.12"}
+trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
+trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
+trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
 
 [tool.poetry.group.notebook.dependencies]
 jupyter = "^1.0.0"
 ipywidgets = "^8.1.3"
 
-[tool.poetry.group.pkg.dependencies]
-trulens-core = {path = "src/core", develop = true}
-trulens-feedback = {path = "src/feedback", develop = true}
-trulens-dashboard = {path = "src/dashboard", develop = true, python = "!=3.9.7"}
-
 [tool.poetry.group.providers.dependencies]
-trulens-provider-bedrock = {path = "src/providers/bedrock", develop = true}
-trulens-provider-langchain = {path = "src/providers/langchain", develop = true}
-trulens-provider-cortex = {path = "src/providers/cortex", develop = true, python = "<3.12"}
-trulens-provider-huggingface = {path = "src/providers/huggingface", develop = true}
-trulens-provider-huggingface-local = {path = "src/providers/huggingface-local", develop = true}
-trulens-provider-openai = {path = "src/providers/openai", develop = true}
-trulens-provider-litellm = {path = "src/providers/litellm", develop = true}
+trulens-provider-bedrock = { path = "src/providers/bedrock", develop = true }
+trulens-provider-langchain = { path = "src/providers/langchain", develop = true }
+trulens-provider-cortex = { path = "src/providers/cortex", develop = true, python = "<3.12" }
+trulens-provider-huggingface = { path = "src/providers/huggingface", develop = true }
+trulens-provider-huggingface-local = { path = "src/providers/huggingface-local", develop = true }
+trulens-provider-openai = { path = "src/providers/openai", develop = true }
+trulens-provider-litellm = { path = "src/providers/litellm", develop = true }
+
+[tool.poetry.group.required.dependencies]
+trulens-core = { path = "src/core", develop = true }
+trulens-feedback = { path = "src/feedback", develop = true }
+trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
 
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.3.1"
@@ -79,25 +83,57 @@ nbformat = "^5.10.4"
 pytest-subtests = "^0.13.1"
 pytest-azurepipelines = "^1.0.5"
 ruff = "^0.5.5"
+pre-commit = "^3.7.1"
+pytest-cov = "^5.0.0"
 
 [tool.ruff]
 line-length = 80
-include = ["src/*.py", "tests/*.py", "tests/*.ipynb", "examples/*.py", "examples/*.ipynb"]
-extend-include = ["*.ipynb"]
-extend-exclude = ["examples/expositional/*", "examples/experimental/*"]
+include = [
+  "src/*.py",
+  "tests/*.py",
+  "tests/*.ipynb",
+  "examples/*.py",
+  "examples/*.ipynb",
+]
+extend-exclude = [
+  "*.ipynb",
+  "examples/expositional/*",
+  "examples/experimental/*",
+]
 
 [tool.ruff.lint]
-ignore = ["E731"]
-extend-select = ["I"]
+preview = true
+ignore = [
+  "E731",
+]
+extend-select = [
+  "I",
+  "E303",
+]
 
 [tool.ruff.lint.isort]
 force-single-line = true
 force-sort-within-sections = true
-single-line-exclusions = ["typing"]
-known-first-party = ["src"]
+single-line-exclusions = [
+  "typing",
+]
+known-first-party = [
+  "src",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
-[tool.tomlsort]
-trailing_comma_inline_array = true
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
+
+[tool.mypy]
+files = [
+  "src",
+  "tests",
+]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true

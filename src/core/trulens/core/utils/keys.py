@@ -256,7 +256,7 @@ def _check_key(
   - in your variable environment,
   - in a .env file in {Path.cwd()} or its parents,
   - explicitly passed to function `check_or_set_keys` of `trulens.core.utils.keys`,
-  - passed to the endpoint or feedback collection constructor that needs it (`trulens.external.provider.endpoint.OpenAIEndpoint`, etc.), or
+  - passed to the endpoint or feedback collection constructor that needs it (`trulens.providers.openai.endpoint.OpenAIEndpoint`, etc.), or
   - set in api utility class that expects it (i.e. `OpenAI(api_key=)`, etc.).
 
 For the last two options, the name of the argument may differ from {k} (i.e. `OpenAI(api_key=)` for `OPENAI_API_KEY`).
