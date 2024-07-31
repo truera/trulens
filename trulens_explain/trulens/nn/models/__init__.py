@@ -1,17 +1,16 @@
-"""
+""" 
 The TruLens library is designed to support models implemented via a variety of
-different popular python neural network frameworks: Keras (with TensorFlow or
-Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks
-implement things (e.g., gradient computations) a number of different ways. We define
-framework specific `ModelWrapper` instances to create a unified model API, providing the same
-functionality to models that are implemented in disparate frameworks. In order to compute
+different popular python neural network frameworks: Keras (with TensorFlow or 
+Theano backend), TensorFlow, and Pytorch. Models developed with different frameworks 
+implement things (e.g., gradient computations) a number of different ways. We define 
+framework specific `ModelWrapper` instances to create a unified model API, providing the same 
+functionality to models that are implemented in disparate frameworks. In order to compute 
 attributions for a model, we provide a `trulens.nn.models.get_model_wrapper` function
 that will return an appropriate `ModelWrapper` instance.
 
-Some parameters are exclusively utilized for specific frameworks and are outlined
+Some parameters are exclusively utilized for specific frameworks and are outlined 
 in the parameter descriptions.
 """
-
 import inspect
 import os
 import traceback
@@ -21,13 +20,13 @@ from trulens.nn.backend import get_backend
 from trulens.utils import tru_logger
 from trulens.utils.typing import ModelLike
 
-import trulens as trulens
+import trulens
 
 
 def discern_backend(model: ModelLike):
     for base_class in inspect.getmro(model.__class__):
         type_str = str(base_class).lower()
-        if "torch" in type_str:
+        if 'torch' in type_str:
             return Backend.PYTORCH
 
         else:
@@ -37,30 +36,26 @@ def discern_backend(model: ModelLike):
                 # Graph objects are currently limited to TF1 and Keras backend
                 # implies keras backed with TF1 or Theano. TF2 Keras objects are
                 # handled by the TF2 backend.
-                if "graph" in type_str:
+                if 'graph' in type_str:
                     return Backend.TENSORFLOW
 
-                if tf.__version__.startswith("2") and (
-                    "tensorflow" in type_str or "keras" in type_str
-                ):
+                if tf.__version__.startswith('2') and ('tensorflow' in type_str
+                                                       or 'keras' in type_str):
                     return Backend.TENSORFLOW
 
                 # Note that in these cases, the TensorFlow version is 1.x.
-                elif (
-                    "tensorflow" in type_str
-                    and "keras" in type_str
-                    and (type_str.index("tensorflow") < type_str.index("keras"))
-                ):
+                elif 'tensorflow' in type_str and 'keras' in type_str and (
+                        type_str.index('tensorflow') < type_str.index('keras')):
                     return Backend.TF_KERAS
 
-                elif "keras" in type_str:
+                elif 'keras' in type_str:
                     return Backend.KERAS
 
             except (ModuleNotFoundError, ImportError):
                 # If tensorflow is not installed, the passed model should not be able to be tensorflow.
                 # Note: we can still use Keras without TensorFlow, if the
                 #   backend is Theano.
-                if "keras" in type_str:
+                if 'keras' in type_str:
                     return Backend.KERAS
 
     return Backend.UNKNOWN
@@ -81,25 +76,25 @@ def get_model_wrapper(
     session=None,
     backend=None,
     force_eval=True,
-    **kwargs,
+    **kwargs
 ):
     """
     Returns a ModelWrapper implementation that exposes the components needed for computing attributions.
 
     Parameters:
         model:
-            The model to wrap. If using the TensorFlow 1 backend, this is
+            The model to wrap. If using the TensorFlow 1 backend, this is 
             expected to be a graph object.
 
         logit_layer:
-            _Supported for Keras and Pytorch models._
+            _Supported for Keras and Pytorch models._ 
             Specifies the name or index of the layer that produces the
-            logit predictions.
+            logit predictions. 
 
         replace_softmax:
             _Supported for Keras models only._ If true, the activation
-            function in the softmax layer (specified by `softmax_layer`)
-            will be changed to a `'linear'` activation.
+            function in the softmax layer (specified by `softmax_layer`) 
+            will be changed to a `'linear'` activation. 
 
         softmax_layer:
             _Supported for Keras models only._ Specifies the layer that
@@ -136,14 +131,14 @@ def get_model_wrapper(
             graph.
 
         session:
-            _Optional, for use with TensorFlow 1 graph models only._ A
+            _Optional, for use with TensorFlow 1 graph models only._ A 
             `tf.Session` object to run the model graph in. If `None`, a new
             temporary session will be generated every time the model is run.
 
         backend:
             _Optional, for forcing a specific backend._ String values recognized
             are pytorch, tensorflow, keras, or tf.keras.
-
+        
         force_eval:
             _Optional, True will force a model.eval() call for PyTorch models. False
             will retain current model state
@@ -151,16 +146,16 @@ def get_model_wrapper(
     Returns: ModelWrapper
     """
 
-    if "input_shape" in kwargs:
+    if 'input_shape' in kwargs:
         tru_logger.deprecate(
-            "get_model_wrapper: input_shape parameter is no longer used and will be removed in the future"
+            f"get_model_wrapper: input_shape parameter is no longer used and will be removed in the future"
         )
-        del kwargs["input_shape"]
-    if "input_dtype" in kwargs:
+        del kwargs['input_shape']
+    if 'input_dtype' in kwargs:
         tru_logger.deprecate(
-            "get_model_wrapper: input_dtype parameter is no longer used and will be removed in the future"
+            f"get_model_wrapper: input_dtype parameter is no longer used and will be removed in the future"
         )
-        del kwargs["input_dtype"]
+        del kwargs['input_dtype']
 
     # get existing backend
     B = get_backend(suppress_warnings=True)
@@ -180,58 +175,56 @@ def get_model_wrapper(
                 None if B is None else B.backend, backend
             )
         )
-        os.environ["TRULENS_BACKEND"] = backend.name.lower()
+        os.environ['TRULENS_BACKEND'] = backend.name.lower()
         B = get_backend()
     else:
-        tru_logger.info(f"Using backend {B.backend}.")
+        tru_logger.info("Using backend {}.".format(B.backend))
     tru_logger.info(
         "If this seems incorrect, you can force the correct backend by passing the `backend` parameter directly into your get_model_wrapper call."
     )
     if B.backend.is_keras_derivative():
         from trulens.nn.models.keras import KerasModelWrapper
-
         return KerasModelWrapper(
             model,
             logit_layer=logit_layer,
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
-            custom_objects=custom_objects,
+            custom_objects=custom_objects
         )
 
     elif B.backend == Backend.PYTORCH:
         from trulens.nn.models.pytorch import PytorchModelWrapper
-
         return PytorchModelWrapper(
-            model, logit_layer=logit_layer, device=device, force_eval=force_eval
+            model,
+            logit_layer=logit_layer,
+            device=device,
+            force_eval=force_eval
         )
     elif B.backend == Backend.TENSORFLOW:
         import tensorflow as tf
-
-        if tf.__version__.startswith("2"):
+        if tf.__version__.startswith('2'):
             from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
-
             return Tensorflow2ModelWrapper(
                 model,
                 logit_layer=logit_layer,
                 replace_softmax=replace_softmax,
                 softmax_layer=softmax_layer,
-                custom_objects=custom_objects,
+                custom_objects=custom_objects
             )
         else:
             from trulens.nn.models.tensorflow_v1 import TensorflowModelWrapper
-
             if input_tensors is None:
                 tru_logger.error(
-                    "tensorflow1 model must pass parameter: input_tensors"
+                    'tensorflow1 model must pass parameter: input_tensors'
                 )
             if output_tensors is None:
                 tru_logger.error(
-                    "tensorflow1 model must pass parameter: output_tensors"
+                    'tensorflow1 model must pass parameter: output_tensors'
                 )
             return TensorflowModelWrapper(
                 model,
                 input_tensors=input_tensors,
                 output_tensors=output_tensors,
                 internal_tensor_dict=internal_tensor_dict,
-                session=session,
+                session=session
             )

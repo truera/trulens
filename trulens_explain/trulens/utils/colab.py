@@ -18,7 +18,7 @@ def install_if_not_installed(packages):
             package_name = package
             package_package = package
 
-        print(f"{package_name} ... ", end="")
+        print(f"{package_name} ... ", end='')
 
         try:
             importlib.import_module(package_name)

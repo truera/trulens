@@ -1,3 +1,4 @@
+from unittest import main
 from unittest import TestCase
 
 import tensorflow as tf
@@ -10,10 +11,11 @@ from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
 
 
 class TFSubclassModel(Model):
+
     def __init__(self):
-        super().__init__()
-        self.dense_1 = Dense(2, activation="relu", input_shape=(2,))
-        self.dense_2 = Dense(1, name="logits")
+        super(TFSubclassModel, self).__init__()
+        self.dense_1 = Dense(2, activation='relu', input_shape=(2,))
+        self.dense_2 = Dense(1, name='logits')
 
     def call(self, x):
         z = self.dense_1(x)
@@ -22,10 +24,11 @@ class TFSubclassModel(Model):
 
 
 class TFFunctionModel(Model):
+
     def __init__(self):
-        super().__init__()
-        self.dense_1 = Dense(2, activation="relu", input_shape=(2,))
-        self.dense_2 = Dense(1, name="logits")
+        super(TFFunctionModel, self).__init__()
+        self.dense_1 = Dense(2, activation='relu', input_shape=(2,))
+        self.dense_2 = Dense(1, name='logits')
 
     @tf.function
     def call(self, x):
@@ -35,12 +38,13 @@ class TFFunctionModel(Model):
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(EnvironmentTest, self).setUp()
         # Make a linear model for testing.
         x = Input((2,))
-        z = Dense(2, activation="relu")(x)
-        y = Dense(1, name="logits")(z)
+        z = Dense(2, activation='relu')(x)
+        y = Dense(1, name='logits')(z)
 
         self.models = [Model(x, y), TFSubclassModel(), TFFunctionModel()]
         self.models_wrapper_kwargs = [{}, {}, {}]

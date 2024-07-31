@@ -1,16 +1,16 @@
 """
-The *slice*, or layer, of the network provides flexibility over the level of
-abstraction for the explanation. In a low layer, an explanation may highlight
-the edges that were most important in identifying an object like a face, while
+The *slice*, or layer, of the network provides flexibility over the level of 
+abstraction for the explanation. In a low layer, an explanation may highlight 
+the edges that were most important in identifying an object like a face, while 
 in a higher layer, the explanation might highlight high-level features such as a
 nose or mouth. By raising the level of abstraction, explanations that generalize
 over larger sets of samples are possible.
 
-Formally, A network, $f$, can be broken into a slice, $f = g \\circ h$, where
+Formally, A network, $f$, can be broken into a slice, $f = g \\circ h$, where 
 $h$ can be thought of as a pre-processor that computes features, and $g$ can be
 thought of as a sub-model that uses the features computed by $h$.
 """
-# from __future__ import annotations # Avoid expanding type aliases in mkdocs.
+#from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from typing import Callable, List, Optional, Union
 
@@ -22,7 +22,7 @@ from trulens.utils.typing import TensorLike
 LayerIdentifier = Union[int, str, List[Union[int, str]]]
 
 
-class Cut:
+class Cut(object):
     """
     A cut is the primary building block for a slice. It determines an internal
     component of a network to expose. A slice if formed by two cuts.
@@ -31,32 +31,32 @@ class Cut:
     def __init__(
         self,
         name: LayerIdentifier,
-        anchor: str = "out",
-        accessor: Optional[Callable] = None,
+        anchor: str = 'out',
+        accessor: Optional[Callable] = None
     ):
         """
         Parameters:
             name:
                 The name or index of a layer in the model, or a list containing
-                the names/indices of multiple layers.
+                the names/indices of mutliple layers.
 
-            anchor:
+            anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the specified layer should be used.
+                of the spcified layer should be used.
 
             accessor:
-                An accessor function that operates on the layer, mapping the
-                tensor (or list thereof) corresponding to the layer's
-                input/output to another tensor (or list thereof). This can be
-                used to, e.g., extract a particular output from a layer that
-                produces a sequence of outputs. If `accessor` is `None`, the
-                following accessor function will be used:
+                An accessor function that operates on the layer, mapping the 
+                tensor (or list thereof) corresponding to the layer's 
+                input/output to another tensor (or list thereof). This can be 
+                used to, e.g., extract a particular output from a layer that 
+                produces a sequence of outputs. If `accessor` is `None`, the 
+                following accessor function will be used: 
                 ```python
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
-        assert (
-            name is None or isinstance(name, (list, int, str))
+        assert name is None or isinstance(
+            name, (list, int, str)
         ), "Cut.name must be one of: layer index, layer name, or list of names/indices of multiple layers"
         if isinstance(name, list):
             for n in name:
@@ -65,20 +65,19 @@ class Cut:
                 ), f"Elements in Cut.name must be layer names (str) or indices (int). Got type {type(n)}"
         anchor = str(anchor)
         assert anchor in [
-            "in",
-            "out",
+            'in', 'out'
         ], "Cut.anchor must be one of ('in', 'out')"
         assert accessor is None or isinstance(
             accessor, Callable
         ), "Cut.accessor must be callable or None"
 
-        if get_backend().backend == "pytorch":
-            if isinstance(name, int) or (
-                isinstance(name, list) and isinstance(name[0], int)
-            ):
+        if get_backend().backend == 'pytorch':
+            if (isinstance(name, int) or
+                (isinstance(name, list) and isinstance(name[0], int))):
+
                 tru_logger.warning(
-                    "\n\nPytorch does not have native support for indexed "
-                    "layers. Using layer indices is not recommended.\n"
+                    '\n\nPytorch does not have native support for indexed '
+                    'layers. Using layer indices is not recommended.\n'
                 )
 
         self.name = name
@@ -86,17 +85,17 @@ class Cut:
         self.anchor = anchor
 
     def __str__(self):
-        return render_object(self, ["name", "accessor", "anchor"])
+        return render_object(self, ['name', 'accessor', 'anchor'])
 
     # TODO: layer arg might need to be more specific
     def access_layer(self, layer: TensorLike) -> TensorLike:
         """
-        Applies `self.accessor` to the result of collecting the relevant
+        Applies `self.accessor` to the result of collecting the relevant 
         tensor(s) associated with a layer's output.
 
         Parameters:
             layer:
-                The tensor output (or input, if so specified by the anchor) of
+                The tensor output (or input, if so specified by the anchor) of 
                 the layer(s) specified by this cut.
 
         Returns:
@@ -109,8 +108,7 @@ class Cut:
         else:
             layer = (
                 layer[0]
-                if isinstance(layer, list) and len(layer) == 1
-                else layer
+                if isinstance(layer, list) and len(layer) == 1 else layer
             )
             return self.accessor(layer)
 
@@ -120,20 +118,20 @@ class InputCut(Cut):
     Special cut that selects the input(s) of a model.
     """
 
-    def __init__(self, anchor: str = "in", accessor: Optional[Callable] = None):
+    def __init__(self, anchor: str = 'in', accessor: Optional[Callable] = None):
         """
         Parameters:
-            anchor:
+            anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the specified layer should be used.
+                of the spcified layer should be used.
 
             accessor:
-                An accessor function that operates on the layer, mapping the
-                tensor (or list thereof) corresponding to the layer's
-                input/output to another tensor (or list thereof). This can be
-                used to, e.g., extract a particular output from a layer that
-                produces a sequence of outputs. If `accessor` is `None`, the
-                following accessor function will be used:
+                An accessor function that operates on the layer, mapping the 
+                tensor (or list thereof) corresponding to the layer's 
+                input/output to another tensor (or list thereof). This can be 
+                used to, e.g., extract a particular output from a layer that 
+                produces a sequence of outputs. If `accessor` is `None`, the 
+                following accessor function will be used: 
                 ```python
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
@@ -147,26 +145,26 @@ class OutputCut(Cut):
     """
 
     def __init__(
-        self, anchor: str = "out", accessor: Optional[Callable] = None
+        self, anchor: str = 'out', accessor: Optional[Callable] = None
     ):
         """
         Parameters:
-            anchor:
+            anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the specified layer should be used.
+                of the spcified layer should be used.
 
             accessor:
-                An accessor function that operates on the layer, mapping the
-                tensor (or list thereof) corresponding to the layer's
-                input/output to another tensor (or list thereof). This can be
-                used to, e.g., extract a particular output from a layer that
-                produces a sequence of outputs. If `accessor` is `None`, the
-                following accessor function will be used:
+                An accessor function that operates on the layer, mapping the 
+                tensor (or list thereof) corresponding to the layer's 
+                input/output to another tensor (or list thereof). This can be 
+                used to, e.g., extract a particular output from a layer that 
+                produces a sequence of outputs. If `accessor` is `None`, the 
+                following accessor function will be used: 
                 ```python
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
-        super().__init__(None, anchor, accessor)
+        super(OutputCut, self).__init__(None, anchor, accessor)
 
 
 class LogitCut(Cut):
@@ -176,37 +174,37 @@ class LogitCut(Cut):
     """
 
     def __init__(
-        self, anchor: str = "out", accessor: Optional[Callable] = None
+        self, anchor: str = 'out', accessor: Optional[Callable] = None
     ):
         """
         Parameters:
-            anchor:
+            anchor: 
                 Determines whether input (`'in'`) or the output (`'out'`) tensor
-                of the specified layer should be used.
+                of the spcified layer should be used.
 
             accessor:
-                An accessor function that operates on the layer, mapping the
-                tensor (or list thereof) corresponding to the layer's
-                input/output to another tensor (or list thereof). This can be
-                used to, e.g., extract a particular output from a layer that
-                produces a sequence of outputs. If `accessor` is `None`, the
-                following accessor function will be used:
+                An accessor function that operates on the layer, mapping the 
+                tensor (or list thereof) corresponding to the layer's 
+                input/output to another tensor (or list thereof). This can be 
+                used to, e.g., extract a particular output from a layer that 
+                produces a sequence of outputs. If `accessor` is `None`, the 
+                following accessor function will be used: 
                 ```python
                 lambda t: t[-1] if isinstance(t, list) else t
                 ```
         """
-        super().__init__(None, anchor, accessor)
+        super(LogitCut, self).__init__(None, anchor, accessor)
 
 
-class Slice:
+class Slice(object):
     """
     Class representing a slice of a network. A network, $f$, can be broken
-    into a slice, $f = g \\circ h$, where $h$ can be thought of as a
-    pre-processor that computes features, and $g$ can be thought of as a
+    into a slice, $f = g \\circ h$, where $h$ can be thought of as a 
+    pre-processor that computes features, and $g$ can be thought of as a 
     sub-model that uses the features computed by $h$.
 
     A `Slice` object represents a slice as two `Cut`s, `from_cut` and `to_cut`,
-    which are the layers corresponding to the output of $h$ and $g$,
+    which are the layers corresponding to the output of $h$ and $g$, 
     respectively.
     """
 
@@ -218,7 +216,7 @@ class Slice:
                 in slice, $f = g \\circ h$.
 
             to_cut:
-                Cut representing the output of the sub-model, $g$, in slice,
+                Cut representing the output of the sub-model, $g$, in slice, 
                 $f = g \\circ h$.
         """
         self._from_cut = from_cut
@@ -227,7 +225,7 @@ class Slice:
     @property
     def from_cut(self) -> Cut:
         """
-        Cut representing the output of the preprocessing function, $h$, in
+        Cut representing the output of the preprocessing function, $h$, in 
         slice, $f = g \\circ h$.
         """
         return self._from_cut
@@ -235,7 +233,7 @@ class Slice:
     @property
     def to_cut(self) -> Cut:
         """
-        Cut representing the output of the sub-model, $g$, in slice,
+        Cut representing the output of the sub-model, $g$, in slice, 
         $f = g \\circ h$.
         """
         return self._to_cut

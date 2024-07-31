@@ -1,15 +1,16 @@
-# Welcome to TruLens
+# Welcome to TruLens!
 
 ![TruLens](https://www.trulens.org/assets/images/Neural_Network_Explainability.png)
+
 
 TruLens is a cross-framework library for deep learning explainability. It provides a uniform abstraction over a number of different frameworks. It provides a uniform abstraction layer over TensorFlow, PyTorch, and Keras and allows input and internal explanations.
 
 [This paper](https://arxiv.org/abs/1802.03788) is an introduction to the theoretical foundations of the library. We’ve been using TruLens at TruEra across a wide range of real-world use cases to explain deep learning models ranging from time-series RNNs to image and NLP models, and wanted to share the awesomeness with the world.
 
+
 [Documentation](https://www.trulens.org/)
 
 # Quick Usage
-
 To quickly play around with the TruLens library, check out the following Colab notebooks:
 
 * PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1n77IGrPDO2XpeIVo_LQW0gY78enV-tY9?usp=sharing)
@@ -17,27 +18,23 @@ To quickly play around with the TruLens library, check out the following Colab n
 * NLP with PyTorch: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/18GcjsYMkRbxPDDS3J6BEbKnb7AY-1-Wa?usp=sharing)
 * NLP with TensorFlow 2 / Keras: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1K09IvN7cMTkzsnb-uAeA0YQNfDU7Ibhs?usp=sharing)
 
+
 # Installation
 
 These installation instructions assume that you have conda installed and added to your path.
 
 0. Create a virtual environment (or modify an existing one).
-
 ```
 conda create -n "<my_name>" python=3.7  # Skip if using existing environment.
 conda activate <my_name>
 ```
-
 1. Install dependencies.
-
 ```
 conda install tensorflow-gpu=1  # Or whatever backend you're using.
 conda install keras             # Or whatever backend you're using.
 conda install matplotlib        # For visualizations.
 ```
-
 2. Install the trulens pip package from PyPI.
-
 ```
 pip install trulens
 ```
@@ -85,7 +82,7 @@ Several common default implementations are provided in this module as well.
 
 The *distribution of interest* (DoI) essentially specifies for which points surrounding each record the calculated attribution should be valid.
 The distribution can be specified via an implementation of the `DoI` class in the `trulens.nn.distributions` module, which is a function taking an input record and producing a list of sample input points to aggregate attribution over.
-A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module.
+A few common default distributions implementing the `DoI` class can be found in the `trulens.nn.distributions` module. 
 
 See [Attributions for Different Use Cases](https://trulens.org/attribution_parameterization/) for further explanations of the purpose of these parameters and examples of their usage.
 
@@ -95,11 +92,9 @@ In order to interpret the attributions produced by an `AttributionMethod`, a few
 While the interface of each visualizer varies slightly, in general, the visualizers are a function taking an `np.Array` representing the attributions returned from an `AttributionMethod` and producing an image that can be used to interpret the attributions.
 
 # Contact Us
-
 To communicate with other trulens developers, join our [Slack](https://join.slack.com/t/trulens/shared_invite/zt-kbaz6odu-kBWfqewcHMFLm_GNN8eqDA)!
 
 # Citation
-
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4495856.svg)](https://doi.org/10.5281/zenodo.4495856)
 
 To cite this repository:

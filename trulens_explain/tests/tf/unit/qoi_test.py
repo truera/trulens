@@ -1,6 +1,6 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "tensorflow"
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 from tensorflow.python.util import deprecation
 
@@ -16,5 +16,5 @@ class QoiTest(QoiTestBase, TestCase):
     pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

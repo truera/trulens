@@ -1,6 +1,6 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "tf.keras"
+os.environ['TRULENS_BACKEND'] = 'tf.keras'
 
 from tensorflow.python.util import deprecation
 
@@ -16,5 +16,5 @@ class QoiTest(QoiTestBase, TestCase):
     pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

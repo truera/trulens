@@ -34,7 +34,13 @@ class PytorchModelWrapper(ModelWrapper):
     """
 
     def __init__(
-        self, model, *, logit_layer=None, device=None, force_eval=True, **kwargs
+        self,
+        model,
+        *,
+        logit_layer=None,
+        device=None,
+        force_eval=True,
+        **kwargs
     ):
         """
         __init__ Constructor
@@ -44,25 +50,25 @@ class PytorchModelWrapper(ModelWrapper):
         model : pytorch.nn.Module
             Pytorch model implemented as nn.Module
         logit_layer: str
-            The name of the logit layer. If not supplied, it will assume any
+            The name of the logit layer. If not supplied, it will assume any 
             layer named 'logits' is the logit layer.
         device : string, optional
             device on which to run model, by default None
         force_eval : bool, optional
             If True, will call model.eval() to ensure determinism. Otherwise, keeps current model state, by default True
-
+            
         """
 
-        if "input_shape" in kwargs:
+        if 'input_shape' in kwargs:
             tru_logger.deprecate(
-                "PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future"
+                f"PytorchModelWrapper: input_shape parameter is no longer used and will be removed in the future"
             )
-            del kwargs["input_shape"]
-        if "input_dtype" in kwargs:
+            del kwargs['input_shape']
+        if 'input_dtype' in kwargs:
             tru_logger.deprecate(
-                "PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future"
+                f"PytorchModelWrapper: input_dtype parameter is no longer used and will be removed in the future"
             )
-            del kwargs["input_dtype"]
+            del kwargs['input_dtype']
 
         super().__init__(model, **kwargs)
         # sets self._model, issues cross-backend messages
@@ -97,16 +103,15 @@ class PytorchModelWrapper(ModelWrapper):
             )
 
         # Check to see if this model outputs probits or logits.
-        if len(self._tensors) > 0 and isinstance(
-            self._tensors[-1], torch.nn.Softmax
-        ):
+        if len(self._tensors) > 0 and isinstance(self._tensors[-1],
+                                                 torch.nn.Softmax):
             self._gives_logits = False
         else:
             self._gives_logits = True
 
     def print_layer_names(self):
         for name in self._layernames:
-            print(f"'{name}':\t{self._layers[name]}")
+            print(f'\'{name}\':\t{self._layers[name]}')
 
     @staticmethod
     def _get_model_layers(model):
@@ -130,7 +135,9 @@ class PytorchModelWrapper(ModelWrapper):
             else:
                 cr_layers = PytorchModelWrapper._get_model_layers(mod)
                 for cr_layer_name, cr_layer_mod in cr_layers:
-                    r_layers.append((f"{name}_{cr_layer_name}", cr_layer_mod))
+                    r_layers.append(
+                        ('{}_{}'.format(name, cr_layer_name), cr_layer_mod)
+                    )
         return r_layers
 
     def _get_layer(self, name):
@@ -156,12 +163,12 @@ class PytorchModelWrapper(ModelWrapper):
             Layer index out of bounds
         """
         if isinstance(name, str):
-            if name not in self._layernames:
-                raise ValueError("no such layer tensor:", name)
+            if not name in self._layernames:
+                raise ValueError('no such layer tensor:', name)
             return self._layers[name]
         elif isinstance(name, int):
             if len(self._layers) <= name:
-                raise ValueError("layer index out of bounds:", name)
+                raise ValueError('layer index out of bounds:', name)
             return self._layers[self._layernames[name]]
         elif isinstance(name, DATA_CONTAINER_TYPE):
             return [self._get_layer(n) for n in name]
@@ -172,10 +179,8 @@ class PytorchModelWrapper(ModelWrapper):
         if isinstance(cut, LogitCut):
             names_and_anchors.append(
                 (
-                    "logits"
-                    if self._logit_layer is None
-                    else self._logit_layer,
-                    cut.anchor,
+                    'logits' if self._logit_layer is None else
+                    self._logit_layer, cut.anchor
                 )
             )
 
@@ -186,14 +191,14 @@ class PytorchModelWrapper(ModelWrapper):
         elif not (isinstance(cut, OutputCut) or isinstance(cut, InputCut)):
             names_and_anchors.append((cut.name, cut.anchor))
 
-    def _extract_outputs_from_hooks(
-        self, cut, hooks, output, model_inputs
-    ) -> Inputs[TensorLike]:
+    def _extract_outputs_from_hooks(self, cut, hooks, output,
+                                    model_inputs) -> Inputs[TensorLike]:
+
         return_output = None
 
         def _get_hook_val(k):
             if k not in hooks:
-                # TODO: incorporate some more info in this error. Some of these
+                # TODO: incoporate some more info in this error. Some of these
                 # prints might be useful for this error.
 
                 # self.print_layer_names()
@@ -213,15 +218,13 @@ class PytorchModelWrapper(ModelWrapper):
             return_output = many_of_om(output)
 
         elif isinstance(cut, InputCut):
-            return_output = list(model_inputs.args) + list(
-                model_inputs.kwargs.values()
-            )
+            return_output = list(model_inputs.args
+                                ) + list(model_inputs.kwargs.values())
 
         elif isinstance(cut, LogitCut):
             return_output = many_of_om(
-                hooks[
-                    "logits" if self._logit_layer is None else self._logit_layer
-                ]
+                hooks['logits' if self._logit_layer is None else self.
+                      _logit_layer]
             )
 
         elif isinstance(cut.name, DATA_CONTAINER_TYPE):
@@ -236,9 +239,8 @@ class PytorchModelWrapper(ModelWrapper):
         # Convert `x` to a tensor on `self.device`. Note that layer input can be
         # a nested DATA_CONTAINER_TYPE.
         B = get_backend()
-        if isinstance(x, np.ndarray) or (
-            len(x) > 0 and isinstance(x[0], np.ndarray)
-        ):
+        if isinstance(x, np.ndarray) or (len(x) > 0 and
+                                         isinstance(x[0], np.ndarray)):
             x = nested_map(x, partial(B.as_tensor, device=self.device))
 
         elif isinstance(x, DATA_CONTAINER_TYPE):
@@ -256,7 +258,7 @@ class PytorchModelWrapper(ModelWrapper):
         to_cut: Cut,
         attribution_cut: Cut,
         intervention: TensorArgs,
-        input_timestep: Optional[int] = None,
+        input_timestep: Optional[int] = None
     ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
@@ -328,26 +330,27 @@ class PytorchModelWrapper(ModelWrapper):
                     inpt = inpt[0] if len(inpt) == 1 else inpt
 
                     ModelWrapper._nested_assign(
-                        inpt if doi_cut.anchor == "in" else outpt,
-                        intervention.first_batchable(B),
+                        inpt if doi_cut.anchor == 'in' else outpt,
+                        intervention.first_batchable(B)
                     )
 
                 counter += 1
 
             # Register according to the anchor.
-            if doi_cut.anchor == "in":
-                in_handle = self._get_layer(
-                    doi_cut.name
-                ).register_forward_pre_hook(
-                    partial(intervene_hookfn, outpt=None)
+            if doi_cut.anchor == 'in':
+                in_handle = (
+                    self._get_layer(doi_cut.name).register_forward_pre_hook(
+                        partial(intervene_hookfn, outpt=None)
+                    )
                 )
             else:
-                if doi_cut.anchor is not None and doi_cut.anchor != "out":
+                if doi_cut.anchor is not None and doi_cut.anchor != 'out':
                     tru_logger.warning(
                         f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
                     )
-                in_handle = self._get_layer(doi_cut.name).register_forward_hook(
-                    intervene_hookfn
+                in_handle = (
+                    self._get_layer(doi_cut.name
+                                   ).register_forward_hook(intervene_hookfn)
                 )
 
         # Collect the names and anchors of the layers we want to return.
@@ -362,13 +365,14 @@ class PytorchModelWrapper(ModelWrapper):
         hooks = {}
 
         def get_hookfn(layer_name, anchor):
+
             def hookfn(self, inpt, outpt):
                 nonlocal hooks, layer_name, anchor
 
                 # FIXME: generalize to multi-input layers
                 inpt = om_of_many(inpt)
 
-                if anchor == "in":
+                if anchor == 'in':
                     hooks[layer_name] = inpt
                 else:
                     # FIXME : will not work for multibranch outputs
@@ -380,9 +384,7 @@ class PytorchModelWrapper(ModelWrapper):
         handles = [
             self._get_layer(name).register_forward_hook(
                 get_hookfn(name, anchor)
-            )
-            for name, anchor in names_and_anchors
-            if name is not None
+            ) for name, anchor in names_and_anchors if name is not None
         ]
 
         with memory_suggestions(device=self.device):
@@ -415,25 +417,21 @@ class PytorchModelWrapper(ModelWrapper):
                 self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
                 self._extract_outputs_from_hooks(
                     cut=attribution_cut, **extract_args
-                ),
+                )
             )
         else:
             return (
-                self._extract_outputs_from_hooks(cut=to_cut, **extract_args),
-                None,
+                self._extract_outputs_from_hooks(cut=to_cut,
+                                                 **extract_args), None
             )
 
     def _qoi_bprop(
-        self,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: TensorArgs,
+        self, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: TensorArgs
     ) -> Outputs[
-        Inputs[TensorLike]
+            Inputs[TensorLike]
     ]:  # one outer element per QoI, one inner element per attribution_cut input
+
         B = get_backend()
 
         y, zs = self._fprop(
@@ -441,7 +439,7 @@ class PytorchModelWrapper(ModelWrapper):
             doi_cut=doi_cut,
             to_cut=to_cut,
             attribution_cut=attribution_cut,
-            intervention=intervention,
+            intervention=intervention
         )
 
         def scalarize(t: torch.Tensor) -> torch.tensor:
@@ -470,10 +468,8 @@ class PytorchModelWrapper(ModelWrapper):
                     grads_for_qoi = B.gradient(qoi_out, zs)
 
             except RuntimeError as e:
-                if (
-                    "cudnn RNN backward can only be called in training mode"
-                    in str(e)
-                ):
+                if "cudnn RNN backward can only be called in training mode" in str(
+                        e):
                     raise RuntimeError(
                         "Cannot get deterministic gradients from RNN's with cudnn. See more about this issue here: https://github.com/pytorch/captum/issues/564 .\n"
                         "Consider setting 'torch.backends.cudnn.enabled = False' for now."

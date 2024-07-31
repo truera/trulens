@@ -1,17 +1,17 @@
 """
-A *Quantity of Interest* (QoI) is a function of the output that determines the
+A *Quantity of Interest* (QoI) is a function of the output that determines the 
 network output behavior that the attributions describe.
 
 The quantity of interest lets us specify what we want to explain. Often, this is
 the output of the network corresponding to a particular class, addressing, e.g.,
-"Why did the model classify a given image as a car?" However, we could also
-consider various combinations of outputs, allowing us to ask more specific
-questions, such as, "Why did the model classify a given image as a sedan *and
-not a convertible*?" The former may highlight general “car features,” such as
-tires, while the latter (called a comparative explanation) might focus on the
+"Why did the model classify a given image as a car?" However, we could also 
+consider various combinations of outputs, allowing us to ask more specific 
+questions, such as, "Why did the model classify a given image as a sedan *and 
+not a convertible*?" The former may highlight general “car features,” such as 
+tires, while the latter (called a comparative explanation) might focus on the 
 roof of the car, a “car feature” not shared by convertibles.
 """
-# from __future__ import annotations # Avoid expanding type aliases in mkdocs.
+#from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
@@ -34,21 +34,20 @@ class QoiCutSupportError(ValueError):
     Exception raised if the quantity of interest is called on a cut whose output
     is not supported by the quantity of interest.
     """
-
     pass
 
 
 class QoI(AbstractBaseClass):
     """
     Interface for quantities of interest. The *Quantity of Interest* (QoI) is a
-    function of the output specified by the slice that determines the network
+    function of the output specified by the slice that determines the network 
     output behavior that the attributions describe.
     """
 
     def __str__(self):
         return render_object(self, [])
 
-    # TODO: Need to give a separate value of y at target instance here since
+    # TODO: Need to give a seperate value of y at target instance here since
     # these are values are interventions. Cannot presently define a QoI that says:
     # logits of the predicted class for each instance.
     # Issue GH-72 . Task MLNN-415 .
@@ -79,22 +78,21 @@ class QoI(AbstractBaseClass):
     def _assert_cut_contains_only_one_tensor(self, x):
         if isinstance(x, DATA_CONTAINER_TYPE):
             raise QoiCutSupportError(
-                "Cut provided to quantity of interest was comprised of "
-                "multiple tensors, but `{}` is only defined for cuts comprised "
-                "of a single tensor (received a list of {} tensors).\n"
-                "\n"
-                "Either (1) select a slice where the `to_cut` corresponds to a "
-                "single tensor, or (2) implement/use a `QoI` object that "
-                "supports lists of tensors, i.e., where the parameter, `x`, to "
-                "`__call__` is expected/allowed to be a list of {} tensors.".format(
-                    self.__class__.__name__, len(x), len(x)
-                )
+                'Cut provided to quantity of interest was comprised of '
+                'multiple tensors, but `{}` is only defined for cuts comprised '
+                'of a single tensor (received a list of {} tensors).\n'
+                '\n'
+                'Either (1) select a slice where the `to_cut` corresponds to a '
+                'single tensor, or (2) implement/use a `QoI` object that '
+                'supports lists of tensors, i.e., where the parameter, `x`, to '
+                '`__call__` is expected/allowed to be a list of {} tensors.'.
+                format(self.__class__.__name__, len(x), len(x))
             )
 
         elif not get_backend().is_tensor(x):
             raise ValueError(
-                "`{}` expected to receive an instance of `Tensor`, but "
-                "received an instance of {}".format(
+                '`{}` expected to receive an instance of `Tensor`, but '
+                'received an instance of {}'.format(
                     self.__class__.__name__, type(x)
                 )
             )
@@ -102,7 +100,7 @@ class QoI(AbstractBaseClass):
 
 class MaxClassQoI(QoI):
     """
-    Quantity of interest for attributing output towards the maximum-predicted
+    Quantity of interest for attributing output towards the maximum-predicted 
     class.
     """
 
@@ -115,14 +113,14 @@ class MaxClassQoI(QoI):
                 Output dimension over which max operation is taken.
 
             activation:
-                Activation function to be applied to the output before taking
-                the max. If `activation` is a string, use the corresponding
-                named activation function implemented by the backend. The
+                Activation function to be applied to the output before taking 
+                the max. If `activation` is a string, use the corresponding 
+                named activation function implemented by the backend. The 
                 following strings are currently supported as shorthands for the
                 respective standard activation functions:
 
-                - `'sigmoid'`
-                - `'softmax'`
+                - `'sigmoid'` 
+                - `'softmax'` 
 
                 If `activation` is `None`, no activation function is applied to
                 the input.
@@ -139,13 +137,13 @@ class MaxClassQoI(QoI):
         if self.activation is not None:
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
-                if self.activation in ["sigmoid", "softmax"]:
+                if self.activation in ['sigmoid', 'softmax']:
                     y = getattr(get_backend(), self.activation)(y)
 
                 else:
                     raise NotImplementedError(
-                        "This activation function is not currently supported "
-                        "by the backend"
+                        'This activation function is not currently supported '
+                        'by the backend'
                     )
             else:
                 y = self.activation(y)
@@ -155,8 +153,8 @@ class MaxClassQoI(QoI):
 
 class InternalChannelQoI(QoI):
     """
-    Quantity of interest for attributing output towards the output of an
-    internal convolutional layer channel, aggregating using a specified
+    Quantity of interest for attributing output towards the output of an 
+    internal convolutional layer channel, aggregating using a specified 
     operation.
 
     Also works for non-convolutional dense layers, where the given neuron's
@@ -174,25 +172,25 @@ class InternalChannelQoI(QoI):
         self,
         channel: Union[int, List[int]],
         channel_axis: Optional[int] = None,
-        agg_fn: Optional[Callable] = None,
+        agg_fn: Optional[Callable] = None
     ):
         """
         Parameters:
             channel:
-                Channel to return. If a list is provided, then the quantity sums
+                Channel to return. If a list is provided, then the quantity sums 
                 over each of the channels in the list.
 
             channel_axis:
                 Channel dimension index, if relevant, e.g., for 2D convolutional
-                layers. If `channel_axis` is `None`, then the channel axis of
-                the relevant backend will be used. This argument is not used
+                layers. If `channel_axis` is `None`, then the channel axis of 
+                the relevant backend will be used. This argument is not used 
                 when the channels are scalars, e.g., for dense layers.
 
             agg_fn:
-                Function with which to aggregate the remaining dimensions
-                (except the batch dimension) in order to get a single scalar
-                value for each channel. If `agg_fn` is `None` then a sum over
-                each neuron in the channel will be taken. This argument is not
+                Function with which to aggregate the remaining dimensions 
+                (except the batch dimension) in order to get a single scalar 
+                value for each channel. If `agg_fn` is `None` then a sum over 
+                each neuron in the channel will be taken. This argument is not 
                 used when the channels are scalars, e.g., for dense layers.
         """
         if channel_axis is None:
@@ -209,30 +207,29 @@ class InternalChannelQoI(QoI):
         self._assert_cut_contains_only_one_tensor(y)
 
         if len(B.int_shape(y)) == 2:
-            return sum(y[:, ch] for ch in self._channels)
+            return sum([y[:, ch] for ch in self._channels])
 
         elif len(B.int_shape(y)) == 3:
-            return sum(self._agg_fn(y[:, :, ch]) for ch in self._channel)
+            return sum([self._agg_fn(y[:, :, ch]) for ch in self._channel])
 
         elif len(B.int_shape(y)) == 4:
             if self._channel_ax == 1:
-                return sum(self._agg_fn(y[:, ch]) for ch in self._channels)
+                return sum([self._agg_fn(y[:, ch]) for ch in self._channels])
 
             elif self._channel_ax == 3:
                 return sum(
-                    self._agg_fn(y[:, :, :, ch]) for ch in self._channels
+                    [self._agg_fn(y[:, :, :, ch]) for ch in self._channels]
                 )
 
             else:
                 raise ValueError(
-                    "Unsupported channel axis for convolutional layer: {}".format(
-                        self._channel_ax
-                    )
+                    'Unsupported channel axis for convolutional layer: {}'.
+                    format(self._channel_ax)
                 )
 
         else:
             raise QoiCutSupportError(
-                "Unsupported tensor rank for `InternalChannelQoI`: {}".format(
+                'Unsupported tensor rank for `InternalChannelQoI`: {}'.format(
                     len(B.int_shape(y))
                 )
             )
@@ -262,7 +259,7 @@ class ClassQoI(QoI):
 
 class ComparativeQoI(QoI):
     """
-    Quantity of interest for attributing network output towards a given class,
+    Quantity of interest for attributing network output towards a given class, 
     relative to another.
     """
 
@@ -281,6 +278,7 @@ class ComparativeQoI(QoI):
         return render_object(self, ["cl1", "cl2"])
 
     def __call__(self, y: TensorLike) -> TensorLike:
+
         self._assert_cut_contains_only_one_tensor(y)
 
         return y[:, self.cl1] - y[:, self.cl2]
@@ -296,14 +294,14 @@ class LambdaQoI(QoI):
         """
         Parameters:
             function:
-                A callable that takes a single argument representing the model's
-                tensor output and returns a differentiable batched scalar tensor
+                A callable that takes a single argument representing the model's 
+                tensor output and returns a differentiable batched scalar tensor 
                 representing the QoI.
         """
         if len(signature(function).parameters) != 1:
             raise ValueError(
-                "QoI function must take exactly 1 argument, but provided "
-                "function takes {} arguments".format(
+                'QoI function must take exactly 1 argument, but provided '
+                'function takes {} arguments'.format(
                     len(signature(function).parameters)
                 )
             )
@@ -316,41 +314,41 @@ class LambdaQoI(QoI):
 
 class ThresholdQoI(QoI):
     """
-    Quantity of interest for attributing network output toward the difference
-    between two regions separated by a given threshold. I.e., the quantity of
+    Quantity of interest for attributing network output toward the difference 
+    between two regions seperated by a given threshold. I.e., the quantity of
     interest is the "high" elements minus the "low" elements, where the high
-    elements have activations above the threshold and the low elements have
+    elements have activations above the threshold and the low elements have 
     activations below the threshold.
 
-    Use case: binary segmentation.
+    Use case: bianry segmentation.
     """
 
     def __init__(
         self,
         threshold: float,
         low_minus_high: bool = False,
-        activation: Union[Callable, str, None] = None,
+        activation: Union[Callable, str, None] = None
     ):
         """
         Parameters:
             threshold:
-                A threshold to determine the element-wise sign of the input
-                tensor. The elements with activations higher than the threshold
-                will retain their sign, while the elements with activations
-                lower than the threshold will have their sign flipped (or vice
+                A threshold to determine the element-wise sign of the input 
+                tensor. The elements with activations higher than the threshold 
+                will retain their sign, while the elements with activations 
+                lower than the threshold will have their sign flipped (or vice 
                 versa if `low_minus_high` is set to `True`).
             low_minus_high:
-                If `True`, subtract the output with activations above the
-                threshold from the output with activations below the threshold.
-                If `False`, subtract the output with activations below the
+                If `True`, substract the output with activations above the 
+                threshold from the output with activations below the threshold. 
+                If `False`, substract the output with activations below the 
                 threshold from the output with activations above the threshold.
             activation: str or function, optional
                 Activation function to be applied to the quantity before taking
-                the threshold. If `activation` is a string, use the
-                corresponding activation function implemented by the backend
-                (currently supported: `'sigmoid'` and `'softmax'`). Otherwise,
+                the threshold. If `activation` is a string, use the 
+                corresponding activation function implemented by the backend 
+                (currently supported: `'sigmoid'` and `'softmax'`). Otherwise, 
                 if `activation` is not `None`, it will be treated as a callable.
-                If `activation` is `None`, do not apply an activation function
+                If `activation` is `None`, do not apply an activation function 
                 to the quantity.
         """
         # TODO(klas):should this support an aggregation function? By default
@@ -367,12 +365,12 @@ class ThresholdQoI(QoI):
         if self.activation is not None:
             if isinstance(self.activation, str):
                 self.activation = self.activation.lower()
-                if self.activation in ["sigmoid", "softmax"]:
+                if self.activation in ['sigmoid', 'softmax']:
                     x = getattr(B, self.activation)(x)
                 else:
                     raise NotImplementedError(
-                        "This activation function is not currently supported "
-                        "by the backend"
+                        'This activation function is not currently supported '
+                        'by the backend'
                     )
             else:
                 x = self.activation(x)
@@ -390,7 +388,7 @@ class ThresholdQoI(QoI):
 
 class ClassSeqQoI(QoI):
     """
-    Quantity of interest for attributing output towards a sequence of classes
+    Quantity of interest for attributing output towards a sequence of classes 
     for each input.
     """
 
@@ -403,6 +401,7 @@ class ClassSeqQoI(QoI):
         self.seq_labels = seq_labels
 
     def __call__(self, y):
+
         self._assert_cut_contains_only_one_tensor(y)
         assert get_backend().shape(y)[0] == len(self.seq_labels)
 

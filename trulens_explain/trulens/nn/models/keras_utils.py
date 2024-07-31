@@ -21,7 +21,7 @@ def unhash_tensor(tensor_ref):
 
 
 def get_layer_input_paths(model):
-    """
+    '''
     get_layer_input_paths Gets the nesting path to each layer's input tensor
 
     Parameters
@@ -33,12 +33,12 @@ def get_layer_input_paths(model):
     -------
     Dict[str, (str, List[str], Dict[str, str])]
         Mapping from each layer name to their input tensor's mapping from the previous layer
-    """
+    '''
     B = get_backend()
 
     def recurse_outputs(obj, prefix=None):
         """Given a possibly nested data structure, return a mapping from Tensors to their path in the data structure.
-
+        
         Primitives used:
             str: represent dictionary keys
             int: represent list indexes or dictionary keys
@@ -91,9 +91,9 @@ def get_layer_input_paths(model):
         for node in model._nodes_by_depth[depth]:
             # add layer output to layer_outputs
             layer = node.outbound_layer
-            layer_outputs[layer.name] = recurse_outputs(
-                om_of_many(node.output_tensors), [layer.name]
-            )
+            layer_outputs[
+                layer.name
+            ] = recurse_outputs(om_of_many(node.output_tensors), [layer.name])
             if node.inbound_layers:
                 # Get input tensor paths for next layer from from prev layer's outputs
                 if isinstance(node.inbound_layers, dict):
@@ -118,11 +118,11 @@ def get_layer_input_paths(model):
                 if layer.name not in layer_input_paths:
                     layer_input_paths[layer.name] = {
                         "args": arg_paths,
-                        "kwargs": kwarg_paths,
+                        "kwargs": kwarg_paths
                     }
                 else:
-                    layer_input_paths[layer.name]["args"].extend(arg_paths)
-                    layer_input_paths[layer.name]["kwargs"].update(kwarg_paths)
+                    layer_input_paths[layer.name]['args'].extend(arg_paths)
+                    layer_input_paths[layer.name]['kwargs'].update(kwarg_paths)
 
     return layer_input_paths
 
@@ -130,20 +130,20 @@ def get_layer_input_paths(model):
 def get_layer_input_tensors(
     layer, layer_outputs, layer_input_paths, keras_module
 ):
-    """
+    '''
     get_layer_input_tensors Get the args and kwargs for the layer
 
     Parameters
     ----------
     layer : keras.layers.Layer
         The layer to get the input tensors for
-
+    
     layer_outputs : Dict[keras.layers.Layer, Tensor]
         Mapping of previous layer to layer outputs
 
     layer_input_paths : Dict[str, (str, List[str], Dict[str, str])]
         Mapping from each layer name to their input tensor's mapping from the previous layer
-
+    
     keras_module : Python Module
         Either the keras module or tf.keras module
 
@@ -152,16 +152,15 @@ def get_layer_input_tensors(
     Tensors for layer from layer_outputs that match the Tensor input paths described in layer_input_paths
     args List[Tensor]
     kwargs Dict[str, Tensor]
-    """
+    '''
 
     def lookup_arg_path(path):
         out = layer_outputs[path[0]]
         for part in path[1:]:
             if isinstance(out, collections.abc.Mapping):
                 out = out[part]
-            elif isinstance(part, int) and isinstance(
-                out, collections.abc.Iterable
-            ):
+            elif isinstance(part, int) and isinstance(out,
+                                                      collections.abc.Iterable):
                 out = out[part]
             else:
                 raise ValueError(f"Invalid part path {part} for object {out}")
@@ -185,8 +184,8 @@ def get_layer_input_tensors(
 
     layer_name = layer.name
     input_paths = layer_input_paths[layer_name]
-    args = input_paths["args"]
-    kwargs = input_paths["kwargs"]
+    args = input_paths['args']
+    kwargs = input_paths['kwargs']
 
     # fetch input args for this layer
     input_args = [get_tensor_from_arg_path(arg) for arg in args]
@@ -198,8 +197,8 @@ def get_layer_input_tensors(
 
 
 def rename_nested_layers(model, keras_module):
-    """
-    Recursively renames layers to the full hierarchical name.
+    '''
+    Recursively renames layers to the full heirarchical name.
     Useful when flattening nested models but want to ensure unique layer names.
 
     Parameters
@@ -209,30 +208,29 @@ def rename_nested_layers(model, keras_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
-    """
+    '''
     for layer in model.layers:
         # InputLayer names are used as keys when dictionary is passed to model.
         # Changing them may cause the model to output different results.
 
         # Due to the recursive flattening operation, this method can be called
         # on the same model multiple times. Skip if renaming already occurred
-        if not isinstance(
-            layer, keras_module.layers.InputLayer
-        ) and not layer.name.startswith(f"{model.name}/"):
+        if not isinstance(layer, keras_module.layers.InputLayer
+                         ) and not layer.name.startswith(f"{model.name}/"):
             layer._name = f"{model.name}/{layer.name}"
             if isinstance(layer, keras_module.models.Model):
                 rename_nested_layers(layer, keras_module)
 
 
 def perform_replacements(model, replacements, keras_module):
-    """
+    '''
     perform_replacements Clone model but replace layers in replacements
 
     Parameters
     ----------
     model : keras.models.Model
         Base model
-
+    
     replacements : Dict[keras.layers.Layer, keras.layers.Layer]
         Mapping of keras layers with their replacement
 
@@ -243,7 +241,7 @@ def perform_replacements(model, replacements, keras_module):
     -------
     A new keras Model that replicates model that but with layer replacements.
 
-    """
+    '''
     layer_input_paths = get_layer_input_paths(model)
     layer_outputs = {}
 
@@ -265,15 +263,13 @@ def perform_replacements(model, replacements, keras_module):
 
         nodes = model._nodes_by_depth[depth]
         if not dirty and all(
-            node.outbound_layer not in replacements
-            and not isinstance(node.outbound_layer, keras_module.models.Model)
-            for node in nodes
-        ):
+                node.outbound_layer not in replacements and
+                not isinstance(node.outbound_layer, keras_module.models.Model)
+                for node in nodes):
             # no prior modifications, no nested models, and no replacements at this depth, continue on
             for node in nodes:
-                layer_outputs[node.outbound_layer.name] = om_of_many(
-                    node.output_tensors
-                )
+                layer_outputs[node.outbound_layer.name
+                             ] = om_of_many(node.output_tensors)
 
             return prop_through_layer(depth=depth - 1, dirty=dirty)
 
@@ -287,7 +283,7 @@ def perform_replacements(model, replacements, keras_module):
                     layer,
                     layer_outputs=layer_outputs,
                     layer_input_paths=layer_input_paths,
-                    keras_module=keras_module,
+                    keras_module=keras_module
                 )
 
                 if layer in replacements:
@@ -310,13 +306,13 @@ def perform_replacements(model, replacements, keras_module):
 
 
 def trace_input_indices(model, keras_module):
-    """
+    '''
     trace_input_indices Get index of input nodes for each layer in model.
     If layers in model are shared across multiple models, they may have multiple
     disconnected inbound nodes. To specify which inbound nodes belong to the
     provided model, this method returns a mapping of layers to the index of their
     respective inbound node.
-
+     
     Parameters
     ----------
     model : keras.models.Model
@@ -324,13 +320,13 @@ def trace_input_indices(model, keras_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
-
+    
     Returns
     -------
     Dict[str, int]
     Returns a mapping of layer names to the index of the inbound node associated with model
 
-    """
+    '''
 
     def tracer(depth):
         if depth not in nodes_by_depth:
@@ -348,10 +344,8 @@ def trace_input_indices(model, keras_module):
 
             if node in out_layer._inbound_nodes:
                 idx = out_layer._inbound_nodes.index(node)
-                if (
-                    out_layer.name in innode_indices
-                    and innode_indices[out_layer.name] != idx
-                ):
+                if out_layer.name in innode_indices and innode_indices[
+                        out_layer.name] != idx:
                     # May occur if layer is shared between other layers in the same model
                     tru_logger.warning(
                         f"{out_layer.name}: input node conflict. orig: {innode_indices[out_layer.name]}, new: {idx}. Keeping original"
@@ -377,27 +371,27 @@ def trace_input_indices(model, keras_module):
 def load_keras_model_from_handle(
     handle, orig_layer, keras_module, tfhub_module
 ):
-    """
+    '''
     load_keras_model_from_handle Load the tensorflow hub KerasLayer as a keras Model.
-
+     
     Parameters
     ----------
     handle : str
         TFHub handle
 
     orig_layer : KerasLayer
-
+    
     keras_module : Python Module
         Either the keras module or tf.keras module
-
+    
     tfhub_module : Python Module
         tensorflow_hub module. Used to resolve tfhub model paths
-
+    
     Returns
     -------
     keras.models.Model
 
-    """
+    '''
     module_path = tfhub_module.module_v2.resolve(handle)
     keras_model = keras_module.models.load_model(module_path)
     keras_model.set_weights(orig_layer.get_weights())
@@ -406,7 +400,7 @@ def load_keras_model_from_handle(
 
 
 def flatten_substitute_tfhub(model, keras_module, tfhub_module):
-    """
+    '''
     flatten_substitute_tfhub Find all TFHub KerasLayers and
     replace them with a keras Model.
 
@@ -417,15 +411,15 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
 
     keras_module : Python Module
         Either the keras module or tf.keras module
-
+    
     tfhub_module : Python Module
         tensorflow_hub module. Used to resolve tfhub model paths
-
+    
     Returns
     -------
     keras.models.Model
     A model free of nested KerasLayers
-    """
+    '''
     replacements = {}
     for layer in model.layers:
         try:
@@ -436,7 +430,7 @@ def flatten_substitute_tfhub(model, keras_module, tfhub_module):
         if tfhub_module and layer_config and "handle" in layer_config:
             try:
                 submodel = load_keras_model_from_handle(
-                    layer_config["handle"], layer, keras_module, tfhub_module
+                    layer_config['handle'], layer, keras_module, tfhub_module
                 )
                 rename_nested_layers(submodel, keras_module)
                 submodel = flatten_substitute_tfhub(

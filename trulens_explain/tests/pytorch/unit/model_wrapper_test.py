@@ -1,12 +1,13 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "pytorch"
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import main
 from unittest import TestCase
 
 import numpy as np
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
@@ -17,12 +18,14 @@ from trulens.nn.slices import Cut
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(ModelWrapperTest, self).setUp()
 
         class M(Module):
+
             def __init__(this):
-                super().__init__()
+                super(M, this).__init__()
                 this.l1 = Linear(2, 2)
                 this.l1_relu = ReLU()
                 this.l2 = Linear(2, 2)
@@ -47,9 +50,9 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.model = PytorchModelWrapper(M())
 
         self.layer0 = None
-        self.layer1 = "l1_relu"
-        self.layer2 = "l2_relu"
-        self.out = "logits"
+        self.layer1 = 'l1_relu'
+        self.layer2 = 'l2_relu'
+        self.out = 'logits'
 
         class MkwargsIdent(Module):
             """Does nothing but lets us build some inner layers."""
@@ -58,8 +61,9 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 return X
 
         class Mkwargs(Module):
+
             def __init__(self):
-                super().__init__()
+                super(Mkwargs, self).__init__()
                 self.layer1 = MkwargsIdent()
                 self.layer2 = MkwargsIdent()
 
@@ -67,8 +71,8 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
                 # Hoping kwargs forces the remaining arguments to be passed only by kwargs.
 
                 # Capital vars are batched, lower-case ones are not.
-                Degree = kwargs["Degree"]
-                offset = kwargs["offset"]
+                Degree = kwargs['Degree']
+                offset = kwargs['offset']
 
                 layer1 = this.layer1(X)
 
@@ -83,19 +87,18 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.model_kwargs_layer1 = "layer1"
         self.model_kwargs_layer2 = "layer2"
 
-    # Overridden tests.
+    # Overriden tests.
 
     def test_qoibprop_multiple_inputs(self):
         r = self.model.qoi_bprop(
-            MaxClassQoI(),
-            (np.array([[2.0, 1.0], [1.0, 2.0]]),),
-            attribution_cut=Cut(["l1", "l2"], anchor="in"),
+            MaxClassQoI(), (np.array([[2., 1.], [1., 2.]]),),
+            attribution_cut=Cut(['l1', 'l2'], anchor='in')
         )
 
         self.assertEqual(len(r), 2)
-        self.assertTrue(np.allclose(r[0], np.array([[3.0, -1.0], [0.0, 2.0]])))
-        self.assertTrue(np.allclose(r[1], np.array([[3.0, 2.0], [2.0, 2.0]])))
+        self.assertTrue(np.allclose(r[0], np.array([[3., -1.], [0., 2.]])))
+        self.assertTrue(np.allclose(r[1], np.array([[3., 2.], [2., 2.]])))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

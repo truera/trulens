@@ -1,9 +1,11 @@
 import numpy as np
 from trulens.nn.backend import get_backend
 from trulens.nn.quantities import LambdaQoI
+from trulens.nn.quantities import MaxClassQoI
 
 
-class DeterminismTestBase:
+class DeterminismTestBase(object):
+
     def setUp(self):
         self.B = get_backend()
         # Create an example tensor to use for the tests.

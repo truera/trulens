@@ -1,11 +1,12 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "pytorch"
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import main
 from unittest import TestCase
 
 from tests.unit.batch_test_base import BatchTestBase
+from torch import Tensor
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
@@ -14,13 +15,15 @@ from trulens.nn.models import get_model_wrapper
 
 
 class BatchTest(BatchTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(BatchTest, self).setUp()
 
         # Make a linear model for testing.
         class M_lin(Module):
+
             def __init__(this):
-                super().__init__()
+                super(M_lin, this).__init__()
                 this.layer = Linear(self.input_size, self.output_size)
                 B = get_backend()
                 this.layer.weight.data = B.as_tensor(self.model_lin_weights.T)
@@ -33,8 +36,9 @@ class BatchTest(BatchTestBase, TestCase):
 
         # Make a deeper model for testing.
         class M_deep(Module):
+
             def __init__(this):
-                super().__init__()
+                super(M_deep, this).__init__()
                 this.l1 = Linear(self.input_size, self.internal1_size)
                 this.l1_relu = ReLU()
                 this.l2 = Linear(self.internal1_size, self.internal2_size)
@@ -59,5 +63,5 @@ class BatchTest(BatchTestBase, TestCase):
         self.model_deep = get_model_wrapper(M_deep())
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

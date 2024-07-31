@@ -1,10 +1,10 @@
 """
-The distribution of interest lets us specify the set of samples over which we
-want our explanations to be faithful. In some cases, we may want to explain the
-model’s behavior on a particular record, whereas other times we may be
+The distribution of interest lets us specify the set of samples over which we 
+want our explanations to be faithful. In some cases, we may want to explain the 
+model’s behavior on a particular record, whereas other times we may be 
 interested in a more general behavior over a distribution of samples.
 """
-# from __future__ import annotations # Avoid expanding type aliases in mkdocs.
+#from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
@@ -36,30 +36,29 @@ class DoiCutSupportError(ValueError):
     Exception raised if the distribution of interest is called on a cut whose
     output is not supported by the distribution of interest.
     """
-
     pass
 
 
 class DoI(AbstractBaseClass):
     """
-    Interface for distributions of interest. The *Distribution of Interest*
-    (DoI) specifies the samples over which an attribution method is
+    Interface for distributions of interest. The *Distribution of Interest* 
+    (DoI) specifies the samples over which an attribution method is 
     aggregated.
     """
 
     def __init__(self, cut: Cut = None):
-        """ "Initialize DoI
+        """"Initialize DoI
 
         Parameters:
-            cut (Cut, optional):
+            cut (Cut, optional): 
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut.
+                to the latent space defined by the cut. 
         """
         self._cut = cut
 
     def __str__(self):
-        return render_object(self, ["_cut"])
+        return render_object(self, ['_cut'])
 
     def _wrap_public_call(
         self, z: Inputs[TensorLike], *, model_inputs: ModelInputs
@@ -94,14 +93,14 @@ class DoI(AbstractBaseClass):
         self,
         z: OM[Inputs, TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> OM[Inputs, Uniform[TensorLike]]:
         """
         Computes the distribution of interest from an initial point. If z:
         TensorLike is given, we assume there is only 1 input to the DoI layer. If
         z: List[TensorLike] is given, it provides all of the inputs to the DoI
-        layer.
-
+        layer. 
+        
         Either way, we always return List[List[TensorLike]] (alias
         Inputs[Uniform[TensorLike]]) with outer list spanning layer inputs, and
         inner list spanning a distribution's instance.
@@ -128,14 +127,14 @@ class DoI(AbstractBaseClass):
         Returns:
             The Cut in which the DoI will be applied. If `None`, the DoI will be
             applied to the input. otherwise, the distribution should be applied
-            to the latent space defined by the cut.
+            to the latent space defined by the cut. 
         """
         return self._cut
 
     def _wrap_public_get_activation_multiplier(
         self, activation: Inputs[TensorLike], *, model_inputs: ModelInputs
     ) -> Inputs[TensorLike]:
-        """Same as get_activation_multiplier but without "one-or-more"."""
+        """Same as get_activation_multiplier but without "one-or-more". """
 
         activations: OM[Inputs, TensorLike] = om_of_many(activation)
 
@@ -145,9 +144,8 @@ class DoI(AbstractBaseClass):
                 activations, model_inputs=model_inputs
             )
         else:
-            ret: OM[Inputs, TensorLike] = self.get_activation_multiplier(
-                activations
-            )
+            ret: OM[Inputs,
+                    TensorLike] = self.get_activation_multiplier(activations)
 
         ret: Inputs[TensorLike] = many_of_om(ret)
 
@@ -157,7 +155,7 @@ class DoI(AbstractBaseClass):
         self,
         activation: OM[Inputs, TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> OM[Inputs, TensorLike]:
         """
         Returns a term to multiply the gradient by to convert from "*influence
@@ -191,23 +189,22 @@ class DoI(AbstractBaseClass):
 
         if isinstance(x, list):
             raise DoiCutSupportError(
-                "\n\n"
-                "Cut provided to distribution of interest was comprised of "
-                "multiple tensors, but `{}` is only defined for cuts comprised "
-                "of a single tensor (received a list of {} tensors).\n"
-                "\n"
-                "Either (1) select a slice where the `to_cut` corresponds to a "
-                "single tensor, or (2) implement/use a `DoI` object that "
-                "supports lists of tensors, i.e., where the parameter, `z`, to "
-                "`__call__` is expected/allowed to be a list of {} tensors.".format(
-                    self.__class__.__name__, len(x), len(x)
-                )
+                '\n\n'
+                'Cut provided to distribution of interest was comprised of '
+                'multiple tensors, but `{}` is only defined for cuts comprised '
+                'of a single tensor (received a list of {} tensors).\n'
+                '\n'
+                'Either (1) select a slice where the `to_cut` corresponds to a '
+                'single tensor, or (2) implement/use a `DoI` object that '
+                'supports lists of tensors, i.e., where the parameter, `z`, to '
+                '`__call__` is expected/allowed to be a list of {} tensors.'.
+                format(self.__class__.__name__, len(x), len(x))
             )
 
         elif not (isinstance(x, np.ndarray) or get_backend().is_tensor(x)):
             raise ValueError(
-                "`{}` expected to receive an instance of `Tensor` or "
-                "`np.ndarray`, but received an instance of {}".format(
+                '`{}` expected to receive an instance of `Tensor` or '
+                '`np.ndarray`, but received an instance of {}'.format(
                     self.__class__.__name__, type(x)
                 )
             )
@@ -219,22 +216,23 @@ class PointDoi(DoI):
     """
 
     def __init__(self, cut: Cut = None):
-        """ "Initialize PointDoI
+        """"Initialize PointDoI
 
         Parameters:
-            cut (Cut, optional):
+            cut (Cut, optional): 
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut.
+                to the latent space defined by the cut. 
         """
-        super().__init__(cut)
+        super(PointDoi, self).__init__(cut)
 
     def __call__(
         self,
         z: OM[Inputs, TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> OM[Inputs, Uniform[TensorLike]]:
+
         z: Inputs[TensorLike] = many_of_om(z)
 
         return om_of_many(nested_map(z, lambda x: [x]))
@@ -242,7 +240,7 @@ class PointDoi(DoI):
 
 class LinearDoi(DoI):
     """
-    Distribution representing the linear interpolation between a baseline and
+    Distribution representing the linear interpolation between a baseline and 
     the given point. Used by Integrated Gradients.
     """
 
@@ -259,10 +257,10 @@ class LinearDoi(DoI):
         sample of `resolution` points equally spaced along this segment.
 
         Parameters:
-            cut (Cut, optional, from DoI):
+            cut (Cut, optional, from DoI): 
                 The Cut in which the DoI will be applied. If `None`, the DoI
                 will be applied to the input. otherwise, the distribution should
-                be applied to the latent space defined by the cut.
+                be applied to the latent space defined by the cut. 
             baseline (BaselineLike, optional):
                 The baseline to interpolate from. Must be same shape as the
                 space the distribution acts over, i.e., the shape of the points,
@@ -277,7 +275,7 @@ class LinearDoi(DoI):
                 resolution is more computationally expensive, but gives a better
                 approximation of the DoI this object mathematically represents.
         """
-        super().__init__(cut)
+        super(LinearDoi, self).__init__(cut)
         self._baseline = baseline
         self._resolution = resolution
 
@@ -290,21 +288,22 @@ class LinearDoi(DoI):
         return self._resolution
 
     def __str__(self):
-        return render_object(self, ["_cut", "_baseline", "_resolution"])
+        return render_object(self, ['_cut', '_baseline', '_resolution'])
 
     def __call__(
         self,
         z: OM[Inputs, TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> OM[Inputs, Uniform[TensorLike]]:
+
         self._assert_cut_contains_only_one_tensor(z)
 
         z: Inputs[TensorLike] = many_of_om(z)
 
         baseline = self._compute_baseline(z, model_inputs=model_inputs)
 
-        r = 1.0 if self._resolution == 1 else self._resolution - 1.0
+        r = 1. if self._resolution == 1 else self._resolution - 1.
         zipped = nested_zip(z, baseline)
 
         def zipped_interpolate(zipped_z_baseline):
@@ -318,9 +317,10 @@ class LinearDoi(DoI):
             """
             z_ = zipped_z_baseline[0]
             b_ = zipped_z_baseline[1]
-            return [
-                (1.0 - i / r) * z_ + i / r * b_ for i in range(self._resolution)
-            ]  # Uniform
+            return [ # Uniform
+                (1. - i / r) * z_ + i / r * b_
+                for i in range(self._resolution)
+            ]
 
         ret = om_of_many(
             nested_map(
@@ -334,14 +334,14 @@ class LinearDoi(DoI):
         self,
         activation: OM[Inputs, TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> Inputs[TensorLike]:
         """
-        Returns a term to multiply the gradient by to convert from "*influence
+        Returns a term to multiply the gradient by to convert from "*influence 
         space*" to "*attribution space*". Conceptually, "influence space"
-        corresponds to the potential effect of a slight increase in each
+        corresponds to the potential effect of a slight increase in each 
         feature, while "attribution space" corresponds to an approximation of
-        the net marginal contribution to the quantity of interest of each
+        the net marginal contribution to the quantity of interest of each 
         feature.
 
         Parameters:
@@ -383,8 +383,9 @@ class LinearDoi(DoI):
         self,
         z: Inputs[TensorLike],
         *,
-        model_inputs: Optional[ModelInputs] = None,
+        model_inputs: Optional[ModelInputs] = None
     ) -> Inputs[TensorLike]:
+
         B = get_backend()
 
         _baseline: BaselineLike = self.baseline  # user-provided
@@ -412,7 +413,7 @@ class LinearDoi(DoI):
         return nested_cast(
             backend=B,
             args=_baseline,
-            astype=type(tensor_wrapper.first_batchable(B)),
+            astype=type(tensor_wrapper.first_batchable(B))
         )
 
 
@@ -430,21 +431,20 @@ class GaussianDoi(DoI):
 
             resolution:
                 Number of samples returned by each call to this DoI.
-            cut (Cut, optional):
+            cut (Cut, optional): 
                 The Cut in which the DoI will be applied. If `None`, the DoI will be
                 applied to the input. otherwise, the distribution should be applied
-                to the latent space defined by the cut.
+                to the latent space defined by the cut. 
         """
-        super().__init__(cut)
+        super(GaussianDoi, self).__init__(cut)
         self._var = var
         self._resolution = resolution
 
     def __str__(self):
-        return render_object(self, ["_cut", "_var", "_resolution"])
+        return render_object(self, ['_cut', '_var', '_resolution'])
 
-    def __call__(
-        self, z: OM[Inputs, TensorLike]
-    ) -> OM[Inputs, Uniform[TensorLike]]:
+    def __call__(self, z: OM[Inputs,
+                             TensorLike]) -> OM[Inputs, Uniform[TensorLike]]:
         # Public interface.
 
         B = get_backend()
@@ -463,7 +463,7 @@ class GaussianDoi(DoI):
             else:
                 # Array implementation.
                 return [
-                    z + np.random.normal(0.0, np.sqrt(self._var), z.shape)
+                    z + np.random.normal(0., np.sqrt(self._var), z.shape)
                     for _ in range(self._resolution)
                 ]  # Uniform
 

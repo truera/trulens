@@ -1,5 +1,5 @@
 """
-*Attribution methods* quantitatively measure the contribution of each of a
+*Attribution methods* quantitatively measure the contribution of each of a 
 function's individual inputs to its output. Gradient-based attribution methods
 compute the gradient of a model with respect to its inputs to describe how
 important each input is towards the output prediction. These methods can be
@@ -8,7 +8,7 @@ applied to assist in explaining deep networks.
 TruLens provides implementations of several such techniques, found in this
 package.
 """
-# from __future__ import annotations # Avoid expanding type aliases in mkdocs.
+#from __future__ import annotations # Avoid expanding type aliases in mkdocs.
 
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
@@ -82,7 +82,7 @@ AttributionResult.axes = {
 class AttributionMethod(AbstractBaseClass):
     """
     Interface used by all attribution methods.
-
+    
     An attribution method takes a neural network model and provides the ability
     to assign values to the variables of the network that specify the importance
     of each variable towards particular predictions.
@@ -129,25 +129,24 @@ class AttributionMethod(AbstractBaseClass):
 
     def attributions(
         self, *model_args: ArgsLike, **model_kwargs: KwargsLike
-    ) -> Union[
-        TensorLike, ArgsLike[TensorLike], ArgsLike[ArgsLike[TensorLike]]
-    ]:
+    ) -> Union[TensorLike, ArgsLike[TensorLike],
+               ArgsLike[ArgsLike[TensorLike]]]:
         """
         Returns attributions for the given input. Attributions are in the same
-        shape as the layer that attributions are being generated for.
-
+        shape as the layer that attributions are being generated for. 
+        
         The numeric scale of the attributions will depend on the specific
         implementations of the Distribution of Interest and Quantity of
         Interest. However it is generally related to the scale of gradients on
-        the Quantity of Interest.
+        the Quantity of Interest. 
 
         For example, Integrated Gradients uses the linear interpolation
         Distribution of Interest which subsumes the completeness axiom which
         ensures the sum of all attributions of a record equals the output
-        determined by the Quantity of Interest on the same record.
+        determined by the Quantity of Interest on the same record. 
 
         The Point Distribution of Interest will be determined by the gradient at
-        a single point, thus being a good measure of model sensitivity.
+        a single point, thus being a good measure of model sensitivity. 
 
         Parameters:
             model_args: ArgsLike, model_kwargs: KwargsLike
@@ -157,12 +156,12 @@ class AttributionMethod(AbstractBaseClass):
                 *data tensors*, the  appropriate tensor type may be used (e.g.,
                 Pytorch models may accept Pytorch tensors in addition to
                 `np.ndarray`s). The shape of the inputs must match the input
-                shape of `self.model`.
+                shape of `self.model`. 
 
         Returns
             - np.ndarray when single attribution_cut input, single qoi output
             - or ArgsLike[np.ndarray] when single input, multiple output (or
-              vice versa)
+              vice versa) 
             - or ArgsLike[ArgsLike[np.ndarray]] when multiple output (outer),
               multiple input (inner)
 
@@ -182,11 +181,9 @@ class AttributionMethod(AbstractBaseClass):
         # ([arg1, arg2],), that is, a tuple with a single element containing the
         # model args. Test below checks for this. TODO: Disallow such
         # invocations? They should be given as attributions(arg1, arg2).
-        if (
-            isinstance(model_args, tuple)
-            and len(model_args) == 1
-            and isinstance(model_args[0], DATA_CONTAINER_TYPE)
-        ):
+        if isinstance(model_args,
+                      tuple) and len(model_args) == 1 and isinstance(
+                          model_args[0], DATA_CONTAINER_TYPE):
             model_args = model_args[0]
 
         model_inputs = ModelInputs(
@@ -203,12 +200,10 @@ class AttributionMethod(AbstractBaseClass):
         attributions: Outputs[Inputs[np.ndarray]] = nested_cast(
             backend=get_backend(), astype=return_type, args=pieces.attributions
         )
-        attributions: Outputs[OM[Inputs, np.ndarray]] = [
-            om_of_many(attr) for attr in attributions
-        ]
-        attributions: OM[Outputs, OM[Inputs, np.ndarray]] = om_of_many(
-            attributions
-        )
+        attributions: Outputs[OM[Inputs, np.ndarray]
+                             ] = [om_of_many(attr) for attr in attributions]
+        attributions: OM[Outputs, OM[Inputs,
+                                     np.ndarray]] = om_of_many(attributions)
 
         if pieces.gradients is not None or pieces.interventions is not None:
             tru_logger.warning(
@@ -222,7 +217,7 @@ class AttributionMethod(AbstractBaseClass):
 class InternalInfluence(AttributionMethod):
     """Internal attributions parameterized by a slice, quantity of interest, and
     distribution of interest.
-
+    
     The *slice* specifies the layers at which the internals of the model are to
     be exposed; it is represented by two *cuts*, which specify the layer the
     attributions are assigned to and the layer from which the quantity of
@@ -230,14 +225,14 @@ class InternalInfluence(AttributionMethod):
     output specified by the slice that determines the network output behavior
     that the attributions are to describe. The *Distribution of Interest* (DoI)
     specifies the records over which the attributions are aggregated.
-
+    
     More information can be found in the following paper:
-
+    
     [Influence-Directed Explanations for Deep Convolutional Networks](
         https://arxiv.org/pdf/1802.03788.pdf)
-
+    
     This should be cited using:
-
+    
     ```bibtex
     @INPROCEEDINGS{
         leino18influence,
@@ -266,32 +261,32 @@ class InternalInfluence(AttributionMethod):
         return_grads: bool = False,
         return_doi: bool = False,
         *args,
-        **kwargs,
+        **kwargs
     ):
         """
         Parameters:
             model:
                 Model for which attributions are calculated.
 
-            cuts:
-                The slice to use when computing the attributions. The slice
-                keeps track of the layer whose output attributions are
-                calculated and the layer for which the quantity of interest is
+            cuts: 
+                The slice to use when computing the attributions. The slice 
+                keeps track of the layer whose output attributions are 
+                calculated and the layer for which the quantity of interest is 
                 computed. Expects a `Slice` object, or a related type that can
                 be interpreted as a `Slice`, as documented below.
 
-                If a single `Cut` object is given, it is assumed to be the cut
-                representing the layer for which attributions are calculated
-                (i.e., `from_cut` in `Slice`) and the layer for the quantity of
-                interest (i.e., `to_cut` in `slices.Slice`) is taken to be the
-                output of the network. If a tuple or list of two `Cut`s is
-                given, they are assumed to be `from_cut` and `to_cut`,
+                If a single `Cut` object is given, it is assumed to be the cut 
+                representing the layer for which attributions are calculated 
+                (i.e., `from_cut` in `Slice`) and the layer for the quantity of 
+                interest (i.e., `to_cut` in `slices.Slice`) is taken to be the 
+                output of the network. If a tuple or list of two `Cut`s is 
+                given, they are assumed to be `from_cut` and `to_cut`, 
                 respectively.
 
-                A cut (or the cuts within the tuple) can also be represented as
-                an `int`, `str`, or `None`. If an `int` is given, it represents
-                the index of a layer in `model`. If a `str` is given, it
-                represents the name of a layer in `model`. `None` is an
+                A cut (or the cuts within the tuple) can also be represented as 
+                an `int`, `str`, or `None`. If an `int` is given, it represents 
+                the index of a layer in `model`. If a `str` is given, it 
+                represents the name of a layer in `model`. `None` is an 
                 alternative for `slices.InputCut`.
 
             qoi:
@@ -299,17 +294,17 @@ class InternalInfluence(AttributionMethod):
                 related type that can be interpreted as a `QoI`, as documented
                 below.
 
-                If an `int` is given, the quantity of interest is taken to be
-                the slice output for the class/neuron/channel specified by the
-                given integer, i.e.,
+                If an `int` is given, the quantity of interest is taken to be 
+                the slice output for the class/neuron/channel specified by the 
+                given integer, i.e., 
                 ```python
                 quantities.InternalChannelQoI(qoi)
                 ```
 
-                If a tuple or list of two integers is given, then the quantity
-                of interest is taken to be the comparative quantity for the
-                class given by the first integer against the class given by the
-                second integer, i.e.,
+                If a tuple or list of two integers is given, then the quantity 
+                of interest is taken to be the comparative quantity for the 
+                class given by the first integer against the class given by the 
+                second integer, i.e., 
                 ```python
                 quantities.ComparativeQoI(*qoi)
                 ```
@@ -320,9 +315,9 @@ class InternalInfluence(AttributionMethod):
                 quantities.LambdaQoI(qoi)
                 ```
 
-                If the string, `'max'`, is given, the quantity of interest is
-                taken to be the output for the class with the maximum score,
-                i.e.,
+                If the string, `'max'`, is given, the quantity of interest is 
+                taken to be the output for the class with the maximum score, 
+                i.e., 
                 ```python
                 quantities.MaxClassQoI()
                 ```
@@ -333,21 +328,21 @@ class InternalInfluence(AttributionMethod):
                 below.
 
                 If the string, `'point'`, is given, the distribution is taken to
-                be the single point passed to `attributions`, i.e.,
+                be the single point passed to `attributions`, i.e., 
                 ```python
                 distributions.PointDoi()
                 ```
 
-                If the string, `'linear'`, is given, the distribution is taken
-                to be the linear interpolation from the zero input to the point
-                passed to `attributions`, i.e.,
+                If the string, `'linear'`, is given, the distribution is taken 
+                to be the linear interpolation from the zero input to the point 
+                passed to `attributions`, i.e., 
                 ```python
                 distributions.LinearDoi()
                 ```
 
             multiply_activation:
                 Whether to multiply the gradient result by its corresponding
-                activation, thus converting from "*influence space*" to
+                activation, thus converting from "*influence space*" to 
                 "*attribution space*."
         """
         super().__init__(model, *args, **kwargs)
@@ -374,7 +369,7 @@ class InternalInfluence(AttributionMethod):
 
         param_msgs = [
             f"float size = {B.floatX_size} ({B.floatX}); consider changing to a smaller type.",
-            f"batch size = {batch_size}; consider reducing the size of the batch you send to the attributions method.",
+            f"batch size = {batch_size}; consider reducing the size of the batch you send to the attributions method."
         ]
 
         doi_cut = self.doi.cut() if self.doi.cut() else InputCut()
@@ -385,7 +380,7 @@ class InternalInfluence(AttributionMethod):
                 to_cut=doi_cut,
                 doi_cut=InputCut(),
                 attribution_cut=None,  # InputCut(),
-                intervention=model_inputs,
+                intervention=model_inputs
             )[0]
 
         doi_val = nested_map(doi_val, B.as_array)
@@ -419,23 +414,24 @@ class InternalInfluence(AttributionMethod):
 
         # Calculate the gradient of each of the points in the DoI.
         with memory_suggestions(
-            param_msgs + [doi_size_msg, combined_batch_msg, rebatch_size_msg]
+                param_msgs +
+            [doi_size_msg, combined_batch_msg, rebatch_size_msg]
         ):  # Handles out-of-memory messages.
             qoi_grads_expanded: List[Outputs[Inputs[TensorLike]]] = []
 
             for inputs_batch, intervention_batch in rebatch(
-                model_inputs_expanded, intervention, batch_size=rebatch_size
-            ):
-                qoi_grads_expanded_batch: Outputs[Inputs[TensorLike]] = (
-                    self.model._qoi_bprop(
+                    model_inputs_expanded, intervention,
+                    batch_size=rebatch_size):
+
+                qoi_grads_expanded_batch: Outputs[
+                    Inputs[TensorLike]] = self.model._qoi_bprop(
                         qoi=self.qoi,
                         model_inputs=inputs_batch,
                         attribution_cut=self.slice.from_cut,
                         to_cut=self.slice.to_cut,
                         intervention=intervention_batch,
-                        doi_cut=doi_cut,
+                        doi_cut=doi_cut
                     )
-                )
 
                 # important to cast to numpy inside loop:
                 qoi_grads_expanded.append(
@@ -475,12 +471,10 @@ class InternalInfluence(AttributionMethod):
         qoi_grads_expanded: Outputs[Inputs[np.ndarray]] = nested_map(
             qoi_grads_expanded,
             lambda grad: np.reshape(grad, (n_doi, -1) + grad.shape[1:]),
-            nest=2,
+            nest=2
         )
         if self._return_grads:
-            results.gradients = (
-                qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
-            )
+            results.gradients = qoi_grads_expanded  # : Outputs[Inputs[Uniform[TensorLike]]]
 
         # TODO: Does this need to be done in numpy?
         attrs: Outputs[Inputs[TensorLike]] = nested_map(
@@ -495,19 +489,19 @@ class InternalInfluence(AttributionMethod):
                     doi_cut=InputCut(),
                     attribution_cut=None,
                     to_cut=self.slice.from_cut,
-                    intervention=model_inputs,  # intentional
+                    intervention=model_inputs  # intentional
                 )[0]
 
-            mults: Inputs[TensorLike] = (
-                self.doi._wrap_public_get_activation_multiplier(
-                    z_val, model_inputs=model_inputs
-                )
-            )
+            mults: Inputs[TensorLike
+                         ] = self.doi._wrap_public_get_activation_multiplier(
+                             z_val, model_inputs=model_inputs
+                         )
             mults: Inputs[np.ndarray] = nested_cast(
                 backend=B, args=mults, astype=np.ndarray
             )
             mult_attrs = []
             for attr in attrs:  # Outputs
+
                 zipped = nested_zip(attr, mults)
 
                 def zip_mult(zipped_attr_mults):
@@ -527,7 +521,7 @@ class InternalInfluence(AttributionMethod):
     @staticmethod
     def __get_qoi(qoi_arg):
         """
-        Helper function to get a `QoI` object from more user-friendly primitive
+        Helper function to get a `QoI` object from more user-friendly primitive 
         arguments.
         """
         # TODO(klas): we could potentially do some basic error catching here,
@@ -555,27 +549,27 @@ class InternalInfluence(AttributionMethod):
 
             else:
                 raise ValueError(
-                    "Tuple or list argument for `qoi` must have length 2"
+                    'Tuple or list argument for `qoi` must have length 2'
                 )
 
         elif isinstance(qoi_arg, str):
             # We can specify `MaxClassQoI` via the string 'max'.
-            if qoi_arg == "max":
+            if qoi_arg == 'max':
                 return MaxClassQoI()
 
             else:
                 raise ValueError(
-                    "String argument for `qoi` must be one of the following:\n"
+                    'String argument for `qoi` must be one of the following:\n'
                     '  - "max"'
                 )
 
         else:
-            raise ValueError("Unrecognized argument type for `qoi`")
+            raise ValueError('Unrecognized argument type for `qoi`')
 
     @staticmethod
     def __get_doi(doi_arg, cut=None):
         """
-        Helper function to get a `DoI` object from more user-friendly primitive
+        Helper function to get a `DoI` object from more user-friendly primitive 
         arguments.
         """
         if isinstance(doi_arg, DoI):
@@ -585,21 +579,21 @@ class InternalInfluence(AttributionMethod):
         elif isinstance(doi_arg, str):
             # We can specify `PointDoi` via the string 'point', or `LinearDoi`
             # via the string 'linear'.
-            if doi_arg == "point":
+            if doi_arg == 'point':
                 return PointDoi(cut=cut)
 
-            elif doi_arg == "linear":
+            elif doi_arg == 'linear':
                 return LinearDoi(cut=cut)
 
             else:
                 raise ValueError(
-                    "String argument for `doi` must be one of the following:\n"
+                    'String argument for `doi` must be one of the following:\n'
                     '  - "point"\n'
                     '  - "linear"'
                 )
 
         else:
-            raise ValueError("Unrecognized argument type for `doi`")
+            raise ValueError('Unrecognized argument type for `doi`')
 
     @staticmethod
     def __get_slice(slice_arg):
@@ -611,13 +605,10 @@ class InternalInfluence(AttributionMethod):
             # We are already given a Slice, so return it.
             return slice_arg
 
-        elif (
-            isinstance(slice_arg, Cut)
-            or isinstance(slice_arg, int)
-            or isinstance(slice_arg, str)
-            or slice_arg is None
-            or slice_arg == 0
-        ):
+        elif (isinstance(slice_arg, Cut) or isinstance(slice_arg, int) or
+              isinstance(slice_arg, str) or slice_arg is None or
+              slice_arg == 0):
+
             # If we receive a Cut, we take it to be the Cut of the start layer.
             return Slice(InternalInfluence.__get_cut(slice_arg), OutputCut())
 
@@ -632,16 +623,16 @@ class InternalInfluence(AttributionMethod):
                 else:
                     return Slice(
                         InternalInfluence.__get_cut(slice_arg[0]),
-                        InternalInfluence.__get_cut(slice_arg[1]),
+                        InternalInfluence.__get_cut(slice_arg[1])
                     )
 
             else:
                 raise ValueError(
-                    "Tuple or list argument for `cuts` must have length 2"
+                    'Tuple or list argument for `cuts` must have length 2'
                 )
 
         else:
-            raise ValueError("Unrecognized argument type for `cuts`")
+            raise ValueError('Unrecognized argument type for `cuts`')
 
     @staticmethod
     def __get_cut(cut_arg):
@@ -662,15 +653,15 @@ class InternalInfluence(AttributionMethod):
             return Cut(cut_arg)
 
         else:
-            raise ValueError("Unrecognized argument type for cut")
+            raise ValueError('Unrecognized argument type for cut')
 
     @staticmethod
     def __concatenate_doi(D: Inputs[Uniform[TensorLike]]) -> Inputs[TensorLike]:
         # Returns one TensorLike for each model input.
         if len(D[0]) == 0:
             raise ValueError(
-                "Got empty distribution of interest. `DoI` must return at "
-                "least one point."
+                'Got empty distribution of interest. `DoI` must return at '
+                'least one point.'
             )
         # TODO: should this always be done in numpy or can we do it in backend?
         D = nested_cast(backend=get_backend(), args=D, astype=np.ndarray)
@@ -682,7 +673,7 @@ class InputAttribution(InternalInfluence):
     """
     Attributions of input features on either internal or output quantities. This
     is essentially an alias for
-
+    
     ```python
     InternalInfluence(
         model,
@@ -697,12 +688,12 @@ class InputAttribution(InternalInfluence):
         self,
         model: ModelWrapper,
         qoi_cut: CutLike = None,  # see WARNING-LOAD-INIT
-        qoi: QoiLike = "max",
+        qoi: QoiLike = 'max',
         doi_cut: CutLike = None,  # see WARNING-LOAD-INIT
-        doi: DoiLike = "point",
+        doi: DoiLike = 'point',
         multiply_activation: bool = True,
         *args,
-        **kwargs,
+        **kwargs
     ):
         """
         Parameters:
@@ -715,11 +706,11 @@ class InputAttribution(InternalInfluence):
                 interpreted as a `Cut`, as documented below.
 
                 If an `int` is given, it represents the index of a layer in
-                `model`.
+                `model`. 
 
                 If a `str` is given, it represents the name of a layer in
-                `model`.
-
+                `model`. 
+                
                 `None` is an alternative for `slices.OutputCut()`.
 
             qoi : quantities.QoI | int | tuple | str
@@ -781,25 +772,24 @@ class InputAttribution(InternalInfluence):
             doi_cut = InputCut()
 
         super().__init__(
-            model,
-            (doi_cut, qoi_cut),
+            model, (doi_cut, qoi_cut),
             qoi,
             doi,
             multiply_activation=multiply_activation,
             *args,
-            **kwargs,
+            **kwargs
         )
 
 
 class IntegratedGradients(InputAttribution):
     """
     Implementation for the Integrated Gradients method from the following paper:
-
+    
     [Axiomatic Attribution for Deep Networks](
         https://arxiv.org/pdf/1703.01365)
-
+    
     This should be cited using:
-
+    
     ```bibtex
     @INPROCEEDINGS{
         sundararajan17axiomatic,
@@ -809,9 +799,9 @@ class IntegratedGradients(InputAttribution):
         year={2017},
     }
     ```
-
+    
     This is essentially an alias for
-
+    
     ```python
     InternalInfluence(
         model,
@@ -828,10 +818,10 @@ class IntegratedGradients(InputAttribution):
         baseline=None,
         resolution: int = 50,
         doi_cut=None,  # see WARNING-LOAD-INIT
-        qoi="max",
+        qoi='max',
         qoi_cut=None,  # see WARNING-LOAD-INIT
         *args,
-        **kwargs,
+        **kwargs
     ):
         """
         Parameters:
@@ -839,14 +829,14 @@ class IntegratedGradients(InputAttribution):
                 Model for which attributions are calculated.
 
             baseline:
-                The baseline to interpolate from. Must be same shape as the
-                input. If `None` is given, the zero vector in the appropriate
+                The baseline to interpolate from. Must be same shape as the 
+                input. If `None` is given, the zero vector in the appropriate 
                 shape will be used.
 
             resolution:
-                Number of points to use in the approximation. A higher
+                Number of points to use in the approximation. A higher 
                 resolution is more computationally expensive, but gives a better
-                approximation of the mathematical formula this attribution
+                approximation of the mathematical formula this attribution 
                 method represents.
         """
 
@@ -864,5 +854,5 @@ class IntegratedGradients(InputAttribution):
             doi=LinearDoi(baseline, resolution, cut=doi_cut),
             multiply_activation=True,
             *args,
-            **kwargs,
+            **kwargs
         )

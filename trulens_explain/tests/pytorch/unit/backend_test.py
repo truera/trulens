@@ -1,6 +1,6 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "pytorch"
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import main
 from unittest import TestCase
@@ -9,9 +9,10 @@ from tests.unit.backend_test_base import BackendTestBase
 
 
 class BackendTest(BackendTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(BackendTest, self).setUp()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

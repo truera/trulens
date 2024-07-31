@@ -1,23 +1,27 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "tensorflow"
+os.environ['TRULENS_BACKEND'] = 'tensorflow'
 
 import unittest
 from unittest import main
 from unittest import TestCase
 
+import numpy as np
+import tensorflow as tf
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
 from trulens.nn.models import get_model_wrapper
 
 
 class TFFunctionModel(Model):
+
     def __init__(self):
-        super().__init__()
-        self.dense_1 = Dense(2, activation="relu", input_shape=(2,))
-        self.dense_2 = Dense(2, activation="relu")
-        self.dense_3 = Dense(1, name="logits")
+        super(TFFunctionModel, self).__init__()
+        self.dense_1 = Dense(2, activation='relu', input_shape=(2,))
+        self.dense_2 = Dense(2, activation='relu')
+        self.dense_3 = Dense(1, name='logits')
 
     def call(self, x):
         z = self.dense_1(x)
@@ -27,19 +31,16 @@ class TFFunctionModel(Model):
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(ModelWrapperTest, self).setUp()
 
         subclassed = TFFunctionModel()
         subclassed.build((5, 2))
         subclassed.set_weights(
             [
-                self.layer1_weights,
-                self.internal_bias,
-                self.layer2_weights,
-                self.internal_bias,
-                self.layer3_weights,
-                self.bias,
+                self.layer1_weights, self.internal_bias, self.layer2_weights,
+                self.internal_bias, self.layer3_weights, self.bias
             ]
         )
         self.model = get_model_wrapper(subclassed)
@@ -48,7 +49,7 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         self.layer0 = None
         self.layer1 = 0
         self.layer2 = 1
-        self.out = "logits"
+        self.out = 'logits'
 
     @unittest.skip(
         "Base class uses layer 0 as multi-input but does not exist in subclass"
@@ -57,5 +58,5 @@ class ModelWrapperTest(ModelWrapperTestBase, TestCase):
         return
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

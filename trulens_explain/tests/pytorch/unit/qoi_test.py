@@ -1,6 +1,6 @@
 import os
 
-os.environ["TRULENS_BACKEND"] = "pytorch"
+os.environ['TRULENS_BACKEND'] = 'pytorch'
 
 from unittest import main
 from unittest import TestCase
@@ -12,5 +12,5 @@ class QoiTest(QoiTestBase, TestCase):
     pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -2,9 +2,8 @@ from typing import Tuple
 
 import tensorflow as tf
 from trulens.nn.backend import get_backend
-from trulens.nn.models.keras import KerasModelWrapper
-
-# dangerous to have this here if tf-less keras gets imported
+from trulens.nn.models.keras import \
+    KerasModelWrapper  # dangerous to have this here if tf-less keras gets imported
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
@@ -15,6 +14,7 @@ from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
@@ -25,9 +25,8 @@ if tf.executing_eagerly():
     tf.config.run_functions_eagerly(True)
 
 
-class Tensorflow2ModelWrapper(
-    KerasModelWrapper
-):  # dangerous to extend keras model wrapper
+class Tensorflow2ModelWrapper(KerasModelWrapper
+                             ):  # dangerous to extend keras model wrapper
     """
     Model wrapper that exposes internal layers of tf2 Keras models.
     """
@@ -40,7 +39,7 @@ class Tensorflow2ModelWrapper(
         replace_softmax=False,
         softmax_layer=-1,
         custom_objects=None,
-        **kwargs,
+        **kwargs
     ):
         """
         __init__ Constructor
@@ -58,7 +57,7 @@ class Tensorflow2ModelWrapper(
             replace_softmax=replace_softmax,
             softmax_layer=softmax_layer,
             custom_objects=custom_objects,
-            **kwargs,
+            **kwargs
         )
 
         self._eager = tf.executing_eagerly()
@@ -102,14 +101,12 @@ class Tensorflow2ModelWrapper(
         return self._B
 
     def _warn_keras_layers(self, layers):
-        keras_layers = [l for l in layers if "KerasLayer" in str(type(l))]
-        if keras_layers:
-            tru_logger.warning(
-                "Detected a KerasLayer in the model. This can sometimes create issues during attribution runs or subsequent model calls. \
+        keras_layers = [l for l in layers if 'KerasLayer' in str(type(l))]
+        if (keras_layers):
+            tru_logger.warning('Detected a KerasLayer in the model. This can sometimes create issues during attribution runs or subsequent model calls. \
                 If failures occur: try saving the model, deactivating eager mode with tf.compat.v1.disable_eager_execution(), \
-                setting tf.config.run_functions_eagerly(False), and reloading the model."
-                "Detected KerasLayers from model.layers: %s" % str(keras_layers)
-            )
+                setting tf.config.run_functions_eagerly(False), and reloading the model.'\
+                    'Detected KerasLayers from model.layers: %s' % str(keras_layers))
 
     def _clear_hooks(self):
         for layer in self._layers.values():
@@ -126,10 +123,8 @@ class Tensorflow2ModelWrapper(
         for output in self._model.outputs:
             for layer in self._layers.values():
                 try:
-                    if (
-                        layer is output
-                        or self._get_layer_output(layer) is output
-                    ):
+                    if layer is output or self._get_layer_output(layer
+                                                                ) is output:
                         output_layers.append(layer)
                 except:
                     # layer output may not be instantiated when using model subclassing,
@@ -140,7 +135,7 @@ class Tensorflow2ModelWrapper(
         return output_layers
 
     def _is_input_layer(self, layer):
-        if self._model.inputs is not None:
+        if (self._model.inputs is not None):
             return any(
                 [
                     inpt is self._get_layer_output(layer)
@@ -163,13 +158,8 @@ class Tensorflow2ModelWrapper(
         self._model.outputs = output_layers
 
     def _fprop(
-        self,
-        *,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: TensorArgs,
+        self, *, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: TensorArgs
     ) -> Tuple[Outputs[TensorLike], Outputs[TensorLike]]:
         """
         See ModelWrapper.fprop .
@@ -183,7 +173,7 @@ class Tensorflow2ModelWrapper(
                 doi_cut=doi_cut,
                 to_cut=to_cut,
                 attribution_cut=attribution_cut,
-                intervention=intervention,
+                intervention=intervention
             )
 
         attribution_results = None
@@ -193,10 +183,10 @@ class Tensorflow2ModelWrapper(
                 if not isinstance(doi_cut, InputCut):
                     from_layers = (
                         self._get_logit_layer()
-                        if isinstance(doi_cut, LogitCut)
-                        else self._get_output_layer()
-                        if isinstance(doi_cut, OutputCut)
-                        else self._get_layers_by_name(doi_cut.name)
+                        if isinstance(doi_cut,
+                                      LogitCut) else self._get_output_layer()
+                        if isinstance(doi_cut, OutputCut) else
+                        self._get_layers_by_name(doi_cut.name)
                     )
 
                     for layer, x_i in zip(from_layers, intervention.args):
@@ -209,13 +199,10 @@ class Tensorflow2ModelWrapper(
                                     x_i[i] = tf.cast(_x_i, _x.dtype)
                             return om_of_many(x_i)
 
-                        if doi_cut.anchor == "in":
+                        if doi_cut.anchor == 'in':
                             layer.input_intervention = intervention_fn
                         else:
-                            if (
-                                doi_cut.anchor is not None
-                                and doi_cut.anchor != "out"
-                            ):
+                            if doi_cut.anchor is not None and doi_cut.anchor != 'out':
                                 tru_logger.warning(
                                     f"Unrecognized doi_cut.anchor {doi_cut.anchor}. Defaulting to `out` anchor."
                                 )
@@ -226,13 +213,12 @@ class Tensorflow2ModelWrapper(
             # Get the output from the "to layers" and possibly the latent
             # layers.
             def retrieve_index(i, results, anchor):
+
                 def retrieve(inputs, output):
-                    if anchor == "in":
+                    if anchor == 'in':
                         # Why does this happen:?
-                        if (
-                            isinstance(inputs, DATA_CONTAINER_TYPE)
-                            and len(inputs) == 1
-                        ):
+                        if isinstance(inputs,
+                                      DATA_CONTAINER_TYPE) and len(inputs) == 1:
                             results[i] = inputs[0]
                         else:
                             results[i] = inputs
@@ -290,15 +276,13 @@ class Tensorflow2ModelWrapper(
                             # Input layers don't end up calling the hook, so we
                             # have to get their output manually.
                             attribution_results[i] = intervention.args[
-                                self._input_layer_index(layer)
-                            ]
+                                self._input_layer_index(layer)]
 
                         else:
                             layer.retrieve_functions.append(
                                 retrieve_index(
-                                    i,
-                                    attribution_results,
-                                    attribution_cut.anchor,
+                                    i, attribution_results,
+                                    attribution_cut.anchor
                                 )
                             )
 
@@ -319,14 +303,8 @@ class Tensorflow2ModelWrapper(
         return (results, attribution_results)
 
     def _qoi_bprop(
-        self,
-        *,
-        qoi: QoI,
-        model_inputs: ModelInputs,
-        doi_cut: Cut,
-        to_cut: Cut,
-        attribution_cut: Cut,
-        intervention: TensorArgs,
+        self, *, qoi: QoI, model_inputs: ModelInputs, doi_cut: Cut, to_cut: Cut,
+        attribution_cut: Cut, intervention: TensorArgs
     ) -> Outputs[Inputs[TensorLike]]:
         """
         See ModelWrapper.qoi_bprop .
@@ -339,7 +317,7 @@ class Tensorflow2ModelWrapper(
                 doi_cut=doi_cut,
                 to_cut=to_cut,
                 attribution_cut=attribution_cut,
-                intervention=intervention,
+                intervention=intervention
             )
 
         with tf.GradientTape(persistent=True) as tape:
@@ -352,7 +330,7 @@ class Tensorflow2ModelWrapper(
                 doi_cut=doi_cut,
                 to_cut=to_cut,
                 attribution_cut=attribution_cut,
-                intervention=intervention,
+                intervention=intervention
             )
             outputs: Outputs[TensorLike]
             attribution_features: Outputs[TensorLike]

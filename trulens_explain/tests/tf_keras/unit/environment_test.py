@@ -1,3 +1,4 @@
+from unittest import main
 from unittest import TestCase
 
 from tensorflow.keras.layers import Dense
@@ -9,8 +10,9 @@ from trulens.nn.models.keras import KerasModelWrapper
 
 
 class EnvironmentTest(EnvironmentTestBase, TestCase):
+
     def setUp(self):
-        super().setUp()
+        super(EnvironmentTest, self).setUp()
         # Make a linear model for testing.
         x_lin = Input((self.input_size,))
         y_lin = Dense(self.output_size)(x_lin)
