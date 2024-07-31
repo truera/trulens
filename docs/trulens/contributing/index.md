@@ -63,7 +63,7 @@ Performance](https://colab.research.google.com/github/truera/trulens/blob/main/t
 All example notebooks are expected to:
 
 - Start with a title and description of the example
-- Include a commented out list of dependencies and their versions, e.g. `# ! pip
+- Include a commented out list of dependencies and their versions, e.g. `# !pip
   install trulens==0.10.0 langchain==0.0.268`
 - Include a linked button to a Google colab version of the notebook
 - Add any additional requirements
