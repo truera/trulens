@@ -151,7 +151,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.experimental_fragment(run_every=2)
+@st.fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
     Render clickable feedback pills for a given record.
@@ -198,7 +198,7 @@ def trulens_feedback(record: Record):
         format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
         label_visibility="collapsed",  # Hiding because we can't format the label here.
         icons=icons,
-        key=f"{call_data['feedback_name']}_{len(feedbacks)}",  # Important! Otherwise streamlit sometimes lazily skips update even with st.experimental_fragment
+        key=f"{call_data['feedback_name']}_{len(feedbacks)}",  # Important! Otherwise streamlit sometimes lazily skips update even with st.fragment
     )
 
     if selected_feedback is not None:

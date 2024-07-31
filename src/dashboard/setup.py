@@ -1,15 +1,12 @@
 """
-# _TruLens-Eval_ build script
+# trulens-dashboard build script
 
 To build:
 
 ```bash
-python setup.py bdist_wheel
+cd src/dashboard
+python -m build
 ```
-
-TODO: It is more standard to configure a lot of things we configure
-here in a setup.cfg file instead. It is unclear whether we can do everything
-with a config file though so we may need to keep this script or parts of it.
 """
 
 import os
