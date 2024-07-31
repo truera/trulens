@@ -33,7 +33,7 @@ class Provider(WithClassInfo, SerialModel):
     for specific tasks, such as language detection. These models are than utilized by a feedback function
     to generate an evaluation score.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.huggingface import Huggingface
@@ -50,7 +50,7 @@ class Provider(WithClassInfo, SerialModel):
 
     This means that the base model selected is combined with specific prompting for `relevance` to generate feedback.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.openai import OpenAI

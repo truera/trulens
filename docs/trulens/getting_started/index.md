@@ -17,7 +17,7 @@
 
 * Let us take you on a tour; the [guides](../guides/use_cases_any.md).
 
-* Shed the floaties and proceed to the [API reference](../api/tru.md).
+* Shed the floaties and proceed to the [API reference](reference/trulens/core).
 
 ## 😍 Community
 

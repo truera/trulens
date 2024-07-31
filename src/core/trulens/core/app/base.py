@@ -448,7 +448,7 @@ class App(
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
-    [AppDefinition][trulens.schema.app.AppDefinition].
+    [AppDefinition][trulens.core.schema.app.AppDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
     - [TruLlama][trulens.instrument.llamaindex.TruLlama] for _LlamaIndex_ apps.
@@ -484,7 +484,7 @@ class App(
     """Database interface.
 
     If this is not provided, a singleton
-    [SQLAlchemyDB][trulens.database.sqlalchemy.SQLAlchemyDB] will be
+    [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] will be
     made (if not already) and used.
     """
 

@@ -52,6 +52,9 @@ python-markdown-math = "^0.8"
 markdown-include = "^0.8.1"
 notebook = "^7.2.1"
 black = "^24.4.2"
+mkdocs-gen-files = "^0.5.0"
+mkdocs-literate-nav = "^0.6.1"
+mkdocs-section-index = "^0.3.9"
 
 [tool.poetry.group.instrument.dependencies]
 trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }

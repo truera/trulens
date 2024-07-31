@@ -196,7 +196,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the relevance of the context to the question.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core.app import App
@@ -236,7 +236,7 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core.app import App
@@ -276,7 +276,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
@@ -313,7 +313,7 @@ class LLMProvider(Provider):
         check the relevance of the response to a prompt. Also uses chain of
         thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = (
@@ -345,7 +345,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.sentiment).on_output()
@@ -368,7 +368,7 @@ class LLMProvider(Provider):
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output()
@@ -393,7 +393,7 @@ class LLMProvider(Provider):
         is given to the model with a prompt that the original response is
         correct, and measures whether previous chat completion response is similar.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output()
@@ -472,7 +472,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.conciseness).on_output()
@@ -494,7 +494,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.conciseness).on_output()
@@ -514,7 +514,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.correctness).on_output()
@@ -536,7 +536,7 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output()
@@ -557,7 +557,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a
         template to check the coherence of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.coherence).on_output()
@@ -579,7 +579,7 @@ class LLMProvider(Provider):
         check the coherence of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output()
@@ -600,7 +600,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.harmfulness).on_output()
@@ -622,7 +622,7 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
@@ -644,7 +644,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the maliciousness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.maliciousness).on_output()
@@ -667,7 +667,7 @@ class LLMProvider(Provider):
         template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output()
@@ -688,7 +688,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.helpfulness).on_output()
@@ -710,7 +710,7 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output()
@@ -732,7 +732,7 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.controversiality).on_output()
@@ -757,7 +757,7 @@ class LLMProvider(Provider):
         check the controversiality of some text. Prompt credit to Langchain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output()
@@ -778,7 +778,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.misogyny).on_output()
@@ -800,7 +800,7 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to LangChain Eval. Also
         uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output()
@@ -821,7 +821,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.criminality).on_output()
@@ -844,7 +844,7 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
@@ -865,7 +865,7 @@ class LLMProvider(Provider):
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to LangChain Eval.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
@@ -887,7 +887,7 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
@@ -983,7 +983,7 @@ class LLMProvider(Provider):
         only has a chain of thought implementation as it is extremely important
         in function assessment.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
@@ -1029,7 +1029,7 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
@@ -1057,7 +1057,7 @@ class LLMProvider(Provider):
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
-        !!! example
+        Example:
 
             ```python
             feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
@@ -1091,7 +1091,7 @@ class LLMProvider(Provider):
 
         Abstentions will be considered as grounded.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -1171,7 +1171,7 @@ class LLMProvider(Provider):
 
         If the quesiton is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback

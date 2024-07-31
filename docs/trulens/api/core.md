@@ -1,3 +1,0 @@
-# trulens-core
-
-::: trulens.core

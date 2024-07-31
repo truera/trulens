@@ -137,7 +137,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -181,7 +181,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Primarily used for evaluation of model generated feedback against human feedback
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -215,7 +215,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -264,7 +264,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback

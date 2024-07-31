@@ -42,7 +42,7 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         Runs cosine distance on the query and document embeddings
 
-        !!! example
+        Example:
 
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
@@ -101,7 +101,7 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         Runs L1 distance on the query and document embeddings
 
-        !!! example
+        Example:
 
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
@@ -160,7 +160,7 @@ class Embeddings(WithClassInfo, SerialModel):
         """
         Runs L2 distance on the query and document embeddings
 
-        !!! example
+        Example:
 
             Below is just one example. See supported embedders:
             https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html

@@ -18,7 +18,7 @@ Some feedback functions rely on classification typically tailor made for task, u
 
 - [Huggingface provider][trulens.providers.huggingface.Huggingface]
   containing a variety of classification-based feedback functions runnable on the remote Huggingface API.
-  - [Huggingface provider][trulens.providers.huggingface-local.Huggingface]
+  - [Huggingface Local provider][trulens.providers.huggingfacelocal.HuggingfaceLocal]
   containing a variety of classification-based feedback functions runnable locally.
 - [OpenAI provider][trulens.providers.openai.OpenAI] (and
   subclasses) features moderation feedback functions.

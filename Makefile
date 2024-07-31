@@ -27,6 +27,14 @@ format: .env/create
 precommit-hooks: .env/create
 	poetry run pre-commit install
 
+typestubs: .env/create
+	stubgen src/core -o out/trulens
+	stubgen src/feedback -o out/trulens
+	stubgen src/dashboard -o out/trulens
+	stubgen src/benchmark -o out/trulens
+	stubgen src/providers/* -o out/trulens/providers
+	stubgen src/instrument/* -o out/trulens/instrument
+
 run-precommit: precommit-hooks
 	poetry run pre-commit run --all-files --show-diff-on-failure
 

@@ -16,7 +16,7 @@ class LiteLLM(LLMProvider):
 
     Create an LiteLLM Provider with out of the box feedback functions.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.litellm import LiteLLM

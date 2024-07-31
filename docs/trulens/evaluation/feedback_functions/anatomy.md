@@ -26,7 +26,7 @@ Multiple underlying models are available througheach provider, such as GPT-4 or
 Llama-2. In many, but not all cases, the feedback implementation is shared
 cross providers (such as with LLM-based evaluations).
 
-Read more about [feedback providers](../../api/providers.md).
+Read more about [feedback providers][trulens.core.feedback.provider.Provider].
 
 ## Feedback implementations
 

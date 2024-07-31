@@ -144,7 +144,7 @@ class HuggingfaceBase(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -195,7 +195,7 @@ class HuggingfaceBase(Provider):
 
         First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
-        !!! example
+        Example:
 
             ```
             from trulens.core import Feedback
@@ -248,7 +248,7 @@ class HuggingfaceBase(Provider):
         model that uses computes the relevance of a given context to the prompt.
         The model can be found at https://huggingface.co/truera/context_relevance.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -283,7 +283,7 @@ class HuggingfaceBase(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -310,7 +310,7 @@ class HuggingfaceBase(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -355,7 +355,7 @@ class HuggingfaceBase(Provider):
         """
         NER model to detect PII.
 
-        !!! example
+        Example:
 
             ```python
             hugs = Huggingface()
@@ -398,7 +398,7 @@ class HuggingfaceBase(Provider):
         """
         NER model to detect PII, with reasons.
 
-        !!! example
+        Example:
 
             ```python
             hugs = Huggingface()
@@ -448,7 +448,7 @@ class HuggingfaceBase(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.providers.huggingface import Huggingface
@@ -488,7 +488,7 @@ class Huggingface(HuggingfaceBase):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.providers.huggingface import Huggingface

@@ -1,7 +1,7 @@
-"""
-# Trulens Core LLM Evaluation Library
+"""# Trulens Core LLM Evaluation Library
 
-This top-level import includes everything to get started.
+The `trulens-core` library includes everything to get started.
+
 """
 
 from trulens.core.app import TruBasicApp

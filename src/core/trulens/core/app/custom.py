@@ -3,7 +3,7 @@
 
 This wrapper is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
 
-!!! example
+Example:
 
     Consider a mock question-answering app with a context retriever component coded
     up as two classes in two python, `CustomApp` and `CustomRetriever`:
@@ -53,7 +53,7 @@ used by components. The `instrument` must decorate each method that the user wis
 The owner classes of any decorated method is then viewed as an app component. In this example, case `CustomApp` and
 `CustomRetriever` are components.
 
-    !!! example
+    Example:
 
     ### `example.py`
 
@@ -223,7 +223,7 @@ class TruCustomApp(App):
     Track any custom app using methods decorated with `@instrument`, or whose
     methods are instrumented after the fact by `instrument.method`.
 
-    !!! example "Using the `@instrument` decorator"
+    Example: "Using the `@instrument` decorator"
 
         ```python
         from trulens.core import instrument
@@ -252,7 +252,7 @@ class TruCustomApp(App):
         ca = CustomApp()
         ```
 
-    !!! example "Using `instrument.method`"
+    Example: "Using `instrument.method`"
 
         ```python
         from trulens.core import instrument
@@ -291,7 +291,7 @@ class TruCustomApp(App):
 
     - For returns: `Select.RecordCalls.<method_name>.rets.<ret_name>`
 
-    !!! example "Defining feedback functions with instrumented methods"
+    Example: "Defining feedback functions with instrumented methods"
 
         ```python
         f_context_relevance = (
@@ -305,7 +305,7 @@ class TruCustomApp(App):
     Last, the `TruCustomApp` recorder can wrap our custom application, and
     provide logging and evaluation upon its use.
 
-    !!! example "Using the `TruCustomApp` recorder"
+    Example: "Using the `TruCustomApp` recorder"
 
         ```python
         from trulens.core import TruCustomApp

@@ -21,7 +21,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         feedback (Feedback): use this feedback function to score each document.
         threshold (float): and keep documents only if their feedback value is at least this threshold.
 
-    !!! example "Using TruLens guardrail context filters with Llama-Index"
+    Example: "Using TruLens guardrail context filters with Llama-Index"
         ```python
         from trulens.guardrails.llama import WithFeedbackFilterNodes
 

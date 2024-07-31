@@ -2,12 +2,10 @@
 
 ## [🚀 Getting Started](getting_started/index.md)
 
-## [🎯 Evaluation](evaluation/index.md)
+## [🎯 Conceptual Guide](guide/index.md)
 
-## [🎺 Tracking](tracking/index.md)
+## [API Reference](reference/trulens/core/)
 
-## [🔍 Guides](guides/index.md)
-
-## [☕ API Reference](api/index.md)
+## [Examples](examples/README.md)
 
 ## [🤝 Contributing](contributing/index.md)

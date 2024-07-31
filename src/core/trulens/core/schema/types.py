@@ -28,20 +28,20 @@ AppID: typing_extensions.TypeAlias = str
 """Unique identifier for an app.
 
 By default these are hashes of app content as json.
-See [App.app_id][trulens.core.schema.app.App.app_id].
+See [AppDefinition.app_id][trulens.core.schema.app.AppDefinition.app_id].
 """
 
 Tags: typing_extensions.TypeAlias = str
 """Tags for an app or record.
 
-See [App.tags][trulens.core.schema.app.App.tags] and
+See [AppDefinition.tags][trulens.core.schema.app.AppDefinition.tags] and
 [Record.tags][trulens.core.schema.record.Record.tags].
 """
 
 Metadata: typing_extensions.TypeAlias = Dict
 """Metadata for an app or record.
 
-See [App.meta][trulens.core.schema.app.App.meta] and
+See [AppDefinition.metadata][trulens.core.schema.app.AppDefinition.metadata] and
 [Record.meta][trulens.core.schema.record.Record.meta].
 """
 

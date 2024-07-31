@@ -24,7 +24,7 @@ class Langchain(LLMProvider):
 
     Create a LangChain Provider with out of the box feedback functions.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.langchain import LangChain
