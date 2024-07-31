@@ -1,3 +1,3 @@
 # Provider
 
-::: trulens.core.feedback.provider.Provider
+::: trulens.core.feedback.Provider

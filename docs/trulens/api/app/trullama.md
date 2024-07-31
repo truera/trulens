@@ -1,5 +1,5 @@
 # 🦙 TruLlama
 
-::: trulens.instrument.llamaindex.tru_llama.TruLlama
+::: trulens.instrument.llamaindex.TruLlama
     options:
       inherited_members: true

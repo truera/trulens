@@ -6,7 +6,7 @@ more information about models available
 [here](https://docs.litellm.ai/docs/providers).
 
 All feedback functions listed in the base [LLMProvider
-class][trulens.feedback.llm_provider.LLMProvider]
+class][trulens.feedback.LLMProvider]
 can be run with LiteLLM.
 
-::: trulens.providers.litellm.provider.LiteLLM
+::: trulens.providers.litellm

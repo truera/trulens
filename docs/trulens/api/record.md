@@ -1,6 +1,6 @@
 # 💾 Record
 
-::: trulens.core.schema.record.Record
+::: trulens.core.schema.Record
 
 ::: trulens.core.schema.record.RecordAppCall
 

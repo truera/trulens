@@ -1,12 +1,12 @@
 # Feedback
 
 Feedback functions are stored as instances of
-[Feedback][trulens.feedback.feedback.Feedback] which itself extends
-[FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition]. The
+[Feedback][trulens.core.Feedback] which itself extends
+[FeedbackDefinition][trulens.core.schema.FeedbackDefinition]. The
 definition parent contains serializable fields while the non-definition subclass
 adds non-serializable instantiations.
 
-::: trulens.core.feedback.feedback.Feedback
+::: trulens.core.Feedback
 
 ## Feedback-related types and containers
 

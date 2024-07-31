@@ -1,3 +1,3 @@
 # ❄️ Cortex Provider
 
-::: trulens.providers.cortex.provider.Cortex
+::: trulens.providers.cortex

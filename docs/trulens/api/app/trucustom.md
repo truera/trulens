@@ -1,5 +1,5 @@
 # TruCustomApp
 
-::: trulens.core.app.custom.TruCustomApp
+::: trulens.core.TruCustomApp
     options:
       inherited_members: true

@@ -1,3 +1,3 @@
 # LLM Provider
 
-::: trulens.feedback.llm_provider.LLMProvider
+::: trulens.feedback.LLMProvider

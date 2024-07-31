@@ -1,10 +1,10 @@
 # 📖 Stock Feedback Functions
 
-::: trulens.providers.huggingface.provider.Huggingface
+::: trulens.providers.huggingface.Huggingface
 
-::: trulens.providers.openai.provider.OpenAI
+::: trulens.providers.openai.OpenAI
 
-::: trulens.feedback.llm_provider
+::: trulens.feedback.LLMProvider
 
 ::: trulens.feedback.groundtruth
 

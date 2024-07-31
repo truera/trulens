@@ -1,3 +1,3 @@
 # Endpoint
 
-::: trulens.core.feedback.endpoint
+::: trulens.core.feedback.Endpoint
