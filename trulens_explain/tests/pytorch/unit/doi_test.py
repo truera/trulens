@@ -2,13 +2,12 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "pytorch"
 
-from unittest import TestCase
 from unittest import main
-
-from torch.nn import Module
-from trulens.nn.models import get_model_wrapper
+from unittest import TestCase
 
 from tests.unit.doi_test_base import DoiTestBase
+from torch.nn import Module
+from trulens.nn.models import get_model_wrapper
 
 
 class DoiTest(DoiTestBase, TestCase):

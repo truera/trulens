@@ -2,17 +2,16 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tensorflow"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import tensorflow as tf
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from trulens.nn.models import get_model_wrapper
-
 from tests.unit.attribution_axioms_test_base import AxiomsTestBase
+from trulens.nn.models import get_model_wrapper
 
 assert not tf.executing_eagerly()
 

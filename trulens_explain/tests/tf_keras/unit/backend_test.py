@@ -2,8 +2,8 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tf.keras"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tests.unit.backend_test_base import BackendTestBase
 

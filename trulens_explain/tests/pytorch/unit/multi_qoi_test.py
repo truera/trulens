@@ -2,16 +2,15 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "pytorch"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
+from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 import torch
 from torch.nn import GRU
 from torch.nn import Linear
 from torch.nn import Module
 from trulens.nn.models import get_model_wrapper
-
-from tests.unit.multi_qoi_test_base import MultiQoiTestBase
 
 
 class MultiQoiTest(MultiQoiTestBase, TestCase):

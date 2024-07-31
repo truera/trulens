@@ -4,10 +4,9 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
+from tests.unit.environment_test_base import EnvironmentTestBase
 from trulens.nn.backend import Backend
 from trulens.nn.models.tensorflow_v2 import Tensorflow2ModelWrapper
-
-from tests.unit.environment_test_base import EnvironmentTestBase
 
 
 class TFSubclassModel(Model):

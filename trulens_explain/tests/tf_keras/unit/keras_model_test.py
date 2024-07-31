@@ -6,15 +6,14 @@ from tensorflow.python.util import deprecation
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from trulens.nn.models.keras import KerasModelWrapper
-
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from trulens.nn.models.keras import KerasModelWrapper
 
 
 class ModelWrapperTest(ModelWrapperTestBase, TestCase):

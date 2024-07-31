@@ -2,16 +2,15 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tf.keras"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Input
 from tensorflow.keras.models import Model
-from trulens.nn.models import get_model_wrapper
-
 from tests.unit.batch_test_base import BatchTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class BatchTest(BatchTestBase, TestCase):

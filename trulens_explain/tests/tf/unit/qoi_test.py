@@ -6,8 +6,8 @@ from tensorflow.python.util import deprecation
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tests.unit.qoi_test_base import QoiTestBase
 

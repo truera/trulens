@@ -3,14 +3,13 @@ import os
 os.environ["TRULENS_BACKEND"] = "tensorflow"
 
 import unittest
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import Model
-from trulens.nn.models import get_model_wrapper
-
 from tests.unit.model_wrapper_test_base import ModelWrapperTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class TFFunctionModel(Model):

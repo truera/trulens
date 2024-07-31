@@ -5,11 +5,10 @@ from typing import Optional, Tuple
 
 import numpy as np
 import torch
-
 from trulens.nn.backend import get_backend
 from trulens.nn.backend.pytorch_backend import pytorch
-from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.backend.pytorch_backend.pytorch import memory_suggestions
+from trulens.nn.backend.pytorch_backend.pytorch import Tensor
 from trulens.nn.models._model_base import ModelWrapper
 from trulens.nn.quantities import QoI
 from trulens.nn.slices import Cut
@@ -19,13 +18,13 @@ from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_map
+from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
-from trulens.utils.typing import many_of_om
-from trulens.utils.typing import nested_map
-from trulens.utils.typing import om_of_many
 
 
 class PytorchModelWrapper(ModelWrapper):

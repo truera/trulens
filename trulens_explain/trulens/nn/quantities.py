@@ -20,13 +20,13 @@ from typing import Callable, List, Optional, Union
 
 from trulens.nn.backend import get_backend
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
+from trulens.utils.typing import render_object
 from trulens.utils.typing import Tensor
 from trulens.utils.typing import TensorLike
-from trulens.utils.typing import many_of_om
-from trulens.utils.typing import om_of_many
-from trulens.utils.typing import render_object
 
 
 class QoiCutSupportError(ValueError):

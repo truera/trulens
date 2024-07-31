@@ -2,16 +2,15 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tensorflow"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import GRU
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import GRU
 from tensorflow.keras.layers import Input
-from trulens.nn.models import get_model_wrapper
-
 from tests.unit.multi_qoi_test_base import MultiQoiTestBase
+from trulens.nn.models import get_model_wrapper
 
 
 class MultiQoiTest(MultiQoiTestBase, TestCase):

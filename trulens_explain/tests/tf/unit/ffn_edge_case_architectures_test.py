@@ -6,12 +6,12 @@ from tensorflow.python.util import deprecation
 
 deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import numpy as np
-import tensorflow as tf
 from tensorflow import Graph
+import tensorflow as tf
 from tensorflow.nn import relu
 from trulens.nn.attribution import InternalInfluence
 from trulens.nn.distributions import PointDoi

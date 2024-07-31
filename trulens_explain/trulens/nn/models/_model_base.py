@@ -18,21 +18,21 @@ from trulens.nn.slices import Cut
 from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import OM
 from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import InterventionLike
 from trulens.utils.typing import KwargsLike
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
+from trulens.utils.typing import nested_cast
+from trulens.utils.typing import OM
+from trulens.utils.typing import om_of_many
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorAKs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
 from trulens.utils.typing import Tensors
-from trulens.utils.typing import many_of_om
-from trulens.utils.typing import nested_cast
-from trulens.utils.typing import om_of_many
 
 
 class ModelWrapper(AbstractBaseClass):

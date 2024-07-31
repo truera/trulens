@@ -2,16 +2,15 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "pytorch"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
+from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 from torch.nn import Linear
 from torch.nn import Module
 from torch.nn import ReLU
 from trulens.nn.backend import get_backend
 from trulens.nn.models import get_model_wrapper
-
-from tests.unit.attribution_axioms_test_base import AxiomsTestBase
 
 
 class AxiomsTest(AxiomsTestBase, TestCase):

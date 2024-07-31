@@ -1,13 +1,12 @@
 import os
 
-from trulens.nn.models import get_model_wrapper
-
 from tests.unit.determinism_test_base import DeterminismTestBase
+from trulens.nn.models import get_model_wrapper
 
 os.environ["TRULENS_BACKEND"] = "pytorch"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import torch
 from torch.nn import Module

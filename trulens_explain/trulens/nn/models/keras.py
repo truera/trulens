@@ -18,11 +18,11 @@ from trulens.nn.slices import LogitCut
 from trulens.nn.slices import OutputCut
 from trulens.utils import tru_logger
 from trulens.utils.typing import DATA_CONTAINER_TYPE
+from trulens.utils.typing import many_of_om
 from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import Outputs
 from trulens.utils.typing import TensorArgs
 from trulens.utils.typing import TensorLike
-from trulens.utils.typing import many_of_om
 
 
 def import_keras_backend():

@@ -2,8 +2,8 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tensorflow"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import tensorflow as tf
 

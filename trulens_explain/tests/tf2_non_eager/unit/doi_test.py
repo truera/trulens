@@ -2,11 +2,10 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "tensorflow"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import tensorflow as tf
-
 from tests.unit.doi_test_base import DoiTestBase
 
 assert not tf.executing_eagerly()

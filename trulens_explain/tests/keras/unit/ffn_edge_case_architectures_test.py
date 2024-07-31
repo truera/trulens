@@ -2,8 +2,8 @@ import os
 
 os.environ["TRULENS_BACKEND"] = "keras"
 
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 import numpy as np
 from tensorflow.python.util import deprecation

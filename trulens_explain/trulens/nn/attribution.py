@@ -13,10 +13,9 @@ package.
 from abc import ABC as AbstractBaseClass
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Callable, List, Tuple, Union, get_type_hints
+from typing import Callable, get_type_hints, List, Tuple, Union
 
 import numpy as np
-
 from trulens.nn.backend import get_backend
 from trulens.nn.backend import memory_suggestions
 from trulens.nn.backend import rebatch
@@ -35,23 +34,23 @@ from trulens.nn.slices import InputCut
 from trulens.nn.slices import OutputCut
 from trulens.nn.slices import Slice
 from trulens.utils import tru_logger
-from trulens.utils.typing import DATA_CONTAINER_TYPE
-from trulens.utils.typing import MAP_CONTAINER_TYPE
-from trulens.utils.typing import OM
 from trulens.utils.typing import ArgsLike
+from trulens.utils.typing import DATA_CONTAINER_TYPE
 from trulens.utils.typing import Inputs
 from trulens.utils.typing import KwargsLike
-from trulens.utils.typing import ModelInputs
-from trulens.utils.typing import Outputs
-from trulens.utils.typing import TensorArgs
-from trulens.utils.typing import TensorLike
-from trulens.utils.typing import Uniform
 from trulens.utils.typing import many_of_om
+from trulens.utils.typing import MAP_CONTAINER_TYPE
+from trulens.utils.typing import ModelInputs
 from trulens.utils.typing import nested_axes
 from trulens.utils.typing import nested_cast
 from trulens.utils.typing import nested_map
 from trulens.utils.typing import nested_zip
+from trulens.utils.typing import OM
 from trulens.utils.typing import om_of_many
+from trulens.utils.typing import Outputs
+from trulens.utils.typing import TensorArgs
+from trulens.utils.typing import TensorLike
+from trulens.utils.typing import Uniform
 
 # Attribution-related type aliases.
 # TODO: Verify these and move to typing utils?

@@ -6,7 +6,6 @@ import os
 from typing import Sequence
 
 import numpy as np
-
 from trulens.nn.backend import _ALL_BACKEND_API_FUNCTIONS
 from trulens.nn.backend import Backend
 from trulens.utils.typing import float_size

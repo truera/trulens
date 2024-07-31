@@ -1,6 +1,6 @@
 from os import listdir
-from unittest import TestCase
 from unittest import main
+from unittest import TestCase
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
