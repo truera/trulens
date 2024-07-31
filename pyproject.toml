@@ -19,6 +19,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
+trulens-api = "^0.33"
 trulens-core = "^0.33"
 trulens-feedback = "^0.33"
 trulens-dashboard = "^0.33"
@@ -72,6 +73,7 @@ trulens-provider-openai = { path = "src/providers/openai", develop = true }
 trulens-provider-litellm = { path = "src/providers/litellm", develop = true }
 
 [tool.poetry.group.required.dependencies]
+trulens-api = { path = "src/api", develop = true }
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }

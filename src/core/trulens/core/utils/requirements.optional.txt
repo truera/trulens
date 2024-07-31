@@ -72,3 +72,17 @@ tokenizers     >= 0.13.3  # no direct uses
 # Datasets
 datasets >= 2.12.0
 kaggle   >= 1.5.13
+
+
+# Trulens packages
+trulens-feedback >= 0.33
+trulens-instrument-llama >= 0.33
+trulens-instrument-langchain >= 0.33
+trulens-instrument-nemo >= 0.33
+trulens-provider-bedrock >= 0.33
+trulens-provider-cortex >= 0.33
+trulens-provider-huggingface >= 0.33
+trulens-provider-huggingface-local >= 0.33
+trulens-provider-langchain >= 0.33
+trulens-provider-litellm >= 0.33
+trulens-provider-openai >= 0.33
