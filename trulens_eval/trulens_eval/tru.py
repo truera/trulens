@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import queue
+import time
 from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
@@ -154,6 +156,9 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
+    batch_record_queue = queue.Queue()
+    batch_thread = None
+
     def __init__(
         self,
         database: Optional[DB] = None,
@@ -213,6 +218,9 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
+
+        self.batch_thread = threading.Thread(target=self.batch_loop)
+        self.batch_thread.start()
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict
@@ -365,10 +373,39 @@ class Tru(python.SingletonPerName):
             record = mod_record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
-
         return self.db.insert_record(record=record)
 
     update_record = add_record
+
+    def add_record_async(
+        self,
+        record: Optional[mod_record_schema.Record] = None,
+        **kwargs: dict
+    ) -> mod_types_schema.RecordID:
+        if record is None:
+            record = mod_record_schema.Record(**kwargs)
+        else:
+            record.update(**kwargs)
+        self.batch_record_queue.put(record)
+
+    def batch_loop(self):
+        while True:
+            time.sleep(10)
+            records = []
+            while True:
+                try:
+                    record = self.batch_record_queue.get_nowait()
+                    records.append(record)
+                except queue.Empty:
+                    break
+            if records:
+                try:
+                    self.db.batch_insert_record(records)
+                except Exception as e:
+                    # Re-queue the records that failed to be inserted
+                    for record in records:
+                        self.batch_record_queue.put(record)
+                    logger.error("Re-queued records due to insertion error {}", e)
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
@@ -440,7 +477,6 @@ class Tru(python.SingletonPerName):
                         on_done(temp)
                     finally:
                         return temp
-
                 return temp
 
 
@@ -450,9 +486,6 @@ class Tru(python.SingletonPerName):
             # Have to roll the on_done callback into the submitted function
             # because the result() is returned before callback runs otherwise.
             # We want to do db work before result is returned.
-
-            # if on_done is not None:
-            #    fut.add_done_callback(on_done)
 
             feedbacks_and_futures.append((ffunc, fut))
 

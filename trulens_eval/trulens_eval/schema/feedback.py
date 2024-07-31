@@ -182,6 +182,9 @@ class FeedbackMode(str, Enum):
     """Evaluate later via the process started by
     `tru.start_deferred_feedback_evaluator`."""
 
+    SERVER = "server"
+    """Evaluate feedback later in server side and not in app environment."""
+
 
 class FeedbackResultStatus(Enum):
     """For deferred feedback evaluation, these values indicate status of evaluation."""

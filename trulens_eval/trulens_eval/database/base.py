@@ -91,7 +91,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: mod_record_schema.Record,
+        record: mod_record_schema.Record
     ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
@@ -103,6 +103,10 @@ class DB(SerialModel, abc.ABC):
             The id of the given record.
         """
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def batch_insert_record(self, records: List[mod_record_schema.Record]):
         raise NotImplementedError()
 
     @abc.abstractmethod

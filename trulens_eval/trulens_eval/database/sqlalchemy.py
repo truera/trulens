@@ -89,10 +89,10 @@ class SQLAlchemyDB(DB):
     """
 
     def __init__(
-        self,
-        redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
-        table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs: Dict[str, Any]
+            self,
+            redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
+            table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+            **kwargs: Dict[str, Any]
     ):
         super().__init__(
             redact_keys=redact_keys,
@@ -115,13 +115,13 @@ class SQLAlchemyDB(DB):
 
     @classmethod
     def from_tru_args(
-        cls,
-        database_url: Optional[str] = None,
-        database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = mod_db.
-        DEFAULT_DATABASE_REDACT_KEYS,
-        database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs: Dict[str, Any]
+            cls,
+            database_url: Optional[str] = None,
+            database_file: Optional[str] = None,
+            database_redact_keys: Optional[bool] = mod_db.
+            DEFAULT_DATABASE_REDACT_KEYS,
+            database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
+            **kwargs: Dict[str, Any]
     ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
@@ -275,9 +275,9 @@ class SQLAlchemyDB(DB):
 
                 with self.engine.connect() as c:
                     for table_name in ['alembic_version'
-                                      ] + [c._table_base_name
-                                           for c in self.orm.registry.values()
-                                           if hasattr(c, "_table_base_name")]:
+                                       ] + [c._table_base_name
+                                            for c in self.orm.registry.values()
+                                            if hasattr(c, "_table_base_name")]:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
 
@@ -311,11 +311,12 @@ class SQLAlchemyDB(DB):
     ) -> mod_types_schema.RecordID:
         """See [DB.insert_record][trulens_eval.database.base.DB.insert_record]."""
         # TODO: thread safety
-
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
+
+        # App thread should not be blocking on sending records to db
         with self.session.begin() as session:
             if session.query(self.orm.Record
-                            ).filter_by(record_id=record.record_id).first():
+                             ).filter_by(record_id=record.record_id).first():
                 session.merge(_rec)  # update existing
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
@@ -324,14 +325,24 @@ class SQLAlchemyDB(DB):
 
             return _rec.record_id
 
+    def batch_insert_record(self, records: List[mod_record_schema.Record]):
+        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
+        try:
+            with self.session.begin() as session:
+                records_list = [self.orm.Record.parse(r, redact_keys=self.redact_keys) for r in records]
+                session.bulk_save_objects(records_list)
+                logger.info("{UNICODE_CHECK} added record batch")
+        except Exception as e:
+            logger.error("Error inserting record batch: %s", e)
+
     def get_app(
-        self, app_id: mod_types_schema.AppID
+            self, app_id: mod_types_schema.AppID
     ) -> Optional[JSONized[mod_app.App]]:
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
             if _app := session.query(self.orm.AppDefinition
-                                    ).filter_by(app_id=app_id).first():
+                                     ).filter_by(app_id=app_id).first():
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
@@ -342,7 +353,7 @@ class SQLAlchemyDB(DB):
                 yield json.loads(_app.app_json)
 
     def insert_app(
-        self, app: mod_app_schema.AppDefinition
+            self, app: mod_app_schema.AppDefinition
     ) -> mod_types_schema.AppID:
         """See [DB.insert_app][trulens_eval.database.base.DB.insert_app]."""
 
@@ -350,7 +361,7 @@ class SQLAlchemyDB(DB):
 
         with self.session.begin() as session:
             if _app := session.query(self.orm.AppDefinition
-                                    ).filter_by(app_id=app.app_id).first():
+                                     ).filter_by(app_id=app.app_id).first():
 
                 _app.app_json = app.model_dump_json()
             else:
@@ -372,7 +383,7 @@ class SQLAlchemyDB(DB):
         """
         with self.Session.begin() as session:
             _app = session.query(orm.AppDefinition).filter_by(app_id=app_id
-                                                             ).first()
+                                                              ).first()
             if _app:
                 session.delete(_app)
                 logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
@@ -380,7 +391,7 @@ class SQLAlchemyDB(DB):
                 logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
-        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
+            self, feedback_definition: mod_feedback_schema.FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens_eval.database.base.DB.insert_feedback_definition]."""
 
@@ -405,9 +416,9 @@ class SQLAlchemyDB(DB):
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
-        self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None
+            self,
+            feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+            ] = None
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
 
@@ -425,7 +436,7 @@ class SQLAlchemyDB(DB):
             )
 
     def insert_feedback(
-        self, feedback_result: mod_feedback_schema.FeedbackResult
+            self, feedback_result: mod_feedback_schema.FeedbackResult
     ) -> mod_types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens_eval.database.base.DB.insert_feedback]."""
 
@@ -466,19 +477,19 @@ class SQLAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def _feedback_query(
-        self,
-        count: bool = False,
-        shuffle: bool = False,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
-        status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+            self,
+            count: bool = False,
+            shuffle: bool = False,
+            record_id: Optional[mod_types_schema.RecordID] = None,
+            feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+            feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+            ] = None,
+            status: Optional[
+                Union[mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None
     ):
         if count:
             q = sa.func.count(self.orm.FeedbackResult.feedback_result_id)
@@ -517,18 +528,18 @@ class SQLAlchemyDB(DB):
         return q
 
     def get_feedback_count_by_status(
-        self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
-        status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-        shuffle: bool = False
+            self,
+            record_id: Optional[mod_types_schema.RecordID] = None,
+            feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+            feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+            ] = None,
+            status: Optional[
+                Union[mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None,
+            shuffle: bool = False
     ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens_eval.database.base.DB.get_feedback_count_by_status]."""
 
@@ -546,18 +557,18 @@ class SQLAlchemyDB(DB):
             }
 
     def get_feedback(
-        self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
-        status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
-        last_ts_before: Optional[datetime] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None,
-        shuffle: Optional[bool] = False
+            self,
+            record_id: Optional[mod_types_schema.RecordID] = None,
+            feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+            feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
+            ] = None,
+            status: Optional[
+                Union[mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            last_ts_before: Optional[datetime] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None,
+            shuffle: Optional[bool] = False
     ) -> pd.DataFrame:
         """See [DB.get_feedback][trulens_eval.database.base.DB.get_feedback]."""
 
@@ -569,10 +580,10 @@ class SQLAlchemyDB(DB):
             return _extract_feedback_results(results)
 
     def get_records_and_feedback(
-        self,
-        app_ids: Optional[List[str]] = None,
-        offset: Optional[int] = None,
-        limit: Optional[int] = None
+            self,
+            app_ids: Optional[List[str]] = None,
+            offset: Optional[int] = None,
+            limit: Optional[int] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
@@ -625,9 +636,8 @@ no_perf = mod_base_schema.Perf.min().model_dump()
 
 
 def _extract_feedback_results(
-    results: Iterable[orm.FeedbackResult]
+        results: Iterable[orm.FeedbackResult]
 ) -> pd.DataFrame:
-
     def _extract(_result: self.orm.FeedbackResult):
         app_json = json.loads(_result.record.app.app_json)
         _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
@@ -680,9 +690,8 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, mod_base_schema.Perf]]
+        series: Iterable[Union[str, dict, mod_base_schema.Perf]]
 ) -> pd.Series:
-
     def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
@@ -705,7 +714,6 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-
     def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
@@ -736,9 +744,9 @@ class AppsExtractor:
         self.feedback_columns = set()
 
     def get_df_and_cols(
-        self,
-        apps: Optional[List[orm.AppDefinition]] = None,
-        records: Optional[List[orm.Record]] = None
+            self,
+            apps: Optional[List[orm.AppDefinition]] = None,
+            records: Optional[List[orm.Record]] = None
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records dataframe which joins in information from apps and
         feedback results.
@@ -771,9 +779,9 @@ class AppsExtractor:
         return df, list(self.feedback_columns)
 
     def extract_apps(
-        self,
-        apps: Iterable[orm.AppDefinition],
-        records: Optional[List[orm.Record]] = None
+            self,
+            apps: Iterable[orm.AppDefinition],
+            records: Optional[List[orm.Record]] = None
     ) -> Iterable[pd.DataFrame]:
         """
         Creates record rows with app information.
@@ -840,9 +848,9 @@ class AppsExtractor:
                         json.loads(_res.calls_json)["calls"]
                     )
                     if _res.multi_result is not None and (multi_result :=
-                                                          json.loads(
-                                                              _res.multi_result
-                                                          )) is not None:
+                    json.loads(
+                        _res.multi_result
+                    )) is not None:
                         for key, val in multi_result.items():
                             if val is not None:  # avoid getting Nones into np.mean
                                 name = f"{_res.name}:::{key}"
@@ -874,7 +882,6 @@ class AppsExtractor:
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
-
     def _flatten(_nested):
         for iterable in _nested:
             for element in iterable:
