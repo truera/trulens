@@ -1,4 +1,4 @@
-exclude: trulens_explain/*
+exclude: trulens_explain
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
@@ -7,6 +7,8 @@ repos:
       - id: check-added-large-files
       - id: check-toml
       - id: check-yaml
+      - id: check-json
+      - id: destroyed-symlinks
       - id: detect-private-key
       - id: debug-statements
       - id: check-merge-conflict

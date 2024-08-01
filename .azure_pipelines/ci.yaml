@@ -86,12 +86,11 @@ jobs:
           cd ./trulens_explain
           pip install -r $(requirementsFile)
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
+          pip install -r requirements.dev.txt
         displayName: Install pip package
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-
-          pip install -r requirements.dev.txt
           ./format.sh --explain
         displayName: Format Code
       - bash: |

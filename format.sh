@@ -1,6 +1,7 @@
 #/bin/bash
 if [ $# -eq 0 ] ; then
-    FORMAT_PATH=.
+    echo "No arguments supplied: Please provide a flag --explain or --eval"
+    exit 1
 elif [ $1 = "--explain" ]; then
     FORMAT_PATH=./trulens_explain
     echo "Sorting imports in $FORMAT_PATH"
