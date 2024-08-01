@@ -1,3 +1,5 @@
+from trulens.core import TruBasicApp
+
 from examples.frameworks.custom.custom_app import CustomApp
 
 ca = CustomApp()

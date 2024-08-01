@@ -1222,7 +1222,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         recording, producing `func` results. The record of the computation is
         available through other means like the database or dashboard. If you
         need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
+        or the `App` as a context manager instead.
         """
 
         awaitable, _ = self.with_record(func, *args, **kwargs)
@@ -1240,7 +1240,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         recording, producing `func` results. The record of the computation is
         available through other means like the database or dashboard. If you
         need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
+        or the `App` as a context manager instead.
         """
 
         res, _ = self.with_record(func, *args, **kwargs)

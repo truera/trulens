@@ -37,7 +37,7 @@ log human feedback with TruLens.
 
 Next, it is a common practice to try traditional NLP metrics for evaluations
 such as BLEU and ROUGE. While these evals are extremely scalable, they are often
-too syntatic and lack the ability to provide meaningful information on the
+too syntactic and lack the ability to provide meaningful information on the
 performance of your app.
 
 ## Medium Language Model Evaluations

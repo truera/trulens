@@ -1169,7 +1169,7 @@ class LLMProvider(Provider):
 
         In the case of abstentions, the LLM will be asked to consider the answerability of the question given the source material.
 
-        If the quesiton is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
+        If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
         Example:
 

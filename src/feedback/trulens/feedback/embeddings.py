@@ -28,7 +28,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
-            from trulens_eval.feedback.embeddings import Embeddings
+            from trulens.feedback.embeddings import Embeddings
 
             embed_model = OpenAIEmbedding()
 
@@ -55,7 +55,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
-            from trulens_eval.feedback.embeddings import Embeddings
+            from trulens.feedback.embeddings import Embeddings
 
             embed_model = OpenAIEmbedding()
 
@@ -106,7 +106,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
-            from trulens_eval.feedback.embeddings import Embeddings
+            from trulens.feedback.embeddings import Embeddings
 
             embed_model = OpenAIEmbedding()
 
@@ -157,7 +157,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
-            from trulens_eval.feedback.embeddings import Embeddings
+            from trulens.feedback.embeddings import Embeddings
 
             embed_model = OpenAIEmbedding()
 

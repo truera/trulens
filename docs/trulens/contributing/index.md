@@ -32,7 +32,7 @@ functions library so others can benefit!
   a float, or a dict of multiple floats. Each output value should be a float on
   the scale of 0 (worst) to 1 (best).
 
-## 🤝 Add new feedback function providers.
+## 🤝 Add new feedback function providers
 
 Feedback functions often rely on a model provider, such as OpenAI or
 HuggingFace. If you need a new model provider to utilize feedback functions for
@@ -58,7 +58,7 @@ assign an issue to yourself.
 If you have applied TruLens to track and evaluate a unique use-case, we would
 love your contribution in the form of an example notebook: e.g. [Evaluating
 Pinecone Configuration Choices on Downstream App
-Performance](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)
+Performance](https://colab.research.google.com/github/truera/trulens/blob/main/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)
 
 All example notebooks are expected to:
 

@@ -284,7 +284,7 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 
 
 # Try to pretend to be a type as well as an instance.
-class Dummy(type, object):
+class Dummy(type):
     """Class to pretend to be a module or some other imported object.
 
     Will raise an error if accessed in some dynamic way. Accesses that are
@@ -431,7 +431,7 @@ class Dummy(type, object):
         raise self.exception_class(self.message)
 
 
-class OptionalImports(object):
+class OptionalImports:
     """Helper context manager for doing multiple imports from an optional
     modules
 

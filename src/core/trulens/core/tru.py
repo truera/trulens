@@ -216,61 +216,23 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-    # def Chain(
-    #     self, chain: langchain.chains.base.Chain, **kwargs: dict
-    # ) -> trulens.instrument.langchain.TruChain:
-    #     """Create a langchain app recorder with database managed by self.
+    def Basic(
+        self, text_to_text: Callable[[str], str], **kwargs: dict
+    ) -> trulens.core.TruBasicApp:
+        """Create a basic app recorder with database managed by self.
 
-    #     Args:
-    #         chain: The langchain chain defining the app to be instrumented.
+        Args:
+            text_to_text: A function that takes a string and returns a string.
+                The wrapped app's functionality is expected to be entirely in
+                this function.
 
-    #         **kwargs: Additional keyword arguments to pass to the
-    #             [TruChain][trulens.instrument.langchain.TruChain].
-    #     """
+            **kwargs: Additional keyword arguments to pass to
+                [TruBasicApp][trulens.core.TruBasicApp].
+        """
 
-    #     from trulens.instrument.langchain import TruChain
+        from trulens.core import TruBasicApp
 
-    #     return TruChain(tru=self, app=chain, **kwargs)
-
-    # def Llama(
-    #     self,
-    #     engine: Union[
-    #         llama_index.indices.query.base.BaseQueryEngine,
-    #         llama_index.chat_engine.types.BaseChatEngine,
-    #     ],
-    #     **kwargs: dict,
-    # ) -> trulens.instrument.llamaindex.TruLlama:
-    #     """Create a llama-index app recorder with database managed by self.
-
-    #     Args:
-    #         engine: The llama-index engine defining
-    #             the app to be instrumented.
-
-    #         **kwargs: Additional keyword arguments to pass to
-    #             [TruLlama][trulens.instrument.llamaindex.TruLlama].
-    #     """
-
-    #     from trulens.instrument.llamaindex import TruLlama
-
-    #     return TruLlama(tru=self, app=engine, **kwargs)
-
-    # def Basic(
-    #     self, text_to_text: Callable[[str], str], **kwargs: dict
-    # ) -> trulens.core.TruBasicApp:
-    #     """Create a basic app recorder with database managed by self.
-
-    #     Args:
-    #         text_to_text: A function that takes a string and returns a string.
-    #             The wrapped app's functionality is expected to be entirely in
-    #             this function.
-
-    #         **kwargs: Additional keyword arguments to pass to
-    #             [TruBasicApp][trulens.core.TruBasicApp].
-    #     """
-
-    #     from trulens.core import TruBasicApp
-
-    #     return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
+        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
 
     def Custom(self, app: Any, **kwargs: dict) -> trulens.core.TruCustomApp:
         """Create a custom app recorder with database managed by self.
@@ -715,7 +677,7 @@ class Tru(python.SingletonPerName):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
-        """Get records, their feeback results, and feedback names.
+        """Get records, their feedback results, and feedback names.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all

@@ -1,7 +1,7 @@
-![PyPI - Version](https://img.shields.io/pypi/v/trulens_eval?label=trulens_eval&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens%2F)
+![PyPI - Version](https://img.shields.io/pypi/v/trulens?label=trulens&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens%2F)
 ![Azure DevOps builds (job)](https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens_eval)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
 [![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/trulens/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/releases/rc-trulens-eval-0.17.0/trulens_eval/examples/quickstart/colab/langchain_quickstart_colab.ipynb)
@@ -12,7 +12,7 @@
 
 **Don't just vibe-check your llm app!** Systematically evaluate and track your
 LLM experiments with TruLens. As you develop your app including prompts, models,
-retreivers, knowledge sources and more, *TruLens* is the tool you need to
+retrievers, knowledge sources and more, *TruLens* is the tool you need to
 understand its performance.
 
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help

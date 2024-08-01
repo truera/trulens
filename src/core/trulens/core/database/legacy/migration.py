@@ -196,7 +196,7 @@ def _get_compatibility_version(version: str) -> str:
 
 def _migration_checker(db, warn: bool = False) -> None:
     """
-    Checks whether this db, if pre-populated, is comptible with this pypi
+    Checks whether this db, if pre-populated, is compatible with this pypi
     version.
 
     Args:
@@ -295,8 +295,10 @@ def _serialization_asserts(db) -> None:
     )
 
     for table in db.TABLES:
-        c.execute(f"""PRAGMA table_info({table});
-                """)
+        c.execute(
+            f"""PRAGMA table_info({table});
+                """
+        )
         columns = c.fetchall()
         for col_idx, col in tqdm(
             enumerate(columns),

@@ -24,7 +24,6 @@ from langchain.schema import StrOutputParser
 from langchain_openai import ChatOpenAI
 import streamlit as st
 from trulens.core import Tru
-from trulens.instrument.langchain import TruChain
 from trulens.dashboard import run_dashboard
 from trulens.instrument.langchain import TruChain
 

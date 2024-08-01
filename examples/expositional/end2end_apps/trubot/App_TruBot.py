@@ -13,12 +13,13 @@ from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
 import streamlit as st
-from trulens.core import Select
 from trulens.core import Feedback
+from trulens.core import Select
+from trulens.core import Tru
+from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
 from trulens.providers.huggingface import Huggingface
 from trulens.providers.openai import OpenAI as fOpenAI
-from trulens.core.utils.keys import check_keys
 
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
@@ -148,6 +149,7 @@ if user_input:
     # Display response
     st.write(answer)
 
+    tru = Tru()
     record_id = tru.add_data(
         app_id=app_id,
         prompt=prompt_input,

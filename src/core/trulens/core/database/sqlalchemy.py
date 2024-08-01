@@ -810,7 +810,7 @@ class AppsExtractor:
             df = pd.concat(self.extract_apps(apps))
 
         elif records is not None:
-            apps = set(record.app for record in records)
+            apps = {record.app for record in records}
             df = pd.concat(self.extract_apps(apps=apps, records=records))
 
         else:
@@ -938,7 +938,6 @@ def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
         _nested: Iterable[Iterable[Any]],
     ) -> Generator[Any, None, None]:
         for iterable in _nested:
-            for element in iterable:
-                yield element
+            yield from iterable
 
     return list(_flatten(nested))

@@ -124,7 +124,7 @@ class DB(SerialModel, abc.ABC):
         self, feedback_definition: FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """
-        Upsert a `feedback_definition` into the databaase.
+        Upsert a `feedback_definition` into the database.
 
         Args:
             feedback_definition: The feedback definition to insert or update.

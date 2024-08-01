@@ -59,19 +59,19 @@ The components of this specifications are:
 
   Some wrappers include additional shorthands:
 
-  ### llama_index-specific selectors
+### llama_index-specific selectors
 
   - `TruLlama.select_source_nodes()` -- outputs the selector for the source
     documents part of the engine output.
   - `TruLlama.select_context()` -- outputs the selector for the text of
     the source documents part of the engine output.
 
-  ### langchain-specific selectors
+### langchain-specific selectors
 
   - `Langchain.select_context()` -- outputs the selector for retrieved context
     from the app's internal `get_relevant_documents` method.
 
-  ### NeMo-specific selectors
+### NeMo-specific selectors
 
   - `NeMo.select_context()` -- outputs the selector for the retrieved context
     from the app's internal `search_relevant_chunks` method.
@@ -98,7 +98,7 @@ f_context_relevance = Feedback(openai.context_relevance)
 # def context_relevance(self, question: str, statement: str) -> float:
 ```
 
-- **Argument Selection specification ** -- Where we previously set,
+- **Argument Selection specification** -- Where we previously set,
   `on_input_output` , the `on(Select...)` line enables specification of where
   the statement argument to the implementation comes from. The form of the
   specification will be discussed in further details in the Specifying Arguments
@@ -182,7 +182,7 @@ argument mappings, the source of `argname1` is `selector1` and so on for further
 argument names. The types of `selector1` is `JSONPath` which we elaborate on in
 the "Selector Details".
 
-If argument names are ommitted, they are taken from the feedback function
+If argument names are omitted, they are taken from the feedback function
 implementation signature in order. That is,
 
 ```python
@@ -301,7 +301,7 @@ The full set of Query aliases are as follows:
 
 As in the `f_context_relevance` example, a selector for a _single_ argument may point
 to more than one aspect of a record/app. These are specified using the slice or
-lists in key/index poisitions. In that case, the feedback function is evaluated
+lists in key/index positions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main
 feedback result.
 

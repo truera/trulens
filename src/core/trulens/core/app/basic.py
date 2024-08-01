@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruWrapperApp(object):
+class TruWrapperApp:
     """Wrapper of basic apps.
 
     This will be wrapped by instrumentation.
@@ -81,7 +81,7 @@ class TruBasicApp(App):
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         # Basic app works by turning your callable into an app
-        # This app is accessbile with the `app` attribute in the recorder
+        # This app is accessible with the `app` attribute in the recorder
         with tru_recorder as recording:
             tru_recorder.app(question)
 

@@ -116,7 +116,7 @@ def render_record_metrics(
 
     cost = selected_rows["total_cost"][0]
     average_cost = app_specific_df["total_cost"].mean()
-    delta_cost = "{:.3g}".format(cost - average_cost)
+    delta_cost = f"{cost - average_cost:.3g}"
     cost_col.metric(
         label="Total cost (USD)",
         value=selected_rows["total_cost"][0],
@@ -126,7 +126,7 @@ def render_record_metrics(
 
     latency = selected_rows["latency"][0]
     average_latency = app_specific_df["latency"].mean()
-    delta_latency = "{:.3g}s".format(latency - average_latency)
+    delta_latency = f"{latency - average_latency:.3g}s"
     latency_col.metric(
         label="Latency (s)",
         value=selected_rows["latency"][0],

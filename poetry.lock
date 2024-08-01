@@ -7915,7 +7915,7 @@ streamlit-aggrid = "0.3.4"
 streamlit-extras = ">=0.4"
 streamlit-pills = ">=0.3"
 traitlets = ">=5.0.5"
-trulens-core = ">=1.0.0"
+trulens-core = ">=1"
 
 [package.extras]
 dev = ["build (>=1.2.1)", "ipython (>=7.25)"]
@@ -8855,4 +8855,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "bb3d6037b1b04b918ee0ef9cec1d025cfd2ed8fb7bc347c694a2229e3714925c"
+content-hash = "3a08ae4845acac9a2d0176845bd8e48f651856d363f7317643f740cca69fe59b"

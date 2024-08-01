@@ -120,7 +120,7 @@ class OpenAIClient(SerialModel):
             # Recreate constructor arguments and store in this dict.
             client_kwargs = {}
 
-            # Guess the contructor arguments based on signature of __new__.
+            # Guess the constructor arguments based on signature of __new__.
             sig = inspect.signature(client_class.__init__)
 
             for k, _ in sig.parameters.items():
@@ -304,7 +304,7 @@ class OpenAIEndpoint(Endpoint):
 
         if isinstance(response, oai.Stream):
             # NOTE(piotrm): Merely checking membership in these will exhaust internal
-            # genertors or iterators which will break users' code. While we work
+            # generators or iterators which will break users' code. While we work
             # out something, I'm disabling any cost-tracking for these streams.
             logger.warning("Cannot track costs from a OpenAI Stream.")
             return

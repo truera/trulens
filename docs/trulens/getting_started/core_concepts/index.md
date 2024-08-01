@@ -172,7 +172,7 @@ General and 🦑_TruLens_-specific concepts.
 
 - `Summarization`. The task of condensing some natural language text into a
   smaller bit of natural language text that preserves the most important parts
-  of the text. This can be targetted towards humans or otherwise. It can also be
+  of the text. This can be targeted towards humans or otherwise. It can also be
   used to maintain consize `Memory` in an `LLM` `Application` or `Agent`.
   Summarization can be performed by an `LLM` using a specific `Instruction Prompt`.
 

@@ -18,7 +18,7 @@ from tests.unit.utils import module_installed
 from tests.unit.utils import optional_test
 from tests.unit.utils import requiredonly_test
 
-# Importing any of these should throw ImportError (or its sublcass
+# Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
 # package that the values depend on. Tests will first make sure the named
 # package is not installed and then check that importing any of those named
@@ -139,7 +139,7 @@ class TestStatic(TestCase):
                 if isinstance(cls, Dummy):  # (1)
                     original_exception = cls.original_exception
                     self.fail(
-                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
+                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original exception={original_exception}"
                     )
 
                 # Disabled #2 test right now because of too many failures. We

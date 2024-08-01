@@ -171,7 +171,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def absolute_error(self, prompt: str, response: str, score: float) -> float:
         """
-        Method to look up the numeric expected score from a golden set and take the differnce.
+        Method to look up the numeric expected score from a golden set and take the difference.
 
         Primarily used for evaluation of model generated feedback against human feedback
 

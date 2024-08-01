@@ -12,7 +12,7 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS) clean-dashboard
 	for dir in $(POETRY_DIRS); do \
-		echo "Creating lockfile for $$dir"; \
+		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
 	done
 

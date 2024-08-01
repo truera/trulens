@@ -6,7 +6,7 @@ import unittest
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import numpy as np
-from trulens_eval.feedback.embeddings import Embeddings
+from trulens.feedback.embeddings import Embeddings
 
 
 class TestEmbeddings(unittest.TestCase):

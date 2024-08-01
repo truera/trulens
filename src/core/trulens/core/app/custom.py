@@ -81,7 +81,7 @@ apps as well including the feedback functions, metadata, etc.
 
 In cases you do not have access to a class to make the necessary decorations for
 tracking, you can instead use one of the static methods of `instrument`, for
-example, the alterative for making sure the custom retriever gets instrumented
+example, the alternative for making sure the custom retriever gets instrumented
 is via:
 
 ```python
@@ -335,7 +335,7 @@ class TruCustomApp(App):
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
-    functions_to_instrument: ClassVar[Set[Callable]] = set([])
+    functions_to_instrument: ClassVar[Set[Callable]] = set()
     """Methods marked as needing instrumentation.
 
     These are checked to make sure the object walk finds them. If not, a message

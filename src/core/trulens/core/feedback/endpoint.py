@@ -67,7 +67,7 @@ class EndpointCallback(SerialModel):
     """
 
     endpoint: Endpoint = Field(exclude=True)
-    """Thhe endpoint owning this callback."""
+    """The endpoint owning this callback."""
 
     cost: Cost = Field(default_factory=Cost)
     """Costs tracked by this callback."""
@@ -330,7 +330,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     def run_me(self, thunk: Thunk[T]) -> T:
         """
-        DEPRECTED: Run the given thunk, returning itse output, on pace with the api.
+        DEPRECATED: Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
 
         DEPRECATED: Use `run_in_pace` instead.

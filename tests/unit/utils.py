@@ -32,7 +32,7 @@ def optional_test(testmethodorclass):
 def requiredonly_test(testmethodorclass):
     """
     Only runs the decorated test if the environment variable with_optional
-    evalutes to false or is not set. Decorated tests are meant to run
+    evaluates to false or is not set. Decorated tests are meant to run
     specifically when optional imports are not installed.
 
     ALLOW_EXTRA_DEPS will allow optional imports to be installed
@@ -62,7 +62,7 @@ class JSONTestCase(TestCase):
         skips=None,
         numeric_places: int = 7,
     ) -> None:
-        skips = skips or set([])
+        skips = skips or set()
         path = path or Lens()
 
         def recur(j1, j2, path):

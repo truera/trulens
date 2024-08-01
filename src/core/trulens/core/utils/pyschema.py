@@ -285,7 +285,7 @@ builtin_init_sig = inspect.signature(builtin_init_dummy)
 def _safe_init_sig(cls):
     """
     Get the signature of the constructor method of the given class `cls`. If it is
-    a builtin class, this typically raises an exeception in which case we return
+    a builtin class, this typically raises an exception in which case we return
     a generic signature that seems typical of builtin constructors.
     """
 
