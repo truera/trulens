@@ -2910,19 +2910,19 @@ pydantic = ">=1.10"
 
 [[package]]
 name = "llama-index"
-version = "0.10.58"
+version = "0.10.59"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index-0.10.58-py3-none-any.whl", hash = "sha256:4a6cd89aeb9a450ce5b367fc4d771193c38ac226baa71af63494e096c5043951"},
-    {file = "llama_index-0.10.58.tar.gz", hash = "sha256:8fe09b4d6e9071f89cf2f5af4eae490b08713e5238492236de893e758428d4dc"},
+    {file = "llama_index-0.10.59-py3-none-any.whl", hash = "sha256:759326e6d36ce088b814b0d96bb0a5724bcbdbdbb3f91e268109cbab79fc5634"},
+    {file = "llama_index-0.10.59.tar.gz", hash = "sha256:9da8c5d79051057b8cfcd5ffcfe0b55b15f84f296845dcd7b4a5ebd8d49f327e"},
 ]
 
 [package.dependencies]
 llama-index-agent-openai = ">=0.1.4,<0.3.0"
 llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = "0.10.58"
+llama-index-core = "0.10.59"
 llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
 llama-index-indices-managed-llama-cloud = ">=0.2.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
@@ -2967,13 +2967,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.58"
+version = "0.10.59"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.58-py3-none-any.whl", hash = "sha256:2345d9b20e21d0ec00e9282fe88a5e4a0eba2e732e577d1b0348512e9181a74f"},
-    {file = "llama_index_core-0.10.58.tar.gz", hash = "sha256:f5730be1861a8fd0ef94e9f412a713132184b887b8a79347514efb672bf749fc"},
+    {file = "llama_index_core-0.10.59-py3-none-any.whl", hash = "sha256:57074e91add520e1e4a85f0af1e54162dca40fb2e279a650c689f54067501de8"},
+    {file = "llama_index_core-0.10.59.tar.gz", hash = "sha256:668c1f3e7811f4f853333a57c87f4a7ac9285eead79871db9f84a87fbe4a4a1e"},
 ]
 
 [package.dependencies]
@@ -7426,7 +7426,7 @@ type = "directory"
 url = "src/instrument/nemo"
 
 [[package]]
-name = "trulens-provider-bedrock"
+name = "trulens-providers-bedrock"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -7445,7 +7445,7 @@ type = "directory"
 url = "src/providers/bedrock"
 
 [[package]]
-name = "trulens-provider-cortex"
+name = "trulens-providers-cortex"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -7464,7 +7464,7 @@ type = "directory"
 url = "src/providers/cortex"
 
 [[package]]
-name = "trulens-provider-huggingface"
+name = "trulens-providers-huggingface"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -7485,7 +7485,7 @@ type = "directory"
 url = "src/providers/huggingface"
 
 [[package]]
-name = "trulens-provider-langchain"
+name = "trulens-providers-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -7503,7 +7503,7 @@ type = "directory"
 url = "src/providers/langchain"
 
 [[package]]
-name = "trulens-provider-litellm"
+name = "trulens-providers-litellm"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -7521,7 +7521,7 @@ type = "directory"
 url = "src/providers/litellm"
 
 [[package]]
-name = "trulens-provider-openai"
+name = "trulens-providers-openai"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
@@ -8278,4 +8278,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "6ba04cb54f409d7a2772ece81fad75b2a1d9588ba274ee00962ec1cbd0960ab1"
+content-hash = "5b04d9722c76b48f5c2945b4fab12702a380330ef3f386afd6c8ab67a5011ab9"

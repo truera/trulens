@@ -5,7 +5,7 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-provider-litellm"
+name = "trulens-providers-litellm"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
