@@ -54,8 +54,6 @@ class Embeddings(WithClassInfo, SerialModel):
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
-            
-
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
             from trulens_eval.feedback.embeddings import Embeddings
@@ -149,9 +147,8 @@ class Embeddings(WithClassInfo, SerialModel):
 
         !!! example
     
-            Below is just one example. See supported embedders:
-            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
-            from langchain.embeddings.openai import OpenAIEmbeddings
+            Below is just one example. Embedders from llama-index are supported:
+            https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
             
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
