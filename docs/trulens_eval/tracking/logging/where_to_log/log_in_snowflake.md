@@ -8,7 +8,6 @@ Here is a guide to logging in _Snowflake_.
 
 ## Install the [Snowflake SQLAlchemy toolkit](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy) with the Python Connector
 
-
 !!! note
 
     Only snowflake-sqlalchemy version 1.6.1 or greater is supported.
@@ -29,6 +28,7 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 
     ```python
     from trulens_eval import Tru
+<<<<<<< HEAD
     tru = Tru(
         name="MyApp",
         snowflake_connection_parameters={
@@ -40,6 +40,20 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
             role: "<role>",
         },
     )
+=======
+    tru = Tru(database_url=(
+        'snowflake://{user}:{password}@{account_identifier}/'
+        '{database}/{schema}?warehouse={warehouse}&role={role}'
+    ).format(
+        user='<user>',
+        password='<password>',
+        account_identifier='<account-identifier>',
+        database='<database>',
+        schema='<schema>',
+        warehouse='<warehouse>',
+        role='<role>'
+    ))
+>>>>>>> origin/main
     ```
 
 Once you've instantiated the `Tru` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.

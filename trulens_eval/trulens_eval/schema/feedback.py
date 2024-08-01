@@ -7,7 +7,15 @@ from enum import Enum
 import logging
 from pprint import pformat
 from typing import (
-    Any, ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar, Union
+    Any,
+    ClassVar,
+    Dict,
+    Hashable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
 )
 
 import pydantic
@@ -51,8 +59,8 @@ class Select:
 
     RecordCalls: Query = Record.app  # type: ignore
     """Selector for the calls made by the wrapped app.
-    
-    Layed out by path into components.
+
+    Laid out by path into components.
     """
 
     RecordCall: Query = Record.calls[-1]
@@ -96,8 +104,10 @@ class Select:
         if len(select.path) == 0:
             return select
 
-        if select.path[0] == Select.Record.path[0] or \
-            select.path[0] == Select.App.path[0]:
+        if (
+            select.path[0] == Select.Record.path[0]
+            or select.path[0] == Select.App.path[0]
+        ):
             return Select.Query(path=select.path[1:])
 
         return select
@@ -200,7 +210,7 @@ class FeedbackResultStatus(Enum):
 
     SKIPPED = "skipped"
     """This feedback was skipped.
-     
+
     This can be because because it had an `if_exists` selector and did not
     select anything or it has a selector that did not select anything the
     `on_missing` was set to warn or ignore.
@@ -209,28 +219,28 @@ class FeedbackResultStatus(Enum):
 
 class FeedbackOnMissingParameters(str, Enum):
     """How to handle missing parameters in feedback function calls.
-    
+
     This is specifically for the case were a feedback function has a selector
     that selects something that does not exist in a record/app.
     """
 
     ERROR = "error"
     """Raise an error if a parameter is missing.
-    
+
     The result status will be set to
     [FAILED][trulens_eval.schema.feedback.FeedbackResultStatus.FAILED].
     """
 
     WARN = "warn"
     """Warn if a parameter is missing.
-    
+
     The result status will be set to
     [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
 
     IGNORE = "ignore"
-    """Do nothing. 
-    
+    """Do nothing.
+
     No warning or error message will be shown. The result status will be set to
     [SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
     """
@@ -238,7 +248,7 @@ class FeedbackOnMissingParameters(str, Enum):
 
 class FeedbackCall(serial.SerialModel):
     """Invocations of feedback function results in one of these instances.
-    
+
     Note that a single `Feedback` instance might require more than one call.
     """
 
@@ -268,7 +278,7 @@ class FeedbackCall(serial.SerialModel):
 
 class FeedbackResult(serial.SerialModel):
     """Feedback results for a single [Feedback][trulens_eval.feedback.feedback.Feedback] instance.
-    
+
     This might involve multiple feedback function calls. Typically you should
     not be constructing these objects yourself except for the cases where you'd
     like to log human feedback.
@@ -307,8 +317,9 @@ class FeedbackResult(serial.SerialModel):
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                    ] = None
+    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = (
+        None
+    )
 
     # Last timestamp involved in the evaluation.
     last_ts: datetime.datetime = pydantic.Field(
@@ -340,7 +351,7 @@ class FeedbackResult(serial.SerialModel):
     def __init__(
         self,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(feedback_result_id="temporary", **kwargs)
 
@@ -364,7 +375,7 @@ class FeedbackResult(serial.SerialModel):
 
 class FeedbackCombinations(str, Enum):
     """How to collect arguments for feedback function calls.
-    
+
     Note that this applies only to cases where selectors pick out more than one
     thing for feedback function arguments. This option is used for the field
     `combinations` of
@@ -374,15 +385,15 @@ class FeedbackCombinations(str, Enum):
     """
 
     ZIP = "zip"
-    """Match argument values per position in produced values. 
-    
+    """Match argument values per position in produced values.
+
     Example:
         If the selector for `arg1` generates values `0, 1, 2` and one for `arg2`
         generates values `"a", "b", "c"`, the feedback function will be called 3
         times with kwargs:
 
         - `{'arg1': 0, arg2: "a"}`,
-        - `{'arg1': 1, arg2: "b"}`, 
+        - `{'arg1': 1, arg2: "b"}`,
         - `{'arg1': 2, arg2: "c"}`
 
     If the quantities of items in the various generators do not match, the
@@ -416,8 +427,8 @@ class FeedbackCombinations(str, Enum):
 
 
 class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
-    """Serialized parts of a feedback function. 
-    
+    """Serialized parts of a feedback function.
+
     The non-serialized parts are in the
     [Feedback][trulens_eval.feedback.feedback.Feedback] class.
     """
@@ -440,7 +451,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     if_exists: Optional[serial.Lens] = None
     """Only execute the feedback function if the following selector names
     something that exists in a record/app.
-    
+
     Can use this to evaluate conditionally on presence of some calls, for
     example. Feedbacks skipped this way will have a status of
     [FeedbackResultStatus.SKIPPED][trulens_eval.schema.feedback.FeedbackResultStatus.SKIPPED].
@@ -461,23 +472,24 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     def __init__(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
-        implementation: Optional[Union[pyschema.Function,
-                                       pyschema.Method]] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
+        implementation: Optional[
+            Union[pyschema.Function, pyschema.Method]
+        ] = None,
         aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
         if_exists: Optional[serial.Lens] = None,
-        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.
-        ERROR,
+        if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
-        **kwargs
+        **kwargs,
     ):
         selectors = selectors or {}
 
         if name is not None:
-            kwargs['supplied_name'] = name
+            kwargs["supplied_name"] = name
 
         super().__init__(
             feedback_definition_id="temporary",
@@ -486,7 +498,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,
-            **kwargs
+            **kwargs,
         )
 
         # By default, higher score is better
@@ -517,7 +529,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     @property
     def name(self) -> str:
         """Name of the feedback function.
-        
+
         Derived from the name of the serialized implementation function if name
         was not provided.
         """

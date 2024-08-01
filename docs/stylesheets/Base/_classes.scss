@@ -1,6 +1,6 @@
 @mixin grid-create($cols: 2, $rows: 0, $size: auto, $gap: var(--gap-lg)) {
     display: grid;
-    
+
     @if $cols != 0 {
         grid-template-columns: repeat($cols, $size);
     }
@@ -17,10 +17,10 @@
 }
 
 $align-types: (
-    "sb": space-between, 
-    "sa": space-around, 
-    "c": center, 
-    "fe": flex-end, 
+    "sb": space-between,
+    "sa": space-around,
+    "c": center,
+    "fe": flex-end,
     "fs": flex-start
 );
 
@@ -48,26 +48,26 @@ $directions-padding: (
 
 $sizes: (
   "0" : 0,
-  "xs": var(--gap-xs),  
-  "sm": var(--gap-sm),  
-  "md": var(--gap-md),  
-  "lg": var(--gap-lg),  
-  "xl": var(--gap-xl),  
+  "xs": var(--gap-xs),
+  "sm": var(--gap-sm),
+  "md": var(--gap-md),
+  "lg": var(--gap-lg),
+  "xl": var(--gap-xl),
   "xll": var(--gap-xll),
-  "xxl": var(--gap-xxl)  
+  "xxl": var(--gap-xxl)
 );
 
 $text-sizes: (
-  "xs": var(--text-xs),  
-  "sm": var(--text-sm),  
-  "md": var(--text-md),  
-  "lg": var(--text-lg),  
-  "xl": var(--text-xl),  
+  "xs": var(--text-xs),
+  "sm": var(--text-sm),
+  "md": var(--text-md),
+  "lg": var(--text-lg),
+  "xl": var(--text-xl),
   "xll": var(--gap-xll),
-  "xxl": var(--text-xxl),  
-  "h1": var(--text-h1),  
-  "h2": var(--text-h2),  
-  "h3": var(--text-h3),  
+  "xxl": var(--text-xxl),
+  "h1": var(--text-h1),
+  "h2": var(--text-h2),
+  "h3": var(--text-h3),
 );
 
 $display: (
@@ -114,7 +114,7 @@ $color-types: (
                 gap: 0.5rem;
             }
         }
-        
+
         &-2 {
             display: flex;
             flex-wrap: wrap;
@@ -138,7 +138,7 @@ $color-types: (
         }
     }
 
-    
+
     .fd {
         &-r {
             flex-direction: row;
@@ -158,7 +158,7 @@ $color-types: (
             flex-wrap: nowrap;
         }
     }
-    
+
     .jc {
         @each $type, $val in $align-types {
             &-#{$type} {
@@ -203,14 +203,14 @@ $color-types: (
             &t-xxl, &t-xxl-mob {
                 margin-top: 2.5rem;
             }
-            
+
             &b-xxl, &b-xxl-mob {
                 margin-bottom: 2.5rem;
             }
             &t-xll, &t-xll-mob {
                 margin-top: 2.5rem;
             }
-            
+
             &b-xll, &b-xll-mob {
                 margin-bottom: 2.5rem;
             }

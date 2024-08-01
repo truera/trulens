@@ -1,13 +1,10 @@
 import asyncio
 import json
 import pprint as pp
-from typing import Dict, Iterable, Tuple
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-import pprint
-from pprint import pformat
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,27 +19,23 @@ from ux.page_config import set_page_config
 from ux.styles import CATEGORY
 
 from trulens_eval import Tru
+from trulens_eval.app import LLM
 from trulens_eval.app import Agent
 from trulens_eval.app import ComponentView
-from trulens_eval.app import instrumented_component_views
-from trulens_eval.app import LLM
 from trulens_eval.app import Other
 from trulens_eval.app import Prompt
 from trulens_eval.app import Tool
 from trulens_eval.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens_eval.react_components.record_viewer import record_viewer
 from trulens_eval.schema.feedback import Select
-from trulens_eval.schema.record import Record
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux.components import draw_agent_info
-from trulens_eval.ux.components import draw_call
 from trulens_eval.ux.components import draw_llm_info
 from trulens_eval.ux.components import draw_prompt_info
 from trulens_eval.ux.components import draw_tool_info
 from trulens_eval.ux.components import render_selector_markdown
-from trulens_eval.ux.components import write_or_json
 from trulens_eval.ux.styles import cellstyle_jscode
 
 set_page_config(page_title="Evaluations")
@@ -58,12 +51,14 @@ lms = tru.db
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
     (
-        row.feedback_json.get("supplied_name", "") or
-        row.feedback_json["implementation"]["name"]
+        row.feedback_json.get("supplied_name", "")
+        or row.feedback_json["implementation"]["name"]
     ): (
-        "HIGHER_IS_BETTER" if row.feedback_json.get("higher_is_better", True)
+        "HIGHER_IS_BETTER"
+        if row.feedback_json.get("higher_is_better", True)
         else "LOWER_IS_BETTER"
-    ) for _, row in lms.get_feedback_defs().iterrows()
+    )
+    for _, row in lms.get_feedback_defs().iterrows()
 }
 default_direction = "HIGHER_IS_BETTER"
 
@@ -123,7 +118,7 @@ def render_record_metrics(
 
     cost = selected_rows["total_cost"][0]
     average_cost = app_specific_df["total_cost"].mean()
-    delta_cost = "{:.3g}".format(cost - average_cost)
+    delta_cost = f"{cost - average_cost:.3g}"
     cost_col.metric(
         label="Total cost (USD)",
         value=selected_rows["total_cost"][0],
@@ -133,7 +128,7 @@ def render_record_metrics(
 
     latency = selected_rows["latency"][0]
     average_latency = app_specific_df["latency"].mean()
-    delta_latency = "{:.3g}s".format(latency - average_latency)
+    delta_latency = f"{latency - average_latency:.3g}s"
     latency_col.metric(
         label="Latency (s)",
         value=selected_rows["latency"][0],
@@ -151,18 +146,18 @@ def extract_metadata(row: pd.Series) -> str:
     Returns:
         str: The metadata extracted from the record_json.
     """
-    record_data = json.loads(row['record_json'])
+    record_data = json.loads(row["record_json"])
     return str(record_data["meta"])
 
 
-apps = list(app['app_id'] for app in lms.get_apps())
+apps = list(app["app_id"] for app in lms.get_apps())
 
 if "app" in st.session_state:
     app = st.session_state.app
 else:
     app = apps
 
-st.query_params['app'] = app
+st.query_params["app"] = app
 
 options = st.multiselect("Filter Applications", apps, default=app)
 
@@ -189,21 +184,21 @@ else:
         evaluations_df = app_df
 
         # By default the cells in the df are unicode-escaped, so we have to reverse it.
-        input_array = evaluations_df['input'].to_numpy()
-        output_array = evaluations_df['output'].to_numpy()
+        input_array = evaluations_df["input"].to_numpy()
+        output_array = evaluations_df["output"].to_numpy()
 
         decoded_input = np.vectorize(
-            lambda x: x.encode('utf-8').decode('unicode-escape')
+            lambda x: x.encode("utf-8").decode("unicode-escape")
         )(input_array)
         decoded_output = np.vectorize(
-            lambda x: x.encode('utf-8').decode('unicode-escape')
+            lambda x: x.encode("utf-8").decode("unicode-escape")
         )(output_array)
 
-        evaluations_df['input'] = decoded_input
-        evaluations_df['output'] = decoded_output
+        evaluations_df["input"] = decoded_input
+        evaluations_df["output"] = decoded_output
 
         # Apply the function to each row and create a new column 'record_metadata'
-        evaluations_df['record_metadata'] = evaluations_df.apply(
+        evaluations_df["record_metadata"] = evaluations_df.apply(
             extract_metadata, axis=1
         )
 
@@ -255,15 +250,15 @@ else:
             else:
                 # cell highlight depending on feedback direction
                 cellstyle = JsCode(
-                    cellstyle_jscode[feedback_directions.get(
-                        feedback_col, default_direction
-                    )]
+                    cellstyle_jscode[
+                        feedback_directions.get(feedback_col, default_direction)
+                    ]
                 )
 
                 gb.configure_column(
                     feedback_col,
                     cellStyle=cellstyle,
-                    hide=feedback_col.endswith("_calls")
+                    hide=feedback_col.endswith("_calls"),
                 )
 
         gb.configure_pagination()
@@ -324,7 +319,8 @@ else:
                         row[feedback_name],
                         higher_is_better=feedback_directions.get(
                             feedback_name, default_direction
-                        ) == default_direction
+                        )
+                        == default_direction,
                     )
                     return cat.icon
 
@@ -341,13 +337,12 @@ else:
                         feedback_with_valid_results,
                         index=None,
                         format_func=lambda fcol: f"{fcol} {row[fcol]:.4f}",
-                        icons=icons
+                        icons=icons,
                     )
                 else:
                     st.write("No feedback functions found.")
 
                 def display_feedback_call(call, feedback_name):
-
                     def highlight(s):
                         if "distance" in feedback_name:
                             return [
@@ -357,7 +352,8 @@ else:
                             s.result,
                             higher_is_better=feedback_directions.get(
                                 feedback_name, default_direction
-                            ) == default_direction
+                            )
+                            == default_direction,
                         )
                         return [f"background-color: {cat.color}"] * len(s)
 
@@ -371,29 +367,32 @@ else:
                         # second or other column is a list, it will not do
                         # this.
                         for c in call:
-                            args = c['args']
+                            args = c["args"]
                             for k, v in args.items():
                                 if not isinstance(v, str):
                                     args[k] = pp.pformat(v)
 
-                        df = pd.DataFrame.from_records(c['args'] for c in call)
+                        df = pd.DataFrame.from_records(c["args"] for c in call)
 
                         df["result"] = pd.DataFrame(
                             [
                                 float(call[i]["ret"])
-                                if call[i]["ret"] is not None else -1
+                                if call[i]["ret"] is not None
+                                else -1
                                 for i in range(len(call))
                             ]
                         )
                         df["meta"] = pd.Series(
                             [call[i]["meta"] for i in range(len(call))]
                         )
-                        df = df.join(df.meta.apply(lambda m: pd.Series(m))
-                                    ).drop(columns="meta")
+                        df = df.join(
+                            df.meta.apply(lambda m: pd.Series(m))
+                        ).drop(columns="meta")
 
                         st.dataframe(
-                            df.style.apply(highlight, axis=1
-                                          ).format("{:.2f}", subset=["result"])
+                            df.style.apply(highlight, axis=1).format(
+                                "{:.2f}", subset=["result"]
+                            )
                         )
 
                     else:
@@ -429,13 +428,18 @@ else:
                             # Generate histogram
                             fig, ax = plt.subplots()
                             bins = [
-                                0, 0.2, 0.4, 0.6, 0.8, 1.0
+                                0,
+                                0.2,
+                                0.4,
+                                0.6,
+                                0.8,
+                                1.0,
                             ]  # Quintile buckets
                             ax.hist(
                                 app_df[feedback[ind]],
                                 bins=bins,
                                 edgecolor="black",
-                                color="#2D736D"
+                                color="#2D736D",
                             )
                             ax.set_xlabel("Feedback Value")
                             ax.set_ylabel("Frequency")

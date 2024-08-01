@@ -26,7 +26,6 @@ The most recent should be the first in the list.
 sqlalchemy_upgrade_paths = {
     # Dict Structure:
     # "from_version":("to_version", migrate_method)
-
     # Example:
     # "1":("2"), migrate_alembic_1_to_2
 }
@@ -46,8 +45,10 @@ def _get_sql_alchemy_compatibility_version(version: str) -> str:
     compat_version = int(sql_alchemy_migration_versions[-1])
     for candidate_version in sql_alchemy_migration_versions:
         candidate_version_int = int(candidate_version)
-        if candidate_version_int <= int(
-                version) and candidate_version_int > compat_version:
+        if (
+            candidate_version_int <= int(version)
+            and candidate_version_int > compat_version
+        ):
             compat_version = candidate_version_int
 
     return compat_version
@@ -66,25 +67,23 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
 
     import inspect
 
-    #from trulens_eval.database import orm
+    # from trulens_eval.database import orm
     # Dynamically check the orm classes since these could change version to version
     for _, orm_obj in inspect.getmembers(db.orm):
-
         # Check only classes
         if inspect.isclass(orm_obj):
             mod_check = str(orm_obj).split(".")
 
             # Check only orm defined classes
-            if len(mod_check) > 2 and "orm" == mod_check[
-                    -2]:  # <class mod.mod.mod.orm.SQLORM>
+            if (
+                len(mod_check) > 2 and "orm" == mod_check[-2]
+            ):  # <class mod.mod.mod.orm.SQLORM>
                 stmt = select(orm_obj)
 
                 # for each record in this orm table
                 for db_record in session.scalars(stmt).all():
-
                     # for each column in the record
                     for attr_name in db_record.__dict__:
-
                         # Check only json columns
                         if "_json" in attr_name:
                             db_json_str = getattr(db_record, attr_name)
@@ -93,17 +92,16 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
 
                             # Do not check Nullables
                             if db_json_str is not None:
-
                                 # Test deserialization
                                 test_json = json.loads(
                                     getattr(db_record, attr_name)
                                 )
 
                                 # special implementation checks for serialized classes
-                                if 'implementation' in test_json:
+                                if "implementation" in test_json:
                                     try:
                                         FunctionOrMethod.model_validate(
-                                            test_json['implementation']
+                                            test_json["implementation"]
                                         ).load()
                                     except ImportError:
                                         # Import error is not a migration problem.
@@ -124,7 +122,8 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                     )
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
-                                            'calls']:
+                                        "calls"
+                                    ]:
                                         mod_feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )
@@ -169,7 +168,8 @@ def data_migrate(db: DB, from_version: str):
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:
             to_compat_version, migrate_fn = sqlalchemy_upgrade_paths[
-                from_compat_version]
+                from_compat_version
+            ]
 
             migrate_fn(db=db)
             from_compat_version = to_compat_version

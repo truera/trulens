@@ -8,17 +8,17 @@ Typical guardrails *only* allow decisions based on the output, and have no impac
 
 ![Standard Guardrails Flow](simple_guardrail_flow.png)
 
-## _TruLens_ guardrails for internal steps
+## *TruLens* guardrails for internal steps
 
-While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, _TruLens_ guardrails can also be leveraged to improve the internal processing of LLM apps. 
+While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, *TruLens* guardrails can also be leveraged to improve the internal processing of LLM apps.
 
 If we consider a RAG, context filter guardrails can be used to evaluate the *context relevance* of each context chunk, and only pass relevant chunks to the LLM for generation. Doing so reduces the chance of hallucination and reduces token usage.
 
 ![Context Filtering with Guardrails](guardrail_context_filtering.png)
 
-## Using _TruLens_ guardrails
+## Using *TruLens* guardrails
 
-_TruLens_ context filter guardrails are easy to add to your app built with custom python, _Langchain_, or _Llama-Index_.
+*TruLens* context filter guardrails are easy to add to your app built with custom python, *Langchain*, or *Llama-Index*.
 
 !!! example "Using context filter guardrails"
 
@@ -38,7 +38,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         )
         return [doc for sublist in results['documents'] for doc in sublist]
         ...
-        ```  
+        ```
 
     === "with _Langchain_"
 
@@ -54,13 +54,13 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
         )
 
         rag_chain = (
-            {"context": filtered_retriever 
+            {"context": filtered_retriever
             | format_docs, "question": RunnablePassthrough()}
             | prompt
             | llm
             | StrOutputParser()
         )
-        ```  
+        ```
 
     === "with _Llama-Index_"
 
@@ -78,4 +78,4 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python](../api/guardrails/index), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
+TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native python](../api/guardrails/index), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).

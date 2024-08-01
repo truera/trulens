@@ -1,19 +1,20 @@
 """
-Tests for Feedback class. 
+Tests for Feedback class.
 """
 
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import numpy as np
-# Get the "globally importable" feedback implementations.
-from tests.unit.feedbacks import custom_feedback_function
+
 from tests.unit.feedbacks import CustomClassNoArgs
 from tests.unit.feedbacks import CustomClassWithArgs
 from tests.unit.feedbacks import CustomProvider
+
+# Get the "globally importable" feedback implementations.
+from tests.unit.feedbacks import custom_feedback_function
 from tests.unit.feedbacks import make_nonglobal_feedbacks
 from tests.unit.feedbacks import skip_if_odd
-
 from trulens_eval import Feedback
 from trulens_eval.schema.feedback import FeedbackMode
 from trulens_eval.schema.feedback import FeedbackResultStatus
@@ -27,23 +28,17 @@ class TestFeedbackEval(TestCase):
     def test_skipeval(self):
         """Test the SkipEval capability."""
 
-        f = Feedback(imp=skip_if_odd
-                    ).on(val=Select.RecordCalls.somemethod.args.num[:])
+        f = Feedback(imp=skip_if_odd).on(
+            val=Select.RecordCalls.somemethod.args.num[:]
+        )
 
         # Create source data that looks like real source data for a record
         # collected from a real app. Store some integers in a place that
         # corresponds to app call to `somemethod`, keyword argument `num`.
         source_data = {
-            '__record__':
-                {
-                    'app': {
-                        'somemethod': {
-                            'args': {
-                                'num': [1, 2, 3, 4, 5, 6]
-                            }
-                        }
-                    }
-                }
+            "__record__": {
+                "app": {"somemethod": {"args": {"num": [1, 2, 3, 4, 5, 6]}}}
+            }
         }
 
         res = f.run(source_data=source_data)
@@ -63,22 +58,15 @@ class TestFeedbackEval(TestCase):
     def test_skipeval_all(self):
         """Test the SkipEval capability for when all evals are skipped"""
 
-        f = Feedback(imp=skip_if_odd
-                    ).on(val=Select.RecordCalls.somemethod.args.num[:])
+        f = Feedback(imp=skip_if_odd).on(
+            val=Select.RecordCalls.somemethod.args.num[:]
+        )
 
         # Create source data that looks like real source data for a record
         # collected from a real app. Store some integers in a place that
         # corresponds to app call to `somemethod`, keyword argument `num`.
         source_data = {
-            '__record__': {
-                'app': {
-                    'somemethod': {
-                        'args': {
-                            'num': [1, 3, 5]
-                        }
-                    }
-                }
-            }
+            "__record__": {"app": {"somemethod": {"args": {"num": [1, 3, 5]}}}}
         }
 
         res = f.run(source_data=source_data)
@@ -106,18 +94,17 @@ class TestFeedbackConstructors(TestCase):
 
         for imp, target in [
             (custom_feedback_function, 0.1),
-                # (CustomProvider.static_method, 0.2),
-                # (CustomProvider.class_method, 0.3),
+            # (CustomProvider.static_method, 0.2),
+            # (CustomProvider.class_method, 0.3),
             (CustomProvider(attr=0.37).method, 0.4 + 0.37),
-                # (CustomClassNoArgs.static_method, 0.5),
-                # (CustomClassNoArgs.class_method, 0.6),
+            # (CustomClassNoArgs.static_method, 0.5),
+            # (CustomClassNoArgs.class_method, 0.6),
             (CustomClassNoArgs().method, 0.7),
-                # (CustomClassWithArgs.static_method, 0.8),
-                # (CustomClassWithArgs.class_method, 0.9),
-                # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            # (CustomClassWithArgs.static_method, 0.8),
+            # (CustomClassWithArgs.class_method, 0.9),
+            # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.
@@ -139,19 +126,18 @@ class TestFeedbackConstructors(TestCase):
         # Each of these should fail when trying to serialize/deserialize.
 
         for imp, target in [
-                # (custom_feedback_function, 0.1),
-                # (CustomProvider.static_method, 0.2), # TODO
+            # (custom_feedback_function, 0.1),
+            # (CustomProvider.static_method, 0.2), # TODO
             (CustomProvider.class_method, 0.3),
-                # (CustomProvider(attr=0.37).method, 0.4 + 0.37),
-                # (CustomClassNoArgs.static_method, 0.5), # TODO
+            # (CustomProvider(attr=0.37).method, 0.4 + 0.37),
+            # (CustomClassNoArgs.static_method, 0.5), # TODO
             (CustomClassNoArgs.class_method, 0.6),
-                # (CustomClassNoArgs().method, 0.7),
-                # (CustomClassWithArgs.static_method, 0.8), # TODO
+            # (CustomClassNoArgs().method, 0.7),
+            # (CustomClassWithArgs.static_method, 0.8), # TODO
             (CustomClassWithArgs.class_method, 0.9),
-            (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
         ]:
-
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
                 with self.assertRaises(Exception):
                     Feedback.model_validate(f.model_dump())
@@ -164,18 +150,17 @@ class TestFeedbackConstructors(TestCase):
 
         for imp, target in [
             (NG.NGcustom_feedback_function, 0.1),
-                # (NG.CustomProvider.static_method, 0.2),
-                # (NG.CustomProvider.class_method, 0.3),
+            # (NG.CustomProvider.static_method, 0.2),
+            # (NG.CustomProvider.class_method, 0.3),
             (NG.NGCustomProvider(attr=0.37).method, 0.4 + 0.37),
-                # (NG.CustomClassNoArgs.static_method, 0.5),
-                # (NG.CustomClassNoArgs.class_method, 0.6),
+            # (NG.CustomClassNoArgs.static_method, 0.5),
+            # (NG.CustomClassNoArgs.class_method, 0.6),
             (NG.NGCustomClassNoArgs().method, 0.7),
-                # (NG.CustomClassWithArgs.static_method, 0.8),
-                # (NG.CustomClassWithArgs.class_method, 0.9),
-                # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            # (NG.CustomClassWithArgs.static_method, 0.8),
+            # (NG.CustomClassWithArgs.class_method, 0.9),
+            # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.
@@ -194,14 +179,14 @@ class TestFeedbackConstructors(TestCase):
                 TruBasicApp(
                     text_to_text=lambda t: f"returning {t}",
                     feedbacks=[f],
-                    feedback_mode=FeedbackMode.WITH_APP
+                    feedback_mode=FeedbackMode.WITH_APP,
                 )
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(
                     text_to_text=lambda t: f"returning {t}",
                     feedbacks=[f],
-                    feedback_mode=FeedbackMode.WITH_APP_THREAD
+                    feedback_mode=FeedbackMode.WITH_APP_THREAD,
                 )
 
                 # Trying these feedbacks with an app with deferred mode should
@@ -210,9 +195,9 @@ class TestFeedbackConstructors(TestCase):
                     TruBasicApp(
                         text_to_text=lambda t: f"returning {t}",
                         feedbacks=[f],
-                        feedback_mode=FeedbackMode.DEFERRED
+                        feedback_mode=FeedbackMode.DEFERRED,
                     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

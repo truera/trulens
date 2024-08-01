@@ -5,7 +5,6 @@ Tests for TruBasicApp.
 from unittest import main
 
 from tests.unit.test import JSONTestCase
-
 from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.keys import check_keys
@@ -15,9 +14,7 @@ check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
 class TestTruBasicApp(JSONTestCase):
-
     def setUp(self):
-
         def custom_application(prompt: str) -> str:
             return "a response"
 
@@ -34,7 +31,7 @@ class TestTruBasicApp(JSONTestCase):
         self.tru_basic_app_recorder = TruBasicApp(
             self.basic_app,
             app_id="Custom Application v1",
-            feedback_mode=FeedbackMode.WITH_APP
+            feedback_mode=FeedbackMode.WITH_APP,
         )
 
     def test_no_fail(self):
@@ -57,5 +54,5 @@ class TestTruBasicApp(JSONTestCase):
         self.assertEqual(len(records), 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

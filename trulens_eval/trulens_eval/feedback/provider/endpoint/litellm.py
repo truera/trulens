@@ -7,8 +7,8 @@ import pydantic
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
+from trulens_eval.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ opt.assert_installed(litellm)
 
 
 class LiteLLMCallback(EndpointCallback):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: pydantic.BaseModel) -> None:
@@ -33,7 +32,7 @@ class LiteLLMCallback(EndpointCallback):
 
         response = response.model_dump()
 
-        usage = response['usage']
+        usage = response["usage"]
 
         if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
             # We are already tracking costs from the openai or bedrock endpoint so we
@@ -52,9 +51,10 @@ class LiteLLMCallback(EndpointCallback):
                 ("n_completion_tokens", "completion_tokens"),
             ]:
                 setattr(
-                    self.cost, cost_field,
-                    getattr(self.cost, cost_field, 0) +
-                    usage.get(litellm_field, 0)
+                    self.cost,
+                    cost_field,
+                    getattr(self.cost, cost_field, 0)
+                    + usage.get(litellm_field, 0),
                 )
 
         if self.endpoint.litellm_provider not in ["openai"]:
@@ -62,6 +62,7 @@ class LiteLLMCallback(EndpointCallback):
             # openai so we can use litellm costs for this.
 
             from litellm import completion_cost
+
             setattr(self.cost, "cost", completion_cost(response))
 
 
@@ -70,7 +71,7 @@ class LiteLLMEndpoint(Endpoint):
 
     litellm_provider: str = "openai"
     """The litellm provider being used.
-    
+
     This is checked to determine whether cost tracking should come from litellm
     or from another endpoint which we already have cost tracking for. Otherwise
     there will be double counting.
@@ -82,17 +83,19 @@ class LiteLLMEndpoint(Endpoint):
             if len(kwargs) > 0:
                 logger.warning(
                     "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name, pp.pformat(kwargs)
+                    self.name,
+                    pp.pformat(kwargs),
                 )
                 self.warning()
             return
 
-        kwargs['name'] = "litellm"
-        kwargs['callback_class'] = LiteLLMCallback
+        kwargs["name"] = "litellm"
+        kwargs["callback_class"] = LiteLLMCallback
 
         super().__init__(litellm_provider=litellm_provider, **kwargs)
 
         import litellm
+
         self._instrument_module_members(litellm, "completion")
 
     def __new__(cls, litellm_provider: str = "openai", **kwargs):
@@ -103,13 +106,15 @@ class LiteLLMEndpoint(Endpoint):
         return super(Endpoint, cls).__new__(cls, name="litellm")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
-
         counted_something = False
 
-        if hasattr(response, 'usage'):
+        if hasattr(response, "usage"):
             counted_something = True
 
             self.global_callback.handle_generation(response=response)
@@ -120,5 +125,5 @@ class LiteLLMEndpoint(Endpoint):
         if not counted_something:
             logger.warning(
                 "Unrecognized litellm response format. It did not have usage information:\n%s",
-                pp.pformat(response)
+                pp.pformat(response),
             )

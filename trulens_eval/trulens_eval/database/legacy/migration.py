@@ -13,24 +13,18 @@ import uuid
 import pydantic
 from tqdm import tqdm
 
-from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.schema import app as mod_app_schema
 from trulens_eval.schema import base as mod_base_schema
 from trulens_eval.schema import feedback as mod_feedback_schema
 from trulens_eval.schema import record as mod_record_schema
-from trulens_eval.utils.pyschema import Class
-from trulens_eval.utils.pyschema import CLASS_INFO
 from trulens_eval.utils.pyschema import FunctionOrMethod
-from trulens_eval.utils.pyschema import Method
-from trulens_eval.utils.pyschema import Module
-from trulens_eval.utils.pyschema import Obj
 
 logger = logging.getLogger(__name__)
-'''
+"""
 How to make a db migrations:
 
 1. Create a compatibility DB (checkout the last pypi rc branch https://github.com/truera/trulens/tree/releases/rc-trulens-eval-X.x.x/):
-  In trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test 
+  In trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test
   remove any local dbs
     * rm rf default.sqlite
   run below notebooks (Making sure you also run with the same X.x.x version trulens-eval)
@@ -57,9 +51,9 @@ How to make a db migrations:
 3. To Test
   * replace your db file with an old version db first and see if the tru.migrate_database() works.
 
-4. Add a DB file for testing new breaking changes (Same as step 1: but with your new version) 
+4. Add a DB file for testing new breaking changes (Same as step 1: but with your new version)
   * Do a sys.path.insert(0,TRULENS_PATH) to run with your version
-'''
+"""
 
 
 class VersionException(Exception):
@@ -83,7 +77,7 @@ def _update_db_json_col(
         old_entry (tuple): the db tuple to update
 
         json_db_col_idx (int): the tuple idx to update
-        
+
         new_json (dict): the new json object to be put in the D
     """
     migrate_record = list(old_entry)
@@ -120,7 +114,6 @@ def jsonlike_map(fval=None, fkey=None, fkeyval=None):
 
 
 def jsonlike_rename_key(old_key, new_key) -> Callable:
-
     def fkey(k):
         if k == old_key:
             logger.debug(f"key {old_key} -> {new_key}")
@@ -132,7 +125,6 @@ def jsonlike_rename_key(old_key, new_key) -> Callable:
 
 
 def jsonlike_rename_value(old_val, new_val) -> Callable:
-
     def fval(v):
         if v == old_val:
             logger.debug(f"value {old_val} -> {new_val}")
@@ -144,7 +136,6 @@ def jsonlike_rename_value(old_val, new_val) -> Callable:
 
 
 class UnknownClass(pydantic.BaseModel):
-
     def unknown_method(self):
         """
         This is a placeholder put into the database in place of methods whose
@@ -186,12 +177,11 @@ def _get_compatibility_version(version: str) -> str:
 
     for m_version_str in migration_versions:
         for i, m_version_split in enumerate(_parse_version(m_version_str)):
-
             if int(version_split[i]) > int(m_version_split):
                 return m_version_str
 
             elif int(version_split[i]) == int(m_version_split):
-                if i == 2:  #patch version
+                if i == 2:  # patch version
                     return m_version_str
                 # Can't make a choice here, move to next endian.
                 continue
@@ -204,7 +194,7 @@ def _get_compatibility_version(version: str) -> str:
 
 def _migration_checker(db, warn: bool = False) -> None:
     """
-    Checks whether this db, if pre-populated, is comptible with this pypi
+    Checks whether this db, if pre-populated, is compatible with this pypi
     version.
 
     Args:
@@ -228,10 +218,10 @@ def commit_migrated_version(db, version: str) -> None:
     conn, c = db._connect()
 
     c.execute(
-        f'''UPDATE {db.TABLE_META} 
-                SET value = '{version}' 
-                WHERE key='trulens_version'; 
-            '''
+        f"""UPDATE {db.TABLE_META}
+                SET value = '{version}'
+                WHERE key='trulens_version';
+            """
     )
     conn.commit()
 
@@ -265,7 +255,6 @@ def _check_needs_migration(version: str, warn=False) -> None:
     compat_version = _get_compatibility_version(version)
 
     if migration_versions.index(compat_version) > 0:
-
         if _upgrade_possible(compat_version):
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release. "
@@ -304,12 +293,15 @@ def _serialization_asserts(db) -> None:
     )
 
     for table in db.TABLES:
-        c.execute(f"""PRAGMA table_info({table});
-                """)
+        c.execute(
+            f"""PRAGMA table_info({table});
+                """
+        )
         columns = c.fetchall()
         for col_idx, col in tqdm(
-                enumerate(columns),
-                desc=f"Validating clean migration of table {table}"):
+            enumerate(columns),
+            desc=f"Validating clean migration of table {table}",
+        ):
             col_name_idx = 1
             col_name = col[col_name_idx]
             # This is naive for now...
@@ -323,10 +315,10 @@ def _serialization_asserts(db) -> None:
 
                         test_json = json.loads(row[col_idx])
                         # special implementation checks for serialized classes
-                        if 'implementation' in test_json:
+                        if "implementation" in test_json:
                             try:
                                 FunctionOrMethod.model_validate(
-                                    test_json['implementation']
+                                    test_json["implementation"]
                                 ).load()
                             except ImportError:
                                 # Import error is not a migration problem.
@@ -340,7 +332,7 @@ def _serialization_asserts(db) -> None:
                         elif col_name == "perf_json":
                             mod_base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
-                            for record_app_call_json in test_json['calls']:
+                            for record_app_call_json in test_json["calls"]:
                                 mod_feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
@@ -386,7 +378,10 @@ def migrate(db) -> None:
     original_db_file = db.filename
     global saved_db_locations
 
-    saved_db_file = original_db_file.parent / f"{original_db_file.name}_saved_{uuid.uuid1()}"
+    saved_db_file = (
+        original_db_file.parent
+        / f"{original_db_file.name}_saved_{uuid.uuid1()}"
+    )
     saved_db_locations[original_db_file] = saved_db_file
     shutil.copy(original_db_file, saved_db_file)
     print(

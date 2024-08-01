@@ -1,10 +1,7 @@
 import logging
-import random
 import time
-from typing import List
 
 import numpy as np
-import pandas as pd
 from sklearn.metrics import ndcg_score
 
 log = logging.getLogger(__name__)
@@ -22,9 +19,9 @@ def score_passages(
     feedback_func,
     backoff_time=0.5,
     n=5,
-    temperature=0.0
+    temperature=0.0,
 ):
-    grouped = df.groupby('query_id')
+    grouped = df.groupby("query_id")
     scores = []
     true_relevance = []
 
@@ -33,23 +30,21 @@ def score_passages(
         query_relevance = []
         for _, row in group.iterrows():
             sampled_score = None
-            if feedback_func_name == 'TruEra' or n == 1:
+            if feedback_func_name == "TruEra" or n == 1:
                 sampled_score = feedback_func(
-                    row['query'], row['passage'], temperature
+                    row["query"], row["passage"], temperature
                 )  # hard-coded for now, we don't need to sample for TruEra BERT-based model
                 time.sleep(backoff_time)
             else:
                 sampled_scores = []
                 for _ in range(n):
                     sampled_scores.append(
-                        feedback_func(
-                            row['query'], row['passage'], temperature
-                        )
+                        feedback_func(row["query"], row["passage"], temperature)
                     )
                     time.sleep(backoff_time)
                 sampled_score = sum(sampled_scores) / len(sampled_scores)
             query_scores.append(sampled_score)
-            query_relevance.append(row['is_selected'])
+            query_relevance.append(row["is_selected"])
             # print(f"Feedback avg score for query {name} is {sampled_score}, is_selected is {row['is_selected']}")
 
         print(
@@ -63,8 +58,7 @@ def score_passages(
 
 def compute_ndcg(scores, true_relevance):
     ndcg_values = [
-        ndcg_score([true], [pred])
-        for true, pred in zip(true_relevance, scores)
+        ndcg_score([true], [pred]) for true, pred in zip(true_relevance, scores)
     ]
     return np.mean(ndcg_values)
 
@@ -83,8 +77,11 @@ def compute_ece(scores, true_relevance, n_bins=10):
         if bin_scores:
             bin_avg_confidence = np.mean(bin_scores)
             bin_accuracy = np.mean(bin_truth)
-            ece += np.abs(bin_avg_confidence - bin_accuracy
-                         ) * len(bin_scores) / sum(map(len, scores))
+            ece += (
+                np.abs(bin_avg_confidence - bin_accuracy)
+                * len(bin_scores)
+                / sum(map(len, scores))
+            )
 
     return ece
 

@@ -2,13 +2,13 @@
 
 .flex {
     display: flex;
-    
+
     &__two-col {
         flex-direction: row;
         flex-wrap: nowrap;
         justify-content: space-between;
         align-items: center;
-        
+
         @include res-min-tablet {
             > * {
                 flex: 1 1 47%;
@@ -25,7 +25,7 @@
 
 .mt-big {
     margin-top: 10rem;
-    
+
     @include res-max-tablet {
         margin-top: var(--gap-xxl);
 
