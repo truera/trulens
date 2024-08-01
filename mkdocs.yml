@@ -53,6 +53,11 @@ plugins:
       rewrite_relative_urls: true
       heading_offset: 0
   - search
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
@@ -80,16 +85,17 @@ plugins:
             - src/providers/bedrock
             - src/providers/cortex
             - src/providers/huggingface
-            - src/providers/huggingface-local
             - src/providers/langchain
             - src/providers/litellm
             - src/providers/openai
           options:
+
             heading_level: 2
             annotations_path: brief
             extensions:
               - pydantic: { schema: true }
 
+            inherited_members: true
             show_signature: true
             show_signature_annotations: true
             signature_crossrefs: true
@@ -124,11 +130,11 @@ plugins:
             #- typing
             #- typing_extensions
             # members:
-            filters:
-              - "!^_" # exlude all members starting with _
-              - "!^tru_class_info" # don't show tru_class_info
-              - "^__init__$" # but always include __init__ modules and methods
-              - "^__call__$" # and __call__ methods
+            # filters:
+            #   - "!^_" # exlude all members starting with _
+            #   - "!^tru_class_info" # don't show tru_class_info
+            #   - "^__init__$" # but always include __init__ modules and methods
+            #   - "^__call__$" # and __call__ methods
           #selection:
 
   - redirects:
@@ -167,7 +173,6 @@ theme:
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
@@ -199,10 +204,8 @@ theme:
 
 nav:
   - 🏠 Home: index.md
-  # - 🏠 Home: docs.md
   - 🚀 Getting Started:
       - trulens/getting_started/index.md
-      - 🔨 Installation: trulens/getting_started/install.md
       - 📓 Quickstarts:
           # - trulens/getting_started/quickstarts/index.md
           # Title labels of these notebooks come from within the notebooks
@@ -221,95 +224,58 @@ nav:
           - 🏆 Honest, Harmless, Helpful Evals: trulens/getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
           - trulens/getting_started/dashboard/index.md
-
-  - 🎯 Evaluation:
-      # PLACEHOLDER: - trulens/evaluation/index.md
-      - ☔ Feedback Functions:
-          - trulens/evaluation/feedback_functions/index.md
-          - 🦴 Anatomy of a Feedback Function: trulens/evaluation/feedback_functions/anatomy.md
-      - Feedback Implementations:
-          - trulens/evaluation/feedback_implementations/index.md
-          - 🧰 Stock Feedback Functions: trulens/evaluation/feedback_implementations/stock.md
-          - trulens/evaluation/feedback_implementations/custom_feedback_functions.ipynb
-      - Feedback Selectors:
-          - trulens/evaluation/feedback_selectors/index.md
-          - Selecting Components: trulens/evaluation/feedback_selectors/selecting_components.md
-          - Selector Shortcuts: trulens/evaluation/feedback_selectors/selector_shortcuts.md
-      - Feedback Aggregation:
-          - trulens/evaluation/feedback_aggregation/index.md
-      - Running Feedback Functions:
-          # PLACEHOLDER: - trulens/evaluation/running_feedback_functions/index.md
-          - Running with your app: trulens/evaluation/running_feedback_functions/with_app.md
-          - Running on existing data: trulens/evaluation/running_feedback_functions/existing_data.md
-      - Generating Test Cases:
-          - trulens/evaluation/generate_test_cases/index.md
-  - 📊 Evaluation Benchmarks:
-      - trulens/evaluation_benchmarks/index.md
-      - Evaluation Benchmark Code:
-          - Answer Relevance Benchmark (small): trulens/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
-          - Comprehensiveness Benchmark: trulens/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
-          - Context Relevance Benchmark (small): trulens/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
-          - Context Relevance Benchmark (large): trulens/evaluation_benchmarks/context_relevance_benchmark.ipynb
-          - Groundedness Benchmark: trulens/evaluation_benchmarks/groundedness_benchmark.ipynb
-  - 🎺 Tracking:
-      # PLACEHOLDER: - trulens/tracking/index.md
-      - Instrumentation Overview:
-          - trulens/tracking/instrumentation/index.ipynb
-          # Titles set inside notebooks and will be overridden if provider here.
-          - trulens/tracking/instrumentation/langchain.ipynb
-          - trulens/tracking/instrumentation/llama_index.ipynb
-          - trulens/tracking/instrumentation/nemo.ipynb
-      - Logging:
-          - Where to Log:
-              - trulens/tracking/logging/where_to_log/index.md
-              - ❄️ Logging in Snowflake: trulens/tracking/logging/where_to_log/log_in_snowflake.md
-          - 📓 Logging Methods: trulens/tracking/logging/logging.ipynb
-  - 🛡️ Guardrails: trulens/guardrails/index.md
-  - 🔍 Guides:
-      # PLACEHOLDER: - trulens/guides/index.md
-      - Any LLM App: trulens/guides/use_cases_any.md
-      - RAGs: trulens/guides/use_cases_rag.md
-      - LLM Agents: trulens/guides/use_cases_agent.md
-      - Dev to Prod: trulens/guides/use_cases_production.md
-  - ☕ API Reference:
-      # PLACEHOLDER: - trulens/api/index.md
-      - 🦑 Tru: trulens/api/tru.md
-      - App:
-          - trulens/api/app/index.md
-          - TruBasicApp: trulens/api/app/trubasicapp.md
-          - TruRails: trulens/api/app/trurails.md
-          - TruCustom: trulens/api/app/trucustom.md
-          - TruVirtual: trulens/api/app/truvirtual.md
-          - 🦜️🔗 TruChain: trulens/api/app/truchain.md
-          - 🦙 TruLlama: trulens/api/app/trullama.md
-      - Feedback: trulens/api/feedback.md
-      - 💾 Record: trulens/api/record.md
-      - Provider:
-          - trulens/api/provider/index.md
-          - LLMProvider: trulens/api/provider/llmprovider.md
-          - OpenAI:
-              - trulens/api/provider/openai/index.md
-              - AzureOpenAI: trulens/api/provider/openai/azureopenai.md
-          - AWS Bedrock: trulens/api/provider/bedrock.md
-          - LiteLLM: trulens/api/provider/litellm.md
-          - 🦜️🔗 LangChain: trulens/api/provider/langchain.md
-          - 🤗 HuggingFace: trulens/api/provider/huggingface.md
-          - Cortex: trulens/api/provider/cortex.md
-          - Endpoint:
-              - trulens/api/endpoint/index.md
-              - OpenAI: trulens/api/endpoint/openai.md
-      - 𝄢 Instrumentation:
-          - trulens/api/instruments.md
-      - 🛡️ Guardrails:
-          - trulens/api/guardrails/index.md
-          - 🦜️🔗 Langchain Guardrails: trulens/api/guardrails/langchain.md
-          - 🦙 Llama-Index Guardrails: trulens/api/guardrails/llama.md
-      - 🗄 Database:
-        - trulens/api/database/index.md
-        - ✨ Migration: trulens/api/database/migration.md
-        - 🧪 SQLAlchemy: trulens/api/database/sqlalchemy.md
-      - Dashboard:
-        - Streamlit: trulens/api/streamlit.md
+  - Conceptual Guide:
+    - trulens/guides/index.md
+    - 🎯 Evaluation:
+        - trulens/evaluation/feedback_functions/index.md
+        # PLACEHOLDER: - trulens/evaluation/index.md
+        - 🦴 Anatomy of a Feedback Function: trulens/evaluation/feedback_functions/anatomy.md
+        - Feedback Implementations:
+            - trulens/evaluation/feedback_implementations/index.md
+            - 🧰 Stock Feedback Functions: trulens/evaluation/feedback_implementations/stock.md
+            - trulens/evaluation/feedback_implementations/custom_feedback_functions.ipynb
+        - Feedback Selectors:
+            - trulens/evaluation/feedback_selectors/index.md
+            - Selecting Components: trulens/evaluation/feedback_selectors/selecting_components.md
+            - Selector Shortcuts: trulens/evaluation/feedback_selectors/selector_shortcuts.md
+        - Feedback Aggregation:
+            - trulens/evaluation/feedback_aggregation/index.md
+        - Running Feedback Functions:
+            # PLACEHOLDER: - trulens/evaluation/running_feedback_functions/index.md
+            - Running with your app: trulens/evaluation/running_feedback_functions/with_app.md
+            - Running on existing data: trulens/evaluation/running_feedback_functions/existing_data.md
+        - Generating Test Cases:
+            - trulens/evaluation/generate_test_cases/index.md
+    - 📊 Evaluation Benchmarks:
+        - trulens/evaluation_benchmarks/index.md
+        - Evaluation Benchmark Code:
+            - Answer Relevance Benchmark (small): trulens/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
+            - Comprehensiveness Benchmark: trulens/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
+            - Context Relevance Benchmark (small): trulens/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
+            - Context Relevance Benchmark (large): trulens/evaluation_benchmarks/context_relevance_benchmark.ipynb
+            - Groundedness Benchmark: trulens/evaluation_benchmarks/groundedness_benchmark.ipynb
+    - 🎺 Instrumenting:
+        # PLACEHOLDER: - trulens/tracking/index.md
+        - Instrumentation Overview:
+            - trulens/tracking/instrumentation/index.ipynb
+            # Titles set inside notebooks and will be overridden if provider here.
+            - trulens/tracking/instrumentation/langchain.ipynb
+            - trulens/tracking/instrumentation/llama_index.ipynb
+            - trulens/tracking/instrumentation/nemo.ipynb
+        - Logging:
+            - Where to Log:
+                - trulens/tracking/logging/where_to_log/index.md
+                - ❄️ Logging in Snowflake: trulens/tracking/logging/where_to_log/log_in_snowflake.md
+            - 📓 Logging Methods: trulens/tracking/logging/logging.ipynb
+    - 🛡️ Guardrails: trulens/guardrails/index.md
+  # - 🔍 Guides:
+  #     # PLACEHOLDER: - trulens/guides/index.md
+  #     - Any LLM App: trulens/guides/use_cases_any.md
+  #     - RAGs: trulens/guides/use_cases_rag.md
+  #     - LLM Agents: trulens/guides/use_cases_agent.md
+  #     - Dev to Prod: trulens/guides/use_cases_production.md
+  - API Reference: reference/
+  - Examples: examples/
   - 🤝 Contributing:
       - trulens/contributing/index.md
       - 🧭 Design: trulens/contributing/design.md
@@ -320,6 +286,8 @@ nav:
 
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
+extra:
+  generator: false
 
 extra_css:
   - stylesheets/extra.css

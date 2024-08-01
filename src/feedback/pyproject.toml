@@ -26,6 +26,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { path = "../core" }
-nltk = "^3.8.1"
+nltk = "^3.8"
 pydantic = "^2"
-numpy = "^1.23.5"
+numpy = "^1.23"

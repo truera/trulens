@@ -216,7 +216,7 @@ class TruLlama(mod_app.App):
     This recorder is designed for LlamaIndex apps, providing a way to
     instrument, log, and evaluate their behavior.
 
-    !!! example "Creating a LlamaIndex application"
+    Example: "Creating a LlamaIndex application"
 
         Consider an example LlamaIndex application. For the complete code
         example, see [LlamaIndex
@@ -235,7 +235,7 @@ class TruLlama(mod_app.App):
     application's retriever. This is achieved using the `select_context` method,
     which then can be used by a feedback selector, such as `on(context)`.
 
-    !!! example "Defining a feedback function"
+    Example: "Defining a feedback function"
 
         ```python
         from trulens.providers.openai import OpenAI
@@ -258,7 +258,7 @@ class TruLlama(mod_app.App):
     The application can be wrapped in a `TruLlama` recorder to provide logging
     and evaluation upon the application's use.
 
-    !!! example "Using the `TruLlama` recorder"
+    Example: "Using the `TruLlama` recorder"
 
         ```python
         from trulens.instrument.llamaindex import TruLlama

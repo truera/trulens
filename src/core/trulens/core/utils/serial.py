@@ -292,7 +292,7 @@ class GetItem(StepItemOrAttribute):
 class GetItemOrAttribute(StepItemOrAttribute):
     """A step in a path lens that selects an item or an attribute.
 
-    !!! note:
+    Note:
         _TruLens-Eval_ allows lookuping elements within sequences if the subelements
         have the item or attribute. We issue warning if this is ambiguous (looking
         up in a sequence of more than 1 element).
@@ -627,7 +627,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     """
     Lenses into python objects.
 
-    !!! example
+    Example:
 
         ```python
         path = Lens().record[5]['somekey']

@@ -126,7 +126,7 @@ class TruChain(mod_app.App):
     This recorder is designed for LangChain apps, providing a way to instrument,
     log, and evaluate their behavior.
 
-    !!! example "Creating a LangChain RAG application"
+    Example: "Creating a LangChain RAG application"
 
         Consider an example LangChain RAG application. For the complete code
         example, see [LangChain
@@ -155,7 +155,7 @@ class TruChain(mod_app.App):
     application's retriever. This is achieved using the `select_context` method,
     which then can be used by a feedback selector, such as `on(context)`.
 
-    !!! example "Defining a feedback function"
+    Example: "Defining a feedback function"
 
         ```python
         from trulens.providers.openai import OpenAI
@@ -178,7 +178,7 @@ class TruChain(mod_app.App):
     The application can be wrapped in a `TruChain` recorder to provide logging
     and evaluation upon the application's use.
 
-    !!! example "Using the `TruChain` recorder"
+    Example: "Using the `TruChain` recorder"
 
         ```python
         from trulens.instrument.langchain import TruChain

@@ -5,7 +5,7 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-provider-langchain"
+name = "trulens-providers-langchain"
 version = "0.33.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
@@ -25,9 +25,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = "^0.33.0"
-trulens-feedback = "^0.33.0"
-langchain = "^0.1.6"
+trulens-core = "^0.33"
+trulens-feedback = "^0.33"
+langchain = "^0.2"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

@@ -1,12 +1,11 @@
 from concurrent.futures import as_completed
 from typing import List
 
+from langchain_core.documents import Document
+from langchain_core.vectorstores import VectorStoreRetriever
 from trulens.core import Feedback
 from trulens.core.utils.serial import model_dump
 from trulens.core.utils.threading import ThreadPoolExecutor
-
-from langchain.schema import Document
-from langchain.vectorstores.base import VectorStoreRetriever
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
@@ -21,7 +20,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
         threshold (float): and keep documents only if their feedback value is at least this threshold.
 
-    !!! example "Using TruLens guardrail context filters with Langchain"
+    Example: "Using TruLens guardrail context filters with Langchain"
 
         ```python
         from trulens.instrument.langchain import WithFeedbackFilterDocuments

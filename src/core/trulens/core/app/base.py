@@ -448,18 +448,18 @@ class App(
     """Base app recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
-    [AppDefinition][trulens.schema.app.AppDefinition].
+    [AppDefinition][trulens.core.schema.app.AppDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
-    - [TruLlama][trulens.tru_llama.TruLlama] for _LlamaIndex_ apps.
-    - [TruChain][trulens.tru_chain.TruChain] for _LangChain_ apps.
-    - [TruRails][trulens.tru_rails.TruRails] for _NeMo Guardrails_
+    - [TruLlama][trulens.instrument.llamaindex.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens.instrument.langchain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens.instrument.nemo.TruRails] for _NeMo Guardrails_
         apps.
-    - [TruVirtual][trulens.core.app.virtual.TruVirtual] for recording
+    - [TruVirtual][trulens.core.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens.tru_custom_app.TruCustomApp] for custom
+    - [TruCustomApp][trulens.core.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
-    - [TruBasicApp][trulens.tru_basic_app.TruBasicApp] for apps defined
+    - [TruBasicApp][trulens.core.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
 
@@ -484,7 +484,7 @@ class App(
     """Database interface.
 
     If this is not provided, a singleton
-    [SQLAlchemyDB][trulens.database.sqlalchemy.SQLAlchemyDB] will be
+    [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] will be
     made (if not already) and used.
     """
 

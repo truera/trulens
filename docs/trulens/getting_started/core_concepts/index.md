@@ -60,7 +60,7 @@ General and 🦑_TruLens_-specific concepts.
 - `Feedback`. See `Evaluation`.
 
 - `Feedback Function`. A method that implements an `Evaluation`. This
-  corresponds to [Feedback][trulens.core.feedback.feedback.Feedback].
+  corresponds to [Feedback][trulens.core.Feedback].
 
 - `Fine-tuning`. The process of training an already pre-trained model on
   additional data. While the initial training of a `Large Language Model` is

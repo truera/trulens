@@ -25,7 +25,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
     === "python"
 
         ```python
-        from trulens.guardrails.base import context_filter
+        from trulens.core.guardrails.base import context_filter
 
         feedback = Feedback(provider.context_relevance)
 
@@ -43,7 +43,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
     === "with _Langchain_"
 
         ```python
-        from trulens.instrument.langchain import WithFeedbackFilterDocuments
+        from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
 
         feedback = Feedback(provider.context_relevance)
 
@@ -65,7 +65,7 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
     === "with _Llama-Index_"
 
         ```python
-        from trulens.guardrails.llama import WithFeedbackFilterNodes
+        from trulens.instrument.llamaindex.guardrails import WithFeedbackFilterNodes
 
         feedback = Feedback(provider.context_relevance)
 
@@ -78,4 +78,4 @@ _TruLens_ context filter guardrails are easy to add to your app built with custo
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python](../api/guardrails/index), [Langchain](../api/guardrails/langchain) and [Llama-Index](../api/guardrails/llama).
+TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the availble guardrails in [native python][trulens.core.guardrails.base], [Langchain][trulens.instrument.langchain.guardrails] and [Llama-Index][trulens.instrument.llamaindex.guardrails].

@@ -4,9 +4,9 @@
 
 ### 🤗 Huggingface
 
-API Reference: [Huggingface][trulens.providers.huggingface.provider.Huggingface].
+API Reference: [Huggingface][trulens.providers.huggingface.Huggingface].
 
-::: trulens.providers.huggingface.provider.Huggingface
+::: trulens.providers.huggingface.Huggingface
     options:
         heading_level: 4
         show_bases: false
@@ -31,7 +31,7 @@ API Reference: [Huggingface][trulens.providers.huggingface.provider.Huggingface]
 
 ### OpenAI
 
-API Reference: [OpenAI][trulens.providers.openai.provider.OpenAI].
+API Reference: [OpenAI][trulens.providers.openai.OpenAI].
 
 ::: trulens.providers.openai.provider.OpenAI
     options:
@@ -58,9 +58,9 @@ API Reference: [OpenAI][trulens.providers.openai.provider.OpenAI].
 
 ## Generation-based: LLMProvider
 
-API Reference: [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
+API Reference: [LLMProvider][trulens.feedback.LLMProvider].
 
-::: trulens.feedback.llm_provider.LLMProvider
+::: trulens.feedback.LLMProvider
     options:
         heading_level: 4
         show_bases: false

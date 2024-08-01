@@ -5,7 +5,7 @@ Interested in contributing to TruLens? Here's how to get started!
 ## What can you work on?
 
 1. 💪 Add new [feedback
-   functions](https://www.trulens.org/trulens/api/providers)
+   functions][trulens.core.feedback.provider.Provider]
 2. 🤝 Add new feedback function providers.
 3. 🐛 Fix bugs
 4. 🎉 Add usage examples
@@ -17,7 +17,7 @@ Also, join the [AI Quality Slack
 community](https://communityinviter.com/apps/aiqualityforum/josh) for ideas and
 discussions.
 
-## 💪 Add new [feedback functions](https://www.trulens.org/trulens/api/providers)
+## 💪 Add new [feedback functions][trulens.core.feedback.provider.Provider]
 
 Feedback functions are the backbone of TruLens, and evaluating unique LLM apps
 may require new evaluations. We'd love your contribution to extend the feedback
@@ -31,8 +31,6 @@ functions library so others can benefit!
   different texts (str), such as prompt and retrieved context. It should return
   a float, or a dict of multiple floats. Each output value should be a float on
   the scale of 0 (worst) to 1 (best).
-- Make sure to add its definition to this
-  [list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/api/providers.md).
 
 ## 🤝 Add new feedback function providers.
 
@@ -41,7 +39,7 @@ HuggingFace. If you need a new model provider to utilize feedback functions for
 your use case, we'd love if you added a new provider class, e.g. Ollama.
 
 You can do so by creating a new provider module in this
-[folder](https://github.com/truera/trulens/blob/main/trulens_eval/trulens_eval/feedback/provider/).
+[folder](https://github.com/truera/trulens/blob/main/src/providers/).
 
 Alternatively, we also appreciate if you open a GitHub Issue if there's a model
 provider you need!
@@ -57,7 +55,7 @@ assign an issue to yourself.
 
 ## 🎉 Add Usage Examples
 
-If you have applied TruLens to track and evalaute a unique use-case, we would
+If you have applied TruLens to track and evaluate a unique use-case, we would
 love your contribution in the form of an example notebook: e.g. [Evaluating
 Pinecone Configuration Choices on Downstream App
 Performance](https://colab.research.google.com/github/truera/trulens/blob/main/trulens_eval/examples/expositional/vector-dbs/pinecone/pinecone_evals_build_better_rags.ipynb)
@@ -65,7 +63,7 @@ Performance](https://colab.research.google.com/github/truera/trulens/blob/main/t
 All example notebooks are expected to:
 
 - Start with a title and description of the example
-- Include a commented out list of dependencies and their versions, e.g. `# ! pip
+- Include a commented out list of dependencies and their versions, e.g. `# !pip
   install trulens==0.10.0 langchain==0.0.268`
 - Include a linked button to a Google colab version of the notebook
 - Add any additional requirements

@@ -37,7 +37,7 @@ class Provider(WithClassInfo, SerialModel):
     These models are than utilized by a feedback function to generate an
     evaluation score.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.huggingface import Huggingface
@@ -45,11 +45,11 @@ class Provider(WithClassInfo, SerialModel):
         huggingface_provider.language_match(prompt, response)
         ```
 
-    Providers for LLM models should subclass
-    `trulens.feedback.llm_provider.LLMProvider`, which itself subclasses
-    `Provider`. Providers for LLM-generated feedback are more of a plug-and-play
-    variety. This means that the base model of your choice can be combined with
-    feedback-specific prompting to generate feedback.
+    Providers for LLM models should subclass `trulens.feedback.LLMProvider`,
+    which itself subclasses `Provider`. Providers for LLM-generated feedback are
+    more of a plug-and-play variety. This means that the base model of your
+    choice can be combined with feedback-specific prompting to generate
+    feedback.
 
     For example, `relevance` can be run with any base LLM feedback provider.
     Once the feedback provider is instantiated with a base model, the
@@ -58,7 +58,7 @@ class Provider(WithClassInfo, SerialModel):
     This means that the base model selected is combined with specific prompting
     for `relevance` to generate feedback.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.openai import OpenAI

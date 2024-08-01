@@ -3,18 +3,14 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-from trulens.core.feedback.provider import Provider
 from trulens.core.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.core.utils.imports import REQUIREMENT_EVALUATE
-from trulens.core.utils.imports import REQUIREMENT_PROVIDER_OPENAI
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 from trulens.feedback.generated import re_0_10_rating
-
-with OptionalImports(messages=REQUIREMENT_PROVIDER_OPENAI):
-    from trulens.providers.openai import OpenAI
+from trulens.feedback.llm_provider import LLMProvider
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
@@ -32,7 +28,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     """
 
     ground_truth: Union[List[Dict], FunctionOrMethod]
-    provider: Provider
+    provider: LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -44,8 +40,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def __init__(
         self,
+        provider: LLMProvider,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        provider: Optional[Provider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
@@ -70,13 +66,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ```
 
         Args:
-            ground_truth (Union[Callable, FunctionOrMethod]): A list of query/response pairs or a function or callable that returns a ground truth string given a prompt string.
-            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
-            provider (Provider, optional): Internal Usage for DB serialization.
+            ground_truth: A list of query/response pairs or a function or
+                callable that returns a ground truth string given a prompt string.
+
+            bert_scorer: Internal Usage for DB serialization.
+
+            provider: Internal Usage for DB serialization.
 
         """
-        if not provider:
-            provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
@@ -137,7 +134,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         with a prompt that the original response is correct, and measures
         whether previous Chat GPT's response is similar.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -150,11 +147,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback
+            Function
+            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -181,7 +181,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Primarily used for evaluation of model generated feedback against human feedback
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -215,7 +215,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BERT Score. A function that that measures
         similarity to ground truth using bert embeddings.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -228,16 +228,20 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback
+            Function
+            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
                 being "in agreement".
+
             - dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
@@ -264,7 +268,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Uses BLEU Score. A function that that measures
         similarity to ground truth using token overlap.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -277,11 +281,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback
+            Function
+            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1

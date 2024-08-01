@@ -13,7 +13,7 @@ class context_filter:
     threshold (float): The minimum feedback value required for a context to be included.
     keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
 
-    !!! example
+    Example:
 
         ```python
         feedback = Feedback(provider.context_relevance, name="Context Relevance")

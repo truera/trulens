@@ -60,9 +60,6 @@ repos:
         name: trulens-providers-huggingface-poetry-check
         args: [-C src/providers/huggingface]
       - id: poetry-check
-        name: trulens-providers-huggingface-local-poetry-check
-        args: [-C src/providers/huggingface-local]
-      - id: poetry-check
         name: trulens-providers-langchain-poetry-check
         args: [-C src/providers/langchain]
       - id: poetry-check

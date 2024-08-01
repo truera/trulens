@@ -4,6 +4,7 @@ import functools
 from inspect import signature
 import logging
 from typing import (
+    Any,
     Dict,
     List,
     Optional,
@@ -17,7 +18,10 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
+import torch
 from tqdm.auto import tqdm
+from transformers import AutoModelForSequenceClassification
+from transformers import AutoTokenizer
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
 from trulens.core.feedback.endpoint import DummyEndpoint
@@ -144,7 +148,7 @@ class HuggingfaceBase(Provider):
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -195,7 +199,7 @@ class HuggingfaceBase(Provider):
 
         First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
-        !!! example
+        Example:
 
             ```
             from trulens.core import Feedback
@@ -248,7 +252,7 @@ class HuggingfaceBase(Provider):
         model that uses computes the relevance of a given context to the prompt.
         The model can be found at https://huggingface.co/truera/context_relevance.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -283,7 +287,7 @@ class HuggingfaceBase(Provider):
         Uses Huggingface's cardiffnlp/twitter-roberta-base-sentiment model. A
         function that uses a sentiment classifier on `text`.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -310,7 +314,7 @@ class HuggingfaceBase(Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model. A function that
         uses a toxic comment classifier on `text`.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -355,7 +359,7 @@ class HuggingfaceBase(Provider):
         """
         NER model to detect PII.
 
-        !!! example
+        Example:
 
             ```python
             hugs = Huggingface()
@@ -398,7 +402,7 @@ class HuggingfaceBase(Provider):
         """
         NER model to detect PII, with reasons.
 
-        !!! example
+        Example:
 
             ```python
             hugs = Huggingface()
@@ -448,7 +452,7 @@ class HuggingfaceBase(Provider):
         true/false boolean. if the return is greater than 0.5 the statement is evaluated as true. if the return is
         less than 0.5 the statement is evaluated as a hallucination.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.providers.huggingface import Huggingface
@@ -488,7 +492,7 @@ class Huggingface(HuggingfaceBase):
         """
         Create a Huggingface Provider with out of the box feedback functions.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.providers.huggingface import Huggingface
@@ -661,6 +665,87 @@ class Huggingface(HuggingfaceBase):
                 "Unexpected response type. Please check the API endpoint."
             )
         return score
+
+
+class HuggingfaceLocal(HuggingfaceBase):
+    """
+    Out of the box feedback functions using HuggingFace models locally.
+    """
+
+    _cached_tokenizers: Dict[str, Any] = {}
+    _cached_models: Dict[str, Any] = {}
+
+    def _retrieve_tokenizer_and_model(
+        self, key: str, tokenizer_kwargs: Optional[Dict[str, Any]] = None
+    ) -> Tuple[Any, Any]:
+        if key not in self._cached_tokenizers:
+            tokenizer_kwargs = tokenizer_kwargs if tokenizer_kwargs else {}
+            self._cached_tokenizers[key] = AutoTokenizer.from_pretrained(
+                key, **tokenizer_kwargs
+            )
+        if key not in self._cached_models:
+            self._cached_models[key] = (
+                AutoModelForSequenceClassification.from_pretrained(key)
+            )
+        tokenizer = self._cached_tokenizers[key]
+        model = self._cached_models[key]
+        return tokenizer, model
+
+    def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _context_relevance_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _positive_sentiment_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _toxic_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _summarized_groundedness_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    # TODEP
+    @_tci
+    def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
+        tokenizer, model = self._retrieve_tokenizer_and_model(
+            HUGS_DOCNLI_MODEL_PATH, tokenizer_kwargs={"use_fast": False}
+        )
+        with torch.no_grad():
+            tokens = tokenizer(
+                premise, hypothesis, truncation=False, return_tensors="pt"
+            )
+            output = model(tokens["input_ids"])
+            prediction = torch.softmax(output["logits"][0], -1).tolist()
+        return prediction[0]
+
+    def _pii_detection_endpoint(self, input: str) -> List[float]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _pii_detection_with_cot_reasons_endpoint(
+        self, input: str
+    ) -> Tuple[List[float], Dict[str, str]]:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
+
+    def _hallucination_evaluator_endpoint(self, input: str) -> float:
+        raise NotImplementedError(
+            "Currently not implemented in for local Huggingface!"
+        )
 
 
 class Dummy(Huggingface):

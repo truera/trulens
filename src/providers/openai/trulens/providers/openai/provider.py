@@ -16,11 +16,11 @@ logger = logging.getLogger(__name__)
 
 class OpenAI(LLMProvider):
     """
-    Out of the box feedback functions calling OpenAI APIs.
+    Out of the box feedback functions calling OpenAI APIs. Additionally, all feedback functions listed in the base [LLMProvider class][trulens.feedback.LLMProvider] can be run with OpenAI.
 
     Create an OpenAI Provider with out of the box feedback functions.
 
-    !!! example
+    Example:
 
         ```python
         from trulens.providers.openai import OpenAI
@@ -118,7 +118,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is hate
         speech.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -145,7 +145,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is
         threatening speech.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -173,7 +173,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         self harm.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -201,7 +201,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is sexual
         speech.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -229,7 +229,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         sexual minors.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -258,7 +258,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         violence.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -286,7 +286,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -314,7 +314,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -341,7 +341,7 @@ class OpenAI(LLMProvider):
         Uses OpenAI's Moderation API. A function that checks if text is about
         graphic violence.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.core import Feedback
@@ -366,6 +366,8 @@ class OpenAI(LLMProvider):
 
 class AzureOpenAI(OpenAI):
     """
+    !!! warning
+        _Azure OpenAI_ does not support the _OpenAI_ moderation endpoint.
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
     functionality as OpenAI out of the box feedback functions, excluding the
     moderation endpoint which is not supported by Azure. Please export the
@@ -388,6 +390,8 @@ class AzureOpenAI(OpenAI):
             response="Poland is in Europe."
         ) # low relevance
         ```
+
+
 
     Args:
         deployment_name: The name of the deployment.

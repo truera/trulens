@@ -86,9 +86,9 @@ Uses the `pytest-cov` plugin to generate a coverage report (`coverage.xml` & `ht
 make coverage
 ```
 
-### Generate Poetry Lockfiles
+### Update Poetry Locks
 
-Generate the poetry lockfile for all subdirectories
+Recreates lockfiles for all submodules
 
 ```bash
 make lock
