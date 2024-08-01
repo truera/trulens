@@ -10,8 +10,9 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 	poetry install
 
 # Lock the poetry dependencies for all the subprojects.
-lock: .env/create $(POETRY_DIRS)
+lock: $(POETRY_DIRS) clean-dashboard
 	for dir in $(POETRY_DIRS); do \
+		echo "Creating lockfile for $$dir"; \
 		poetry lock -C $$dir; \
 	done
 
@@ -25,14 +26,6 @@ format: .env/create
 
 precommit-hooks: .env/create
 	poetry run pre-commit install
-
-typestubs: .env/create $(POETRY_DIRS)
-	stubgen src/core -o out/trulens
-	stubgen src/feedback -o out/trulens
-	stubgen src/dashboard -o out/trulens
-	stubgen src/benchmark -o out/trulens
-	stubgen src/providers/* -o out/trulens/providers
-	stubgen src/instrument/* -o out/trulens/instrument
 
 run-precommit: precommit-hooks
 	poetry run pre-commit run --all-files --show-diff-on-failure
@@ -109,16 +102,19 @@ test-notebook:
 
 # Release Steps:
 ## Step: Clean repo:
-clean:
+clean-dashboard:
+	rm -rf src/dashboard/*.egg-info
+
+clean: clean-dashboard
 	git clean -fxd
 
 ## Step: Build wheels
-build-dashboard: .env/create
-	rm -rf src/dashboard/*.egg-info
+build-dashboard: .env/create clean-dashboard
 	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist;
 
 build: $(POETRY_DIRS) clean lock
 	for dir in $(POETRY_DIRS); do \
+		echo "Building $$dir"; \
 		pushd $$dir; \
 		poetry build -o $(REPO_ROOT)/dist; \
 		popd; \

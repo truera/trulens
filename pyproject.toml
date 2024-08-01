@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "0.33.0"
+version = "1.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Truera Inc <all@truera.com>",
@@ -28,9 +28,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = "^0.33"
-trulens-feedback = "^0.33"
-trulens-dashboard = "^0.33"
+trulens-core = "^1.0.0"
+trulens-feedback = "^1.0.0"
+trulens-dashboard = "^1.0.0"
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -83,6 +83,7 @@ trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 
 [tool.poetry.group.required.dependencies]
+python = "^3.9,!=3.9.7"
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
@@ -96,6 +97,7 @@ pytest-azurepipelines = "^1.0"
 ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
+llama-index-embeddings-huggingface = "^0.2"
 
 [tool.ruff]
 line-length = 80

@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "trulens-dashboard"
-version = "0.33.0"
+version = "1.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 readme = "README.md"
 license = { text = "MIT License" }
@@ -33,7 +33,7 @@ dependencies = [
   "streamlit-extras>=0.4",
   "streamlit-pills>=0.3",
   "traitlets>=5.0.5",
-  "trulens-core>=0.33",
+  "trulens-core>=1",
 ]
 optional-dependencies.dev = [
   "build>=1.2.1",
