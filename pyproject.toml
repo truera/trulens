@@ -70,7 +70,6 @@ trulens-provider-bedrock = { path = "src/providers/bedrock", develop = true }
 trulens-provider-langchain = { path = "src/providers/langchain", develop = true }
 trulens-provider-cortex = { path = "src/providers/cortex", develop = true, python = "<3.12" }
 trulens-provider-huggingface = { path = "src/providers/huggingface", develop = true }
-trulens-provider-huggingface-local = { path = "src/providers/huggingface-local", develop = true }
 trulens-provider-openai = { path = "src/providers/openai", develop = true }
 trulens-provider-litellm = { path = "src/providers/litellm", develop = true }
 

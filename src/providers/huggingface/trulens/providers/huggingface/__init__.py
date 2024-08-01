@@ -8,8 +8,11 @@
     ```
 """
 
-from trulens.providers.huggingface.provider import Huggingface
+from importlib.metadata import version
 
-__all__ = [
-    "Huggingface",
-]
+from trulens.providers.huggingface.provider import Huggingface
+from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+__version__ = version(__package__ or __name__)
+
+__all__ = ["Huggingface", "HuggingfaceLocal"]

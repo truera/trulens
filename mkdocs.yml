@@ -85,7 +85,6 @@ plugins:
             - src/providers/bedrock
             - src/providers/cortex
             - src/providers/huggingface
-            - src/providers/huggingface-local
             - src/providers/langchain
             - src/providers/litellm
             - src/providers/openai
