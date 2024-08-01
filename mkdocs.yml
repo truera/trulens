@@ -5,7 +5,7 @@ repo_name: truera/trulens
 repo_url: https://github.com/truera/trulens
 
 markdown_extensions:
-  # Note: disabled most extensions are they were interfering with each other and
+  # Note: disabled most extensions as they were interfering with each other and
   # rendering things poorly.
 
   # https://squidfunk.github.io/mkdocs-material/reference/mathjax/

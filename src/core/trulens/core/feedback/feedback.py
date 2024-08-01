@@ -866,9 +866,7 @@ Feedback function signature:
                 )
                 return feedback_result
 
-            feedback_result.status = (
-                feedback_schema.FeedbackResultStatus.FAILED
-            )
+            feedback_result.status = feedback_schema.FeedbackResultStatus.FAILED
             raise ValueError(
                 f"Unknown value for `if_missing` {self.if_missing}."
             ) from e

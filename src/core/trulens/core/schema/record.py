@@ -153,9 +153,9 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[
-        List[Future[feedback_schema.FeedbackResult]]
-    ] = pydantic.Field(None, exclude=True)
+    feedback_results: Optional[List[Future[feedback_schema.FeedbackResult]]] = (
+        pydantic.Field(None, exclude=True)
+    )
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(

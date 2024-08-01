@@ -13,23 +13,32 @@ def has_deprecated(obj: Union[Callable, Type]) -> bool:
 
     return has_moved(obj)
 
+
 def has_moved(obj: Union[Callable, Type]) -> bool:
     """Check if a function or class has been moved."""
 
-    return hasattr(obj, "__doc__") and obj.__doc__ is not None and "has moved:\n" in obj.__doc__
+    return (
+        hasattr(obj, "__doc__")
+        and obj.__doc__ is not None
+        and "has moved:\n" in obj.__doc__
+    )
 
 
 def function_moved(func: Callable, old: str, new: str):
     """Issue a warning upon function call that has been moved to a new location.
-    
+
     Issues the warning only once.
     """
 
-    assert hasattr(func, "__name__"), "Cannot create dep message without function name."
+    assert hasattr(
+        func, "__name__"
+    ), "Cannot create dep message without function name."
 
-    message = (f"Function `{func.__name__}` has moved:\n"
-               f"\tOld import: `from {old} import {func.__name__}`\n"
-               f"\tNew import: `from {new} import {func.__name__}`\n ")
+    message = (
+        f"Function `{func.__name__}` has moved:\n"
+        f"\tOld import: `from {old} import {func.__name__}`\n"
+        f"\tNew import: `from {new} import {func.__name__}`\n "
+    )
 
     warned = False
 
@@ -51,13 +60,15 @@ def function_moved(func: Callable, old: str, new: str):
 def class_moved(cls: Type, old_location: str, new_location: str):
     """Issue a warning upon class instantioation that has been moved to a new
     location.
-    
+
     Issues the warning only once.
     """
 
-    message = (f"Class `{cls.__name__}` has moved:\n"
-               f"\tOld import: `from {old_location} import {cls.__name__}`\n"
-               f"\tNew import: `from {new_location} import {cls.__name__}`\n ")
+    message = (
+        f"Class `{cls.__name__}` has moved:\n"
+        f"\tOld import: `from {old_location} import {cls.__name__}`\n"
+        f"\tNew import: `from {new_location} import {cls.__name__}`\n "
+    )
 
     warned = False
     moved_class = cls
@@ -67,7 +78,6 @@ def class_moved(cls: Type, old_location: str, new_location: str):
         return cls
 
     class _MovedClass(moved_class):
-
         def __new__(cls, *args, **kwargs):
             nonlocal warned
 
@@ -82,15 +92,17 @@ def class_moved(cls: Type, old_location: str, new_location: str):
     return _MovedClass
 
 
-def moved(globals_dict: Dict[str, Any],
-          old: str,
-          new: str,
-          names: Optional[Iterable[str]] = None):
+def moved(
+    globals_dict: Dict[str, Any],
+    old: str,
+    new: str,
+    names: Optional[Iterable[str]] = None,
+):
     """Replace all classes or function in the given dictionary with ones that
     issue a deprecation warning upon initialization or invocation.
-    
+
     You can use this with module `globals_dict=globals()` and `names=__all__` to
-    deprecate all exposed module members. 
+    deprecate all exposed module members.
 
     Args:
         globals_dict: The dictionary to update. See [globals][globals].

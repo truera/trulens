@@ -572,10 +572,7 @@ class App(
         else:
             pass
 
-        if (
-            self.feedback_mode
-            == feedback_schema.FeedbackMode.WITH_APP_THREAD
-        ):
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -1160,10 +1157,7 @@ class App(
         if record.feedback_and_future_results is None:
             return record
 
-        if (
-            self.feedback_mode
-            == feedback_schema.FeedbackMode.WITH_APP_THREAD
-        ):
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.add(record)

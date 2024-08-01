@@ -257,6 +257,7 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
+
 # Optional sub-packages:
 REQUIREMENT_FEEDBACK = format_import_errors(
     "trulens-feedback", purpose="evaluating feedback functions"
@@ -278,28 +279,30 @@ REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
 # Optional provider types:
 
 REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
-    "trulens-provider-bedrock", purpose="evaluating feedback using Bedrock"
+    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
 )
 REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
-    "trulens-provider-cortex", purpose="evaluating feedback using Cortex"
+    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
 )
 
 REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
-    "trulens-provider-huggingface", purpose="evaluating feedback using Huggingface"
+    "trulens-providers-huggingface",
+    purpose="evaluating feedback using Huggingface",
 )
 
 REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL = format_import_errors(
-    "trulens-provider-huggingface-local", purpose="evaluating feedback using local Huggingface"
+    "trulens-providers-huggingface-local",
+    purpose="evaluating feedback using local Huggingface",
 )
 REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
-    "trulens-provider-langchain", purpose="evaluating feedback using LangChain"
+    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
 )
 REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
-    'trulens-provider-litellm', purpose="evaluating feedback using LiteLLM"
+    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
 )
 
 REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
-    "trulens-provider-openai", purpose="evaluating feedback using OpenAI"
+    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
 )
 
 # Other optionals:

@@ -14,4 +14,5 @@ from trulens.dashboard.react_components.record_viewer import record_viewer
 record_viewer = deprecation.function_moved(
     record_viewer,
     old="trulens_eval.react_components.record_viewer",
-    new="trulens.dashboard.react_components.record_viewer")
+    new="trulens.dashboard.react_components.record_viewer",
+)

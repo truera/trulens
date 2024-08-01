@@ -26,14 +26,11 @@ class TestDeprecation(TestCase):
                 "TruLlama",
                 "TruVirtual",
                 "TruRails",
-
                 # app setup
                 "FeedbackMode",
-
                 # feedback setup
                 "Feedback",
                 "Select",
-
                 # feedback providers
                 "Provider",
                 "AzureOpenAI",
@@ -44,9 +41,8 @@ class TestDeprecation(TestCase):
                 "Huggingface",
                 "HuggingfaceLocal",
                 "Cortex",
-
                 # misc utility
-                "TP"
+                "TP",
             ],
             "trulens_eval.database.migrations": [],  # no public names
             "trulens_eval.feedback.provider": [
@@ -61,9 +57,15 @@ class TestDeprecation(TestCase):
                 "Cortex",
             ],
             "trulens_eval.feedback.provider.endpoint": [
-                "Endpoint", "DummyEndpoint", "HuggingfaceEndpoint",
-                "OpenAIEndpoint", "LiteLLMEndpoint", "BedrockEndpoint",
-                "OpenAIClient", "LangchainEndpoint", "CortexEndpoint"
+                "Endpoint",
+                "DummyEndpoint",
+                "HuggingfaceEndpoint",
+                "OpenAIEndpoint",
+                "LiteLLMEndpoint",
+                "BedrockEndpoint",
+                "OpenAIClient",
+                "LangchainEndpoint",
+                "CortexEndpoint",
             ],
             "trulens_eval.feedback": [
                 "Feedback",
@@ -79,13 +81,13 @@ class TestDeprecation(TestCase):
                 "Cortex",
             ],
             "trulens_eval.schema": [],  # no names
-            "trulens_eval.react_components.record_viewer": ["record_viewer"]
+            "trulens_eval.react_components.record_viewer": ["record_viewer"],
         }
 
     def test_init_aliases(self):
         """Check that all trulens_eval.*.__init__ aliases are still usable
         produce deprecation messages when used.
-        
+
         Also checks that importing the module itself produces a deprecation
         warning.
         """
@@ -102,7 +104,9 @@ class TestDeprecation(TestCase):
                             # occurs the first time it is imported.
                             del sys.modules[modname]
 
-                        mod = importlib.import_module(modname, )
+                        mod = importlib.import_module(
+                            modname,
+                        )
 
                 if mod is None:
                     continue
@@ -112,7 +116,8 @@ class TestDeprecation(TestCase):
                         # Can get the named object from module:
                         self.assertTrue(
                             hasattr(mod, name),
-                            f"Module {modname} does not have alias {name}.")
+                            f"Module {modname} does not have alias {name}.",
+                        )
 
                         val = getattr(mod, name)
 
@@ -120,8 +125,7 @@ class TestDeprecation(TestCase):
                             with self.assertWarns(DeprecationWarning):
                                 # try calling it:
                                 try:
-                                    val(
-                                    )  # will most likely fail, but should do so after the deprecation message
+                                    val()  # will most likely fail, but should do so after the deprecation message
                                 except BaseException:
                                     pass
 

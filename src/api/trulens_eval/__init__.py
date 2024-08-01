@@ -8,9 +8,10 @@ import warnings
 
 MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
 
+
 def dep_warn(module: str):
     """Issue a deprecation warning for a backwards-compatibility modules.
-    
+
     This is specifically for the trulens_eval -> trulens module renaming and
     reorganization.
     """
@@ -19,8 +20,9 @@ def dep_warn(module: str):
         f"The `{module}` module is deprecated. "
         f"See {MIGRATION_LINK} for instructions on migrating to `trulens.*` modules.",
         DeprecationWarning,
-        stacklevel=3
+        stacklevel=3,
     )
+
 
 dep_warn("trulens_eval")
 
@@ -28,7 +30,7 @@ dep_warn("trulens_eval")
 __version_info__ = (0, 33, 0)
 """Version number components for major, minor, patch."""
 
-__version__ = '.'.join(map(str, __version_info__))
+__version__ = ".".join(map(str, __version_info__))
 """Version number string."""
 
 # This check is intentionally done ahead of the other imports as we want to
@@ -53,46 +55,56 @@ from trulens.core.utils import threading as threading_utils
 # Optional provider types.
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM):
+    messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
+):
     from trulens.providers.litellm.provider import LiteLLM
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK):
+    messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK
+):
     from trulens.providers.bedrock.provider import Bedrock
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI):
+    messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI
+):
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE):
+    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
+):
     from trulens.providers.huggingface.provider import Huggingface
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL):
+    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL
+):
     from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN):
+    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
+):
     from trulens.providers.langchain.provider import Langchain
 
 # the dependency snowflake-snowpark-python not yet supported in 3.12
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX):
+    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
+):
     from trulens.providers.cortex.provider import Cortex
 
 # Optional app types.
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN):
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+):
     from trulens.instrument.langchain.tru_chain import TruChain
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA):
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA
+):
     from trulens.instrument.llama.tru_llama import TruLlama
 
 with imports_utils.OptionalImports(
-        messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO):
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO
+):
     from trulens.instrument.nemo.tru_rails import TruRails
 
 
@@ -108,7 +120,6 @@ Select = core_schema.Select
 
 __all__ = [
     "Tru",  # main interface
-
     # app types
     "TruBasicApp",
     "TruCustomApp",
@@ -116,14 +127,11 @@ __all__ = [
     "TruLlama",
     "TruVirtual",
     "TruRails",
-
     # app setup
     "FeedbackMode",
-
     # feedback setup
     "Feedback",
     "Select",
-
     # feedback providers
     "Provider",
     "AzureOpenAI",
@@ -134,7 +142,6 @@ __all__ = [
     "Huggingface",
     "HuggingfaceLocal",
     "Cortex",
-
     # misc utility
     "TP",
 ]
@@ -142,9 +149,4 @@ __all__ = [
 
 # Replace all classes we expose to ones which issue a deprecation warning upon
 # initialization.
-deprecation.moved(
-    globals(),
-    names=__all__,
-    old="trulens_eval",
-    new="trulens"
-)
+deprecation.moved(globals(), names=__all__, old="trulens_eval", new="trulens")

@@ -390,9 +390,7 @@ class Tru(python.SingletonPerName):
                 ]
             ]
         ] = None,
-    ) -> List[
-        Tuple[feedback.Feedback, Future[feedback_schema.FeedbackResult]]
-    ]:
+    ) -> List[Tuple[feedback.Feedback, Future[feedback_schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -615,14 +613,14 @@ class Tru(python.SingletonPerName):
                 # If result already present, set status to done.
                 kwargs["status"] = feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = feedback_schema.FeedbackResult(
-                **kwargs
-            )
+            feedback_result_or_future = feedback_schema.FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: feedback_schema.FeedbackResult = feedback_result_or_future.result()
+                feedback_result_or_future: feedback_schema.FeedbackResult = (
+                    feedback_result_or_future.result()
+                )
 
             elif isinstance(
                 feedback_result_or_future, feedback_schema.FeedbackResult
@@ -859,8 +857,7 @@ class Tru(python.SingletonPerName):
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
             queue_done = (
-                queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
-                or 0
+                queue_stats.get(feedback_schema.FeedbackResultStatus.DONE) or 0
             )
             queue_total = sum(queue_stats.values())
 
@@ -960,9 +957,7 @@ class Tru(python.SingletonPerName):
 
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = (
-                    queue_stats.get(
-                        feedback_schema.FeedbackResultStatus.DONE
-                    )
+                    queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
                     or 0
                 )
                 queue_total = sum(queue_stats.values())
