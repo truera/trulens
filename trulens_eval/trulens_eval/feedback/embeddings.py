@@ -3,22 +3,22 @@ from typing import Dict, Tuple, Union
 import numpy as np
 from pydantic import PrivateAttr
 
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
 from trulens_eval.utils.imports import REQUIREMENT_SKLEARN
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
-    import sklearn
+    pass
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
 class Embeddings(WithClassInfo, SerialModel):
-    """Embedding related feedback function implementations.
-    """
+    """Embedding related feedback function implementations."""
+
     _embed_model: BaseEmbedding
 
     def __init__(self, embed_model: BaseEmbedding):
@@ -27,7 +27,7 @@ class Embeddings(WithClassInfo, SerialModel):
 
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
-        
+
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
             from trulens_eval.feedback.embeddings import Embeddings
@@ -50,7 +50,7 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -67,13 +67,14 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -87,7 +88,9 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.cosine_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
@@ -98,14 +101,14 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
-            
+
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
             from trulens_eval.feedback.embeddings import Embeddings
-            
+
             embed_model = OpenAIEmbedding()
 
             # Create the feedback function
@@ -115,13 +118,14 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -135,7 +139,9 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.manhattan_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)
 
@@ -146,10 +152,10 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         !!! example
-    
+
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
-            
+
             ```python
             from llama_index.embeddings.openai import OpenAIEmbedding
             from trulens_eval.feedback.embeddings import Embeddings
@@ -163,13 +169,14 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            query (str): A text prompt to a vector DB. 
+            query (str): A text prompt to a vector DB.
             document (str): The document returned from the vector DB.
 
         Returns:
             - float: the embedding vector distance
         """
         import sklearn
+
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
         ).reshape(
@@ -183,6 +190,8 @@ class Embeddings(WithClassInfo, SerialModel):
 
         return sklearn.metrics.pairwise.euclidean_distances(
             query_embed, document_embed
-        )[0][
+        )[
+            0
+        ][
             0
         ]  # final results will be dimensions (sample query x sample doc) === (1,1)

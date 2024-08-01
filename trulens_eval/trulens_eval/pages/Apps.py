@@ -31,7 +31,7 @@ def remove_selector(
     selector_idx: int,
     record_idx: int,
     selector: str,
-    rec: Optional[ChatRecord] = None
+    rec: Optional[ChatRecord] = None,
 ):
     """
     Remove the `selector` of type `type`. A selector should be uniquely
@@ -64,7 +64,7 @@ def update_selector(
     selector_idx: int,
     record_idx: int,
     selector: str,
-    rec: Optional[ChatRecord] = None
+    rec: Optional[ChatRecord] = None,
 ):
     """
     Update the selector keyed by `type`, `selector_idx`, `record_idx` to the new
@@ -86,14 +86,14 @@ def draw_selector(
     selector_idx: int,
     record_idx: int,
     selector: str,
-    rec: Optional[ChatRecord] = None
+    rec: Optional[ChatRecord] = None,
 ):
     """
     Draws the UI elements for a selector of type `type` intended to be keyed by
     (type) and `selector_idx` and `record_idx`. The selector represents a
     Lens given as str in `selector`. Includes delete and edit widgets as
     well as the listing of the values attained by the selected path in the given
-    ChatRecord `rec`. 
+    ChatRecord `rec`.
     """
 
     key = f"{type}_{selector_idx}_{record_idx}"
@@ -109,7 +109,7 @@ def draw_selector(
     st.session_state[f"containers_{key_norec}"].append(container)
 
     # Cannot stack columns too deeply:
-    #c1, c2 = st.columns(2)
+    # c1, c2 = st.columns(2)
 
     # TODO: figure out how to expand/collapse these across all records at the
     # same time, this session thing does not work.
@@ -132,16 +132,17 @@ def draw_selector(
             selector_idx=selector_idx,
             record_idx=record_idx,
             selector=selector,
-            rec=rec
+            rec=rec,
         ),
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     # Get the relevant JSON to path into.
     obj = rec.app_json
     if type == "record":
-        obj = mod_record_schema.Record.model_validate(rec.record_json
-                                                     ).layout_calls_as_app()
+        obj = mod_record_schema.Record.model_validate(
+            rec.record_json
+        ).layout_calls_as_app()
 
     # Try to parse the selector as a Lens.
     path = None
@@ -188,13 +189,14 @@ def draw_rec(record_idx: int, rec: ChatRecord, skip_human: bool = False):
         # st.write(f"TODO link to {record_json['record_id']}.")
 
         for selector_idx, selector in enumerate(
-                st.session_state.selectors_record):
+            st.session_state.selectors_record
+        ):
             draw_selector(
                 type="record",
                 selector_idx=selector_idx,
                 record_idx=record_idx,
                 selector=selector,
-                rec=rec
+                rec=rec,
             )
 
 
@@ -244,7 +246,7 @@ def select_app(app_json: JSON):
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
     for typ in ["app", "record"]:
-        st.session_state[f'selectors_{typ}'] = []
+        st.session_state[f"selectors_{typ}"] = []
 
 
 def run_record(col):
@@ -258,7 +260,7 @@ def run_record(col):
     current_record = st.session_state.records[last_record_index]
 
     # Get the human input from state and update record.
-    human_input = st.session_state['human_input']
+    human_input = st.session_state["human_input"]
     current_record.human = human_input
 
     # Draw the ChatRecord so far, just human input.
@@ -292,7 +294,7 @@ def end_session():
     Reset the state to that before a session is started.
     """
 
-    del st.session_state['records']
+    del st.session_state["records"]
 
 
 if "records" not in st.session_state:
@@ -307,12 +309,12 @@ if "records" not in st.session_state:
     st.divider()
 
     for app_json in loadable_apps:
-        st.subheader(app_json['app_id'])
+        st.subheader(app_json["app_id"])
         st.button(
             label="New Session",
             key=f"select_app_{app_json['app_id']}",
             on_click=select_app,
-            args=(app_json,)
+            args=(app_json,),
         )
 
         st.divider()
@@ -352,16 +354,16 @@ else:
         )
 
         # Create an add app selector input:
-        st.write('**App selectors**')
+        st.write("**App selectors**")
         if len(st.session_state.selectors_app) > 0:
             st.multiselect(
-                'Current app selectors',
+                "Current app selectors",
                 st.session_state.selectors_app,
                 st.session_state.selectors_app,
                 on_change=set_selector,
                 key="set_app_selector_input",
                 args=("app",),
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
         st.text_input(
             label="add app selector",
@@ -369,7 +371,7 @@ else:
             placeholder="Add an app selector (e.g. app.llm.model_name)",
             on_change=add_selector,
             args=("app",),
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
 
         # Draw existing app selectors.
@@ -379,7 +381,7 @@ else:
                 selector_idx=i,
                 record_idx=None,
                 selector=selector,
-                rec=first_record
+                rec=first_record,
             )
 
     with right:
@@ -389,41 +391,41 @@ else:
             "Your interactive chat session. Type in a message below to 'chat' with the LLM application. Record selectors can be used to surface information on a per-record level."
         )
 
-        st.write('**Record selectors**')
+        st.write("**Record selectors**")
         if len(st.session_state.selectors_record) > 0:
             st.multiselect(
-                'Current record selectors',
+                "Current record selectors",
                 st.session_state.selectors_record,
                 st.session_state.selectors_record,
                 on_change=set_selector,
                 key="set_record_selector_input",
                 args=("record",),
-                label_visibility="collapsed"
+                label_visibility="collapsed",
             )
         st.text_input(
             label="add record selector",
-            placeholder=
-            "Add a record selector to view details about the records (e.g. cost.cost).",
+            placeholder="Add a record selector to view details about the records (e.g. cost.cost).",
             key="add_record_selector_input",
             on_change=add_selector,
             args=("record",),
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
 
         # Rows corresponding to ChatRecord:
         for i, rec in enumerate(st.session_state.records):
             draw_rec(record_idx=i, rec=rec)
 
-        if len(st.session_state.records
-              ) == 0 or st.session_state.records[0].record_json is None:
-            st.caption('Begin a chat session by typing in a message below')
+        if (
+            len(st.session_state.records) == 0
+            or st.session_state.records[0].record_json is None
+        ):
+            st.caption("Begin a chat session by typing in a message below")
 
     # NOTE: chat input cannot be inside column.
     human_input = st.chat_input(
         on_submit=run_record,
         key="human_input",
         kwargs=dict(
-            col=
-            right  # should be the cols of the last row from the above enumeration.
-        )
+            col=right
+        ),  # should be the cols of the last row from the above enumeration.
     )

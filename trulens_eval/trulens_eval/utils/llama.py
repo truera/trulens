@@ -9,8 +9,8 @@ various llama_index classes and example classes:
 from typing import Type
 
 from trulens_eval import app
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import Class
 
 with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
@@ -20,13 +20,12 @@ opt.assert_installed(llama_index)
 
 
 class Prompt(app.Prompt, app.LlamaIndexComponent):
-
     @property
     def template(self) -> str:
-        return self.json['template']
+        return self.json["template"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['template']))
+        return super().unsorted_parameters(skip={"template"})
 
     @staticmethod
     def class_is(cls: Class) -> bool:
@@ -36,7 +35,6 @@ class Prompt(app.Prompt, app.LlamaIndexComponent):
 
 
 class Agent(app.Agent, app.LlamaIndexComponent):
-
     @property
     def agent_name(self) -> str:
         return "agent name not supported in llama_index"
@@ -52,16 +50,15 @@ class Agent(app.Agent, app.LlamaIndexComponent):
 
 
 class Tool(app.Tool, app.LlamaIndexComponent):
-
     @property
     def tool_name(self) -> str:
-        if 'metadata' in self.json:
-            return self.json['metadata']['name']
+        if "metadata" in self.json:
+            return self.json["metadata"]["name"]
         else:
             return "no name given"
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model']))
+        return super().unsorted_parameters(skip={"model"})
 
     @staticmethod
     def class_is(cls: Class) -> bool:
@@ -71,13 +68,12 @@ class Tool(app.Tool, app.LlamaIndexComponent):
 
 
 class LLM(app.LLM, app.LlamaIndexComponent):
-
     @property
     def model_name(self) -> str:
-        return self.json['model']
+        return self.json["model"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model']))
+        return super().unsorted_parameters(skip={"model"})
 
     @staticmethod
     def class_is(cls: Class) -> bool:

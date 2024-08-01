@@ -4,9 +4,8 @@ from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import BedrockEndpoint
 from trulens_eval.utils.generated import re_0_10_rating
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
-from trulens_eval.utils.python import NoneType
+from trulens_eval.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +42,9 @@ class Bedrock(LLMProvider):
         self,
         *args,
         model_id: Optional[str] = None,
-        **kwargs
+        **kwargs,
         # self, *args, model_id: str = "amazon.titan-text-express-v1", **kwargs
     ):
-
         if model_id is None:
             model_id = self.DEFAULT_MODEL_ID
 
@@ -58,9 +56,9 @@ class Bedrock(LLMProvider):
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
 
-        self_kwargs['model_id'] = model_id
+        self_kwargs["model_id"] = model_id
 
-        self_kwargs['endpoint'] = BedrockEndpoint(*args, **kwargs)
+        self_kwargs["endpoint"] = BedrockEndpoint(*args, **kwargs)
 
         super().__init__(
             **self_kwargs
@@ -71,7 +69,7 @@ class Bedrock(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         assert self.endpoint is not None
 
@@ -93,13 +91,12 @@ class Bedrock(LLMProvider):
             body = json.dumps(
                 {
                     "inputText": messages_str,
-                    "textGenerationConfig":
-                        {
-                            "maxTokenCount": 4095,
-                            "stopSequences": [],
-                            "temperature": 0,
-                            "topP": 1
-                        }
+                    "textGenerationConfig": {
+                        "maxTokenCount": 4095,
+                        "stopSequences": [],
+                        "temperature": 0,
+                        "topP": 1,
+                    },
                 }
             )
         elif self.model_id.startswith("anthropic"):
@@ -108,7 +105,7 @@ class Bedrock(LLMProvider):
                     "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
                     "temperature": 0,
                     "top_p": 1,
-                    "max_tokens_to_sample": 4095
+                    "max_tokens_to_sample": 4095,
                 }
             )
         elif self.model_id.startswith("cohere"):
@@ -117,7 +114,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "p": 1,
-                    "max_tokens": 4095
+                    "max_tokens": 4095,
                 }
             )
         elif self.model_id.startswith("ai21"):
@@ -126,7 +123,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "topP": 1,
-                    "maxTokens": 8191
+                    "maxTokens": 8191,
                 }
             )
 
@@ -136,7 +133,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "top_p": 1,
-                    "max_tokens": 4095
+                    "max_tokens": 4095,
                 }
             )
 
@@ -146,7 +143,7 @@ class Bedrock(LLMProvider):
                     "prompt": messages_str,
                     "temperature": 0,
                     "top_p": 1,
-                    "max_gen_len": 2047
+                    "max_gen_len": 2047,
                 }
             )
         else:
@@ -166,27 +163,35 @@ class Bedrock(LLMProvider):
         )
 
         if self.model_id.startswith("amazon"):
-            response_body = json.loads(response.get('body').read()
-                                      ).get('results')[0]["outputText"]
+            response_body = json.loads(response.get("body").read()).get(
+                "results"
+            )[0]["outputText"]
 
         if self.model_id.startswith("anthropic"):
-            response_body = json.loads(response.get('body').read()
-                                      ).get('completion')
+            response_body = json.loads(response.get("body").read()).get(
+                "completion"
+            )
 
         if self.model_id.startswith("cohere"):
-            response_body = json.loads(response.get('body').read()
-                                      ).get('generations')[0]["text"]
+            response_body = json.loads(response.get("body").read()).get(
+                "generations"
+            )[0]["text"]
 
         if self.model_id.startswith("mistral"):
-            response_body = json.loads(response.get('body').read()
-                                      ).get('output')[0]["text"]
+            response_body = json.loads(response.get("body").read()).get(
+                "output"
+            )[0]["text"]
         if self.model_id.startswith("meta"):
-            response_body = json.loads(response.get('body').read()
-                                      ).get('generation')
+            response_body = json.loads(response.get("body").read()).get(
+                "generation"
+            )
         if self.model_id.startswith("ai21"):
-            response_body = json.loads(
-                response.get('body').read()
-            ).get('completions')[0].get('data').get('text')
+            response_body = (
+                json.loads(response.get("body").read())
+                .get("completions")[0]
+                .get("data")
+                .get("text")
+            )
 
         return response_body
 
@@ -196,7 +201,7 @@ class Bedrock(LLMProvider):
         system_prompt: str,
         user_prompt: Optional[str] = None,
         normalize: float = 10.0,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> float:
         """
         Base method to generate a score only, used for evaluation.
@@ -233,7 +238,7 @@ class Bedrock(LLMProvider):
         system_prompt: str,
         user_prompt: Optional[str] = None,
         normalize: float = 10.0,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Union[float, Tuple[float, Dict]]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -247,7 +252,7 @@ class Bedrock(LLMProvider):
 
         Returns:
             The score on a 0-1 scale.
-            
+
             Reason metadata if returned by the LLM.
         """
 
@@ -267,7 +272,7 @@ class Bedrock(LLMProvider):
             score = 0.0
             supporting_evidence = None
             criteria = None
-            for line in response.split('\n'):
+            for line in response.split("\n"):
                 if "Score" in line:
                     score = re_0_10_rating(line) / normalize
                 if "Criteria" in line:
@@ -276,14 +281,14 @@ class Bedrock(LLMProvider):
                         criteria = ":".join(parts[1:]).strip()
                 if "Supporting Evidence" in line:
                     supporting_evidence = line[
-                        line.index("Supporting Evidence:") +
-                        len("Supporting Evidence:"):].strip()
+                        line.index("Supporting Evidence:")
+                        + len("Supporting Evidence:") :
+                    ].strip()
             reasons = {
-                'reason':
-                    (
-                        f"{'Criteria: ' + str(criteria)}\n"
-                        f"{'Supporting Evidence: ' + str(supporting_evidence)}"
-                    )
+                "reason": (
+                    f"{'Criteria: ' + str(criteria)}\n"
+                    f"{'Supporting Evidence: ' + str(supporting_evidence)}"
+                )
             }
             return score, reasons
         else:

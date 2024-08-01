@@ -22,13 +22,12 @@ running.
 """
 
 from contextlib import contextmanager
-import json
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, Literal, Union
-from unittest import main
 from unittest import TestCase
+from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
@@ -45,7 +44,6 @@ from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import downgrade_db
 from trulens_eval.database.migrations import get_revision_history
 from trulens_eval.database.migrations import upgrade_db
-from trulens_eval.database.sqlalchemy import AppsExtractor
 from trulens_eval.database.sqlalchemy import SQLAlchemyDB
 from trulens_eval.database.utils import copy_database
 from trulens_eval.database.utils import is_legacy_sqlite
@@ -57,13 +55,12 @@ class TestDBSpecifications(TestCase):
     def test_prefix(self):
         """Test that the table prefix is correctly used to name tables in the database."""
 
-        db_types = ["sqlite_file"]  #, "postgres", "mysql", "sqlite_memory"
+        db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
         # sqlite_memory might have problems with multithreading of tests
 
         for db_type in db_types:
             with self.subTest(msg=f"prefix for {db_type}"):
                 with clean_db(db_type, table_prefix="test_") as db:
-
                     _test_db_consistency(self, db)
 
                     # Check that we have the correct table names.
@@ -76,36 +73,38 @@ class TestDBSpecifications(TestCase):
     def test_copy(self):
         """Test copying of databases via [copy_database][trulens_eval.database.utils.copy_database]."""
 
-        db_types = ["sqlite_file"]  #, "postgres", "mysql", "sqlite_memory"
+        db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
         # sqlite_memory might have problems with multithreading of tests
 
         for source_db_type in db_types:
             with self.subTest(msg=f"source prefix for {source_db_type}"):
-                with clean_db(source_db_type,
-                              table_prefix="test_prior_") as db_prior:
-
+                with clean_db(
+                    source_db_type, table_prefix="test_prior_"
+                ) as db_prior:
                     _populate_data(db_prior)
 
                     for target_db_type in db_types:
                         with self.subTest(
-                                msg=f"target prefix for {target_db_type}"):
-                            with clean_db(target_db_type,
-                                          table_prefix="test_post_") as db_post:
-
+                            msg=f"target prefix for {target_db_type}"
+                        ):
+                            with clean_db(
+                                target_db_type, table_prefix="test_post_"
+                            ) as db_post:
                                 # This makes the database tables:
                                 db_post.migrate_database()
 
                                 # assert database is empty before copying
                                 with db_post.session.begin() as session:
                                     for orm_class in [
-                                            db_post.orm.AppDefinition,
-                                            db_post.orm.FeedbackDefinition,
-                                            db_post.orm.Record,
-                                            db_post.orm.FeedbackResult
+                                        db_post.orm.AppDefinition,
+                                        db_post.orm.FeedbackDefinition,
+                                        db_post.orm.Record,
+                                        db_post.orm.FeedbackResult,
                                     ]:
                                         self.assertEqual(
-                                            session.query(orm_class).all(), [],
-                                            f"Expected no {orm_class}."
+                                            session.query(orm_class).all(),
+                                            [],
+                                            f"Expected no {orm_class}.",
                                         )
 
                                 copy_database(
@@ -118,32 +117,32 @@ class TestDBSpecifications(TestCase):
                                 # assert database contains exactly one of each row
                                 with db_post.session.begin() as session:
                                     for orm_class in [
-                                            db_post.orm.AppDefinition,
-                                            db_post.orm.FeedbackDefinition,
-                                            db_post.orm.Record,
-                                            db_post.orm.FeedbackResult
+                                        db_post.orm.AppDefinition,
+                                        db_post.orm.FeedbackDefinition,
+                                        db_post.orm.Record,
+                                        db_post.orm.FeedbackResult,
                                     ]:
                                         self.assertEqual(
                                             len(session.query(orm_class).all()),
                                             1,
-                                            f"Expected exactly one {orm_class}."
+                                            f"Expected exactly one {orm_class}.",
                                         )
 
     def test_migrate_prefix(self):
         """Test that database migration works across different prefixes."""
 
-        db_types = ["sqlite_file"]  #, "postgres", "mysql", "sqlite_memory"
+        db_types = ["sqlite_file"]  # , "postgres", "mysql", "sqlite_memory"
         # sqlite_memory might have problems with multithreading of tests
 
         for db_type in db_types:
             with self.subTest(msg=f"prefix for {db_type}"):
                 with clean_db(db_type, table_prefix="test_prior_") as db_prior:
-
                     _test_db_consistency(self, db_prior)
 
                     # Migrate the database.
-                    with clean_db(db_type,
-                                  table_prefix="test_post_") as db_post:
+                    with clean_db(
+                        db_type, table_prefix="test_post_"
+                    ) as db_post:
                         db_post.migrate_database(prior_prefix="test_prior_")
 
                         # Check that we have the correct table names.
@@ -193,15 +192,16 @@ class TestDbV2Migration(TestCase):
 
     def test_future_db(self):
         """Check handling of database that is newer than the current
-        trulens_eval's db version. 
-        
+        trulens_eval's db version.
+
         We expect a warning and exception."""
 
-        for folder in (Path(__file__).parent.parent.parent /
-                       "release_dbs").iterdir():
+        for folder in (
+            Path(__file__).parent.parent.parent / "release_dbs"
+        ).iterdir():
             _dbfile = folder / "default.sqlite"
 
-            if not "infty" in str(folder):
+            if "infty" not in str(folder):
                 # Future/unknown dbs have "infty" in their folder name.
                 continue
 
@@ -239,8 +239,9 @@ class TestDbV2Migration(TestCase):
         This involves migrating the legacy dbs to the latest legacy first.
         """
 
-        for folder in (Path(__file__).parent.parent.parent /
-                       "release_dbs").iterdir():
+        for folder in (
+            Path(__file__).parent.parent.parent / "release_dbs"
+        ).iterdir():
             _dbfile = folder / "default.sqlite"
 
             if "infty" in str(folder):
@@ -284,7 +285,7 @@ class MockFeedback(Provider):
 @contextmanager
 def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
     """Yields a clean database instance for the given database type.
-    
+
     Args:
         alias: Database type to use from the following: `sqlite_file`,
             `sqlite_memory`, `postgres`, `mysql`.
@@ -297,34 +298,31 @@ def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
         # NOTE: The parameters below come from the docker definition in the
         # `trulens_eval/docker/test-database.yaml` file.
         url = {
-            "sqlite_memory":
-                "sqlite:///:memory:",
+            "sqlite_memory": "sqlite:///:memory:",
             # TODO: Test this one more.
             # NOTE: Sqlalchemy docs say this should be written
             # "sqlite://:memory:" but that gives an error on mac at least.
-            "sqlite_file":
-                f"sqlite:///{Path(tmp) / 'test.sqlite'}",
-            "postgres":
-                "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
-            "mysql":
-                "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
+            "sqlite_file": f"sqlite:///{Path(tmp) / 'test.sqlite'}",
+            "postgres": "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
+            "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
         db = SQLAlchemyDB.from_db_url(url, **kwargs)
 
         # NOTE(piotrm): I couldn't figure out why these things were done here.
-        #downgrade_db(
+        # downgrade_db(
         #    db.engine, revision="base"
-        #)  # drops all tables except `db.version_table`
-        #with db.engine.connect() as conn:
+        # )  # drops all tables except `db.version_table`
+        # with db.engine.connect() as conn:
         #    conn.execute(text(f"DROP TABLE {db.table_prefix}version_table"))
 
         yield db
 
 
 def assert_revision(
-    engine: Engine, expected: Union[None, str], status: Literal["in_sync",
-                                                                "behind"]
+    engine: Engine,
+    expected: Union[None, str],
+    status: Literal["in_sync", "behind"],
 ):
     """Asserts that the version of the database `engine` is `expected` and
     has the `status` flag set."""
@@ -341,9 +339,9 @@ def _test_db_migration(db: SQLAlchemyDB):
 
     # apply each upgrade at a time up to head revision
     for i, next_rev in enumerate(history):
-        assert int(
-            next_rev
-        ) == i + 1, f"Versions must be monotonically increasing from 1: {history}"
+        assert (
+            int(next_rev) == i + 1
+        ), f"Versions must be monotonically increasing from 1: {history}"
         assert_revision(engine, curr_rev, "behind")
         upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev
@@ -387,8 +385,9 @@ def debug_dump(db: SQLAlchemyDB):
         ress = session.query(db.orm.FeedbackResult).all()
         for res in ress:
             print(
-                "    feedback_result", res.feedback_result_id,
-                res.feedback_definition
+                "    feedback_result",
+                res.feedback_result_id,
+                res.feedback_definition,
             )
 
 
@@ -411,14 +410,16 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
         # feedbacks results are deleted in cascade
         test.assertEqual(
-            session.query(db.orm.FeedbackResult).all(), [],
-            "Expected no feedback results."
+            session.query(db.orm.FeedbackResult).all(),
+            [],
+            "Expected no feedback results.",
         )
 
         # feedback defs are preserved
         test.assertEqual(
-            len(session.query(db.orm.FeedbackDefinition).all()), 1,
-            "Expected exactly one feedback to be in the db."
+            len(session.query(db.orm.FeedbackDefinition).all()),
+            1,
+            "Expected exactly one feedback to be in the db.",
         )
 
     _populate_data(db)
@@ -428,13 +429,15 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
     with db.session.begin() as session:
         test.assertEqual(
-            len(session.query(db.orm.Record).all()), 1,
-            "Expected exactly one record."
+            len(session.query(db.orm.Record).all()),
+            1,
+            "Expected exactly one record.",
         )
 
         test.assertEqual(
-            len(session.query(db.orm.FeedbackResult).all()), 1,
-            "Expected exactly one feedback result."
+            len(session.query(db.orm.FeedbackResult).all()),
+            1,
+            "Expected exactly one feedback result.",
         )
 
         # delete the only record
@@ -442,27 +445,32 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
         # feedbacks results are deleted in cascade
         test.assertEqual(
-            session.query(db.orm.FeedbackResult).all(), [],
-            "Expected no feedback results."
+            session.query(db.orm.FeedbackResult).all(),
+            [],
+            "Expected no feedback results.",
         )
 
         # apps are preserved
         test.assertEqual(
-            len(session.query(db.orm.AppDefinition).all()), 1,
-            "Expected an app."
+            len(session.query(db.orm.AppDefinition).all()),
+            1,
+            "Expected an app.",
         )
 
         # feedback defs are preserved. Note that this requires us to use the
         # same feedback_definition_id in _populate_data.
         test.assertEqual(
-            len(session.query(db.orm.FeedbackDefinition).all()), 1,
-            "Expected a feedback definition."
+            len(session.query(db.orm.FeedbackDefinition).all()),
+            1,
+            "Expected a feedback definition.",
         )
 
 
 def _populate_data(db: DB):
     tru = Tru()
-    tru.db = db  # because of the singleton behavior, db must be changed manually
+    tru.db = (
+        db  # because of the singleton behavior, db must be changed manually
+    )
 
     fb = Feedback(
         imp=MockFeedback().length,
@@ -485,5 +493,5 @@ def _populate_data(db: DB):
     return fb, app, rec
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -14,11 +14,11 @@ from trulens_eval import app as mod_app
 from trulens_eval.instruments import ClassFilter
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.containers import dict_set_with_multikey
-from trulens_eval.utils.imports import Dummy
-from trulens_eval.utils.imports import get_package_version
-from trulens_eval.utils.imports import OptionalImports
-from trulens_eval.utils.imports import parse_version
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.imports import Dummy
+from trulens_eval.utils.imports import OptionalImports
+from trulens_eval.utils.imports import get_package_version
+from trulens_eval.utils.imports import parse_version
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import EmptyType
@@ -48,8 +48,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
 
     if not legacy:
         from llama_index.core.base.base_query_engine import BaseQueryEngine
-        from llama_index.core.base.base_query_engine import \
-            QueryEngineComponent
+        from llama_index.core.base.base_query_engine import QueryEngineComponent
         from llama_index.core.base.embeddings.base import BaseEmbedding
         from llama_index.core.base.llms.base import BaseLLM
         from llama_index.core.base.llms.types import LLMMetadata
@@ -57,8 +56,9 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.core.base.response.schema import StreamingResponse
         from llama_index.core.chat_engine.types import AgentChatResponse
         from llama_index.core.chat_engine.types import BaseChatEngine
-        from llama_index.core.chat_engine.types import \
-            StreamingAgentChatResponse
+        from llama_index.core.chat_engine.types import (
+            StreamingAgentChatResponse,
+        )
         from llama_index.core.indices.base import BaseIndex
         from llama_index.core.indices.prompt_helper import PromptHelper
         from llama_index.core.memory.types import BaseMemory
@@ -89,7 +89,7 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         if version is not None:
             logger.warning(
                 "Using legacy llama_index version %s. Consider upgrading to 0.10.0 or later.",
-                version
+                version,
             )
 
         from llama_index.chat_engine.types import AgentChatResponse
@@ -103,7 +103,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.indices.base import BaseIndex
         from llama_index.indices.prompt_helper import PromptHelper
         from llama_index.indices.query.schema import QueryBundle
-        from llama_index.indices.service_context import ServiceContext
         from llama_index.llm_predictor import LLMPredictor
         from llama_index.llm_predictor.base import BaseLLMPredictor
         from llama_index.llm_predictor.base import LLMMetadata
@@ -111,7 +110,6 @@ with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:
         from llama_index.memory import BaseMemory
         from llama_index.node_parser.interface import NodeParser
         from llama_index.postprocessor.types import BaseNodePostprocessor
-        from llama_index.prompts.base import Prompt
         from llama_index.question_gen.types import BaseQuestionGenerator
         from llama_index.response.schema import Response
         from llama_index.response.schema import StreamingResponse
@@ -142,20 +140,38 @@ class LlamaInstrument(Instrument):
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
-        MODULES = {"llama_index.",
-                   "llama_hub."}.union(LangChainInstrument.Default.MODULES)
+        MODULES = {"llama_index.", "llama_hub."}.union(
+            LangChainInstrument.Default.MODULES
+        )
         """Modules by prefix to instrument.
-         
+
         Note that llama_index uses langchain internally for some things.
         """
 
         CLASSES = lambda: {
-            BaseComponent, BaseLLM, BaseQueryEngine, BaseRetriever, BaseIndex,
-            BaseChatEngine, BaseQuestionGenerator, BaseSynthesizer, Refine,
-            LLMPredictor, LLMMetadata, BaseLLMPredictor, VectorStore,
-            PromptHelper, BaseEmbedding, NodeParser, ToolMetadata, BaseTool,
-            BaseMemory, WithFeedbackFilterNodes, BaseNodePostprocessor,
-            QueryEngineComponent, RetrieverComponent
+            BaseComponent,
+            BaseLLM,
+            BaseQueryEngine,
+            BaseRetriever,
+            BaseIndex,
+            BaseChatEngine,
+            BaseQuestionGenerator,
+            BaseSynthesizer,
+            Refine,
+            LLMPredictor,
+            LLMMetadata,
+            BaseLLMPredictor,
+            VectorStore,
+            PromptHelper,
+            BaseEmbedding,
+            NodeParser,
+            ToolMetadata,
+            BaseTool,
+            BaseMemory,
+            WithFeedbackFilterNodes,
+            BaseNodePostprocessor,
+            QueryEngineComponent,
+            RetrieverComponent,
         }.union(LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
@@ -164,49 +180,39 @@ class LlamaInstrument(Instrument):
             {
                 # LLM:
                 (
-                    "complete", "stream_complete", "acomplete", "astream_complete"
-                ):
-                    BaseLLM,
-
+                    "complete",
+                    "stream_complete",
+                    "acomplete",
+                    "astream_complete",
+                ): BaseLLM,
                 # BaseTool/AsyncBaseTool:
-                ("__call__", "call"):
-                    BaseTool,
-                ("acall"):
-                    AsyncBaseTool,
-
+                ("__call__", "call"): BaseTool,
+                ("acall"): AsyncBaseTool,
                 # Memory:
-                ("put"):
-                    BaseMemory,
-
+                ("put"): BaseMemory,
                 # Misc.:
-                ("get_response"):
-                    Refine,
-                ("predict"):
-                    BaseLLMPredictor,
-
+                ("get_response"): Refine,
+                ("predict"): BaseLLMPredictor,
                 # BaseQueryEngine:
-                ("query", "aquery"):
-                    BaseQueryEngine,
-
+                ("query", "aquery"): BaseQueryEngine,
                 # BaseChatEngine/LLM:
-                ("chat", "achat", "stream_chat", "astream_achat"):
-                    (BaseLLM, BaseChatEngine),
-
+                ("chat", "achat", "stream_chat", "astream_achat"): (
+                    BaseLLM,
+                    BaseChatEngine,
+                ),
                 # BaseRetriever/BaseQueryEngine:
-                ("retrieve", "_retrieve", "_aretrieve"):
-                    (BaseQueryEngine, BaseRetriever, WithFeedbackFilterNodes),
-
-                # BaseQueryEngine:
-                ("synthesize"):
+                ("retrieve", "_retrieve", "_aretrieve"): (
                     BaseQueryEngine,
-
+                    BaseRetriever,
+                    WithFeedbackFilterNodes,
+                ),
+                # BaseQueryEngine:
+                ("synthesize"): BaseQueryEngine,
                 # BaseNodePostProcessor
-                ("_postprocess_nodes"):
-                    BaseNodePostprocessor,
-
+                ("_postprocess_nodes"): BaseNodePostprocessor,
                 # Components
-                ("_run_component"): (QueryEngineComponent, RetrieverComponent)
-            }
+                ("_run_component"): (QueryEngineComponent, RetrieverComponent),
+            },
         )
         """Methods to instrument."""
 
@@ -216,7 +222,7 @@ class LlamaInstrument(Instrument):
             include_classes=LlamaInstrument.Default.CLASSES(),
             include_methods=LlamaInstrument.Default.METHODS,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -295,6 +301,7 @@ class TruLlama(mod_app.App):
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
             and [AppDefinition][trulens_eval.schema.app.AppDefinition].
     """
+
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     app: Union[BaseQueryEngine, BaseChatEngine]
@@ -307,9 +314,9 @@ class TruLlama(mod_app.App):
         self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
     ):
         # TruLlama specific:
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)  # TODO: make class property
-        kwargs['instrument'] = LlamaInstrument(app=self)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["instrument"] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -322,8 +329,7 @@ class TruLlama(mod_app.App):
 
     @classmethod
     def select_context(
-        cls,
-        app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
+        cls, app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
     ) -> Lens:
         """
         Get the path to the context in the query output.
@@ -339,20 +345,19 @@ class TruLlama(mod_app.App):
         `bindings`.
         """
 
-        if 'str_or_query_bundle' in bindings.arguments:
+        if "str_or_query_bundle" in bindings.arguments:
             # llama_index specific
-            str_or_bundle = bindings.arguments['str_or_query_bundle']
+            str_or_bundle = bindings.arguments["str_or_query_bundle"]
             if isinstance(str_or_bundle, QueryBundle):
                 return str_or_bundle.query_str
             else:
                 return str_or_bundle
 
-        elif 'message' in bindings.arguments:
+        elif "message" in bindings.arguments:
             # llama_index specific
-            return bindings.arguments['message']
+            return bindings.arguments["message"]
 
         else:
-
             return mod_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
@@ -445,7 +450,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def chat(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="chat", is_async=False, with_record=False
         )
@@ -453,7 +457,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def achat(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="achat", is_async=True, with_record=False
         )
@@ -461,7 +464,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     def stream_chat(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="stream_chat", is_async=False, with_record=False
         )
@@ -469,7 +471,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.chat_engine.types.BaseChatEngine
     async def astream_chat(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="astream_chat", is_async=True, with_record=False
         )
@@ -477,7 +478,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # llama_index.indices.query.base.BaseQueryEngine
     def query(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="query", is_async=False, with_record=False
         )
@@ -492,7 +492,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
     def query_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="query", is_async=False, with_record=True
         )
@@ -500,7 +499,6 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
     async def aquery_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="aquery", is_async=True, with_record=True
         )
@@ -508,19 +506,16 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
     def chat_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(method="chat", is_async=False, with_record=True)
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
     async def achat_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(method="achat", is_async=True, with_record=True)
 
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
     def stream_chat_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="stream", is_async=False, with_record=True
         )
@@ -528,12 +523,11 @@ class TruLlama(mod_app.App):
     # TOREMOVE
     # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
     async def astream_chat_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(
             method="astream_chat", is_async=True, with_record=True
         )
 
 
-import trulens_eval  # for App class annotations
+import trulens_eval  # noqa: F401
 
 TruLlama.model_rebuild()

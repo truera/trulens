@@ -5,11 +5,11 @@ from typing import Any, Callable, ClassVar, Iterable, Optional
 
 import pydantic
 
+from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BEDROCK
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.python import safe_hasattr
 
 with OptionalImports(messages=REQUIREMENT_BEDROCK) as opt:
@@ -26,7 +26,6 @@ pp = pprint.PrettyPrinter()
 
 
 class BedrockCallback(EndpointCallback):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -57,6 +56,7 @@ class BedrockCallback(EndpointCallback):
             return
 
         import json
+
         data = json.loads(data.decode())
 
         metrics = data.get("amazon-bedrock-invocationMetrics")
@@ -65,12 +65,12 @@ class BedrockCallback(EndpointCallback):
         if metrics is None:
             return
 
-        output_tokens = metrics.get('outputTokenCount')
+        output_tokens = metrics.get("outputTokenCount")
         if output_tokens is not None:
             self.cost.n_completion_tokens += int(output_tokens)
             self.cost.n_tokens += int(output_tokens)
 
-        input_tokens = metrics.get('inputTokenCount')
+        input_tokens = metrics.get("inputTokenCount")
         if input_tokens is not None:
             self.cost.n_prompt_tokens += int(input_tokens)
             self.cost.n_tokens += int(input_tokens)
@@ -109,14 +109,14 @@ class BedrockCallback(EndpointCallback):
                     headers = metadata.get("HTTPHeaders")
                     if headers is not None:
                         output_tokens = headers.get(
-                            'x-amzn-bedrock-output-token-count'
+                            "x-amzn-bedrock-output-token-count"
                         )
                         if output_tokens is not None:
                             self.cost.n_completion_tokens += int(output_tokens)
                             self.cost.n_tokens += int(output_tokens)
 
                         input_tokens = headers.get(
-                            'x-amzn-bedrock-input-token-count'
+                            "x-amzn-bedrock-input-token-count"
                         )
                         if input_tokens is not None:
                             self.cost.n_prompt_tokens += int(input_tokens)
@@ -135,7 +135,7 @@ class BedrockCallback(EndpointCallback):
 class BedrockEndpoint(Endpoint):
     """
     Bedrock endpoint.
-    
+
     Instruments `invoke_model` and `invoke_model_with_response_stream` methods
     created by `boto3.ClientCreator._create_api_method`.
 
@@ -164,22 +164,21 @@ class BedrockEndpoint(Endpoint):
         *args,
         name: str = "bedrock",
         region_name: str = "us-east-1",
-        **kwargs
+        **kwargs,
     ):
-
         # SingletonPerName behaviour but only if client not provided.
         if hasattr(self, "region_name") and "client" not in kwargs:
             return
 
         # For constructing BedrockClient below:
         client_kwargs = {k: v for k, v in kwargs.items()}  # copy
-        client_kwargs['region_name'] = region_name
+        client_kwargs["region_name"] = region_name
 
-        kwargs['region_name'] = region_name
+        kwargs["region_name"] = region_name
 
         # for Endpoint, SingletonPerName:
-        kwargs['name'] = name
-        kwargs['callback_class'] = BedrockCallback
+        kwargs["name"] = name
+        kwargs["callback_class"] = BedrockCallback
 
         super().__init__(*args, **kwargs)
 
@@ -189,11 +188,11 @@ class BedrockEndpoint(Endpoint):
             self._instrument_class_wrapper(
                 ClientCreator,
                 wrapper_method_name="_create_api_method",
-                wrapped_method_filter=lambda f: f.__name__ in
-                ["invoke_model", "invoke_model_with_response_stream"]
+                wrapped_method_filter=lambda f: f.__name__
+                in ["invoke_model", "invoke_model_with_response_stream"],
             )
 
-        if 'client' in kwargs:
+        if "client" in kwargs:
             # `self.client` should be already set by super().__init__.
 
             if not safe_hasattr(self.client.invoke_model, INSTRUMENT):
@@ -209,14 +208,16 @@ class BedrockEndpoint(Endpoint):
             # This one will be instrumented by our hacks onto _create_api_method above:
 
             self.client = boto3.client(
-                service_name='bedrock-runtime', **client_kwargs
+                service_name="bedrock-runtime", **client_kwargs
             )
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
-
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
@@ -240,5 +241,4 @@ class BedrockEndpoint(Endpoint):
                 )
 
         else:
-
-            logger.warning(f"Unhandled wrapped call to %s.", func.__name__)
+            logger.warning("Unhandled wrapped call to %s.", func.__name__)

@@ -9,7 +9,6 @@ from trulens_eval.utils.serial import JSON
 
 
 class ChatRecord(pydantic.BaseModel):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     # Human input

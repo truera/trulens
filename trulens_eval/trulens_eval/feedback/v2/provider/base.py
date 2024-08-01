@@ -15,7 +15,6 @@ from trulens_eval.utils.serial import SerialModel
 
 
 class Provider(WithClassInfo, SerialModel):
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     endpoint: Optional[Endpoint]

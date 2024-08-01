@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def is_legacy_sqlite(engine: Engine) -> bool:
     """Check if DB is an existing file-based SQLite created with the legacy
     `LocalSQLite` implementation.
-    
+
     This database was removed since trulens_eval 0.29.0 .
     """
 
@@ -37,7 +37,7 @@ def is_legacy_sqlite(engine: Engine) -> bool:
 
 def is_memory_sqlite(
     engine: Optional[Engine] = None,
-    url: Optional[Union[sqlalchemy.engine.URL, str]] = None
+    url: Optional[Union[sqlalchemy.engine.URL, str]] = None,
 ) -> bool:
     """Check if DB is an in-memory SQLite instance.
 
@@ -59,7 +59,6 @@ def is_memory_sqlite(
     return (
         # The database type is SQLite
         url.drivername.startswith("sqlite")
-
         # The database storage is in memory
         and url.database == ":memory:"
     )
@@ -68,7 +67,7 @@ def is_memory_sqlite(
 def check_db_revision(
     engine: Engine,
     prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
-    prior_prefix: Optional[str] = None
+    prior_prefix: Optional[str] = None,
 ):
     """
     Check if database schema is at the expected revision.
@@ -89,7 +88,7 @@ def check_db_revision(
 
     if prefix == prior_prefix:
         raise ValueError(
-            "prior_prefix and prefix canot be the same. Use None for prior_prefix if it is unknown."
+            "prior_prefix and prefix cannot be the same. Use None for prior_prefix if it is unknown."
         )
 
     ins = sqlalchemy.inspect(engine)
@@ -112,7 +111,6 @@ def check_db_revision(
             # If not, lets try to figure out the prior prefix.
 
             if len(version_tables) > 0:
-
                 if len(version_tables) > 1:
                     # Cannot figure out prior prefix if there is more than one
                     # version table.
@@ -124,8 +122,9 @@ def check_db_revision(
 
                 # Guess prior prefix as the single one with version table name.
                 raise DatabaseVersionException.reconfigured(
-                    prior_prefix=version_tables[0].
-                    replace("alembic_version", "")
+                    prior_prefix=version_tables[0].replace(
+                        "alembic_version", ""
+                    )
                 )
 
     if is_legacy_sqlite(engine):
@@ -177,7 +176,7 @@ def copy_database(
     """Copy all data from a source database to an EMPTY target database.
 
     Important considerations:
-    
+
     - All source data will be appended to the target tables, so it is
         important that the target database is empty.
 
@@ -215,18 +214,16 @@ def copy_database(
         target_table_class = tgt.orm.registry.get(k)
 
         with src.engine.begin() as src_conn:
-
             with tgt.engine.begin() as tgt_conn:
-
                 df = pd.read_sql(
                     f"SELECT * FROM {source_table_class.__tablename__}",
-                    src_conn
+                    src_conn,
                 )
                 df.to_sql(
                     target_table_class.__tablename__,
                     tgt_conn,
                     index=False,
-                    if_exists="append"
+                    if_exists="append",
                 )
 
                 print(

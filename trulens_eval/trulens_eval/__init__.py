@@ -7,7 +7,7 @@ This top-level import includes everything to get started.
 __version_info__ = (0, 33, 0)
 """Version number components for major, minor, patch."""
 
-__version__ = '.'.join(map(str, __version_info__))
+__version__ = ".".join(map(str, __version_info__))
 """Version number string."""
 
 # This check is intentionally done ahead of the other imports as we want to
@@ -36,31 +36,37 @@ from trulens_eval.utils import threading as mod_threading_utils
 # Optional provider types.
 
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_LITELLM):
+    messages=mod_imports_utils.REQUIREMENT_LITELLM
+):
     from trulens_eval.feedback.provider.litellm import LiteLLM
 
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_BEDROCK):
+    messages=mod_imports_utils.REQUIREMENT_BEDROCK
+):
     from trulens_eval.feedback.provider.bedrock import Bedrock
 
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_OPENAI):
+    messages=mod_imports_utils.REQUIREMENT_OPENAI
+):
     from trulens_eval.feedback.provider.openai import AzureOpenAI
     from trulens_eval.feedback.provider.openai import OpenAI
 
 # Optional app types.
 
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_LLAMA):
+    messages=mod_imports_utils.REQUIREMENT_LLAMA
+):
     from trulens_eval.tru_llama import TruLlama
 
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_RAILS):
+    messages=mod_imports_utils.REQUIREMENT_RAILS
+):
     from trulens_eval.tru_rails import TruRails
 
 # the dependency snowflake-snowpark-python not yet supported in 3.12
 with mod_imports_utils.OptionalImports(
-        messages=mod_imports_utils.REQUIREMENT_CORTEX):
+    messages=mod_imports_utils.REQUIREMENT_CORTEX
+):
     from trulens_eval.feedback.provider.cortex import Cortex
 
 Tru = mod_tru.Tru
@@ -79,7 +85,6 @@ Select = mod_feedback_schema.Select
 
 __all__ = [
     "Tru",  # main interface
-
     # app types
     "TruBasicApp",
     "TruCustomApp",
@@ -87,14 +92,11 @@ __all__ = [
     "TruLlama",
     "TruVirtual",
     "TruRails",
-
     # app setup
     "FeedbackMode",
-
     # feedback setup
     "Feedback",
     "Select",
-
     # feedback providers
     "Provider",
     "AzureOpenAI",
@@ -105,7 +107,7 @@ __all__ = [
     "Huggingface",
     "HuggingfaceLocal",
     "Cortex",
-
     # misc utility
     "TP",
+    "mod_app_schema",
 ]

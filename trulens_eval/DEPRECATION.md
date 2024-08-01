@@ -19,7 +19,7 @@
 
 - Database interfaces changed from sqlite to sqlalchemy. Sqlite databases are
   supported under the sqlaclchemy interface and other databases such as mysql
-  and postgress are also now usable. Running the migration scripts via
+  and postgresql are also now usable. Running the migration scripts via
   `Tru().migrate_database()` may be necessary.
 
 ## Changes in 0.7.0
@@ -49,7 +49,7 @@
 
 - Class `Record` of `schema.py`:
 
-    - Attributes `main_input`, `main_output`, and `main_error` generalized to
+  - Attributes `main_input`, `main_output`, and `main_error` generalized to
       `JSON` (not strict json) allowing the attribute to contain strings like
       before the change but also sequences and dictionaries (with string keys)
       of json.
@@ -67,10 +67,10 @@ Backwards compatibility will be removed in 0.3.0 at earliest.
 ### Breaking changes to databases
 
 - Json serialization of `WithClassInfo` mixin:
-    - Key `class_info` renamed to `__tru_class_info` .
+  - Key `class_info` renamed to `__tru_class_info` .
 
 - Json serialization of `ObjSerial` class:
-    - Attribute `init_kwargs` expanded into `init_bindings`, serialized by a new
+  - Attribute `init_kwargs` expanded into `init_bindings`, serialized by a new
       class `Bindings`, containing both args and kwargs.
 
 ## Changes in 0.2.0
@@ -82,18 +82,18 @@ Backwards compatibility will be removed in 0.3.0 at earliest.
 - File `tru_feedback.py` renamed to `feedback.py` .
 
 - File `tru_db.py` renamed to `db.py` and:
-    - Class `TruDB` renamed to `DB` .
+  - Class `TruDB` renamed to `DB` .
 
 - File `tru_app.py` renamed to `app.py` and:
-    - Class `TruApp` renamed to `App` .
+  - Class `TruApp` renamed to `App` .
 
 - In file `schema.py`:
-    - Class `App` renamed to `AppDefinition` .
+  - Class `App` renamed to `AppDefinition` .
 
 ### Breaking changes to databases
 
 - DB schema changes:
 
-    - Table `apps`: 
+  - Table `apps`:
 
-        - Field `chain_id` renamed to `app_id` .
+    - Field `chain_id` renamed to `app_id` .
