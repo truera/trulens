@@ -8,10 +8,14 @@
     ```
 """
 
+from importlib.metadata import version
+
 from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.instrument.langchain.langchain import LangChainComponent
 from trulens.instrument.langchain.tru_chain import LangChainInstrument
 from trulens.instrument.langchain.tru_chain import TruChain
+
+__version__ = version(__package__ or __name__)
 
 __all__ = [
     "TruChain",

@@ -2,7 +2,9 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-from langchain.chains.conversational_retrieval.base import ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.base import (
+    ConversationalRetrievalChain,
+)
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_community.callbacks import get_openai_callback

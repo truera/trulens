@@ -8,7 +8,11 @@
     ```
 """
 
+from importlib.metadata import version
+
 from trulens.providers.cortex.provider import Cortex
+
+__version__ = version(__package__ or __name__)
 
 __all__ = [
     "Cortex",

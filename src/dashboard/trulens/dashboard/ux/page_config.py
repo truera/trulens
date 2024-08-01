@@ -1,7 +1,8 @@
 import streamlit as st
-from trulens.core import __package__
-from trulens.core import __version__
+from trulens.core import __package__ as core_package
+from trulens.core import __version__ as core_version
 from trulens.core.utils.imports import static_resource
+from trulens.dashboard import __version__
 
 
 def set_page_config(page_title="TruLens"):
@@ -61,6 +62,7 @@ def set_page_config(page_title="TruLens"):
     with st.sidebar:
         version_col, user_feedback_col = st.columns(2)
         with version_col:
+            st.text(f"{core_package}\nv{core_version}")
             st.text(f"{__package__}\nv{__version__}")
         with user_feedback_col:
             st.link_button(

@@ -16,7 +16,11 @@ class][trulens.feedback.LLMProvider] can be run with AWS
 Bedrock.
 """
 
+from importlib.metadata import version
+
 from trulens.providers.bedrock.provider import Bedrock
+
+__version__ = version(__package__ or __name__)
 
 __all__ = [
     "Bedrock",

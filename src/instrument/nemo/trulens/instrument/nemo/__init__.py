@@ -8,8 +8,12 @@
     ```
 """
 
+from importlib.metadata import version
+
 from trulens.instrument.nemo.tru_rails import RailsActionSelect
 from trulens.instrument.nemo.tru_rails import RailsInstrument
 from trulens.instrument.nemo.tru_rails import TruRails
+
+__version__ = version(__package__ or __name__)
 
 __all__ = ["TruRails", "RailsInstrument", "RailsActionSelect"]

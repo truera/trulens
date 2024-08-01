@@ -3,18 +3,14 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-from trulens.core.feedback.provider import Provider
 from trulens.core.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens.core.utils.imports import REQUIREMENT_EVALUATE
-from trulens.core.utils.imports import REQUIREMENT_OPENAI
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 from trulens.feedback.generated import re_0_10_rating
-
-with OptionalImports(messages=REQUIREMENT_OPENAI):
-    from trulens.providers.openai import OpenAI
+from trulens.feedback.llm_provider import LLMProvider
 
 with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
     from bert_score import BERTScorer
@@ -32,7 +28,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     """
 
     ground_truth: Union[List[Dict], FunctionOrMethod]
-    provider: Provider
+    provider: LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -44,8 +40,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def __init__(
         self,
+        provider: LLMProvider,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        provider: Optional[Provider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
@@ -75,8 +71,6 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             provider (Provider, optional): Internal Usage for DB serialization.
 
         """
-        if not provider:
-            provider = OpenAI()
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):

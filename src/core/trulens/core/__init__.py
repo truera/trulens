@@ -4,6 +4,8 @@ The `trulens-core` library includes everything to get started.
 
 """
 
+from importlib.metadata import version
+
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
 from trulens.core.app import TruVirtual
@@ -12,6 +14,8 @@ from trulens.core.feedback import Provider
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select
 from trulens.core.tru import Tru
+
+__version__ = version(__package__ or __name__)
 
 __all__ = [
     "Tru",  # main interface

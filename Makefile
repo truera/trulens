@@ -7,7 +7,7 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 
 # Create the poetry env for building website, docs, formatting, etc.
 .env/create:
-	poetry install --sync
+	poetry install
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
