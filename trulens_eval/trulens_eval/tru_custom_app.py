@@ -541,5 +541,4 @@ class instrument(base_instrument):
 
 import trulens_eval  # noqa: F401
 
-
 TruCustomApp.model_rebuild()

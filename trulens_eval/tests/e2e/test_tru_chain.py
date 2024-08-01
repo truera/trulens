@@ -11,9 +11,9 @@ from langchain.llms.openai import OpenAI
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
+
 from tests.unit.test import JSONTestCase
 from tests.unit.test import optional_test
-
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys
