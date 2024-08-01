@@ -6,7 +6,7 @@ import importlib
 from trulens.core.utils.imports import get_package_version
 
 
-_PACKAGES = {
+_OPTIONAL_PROVIDERS = {
     "Bedrock":
     ("trulens-provider-bedrock", "trulens.providers.bedrock.provider"),
     "Cortex": ("trulens-provider-cortex", "trulens.providers.cortex.provider"),
@@ -19,12 +19,13 @@ _PACKAGES = {
     "LiteLLM":
     ("trulens-provider-litellm", "trulens.providers.litellm.provider"),
     "OpenAI": ("trulens-provider-openai", "trulens.providers.openai.provider"),
+    "AzureOpenAI": ("trulens-provider-openai", "trulens.providers.openai.provider")
 }
 
 def __getattr__(attr):
-    if attr in _PACKAGES:
+    if attr in _OPTIONAL_PROVIDERS:
 
-        package_name, module_name = _PACKAGES[attr]
+        package_name, module_name = _OPTIONAL_PROVIDERS[attr]
 
         installed_version = get_package_version(package_name)
 
@@ -52,4 +53,4 @@ f"""Could not import the {attr} provider. You might need to re-install {package_
         
     raise AttributeError(f"Module {__name__} has no attribute {attr}. It has:\n  {"\n  ".join(__all__)}")
 
-__all__ = [k for k, v in _PACKAGES.items()]
+__all__ = [k for k, v in _OPTIONAL_PROVIDERS.items()]
