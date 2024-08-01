@@ -11,7 +11,6 @@ from trulens_eval.feedback.embeddings import Embeddings
 
 
 class TestEmbeddings(unittest.TestCase):
-
     def setUp(self):
         self.embed_model = HuggingFaceEmbedding(
             model_name="BAAI/bge-small-en-v1.5"
@@ -26,11 +25,11 @@ class TestEmbeddings(unittest.TestCase):
     def test_cosine_distance_order(self):
         self.assertGreater(
             self.embeddings.cosine_distance("apple", "john f kennedy"),
-            self.embeddings.cosine_distance("apple", "banana")
+            self.embeddings.cosine_distance("apple", "banana"),
         )
         self.assertGreater(
             self.embeddings.cosine_distance("apple", "banana"),
-            self.embeddings.cosine_distance("apple", "apple")
+            self.embeddings.cosine_distance("apple", "apple"),
         )
 
     def test_manhattan_distance_type(self):
@@ -41,11 +40,11 @@ class TestEmbeddings(unittest.TestCase):
     def test_manhattan_distance_order(self):
         self.assertGreater(
             self.embeddings.manhattan_distance("apple", "john f kennedy"),
-            self.embeddings.manhattan_distance("apple", "banana")
+            self.embeddings.manhattan_distance("apple", "banana"),
         )
         self.assertGreater(
             self.embeddings.manhattan_distance("apple", "banana"),
-            self.embeddings.manhattan_distance("apple", "apple")
+            self.embeddings.manhattan_distance("apple", "apple"),
         )
 
     def test_euclidean_distance_type(self):
@@ -56,11 +55,11 @@ class TestEmbeddings(unittest.TestCase):
     def test_euclidean_distance_order(self):
         self.assertGreater(
             self.embeddings.euclidean_distance("apple", "john f kennedy"),
-            self.embeddings.euclidean_distance("apple", "banana")
+            self.embeddings.euclidean_distance("apple", "banana"),
         )
         self.assertGreater(
             self.embeddings.euclidean_distance("apple", "banana"),
-            self.embeddings.euclidean_distance("apple", "apple")
+            self.embeddings.euclidean_distance("apple", "apple"),
         )
 
 
