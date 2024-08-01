@@ -28,19 +28,6 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 
     ```python
     from trulens_eval import Tru
-<<<<<<< HEAD
-    tru = Tru(
-        name="MyApp",
-        snowflake_connection_parameters={
-            account: "<account>",
-            user: "<user>",
-            password: "<password>",
-            database: "<database>",
-            warehouse: "<warehouse>",
-            role: "<role>",
-        },
-    )
-=======
     tru = Tru(database_url=(
         'snowflake://{user}:{password}@{account_identifier}/'
         '{database}/{schema}?warehouse={warehouse}&role={role}'
@@ -53,7 +40,6 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
         warehouse='<warehouse>',
         role='<role>'
     ))
->>>>>>> origin/main
     ```
 
 Once you've instantiated the `Tru` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
