@@ -10,11 +10,10 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 	poetry install
 
 # Lock the poetry dependencies for all the subprojects.
-lock: $(POETRY_DIRS)
+lock: .env/create $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		poetry lock -C $$dir; \
 	done
-	poetry .env/create
 
 # Run the ruff linter.
 lint: .env/create
@@ -27,7 +26,7 @@ format: .env/create
 precommit-hooks: .env/create
 	poetry run pre-commit install
 
-typestubs: .env/create
+typestubs: .env/create $(POETRY_DIRS)
 	stubgen src/core -o out/trulens
 	stubgen src/feedback -o out/trulens
 	stubgen src/dashboard -o out/trulens

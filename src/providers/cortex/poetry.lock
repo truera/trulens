@@ -1298,18 +1298,18 @@ files = []
 develop = false
 
 [package.dependencies]
-alembic = "^1.11.2"
-dill = "^0.3.7"
-merkle-json = "^1.0.0"
-munch = "^3.0.0"
-nest-asyncio = "^1.5.8"
-numpy = "^1.23.5"
-psutil = "^5.9.8"
+alembic = "^1.11"
+dill = "^0.3"
+merkle-json = "^1.0"
+munch = "^3.0"
+nest-asyncio = "^1.5"
+numpy = "^1.23"
+psutil = "^5.9"
 pydantic = "^2"
-python-dotenv = "^1.0.0"
-sqlalchemy = "^2.0.19"
-tqdm = "^4.66.1"
-typing_extensions = "^4.9.0"
+python-dotenv = "^1.0"
+sqlalchemy = "^2.0"
+tqdm = "^4.66"
+typing_extensions = "^4.9"
 
 [package.source]
 type = "directory"
@@ -1325,8 +1325,8 @@ files = []
 develop = false
 
 [package.dependencies]
-nltk = "^3.8.1"
-numpy = "^1.23.5"
+nltk = "^3.8"
+numpy = "^1.23"
 pydantic = "^2"
 trulens-core = {path = "../core"}
 
@@ -1378,4 +1378,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "028f9e2e433e60c4fd899d65ed446c5757db4e190a38448419625fa7b5157d6c"
+content-hash = "c5c1de75578117ca2e4a8d7e84c59bb4c180f28823846ce8e33c9a96227937ba"

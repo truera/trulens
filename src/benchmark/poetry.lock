@@ -593,18 +593,18 @@ files = []
 develop = true
 
 [package.dependencies]
-alembic = "^1.11.2"
-dill = "^0.3.7"
-merkle-json = "^1.0.0"
-munch = "^3.0.0"
-nest-asyncio = "^1.5.8"
-numpy = "^1.23.5"
-psutil = "^5.9.8"
+alembic = "^1.11"
+dill = "^0.3"
+merkle-json = "^1.0"
+munch = "^3.0"
+nest-asyncio = "^1.5"
+numpy = "^1.23"
+psutil = "^5.9"
 pydantic = "^2"
-python-dotenv = "^1.0.0"
-sqlalchemy = "^2.0.19"
-tqdm = "^4.66.1"
-typing_extensions = "^4.9.0"
+python-dotenv = "^1.0"
+sqlalchemy = "^2.0"
+tqdm = "^4.66"
+typing_extensions = "^4.9"
 
 [package.source]
 type = "directory"
@@ -624,4 +624,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "ec57c9620010a5c60925375b56309dd14d1a3233ee1f16736f79a5734bcddfa3"
+content-hash = "6814c7beb012c0f85cb86bdc0ba94796672142f9b20d4a983736060586a3eecf"
