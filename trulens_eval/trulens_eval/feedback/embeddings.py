@@ -35,7 +35,7 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            embed_model ('Embedder'): Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+            embed_model BaseEmbedding: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
         """
         super().__init__()
         self._embed_model = embed_model
