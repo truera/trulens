@@ -38,9 +38,12 @@ llama-index-embeddings-huggingface >= 0.2.2
 # Embeddings: OpenAI
 llama-index-embeddings-openai >= 0.1.10
 
-# Cortex
+# Snowflake/Cortex
+snowflake-core >= 0.9.0; python_version < "3.12" # not available for 3.12
 snowflake-snowpark-python >= 1.18.0; python_version < "3.12" # not available for 3.12
 snowflake-connector-python >= 3.11.0
+snowflake-snowpark-python >= 1.18.0; python_version < "3.12" # not available for 3.12
+snowflake-sqlalchemy >= 1.6.1
 
 # Local models
 transformers  >= 4.10.0
