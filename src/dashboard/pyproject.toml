@@ -40,6 +40,12 @@ optional-dependencies.dev = [
   "ipython>=7.25",
 ]
 
+urls.Changelog = "https://github.com/truera/trulens/blob/main/RELEASES.md"
+urls.Documentation = "https://trulens.org/trulens/getting_started/"
+urls.Homepage = "https://trulens.org"
+urls.Issues = "https://github.com/truera/trulens/issues"
+urls.Repository = "https://github.com/truera/trulens"
+
 [tool.setuptools.exclude-package-data]
 trulens = [
   'dashboard/react_components/*/node_modules/*',
@@ -47,7 +53,6 @@ trulens = [
 
 [tool.setuptools.package-data]
 trulens = [
-  'dashboard',
   'dashboard/react_components/**/*',
   'dashboard/react_components/*/dist/*',
 ]

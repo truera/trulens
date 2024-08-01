@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 import functools
+import importlib
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -478,9 +479,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
                 try:
-                    mod = __import__(
-                        endpoint.module_name, fromlist=[endpoint.class_name]
-                    )
+                    mod = importlib.import_module(endpoint.module_name)
                     cls = safe_getattr(mod, endpoint.class_name)
                 except Exception:
                     # If endpoint uses optional packages, will get either module

@@ -16,6 +16,9 @@ readme = "README.md"
 packages = [
   { include = "trulens" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -31,6 +34,9 @@ requests = "^2.31"
 tqdm = "^4.66"
 numpy = "^1.23"
 nltk = "^3.8"
+# HuggingfaceLocal dependencies
+torch = "^2.1.2"
+transformers = "^4.38.1"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

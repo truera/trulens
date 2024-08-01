@@ -16,6 +16,15 @@ readme = "README.md"
 packages = [
   { from = "_trulens", include = "trulens" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
@@ -90,18 +99,6 @@ pytest-cov = "^5.0"
 
 [tool.ruff]
 line-length = 80
-include = [
-  "src/*.py",
-  "tests/*.py",
-  "tests/*.ipynb",
-  "examples/*.py",
-  "examples/*.ipynb",
-]
-extend-exclude = [
-  "*.ipynb",
-  "examples/expositional/*",
-  "examples/experimental/*",
-]
 
 [tool.ruff.lint]
 preview = true
