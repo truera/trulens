@@ -41,7 +41,7 @@ class RecordAppCall(serial.SerialModel):
         default_factory=mod_types_schema.new_call_id
     )
     """Unique identifier for this call.
-    
+
     This is shared across different instances of
     [RecordAppCall][trulens_eval.schema.record.RecordAppCall] if they refer to
     the same python method call. This may happen if multiple recorders capture
@@ -59,7 +59,7 @@ class RecordAppCall(serial.SerialModel):
 
     rets: Optional[serial.JSON] = None
     """Returns of the instrumented method if successful.
-    
+
     Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
     """
 
@@ -95,7 +95,7 @@ class Record(serial.SerialModel, Hashable):
 
     model_config: ClassVar[dict] = {
         # for `Future[FeedbackResult]`
-        'arbitrary_types_allowed': True
+        "arbitrary_types_allowed": True
     }
 
     record_id: mod_types_schema.RecordID
@@ -114,7 +114,7 @@ class Record(serial.SerialModel, Hashable):
         default_factory=datetime.datetime.now
     )
     """Timestamp of last update.
-    
+
     This is usually set whenever a record is changed in any way."""
 
     tags: Optional[str] = ""
@@ -139,20 +139,24 @@ class Record(serial.SerialModel, Hashable):
     as the app that generated this record via `layout_calls_as_app`.
     """
 
-    feedback_and_future_results: Optional[List[
-        Tuple[mod_feedback_schema.FeedbackDefinition,
-              Future[mod_feedback_schema.FeedbackResult]]]] = pydantic.Field(
-                  None, exclude=True
-              )
+    feedback_and_future_results: Optional[
+        List[
+            Tuple[
+                mod_feedback_schema.FeedbackDefinition,
+                Future[mod_feedback_schema.FeedbackResult],
+            ]
+        ]
+    ] = pydantic.Field(None, exclude=True)
     """Map of feedbacks to the futures for of their results.
-     
+
     These are only filled for records that were just produced. This will not
     be filled in when read from database. Also, will not fill in when using
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[List[Future[mod_feedback_schema.FeedbackResult]]] = \
-        pydantic.Field(None, exclude=True)
+    feedback_results: Optional[
+        List[Future[mod_feedback_schema.FeedbackResult]]
+    ] = pydantic.Field(None, exclude=True)
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(
@@ -169,16 +173,17 @@ class Record(serial.SerialModel, Hashable):
         return hash(self.record_id)
 
     def wait_for_feedback_results(
-        self,
-        feedback_timeout: Optional[float] = None
-    ) -> Dict[mod_feedback_schema.FeedbackDefinition,
-              mod_feedback_schema.FeedbackResult]:
+        self, feedback_timeout: Optional[float] = None
+    ) -> Dict[
+        mod_feedback_schema.FeedbackDefinition,
+        mod_feedback_schema.FeedbackResult,
+    ]:
         """Wait for feedback results to finish.
 
         Args:
             feedback_timeout: Timeout in seconds for each feedback function. If
                 not given, will use the default timeout
-                `trulens_eval.utils.threading.TP.DEBUG_TIMEOUT`. 
+                `trulens_eval.utils.threading.TP.DEBUG_TIMEOUT`.
 
         Returns:
             A mapping of feedback functions to their results.
@@ -199,7 +204,7 @@ class Record(serial.SerialModel, Hashable):
             except TimeoutError:
                 logger.error(
                     "Timeout waiting for feedback result for %s.",
-                    feedback_def.name
+                    feedback_def.name,
                 )
 
         return ret
@@ -207,7 +212,7 @@ class Record(serial.SerialModel, Hashable):
     def layout_calls_as_app(self) -> Bunch:
         """Layout the calls in this record into the structure that follows that of
         the app that created this record.
-        
+
         This uses the paths stored in each
         [RecordAppCall][trulens_eval.schema.record.RecordAppCall] which are paths into
         the app.
@@ -215,10 +220,10 @@ class Record(serial.SerialModel, Hashable):
         Note: We cannot create a validated
         [AppDefinition][trulens_eval.schema.app.AppDefinition] class (or subclass)
         object here as the layout of records differ in these ways:
-        
+
         - Records do not include anything that is not an instrumented method
           hence have most of the structure of a app missing.
-        
+
         - Records have RecordAppCall as their leafs where method definitions
           would be in the AppDefinition structure.
         """

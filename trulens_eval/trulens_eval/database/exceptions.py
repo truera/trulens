@@ -16,10 +16,10 @@ class DatabaseVersionException(Exception):
         RECONFIGURED = 3
         """Initialized database differs in configuration compared to the stored
         version.
-        
+
         Configuration differences recognized:
             - table_prefix
-        
+
         """
 
     def __init__(self, msg: str, reason: Reason, **kwargs):
@@ -35,7 +35,7 @@ class DatabaseVersionException(Exception):
         return cls(
             "Database schema is ahead of the expected revision. "
             "Please update to a later release of `trulens_eval`.",
-            cls.Reason.AHEAD
+            cls.Reason.AHEAD,
         )
 
     @classmethod
@@ -45,21 +45,22 @@ class DatabaseVersionException(Exception):
         return cls(
             "Database schema is behind the expected revision. "
             "Please upgrade it by running `tru.migrate_database()` "
-            "or reset it by running `tru.reset_database()`.", cls.Reason.BEHIND
+            "or reset it by running `tru.reset_database()`.",
+            cls.Reason.BEHIND,
         )
 
     @classmethod
     def reconfigured(cls, prior_prefix: str):
         """Create a reconfigured variant of this exception.
-        
+
         The only present reconfiguration that is recognized is a table_prefix
         change. A guess as to the prior prefix is included in the exception and
         message.
         """
         return cls(
             "Database has been reconfigured. "
-            f"Please update it by running `tru.migrate_database(prior_prefix=\"{prior_prefix}\")`"
+            f'Please update it by running `tru.migrate_database(prior_prefix="{prior_prefix}")`'
             " or reset it by running `tru.reset_database()`.",
             cls.Reason.RECONFIGURED,
-            prior_prefix=prior_prefix
+            prior_prefix=prior_prefix,
         )

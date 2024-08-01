@@ -8,7 +8,7 @@ them all in one go.
 
 ## Dev Notes
 
-To handle optional packages and provide clearer instuctions to the user, we
+To handle optional packages and provide clearer instructions to the user, we
 employ a context-manager-based scheme (see `utils/imports.py`) to import
 packages that may not be installed. The basic form of such imports can be seen
 in `__init__.py`:
@@ -25,7 +25,7 @@ However, if the user imports TruLlama (via `__init__.py`) and tries to use it
 that `llama-index` is optional and how to install it:
 
 ```
-ModuleNotFoundError: 
+ModuleNotFoundError:
 llama-index package is required for instrumenting llama_index apps.
 You should be able to install it with pip:
 
@@ -45,7 +45,7 @@ This checks that the optional import system did not return a replacement for
 
 If used in conjunction, the optional imports context manager and
 `assert_installed` check can be simplified by storing a reference to to the
-`OptionalImports` instance which is returned by the context manager entrace:
+`OptionalImports` instance which is returned by the context manager entrance:
 
 ```python
 with OptionalImports(messages=REQUIREMENT_LLAMA) as opt:

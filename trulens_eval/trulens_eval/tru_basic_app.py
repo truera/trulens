@@ -3,8 +3,8 @@
 """
 
 from inspect import BoundArguments
-from inspect import signature
 from inspect import Signature
+from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
@@ -22,10 +22,10 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class TruWrapperApp(object):
+class TruWrapperApp:
     """Wrapper of basic apps.
 
-    This will be wrapped by instrumentation. 
+    This will be wrapped by instrumentation.
 
     Warning:
         Because `TruWrapperApp` may wrap different types of callables, we cannot
@@ -61,28 +61,28 @@ class TruBasicCallableInstrument(Instrument):
             include_classes=TruBasicCallableInstrument.Default.CLASSES(),
             include_methods=TruBasicCallableInstrument.Default.METHODS,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
 class TruBasicApp(mod_app.App):
     """Instantiates a Basic app that makes little assumptions.
-    
+
     Assumes input text and output text.
-        
+
     Example:
         ```python
         def custom_application(prompt: str) -> str:
             return "a response"
-        
+
         from trulens_eval import TruBasicApp
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
-        tru_recorder = TruBasicApp(custom_application, 
+        tru_recorder = TruBasicApp(custom_application,
             app_id="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         # Basic app works by turning your callable into an app
-        # This app is accessbile with the `app` attribute in the recorder
+        # This app is accessible with the `app` attribute in the recorder
         with tru_recorder as recording:
             tru_recorder.app(question)
 
@@ -98,7 +98,7 @@ class TruBasicApp(mod_app.App):
 
         app: A TruWrapperApp instance. If not provided, `text_to_text` must
             be provided.
-        
+
         **kwargs: Additional arguments to pass to [App][trulens_eval.app.App]
             and [AppDefinition][trulens_eval.schema.app.AppDefinition]
     """
@@ -109,27 +109,30 @@ class TruBasicApp(mod_app.App):
     """The app to be instrumented."""
 
     root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.
-        of_callable(TruWrapperApp._call)
+        default_factory=lambda: FunctionOrMethod.of_callable(
+            TruWrapperApp._call
+        )
     )
     """The root callable to be instrumented.
-    
+
     This is the method that will be called by the main_input method."""
 
     def __init__(
         self,
         text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
         else:
-            assert app is not None, "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+            assert (
+                app is not None
+            ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
 
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
-        kwargs['instrument'] = TruBasicCallableInstrument(app=self)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)
+        kwargs["instrument"] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
 
@@ -141,7 +144,6 @@ class TruBasicApp(mod_app.App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-
         if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of
@@ -161,10 +163,9 @@ class TruBasicApp(mod_app.App):
         return super().main_input(func, sig, bindings)
 
     def call_with_record(self, *args, **kwargs) -> None:
-
         self._throw_dep_message(method="call", is_async=False, with_record=True)
 
 
-import trulens_eval  # for App class annotations
+import trulens_eval  # noqa: F401
 
 TruBasicApp.model_rebuild()

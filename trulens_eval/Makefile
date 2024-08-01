@@ -14,7 +14,7 @@ PYENV:=PYTHONPATH=$(PWD)
 # https://www.gnu.org/software/make/manual/html_node/One-Shell.html .
 .ONESHELL:
 
-# Create conda enviornments with all of the supported python versions. The "req"
+# Create conda environments with all of the supported python versions. The "req"
 # ones with just the required packages and the "opt" ones with also the optional
 # packages.
 test-envs: \
@@ -169,7 +169,7 @@ react:
 clean:
 	git clean -fxd
 
-# Step: Packages trulens into .whl file 
+# Step: Packages trulens into .whl file
 build:
 	python setup.py bdist_wheel
 

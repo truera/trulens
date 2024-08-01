@@ -24,4 +24,4 @@ github pipelines. There are differences between these systems.
 
 - [Triggers
   documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/build/triggers?view=azure-devops)
-  describes how to setup trigers (when a pipeline needs to run).
+  describes how to setup triggers (when a pipeline needs to run).

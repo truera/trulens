@@ -23,7 +23,7 @@ test_data = [
     ("Not relevant. Score: 0.", 0),
     ("Some text here. Score: 10.0", 10.0),
     ("Score: 4.5", 4.5),
-    ("Score is 8.333", 8.333)
+    ("Score is 8.333", 8.333),
 ]
 
 
@@ -36,4 +36,6 @@ def test_re_0_10_rating(test_input, expected):
     except ParseError:
         result = None
 
-    assert result == expected, f"Failed on {test_input}: expected {expected}, got {result}"
+    assert (
+        result == expected
+    ), f"Failed on {test_input}: expected {expected}, got {result}"

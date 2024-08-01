@@ -1,20 +1,20 @@
 import os
 
-os.environ['PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION'] = 'python'
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationSummaryBufferMemory
 import numpy as np
 import streamlit as st
 
-from trulens_eval import feedback
 from trulens_eval import Select
+from trulens_eval import feedback
 from trulens_eval import tru
 from trulens_eval import tru_chain
 from trulens_eval.feedback import Feedback
 from trulens_eval.keys import check_keys
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_PINECONE
+from trulens_eval.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_PINECONE) as opt:
     from langchain.embeddings.openai import OpenAIEmbeddings
@@ -37,7 +37,7 @@ app_id = "TruBot"
 # Pinecone configuration.
 pinecone_client = pinecone.Pinecone(
     api_key=os.environ.get("PINECONE_API_KEY"),  # find at app.pinecone.io
-    environment=os.environ.get("PINECONE_ENV")  # next to api key in console
+    environment=os.environ.get("PINECONE_ENV"),  # next to api key in console
 )
 
 identity = lambda h: h
@@ -54,10 +54,16 @@ f_qa_relevance = Feedback(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
-f_context_relevance = feedback.Feedback(openai.context_relevance).on_input().on(
-    Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].
-    page_content
-).aggregate(np.min)
+f_context_relevance = (
+    feedback.Feedback(openai.context_relevance)
+    .on_input()
+    .on(
+        Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
+            :
+        ].page_content
+    )
+    .aggregate(np.min)
+)
 
 # First feedback argument is set to main app input, and the second is taken from
 # the context sources as passed to an internal `combine_docs_chain._call`.
@@ -66,7 +72,7 @@ f_context_relevance = feedback.Feedback(openai.context_relevance).on_input().on(
 # @st.cache_data
 def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
-    embedding = OpenAIEmbeddings(model='text-embedding-ada-002')  # 1536 dims
+    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
 
     # TODO: Check updated usage here.
     docsearch = pinecone_client.from_existing_index(
@@ -82,7 +88,7 @@ def generate_response(prompt):
         max_token_limit=650,
         llm=llm,
         memory_key="chat_history",
-        output_key='answer'
+        output_key="answer",
     )
 
     # Conversational chain puts it all together.
@@ -92,37 +98,41 @@ def generate_response(prompt):
         return_source_documents=True,
         memory=memory,
         get_chat_history=identity,
-        max_tokens_limit=4096
+        max_tokens_limit=4096,
     )
 
     # Language mismatch fix:
     if "langprompt" in app_id:
-        chain.combine_docs_chain.llm_chain.prompt.template = \
-            "Use the following pieces of CONTEXT to answer the question at the end " \
-            "in the same language as the question. If you don't know the answer, " \
-            "just say that you don't know, don't try to make up an answer.\n" \
-            "\n" \
-            "CONTEXT: {context}\n" \
-            "\n" \
-            "Question: {question}\n" \
+        chain.combine_docs_chain.llm_chain.prompt.template = (
+            "Use the following pieces of CONTEXT to answer the question at the end "
+            "in the same language as the question. If you don't know the answer, "
+            "just say that you don't know, don't try to make up an answer.\n"
+            "\n"
+            "CONTEXT: {context}\n"
+            "\n"
+            "Question: {question}\n"
             "Helpful Answer: "
+        )
 
     elif "relevance" in app_id:
         # Contexts fix
-        chain.combine_docs_chain.llm_chain.prompt.template = \
-            "Use only the relevant contexts to answer the question at the end " \
-            ". Some pieces of context may not be relevant. If you don't know the answer, " \
-            "just say that you don't know, don't try to make up an answer.\n" \
-            "\n" \
-            "Contexts: \n" \
-            "{context}\n" \
-            "\n" \
-            "Question: {question}\n" \
+        chain.combine_docs_chain.llm_chain.prompt.template = (
+            "Use only the relevant contexts to answer the question at the end "
+            ". Some pieces of context may not be relevant. If you don't know the answer, "
+            "just say that you don't know, don't try to make up an answer.\n"
+            "\n"
+            "Contexts: \n"
+            "{context}\n"
+            "\n"
+            "Question: {question}\n"
             "Helpful Answer: "
+        )
 
         # space is important
 
-        chain.combine_docs_chain.document_prompt.template = "\tContext: {page_content}"
+        chain.combine_docs_chain.document_prompt.template = (
+            "\tContext: {page_content}"
+        )
 
     # Trulens instrumentation.
     tc_recorder = tru_chain.TruChain(chain, app_id=app_id)
@@ -146,7 +156,7 @@ if user_input:
         total_tokens = cb.total_tokens
         total_cost = cb.total_cost
 
-    answer = response['answer']
+    answer = response["answer"]
 
     # Display response
     st.write(answer)
@@ -156,16 +166,16 @@ if user_input:
         prompt=prompt_input,
         response=answer,
         record=record,
-        tags='dev',
+        tags="dev",
         total_tokens=total_tokens,
-        total_cost=total_cost
+        total_cost=total_cost,
     )
 
     # Run feedback function and get value
     feedbacks = tru.run_feedback_functions(
         app=app,
         record=record,
-        feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance]
+        feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance],
     )
 
     # Add value to database

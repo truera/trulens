@@ -34,7 +34,7 @@ Note: You must create a new schema revision before doing this
 
 1. Create a sacrificial OpenAI Key (this will be added to the DB and put into
    github; which will invalidate it upon commit)
-1. cd `trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test` 
+1. cd `trulens/trulens_eval/tests/docs_notebooks/notebooks_to_test`
 1. remove any local dbs
     * `rm -rf default.sqlite`
 1. run below notebooks (Making sure you also run with the most recent code in

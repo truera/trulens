@@ -14,16 +14,29 @@ from contextvars import ContextVar
 from copy import copy
 import logging
 from typing import (
-    Any, Callable, ClassVar, Dict, Generic, Hashable, Iterable, List, Optional,
-    Sequence, Set, Sized, Tuple, TypeVar, Union
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Generic,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Sized,
+    Tuple,
+    TypeVar,
+    Union,
 )
 
 from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 from pydantic import GetCoreSchemaHandler
-from pydantic_core import core_schema
 from pydantic_core import CoreSchema
+from pydantic_core import core_schema
 import rich
 
 from trulens_eval.utils.containers import iterable_peek
@@ -40,18 +53,12 @@ Tuple of JSON-able base types.
 Can be used in `isinstance` checks.
 """
 
-JSON_BASES_T = Union[\
-    str, int, float, bytes, None
-                    ]
+JSON_BASES_T = Union[str, int, float, bytes, None]
 """
 Alias for JSON-able base types.
 """
 
-JSON = Union[\
-    JSON_BASES_T,
-    Sequence[Any],
-    Dict[str, Any]
-            ]
+JSON = Union[JSON_BASES_T, Sequence[Any], Dict[str, Any]]
 """Alias for (non-strict) JSON-able data (`Any` = `JSON`).
 
 If used with type argument, that argument indicates what the JSON represents and
@@ -71,7 +78,7 @@ Python object that is directly mappable to JSON.
 
 class JSONized(dict, Generic[T]):  # really JSON_STRICT
     """JSON-encoded data the can be deserialized into a given type `T`.
-    
+
     This class is meant only for type annotations. Any
     serialization/deserialization logic is handled by different classes, usually
     subclasses of `pydantic.BaseModel`.
@@ -108,8 +115,9 @@ class SerialModel(pydantic.BaseModel):
     help serialization mostly.
     """
 
-    formatted_objects: ClassVar[ContextVar[Set[int]]
-                               ] = ContextVar("formatted_objects")
+    formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar(
+        "formatted_objects"
+    )
 
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
@@ -136,9 +144,7 @@ class SerialModel(pydantic.BaseModel):
 
         formatted_objects.add(id(self))
 
-        for k, v in self.__dict__.items():
-            # This might result in recursive calls to __rich_repr__ of v.
-            yield k, v
+        yield from self.__dict__.items()
 
         if tok is not None:
             SerialModel.formatted_objects.reset(tok)
@@ -153,7 +159,7 @@ class SerialModel(pydantic.BaseModel):
 
         return jsonify(self, **kwargs)
 
-    # NOTE(piotrm): regaring model_validate: custom deserialization is done in
+    # NOTE(piotrm): regarding model_validate: custom deserialization is done in
     # WithClassInfo class but only for classes that mix it in.
 
     def update(self, **d):
@@ -174,6 +180,7 @@ class SerialBytes(pydantic.BaseModel):
 
     def dict(self):
         import base64
+
         encoded = base64.b64encode(self.data)
         return dict(data=encoded)
 
@@ -185,7 +192,7 @@ class SerialBytes(pydantic.BaseModel):
         import base64
 
         if isinstance(obj, Dict):
-            encoded = obj['data']
+            encoded = obj["data"]
             if isinstance(encoded, str):
                 return SerialBytes(data=base64.b64decode(encoded))
             elif isinstance(encoded, bytes):
@@ -208,23 +215,21 @@ class Step(pydantic.BaseModel, Hashable):
 
     @classmethod
     def model_validate(cls, obj, **kwargs):
-
         if isinstance(obj, Step):
             return super().model_validate(obj, **kwargs)
 
         elif isinstance(obj, dict):
-
             ATTRIBUTE_TYPE_MAP = {
-                'item': GetItem,
-                'index': GetIndex,
-                'attribute': GetAttribute,
-                'item_or_attribute': GetItemOrAttribute,
-                'start': GetSlice,
-                'stop': GetSlice,
-                'step': GetSlice,
-                'items': GetItems,
-                'indices': GetIndices,
-                'collect': Collect
+                "item": GetItem,
+                "index": GetIndex,
+                "attribute": GetAttribute,
+                "item_or_attribute": GetItemOrAttribute,
+                "start": GetSlice,
+                "stop": GetSlice,
+                "step": GetSlice,
+                "items": GetItems,
+                "indices": GetIndices,
+                "collect": Collect,
             }
 
             a = next(iter(obj.keys()))
@@ -268,7 +273,7 @@ class Collect(Step):
         raise NotImplementedError()
 
     def __repr__(self):
-        return f".collect()"
+        return ".collect()"
 
 
 class StepItemOrAttribute(Step):
@@ -302,7 +307,7 @@ class GetAttribute(StepItemOrAttribute):
         if obj is None:
             obj = Bunch()
 
-        # might cause isses
+        # might cause issues
         obj = copy(obj)
 
         if hasattr(obj, self.attribute):
@@ -418,8 +423,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
 
         if isinstance(obj, Sequence) and not isinstance(obj, str):
             if len(obj) == 1:
-                for r in self.get(obj=obj[0]):
-                    yield r
+                yield from self.get(obj=obj[0])
             elif len(obj) == 0:
                 raise ValueError(
                     f"Object not a dictionary or sequence of dictionaries: {obj}."
@@ -429,12 +433,12 @@ class GetItemOrAttribute(StepItemOrAttribute):
                     "Object (of type %s is a sequence containing more than one dictionary. "
                     "Lookup by item or attribute `%s` is ambiguous. "
                     "Use a lookup by index(es) or slice first to disambiguate.",
-                    type(obj).__name__, self.item_or_attribute
+                    type(obj).__name__,
+                    self.item_or_attribute,
                 )
                 for sub_obj in obj:
                     try:
-                        for r in self.get(obj=sub_obj):
-                            yield r
+                        yield from self.get(obj=sub_obj)
                     except Exception:
                         pass
 
@@ -486,8 +490,9 @@ class GetSlice(Step):
     # Step requirement
     def get(self, obj: Sequence[T]) -> Iterable[T]:
         if isinstance(obj, Sequence):
-            lower, upper, step = slice(self.start, self.stop,
-                                       self.step).indices(len(obj))
+            lower, upper, step = slice(
+                self.start, self.stop, self.step
+            ).indices(len(obj))
             for i in range(lower, upper, step):
                 yield obj[i]
         else:
@@ -500,8 +505,9 @@ class GetSlice(Step):
 
         assert isinstance(obj, Sequence), "Sequence expected."
 
-        lower, upper, step = slice(self.start, self.stop,
-                                   self.step).indices(len(obj))
+        lower, upper, step = slice(self.start, self.stop, self.step).indices(
+            len(obj)
+        )
 
         # copy
         obj = list(obj)
@@ -599,11 +605,10 @@ class GetItems(Step):
         return obj
 
     def __repr__(self):
-        return "[" + (','.join(f"'{i}'" for i in self.items)) + "]"
+        return "[" + (",".join(f"'{i}'" for i in self.items)) + "]"
 
 
 class ParseException(Exception):
-
     def __init__(self, exp_string: str, exp_ast: ast.AST):
         self.exp_string = exp_string
         self.exp_ast = exp_ast
@@ -622,7 +627,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     Lenses into python objects.
 
     !!! example
-    
+
         ```python
         path = Lens().record[5]['somekey']
 
@@ -651,11 +656,11 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         value_at_path = path_collect.get(obj) # generates a single item, [1, 2, 3] (a list)
         ```
-        """
+    """
 
     path: Tuple[Step, ...]
 
-    @pydantic.model_validator(mode='wrap')
+    @pydantic.model_validator(mode="wrap")
     @classmethod
     def validate_from_string(cls, obj, handler):
         # `mode="before"` validators currently cannot return something of a type
@@ -666,7 +671,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             return ret
         elif isinstance(obj, dict):
             return handler(
-                dict(path=(Step.model_validate(step) for step in obj['path']))
+                dict(path=(Step.model_validate(step) for step in obj["path"]))
             )
         else:
             return handler(obj)
@@ -728,7 +733,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # exp = parse(f"PLACEHOLDER.{s}", mode="eval")
             exp = parse(s, mode="eval")
 
-        except SyntaxError as e:
+        except SyntaxError:
             raise ParseException(s, None)
 
         if not isinstance(exp, ast.Expression):
@@ -739,9 +744,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         path = []
 
         def of_index(idx):
-
             if isinstance(idx, ast.Tuple):
-
                 elts = tuple(of_index(elt) for elt in idx.elts)
 
                 if all(isinstance(e, GetItem) for e in elts):
@@ -754,7 +757,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                     raise ParseException(s, idx)
 
             elif isinstance(idx, ast.Constant):
-
                 if isinstance(idx.value, str):
                     return GetItem(item=idx.value)
 
@@ -765,7 +767,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                     raise ParseException(s, idx)
 
             elif isinstance(idx, ast.UnaryOp):
-
                 if isinstance(idx.op, ast.USub):
                     oper = of_index(idx.operand)
                     if not isinstance(oper, GetIndex):
@@ -799,7 +800,8 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                     )
 
                     if not all(
-                            e is None or isinstance(e, GetIndex) for e in vals):
+                        e is None or isinstance(e, GetIndex) for e in vals
+                    ):
                         raise ParseException(s, exp)
 
                     vals_indices: Tuple[Union[None, int], ...] = tuple(
@@ -810,7 +812,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
                         GetSlice(
                             start=vals_indices[0],
                             stop=vals_indices[1],
-                            step=vals_indices[2]
+                            step=vals_indices[2],
                         )
                     )
 
@@ -915,15 +917,15 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: 'Lens'):
+    def __add__(self, other: Lens):
         return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: 'Lens'):
+    def is_immediate_prefix_of(self, other: Lens):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: 'Lens'):
+    def is_prefix_of(self, other: Lens):
         p = self.path
         pother = other.path
 
@@ -942,7 +944,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         containing only the given `val`. If it already exists as a sequence,
         appends `val` to that sequence as a list. If it is set but not a sequence,
         error is thrown.
-        
+
         """
         try:
             existing = self.get_sole_item(obj)
@@ -976,7 +978,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             first_obj, firsts = iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
-
             # `first` points to an element that does not exist, use `set` to create a spot for it.
             obj = first.set(obj, None)  # will create a spot for `first`
             firsts = first.get(obj)
@@ -989,9 +990,9 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def get_sole_item(self, obj: Any) -> Any:
         all_objects = list(self.get(obj))
 
-        assert len(
-            all_objects
-        ) == 1, f"Lens {self} did not address exactly a single object."
+        assert (
+            len(all_objects) == 1
+        ), f"Lens {self} did not address exactly a single object."
 
         return all_objects[0]
 
@@ -1032,15 +1033,14 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         else:
             for start_selection in start_items:
-                for last_selection in last_step.get(start_selection):
-                    yield last_selection
+                yield from last_step.get(start_selection)
 
     def _append(self, step: Step) -> Lens:
         return Lens(path=self.path + (step,))
 
     def __getitem__(
         self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
-    ) -> 'Lens':
+    ) -> Lens:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -1063,7 +1063,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> 'Lens':
+    def __getattr__(self, attr: str) -> Lens:
         if attr == "_ipython_canary_method_should_not_exist_":
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
@@ -1073,7 +1073,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
             # constructed with this canary attribute name. We instead return
             # None here to let ipython know we have overwritten __getattr__ but
             # we do not construct any Lenses.
-            return 0xdead
+            return 0xDEAD
 
         return self._append(GetItemOrAttribute(item_or_attribute=attr))
 
@@ -1097,14 +1097,12 @@ def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
     elif isinstance(obj_json, Dict):
         for k, v in obj_json.items():
             sub_query = query[k]
-            for res in leaf_queries(obj_json[k], sub_query):
-                yield res
+            yield from leaf_queries(obj_json[k], sub_query)
 
     elif isinstance(obj_json, Sequence):
         for i, v in enumerate(obj_json):
             sub_query = query[i]
-            for res in leaf_queries(obj_json[i], sub_query):
-                yield res
+            yield from leaf_queries(obj_json[i], sub_query)
 
     else:
         yield query
@@ -1126,24 +1124,21 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
         for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
-            for res in all_queries(v, sub_query):
-                yield res
+            yield from all_queries(v, sub_query)
 
     elif isinstance(obj, Dict):
         yield query
 
         for k, v in obj.items():
             sub_query = query[k]
-            for res in all_queries(obj[k], sub_query):
-                yield res
+            yield from all_queries(obj[k], sub_query)
 
     elif isinstance(obj, Sequence):
         yield query
 
         for i, v in enumerate(obj):
             sub_query = query[i]
-            for res in all_queries(obj[i], sub_query):
-                yield res
+            yield from all_queries(obj[i], sub_query)
 
     else:
         yield query
@@ -1165,20 +1160,17 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
         for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
-            for res in all_objects(v, sub_query):
-                yield res
+            yield from all_objects(v, sub_query)
 
     elif isinstance(obj, Dict):
         for k, v in obj.items():
             sub_query = query[k]
-            for res in all_objects(obj[k], sub_query):
-                yield res
+            yield from all_objects(obj[k], sub_query)
 
     elif isinstance(obj, Sequence):
         for i, v in enumerate(obj):
             sub_query = query[i]
-            for res in all_objects(obj[i], sub_query):
-                yield res
+            yield from all_objects(obj[i], sub_query)
 
     elif isinstance(obj, Iterable):
         logger.debug(

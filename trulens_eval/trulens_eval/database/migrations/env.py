@@ -12,7 +12,7 @@ from trulens_eval.database.orm import make_orm_for_prefix
 config = context.config
 
 # Run this block only if Alembic was called from the command-line
-#if config.get_main_option("calling_context", default="CLI") == "CLI":
+# if config.get_main_option("calling_context", default="CLI") == "CLI":
 # NOTE(piotrm): making this run always so users can configure alembic.ini as
 # they see fit.
 
@@ -32,9 +32,10 @@ if config.get_main_option("sqlalchemy.url", None) is None:
     )
 
 # Get `trulens.table_prefix` from the environment.
-prefix = config.get_main_option(
-    "trulens.table_prefix"
-) or mod_db.DEFAULT_DATABASE_PREFIX
+prefix = (
+    config.get_main_option("trulens.table_prefix")
+    or mod_db.DEFAULT_DATABASE_PREFIX
+)
 
 orm = make_orm_for_prefix(table_prefix=prefix)
 
@@ -61,7 +62,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
-        version_table=prefix + "alembic_version"
+        version_table=prefix + "alembic_version",
     )
 
     with context.begin_transaction():
@@ -86,7 +87,7 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            version_table=prefix + "alembic_version"
+            version_table=prefix + "alembic_version",
         )
 
         with context.begin_transaction():

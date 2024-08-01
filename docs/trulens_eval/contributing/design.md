@@ -26,7 +26,7 @@ the [Instrumentation](#instrumentation) section below.
 ### App Data
 
 We collect app components and parameters by walking over its structure and
-producing a json reprensentation with everything we deem relevant to track. The
+producing a json representation with everything we deem relevant to track. The
 function [jsonify][trulens_eval.utils.json.jsonify] is the root of this process.
 
 #### class/system specific
@@ -36,7 +36,7 @@ function [jsonify][trulens_eval.utils.json.jsonify] is the root of this process.
 Classes inheriting [BaseModel][pydantic.BaseModel] come with serialization
 to/from json in the form of [model_dump][pydantic.BaseModel.model_dump] and
 [model_validate][pydantic.BaseModel.model_validate]. We do not use the
-serialization to json part of this capability as a lot of _LangChain_ components
+serialization to json part of this capability as a lot of *LangChain* components
 are tripped to fail it with a "will not serialize" message. However, we use make
 use of pydantic `fields` to enumerate components of an object ourselves saving
 us from having to filter out irrelevant internals that are not declared as
@@ -62,22 +62,22 @@ In addition to collecting app parameters, we also collect:
 
 - (subset of components) App class information:
 
-    - This allows us to deserialize some objects. Pydantic models can be
+  - This allows us to deserialize some objects. Pydantic models can be
       deserialized once we know their class and fields, for example.
-    - This information is also used to determine component types without having
-      to deserialize them first. 
-    - See [Class][trulens_eval.utils.pyschema.Class] for details.
+  - This information is also used to determine component types without having
+      to deserialize them first.
+  - See [Class][trulens_eval.utils.pyschema.Class] for details.
 
 ### Functions/Methods
 
 Methods and functions are instrumented by overwriting choice attributes in
-various classes. 
+various classes.
 
 #### class/system specific
 
 ##### pydantic (langchain)
 
-Most if not all _LangChain_ components use pydantic which imposes some
+Most if not all *LangChain* components use pydantic which imposes some
 restrictions but also provides some utilities. Classes inheriting
 [BaseModel][pydantic.BaseModel] do not allow defining new attributes but
 existing attributes including those provided by pydantic itself can be
@@ -86,13 +86,13 @@ instrumented versions.
 
 #### Alternatives
 
-- `intercepts` package (see https://github.com/dlshriver/intercepts)
+- `intercepts` package (see <https://github.com/dlshriver/intercepts>)
 
     Low level instrumentation of functions but is architecture and platform
     dependent with no darwin nor arm64 support as of June 07, 2023.
 
 - `sys.setprofile` (see
-  https://docs.python.org/3/library/sys.html#sys.setprofile)
+  <https://docs.python.org/3/library/sys.html#sys.setprofile>)
 
     Might incur much overhead and all calls and other event types get
     intercepted and result in a callback.
@@ -102,7 +102,7 @@ instrumented versions.
   drawbacks is the need to handle different callback systems for each system and
   potentially missing information not exposed by them.
 
-- `wrapt` package (see https://pypi.org/project/wrapt/)
+- `wrapt` package (see <https://pypi.org/project/wrapt/>)
 
     This is only for wrapping functions or classes to resemble their original
     but does not help us with wrapping existing methods in langchain, for
@@ -113,7 +113,7 @@ instrumented versions.
 The instrumented versions of functions/methods record the inputs/outputs and
 some additional data (see
 [RecordAppCallMethod]trulens_eval.schema.record.RecordAppCallMethod]). As more than
-one instrumented call may take place as part of a app invokation, they are
+one instrumented call may take place as part of a app invocation, they are
 collected and returned together in the `calls` field of
 [Record][trulens_eval.schema.record.Record].
 
@@ -158,7 +158,7 @@ our reliance on info stored on the stack. Therefore we have a limitation:
   [ThreadPoolExecutor][trulens_eval.utils.threading.ThreadPoolExecutor] also
   defined in `utils/threading.py` in order for instrumented methods called in a
   thread to be tracked. As we rely on call stack for call instrumentation we
-  need to preserve the stack before a thread start which python does not do. 
+  need to preserve the stack before a thread start which python does not do.
 
 #### Async
 
@@ -196,7 +196,7 @@ functions that seem to not involve [Task][asyncio.Task] do use tasks, such as
   TODO(piotrm): This might have been fixed. Check.
 
 - Some apps cannot be serialized/jsonized. Sequential app is an example. This is
-  a limitation of _LangChain_ itself.
+  a limitation of *LangChain* itself.
 
 - Instrumentation relies on CPython specifics, making heavy use of the
   [inspect][] module which is not expected to work with other Python
@@ -216,7 +216,7 @@ themselves from invocations of apps that are being tracked from those not being
 tracked, and of those that are tracked, where in the call stack a instrumented
 method invocation is. To achieve this, we rely on inspecting the python call
 stack for specific frames:
-  
+
 - Prior frame -- Each instrumented call searches for the topmost instrumented
   call (except itself) in the stack to check its immediate caller (by immediate
   we mean only among instrumented methods) which forms the basis of the stack
@@ -235,7 +235,7 @@ stack for specific frames:
 
 #### Alternatives
 
-- [contextvars][] -- _LangChain_ uses these to manage contexts such as those used
+- [contextvars][] -- *LangChain* uses these to manage contexts such as those used
   for instrumenting/tracking LLM usage. These can be used to manage call stack
   information like we do. The drawback is that these are not threadsafe or at
   least need instrumenting thread creation. We have to do a similar thing by

@@ -15,8 +15,20 @@ import sys
 from types import ModuleType
 import typing
 from typing import (
-    Any, Awaitable, Callable, Dict, Generator, Generic, Hashable, Iterator,
-    List, Optional, Sequence, Type, TypeVar, Union
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generator,
+    Generic,
+    Hashable,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
 )
 
 T = TypeVar("T")
@@ -27,15 +39,15 @@ Thunk = Callable[[], T]
 if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
-    
-    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+
+    In python < 3.9, a subclass of [concurrent.futures.Future][] with
     `Generic[A]` is used instead.
     """
 
     Queue = queue.Queue
     """Alias for [queue.Queue][] .
-    
-    In python < 3.9, a sublcass of [queue.Queue][] with
+
+    In python < 3.9, a subclass of [queue.Queue][] with
     `Generic[A]` is used instead.
     """
 
@@ -49,16 +61,16 @@ else:
     # HACK011
     class Future(Generic[A], futures.Future):
         """Alias for [concurrent.futures.Future][].
-    
-        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+
+        In python < 3.9, a subclass of [concurrent.futures.Future][] with
         `Generic[A]` is used instead.
         """
 
     # HACK012
     class Queue(Generic[A], queue.Queue):
         """Alias for [queue.Queue][] .
-    
-        In python < 3.9, a sublcass of [queue.Queue][] with
+
+        In python < 3.9, a subclass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
 
@@ -78,16 +90,17 @@ class EmptyType(type):
 
 if sys.version_info >= (3, 10):
     import types
+
     NoneType = types.NoneType
     """Alias for [types.NoneType][] .
-    
+
     In python < 3.10, it is defined as `type(None)` instead.
     """
 
 else:
     NoneType = type(None)
     """Alias for [types.NoneType][] .
-    
+
     In python < 3.10, it is defined as `type(None)` instead.
     """
 
@@ -147,7 +160,7 @@ def id_str(obj: Any) -> str:
 def is_really_coroutinefunction(func) -> bool:
     """Determine whether the given function is a coroutine function.
 
-    Warning: 
+    Warning:
         Inspect checkers for async functions do not work on openai clients,
         perhaps because they use `@typing.overload`. Because of that, we detect
         them by checking `__wrapped__` attribute instead. Note that the inspect
@@ -162,14 +175,15 @@ def is_really_coroutinefunction(func) -> bool:
         return True
 
     if hasattr(func, "__wrapped__") and inspect.iscoroutinefunction(
-            func.__wrapped__):
+        func.__wrapped__
+    ):
         return True
 
     return False
 
 
 def safe_signature(func_or_obj: Any):
-    """Get the signature of the given function. 
+    """Get the signature of the given function.
 
     Sometimes signature fails for wrapped callables and in those cases we check
     for `__call__` attribute and use that instead.
@@ -197,8 +211,8 @@ def safe_signature(func_or_obj: Any):
 
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
-    
-    Attempts to use static checks (see [inspect.getattr_static][]) to avoid any 
+
+    Attempts to use static checks (see [inspect.getattr_static][]) to avoid any
     side effects of attribute access (i.e. for properties).
     """
     try:
@@ -286,10 +300,10 @@ def for_all_methods(decorator, _except: Optional[List[str]] = None):
     """
 
     def decorate(cls):
-
-        for attr_name, attr in cls.__dict__.items(
-        ):  # does not include classmethods
-
+        for (
+            attr_name,
+            attr,
+        ) in cls.__dict__.items():  # does not include classmethods
             if not inspect.isfunction(attr):
                 continue  # skips non-method attributes
 
@@ -313,7 +327,6 @@ def run_before(callback: Callable):
     """
 
     def decorator(func):
-
         def wrapper(*args, **kwargs):
             callback(*args, **kwargs)
             return func(*args, **kwargs)
@@ -329,7 +342,7 @@ def run_before(callback: Callable):
 STACK = "__tru_stack"
 
 
-def caller_frame(offset=0) -> 'frame':
+def caller_frame(offset=0) -> frame:
     """
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
@@ -339,8 +352,7 @@ def caller_frame(offset=0) -> 'frame':
 
 
 def caller_frameinfo(
-    offset: int = 0,
-    skip_module: Optional[str] = "trulens_eval"
+    offset: int = 0, skip_module: Optional[str] = "trulens_eval"
 ) -> Optional[inspect.FrameInfo]:
     """
     Get the caller's (of this function) frameinfo. See
@@ -348,23 +360,23 @@ def caller_frameinfo(
 
     Args:
         offset: The number of frames to skip. Default is 0.
-        
+
         skip_module: Skip frames from the given module. Default is "trulens_eval".
     """
 
-    for finfo in inspect.stack()[offset + 1:]:
+    for finfo in inspect.stack()[offset + 1 :]:
         if skip_module is None:
             return finfo
-        if not finfo.frame.f_globals['__name__'].startswith(skip_module):
+        if not finfo.frame.f_globals["__name__"].startswith(skip_module):
             return finfo
 
     return None
 
 
-def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence['frame']:
+def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence[frame]:
     """
     A task factory that annotates created tasks with stacks of their parents.
-    
+
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens_eval.utils.python.stack_with_tasks] as one merged
     stack.
@@ -402,7 +414,7 @@ def tru_new_event_loop():
 asyncio.new_event_loop = tru_new_event_loop
 
 
-def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
+def get_task_stack(task: asyncio.Task) -> Sequence[frame]:
     """
     Get the annotated stack (if available) on the given task.
     """
@@ -413,8 +425,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence['frame']:
         return task.get_stack()[::-1]
 
 
-def merge_stacks(s1: Sequence['frame'],
-                 s2: Sequence['frame']) -> Sequence['frame']:
+def merge_stacks(s1: Sequence[frame], s2: Sequence[frame]) -> Sequence[frame]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
     order.
@@ -439,7 +450,7 @@ def merge_stacks(s1: Sequence['frame'],
     return ret
 
 
-def stack_with_tasks() -> Sequence['frame']:
+def stack_with_tasks() -> Sequence[frame]:
     """
     Get the current stack (not including this function) with frames reaching
     across Tasks.
@@ -479,17 +490,17 @@ def get_all_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None  # really frame
+    skip: Optional[Any] = None,  # really frame
 ) -> Iterator[Any]:
     """Find locals in call stack by name.
-    
+
     Args:
         key: The name of the local variable to look for.
-        
+
         func: Recognizer of the function to find in the call stack.
-        
+
         offset: The number of top frames to skip.
-        
+
         skip: A frame to skip as well.
 
     Note:
@@ -526,8 +537,10 @@ def get_all_local_in_call_stack(
 
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
-            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
-            for fi in locs['pre_start_stack']:
+            assert (
+                "pre_start_stack" in locs
+            ), "Pre thread start stack expected but not found."
+            for fi in locs["pre_start_stack"]:
                 q.put(fi.frame)
 
             continue
@@ -539,7 +552,7 @@ def get_all_local_in_call_stack(
         if func(f.f_code):
             logger.debug(f"Looking via {func.__name__}; found {f}")
             if skip is not None and f == skip:
-                logger.debug(f"Skipping.")
+                logger.debug("Skipping.")
                 continue
 
             locs = f.f_locals
@@ -555,7 +568,7 @@ def get_first_local_in_call_stack(
     key: str,
     func: Callable[[Callable], bool],
     offset: Optional[int] = 1,
-    skip: Optional[Any] = None  # actually frame
+    skip: Optional[Any] = None,  # actually frame
 ) -> Optional[Any]:
     """
     Get the value of the local variable named `key` in the stack at the nearest
@@ -624,7 +637,7 @@ class OpaqueWrapper(Generic[T]):
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None
+    on_done: Optional[Callable[[T], Any]] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
@@ -637,7 +650,7 @@ def wrap_awaitable(
 
         on_await: The callback to call when the wrapper awaitable is awaited but
             before the wrapped awaitable is awaited.
-        
+
         on_done: The callback to call with the result of the wrapped awaitable
             once it is ready.
     """
@@ -660,7 +673,7 @@ def wrap_generator(
     gen: Generator[T, None, None],
     on_iter: Optional[Callable[[], Any]] = None,
     on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None
+    on_done: Optional[Callable[[], Any]] = None,
 ) -> Generator[T, None, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -708,8 +721,8 @@ class SingletonInfo(Generic[T]):
 
     name: str
     """The name of the singleton instance.
-    
-    This is used for the SingletonPerName mechanism to have a seperate singleton
+
+    This is used for the SingletonPerName mechanism to have a separate singleton
     for each unique name (and class).
     """
 
@@ -718,7 +731,7 @@ class SingletonInfo(Generic[T]):
 
     frame: Any
     """The frame where the singleton was created.
-    
+
     This is used for showing "already created" warnings.
     """
 
@@ -740,7 +753,9 @@ class SingletonInfo(Generic[T]):
   SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
   ```
             """
-            ), self.cls.__name__, code_line(self.frameinfo, show_source=True)
+            ),
+            self.cls.__name__,
+            code_line(self.frameinfo, show_source=True),
         )
 
 
@@ -775,7 +790,7 @@ class SingletonPerName(Generic[T]):
         cls: Type[SingletonPerName[T]],
         *args,
         name: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> SingletonPerName[T]:
         """
         Create the singleton instance if it doesn't already exist and return it.
@@ -786,7 +801,8 @@ class SingletonPerName(Generic[T]):
         if k not in cls._instances:
             logger.debug(
                 "*** Creating new %s singleton instance for name = %s ***",
-                cls.__name__, name
+                cls.__name__,
+                name,
             )
             # If exception happens here, the instance should not be added to
             # _instances.
@@ -806,7 +822,7 @@ class SingletonPerName(Generic[T]):
     def delete_singleton_by_name(name: str, cls: Type[SingletonPerName] = None):
         """
         Delete the singleton instance with the given name.
-        
+
         This can be used for testing to create another singleton.
 
         Args:

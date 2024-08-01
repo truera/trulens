@@ -3,11 +3,12 @@ from concurrent.futures import wait
 import time
 
 from examples.expositional.end2end_apps.custom_app.custom_llm import CustomLLM
-from examples.expositional.end2end_apps.custom_app.custom_memory import \
-    CustomMemory
-from examples.expositional.end2end_apps.custom_app.custom_retriever import \
-    CustomRetriever
-
+from examples.expositional.end2end_apps.custom_app.custom_memory import (
+    CustomMemory,
+)
+from examples.expositional.end2end_apps.custom_app.custom_retriever import (
+    CustomRetriever,
+)
 from trulens_eval.tru_custom_app import instrument
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
@@ -16,22 +17,24 @@ instrument.method(CustomMemory, "remember")
 
 
 class CustomTemplate:
-
     def __init__(self, template):
         self.template = template
 
     @instrument
     def fill(self, question, answer):
-        return self.template[:] \
-            .replace("{question}", question) \
+        return (
+            self.template[:]
+            .replace("{question}", question)
             .replace("{answer}", answer)
+        )
 
 
 class CustomApp:
-
     def __init__(self, delay: float = 0.05, alloc: int = 1024 * 1024):
         self.delay = delay  # controls how long to delay certain operations to make it look more realistic
-        self.alloc = alloc  # controls how much memory to allocate during some operations
+        self.alloc = (
+            alloc  # controls how much memory to allocate during some operations
+        )
         self.memory = CustomMemory(delay=delay / 20.0, alloc=alloc)
         self.retriever = CustomRetriever(delay=delay / 4.0, alloc=alloc)
         self.llm = CustomLLM(delay=delay, alloc=alloc)

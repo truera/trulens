@@ -1,11 +1,11 @@
 """
-# API keys and configuration 
+# API keys and configuration
 
 ## Setting keys
 
 To check whether appropriate api keys have been set:
 
-```python 
+```python
 from trulens_eval.keys import check_keys
 
 check_keys(
@@ -16,11 +16,11 @@ check_keys(
 
 Alternatively you can set using `check_or_set_keys`:
 
-```python 
+```python
 from trulens_eval.keys import check_or_set_keys
 
 check_or_set_keys(
-    OPENAI_API_KEY="to fill in", 
+    OPENAI_API_KEY="to fill in",
     HUGGINGFACE_API_KEY="to fill in"
 )
 ```
@@ -113,24 +113,23 @@ values_to_redact: Set[str] = set()
 
 # Regex of keys (into dict/json) that should be redacted.
 RE_KEY_TO_REDACT: re.Pattern = re.compile(
-    '|'.join(
+    "|".join(
         [
-            r'api_key',
+            r"api_key",
             # Covers OpenAI, Cohere, Anthropic class key 'api_key'
-            r'.+_api_key',
+            r".+_api_key",
             # Covers langchain llm attributes for keys such as 'openai_api_key'.
-
             # r'token',
             # Would cover bard unofficial api field "token" but this is a
             # bit too general of a key; TODO: need another solution to redact.
-            r'.+_API_KEY',
-            r'.+_API_TOKEN',
+            r".+_API_KEY",
+            r".+_API_TOKEN",
             # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
             # bard
-            r'KAGGLE_KEY',
-            r'SLACK_(TOKEN|SIGNING_SECRET)',
+            r"KAGGLE_KEY",
+            r"SLACK_(TOKEN|SIGNING_SECRET)",
             # Covers slack-related keys.
-            r'.*PASSWORD.*',
+            r".*PASSWORD.*",
             # Cover user credentials for i.e. Snowflake connection session
         ]
     )
@@ -151,7 +150,7 @@ REDACTED_VALUE = "__tru_redacted"
 
 # Treat these value as not valid keys. Use any as a templates to suggest a user
 # fills in the key.
-TEMPLATE_VALUES = set(["to fill in"])
+TEMPLATE_VALUES = {"to fill in"}
 
 global cohere_agent
 cohere_agent = None
@@ -165,8 +164,9 @@ def should_redact_value(v: Union[Any, str]) -> bool:
     return isinstance(v, str) and v in values_to_redact
 
 
-def redact_value(v: Union[str, Any],
-                 k: Optional[str] = None) -> Union[str, Any]:
+def redact_value(
+    v: Union[str, Any], k: Optional[str] = None
+) -> Union[str, Any]:
     """
     Determine whether the given value `v` should be redacted and redact it if
     so. If its key `k` (in a dict/json-like) is given, uses the key name to
@@ -218,7 +218,6 @@ def _value_is_set(v: str) -> bool:
 
 
 class ApiKeyError(RuntimeError):
-
     def __init__(self, *args, key: str, msg: str = ""):
         super().__init__(msg, *args)
         self.key = key
@@ -242,8 +241,8 @@ def _check_key(
     if not _value_is_set(v):
         msg = f"""Key {k} needs to be set; please provide it in one of these ways:
 
-  - in a variable {k} prior to this check, 
-  - in your variable environment, 
+  - in a variable {k} prior to this check,
+  - in your variable environment,
   - in a .env file in {Path.cwd()} or its parents,
   - explicitly passed to function `check_or_set_keys` of `trulens_eval.keys`,
   - passed to the endpoint or feedback collection constructor that needs it (`trulens_eval.feedback.provider_apis.OpenAIEndpoint`, etc.), or
@@ -275,15 +274,17 @@ def _relative_path(path: Path, relative_to: Path) -> str:
 
     while True:
         try:
-            return "".join(["../"] * parents
-                          ) + str(path.relative_to(relative_to))
+            return "".join(["../"] * parents) + str(
+                path.relative_to(relative_to)
+            )
         except Exception:
             parents += 1
             relative_to = relative_to.parent
 
 
-def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
-                                                    str]) -> Dict[str, str]:
+def _collect_keys(
+    *args: Tuple[str], **kwargs: Dict[str, str]
+) -> Dict[str, str]:
     """
     Collect values for keys from all of the currently supported sources. This includes:
 
@@ -319,7 +320,7 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
         temp_v = kwargs.get(k)
         if _value_is_set(temp_v):
             valid_sources[temp_v].append(
-                f"explicit value to `check_or_set_keys`"
+                "explicit value to `check_or_set_keys`"
             )
             valid_values.add(temp_v)
 
@@ -333,30 +334,36 @@ def _collect_keys(*args: Tuple[str], **kwargs: Dict[str,
         # Globals of caller.
         temp_v = globs.get(k)
         if _value_is_set(temp_v):
-            valid_sources[temp_v].append(f"python variable")
+            valid_sources[temp_v].append("python variable")
             valid_values.add(temp_v)
 
         if len(valid_values) == 0:
             ret[k] = None
 
         elif len(valid_values) > 1:
-            warning = f"More than one different value for key {k} has been found:\n\t"
+            warning = (
+                f"More than one different value for key {k} has been found:\n\t"
+            )
             warning += "\n\t".join(
                 f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}"""
                 for v in valid_values
             )
-            warning += f"\nUsing one arbitrarily."
+            warning += "\nUsing one arbitrarily."
             logger.warning(warning)
 
             ret[k] = list(valid_values)[0]
         else:
             v = list(valid_values)[0]
             print(
-                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}" + (
-                    ' (same value found in ' +
-                    (' and '.join(valid_sources[v][1:])) +
-                    ')' if len(valid_sources[v]) > 1 else ''
-                ) + "."
+                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
+                + (
+                    " (same value found in "
+                    + (" and ".join(valid_sources[v][1:]))
+                    + ")"
+                    if len(valid_sources[v]) > 1
+                    else ""
+                )
+                + "."
             )
 
             ret[k] = v
@@ -371,7 +378,7 @@ def check_keys(*keys: Tuple[str]) -> None:
     somewhere, they will be set in the env var as the canonical location where
     we should expect them subsequently. Example:
 
-    ```python 
+    ```python
     from trulens_eval.keys import check_keys
 
     check_keys(
@@ -398,11 +405,11 @@ def check_or_set_keys(*args: Tuple[str], **kwargs: Dict[str, str]) -> None:
     storage of these keys, regardless of how they were specified. Values can
     also be specified explicitly to this method. Example:
 
-    ```python 
+    ```python
     from trulens_eval.keys import check_or_set_keys
 
     check_or_set_keys(
-        OPENAI_API_KEY="to fill in", 
+        OPENAI_API_KEY="to fill in",
         HUGGINGFACE_API_KEY="to fill in"
     )
     ```

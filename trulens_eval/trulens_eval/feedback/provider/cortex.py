@@ -5,8 +5,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.cortex import CortexEndpoint
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
+from trulens_eval.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_CORTEX) as opt:
     import snowflake
@@ -36,19 +36,19 @@ class Cortex(LLMProvider):
     ):
         self_kwargs = dict(kwargs)
 
-        self_kwargs[
-            'model_engine'
-        ] = self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
+        self_kwargs["model_engine"] = (
+            self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
+        )
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-        self_kwargs['snowflake_conn'] = snowflake.connector.connect(
+        self_kwargs["snowflake_conn"] = snowflake.connector.connect(
             account=os.environ["SNOWFLAKE_ACCOUNT"],
             user=os.environ["SNOWFLAKE_USER"],
             password=os.environ["SNOWFLAKE_USER_PASSWORD"],
             database=os.environ["SNOWFLAKE_DATABASE"],
             schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"]
+            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
         )
         super().__init__(**self_kwargs)
 
@@ -56,14 +56,14 @@ class Cortex(LLMProvider):
         self,
         model: str,
         temperature: float,
-        messages: Optional[Sequence[Dict]] = None
+        messages: Optional[Sequence[Dict]] = None,
     ):
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
         messages_json_str = json.dumps(messages)
 
-        options = {'temperature': temperature}
+        options = {"temperature": temperature}
         options_json_str = json.dumps(options)
 
         completion_input_str = """
@@ -79,7 +79,7 @@ class Cortex(LLMProvider):
         try:
             cursor.execute(
                 completion_input_str,
-                (model, messages_json_str, options_json_str)
+                (model, messages_json_str, options_json_str),
             )
             result = cursor.fetchall()
         finally:
@@ -91,18 +91,18 @@ class Cortex(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
-        if 'temperature' not in kwargs:
-            kwargs['temperature'] = 0.0
+        if "model" not in kwargs:
+            kwargs["model"] = self.model_engine
+        if "temperature" not in kwargs:
+            kwargs["temperature"] = 0.0
 
         if messages is not None:
-            kwargs['messages'] = messages
+            kwargs["messages"] = messages
 
         elif prompt is not None:
-            kwargs['messages'] = [{"role": "system", "content": prompt}]
+            kwargs["messages"] = [{"role": "system", "content": prompt}]
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 

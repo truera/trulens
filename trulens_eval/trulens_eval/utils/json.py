@@ -4,29 +4,27 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
-import inspect
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-import typing
 from typing import Any, Dict, Optional, Sequence, Set, TypeVar
 
 from merkle_json import MerkleJson
 import pydantic
 
 from trulens_eval.keys import redact_value
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import CIRCLE
-from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import CLASS_INFO
-from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import ERROR
 from trulens_eval.utils.pyschema import NOSERIO
+from trulens_eval.utils.pyschema import Class
+from trulens_eval.utils.pyschema import WithClassInfo
+from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import noserio
 from trulens_eval.utils.pyschema import safe_getattr
-from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.serial import JSON
 from trulens_eval.utils.serial import JSON_BASES
@@ -46,6 +44,7 @@ mj = MerkleJson()
 with OptionalImports(messages=REQUIREMENT_OPENAI):
     # httpx.URL needed for openai client.
     import httpx
+
     # Another thing we need for openai client.
     from openai import Timeout
 
@@ -78,7 +77,7 @@ def json_str_of_obj(
 
     return json.dumps(
         jsonify(obj, *args, redact_keys=redact_keys, **kwargs),
-        default=json_default
+        default=json_default,
     )
 
 
@@ -97,12 +96,12 @@ def json_default(obj: Any) -> str:
         return noserio(obj)
 
 
-ALL_SPECIAL_KEYS = set([CIRCLE, ERROR, CLASS_INFO, NOSERIO])
+ALL_SPECIAL_KEYS = {CIRCLE, ERROR, CLASS_INFO, NOSERIO}
 
 
 def jsonify_for_ui(*args, **kwargs):
     """Options for jsonify common to UI displays.
-    
+
     Redacts keys and hides special fields introduced by trulens.
     """
 
@@ -112,51 +111,51 @@ def jsonify_for_ui(*args, **kwargs):
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, JSON]] = None,
-    instrument: Optional['Instrument'] = None,
+    instrument: Optional[Instrument] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
     depth: int = 0,
-    max_depth: int = 256
+    max_depth: int = 256,
 ) -> JSON:
     """Convert the given object into types that can be serialized in json.
 
-    Args:
-        obj: the object to jsonify.
+        Args:
+            obj: the object to jsonify.
 
-        dicted: the mapping from addresses of already jsonifed objects (via id)
-            to their json.
+            dicted: the mapping from addresses of already jsonifed objects (via id)
+                to their json.
 
-        instrument: instrumentation functions for checking whether to recur into
-            components of `obj`.
+            instrument: instrumentation functions for checking whether to recur into
+                components of `obj`.
 
-        skip_specials: remove specially keyed structures from the json. These
-            have keys that start with "__tru_".
+            skip_specials: remove specially keyed structures from the json. These
+                have keys that start with "__tru_".
 
-        redact_keys: redact secrets from the output. Secrets are detremined by
-            `keys.py:redact_value` .
+            redact_keys: redact secrets from the output. Secrets are detremined by
+                `keys.py:redact_value` .
 
-        include_excluded: include fields that are annotated to be excluded by
-            pydantic.
+            include_excluded: include fields that are annotated to be excluded by
+                pydantic.
 
-        depth: the depth of the serialization of the given object relative to
-            the serialization of its container. 
-`
-        max_depth: the maximum depth of the serialization of the given object.
-            Objects to be serialized beyond this will be serialized as
-            "non-serialized object" as per `noserio`. Note that this may happen
-            for some data layouts like linked lists. This value should be no
-            larger than half the value set by
-            [sys.setrecursionlimit][sys.setrecursionlimit].
+            depth: the depth of the serialization of the given object relative to
+                the serialization of its container.
+    `
+            max_depth: the maximum depth of the serialization of the given object.
+                Objects to be serialized beyond this will be serialized as
+                "non-serialized object" as per `noserio`. Note that this may happen
+                for some data layouts like linked lists. This value should be no
+                larger than half the value set by
+                [sys.setrecursionlimit][sys.setrecursionlimit].
 
-    Returns:
-        The jsonified version of the given object. Jsonified means that the the
-        object is either a JSON base type, a list, or a dict with the containing
-        elements of the same.
+        Returns:
+            The jsonified version of the given object. Jsonified means that the the
+            object is either a JSON base type, a list, or a dict with the containing
+            elements of the same.
     """
 
     # NOTE(piotrm): We might need to do something special for the below types as
-    # they are stateful if iterated. That is, they might be iteratable only once
+    # they are stateful if iterated. That is, they might be iterable only once
     # and iterating will break their user's interfaces.
     """
     if isinstance(obj, typing.Iterator):
@@ -202,6 +201,7 @@ def jsonify(
 
         def recur_key(k):
             return isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
+
     else:
 
         def recur_key(k):
@@ -241,7 +241,7 @@ def jsonify(
             redact_keys=redact_keys,
             include_excluded=include_excluded,
             depth=depth + 1,
-            max_depth=max_depth
+            max_depth=max_depth,
         )
 
     content = None
@@ -313,8 +313,8 @@ def jsonify(
             {
                 k: recur(safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude) and
-                recur_key(k)
+                if (not skip_excluded or not v.field_info.exclude)
+                and recur_key(k)
             }
         )
 
@@ -348,7 +348,6 @@ def jsonify(
         content = forward_value
 
     elif instrument.to_instrument_object(obj):
-
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
@@ -357,10 +356,14 @@ def jsonify(
         # TODO(piotrm): object walks redo
         forward_value.update(
             {
-                k: recur(v) for k, v in kvs.items() if recur_key(k) and (
-                    isinstance(v, JSON_BASES) or isinstance(v, Dict) or
-                    isinstance(v, Sequence) or
-                    instrument.to_instrument_object(v)
+                k: recur(v)
+                for k, v in kvs.items()
+                if recur_key(k)
+                and (
+                    isinstance(v, JSON_BASES)
+                    or isinstance(v, Dict)
+                    or isinstance(v, Sequence)
+                    or instrument.to_instrument_object(v)
                 )
             }
         )
@@ -376,10 +379,15 @@ def jsonify(
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
-    if not skip_specials and isinstance(content, dict) and not isinstance(
-            obj, dict) and (instrument.to_instrument_object(obj) or
-                            isinstance(obj, WithClassInfo)):
-
+    if (
+        not skip_specials
+        and isinstance(content, dict)
+        and not isinstance(obj, dict)
+        and (
+            instrument.to_instrument_object(obj)
+            or isinstance(obj, WithClassInfo)
+        )
+    ):
         content[CLASS_INFO] = Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()
