@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath("../"))
 # -- Project information -----------------------------------------------------
 
 project = "trulens"
-copyright = "2023, TruEra"
-author = "TruEra"
+copyright = "2024, Snowflake"
+author = "Snowflake"
 
 # -- General configuration ---------------------------------------------------
 
