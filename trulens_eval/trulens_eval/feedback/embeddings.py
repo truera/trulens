@@ -21,7 +21,7 @@ class Embeddings(WithClassInfo, SerialModel):
     """
     _embed_model: BaseEmbedding
 
-    def __init__(self, embed_model: BaseEmbedding = None):
+    def __init__(self, embed_model: BaseEmbedding):
         """Instantiates embeddings for feedback functions.
         !!! example
         
