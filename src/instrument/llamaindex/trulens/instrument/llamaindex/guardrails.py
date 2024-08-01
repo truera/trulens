@@ -23,7 +23,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
 
     Example: "Using TruLens guardrail context filters with Llama-Index"
         ```python
-        from trulens.guardrails.llama import WithFeedbackFilterNodes
+        from trulens.instrument.llamaindex.guardrails import WithFeedbackFilterNodes
 
         # note: feedback function used for guardrail must only return a score, not also reasons
         feedback = (
