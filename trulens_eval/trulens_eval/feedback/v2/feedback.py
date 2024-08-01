@@ -285,8 +285,6 @@ class PromptResponseRelevance(Relevance, WithPrompt):
 
         - Long RESPONSES should score equally well as short RESPONSES.
 
-        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the most RELEVANT.
-
         - RESPONSE must be relevant to the entire PROMPT to get a score of 10.
 
         - RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
@@ -304,6 +302,8 @@ class PromptResponseRelevance(Relevance, WithPrompt):
         - RESPONSE that confidently FALSE should get a score of 0.
 
         - RESPONSE that is only seemingly RELEVANT should get a score of 0.
+
+        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of 0.
 
         - Never elaborate.
         """
