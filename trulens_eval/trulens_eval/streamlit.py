@@ -133,7 +133,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color="normal",
                 )
             else:
-                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
+                cat = styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
@@ -141,7 +143,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color=(
                         "normal"
                         if cat.compare(
-                            mean, CATEGORY.PASS[cat.direction].threshold
+                            mean, styles.CATEGORY.PASS[cat.direction].threshold
                         )
                         else "inverse"
                     ),
