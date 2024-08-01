@@ -120,7 +120,7 @@ class Tru(python.SingletonPerName):
             written to database (defaults to `False`)
 
         database_args: Additional arguments to pass to the database constructor.
-        
+
         snowflake_connection_parameters: Connection arguments to Snowflake database to use.
 
         name: Name of the app.
@@ -287,14 +287,14 @@ class Tru(python.SingletonPerName):
         from snowflake.core.schema import Schema
         from snowflake.snowpark import Session
 
-        session = Session.builder.configs(snowflake_connection_parameters
-                                         ).create()
+        session = Session.builder.configs(
+            snowflake_connection_parameters
+        ).create()
         root = Root(session)
         schema = Schema(name=schema_name)
-        root.databases[snowflake_connection_parameters["database"]
-                      ].schemas.create(
-                          schema, mode=CreateMode.if_not_exists
-                      )
+        root.databases[
+            snowflake_connection_parameters["database"]
+        ].schemas.create(schema, mode=CreateMode.if_not_exists)
 
     def Chain(
         self, chain: langchain.chains.base.Chain, **kwargs: dict

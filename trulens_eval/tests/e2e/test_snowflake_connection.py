@@ -1,5 +1,5 @@
 """
-Tests for a Snowflake connection. 
+Tests for a Snowflake connection.
 """
 
 import os
@@ -15,7 +15,6 @@ from trulens_eval import Tru
 
 
 class TestSnowflakeConnection(TestCase):
-
     def setUp(self):
         self._snowflake_connection_parameters = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
@@ -35,7 +34,8 @@ class TestSnowflakeConnection(TestCase):
 
     def _list_schemas(self):
         schemas = self._snowflake_root.databases[
-            self._snowflake_connection_parameters["database"]].schemas.iter()
+            self._snowflake_connection_parameters["database"]
+        ].schemas.iter()
         return [curr.name for curr in schemas]
 
     @optional_test
@@ -48,9 +48,8 @@ class TestSnowflakeConnection(TestCase):
         try:
             self.assertNotIn(schema_name, self._list_schemas())
             tru = Tru(
-                snowflake_connection_parameters=self.
-                _snowflake_connection_parameters,
-                name=app_name
+                snowflake_connection_parameters=self._snowflake_connection_parameters,
+                name=app_name,
             )
             self.assertIn(schema_name, self._list_schemas())
         finally:
@@ -61,5 +60,5 @@ class TestSnowflakeConnection(TestCase):
                 schema.delete()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
