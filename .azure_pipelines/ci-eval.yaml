@@ -41,7 +41,10 @@ jobs:
           # Show python version
           echo "Using $(python --version) ($(which python))"
           poetry config virtualenvs.create false
-          poetry install --only tests --sync
+
+          # NOTE: workaround for langchain typecheck error
+          # https://github.com/truera/trulens/issues/1308
+          poetry run pip install pip==24.1.2
 
           poetry run python --version
           poetry run pip --version
