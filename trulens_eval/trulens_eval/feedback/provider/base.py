@@ -156,7 +156,9 @@ class LLMProvider(Provider):
             The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, "Max score must be greater than min score."
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -172,8 +174,9 @@ class LLMProvider(Provider):
             mod_generated_utils.re_configured_rating(
                 response,
                 min_score_val=min_score_val,
-                max_score_val=max_score_val
-            ) - min_score_val
+                max_score_val=max_score_val,
+            )
+            - min_score_val
         ) / (max_score_val - min_score_val)
 
     def generate_confidence_score(
@@ -200,7 +203,9 @@ class LLMProvider(Provider):
             The feedback score on a 0-1 scale and the confidence score.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, "Max score must be greater than min score."
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": verb_confidence_prompt}]
         if user_prompt is not None:
@@ -209,25 +214,29 @@ class LLMProvider(Provider):
         response = self.endpoint.run_in_pace(
             func=self._create_chat_completion,
             messages=llm_messages,
-            temperature=temperature
+            temperature=temperature,
         )
         # print(f'Relevance score and Confidence score: {response}')
-        relevance_score = re.search(r'\d+', response)
+        relevance_score = re.search(r"\d+", response)
 
         confidence_score = re.search(
-            r'CONFIDENCE: (\d+)', response
+            r"CONFIDENCE: (\d+)", response
         )  # TODO: refactor this to use a more general pattern
-        if confidence_score and relevance_score and 0 <= float(
-                confidence_score.group(1)) <= 10 and min_score_val <= float(
-                    relevance_score.group(0)) <= max_score_val:
+        if (
+            confidence_score
+            and relevance_score
+            and 0 <= float(confidence_score.group(1)) <= 10
+            and min_score_val
+            <= float(relevance_score.group(0))
+            <= max_score_val
+        ):
             confidence = float(confidence_score.group(1))
             relevance_score = float(relevance_score.group(0))
 
             return (
-                (relevance_score - min_score_val) /
-                (max_score_val - min_score_val), {
-                    "confidence_score": confidence / 10.0
-                }
+                (relevance_score - min_score_val)
+                / (max_score_val - min_score_val),
+                {"confidence_score": confidence / 10.0},
             )
         else:
             raise ValueError("Confidence score not found in response.")
@@ -238,7 +247,7 @@ class LLMProvider(Provider):
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -258,7 +267,9 @@ class LLMProvider(Provider):
             Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, "Max score must be greater than min score."
+        assert (
+            max_score_val > min_score_val
+        ), "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -278,8 +289,9 @@ class LLMProvider(Provider):
                         mod_generated_utils.re_configured_rating(
                             line,
                             min_score_val=min_score_val,
-                            max_score_val=max_score_val
-                        ) - min_score_val
+                            max_score_val=max_score_val,
+                        )
+                        - min_score_val
                     ) / (max_score_val - min_score_val)
                 criteria_lines = []
                 supporting_evidence_lines = []
@@ -327,8 +339,9 @@ class LLMProvider(Provider):
                 mod_generated_utils.re_configured_rating(
                     response,
                     min_score_val=min_score_val,
-                    max_score_val=max_score_val
-                ) - min_score_val
+                    max_score_val=max_score_val,
+                )
+                - min_score_val
             ) / (max_score_val - min_score_val)
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
@@ -336,56 +349,13 @@ class LLMProvider(Provider):
             )
             return score, {}
 
-    # TODO: to be deprecated soon
-    def context_relevance_old(
-        self,
-        question: str,
-        context: str,
-        temperature: float = 0.0,
-    ) -> float:
-        """
-        Uses chat completion model. A function that completes a template to
-        check the relevance of the context to the question.
-
-        !!! example
-
-            ```python
-            from trulens_eval.app import App
-            context = App.select_context(rag_app)
-            feedback = (
-                Feedback(provider.context_relevance_with_cot_reasons)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-                )
-            ```
-
-        Args:
-            question (str): A question being asked.
-
-            context (str): Context related to the question.
-
-        Returns:
-            float: A value between 0.0 (not relevant) and 1.0 (relevant).
-        """
-
-        return self.generate_score(
-            system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM_OLD,
-            user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER,
-                question=question,
-                context=context
-            ),
-            temperature=temperature
-        )
-
     def context_relevance(
         self,
         question: str,
         context: str,
         criteria: str = "",
         output_space: str = "",
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -422,11 +392,10 @@ class LLMProvider(Provider):
             user_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
-                context=context
+                context=context,
             ),
-            temperature=temperature
+            temperature=temperature,
         )
-
 
     def context_relevance_with_cot_reasons(
         self,
@@ -434,7 +403,7 @@ class LLMProvider(Provider):
         context: str,
         criteria: str = "",
         output_space: str = "",
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
@@ -478,7 +447,7 @@ class LLMProvider(Provider):
         return self.generate_score_and_reasons(
             system_prompt=ContextRelevance.system_prompt.template,
             user_prompt=user_prompt,
-            temperature=temperature
+            temperature=temperature,
         )
 
     def context_relevance_verb_confidence(
@@ -487,7 +456,7 @@ class LLMProvider(Provider):
         context: str,
         criteria: str = "",
         output_space: str = "",
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict[str, float]]:
         """
         Uses chat completion model. A function that completes a
@@ -523,14 +492,14 @@ class LLMProvider(Provider):
 
         try:
             return self.generate_confidence_score(
-                verb_confidence_prompt=ContextRelevance.system_prompt.template +
-                ContextRelevance.verb_confidence_prompt.template,
+                verb_confidence_prompt=ContextRelevance.system_prompt.template
+                + ContextRelevance.verb_confidence_prompt.template,
                 user_prompt=str.format(
                     prompts.CONTEXT_RELEVANCE_USER,
                     question=question,
-                    context=context
+                    context=context,
                 ),
-                temperature=temperature
+                temperature=temperature,
             )
         except ValueError as e:
             logger.error(e)
@@ -1271,7 +1240,7 @@ class LLMProvider(Provider):
         for assessment in key_point_inclusion_assessments:
             reasons += assessment + "\n\n"
             if assessment:
-                first_line = assessment.split('\n')[0]
+                first_line = assessment.split("\n")[0]
                 score = mod_generated_utils.re_configured_rating(first_line) / 3
                 scores.append(score)
 
@@ -1349,34 +1318,34 @@ class LLMProvider(Provider):
         self, source: str, statement: str
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
-        the statement using an LLM provider.
+                the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons.
+                The LLM will process the entire statement at once, using chain of
+                thought methodology to emit the reasons.
 
-        Abstentions will be considered as grounded.
+                Abstentions will be considered as grounded.
 
-        !!! example
+                !!! example
 
-            ```python
-            from trulens_eval import Feedback
-            from trulens_eval.feedback.provider.openai import OpenAI
-import re
+                    ```python
+                    from trulens_eval import Feedback
+                    from trulens_eval.feedback.provider.openai import OpenAI
+        import re
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_groundedness = (
-                Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect()
-                .on_output()
-                )
-            ```
-        Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
+                    f_groundedness = (
+                        Feedback(provider.groundedness_measure_with_cot_reasons)
+                        .on(context.collect()
+                        .on_output()
+                        )
+                    ```
+                Args:
+                    source: The source that should support the statement.
+                    statement: The statement to check groundedness.
 
-        Returns:
-            Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
+                Returns:
+                    Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
         nltk.download("punkt", quiet=True)
         groundedness_scores = {}
