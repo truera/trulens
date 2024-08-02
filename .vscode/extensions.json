@@ -4,6 +4,5 @@
     "charliermarsh.ruff",
     "ms-toolsai.jupyter",
     "github.vscode-pull-request-github",
-
   ]
 }
