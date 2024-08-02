@@ -215,6 +215,7 @@ class OutputSpace(str, Enum):
     """
     Enum for valid output spaces of scores.
     """
+
     LIKERT_0_3 = "likert-0-3"
     BINARY = "binary"
     # note: we are deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space
@@ -224,7 +225,7 @@ class EvalCriteria(pydantic.BaseModel):
     criteria: str
     output_space: str
 
-    @pydantic.field_validator('output_space')
+    @pydantic.field_validator("output_space")
     def validate_output_space(cls, v):
         if v not in [OutputSpace.LIKERT_0_3, OutputSpace.BINARY]:
             raise ValueError(
@@ -261,15 +262,14 @@ class ContextRelevance(Relevance, WithPrompt):
         """
     output_space: str = OutputSpace.LIKERT_0_3
 
-    system_prompt_template: ClassVar[
-        PromptTemplate
-    ] = PromptTemplate.from_template(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+    system_prompt_template: ClassVar[PromptTemplate] = (
+        PromptTemplate.from_template(
+            """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
         Respond only as a number from {output_space_prompt}.
 
         Criteria for evaluating relevance:
         {criteria}
-        
+
         A few additional scoring guidelines:
 
         - Long CONTEXTS should score equally well as short CONTEXTS.
@@ -280,6 +280,7 @@ class ContextRelevance(Relevance, WithPrompt):
 
         - Never elaborate.
         """
+        )
     )
 
     @staticmethod
@@ -298,15 +299,15 @@ class ContextRelevance(Relevance, WithPrompt):
         cls.system_prompt = PromptTemplate.from_template(
             cls.system_prompt_template.format(
                 criteria=validated.criteria,
-                output_space_prompt=cls.output_space_prompt
+                output_space_prompt=cls.output_space_prompt,
             )
         )
 
     user_prompt = PromptTemplate.from_template(
         """QUESTION: {question}
         CONTEXT: {context}
-        
-        RELEVANCE: 
+
+        RELEVANCE:
         """
     )
     verb_confidence_prompt = PromptTemplate.from_template(
@@ -343,7 +344,7 @@ class ContextRelevanceOld(Relevance, WithPrompt):
 
     system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from 0 to 3 where 0 is the least relevant and 3 is the most relevant. 
+        Respond only as a number from 0 to 3 where 0 is the least relevant and 3 is the most relevant.
 
         A few additional scoring guidelines:
 

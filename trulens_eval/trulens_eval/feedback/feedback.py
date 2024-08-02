@@ -58,8 +58,9 @@ ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
 Those take in any number of arguments and return either a single float or a
 float and a dictionary (of metadata)."""
 
-AggCallable = Callable[[Union[Iterable[float], Iterable[Tuple[float, float]]]],
-                       float]
+AggCallable = Callable[
+    [Union[Iterable[float], Iterable[Tuple[float, float]]]], float
+]
 """Signature of aggregation functions."""
 
 

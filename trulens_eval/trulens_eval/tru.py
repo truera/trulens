@@ -391,10 +391,13 @@ class Tru(python.SingletonPerName):
         return TruVirtual(tru=self, app=app, **kwargs)
 
     def BenchmarkExperiment(
-        self, app_id: str, ground_truth: Union[List, Callable,
-                                               FunctionOrMethod],
-        feedback_to_score_fn: Callable, agg_funcs: List[feedback.AggCallable],
-        benchmark_params: Any, **kwargs: dict
+        self,
+        app_id: str,
+        ground_truth: Union[List, Callable, FunctionOrMethod],
+        feedback_to_score_fn: Callable,
+        agg_funcs: List[feedback.AggCallable],
+        benchmark_params: Any,
+        **kwargs: dict,
     ) -> trulens_eval.tru_custom_app.TruCustomApp:
         """Create a Custom app for special use case: benchmarking feedback functions.
 
@@ -410,20 +413,22 @@ class Tru(python.SingletonPerName):
         """
 
         from trulens_eval import TruCustomApp
-        from trulens_eval.feedback.benchmark_frameworks.tru_benchmark_experiment import \
-            TruBenchmarkExperiment
+        from trulens_eval.feedback.benchmark_frameworks.tru_benchmark_experiment import (
+            TruBenchmarkExperiment,
+        )
+
         benchmark_exp = TruBenchmarkExperiment(
             ground_truth=ground_truth,
             feedback_to_score_fn=feedback_to_score_fn,
             agg_funcs=agg_funcs,
-            benchmark_params=benchmark_params
+            benchmark_params=benchmark_params,
         )
 
         return TruCustomApp(
             benchmark_exp,
             app_id=app_id,
             feedbacks=benchmark_exp.f_benchmark_metrics,
-            **kwargs
+            **kwargs,
         )
 
     def reset_database(self):
@@ -1074,9 +1079,7 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {
-                        name: count for name, count in runs_stats.items()
-                    }
+                    {name: count for name, count in runs_stats.items()}
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()

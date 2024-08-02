@@ -31,7 +31,7 @@ def validate_rating(rating, min_val=0, max_val=10) -> float:
     """Validate a rating is specified_range."""
 
     if not min_val <= rating <= max_val:
-        raise ValueError(f'Rating must be between {min_val} and {max_val}.')
+        raise ValueError(f"Rating must be between {min_val} and {max_val}.")
 
     return rating
 
@@ -53,7 +53,7 @@ def re_configured_rating(
     s: str, min_score_val: int = 0, max_score_val: int = 3
 ) -> int:
     """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable to the ranges like 4-point Likert scale or binary (0 or 1).
-    
+
     If the string does not match an integer/a float or matches an integer/a float outside the
     {min_score_val} - {max_score_val} range, raises an error instead. If multiple numbers are found within
     the expected 0-10 range, the smallest is returned.
@@ -62,8 +62,8 @@ def re_configured_rating(
         s: String to extract rating from.
 
     Returns:
-        int: Extracted rating. 
-    
+        int: Extracted rating.
+
     Raises:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """

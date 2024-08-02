@@ -203,7 +203,7 @@ class Bedrock(LLMProvider):
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> float:
         """
         Base method to generate a score only, used for evaluation.
@@ -232,8 +232,9 @@ class Bedrock(LLMProvider):
             func=self._create_chat_completion, messages=llm_messages
         )
 
-        return (re_configured_rating(response) -
-                min_score_val) / (max_score_val - min_score_val)
+        return (re_configured_rating(response) - min_score_val) / (
+            max_score_val - min_score_val
+        )
 
     # overwrite base to use prompt instead of messages
     def generate_score_and_reasons(
@@ -242,7 +243,7 @@ class Bedrock(LLMProvider):
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
-        temperature: float = 0.0
+        temperature: float = 0.0,
     ) -> Union[float, Tuple[float, Dict]]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -282,8 +283,9 @@ class Bedrock(LLMProvider):
                         re_configured_rating(
                             line,
                             min_score_val=min_score_val,
-                            max_score_val=max_score_val
-                        ) - min_score_val
+                            max_score_val=max_score_val,
+                        )
+                        - min_score_val
                     ) / (max_score_val - min_score_val)
                 if "Criteria" in line:
                     parts = line.split(":")
@@ -306,6 +308,7 @@ class Bedrock(LLMProvider):
                 re_configured_rating(
                     response,
                     min_score_val=min_score_val,
-                    max_score_val=max_score_val
-                ) - min_score_val
+                    max_score_val=max_score_val,
+                )
+                - min_score_val
             ) / (max_score_val - min_score_val)
