@@ -9,7 +9,7 @@ name = "trulens-instrument-llamaindex"
 version = "1.0.0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-  "Truera Inc <all@truera.com>",
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
 license = "MIT"
 readme = "README.md"
