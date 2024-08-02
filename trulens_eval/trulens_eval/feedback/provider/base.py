@@ -367,7 +367,7 @@ class LLMProvider(Provider):
             from trulens_eval.app import App
             context = App.select_context(rag_app)
             feedback = (
-                Feedback(provider.context_relevance_with_cot_reasons)
+                Feedback(provider.context_relevance)
                 .on_input()
                 .on(context)
                 .aggregate(np.mean)
@@ -376,9 +376,10 @@ class LLMProvider(Provider):
 
         Args:
             question (str): A question being asked.
-
             context (str): Context related to the question.
-
+            criteria (str): Overriding evaluation criteria for evaluation .
+            output_space (str): Overriding output space for evaluation.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
