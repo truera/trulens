@@ -10,4 +10,6 @@
 
 from importlib.metadata import version
 
-__version__ = version(__package__ or __name__)
+from trulens.core.utils.imports import safe_importlib_package_name
+
+__version__ = version(safe_importlib_package_name(__package__ or __name__))

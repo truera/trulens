@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
+def safe_importlib_package_name(package_name: str) -> str:
+    return (
+        package_name
+        if sys.version_info > (3, 9)
+        else package_name.replace(".", "-")
+    )
+
+
 def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
     file."""

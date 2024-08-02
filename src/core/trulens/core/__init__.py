@@ -20,8 +20,10 @@ from trulens.core.feedback import Provider
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select
 from trulens.core.tru import Tru
+from trulens.core.utils.imports import safe_importlib_package_name
 
-__version__ = version(__package__ or __name__)
+__version__ = version(safe_importlib_package_name(__package__ or __name__))
+
 
 __all__ = [
     "Tru",  # main interface

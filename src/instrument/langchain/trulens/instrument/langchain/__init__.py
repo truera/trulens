@@ -10,12 +10,14 @@
 
 from importlib.metadata import version
 
+from trulens.core.utils.imports import safe_importlib_package_name
 from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.instrument.langchain.langchain import LangChainComponent
 from trulens.instrument.langchain.tru_chain import LangChainInstrument
 from trulens.instrument.langchain.tru_chain import TruChain
 
-__version__ = version(__package__ or __name__)
+__version__ = version(safe_importlib_package_name(__package__ or __name__))
+
 
 __all__ = [
     "TruChain",

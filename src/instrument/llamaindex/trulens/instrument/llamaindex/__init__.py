@@ -10,12 +10,14 @@
 
 from importlib.metadata import version
 
+from trulens.core.utils.imports import safe_importlib_package_name
 from trulens.instrument.llamaindex.guardrails import WithFeedbackFilterNodes
 from trulens.instrument.llamaindex.llama import LlamaIndexComponent
 from trulens.instrument.llamaindex.tru_llama import LlamaInstrument
 from trulens.instrument.llamaindex.tru_llama import TruLlama
 
-__version__ = version(__package__ or __name__)
+__version__ = version(safe_importlib_package_name(__package__ or __name__))
+
 
 __all__ = [
     "TruLlama",

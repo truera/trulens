@@ -10,9 +10,11 @@
 
 from importlib.metadata import version
 
+from trulens.core.utils.imports import safe_importlib_package_name
 from trulens.providers.huggingface.provider import Huggingface
 from trulens.providers.huggingface.provider import HuggingfaceLocal
 
-__version__ = version(__package__ or __name__)
+__version__ = version(safe_importlib_package_name(__package__ or __name__))
+
 
 __all__ = ["Huggingface", "HuggingfaceLocal"]
