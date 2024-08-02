@@ -34,10 +34,10 @@ lint: env
 format: env
 	poetry run ruff format
 
-precommit-hooks: env
+precommit-hooks:
 	poetry run pre-commit install
 
-run-precommit: precommit-hooks
+run-precommit:
 	poetry run pre-commit run --all-files --show-diff-on-failure
 
 # Start a jupyer lab instance.

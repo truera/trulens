@@ -14,7 +14,7 @@ Optionally install a Python runtime manager like PyEnv. This helps install and s
 ```bash
 curl https://pyenv.run | bash
 git clone https://github.com/pyenv/pyenv-virtualenv.git $(pyenv root)/plugins/pyenv-virtualenv
-pyenv install 3.11  # python >= 3.9 supported
+pyenv install 3.11  # python 3.11 recommended, python >= 3.9 supported
 pyenv local 3.11
 ```
 

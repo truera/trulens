@@ -116,12 +116,11 @@ for package in packages:
 
         if not len(parts):
             continue
-        if (
-            package == "dashboard"
-            and len(parts) > 2
-            and parts[2] == "react_components"
-        ):
-            continue
+        if package == "dashboard":
+            if parts[0] != "trulens":
+                continue
+            if len(parts) > 2 and parts[2] == "react_components":
+                continue
         if not os.path.exists(path.parent / "__init__.py"):
             print(
                 "Skipping due to missing python package: ",
