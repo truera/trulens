@@ -209,6 +209,7 @@ class Abstention(Semantics, WithPrompt):
 
 LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
 BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"
+LIKERT_0_10_PROMPT = "0 to 10, where 0 is the lowest score according to the criteria and 10 is the highest possible score"  # legacy, to be deprecated
 
 
 class OutputSpace(str, Enum):
@@ -216,9 +217,10 @@ class OutputSpace(str, Enum):
     Enum for valid output spaces of scores.
     """
 
+    LIKERT_0_10 = "likert-0-10"  # legacy
     LIKERT_0_3 = "likert-0-3"
     BINARY = "binary"
-    # note: we are deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space
+    # note: we will be deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space in the near release
 
 
 class EvalCriteria(pydantic.BaseModel):
@@ -227,21 +229,26 @@ class EvalCriteria(pydantic.BaseModel):
 
     @pydantic.field_validator("output_space")
     def validate_output_space(cls, v):
-        if v not in [OutputSpace.LIKERT_0_3, OutputSpace.BINARY]:
+        if v not in [
+            OutputSpace.LIKERT_0_3,
+            OutputSpace.BINARY,
+            OutputSpace.LIKERT_0_10,
+        ]:
             raise ValueError(
-                'output_space must be either "likert-0-3" or "binary"'
+                'output_space must be either "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
         return v
 
     def get_output_scale_prompt(self) -> str:
-        # TODO: verify if this is compatible with the flag higher_is_better directionality
         if self.output_space == OutputSpace.LIKERT_0_3:
             return LIKERT_0_3_PROMPT
+        elif self.output_space == OutputSpace.LIKERT_0_10:
+            return LIKERT_0_10_PROMPT
         elif self.output_space == OutputSpace.BINARY:
             return BINARY_0_1_PROMPT
         else:
             raise ValueError(
-                'output_space must be either "likert-0-3" or "binary"'
+                'output_space must be either "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
 
 
