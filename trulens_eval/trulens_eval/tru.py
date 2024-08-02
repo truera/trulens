@@ -396,7 +396,7 @@ class Tru(python.SingletonPerName):
         ground_truth: Union[List, Callable, FunctionOrMethod],
         feedback_to_score_fn: Callable,
         agg_funcs: List[feedback.AggCallable],
-        benchmark_params: Any,
+        benchmark_params: dict,
         **kwargs: dict,
     ) -> trulens_eval.tru_custom_app.TruCustomApp:
         """Create a Custom app for special use case: benchmarking feedback functions.

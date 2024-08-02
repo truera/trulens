@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 class BenchmarkParams(BaseModel):
     temperature: float = 0.0
-    criteria: Optional[str] = (None,)
+    criteria: Optional[str] = None
     output_space: Optional[str] = None
     # TODO: support more parameters
     # "use_verb_confidence": False,
