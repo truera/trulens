@@ -7,12 +7,12 @@
 Currently to get going, a user needs to add  4 lines of python:
 
 ```python
-from trulens.core import Tru # line 1
-tru = Tru() # line 2
-with tru.Chain(app): # 3
+from trulens.dashboard import run_dashboard # line 1
+from trulens.instrument.langchain import TruChain # line 2
+with TruChain(app): # 3
     app.invoke("some question") # doesn't count since they already had this
 
-tru.start_dashboard() # 4
+run_dashboard() # 4
 ```
 
 3 of these lines are fixed so only #3 would vary in typical cases. From here

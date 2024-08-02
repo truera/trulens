@@ -127,7 +127,7 @@ feedback_result: FeedbackResult = f_context_relevance.run(app=app, record=record
 The object can also be provided to an app wrapper for automatic evaluation:
 
 ```python
-app: App = tru.Chain(...., feedbacks=[f_context_relevance])
+app: App = TruChain(...., feedbacks=[f_context_relevance])
 ```
 
 ## Specifying Implementation Function and Aggregate

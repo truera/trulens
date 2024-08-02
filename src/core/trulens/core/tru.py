@@ -8,6 +8,7 @@ import json
 import logging
 from multiprocessing import Process
 from pprint import PrettyPrinter
+import re
 import threading
 from threading import Thread
 from time import sleep
@@ -26,7 +27,6 @@ from typing import (
 import humanize
 import pandas
 from tqdm.auto import tqdm
-import trulens
 from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -106,6 +106,10 @@ class Tru(python.SingletonPerName):
             written to database (defaults to `False`)
 
         database_args: Additional arguments to pass to the database constructor.
+
+        snowflake_connection_parameters: Connection arguments to Snowflake database to use.
+
+        name: Name of the app.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -161,6 +165,8 @@ class Tru(python.SingletonPerName):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        snowflake_connection_parameters: Optional[Dict[str, str]] = None,
+        name: Optional[str] = None,
     ):
         """
         Args:
@@ -170,6 +176,24 @@ class Tru(python.SingletonPerName):
 
         if database_args is None:
             database_args = {}
+
+        if snowflake_connection_parameters is not None:
+            if database is not None:
+                raise ValueError(
+                    "`database` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if database_url is not None:
+                raise ValueError(
+                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if not name:
+                raise ValueError(
+                    "`name` must be set if `snowflake_connection_parameters` is set!"
+                )
+            schema_name = self._validate_and_compute_schema_name(name)
+            database_url = self._create_snowflake_database_url(
+                snowflake_connection_parameters, schema_name
+            )
 
         database_args.update(
             {
@@ -216,58 +240,50 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-    def Basic(
-        self, text_to_text: Callable[[str], str], **kwargs: dict
-    ) -> trulens.core.TruBasicApp:
-        """Create a basic app recorder with database managed by self.
+    @staticmethod
+    def _validate_and_compute_schema_name(name):
+        if not re.match(r"^[A-Za-z0-9_]+$", name):
+            raise ValueError(
+                "`name` must contain only alphanumeric and underscore characters!"
+            )
+        return f"TRULENS_APP__{name.upper()}"
 
-        Args:
-            text_to_text: A function that takes a string and returns a string.
-                The wrapped app's functionality is expected to be entirely in
-                this function.
+    @staticmethod
+    def _create_snowflake_database_url(
+        snowflake_connection_parameters: Dict[str, str], schema_name: str
+    ) -> str:
+        from snowflake.sqlalchemy import URL
 
-            **kwargs: Additional keyword arguments to pass to
-                [TruBasicApp][trulens.core.TruBasicApp].
-        """
+        Tru._create_snowflake_schema_if_not_exists(
+            snowflake_connection_parameters, schema_name
+        )
+        return URL(
+            account=snowflake_connection_parameters["account"],
+            user=snowflake_connection_parameters["user"],
+            password=snowflake_connection_parameters["password"],
+            database=snowflake_connection_parameters["database"],
+            schema=schema_name,
+            warehouse=snowflake_connection_parameters.get("warehouse", None),
+            role=snowflake_connection_parameters.get("role", None),
+        )
 
-        from trulens.core import TruBasicApp
+    @staticmethod
+    def _create_snowflake_schema_if_not_exists(
+        snowflake_connection_parameters: Dict[str, str], schema_name: str
+    ):
+        from snowflake.core import CreateMode
+        from snowflake.core import Root
+        from snowflake.core.schema import Schema
+        from snowflake.snowpark import Session
 
-        return TruBasicApp(tru=self, text_to_text=text_to_text, **kwargs)
-
-    def Custom(self, app: Any, **kwargs: dict) -> trulens.core.TruCustomApp:
-        """Create a custom app recorder with database managed by self.
-
-        Args:
-            app: The app to be instrumented. This can be any python object.
-
-            **kwargs: Additional keyword arguments to pass to
-                [TruCustomApp][trulens.core.TruCustomApp].
-        """
-
-        from trulens.core import TruCustomApp
-
-        return TruCustomApp(tru=self, app=app, **kwargs)
-
-    def Virtual(
-        self,
-        app: Union[trulens.core.app.virtual.VirtualApp, Dict],
-        **kwargs: dict,
-    ) -> trulens.core.app.virtual.TruVirtual:
-        """Create a virtual app recorder with database managed by self.
-
-        Args:
-            app: The app to be instrumented. If not a
-                [VirtualApp][trulens.core.app.virtual.VirtualApp], it is passed
-                to [VirtualApp][trulens.core.app.virtual.VirtualApp] constructor
-                to create it.
-
-            **kwargs: Additional keyword arguments to pass to
-                [TruVirtual][trulens.core.app.virtual.TruVirtual].
-        """
-
-        from trulens.core import TruVirtual
-
-        return TruVirtual(tru=self, app=app, **kwargs)
+        session = Session.builder.configs(
+            snowflake_connection_parameters
+        ).create()
+        root = Root(session)
+        schema = Schema(name=schema_name)
+        root.databases[
+            snowflake_connection_parameters["database"]
+        ].schemas.create(schema, mode=CreateMode.if_not_exists)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
