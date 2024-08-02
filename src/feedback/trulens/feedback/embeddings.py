@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations."""
 
-    _embed_model: BaseEmbedding
+    _embed_model: "BaseEmbedding"
 
-    def __init__(self, embed_model: BaseEmbedding):
+    def __init__(self, embed_model: "BaseEmbedding"):
         """Instantiates embeddings for feedback functions.
         !!! example
 
