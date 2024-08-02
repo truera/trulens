@@ -5,6 +5,9 @@
 	],
 	"python.testing.unittestEnabled": false,
 	"python.testing.pytestEnabled": true,
-	"editor.defaultFormatter": "charliermarsh.ruff",
 	"ruff.format.preview": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+    },
 }
