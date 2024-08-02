@@ -211,50 +211,6 @@ class LLMProvider(Provider):
             messages=llm_messages,
             temperature=temperature
         )
-
-        return (
-            mod_generated_utils.re_configured_rating(
-                response,
-                min_score_val=min_score_val,
-                max_score_val=max_score_val
-            ) - min_score_val
-        ) / (max_score_val - min_score_val)
-
-    def generate_confidence_score(
-        self,
-        verb_confidence_prompt: str,
-        user_prompt: Optional[str] = None,
-        min_score_val: int = 0,
-        max_score_val: int = 3,
-        temperature: float = 0.0,
-    ) -> Tuple[float, Dict[str, float]]:
-        """
-        Base method to generate a score normalized to 0 to 1, used for evaluation.
-
-        Args:
-            system_prompt: A pre-formatted system prompt.
-
-            user_prompt: An optional user prompt.
-
-            normalize: The normalization factor for the score.
-
-            temperature: The temperature for the LLM response.
-
-        Returns:
-            The feedback score on a 0-1 scale and the confidence score.
-        """
-        assert self.endpoint is not None, "Endpoint is not set."
-        assert max_score_val > min_score_val, "Max score must be greater than min score."
-
-        llm_messages = [{"role": "system", "content": verb_confidence_prompt}]
-        if user_prompt is not None:
-            llm_messages.append({"role": "user", "content": user_prompt})
-
-        response = self.endpoint.run_in_pace(
-            func=self._create_chat_completion,
-            messages=llm_messages,
-            temperature=temperature
-        )
         # print(f'Relevance score and Confidence score: {response}')
         relevance_score = re.search(r'\d+', response)
 
@@ -471,53 +427,6 @@ class LLMProvider(Provider):
             temperature=temperature
         )
 
-    def context_relevance(
-        self,
-        question: str,
-        context: str,
-        criteria: str = "",
-        output_space: str = "",
-        temperature: float = 0.0
-    ) -> float:
-        """
-        Uses chat completion model. A function that completes a template to
-        check the relevance of the context to the question.
-
-        !!! example
-
-            ```python
-            from trulens_eval.app import App
-            context = App.select_context(rag_app)
-            feedback = (
-                Feedback(provider.context_relevance_with_cot_reasons)
-                .on_input()
-                .on(context)
-                .aggregate(np.mean)
-                )
-            ```
-
-        Args:
-            question (str): A question being asked.
-
-            context (str): Context related to the question.
-
-        Returns:
-            float: A value between 0.0 (not relevant) and 1.0 (relevant).
-        """
-        if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
-                criteria, output_space
-            )
-
-        return self.generate_score(
-            system_prompt=ContextRelevance.system_prompt.template,
-            user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER,
-                question=question,
-                context=context,
-            ),
-            temperature=temperature,
-        )
 
     def context_relevance_with_cot_reasons(
         self,
