@@ -27,11 +27,11 @@ class ParseError(Exception):
         self.pattern = pattern
 
 
-def validate_rating(rating) -> float:
-    """Validate a rating is between 0 and 10."""
+def validate_rating(rating, min_val=0, max_val=10) -> float:
+    """Validate a rating is specified_range."""
 
-    if not 0 <= rating <= 10:
-        raise ValueError("Rating must be between 0 and 10")
+    if not min_val <= rating <= max_val:
+        raise ValueError(f'Rating must be between {min_val} and {max_val}.')
 
     return rating
 
@@ -47,6 +47,51 @@ PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
 
 PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 """Regex that matches integers."""
+
+
+def re_configured_rating(
+    s: str, min_score_val: int = 0, max_score_val: int = 3
+) -> int:
+    """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable to the ranges like 4-point Likert scale or binary (0 or 1).
+    
+    If the string does not match an integer/a float or matches an integer/a float outside the
+    {min_score_val} - {max_score_val} range, raises an error instead. If multiple numbers are found within
+    the expected 0-10 range, the smallest is returned.
+
+    Args:
+        s: String to extract rating from.
+
+    Returns:
+        int: Extracted rating. 
+    
+    Raises:
+        ParseError: If no integers/floats between 0 and 10 are found in the string.
+    """
+    matches = PATTERN_NUMBER.findall(s)
+    if not matches:
+        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
+
+    vals = set()
+    for match in matches:
+        try:
+            vals.add(
+                validate_rating(
+                    int(match), min_val=min_score_val, max_val=max_score_val
+                )
+            )
+        except ValueError:
+            pass
+
+    if not vals:
+        raise ParseError(f"{min_score_val}-{max_score_val} rating", s)
+
+    if len(vals) > 1:
+        logger.warning(
+            "Multiple valid rating values found in the string: %s", s
+        )
+
+    # Min to handle cases like "The rating is 1 out of 3."
+    return min(vals)
 
 
 def re_0_10_rating(s: str) -> int:

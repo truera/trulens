@@ -1,17 +1,20 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
+import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
 
+from langchain.prompts import PromptTemplate
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.endpoint import base as mod_endpoint
+from trulens_eval.feedback.v2.feedback import ContextRelevance
+from trulens_eval.feedback.v2.feedback import OutputSpace
 from trulens_eval.utils import generated as mod_generated_utils
-from trulens_eval.utils.generated import re_0_10_rating
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
 
@@ -133,11 +136,12 @@ class LLMProvider(Provider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> float:
         """
-        Base method to generate a score only, used for evaluation.
+        Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
             system_prompt: A pre-formatted system prompt.
@@ -152,6 +156,7 @@ class LLMProvider(Provider):
             The score on a 0-1 scale.
         """
         assert self.endpoint is not None, "Endpoint is not set."
+        assert max_score_val > min_score_val, "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -163,14 +168,121 @@ class LLMProvider(Provider):
             temperature=temperature,
         )
 
-        return mod_generated_utils.re_0_10_rating(response) / normalize
+        return (
+            mod_generated_utils.re_configured_rating(
+                response,
+                min_score_val=min_score_val,
+                max_score_val=max_score_val
+            ) - min_score_val
+        ) / (max_score_val - min_score_val)
+
+    def generate_confidence_score(
+        self,
+        verb_confidence_prompt: str,
+        user_prompt: Optional[str] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict[str, float]]:
+        """
+        Base method to generate a score normalized to 0 to 1, used for evaluation.
+
+        Args:
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt.
+
+            normalize: The normalization factor for the score.
+
+            temperature: The temperature for the LLM response.
+
+        Returns:
+            The feedback score on a 0-1 scale and the confidence score.
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+        assert max_score_val > min_score_val, "Max score must be greater than min score."
+
+        llm_messages = [{"role": "system", "content": verb_confidence_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
+        )
+
+        return (
+            mod_generated_utils.re_configured_rating(
+                response,
+                min_score_val=min_score_val,
+                max_score_val=max_score_val
+            ) - min_score_val
+        ) / (max_score_val - min_score_val)
+
+    def generate_confidence_score(
+        self,
+        verb_confidence_prompt: str,
+        user_prompt: Optional[str] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict[str, float]]:
+        """
+        Base method to generate a score normalized to 0 to 1, used for evaluation.
+
+        Args:
+            system_prompt: A pre-formatted system prompt.
+
+            user_prompt: An optional user prompt.
+
+            normalize: The normalization factor for the score.
+
+            temperature: The temperature for the LLM response.
+
+        Returns:
+            The feedback score on a 0-1 scale and the confidence score.
+        """
+        assert self.endpoint is not None, "Endpoint is not set."
+        assert max_score_val > min_score_val, "Max score must be greater than min score."
+
+        llm_messages = [{"role": "system", "content": verb_confidence_prompt}]
+        if user_prompt is not None:
+            llm_messages.append({"role": "user", "content": user_prompt})
+
+        response = self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature
+        )
+        # print(f'Relevance score and Confidence score: {response}')
+        relevance_score = re.search(r'\d+', response)
+
+        confidence_score = re.search(
+            r'CONFIDENCE: (\d+)', response
+        )  # TODO: refactor this to use a more general pattern
+        if confidence_score and relevance_score and 0 <= float(
+                confidence_score.group(1)) <= 10 and min_score_val <= float(
+                    relevance_score.group(0)) <= max_score_val:
+            confidence = float(confidence_score.group(1))
+            relevance_score = float(relevance_score.group(0))
+
+            return (
+                (relevance_score - min_score_val) /
+                (max_score_val - min_score_val), {
+                    "confidence_score": confidence / 10.0
+                }
+            )
+        else:
+            raise ValueError("Confidence score not found in response.")
 
     def generate_score_and_reasons(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0,
-        temperature: float = 0.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0
     ) -> Tuple[float, Dict]:
         """
         Base method to generate a score and reason, used for evaluation.
@@ -190,6 +302,7 @@ class LLMProvider(Provider):
             Reason metadata if returned by the LLM.
         """
         assert self.endpoint is not None, "Endpoint is not set."
+        assert max_score_val > min_score_val, "Max score must be greater than min score."
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         if user_prompt is not None:
@@ -205,7 +318,13 @@ class LLMProvider(Provider):
             criteria = None
             for line in response.split("\n"):
                 if "Score" in line:
-                    score = mod_generated_utils.re_0_10_rating(line) / normalize
+                    score = (
+                        mod_generated_utils.re_configured_rating(
+                            line,
+                            min_score_val=min_score_val,
+                            max_score_val=max_score_val
+                        ) - min_score_val
+                    ) / (max_score_val - min_score_val)
                 criteria_lines = []
                 supporting_evidence_lines = []
                 collecting_criteria = False
@@ -248,15 +367,25 @@ class LLMProvider(Provider):
             return score, reasons
 
         else:
-            score = mod_generated_utils.re_0_10_rating(response) / normalize
+            score = (
+                mod_generated_utils.re_configured_rating(
+                    response,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val
+                ) - min_score_val
+            ) / (max_score_val - min_score_val)
             warnings.warn(
                 "No supporting evidence provided. Returning score only.",
                 UserWarning,
             )
             return score, {}
 
-    def context_relevance(
-        self, question: str, context: str, temperature: float = 0.0
+    # TODO: to be deprecated soon
+    def context_relevance_old(
+        self,
+        question: str,
+        context: str,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -285,7 +414,103 @@ class LLMProvider(Provider):
         """
 
         return self.generate_score(
-            system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM,
+            system_prompt=prompts.CONTEXT_RELEVANCE_SYSTEM_OLD,
+            user_prompt=str.format(
+                prompts.CONTEXT_RELEVANCE_USER,
+                question=question,
+                context=context
+            ),
+            temperature=temperature
+        )
+
+    def context_relevance(
+        self,
+        question: str,
+        context: str,
+        criteria: str = "",
+        output_space: str = "",
+        temperature: float = 0.0
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        check the relevance of the context to the question.
+
+        !!! example
+
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+
+        Args:
+            question (str): A question being asked.
+
+            context (str): Context related to the question.
+
+        Returns:
+            float: A value between 0.0 (not relevant) and 1.0 (relevant).
+        """
+        if criteria and output_space:
+            ContextRelevance.override_critera_and_output_space(
+                criteria, output_space
+            )
+
+        return self.generate_score(
+            system_prompt=ContextRelevance.system_prompt.template,
+            user_prompt=str.format(
+                prompts.CONTEXT_RELEVANCE_USER,
+                question=question,
+                context=context
+            ),
+            temperature=temperature
+        )
+
+    def context_relevance(
+        self,
+        question: str,
+        context: str,
+        criteria: str = "",
+        output_space: str = "",
+        temperature: float = 0.0
+    ) -> float:
+        """
+        Uses chat completion model. A function that completes a template to
+        check the relevance of the context to the question.
+
+        !!! example
+
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+
+        Args:
+            question (str): A question being asked.
+
+            context (str): Context related to the question.
+
+        Returns:
+            float: A value between 0.0 (not relevant) and 1.0 (relevant).
+        """
+        if criteria and output_space:
+            ContextRelevance.override_critera_and_output_space(
+                criteria, output_space
+            )
+
+        return self.generate_score(
+            system_prompt=ContextRelevance.system_prompt.template,
             user_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
@@ -295,7 +520,12 @@ class LLMProvider(Provider):
         )
 
     def context_relevance_with_cot_reasons(
-        self, question: str, context: str, temperature: float = 0.0
+        self,
+        question: str,
+        context: str,
+        criteria: str = "",
+        output_space: str = "",
+        temperature: float = 0.0
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
@@ -323,7 +553,7 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
-        system_prompt = prompts.CONTEXT_RELEVANCE_SYSTEM
+
         user_prompt = str.format(
             prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
         )
@@ -331,11 +561,71 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
+        if criteria and output_space:
+            ContextRelevance.override_critera_and_output_space(
+                criteria, output_space
+            )
+
         return self.generate_score_and_reasons(
-            system_prompt=system_prompt,
+            system_prompt=ContextRelevance.system_prompt.template,
             user_prompt=user_prompt,
-            temperature=temperature,
+            temperature=temperature
         )
+
+    def context_relevance_verb_confidence(
+        self,
+        question: str,
+        context: str,
+        criteria: str = "",
+        output_space: str = "",
+        temperature: float = 0.0
+    ) -> Tuple[float, Dict[str, float]]:
+        """
+        Uses chat completion model. A function that completes a
+        template to check the relevance of the context to the question.
+        Also uses chain of thought methodology and emits the reasons.
+
+        !!! example
+
+            ```python
+            from trulens_eval.app import App
+            context = App.select_context(rag_app)
+            feedback = (
+                Feedback(provider.context_relevance_with_cot_reasons)
+                .on_input()
+                .on(context)
+                .aggregate(np.mean)
+                )
+            ```
+
+        Args:
+            question (str): A question being asked.
+
+            context (str): Context related to the question.
+
+        Returns:
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
+            Dict[str, float]: A dictionary containing the confidence score.
+        """
+        if criteria and output_space:
+            ContextRelevance.override_critera_and_output_space(
+                criteria, output_space
+            )
+
+        try:
+            return self.generate_confidence_score(
+                verb_confidence_prompt=ContextRelevance.system_prompt.template +
+                ContextRelevance.verb_confidence_prompt.template,
+                user_prompt=str.format(
+                    prompts.CONTEXT_RELEVANCE_USER,
+                    question=question,
+                    context=context
+                ),
+                temperature=temperature
+            )
+        except ValueError as e:
+            logger.error(e)
+            return None, None
 
     def relevance(self, prompt: str, response: str) -> float:
         """
@@ -484,7 +774,7 @@ class LLMProvider(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return mod_generated_utils.re_0_10_rating(agreement_txt) / 10.0
+        return mod_generated_utils.re_configured_rating(agreement_txt) / 3
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """
@@ -1072,8 +1362,8 @@ class LLMProvider(Provider):
         for assessment in key_point_inclusion_assessments:
             reasons += assessment + "\n\n"
             if assessment:
-                first_line = assessment.split("\n")[0]
-                score = re_0_10_rating(first_line) / 10
+                first_line = assessment.split('\n')[0]
+                score = mod_generated_utils.re_configured_rating(first_line) / 3
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
@@ -1162,6 +1452,7 @@ class LLMProvider(Provider):
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
+import re
 
             provider = OpenAI()
 

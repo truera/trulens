@@ -8,8 +8,8 @@ from trulens_eval.feedback.v2 import feedback as v2
 COT_REASONS_TEMPLATE = """
 Please answer using the entire template below.
 
-TEMPLATE:
-Score: <The score 0-10 based on the given criteria>
+TEMPLATE: 
+Score: <The score based on the given criteria>
 Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
 """
@@ -35,10 +35,8 @@ LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt.template
 LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt.template
 LLM_ABSTENTION_USER = v2.Abstention.user_prompt.template
 
+CONTEXT_RELEVANCE_SYSTEM_OLD = v2.ContextRelevanceOld.system_prompt.template
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
-context_relevance_VERB_2S_TOP1 = (
-    v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
-)
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
 
 ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt.template

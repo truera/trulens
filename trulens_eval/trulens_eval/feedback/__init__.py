@@ -2,6 +2,7 @@
 # Main class holding and running feedback functions:
 from trulens_eval.feedback import feedback as mod_feedback
 from trulens_eval.feedback.embeddings import Embeddings
+from trulens_eval.feedback.groundtruth import BenchmarkAggregator
 from trulens_eval.feedback.groundtruth import GroundTruthAgreement
 
 # Providers of feedback functions evaluation:
@@ -33,6 +34,7 @@ __all__ = [
     "Feedback",
     "Embeddings",
     "GroundTruthAgreement",
+    "BenchmarkAggregator",
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",

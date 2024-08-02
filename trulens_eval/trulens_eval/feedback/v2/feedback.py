@@ -1,11 +1,14 @@
 from abc import abstractmethod
+from dataclasses import dataclass
+from dataclasses import field
+from enum import Enum
 from typing import ClassVar, List, Optional
 
 from langchain.evaluation.criteria.eval_chain import _SUPPORTED_CRITERIA
 from langchain.prompts import PromptTemplate
 import pydantic
 
-from trulens_eval.utils.generated import re_0_10_rating
+from trulens_eval.utils.generated import re_configured_rating
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.text import make_retab
 
@@ -204,13 +207,122 @@ class Abstention(Semantics, WithPrompt):
     )
 
 
-class ContextRelevance(Relevance, WithPrompt):
-    # openai.context_relevance
-    # openai.context_relevance_with_cot_reasons
+LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
+BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"
 
-    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+
+class OutputSpace(str, Enum):
+    """
+    Enum for valid output spaces of scores.
+    """
+    LIKERT_0_3 = "likert-0-3"
+    BINARY = "binary"
+    # note: we are deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space
+
+
+class EvalCriteria(pydantic.BaseModel):
+    criteria: str
+    output_space: str
+
+    @pydantic.field_validator('output_space')
+    def validate_output_space(cls, v):
+        if v not in [OutputSpace.LIKERT_0_3, OutputSpace.BINARY]:
+            raise ValueError(
+                'output_space must be either "likert-0-3" or "binary"'
+            )
+        return v
+
+    def get_output_scale_prompt(self) -> str:
+        # TODO: verify if this is compatible with the flag higher_is_better directionality
+        if self.output_space == OutputSpace.LIKERT_0_3:
+            return LIKERT_0_3_PROMPT
+        elif self.output_space == OutputSpace.BINARY:
+            return BINARY_0_1_PROMPT
+        else:
+            raise ValueError(
+                'output_space must be either "likert-0-3" or "binary"'
+            )
+
+
+@dataclass
+class ContextRelevance(Relevance, WithPrompt):
+    system_prompt: ClassVar[PromptTemplate]
+
+    user_prompt: ClassVar[PromptTemplate]
+    verb_confidence_prompt: ClassVar[PromptTemplate]
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+
+    criteria: str = """
+        - CONTEXT that is IRRELEVANT to the QUESTION should score 0.
+        - CONTEXT that is RELEVANT to some of the QUESTION should score of 1.
+        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 2.
+        - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of 3, which is the full mark.
+        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
+        """
+    output_space: str = OutputSpace.LIKERT_0_3
+
+    system_prompt_template: ClassVar[
+        PromptTemplate
+    ] = PromptTemplate.from_template(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating relevance:
+        {criteria}
+        
+        A few additional scoring guidelines:
+
+        - Long CONTEXTS should score equally well as short CONTEXTS.
+
+        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
+
+        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
+
+        - Never elaborate.
+        """
+    )
+
+    @staticmethod
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
+        validated = EvalCriteria(criteria=criteria, output_space=output_space)
+        return validated
+
+    @classmethod
+    def override_critera_and_output_space(
+        cls, criteria: str, output_space: str
+    ):
+        validated = cls.validate_criteria_and_output_space(
+            criteria, output_space
+        )
+        cls.output_space_prompt = validated.get_output_scale_prompt()
+        cls.system_prompt = PromptTemplate.from_template(
+            cls.system_prompt_template.format(
+                criteria=validated.criteria,
+                output_space_prompt=cls.output_space_prompt
+            )
+        )
+
+    user_prompt = PromptTemplate.from_template(
+        """QUESTION: {question}
+        CONTEXT: {context}
+        
+        RELEVANCE: 
+        """
+    )
+    verb_confidence_prompt = PromptTemplate.from_template(
+        """Finally after generating the RELEVANCE score, provide the confidence level CONFIDENCE on a scale of 0 to 10 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
+        other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
+        0 and 10 that your scoring is accurate, without any extra commentary whatsoever;
+        just the probability!>
+        """
+    )
+
+    system_prompt = PromptTemplate.from_template(
+        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating relevance:
+        {criteria}
 
         A few additional scoring guidelines:
 
@@ -220,13 +332,31 @@ class ContextRelevance(Relevance, WithPrompt):
 
         - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
 
-        - CONTEXT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
+        - Never elaborate.
+        """.format(output_space_prompt=output_space_prompt, criteria=criteria)
+    )
 
-        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
 
-        - CONTEXT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
+class ContextRelevanceOld(Relevance, WithPrompt):
+    # openai.context_relevance
+    # openai.context_relevance_with_cot_reasons
 
-        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
+    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
+        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+        Respond only as a number from 0 to 3 where 0 is the least relevant and 3 is the most relevant. 
+
+        A few additional scoring guidelines:
+
+        - Long CONTEXTS should score equally well as short CONTEXTS.
+
+        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
+
+        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
+
+        - CONTEXT that is RELEVANT to none of the QUESTION should score 0.
+        - CONTEXT that is RELEVANT to some of the QUESTION should score of 1 or 2.
+        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 3.
+        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
 
         - Never elaborate."""
     )
@@ -236,45 +366,6 @@ class ContextRelevance(Relevance, WithPrompt):
         CONTEXT: {context}
 
         RELEVANCE: """
-    )
-
-
-class QuestionStatementRelevanceVerb2STop1Confidence(Relevance, WithPrompt):
-    prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
-Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
-
-A few additional scoring guidelines:
-
-- Long STATEMENTS should score equally well as short STATEMENTS.
-
-- RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
-
-- RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
-
-- STATEMENT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
-
-- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
-
-- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
-
-- STATEMENT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
-
-- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
-
-- Never elaborate.
-
-QUESTION: {question}
-
-STATEMENT: {statement}
-
-RELEVANCE:
-
-Finally, provide the probability on a scale of 0 to 10 that your RELEVANCE scoring is correct. Give ONLY the probability, no
-other words or explanation.\n\nFor example: <the probability between
-0 and 10 that your guess is correct, without any extra commentary whatsoever;
-just the probability!>
-"""
     )
 
 
@@ -594,16 +685,16 @@ class COTExplained(Feedback):
             # TODO: things related to extracting score and reasons
 
             def extract_cot_explanation_of_response(
-                self, response: str, normalize=10
+                self, response: str, normalize=3
             ):
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):
                         if "Score" in line:
-                            score = re_0_10_rating(line) / normalize
+                            score = re_configured_rating(line) / normalize
                     return score, {"reason": response}
                 else:
-                    return re_0_10_rating(response) / normalize
+                    return re_configured_rating(response) / normalize
 
         return FeedbackWithExplanation(**feedback)
 

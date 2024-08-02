@@ -48,6 +48,7 @@ from trulens_eval.utils import python
 from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
+from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import Future  # code style exception
 from trulens_eval.utils.python import OpaqueWrapper
 
@@ -388,6 +389,42 @@ class Tru(python.SingletonPerName):
         from trulens_eval.tru_virtual import TruVirtual
 
         return TruVirtual(tru=self, app=app, **kwargs)
+
+    def BenchmarkExperiment(
+        self, app_id: str, ground_truth: Union[List, Callable,
+                                               FunctionOrMethod],
+        feedback_to_score_fn: Callable, agg_funcs: List[feedback.AggCallable],
+        benchmark_params: Any, **kwargs: dict
+    ) -> trulens_eval.tru_custom_app.TruCustomApp:
+        """Create a Custom app for special use case: benchmarking feedback functions.
+
+        Args:
+            app_id (str): user-defined identifier of the experiment run.
+            ground_truth (Union[List, Callable, FunctionOrMethod]): groundtruth for the benchmarking experiment.
+            feedback_to_score_fn (Callable): feedback function of interest to perform meta-evaluation on.
+            agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
+            benchmark_params (Any): parameters for the benchmarking experiment.
+
+        Returns:
+            trulens_eval.tru_custom_app.TruCustomApp: Custom app wrapper for benchmarking feedback functions.
+        """
+
+        from trulens_eval import TruCustomApp
+        from trulens_eval.feedback.benchmark_frameworks.tru_benchmark_experiment import \
+            TruBenchmarkExperiment
+        benchmark_exp = TruBenchmarkExperiment(
+            ground_truth=ground_truth,
+            feedback_to_score_fn=feedback_to_score_fn,
+            agg_funcs=agg_funcs,
+            benchmark_params=benchmark_params
+        )
+
+        return TruCustomApp(
+            benchmark_exp,
+            app_id=app_id,
+            feedbacks=benchmark_exp.f_benchmark_metrics,
+            **kwargs
+        )
 
     def reset_database(self):
         """Reset the database. Clears all tables.
@@ -1037,7 +1074,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 tqdm_total.set_postfix(
-                    {name: count for name, count in runs_stats.items()}
+                    {
+                        name: count for name, count in runs_stats.items()
+                    }
                 )
 
                 queue_stats = self.db.get_feedback_count_by_status()
