@@ -58,7 +58,7 @@ plugins:
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
-  - mkdocs-jupyter
+#  - mkdocs-jupyter
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -75,6 +75,7 @@ plugins:
             - https://docs.llamaindex.ai/en/stable/objects.inv
             - https://docs.sqlalchemy.org/en/20/objects.inv
           paths:
+            - src/api
             - src/core
             - src/feedback
             - src/dashboard

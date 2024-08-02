@@ -5,9 +5,9 @@ removed in a future release.
 """
 
 from trulens.core.utils import deprecation
-from trulens_eval import dep_warn
+from trulens_eval import packages_dep_warn
 
-dep_warn("trulens_eval.feedback.provider")
+packages_dep_warn("trulens_eval.feedback.provider")
 
 from trulens.core.feedback.provider import Provider
 from trulens.core.utils import imports as imports_utils

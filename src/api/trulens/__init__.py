@@ -1,6 +1,4 @@
-from pkgutil import extend_path
-
-__path__ = extend_path(__path__, __name__)
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 # TODO: get this from poetry
 __version_info__ = (0, 33, 0)
@@ -160,7 +158,10 @@ __all__ = [
     "TruBasicApp",
     "TruCustomApp",
     "TruVirtual",
-    *list(_OPTIONAL_APPS.keys()),
+    # Cannot use dynamic: *list(_OPTIONAL_APPS.keys()),
+    "TruChain",
+    "TruLlama",
+    "TruRails",
     # app setup
     "FeedbackMode",
     # feedback setup
@@ -168,7 +169,15 @@ __all__ = [
     "Select",
     # feedback providers
     "Provider",
-    *list(_OPTIONAL_PROVIDERS.keys()),
+    # Cannot use dynamic: *list(_OPTIONAL_PROVIDERS.keys()),
+    "AzureOpenAI",
+    "OpenAI",
+    "Langchain",
+    "LiteLLM",
+    "Bedrock",
+    "Huggingface",
+    "HuggingfaceLocal",
+    "Cortex",
     # misc utility
     "TP",
 ]

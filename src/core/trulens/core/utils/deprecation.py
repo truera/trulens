@@ -1,12 +1,28 @@
 """Utilities for handling deprecation."""
 
 from enum import Enum
-import warnings
-import inspect
-from trulens.core.utils import imports as imports_utils
-from typing import Optional, Iterable, Callable, Type, Dict, Any, Union
 import functools
+import inspect
+from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
+import warnings
 
+from trulens.core.utils import imports as imports_utils
+
+PACKAGES_MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
+
+def packages_dep_warn(module: str):
+    """Issue a deprecation warning for a backwards-compatibility modules.
+
+    This is specifically for the trulens_eval -> trulens module renaming and
+    reorganization.
+    """
+
+    warnings.warn(
+        f"The `{module}` module is deprecated. "
+        f"See {PACKAGES_MIGRATION_LINK} for instructions on migrating to `trulens.*` modules.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 def has_deprecated(obj: Union[Callable, Type]) -> bool:
     """Check if a function or class has been deprecated."""

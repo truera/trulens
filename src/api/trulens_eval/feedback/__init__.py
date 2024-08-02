@@ -1,13 +1,13 @@
-"""Aliases.
-
-Aliases to new locations of various names. This module is deprecated and will be
-removed in a future release.
+"""
+!!! warning
+    This module is deprecated and will be removed. Use `trulens.core.feedback`
+    or `trulens.feedback` instead.
 """
 
-from trulens_eval import dep_warn
+from trulens.core.utils.deprecation import packages_dep_warn
 from trulens.core.utils import deprecation
 
-dep_warn("trulens_eval.feedback")
+packages_dep_warn("trulens_eval.feedback")
 
 from trulens.core.utils import imports as imports_utils
 

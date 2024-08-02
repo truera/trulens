@@ -1,30 +1,14 @@
-"""Backwards-compatibility Aliases
-
-Aliases to new locations of various names. This module is deprecated and will be
-removed in a future release.
+"""
+!!! warning
+    This module is deprecated and will be removed. Use `trulens.core`
+    or `trulens` instead.
 """
 
-import warnings
+# Must use this format due to griffe: https://github.com/mkdocstrings/griffe/commit/efba0c6a5e1dc185e96e5a09c05e94c751abc4cb
+__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
-
-
-def dep_warn(module: str):
-    """Issue a deprecation warning for a backwards-compatibility modules.
-
-    This is specifically for the trulens_eval -> trulens module renaming and
-    reorganization.
-    """
-
-    warnings.warn(
-        f"The `{module}` module is deprecated. "
-        f"See {MIGRATION_LINK} for instructions on migrating to `trulens.*` modules.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-
-dep_warn("trulens_eval")
+from trulens.core.utils.deprecation import packages_dep_warn
+packages_dep_warn("trulens_eval")
 
 # TODO: get this from poetry
 __version_info__ = (0, 33, 0)

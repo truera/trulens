@@ -4,10 +4,10 @@ Aliases to new locations of various names. This module is deprecated and will be
 removed in a future release.
 """
 
-from trulens_eval import dep_warn
+from trulens.core.utils.deprecation import packages_dep_warn
 from trulens.core.utils import deprecation
 
-dep_warn("trulens_eval.feedback.provider.endpoint")
+packages_dep_warn("trulens_eval.feedback.provider.endpoint")
 
 from trulens.core.utils import imports as imports_utils
 

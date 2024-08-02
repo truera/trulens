@@ -1,13 +1,13 @@
-"""Aliases.
-
-Aliases to new locations of various names. This module is deprecated and will be
-removed in a future release.
+"""
+!!! warning
+    This module is deprecated and will be removed. Use
+    `trulens.dashboard.react_components.record_viewer` instead.
 """
 
-from trulens_eval import dep_warn
+from trulens.core.utils.deprecation import packages_dep_warn
 from trulens.core.utils import deprecation
 
-dep_warn("trulens_eval.react_components.record_viewer")
+packages_dep_warn("trulens_eval.react_components.record_viewer")
 
 from trulens.dashboard.react_components.record_viewer import record_viewer
 
