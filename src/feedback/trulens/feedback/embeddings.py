@@ -1,4 +1,4 @@
-from typing import Dict, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Tuple, Union
 
 import numpy as np
 from trulens.core.utils.imports import REQUIREMENT_LLAMA
@@ -10,8 +10,9 @@ from trulens.core.utils.serial import SerialModel
 with OptionalImports(messages=REQUIREMENT_SKLEARN):
     pass
 
-with OptionalImports(messages=REQUIREMENT_LLAMA):
-    from llama_index.core.base.embeddings.base import BaseEmbedding
+if TYPE_CHECKING:
+    with OptionalImports(messages=REQUIREMENT_LLAMA):
+        from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
 class Embeddings(WithClassInfo, SerialModel):

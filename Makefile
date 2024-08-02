@@ -6,8 +6,15 @@ REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.lock" -exec dirname {} \;)
 
 # Create the poetry env for building website, docs, formatting, etc.
-.env/create:
+env:
 	poetry install
+
+env-required:
+	poetry install --only required,tests --sync
+
+env-optional:
+	poetry install --sync --verbose
+
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS) clean-dashboard
@@ -17,43 +24,43 @@ lock: $(POETRY_DIRS) clean-dashboard
 	done
 
 # Run the ruff linter.
-lint: .env/create
+lint: env
 	poetry run ruff check --fix
 
 # Run the ruff formatter.
-format: .env/create
+format: env
 	poetry run ruff format
 
-precommit-hooks: .env/create
+precommit-hooks: env
 	poetry run pre-commit install
 
 run-precommit: precommit-hooks
 	poetry run pre-commit run --all-files --show-diff-on-failure
 
 # Start a jupyer lab instance.
-lab: .env/create
+lab: env
 	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Build the documentation website.
-docs: .env/create $(shell find docs -type f) mkdocs.yml
+docs: env $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs build --clean
 	rm -Rf site/overrides
 
 # Serve the documentation website.
-docs-serve: .env/create
+docs-serve: env
 	poetry run mkdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
-docs-serve-debug: .env/create
+docs-serve-debug: env
 	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-docs-serve-dirty: .env/create
+docs-serve-dirty: env
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
 
-docs-upload: .env/create $(shell find docs -type f) mkdocs.yml
+docs-upload: env $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.
@@ -66,25 +73,20 @@ trubot:
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
-required-env: .env/create
-	poetry install --only required,tests --sync
-
-optional-env: .env/create
-	poetry install --sync --verbose
 
 coverage:
 	ALLOW_OPTIONAL_ENV_VAR=true pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Runs required tests
-test-%-required: required-env
+test-%-required: env-required
 	make test-$*
 
 # Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: required-env
+test-%-allow-optional: env
 	ALLOW_OPTIONAL_ENV_VAR=true make test-$*
 
 # Requires the full optional environment to be set up.
-test-%-optional: optional-env
+test-%-optional: env-optional
 	TEST_OPTIONAL=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
@@ -109,7 +111,7 @@ clean: clean-dashboard
 	git clean -fxd
 
 ## Step: Build wheels
-build-dashboard: .env/create clean-dashboard
+build-dashboard: env clean-dashboard
 	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist;
 
 build: $(POETRY_DIRS) clean lock

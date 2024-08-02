@@ -97,7 +97,8 @@ pytest-azurepipelines = "^1.0"
 ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
-# Embeddings tests
+
+[tool.poetry.group.tests-optional.dependencies]
 llama-index-embeddings-huggingface = "^0.2.2"
 llama-index-embeddings-openai = "^0.1.10"
 
