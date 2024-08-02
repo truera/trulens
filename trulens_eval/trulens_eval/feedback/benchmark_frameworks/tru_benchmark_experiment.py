@@ -38,7 +38,7 @@ class TruBenchmarkExperiment:
     benchmark_experiment = TruBenchmarkExperiment(ground_truth, context_relevance_to_score, benchmark_params)
 
     true_labels = benchmark_experiment.load_true_labels()
-    mae_agg_func = BenchmarkAggregator(true_labels=true_labels).mae
+    mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
     """
 
     def __init__(

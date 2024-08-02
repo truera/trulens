@@ -343,7 +343,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         return ret
 
 
-class BenchmarkAggregator(WithClassInfo, SerialModel):
+class GroundTruthAggregator(WithClassInfo, SerialModel):
     """Aggregate benchmarking metrics for ground-truth-based meta evaluation on feedback fuctions."""
 
     true_labels: List[int]
