@@ -344,12 +344,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
-    """Aggregate benchmarking metrics for ground-truth-based meta evaluation on feedback fuctions."""
+    """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback fuctions."""
 
     true_labels: List[int]
     k: Optional[int] = (
         None  # top k results to consider in NDCG@k, precision@k, recall@k, etc
     )
+
+    # TODO take custom aggregation functions as input
 
     n_bins: int = 5  # number of bins for ECE
 
