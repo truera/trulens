@@ -42,11 +42,14 @@ jobs:
           echo "Using $(python --version) ($(which python))"
           poetry config virtualenvs.create false
           poetry install --only tests --sync
+
+          poetry run python --version
+          poetry run pip --version
         displayName: Env Setup
 
       - bash: |
           set -e
-          echo $(which python)
+          poetry install --only tests --sync
           make run-precommit
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
         displayName: Format Diffs
