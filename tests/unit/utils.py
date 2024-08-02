@@ -1,6 +1,7 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import importlib
 import os
 from typing import Dict, Optional, Sequence
 import unittest
@@ -47,7 +48,7 @@ def requiredonly_test(testmethodorclass):
 
 def module_installed(module: str) -> bool:
     try:
-        __import__(module)
+        importlib.import_module(module)
         return True
     except ImportError:
         return False

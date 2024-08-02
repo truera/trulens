@@ -50,7 +50,7 @@ pp = PrettyPrinter()
 
 
 class LangChainInstrument(Instrument):
-    """Instruemtnation for LangChain apps."""
+    """Instrumentation for LangChain apps."""
 
     class Default:
         """Instrumentation specification for LangChain apps."""

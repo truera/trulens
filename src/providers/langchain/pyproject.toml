@@ -30,7 +30,7 @@ classifiers = [
 python = "^3.9"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"
-langchain = "^0.2"
+langchain-core = "^0.2.24,!=0.2.27"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

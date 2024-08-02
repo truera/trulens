@@ -3,6 +3,7 @@ Static tests, i.e. ones that don't run anything substantial. This should find
 issues that occur from merely importing trulens.
 """
 
+import importlib
 from pathlib import Path
 import pkgutil
 import sys
@@ -117,7 +118,7 @@ class TestStatic(TestCase):
 
         for mod in base_mods:
             with self.subTest(mod=mod):
-                __import__(mod)
+                importlib.import_module(mod)
 
     def _test_instrumentation(self, i: Instrument):
         """Check that the instrumentation specification is good in these ways:
@@ -201,7 +202,7 @@ class TestStatic(TestCase):
                     with self.subTest(mod=mod):
                         # Make sure the import raises ImportError:
                         with self.assertRaises(ImportError):
-                            __import__(mod)
+                            importlib.import_module(mod)
 
     @optional_test
     def test_import_optional_success(self):
@@ -221,7 +222,7 @@ class TestStatic(TestCase):
                 for mod in mods:
                     with self.subTest(mod=mod):
                         # Make sure we can import the module now.
-                        __import__(mod)
+                        importlib.import_module(mod)
 
 
 if __name__ == "__main__":

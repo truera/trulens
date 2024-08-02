@@ -31,7 +31,8 @@ python = "^3.9"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"
 openai = "^1.37"
-langchain-openai = "^0.1"
+langchain-openai = "^0.1.19"
+langchain-community = "^0.2.10"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
