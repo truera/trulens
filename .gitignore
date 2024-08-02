@@ -57,3 +57,6 @@ test-output.xml
 .coverage
 coverage.xml
 htmlcov/
+
+# mypy
+.mypy-cache/

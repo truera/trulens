@@ -9,5 +9,8 @@
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
-    },
+	},
+	"files.exclude": {
+		"**/.venv": true
+	},
 }
