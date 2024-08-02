@@ -38,8 +38,18 @@ from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
 from trulens.core.utils import serial
 from trulens.core.utils import threading as tru_threading
+from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
+from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.python import OpaqueWrapper
+
+with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
+    from snowflake.core import CreateMode
+    from snowflake.core import Root
+    from snowflake.core.schema import Schema
+    from snowflake.snowpark import Session
+    from snowflake.sqlalchemy import URL
+
 
 pp = PrettyPrinter()
 
@@ -252,8 +262,6 @@ class Tru(python.SingletonPerName):
     def _create_snowflake_database_url(
         snowflake_connection_parameters: Dict[str, str], schema_name: str
     ) -> str:
-        from snowflake.sqlalchemy import URL
-
         Tru._create_snowflake_schema_if_not_exists(
             snowflake_connection_parameters, schema_name
         )
@@ -271,11 +279,6 @@ class Tru(python.SingletonPerName):
     def _create_snowflake_schema_if_not_exists(
         snowflake_connection_parameters: Dict[str, str], schema_name: str
     ):
-        from snowflake.core import CreateMode
-        from snowflake.core import Root
-        from snowflake.core.schema import Schema
-        from snowflake.snowpark import Session
-
         session = Session.builder.configs(
             snowflake_connection_parameters
         ).create()

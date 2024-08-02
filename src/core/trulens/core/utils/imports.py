@@ -223,11 +223,11 @@ def format_import_errors(
     this_these = "this" if len(packages) == 1 else "these"
 
     msg = cleandoc(f"""
-{','.join(packages)} {pack_s} {is_are} required for {purpose}.
+{",".join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
     ```bash
-    pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
+    pip install {" ".join(map(lambda a: f'"{a}"', requirements))}
     ```
 """)
 
@@ -237,13 +237,13 @@ components. There may be a version incompatibility. Please try installing {this_
 exact {pack_s} with pip:
 
     ```bash
-    pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
+    pip install {" ".join(map(lambda a: f'"{a}"', requirements_pinned))}
     ```
 
 Alternatively, if you do not need {packs}, uninstall {it_them}:
 
     ```bash
-    pip uninstall -y '{' '.join(packages)}'
+    pip uninstall -y '{" ".join(packages)}'
     ```
 """)
 
@@ -272,6 +272,16 @@ REQUIREMENT_OPENAI = format_import_errors(
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
     "bert-score", purpose="measuring BERT Score"
+)
+
+REQUIREMENT_SNOWFLAKE = format_import_errors(
+    [
+        "snowflake-core",
+        "snowflake-connector-python",
+        "snowflake-snowpark-python",
+        "snowflake-sqlalchemy",
+    ],
+    purpose="connecting to Snowflake",
 )
 
 REQUIREMENT_EVALUATE = format_import_errors(

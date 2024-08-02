@@ -41,6 +41,11 @@ alembic = "^1.11"
 nest-asyncio = "^1.5"
 python-dotenv = "^1.0"
 
+snowflake-core = { version = "^0.9.0", python = "<3.12", optional = true }
+snowflake-connector-python = { version = "^3.11.0", python = "<3.12", optional = true }
+snowflake-snowpark-python = { version = "^1.20.0", python = "<3.12", optional = true }
+snowflake-sqlalchemy = { version = "^1.6", python = "<3.12", optional = true }
+
 [tool.poetry.group.openai]
 optional = true
 
@@ -48,11 +53,10 @@ optional = true
 openai = "^1.37"
 httpx = "^0.27"
 
-[tool.poetry.group.snowflake]
-optional = true
-
-[tool.poetry.group.snowflake.dependencies]
-snowflake-core = { version = "^0.9.0", python = "<3.12" }
-snowflake-connector-python = { version = "^3.11.0", python = "<3.12" }
-snowflake-snowpark-python = { version = "^1.20.0", python = "<3.12" }
-snowflake-sqlalchemy = { version = "^1.6.1", python = "<3.12" }
+[tool.poetry.extras]
+snowflake = [
+  "snowflake-core",
+  "snowflake-connector-python",
+  "snowflake-snowpark-python",
+  "snowflake-sqlalchemy",
+]

@@ -352,6 +352,17 @@ files = [
 ]
 
 [[package]]
+name = "atpublic"
+version = "5.0"
+description = "Keep all y'all's __all__'s in sync"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "atpublic-5.0-py3-none-any.whl", hash = "sha256:b651dcd886666b1042d1e38158a22a4f2c267748f4e97fde94bc492a4a28a3f3"},
+    {file = "atpublic-5.0.tar.gz", hash = "sha256:d5cb6cbabf00ec1d34e282e8ce7cbc9b74ba4cb732e766c24e2d78d1ad7f723f"},
+]
+
+[[package]]
 name = "attrs"
 version = "23.2.0"
 description = "Classes Without Boilerplate"
@@ -6927,6 +6938,25 @@ pandas = ["pandas (>=1.0.0,<3.0.0)", "pyarrow"]
 secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
+name = "snowflake-core"
+version = "0.9.0"
+description = "Snowflake Python API for Resource Management"
+optional = false
+python-versions = "<3.12,>=3.8"
+files = [
+    {file = "snowflake_core-0.9.0-py3-none-any.whl", hash = "sha256:19adcf3662364c15c2d25367479fe3a6361015d64d05146e20c35fdecfae0fb2"},
+    {file = "snowflake_core-0.9.0.tar.gz", hash = "sha256:027ba663ca5b797acebd8baaed17b9f885649037d61d40ad3342ad6b2f3d9571"},
+]
+
+[package.dependencies]
+atpublic = ">=4"
+pydantic = ">=2"
+python-dateutil = ">=2.8.2"
+requests = "*"
+snowflake-snowpark-python = ">=1.5.0,<2.0.0"
+urllib3 = "*"
+
+[[package]]
 name = "snowflake-snowpark-python"
 version = "1.20.0"
 description = "Snowflake Snowpark for Python"
@@ -6956,6 +6986,25 @@ modin-development = ["cachetools", "coverage", "decorator", "matplotlib", "modin
 opentelemetry = ["opentelemetry-api (>=1.0.0,<2.0.0)", "opentelemetry-sdk (>=1.0.0,<2.0.0)"]
 pandas = ["snowflake-connector-python[pandas] (>=3.10.0,<4.0.0)"]
 secure-local-storage = ["snowflake-connector-python[secure-local-storage] (>=3.10.0,<4.0.0)"]
+
+[[package]]
+name = "snowflake-sqlalchemy"
+version = "1.6.1"
+description = "Snowflake SQLAlchemy Dialect"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "snowflake_sqlalchemy-1.6.1-py3-none-any.whl", hash = "sha256:06f5eac0f864f5634e7bcec4b87cdb77044723b9135c02bab426ba15382effee"},
+    {file = "snowflake_sqlalchemy-1.6.1.tar.gz", hash = "sha256:792cde928c0d1d30714b88b0404de81ed297a7745cbcc253dcda973f65759382"},
+]
+
+[package.dependencies]
+snowflake-connector-python = "<4.0.0"
+sqlalchemy = ">=1.4.19"
+
+[package.extras]
+development = ["mock", "numpy", "pre-commit", "pytest", "pytest-cov", "pytest-rerunfailures", "pytest-timeout", "pytz"]
+pandas = ["snowflake-connector-python[pandas]"]
 
 [[package]]
 name = "sortedcontainers"
@@ -7876,7 +7925,7 @@ description = "Library to systematically track and evaluate LLM based applicatio
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 alembic = "^1.11"
@@ -7888,9 +7937,16 @@ numpy = "^1.23"
 psutil = "^5.9"
 pydantic = "^2"
 python-dotenv = "^1.0"
+snowflake-connector-python = {version = "^3.11.0", optional = true, markers = "python_version < \"3.12\""}
+snowflake-core = {version = "^0.9.0", optional = true, markers = "python_version < \"3.12\""}
+snowflake-snowpark-python = {version = "^1.20.0", optional = true, markers = "python_version < \"3.12\""}
+snowflake-sqlalchemy = {version = "^1.6", optional = true, markers = "python_version < \"3.12\""}
 sqlalchemy = "^2.0"
 tqdm = "^4.66"
 typing_extensions = "^4.9"
+
+[package.extras]
+snowflake = ["snowflake-connector-python (>=3.11.0,<4.0.0)", "snowflake-core (>=0.9.0,<0.10.0)", "snowflake-snowpark-python (>=1.20.0,<2.0.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]
 type = "directory"
@@ -8855,4 +8911,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "3d8c3578a308893059973db29d4cab1649d902432d9fa18cc04419dae6ae82f7"
+content-hash = "f548dc2bece9e525dc9294fae19d775c4d9d492bdd783742c03217749312ea8d"
