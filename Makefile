@@ -3,7 +3,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.lock" -exec dirname {} \;)
+POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
 
 # Create the poetry env for building website, docs, formatting, etc.
 env:
@@ -142,12 +142,12 @@ upload-%: build
 	popd
 
 upload-all: build
-	pushd dist/
-	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) **/*.whl
-	popd
+	poetry run `twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 
 upload-testpypi-%: build
-	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/**/*.whl
+	pushd dist/trulens-$*/
+	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) *.whl
+	popd
 
 upload-testpypi-all: build
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl

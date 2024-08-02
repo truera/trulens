@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-cortex"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,8 +28,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
-trulens-core = "^1.0.0"
-trulens-feedback = "^1.0.0"
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
+trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 snowflake-connector-python = "^3.11"
 snowflake-snowpark-python = "^1.18"
 

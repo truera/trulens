@@ -300,13 +300,13 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.2.26"
+version = "0.2.28"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.26-py3-none-any.whl", hash = "sha256:ab7bc58d8037349d06ad8c3eee2ea776e26af7f57cce330eecbed5b98e1c4d56"},
-    {file = "langchain_core-0.2.26.tar.gz", hash = "sha256:20c7792eb6c256dc50892d41f07f7fd8e12e5868dbb059fa316a278977bdf4f6"},
+    {file = "langchain_core-0.2.28-py3-none-any.whl", hash = "sha256:0728761d02ce696a1c6a57cfad18b874cf6c9566ba86120e2f542e442cb77a06"},
+    {file = "langchain_core-0.2.28.tar.gz", hash = "sha256:589f907fcb1f15acea55ea3f451a37faaa61c2e68b3d39d436cf73ca3dd23ef5"},
 ]
 
 [package.dependencies]
@@ -1078,7 +1078,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1108,7 +1108,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1119,7 +1119,7 @@ develop = false
 nltk = "^3.8"
 numpy = "^1.23"
 pydantic = "^2"
-trulens-core = {path = "../core"}
+trulens-core = "^1.0.0"
 
 [package.source]
 type = "directory"
@@ -1156,4 +1156,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "7bcdfc3184cb65c27786192b18e7cc9ce26566ca659a79bf4360ee4171361dc7"
+content-hash = "1bbaface6c0b1a7be206cc3fe1f4b47f732471d95adfa08e44aaadc24483f752"

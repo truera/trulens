@@ -672,8 +672,8 @@ langchain-core = ">=0.2.27,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
-    {version = ">=1,<2", markers = "python_version < \"3.12\""},
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1,<2", markers = "python_version < \"3.12\""},
 ]
 pydantic = ">=1,<3"
 PyYAML = ">=5.3"
@@ -683,24 +683,24 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.10"
+version = "0.2.11"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.2.10-py3-none-any.whl", hash = "sha256:9f4d1b5ab7f0b0a704f538e26e50fce45a461da6d2bf6b7b636d24f22fbc088a"},
-    {file = "langchain_community-0.2.10.tar.gz", hash = "sha256:3a0404bad4bd07d6f86affdb62fb3d080a456c66191754d586a409d9d6024d62"},
+    {file = "langchain_community-0.2.11-py3-none-any.whl", hash = "sha256:465c03ba1603975d141533424185e09546ecf09e379c93aee2671bdc9b325cda"},
+    {file = "langchain_community-0.2.11.tar.gz", hash = "sha256:ede261ff8202f1433f004ee90baf89f371cee37cb1abfc16dd0f8392db10b23e"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.9,<0.3.0"
-langchain-core = ">=0.2.23,<0.3.0"
+langchain = ">=0.2.12,<0.3.0"
+langchain-core = ">=0.2.27,<0.3.0"
 langsmith = ">=0.1.0,<0.2.0"
 numpy = [
-    {version = ">=1,<2", markers = "python_version < \"3.12\""},
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1,<2", markers = "python_version < \"3.12\""},
 ]
 PyYAML = ">=5.3"
 requests = ">=2,<3"
@@ -709,13 +709,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.27"
+version = "0.2.28"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.27-py3-none-any.whl", hash = "sha256:b12f58d4e3590e8e0b4b727acb0457b00e80862d1bf8b9d1ae36128adb08a7d0"},
-    {file = "langchain_core-0.2.27.tar.gz", hash = "sha256:5d2e4b9bc84285bbfe19864363b1a21dd04c2eed12d4a6b39f239ee02237ce40"},
+    {file = "langchain_core-0.2.28-py3-none-any.whl", hash = "sha256:0728761d02ce696a1c6a57cfad18b874cf6c9566ba86120e2f542e442cb77a06"},
+    {file = "langchain_core-0.2.28.tar.gz", hash = "sha256:589f907fcb1f15acea55ea3f451a37faaa61c2e68b3d39d436cf73ca3dd23ef5"},
 ]
 
 [package.dependencies]
@@ -723,8 +723,8 @@ jsonpatch = ">=1.33,<2.0"
 langsmith = ">=0.1.75,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
-    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
+    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
 ]
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
@@ -774,8 +774,8 @@ files = [
 [package.dependencies]
 orjson = ">=3.9.14,<4.0.0"
 pydantic = [
-    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
+    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
 ]
 requests = ">=2,<3"
 
@@ -1243,8 +1243,8 @@ files = [
 annotated-types = ">=0.4.0"
 pydantic-core = "2.20.1"
 typing-extensions = [
-    {version = ">=4.6.1", markers = "python_version < \"3.13\""},
     {version = ">=4.12.2", markers = "python_version >= \"3.13\""},
+    {version = ">=4.6.1", markers = "python_version < \"3.13\""},
 ]
 
 [package.extras]
@@ -1732,7 +1732,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1762,7 +1762,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1773,7 +1773,7 @@ develop = false
 nltk = "^3.8"
 numpy = "^1.23"
 pydantic = "^2"
-trulens-core = {path = "../core"}
+trulens-core = "^1.0.0"
 
 [package.source]
 type = "directory"
@@ -1928,4 +1928,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "d0c7ae5a61988d69a4ad1dfa99d8a97bc8eb6715eae2e92df09c0fdd28829e21"
+content-hash = "8bacbd3309eea9267c95afc0a56361bff37d8fb7e1b3828d924bfa11c9ea7547"

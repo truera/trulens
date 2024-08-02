@@ -444,33 +444,33 @@ lxml = ["lxml"]
 
 [[package]]
 name = "black"
-version = "24.4.2"
+version = "24.8.0"
 description = "The uncompromising code formatter."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "black-24.4.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:dd1b5a14e417189db4c7b64a6540f31730713d173f0b63e55fabd52d61d8fdce"},
-    {file = "black-24.4.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8e537d281831ad0e71007dcdcbe50a71470b978c453fa41ce77186bbe0ed6021"},
-    {file = "black-24.4.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eaea3008c281f1038edb473c1aa8ed8143a5535ff18f978a318f10302b254063"},
-    {file = "black-24.4.2-cp310-cp310-win_amd64.whl", hash = "sha256:7768a0dbf16a39aa5e9a3ded568bb545c8c2727396d063bbaf847df05b08cd96"},
-    {file = "black-24.4.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:257d724c2c9b1660f353b36c802ccece186a30accc7742c176d29c146df6e474"},
-    {file = "black-24.4.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:bdde6f877a18f24844e381d45e9947a49e97933573ac9d4345399be37621e26c"},
-    {file = "black-24.4.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e151054aa00bad1f4e1f04919542885f89f5f7d086b8a59e5000e6c616896ffb"},
-    {file = "black-24.4.2-cp311-cp311-win_amd64.whl", hash = "sha256:7e122b1c4fb252fd85df3ca93578732b4749d9be076593076ef4d07a0233c3e1"},
-    {file = "black-24.4.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:accf49e151c8ed2c0cdc528691838afd217c50412534e876a19270fea1e28e2d"},
-    {file = "black-24.4.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:88c57dc656038f1ab9f92b3eb5335ee9b021412feaa46330d5eba4e51fe49b04"},
-    {file = "black-24.4.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:be8bef99eb46d5021bf053114442914baeb3649a89dc5f3a555c88737e5e98fc"},
-    {file = "black-24.4.2-cp312-cp312-win_amd64.whl", hash = "sha256:415e686e87dbbe6f4cd5ef0fbf764af7b89f9057b97c908742b6008cc554b9c0"},
-    {file = "black-24.4.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:bf10f7310db693bb62692609b397e8d67257c55f949abde4c67f9cc574492cc7"},
-    {file = "black-24.4.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:98e123f1d5cfd42f886624d84464f7756f60ff6eab89ae845210631714f6db94"},
-    {file = "black-24.4.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:48a85f2cb5e6799a9ef05347b476cce6c182d6c71ee36925a6c194d074336ef8"},
-    {file = "black-24.4.2-cp38-cp38-win_amd64.whl", hash = "sha256:b1530ae42e9d6d5b670a34db49a94115a64596bc77710b1d05e9801e62ca0a7c"},
-    {file = "black-24.4.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:37aae07b029fa0174d39daf02748b379399b909652a806e5708199bd93899da1"},
-    {file = "black-24.4.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:da33a1a5e49c4122ccdfd56cd021ff1ebc4a1ec4e2d01594fef9b6f267a9e741"},
-    {file = "black-24.4.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ef703f83fc32e131e9bcc0a5094cfe85599e7109f896fe8bc96cc402f3eb4b6e"},
-    {file = "black-24.4.2-cp39-cp39-win_amd64.whl", hash = "sha256:b9176b9832e84308818a99a561e90aa479e73c523b3f77afd07913380ae2eab7"},
-    {file = "black-24.4.2-py3-none-any.whl", hash = "sha256:d36ed1124bb81b32f8614555b34cc4259c3fbc7eec17870e8ff8ded335b58d8c"},
-    {file = "black-24.4.2.tar.gz", hash = "sha256:c872b53057f000085da66a19c55d68f6f8ddcac2642392ad3a355878406fbd4d"},
+    {file = "black-24.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:09cdeb74d494ec023ded657f7092ba518e8cf78fa8386155e4a03fdcc44679e6"},
+    {file = "black-24.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:81c6742da39f33b08e791da38410f32e27d632260e599df7245cccee2064afeb"},
+    {file = "black-24.8.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:707a1ca89221bc8a1a64fb5e15ef39cd755633daa672a9db7498d1c19de66a42"},
+    {file = "black-24.8.0-cp310-cp310-win_amd64.whl", hash = "sha256:d6417535d99c37cee4091a2f24eb2b6d5ec42b144d50f1f2e436d9fe1916fe1a"},
+    {file = "black-24.8.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:fb6e2c0b86bbd43dee042e48059c9ad7830abd5c94b0bc518c0eeec57c3eddc1"},
+    {file = "black-24.8.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:837fd281f1908d0076844bc2b801ad2d369c78c45cf800cad7b61686051041af"},
+    {file = "black-24.8.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:62e8730977f0b77998029da7971fa896ceefa2c4c4933fcd593fa599ecbf97a4"},
+    {file = "black-24.8.0-cp311-cp311-win_amd64.whl", hash = "sha256:72901b4913cbac8972ad911dc4098d5753704d1f3c56e44ae8dce99eecb0e3af"},
+    {file = "black-24.8.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:7c046c1d1eeb7aea9335da62472481d3bbf3fd986e093cffd35f4385c94ae368"},
+    {file = "black-24.8.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:649f6d84ccbae73ab767e206772cc2d7a393a001070a4c814a546afd0d423aed"},
+    {file = "black-24.8.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:2b59b250fdba5f9a9cd9d0ece6e6d993d91ce877d121d161e4698af3eb9c1018"},
+    {file = "black-24.8.0-cp312-cp312-win_amd64.whl", hash = "sha256:6e55d30d44bed36593c3163b9bc63bf58b3b30e4611e4d88a0c3c239930ed5b2"},
+    {file = "black-24.8.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:505289f17ceda596658ae81b61ebbe2d9b25aa78067035184ed0a9d855d18afd"},
+    {file = "black-24.8.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:b19c9ad992c7883ad84c9b22aaa73562a16b819c1d8db7a1a1a49fb7ec13c7d2"},
+    {file = "black-24.8.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1f13f7f386f86f8121d76599114bb8c17b69d962137fc70efe56137727c7047e"},
+    {file = "black-24.8.0-cp38-cp38-win_amd64.whl", hash = "sha256:f490dbd59680d809ca31efdae20e634f3fae27fba3ce0ba3208333b713bc3920"},
+    {file = "black-24.8.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:eab4dd44ce80dea27dc69db40dab62d4ca96112f87996bca68cd75639aeb2e4c"},
+    {file = "black-24.8.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:3c4285573d4897a7610054af5a890bde7c65cb466040c5f0c8b732812d7f0e5e"},
+    {file = "black-24.8.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9e84e33b37be070ba135176c123ae52a51f82306def9f7d063ee302ecab2cf47"},
+    {file = "black-24.8.0-cp39-cp39-win_amd64.whl", hash = "sha256:73bbf84ed136e45d451a260c6b73ed674652f90a2b3211d6a35e78054563a9bb"},
+    {file = "black-24.8.0-py3-none-any.whl", hash = "sha256:972085c618ee94f402da1af548a4f218c754ea7e5dc70acb168bfaca4c2542ed"},
+    {file = "black-24.8.0.tar.gz", hash = "sha256:2500945420b6784c38b9ee885af039f5e7471ef284ab03fa35ecdde4688cd83f"},
 ]
 
 [package.dependencies]
@@ -1067,33 +1067,13 @@ typing-inspect = ">=0.4.0,<1"
 
 [[package]]
 name = "debugpy"
-version = "1.8.2"
+version = "1.8.3"
 description = "An implementation of the Debug Adapter Protocol for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "debugpy-1.8.2-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:7ee2e1afbf44b138c005e4380097d92532e1001580853a7cb40ed84e0ef1c3d2"},
-    {file = "debugpy-1.8.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3f8c3f7c53130a070f0fc845a0f2cee8ed88d220d6b04595897b66605df1edd6"},
-    {file = "debugpy-1.8.2-cp310-cp310-win32.whl", hash = "sha256:f179af1e1bd4c88b0b9f0fa153569b24f6b6f3de33f94703336363ae62f4bf47"},
-    {file = "debugpy-1.8.2-cp310-cp310-win_amd64.whl", hash = "sha256:0600faef1d0b8d0e85c816b8bb0cb90ed94fc611f308d5fde28cb8b3d2ff0fe3"},
-    {file = "debugpy-1.8.2-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:8a13417ccd5978a642e91fb79b871baded925d4fadd4dfafec1928196292aa0a"},
-    {file = "debugpy-1.8.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:acdf39855f65c48ac9667b2801234fc64d46778021efac2de7e50907ab90c634"},
-    {file = "debugpy-1.8.2-cp311-cp311-win32.whl", hash = "sha256:2cbd4d9a2fc5e7f583ff9bf11f3b7d78dfda8401e8bb6856ad1ed190be4281ad"},
-    {file = "debugpy-1.8.2-cp311-cp311-win_amd64.whl", hash = "sha256:d3408fddd76414034c02880e891ea434e9a9cf3a69842098ef92f6e809d09afa"},
-    {file = "debugpy-1.8.2-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:5d3ccd39e4021f2eb86b8d748a96c766058b39443c1f18b2dc52c10ac2757835"},
-    {file = "debugpy-1.8.2-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:62658aefe289598680193ff655ff3940e2a601765259b123dc7f89c0239b8cd3"},
-    {file = "debugpy-1.8.2-cp312-cp312-win32.whl", hash = "sha256:bd11fe35d6fd3431f1546d94121322c0ac572e1bfb1f6be0e9b8655fb4ea941e"},
-    {file = "debugpy-1.8.2-cp312-cp312-win_amd64.whl", hash = "sha256:15bc2f4b0f5e99bf86c162c91a74c0631dbd9cef3c6a1d1329c946586255e859"},
-    {file = "debugpy-1.8.2-cp38-cp38-macosx_11_0_x86_64.whl", hash = "sha256:5a019d4574afedc6ead1daa22736c530712465c0c4cd44f820d803d937531b2d"},
-    {file = "debugpy-1.8.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:40f062d6877d2e45b112c0bbade9a17aac507445fd638922b1a5434df34aed02"},
-    {file = "debugpy-1.8.2-cp38-cp38-win32.whl", hash = "sha256:c78ba1680f1015c0ca7115671fe347b28b446081dada3fedf54138f44e4ba031"},
-    {file = "debugpy-1.8.2-cp38-cp38-win_amd64.whl", hash = "sha256:cf327316ae0c0e7dd81eb92d24ba8b5e88bb4d1b585b5c0d32929274a66a5210"},
-    {file = "debugpy-1.8.2-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:1523bc551e28e15147815d1397afc150ac99dbd3a8e64641d53425dba57b0ff9"},
-    {file = "debugpy-1.8.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e24ccb0cd6f8bfaec68d577cb49e9c680621c336f347479b3fce060ba7c09ec1"},
-    {file = "debugpy-1.8.2-cp39-cp39-win32.whl", hash = "sha256:7f8d57a98c5a486c5c7824bc0b9f2f11189d08d73635c326abef268f83950326"},
-    {file = "debugpy-1.8.2-cp39-cp39-win_amd64.whl", hash = "sha256:16c8dcab02617b75697a0a925a62943e26a0330da076e2a10437edd9f0bf3755"},
-    {file = "debugpy-1.8.2-py2.py3-none-any.whl", hash = "sha256:16e16df3a98a35c63c3ab1e4d19be4cbc7fdda92d9ddc059294f18910928e0ca"},
-    {file = "debugpy-1.8.2.zip", hash = "sha256:95378ed08ed2089221896b9b3a8d021e642c24edc8fef20e5d4342ca8be65c00"},
+    {file = "debugpy-1.8.3-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:0df2c400853150af14996b8d1a4f54d45ffa98e76c0f3de30665e89e273ea293"},
+    {file = "debugpy-1.8.3.zip", hash = "sha256:0f5a6326d9fc375b864ed368d06cddf2dabe5135511e71cde3758be699847d36"},
 ]
 
 [[package]]
@@ -2498,13 +2478,13 @@ test-ui = ["calysto-bash"]
 
 [[package]]
 name = "keyring"
-version = "25.2.1"
+version = "25.3.0"
 description = "Store and access your passwords safely."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "keyring-25.2.1-py3-none-any.whl", hash = "sha256:2458681cdefc0dbc0b7eb6cf75d0b98e59f9ad9b2d4edd319d18f68bdca95e50"},
-    {file = "keyring-25.2.1.tar.gz", hash = "sha256:daaffd42dbda25ddafb1ad5fec4024e5bbcfe424597ca1ca452b299861e49f1b"},
+    {file = "keyring-25.3.0-py3-none-any.whl", hash = "sha256:8d963da00ccdf06e356acd9bf3b743208878751032d8599c6cc89eb51310ffae"},
+    {file = "keyring-25.3.0.tar.gz", hash = "sha256:8d85a1ea5d6db8515b59e1c5d1d1678b03cf7fc8b8dcfb1651e8c4a524eb42ef"},
 ]
 
 [package.dependencies]
@@ -2518,8 +2498,8 @@ SecretStorage = {version = ">=3.2", markers = "sys_platform == \"linux\""}
 
 [package.extras]
 completion = ["shtab (>=1.1.0)"]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+test = ["pyfakefs", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)"]
 
 [[package]]
 name = "kiwisolver"
@@ -2689,13 +2669,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.26"
+version = "0.2.28"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.26-py3-none-any.whl", hash = "sha256:ab7bc58d8037349d06ad8c3eee2ea776e26af7f57cce330eecbed5b98e1c4d56"},
-    {file = "langchain_core-0.2.26.tar.gz", hash = "sha256:20c7792eb6c256dc50892d41f07f7fd8e12e5868dbb059fa316a278977bdf4f6"},
+    {file = "langchain_core-0.2.28-py3-none-any.whl", hash = "sha256:0728761d02ce696a1c6a57cfad18b874cf6c9566ba86120e2f542e442cb77a06"},
+    {file = "langchain_core-0.2.28.tar.gz", hash = "sha256:589f907fcb1f15acea55ea3f451a37faaa61c2e68b3d39d436cf73ca3dd23ef5"},
 ]
 
 [package.dependencies]
@@ -2778,13 +2758,13 @@ regex = ["regex"]
 
 [[package]]
 name = "litellm"
-version = "1.42.10"
+version = "1.42.11"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.42.10-py3-none-any.whl", hash = "sha256:f318e7d1b6eb9134397edfb7ad070c744fbcdcdfd165d0282ae7acf8bb740db2"},
-    {file = "litellm-1.42.10.tar.gz", hash = "sha256:eda013f10d5d843e78fcaf9ef6e3cc2f3a3e2572c72a9ceb3b7c97f7e35d3b4e"},
+    {file = "litellm-1.42.11-py3-none-any.whl", hash = "sha256:42f44aff8755e857e1545efadd0647a65dc49a2ef94274b5eeb94f4cecbd2258"},
+    {file = "litellm-1.42.11.tar.gz", hash = "sha256:6b8af910ddcd2ffcfa65f2b1d7dd8b34a5da491d7ac61ea6041f89e8d3c8670a"},
 ]
 
 [package.dependencies]
@@ -7788,7 +7768,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7804,12 +7784,12 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-core"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 alembic = "^1.11"
@@ -7838,7 +7818,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "!=3.9.7,<4.0,>=3.9"
@@ -7856,7 +7836,7 @@ streamlit-aggrid = "0.3.4"
 streamlit-extras = ">=0.4"
 streamlit-pills = ">=0.3"
 traitlets = ">=5.0.5"
-trulens-core = ">=1"
+trulens-core = ">=1.0.0"
 
 [package.extras]
 dev = ["build (>=1.2.1)", "ipython (>=7.25)"]
@@ -7867,7 +7847,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7878,7 +7858,7 @@ develop = true
 nltk = "^3.8"
 numpy = "^1.23"
 pydantic = "^2"
-trulens-core = {path = "../core"}
+trulens-core = "^1.0.0"
 
 [package.source]
 type = "directory"
@@ -7886,7 +7866,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-instrument-langchain"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -7897,7 +7877,7 @@ develop = true
 langchain = "^0.2.10,!=0.2.12"
 langchain-core = "^0.2.24,!=0.2.27"
 pydantic = "^2"
-trulens-core = ">=0.33"
+trulens-core = "^1.0.0"
 typing-inspect = "^0.8"
 
 [package.source]
@@ -7906,7 +7886,7 @@ url = "src/instrument/langchain"
 
 [[package]]
 name = "trulens-instrument-llamaindex"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7925,7 +7905,7 @@ url = "src/instrument/llamaindex"
 
 [[package]]
 name = "trulens-instrument-nemo"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -7944,7 +7924,7 @@ url = "src/instrument/nemo"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7963,7 +7943,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -7982,7 +7962,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8005,7 +7985,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8023,7 +8003,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8041,7 +8021,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8579,4 +8559,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "ff8a64372ac48b7f499b60ce22657001e0abf1960a5b4d1f155601da5ca87fdb"
+content-hash = "7792d676e757ba422f69465287bfeb5c487933e049b7e7d3f48dd58b9073262d"

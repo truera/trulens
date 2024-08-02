@@ -1290,7 +1290,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1320,7 +1320,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1331,7 +1331,7 @@ develop = false
 nltk = "^3.8"
 numpy = "^1.23"
 pydantic = "^2"
-trulens-core = {path = "../core"}
+trulens-core = "^1.0.0"
 
 [package.source]
 type = "directory"
@@ -1381,4 +1381,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "7bf3ca6ae1b760c14945864fe9f1855cdae1a02637cc941a63ecbd502a8bfd1f"
+content-hash = "bfdaf552e44a423ec171420d3e8e3db4c5cf61cdc829ddac687f6d39abae28ea"

@@ -723,12 +723,12 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 alembic = "^1.11"
@@ -765,4 +765,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "841dbe66dc728403fb9d1a28380654577b388e5ffeff85fe86e533dbbe1b1f54"
+content-hash = "9e6b00e5b5d3ac31a7b48ffff1d498dcdc377876bb6e8adb58c1b4602d3e7264"
