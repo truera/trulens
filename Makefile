@@ -111,22 +111,43 @@ clean-dashboard:
 	rm -rf src/dashboard/*.egg-info
 
 clean: clean-dashboard
+	rm -rf dist build
 	git clean -fxd
 
 ## Step: Build wheels
 build-dashboard: env clean-dashboard
-	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist;
+	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
 
-build: $(POETRY_DIRS) clean lock
+build: $(POETRY_DIRS) clean
 	for dir in $(POETRY_DIRS); do \
 		echo "Building $$dir"; \
 		pushd $$dir; \
-		poetry build -o $(REPO_ROOT)/dist; \
+		if [[ "$$dir" == "." ]]; then \
+			pkg_name=trulens; \
+		else \
+			pkg_path=$${dir#./src/}; \
+			pkg_name=trulens-$${pkg_path//\//-}; \
+		fi; \
+		echo $$pkg_name; \
+		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/; \
 		popd; \
 	done
 	make build-dashboard
 
 ## Step: Upload wheels to pypi
-## Usage: TOKEN=... make upload
-upload: build
-	poetry run twine upload -u __token__ -p $(TOKEN) dist/*.whl
+# Usage: TOKEN=... make upload-pypi-instrument-langchain
+upload-%: build
+	pushd dist/trulens-$*/
+	poetry run twine upload -u __token__ -p $(TOKEN) *.whl
+	popd
+
+upload-all: build
+	pushd dist/
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) **/*.whl
+	popd
+
+upload-testpypi-%: build
+	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/**/*.whl
+
+upload-testpypi-all: build
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl

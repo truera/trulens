@@ -1,10 +1,9 @@
-# TruLens Dashboard
+# trulens-dashboard
 
-## Setup
+## Install Node.js
 
-### Install NPM
+See [the Node.js website](https://nodejs.org/en/download/package-manager) for details
 
-
-### Building
+## Building
 
 Build with `python -m build`
