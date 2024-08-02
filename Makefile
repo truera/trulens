@@ -9,11 +9,14 @@ POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.l
 env:
 	poetry install
 
+env-%:
+	poetry install --with $*
+
 env-required:
 	poetry install --only required,tests --sync
 
 env-optional:
-	poetry install --sync --verbose
+	poetry install --with tests,tests-optional --sync --verbose
 
 
 # Lock the poetry dependencies for all the subprojects.
@@ -42,25 +45,25 @@ lab: env
 	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Build the documentation website.
-docs: env $(shell find docs -type f) mkdocs.yml
+docs: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs build --clean
 	rm -Rf site/overrides
 
 # Serve the documentation website.
-docs-serve: env
+docs-serve: env-docs
 	poetry run mkdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
-docs-serve-debug: env
+docs-serve-debug: env-docs
 	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-docs-serve-dirty: env
+docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
 
-docs-upload: env $(shell find docs -type f) mkdocs.yml
+docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.

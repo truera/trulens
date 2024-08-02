@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
   "humanize>=4.6",
   "ipywidgets>=8.1.3",
+  "jupyter>=1",
   "millify>=0.1.1",
   "rich>=13.6",
   "streamlit>=1.33",

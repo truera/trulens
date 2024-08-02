@@ -27,7 +27,7 @@ pp = PrettyPrinter()
 def safe_importlib_package_name(package_name: str) -> str:
     return (
         package_name
-        if sys.version_info > (3, 9)
+        if sys.version_info >= (3, 10)
         else package_name.replace(".", "-")
     )
 

@@ -37,7 +37,10 @@ trulens-dashboard = "^1.0.0"
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
 
-[tool.poetry.group.db-tests.dependencies]
+[tool.poetry.group.tests-db]
+optional = true
+
+[tool.poetry.group.tests-db.dependencies]
 psycopg2-binary = "^2.9"
 pymysql = "^1.1"
 cryptography = "^41.0"
@@ -72,10 +75,6 @@ trulens-instrument-langchain = { path = "src/instrument/langchain", develop = tr
 trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
 trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
 
-[tool.poetry.group.notebook.dependencies]
-jupyter = "^1.0"
-ipywidgets = "^8.1"
-
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
 trulens-providers-langchain = { path = "src/providers/langchain", develop = true }
@@ -92,6 +91,9 @@ trulens-core = { path = "src/core", extras = [
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
 
+[tool.poetry.group.tests]
+optional = true
+
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.3"
 nbconvert = "^7.16"
@@ -101,6 +103,9 @@ pytest-azurepipelines = "^1.0"
 ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
+
+[tool.poetry.group.tests-optional]
+optional = true
 
 [tool.poetry.group.tests-optional.dependencies]
 llama-index-embeddings-huggingface = "^0.2.2"
