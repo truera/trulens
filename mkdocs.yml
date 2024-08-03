@@ -268,6 +268,8 @@ nav:
                 - ❄️ Logging in Snowflake: trulens/tracking/logging/where_to_log/log_in_snowflake.md
             - 📓 Logging Methods: trulens/tracking/logging/logging.ipynb
     - 🛡️ Guardrails: trulens/guardrails/index.md
+    - Other:
+      - Moving from trulens-eval: trulens/guides/trulens_eval_migration.md
   # - 🔍 Guides:
   #     # PLACEHOLDER: - trulens/guides/index.md
   #     - Any LLM App: trulens/guides/use_cases_any.md

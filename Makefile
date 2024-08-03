@@ -130,6 +130,7 @@ build: $(POETRY_DIRS) clean
 		fi; \
 		echo $$pkg_name; \
 		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/; \
+		rm -rf .venv; \
 		popd; \
 	done
 	make build-dashboard
