@@ -268,6 +268,7 @@ nav:
         - trulens/guardrails/index.md
     - Other:
       - Moving from TruLens Eval: trulens/guides/trulens_eval_migration.md
+      - Uninstalling TruLens: trulens/guides/uninstalling.md
   # - 🔍 Guides:
   #     # PLACEHOLDER: - trulens/guides/index.md
   #     - Any LLM App: trulens/guides/use_cases_any.md
@@ -275,7 +276,7 @@ nav:
   #     - LLM Agents: trulens/guides/use_cases_agent.md
   #     - Dev to Prod: trulens/guides/use_cases_production.md
   - API Reference: reference/
-  - Examples: examples/
+  - Cookbook: examples/
   - 🤝 Contributing:
       - trulens/contributing/index.md
       - 🧭 Design: trulens/contributing/design.md
