@@ -2,7 +2,7 @@ trigger: none
 
 pr:
   # Run this pipeline for any PR from a branch that starts with "releases/" that
-  # changed code in trulens_eval folder or to eval notebooks in the docs folder.
+  # changed code in trulens src directory or to eval notebooks in the docs folder.
   branches:
     include:
       - releases/*

@@ -13,7 +13,7 @@ If `npm` is absent, follow the instructions [here](https://docs.npmjs.com/downlo
 1. `cd` into the `record_viewer` directory
 
 ```
-cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
+cd <your-trulens-directory>/src/dashboard/trulens/dashboard/react_components/record_viewer
 ```
 
 2. Install the frontend dependencies:
@@ -31,14 +31,14 @@ npm run dev
 4. Set `_RELEASE` in `__init__.py` to be `False`
 
 ```
-cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
+cd <your-trulens-directory>/src/dashboard/trulens/dashboard/react_components/record_viewer
 <vi/nano/your text editor> __init__.py
 ```
 
 5. Start your jupyter notebook
 
 ```
-PYTHONPATH="<path to trulens-eval>:$PYTHONPATH" jupyter lab
+PYTHONPATH="<path to trulens>:$PYTHONPATH" jupyter lab
 ```
 
 ## Quickstart once development is complete
@@ -46,7 +46,7 @@ PYTHONPATH="<path to trulens-eval>:$PYTHONPATH" jupyter lab
 1. `cd` into the `record_viewer` directory
 
 ```
-cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
+cd <your-trulens-directory>/src/dashboard/trulens/dashboard/react_components/record_viewer
 ```
 
 2. Install the frontend dependencies:
@@ -64,12 +64,12 @@ npm run build
 4. Set `_RELEASE` in `__init__.py` to be `True`
 
 ```
-cd <your-trulens-directory>/trulens/trulens_eval/trulens_eval/react_components/record_viewer
+cd <your-trulens-directory>/src/dashboard/trulens/dashboard/react_components/record_viewer
 <vi/nano/your text editor> __init__.py
 ```
 
 5. Start your jupyter notebook
 
 ```
-PYTHONPATH="<path to trulens-eval>:$PYTHONPATH" jupyter lab
+PYTHONPATH="<path to trulens>:$PYTHONPATH" jupyter lab
 ```

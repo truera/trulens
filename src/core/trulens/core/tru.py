@@ -61,7 +61,7 @@ def humanize_seconds(seconds: float):
 
 
 class Tru(python.SingletonPerName):
-    """Tru is the main class that provides an entry points to trulens-eval.
+    """Tru is the main class that provides an entry points to trulens.
 
     Tru lets you:
 

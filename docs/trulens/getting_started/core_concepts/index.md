@@ -54,7 +54,7 @@ General and 🦑_TruLens_-specific concepts.
   to find related pieces of text in a `Retrieval`.
 
 - `Eval`, `Evals`, `Evaluation`. Process or result of method that scores the
-  outputs or aspects of a `Trace`. In 🦑_TruLens-Eval_, our scores are real
+  outputs or aspects of a `Trace`. In 🦑_TruLens_, our scores are real
   numbers between 0 and 1.
 
 - `Feedback`. See `Evaluation`.
@@ -130,7 +130,7 @@ General and 🦑_TruLens_-specific concepts.
   `Memory`, or `Application` configuration parameters.
 
 - `Provider`. A system that _provides_ the ability to execute models, either
-  `LLM`s or classification models. In 🦑_TruLens-Eval_, `Feedback Functions`
+  `LLM`s or classification models. In 🦑_TruLens_, `Feedback Functions`
   make use of `Providers` to invoke models for `Evaluation`.
 
 - `RAG`, `Retrieval Augmented Generation`. A common organization of
@@ -138,7 +138,7 @@ General and 🦑_TruLens_-specific concepts.
   `Completions` that incorporate information that an `LLM` alone may not be
   aware of.
 
-- `RAG Triad` (🦑_TruLens-Eval_-specific concept). A combination of three
+- `RAG Triad` (🦑_TruLens_-specific concept). A combination of three
   `Feedback Functions` meant to `Evaluate` `Retrieval` steps in `Applications`.
 
 - `Record`. A "record" of the execution of a single execution of an app. Single
@@ -153,7 +153,7 @@ General and 🦑_TruLens_-specific concepts.
   as `Context` to an `LLM`. Typically this is done using an `Embedding`
   representations.
 
-- `Selector` (🦑_TruLens-Eval_-specific concept). A specification of the source
+- `Selector` (🦑_TruLens_-specific concept). A specification of the source
   of data from a `Trace` to use as inputs to a `Feedback Function`. This
   corresponds to [Lens][trulens.core.utils.serial.Lens] and utilities
   [Select][trulens.core.Select].

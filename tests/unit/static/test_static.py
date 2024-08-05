@@ -85,7 +85,7 @@ def get_all_modules(path: Path, startswith=None):
     return ret
 
 
-# Get all modules inside trulens_eval:
+# Get all modules inside trulens:
 all_trulens_mods = get_all_modules(
     Path(trulens.core.__file__).parent.parent, startswith="trulens"
 )

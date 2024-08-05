@@ -26,13 +26,6 @@ By default, the dashboard will find and run on an unused port number. You can al
 
     If you are running in Google Colab, `run_dashboard()` will output a tunnel website and IP address that can be entered into the tunnel website.
 
-It can also be run in the CLI with the command below:
-
-!!! example "Lanch the TruLens dashboard in the CLI"
-
-    ```bash
-    trulens-eval
-    ```
 
 ## Streamlit Components
 

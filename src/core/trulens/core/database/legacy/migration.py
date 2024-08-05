@@ -1,6 +1,6 @@
 """
 This is pre-sqlalchemy db migration. This file should not need changes. It is
-here for backwards compatibility of oldest trulens-eval versions.
+here for backwards compatibility of oldest TruLens versions.
 """
 
 import json
@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 """
 How to make a db migrations:
 
-1. Create a compatibility DB (checkout the last pypi rc branch https://github.com/truera/trulens/tree/releases/rc-trulens-eval-X.x.x/):
+1. Create a compatibility DB (checkout the last pypi rc branch https://github.com/truera/trulens/tree/releases/rc-trulens-X.x.x/):
   In trulens/tests/docs_notebooks/notebooks_to_test
   remove any local dbs
     * rm rf default.sqlite
-  run below notebooks (Making sure you also run with the same X.x.x version trulens-eval)
+  run below notebooks (Making sure you also run with the same X.x.x version trulens)
     * all_tools.ipynb # cp cp ../generated_files/all_tools.ipynb ./
     * llama_index_quickstart.ipynb # cp frameworks/llama_index/llama_index_quickstart.ipynb ./
     * langchain-retrieval-augmentation-with-trulens.ipynb # cp vector-dbs/pinecone/langchain-retrieval-augmentation-with-trulens.ipynb ./
