@@ -409,7 +409,7 @@ class LLMProvider(Provider):
         """
         warnings.warn(
             "`model_agreement` has been deprecated. "
-            "Use `GroundTruthAgreement(ground_truth)` instead.",
+            "Use `GroundTruthAgreement(ground_truth, provider)` instead.",
             DeprecationWarning,
         )
         chat_response = self._create_chat_completion(

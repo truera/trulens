@@ -43,8 +43,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def __init__(
         self,
-        provider: LLMProvider,
         ground_truth: Union[List, Callable, FunctionOrMethod],
+        provider: LLMProvider,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
@@ -53,25 +53,28 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Usage 1:
         ```
         from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.openai import OpenAI
         golden_set = [
             {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
             {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
         ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+        ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
         ```
 
         Usage 2:
         ```
         from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.cortex import Cortex
         ground_truth_imp = llm_app
         response = llm_app(prompt)
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
+
+        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
         ```
 
         Args:
             ground_truth (Union[Callable, FunctionOrMethod]): A list of query/response pairs or a function or callable that returns a ground truth string given a prompt string.
+            provider (LLMProvider): The provider to use for agreement measures.
             bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
-            provider (Provider, optional): Internal Usage for DB serialization.
 
         """
         if isinstance(ground_truth, List):
@@ -139,11 +142,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
@@ -183,12 +188,17 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.bedrock import Bedrock
 
             golden_set =
             {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
             {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+
+            bedrock = Bedrock(
+                model_id="amazon.titan-text-express-v1", region_name="us-east-1"
+            )
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=bedrock)
 
             f_groundtruth = Feedback(ground_truth.absolute_error.on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
             ```
@@ -217,11 +227,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
@@ -266,11 +277,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```
