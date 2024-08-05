@@ -394,7 +394,7 @@ class Tru(python.SingletonPerName):
         self,
         app_id: str,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        feedback_to_score_fn: Callable,
+        trace_to_score_fn: Callable,
         agg_funcs: List[feedback.AggCallable],
         benchmark_params: dict,
         **kwargs: dict,
@@ -404,7 +404,7 @@ class Tru(python.SingletonPerName):
         Args:
             app_id (str): user-defined identifier of the experiment run.
             ground_truth (Union[List, Callable, FunctionOrMethod]): groundtruth for the benchmarking experiment.
-            feedback_to_score_fn (Callable): feedback function of interest to perform meta-evaluation on.
+            trace_to_score_fn (Callable): feedback function of interest to perform meta-evaluation on.
             agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
             benchmark_params (Any): parameters for the benchmarking experiment.
 
@@ -419,7 +419,7 @@ class Tru(python.SingletonPerName):
 
         benchmark_exp = TruBenchmarkExperiment(
             ground_truth=ground_truth,
-            feedback_to_score_fn=feedback_to_score_fn,
+            trace_to_score_fn=trace_to_score_fn,
             agg_funcs=agg_funcs,
             benchmark_params=benchmark_params,
         )

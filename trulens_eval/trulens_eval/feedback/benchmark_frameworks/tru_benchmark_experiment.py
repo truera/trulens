@@ -44,13 +44,13 @@ class TruBenchmarkExperiment:
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        feedback_to_score_fn: Callable,
+        trace_to_score_fn: Callable,
         agg_funcs: List[AggCallable],
         benchmark_params: BenchmarkParams,
     ):
         # TODO: instance type check of ground_truth argument + handle groundtruth_impl
         self.ground_truth = ground_truth
-        self.feedback_to_score_fn = feedback_to_score_fn
+        self.trace_to_score_fn = trace_to_score_fn
         self.benchmark_params = benchmark_params
 
         self.f_benchmark_metrics: List[mod_feedback.Feedback] = [
@@ -58,7 +58,7 @@ class TruBenchmarkExperiment:
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )
-            .on(Select.RecordCalls.run_feedback_on_single_row.rets)
+            .on(Select.RecordCalls.run_score_generation_on_single_row.rets)
             .aggregate(agg_func)
             for agg_func in agg_funcs
         ]
@@ -67,22 +67,21 @@ class TruBenchmarkExperiment:
         pass  # TODO
 
     @instrument
-    def run_feedback_on_single_row(
-        self, row, feedback_to_score_fn: Callable
+    def run_score_generation_on_single_row(
+        self, row, trace_to_score_fn: Callable
     ) -> Union[float, Tuple[float, float]]:
-        """Generate a score with the feedback_to_score_fn
+        """Generate a score with the trace_to_score_fn
 
         Returns:
             Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
         """
-        benchmark_params = self.benchmark_params.model_dump()
-        temperature = benchmark_params.get("temperature", 0)
 
-        ret = feedback_to_score_fn(
-            row["query"], row["response"], temperature=temperature
+        benchmark_params_dict: dict = self.benchmark_params.model_dump()
+        ret = trace_to_score_fn(
+            row["query"], row["response"], benchmark_params_dict
         )
 
-        # TODO: support benchmark parameters beyond temperature in kwargs
+        # TODO: better define the shape of arguments of trace_to_score_fn
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
@@ -112,9 +111,9 @@ class TruBenchmarkExperiment:
         with ThreadPoolExecutor() as executor:
             future_to_row = {
                 executor.submit(
-                    self.run_feedback_on_single_row,
+                    self.run_score_generation_on_single_row,
                     row,
-                    self.feedback_to_score_fn,
+                    self.trace_to_score_fn,
                 ): row
                 for row in self.ground_truth
             }
