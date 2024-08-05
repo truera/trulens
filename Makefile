@@ -118,7 +118,7 @@ clean: clean-dashboard
 build-dashboard: env clean-dashboard
 	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
 
-build: $(POETRY_DIRS) clean
+build: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Building $$dir"; \
 		pushd $$dir; \

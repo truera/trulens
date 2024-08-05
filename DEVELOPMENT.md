@@ -28,6 +28,14 @@ TruLens uses Poetry for dependency management and packaging. Install Poetry with
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
+You may need to add the Poetry binary to your `PATH` by adding the following line to your shell profile (e.g. `~/.bashrc`, `~/.zshrc`):
+
+```bash
+export PATH=$PATH:$HOME/.local/bin
+```
+
+## Install the TruLens project
+
 Install `trulens` into your environment, including optional dependencies, by running the following command:
 
 ```bash
@@ -47,6 +55,7 @@ For more information on Poetry, see [poetry docs](https://python-poetry.org/docs
 ## Install pre-commit hooks
 
 TruLens uses pre-commit hooks for running simple syntax and style checks before committing to the repository. Install the hooks with the following command:
+
 ```bash
 pre-commit install
 ```
@@ -109,15 +118,27 @@ make coverage
 
 ### Update Poetry Locks
 
-Recreates lockfiles for all submodules. This runs `poetry lock` in the root directory and in each submodule.
+Recreates lockfiles for all packages. This runs `poetry lock` in the root directory and in each package.
 
 ```bash
 make lock
 ```
 
+### Update package version
+
+To update the version of a specific package:
+
+```bash
+# If updating version of a specific package
+cd src/[path-to-package]
+poetry version [major | minor | patch]
+```
+
+This can also be done manually by editing the `pyproject.toml` file in the respective directory.
+
 ### Build all packages
 
-Builds `trulens` and all subpackages to `dist/*`
+Builds `trulens` and all packages to `dist/*`
 
 ```bash
 make build
