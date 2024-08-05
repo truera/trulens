@@ -1,17 +1,24 @@
 from typing import TYPE_CHECKING, Dict, Tuple, Union
 
 import numpy as np
-from trulens.core.utils.imports import REQUIREMENT_LLAMA
-from trulens.core.utils.imports import REQUIREMENT_SKLEARN
 from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 
-with OptionalImports(messages=REQUIREMENT_SKLEARN):
-    pass
+with OptionalImports(
+    messages=format_import_errors(
+        "scikit-learn", purpose="using embedding vector distances"
+    )
+):
+    import sklearn.metrics
 
 if TYPE_CHECKING:
-    with OptionalImports(messages=REQUIREMENT_LLAMA):
+    with OptionalImports(
+        messages=format_import_errors(
+            "llama-index", purpose="instrumenting LlamaIndex apps"
+        )
+    ):
         from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
@@ -73,7 +80,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -86,13 +92,10 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.cosine_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]
 
     def manhattan_distance(
         self, query: str, document: str
@@ -124,7 +127,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -137,13 +139,10 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.manhattan_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]
 
     def euclidean_distance(
         self, query: str, document: str
@@ -175,7 +174,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -188,10 +186,7 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.euclidean_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]

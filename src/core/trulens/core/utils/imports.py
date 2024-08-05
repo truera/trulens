@@ -78,26 +78,6 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
             return _path
 
 
-required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource("core.utils", "requirements.txt")
-)
-"""Mapping of required package names to the requirement object with info
-about that requirement including version constraints."""
-
-optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource("core.utils", "requirements.optional.txt")
-)
-"""Mapping of optional package names to the requirement object with info
-about that requirement including version constraints."""
-
-all_packages: Dict[str, requirements.Requirement] = {
-    **required_packages,
-    **optional_packages,
-}
-"""Mapping of optional and required package names to the requirement object
-with info about that requirement including version constraints."""
-
-
 def parse_version(version_string: str) -> version.Version:
     """Parse the version string into a packaging version object."""
 
@@ -216,14 +196,6 @@ def format_import_errors(
     requirements = []
     requirements_pinned = []
 
-    for pkg in packages:
-        if pkg in all_packages:
-            requirements.append(str(all_packages[pkg]))
-            requirements_pinned.append(str(pin_spec(all_packages[pkg])))
-        else:
-            logger.warning("Package %s not present in requirements.", pkg)
-            requirements.append(pkg)
-
     packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
     is_are = "is" if len(packages) == 1 else "are"
@@ -266,20 +238,8 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
-REQUIREMENT_LLAMA = format_import_errors(
-    "llama-index", purpose="instrumenting LlamaIndex apps"
-)
-
-REQUIREMENT_SKLEARN = format_import_errors(
-    "scikit-learn", purpose="using embedding vector distances"
-)
-
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
-)
-
-REQUIREMENT_BERT_SCORE = format_import_errors(
-    "bert-score", purpose="measuring BERT Score"
 )
 
 REQUIREMENT_SNOWFLAKE = format_import_errors(
@@ -290,14 +250,6 @@ REQUIREMENT_SNOWFLAKE = format_import_errors(
         "snowflake-sqlalchemy",
     ],
     purpose="connecting to Snowflake",
-)
-
-REQUIREMENT_EVALUATE = format_import_errors(
-    "evaluate", purpose="using certain metrics"
-)
-
-REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
 )
 
 

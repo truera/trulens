@@ -1,10 +1,14 @@
 import inspect
 
-from trulens.core.utils.imports import REQUIREMENT_NOTEBOOK
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.imports import format_import_errors
 
-with OptionalImports(messages=REQUIREMENT_NOTEBOOK):
+with OptionalImports(
+    messages=format_import_errors(
+        ["ipython", "ipywidgets"], purpose="using TruLens in a notebook"
+    )
+):
     from IPython import get_ipython
     from IPython.core.magic import register_line_cell_magic
     from IPython.display import display

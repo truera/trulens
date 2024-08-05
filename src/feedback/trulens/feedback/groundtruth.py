@@ -3,19 +3,22 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-from trulens.core.utils.imports import REQUIREMENT_BERT_SCORE
-from trulens.core.utils.imports import REQUIREMENT_EVALUATE
 from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 from trulens.feedback.generated import re_0_10_rating
 from trulens.feedback.llm_provider import LLMProvider
 
-with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
+with OptionalImports(
+    messages=format_import_errors("bert-score", purpose="measuring BERT Score")
+):
     from bert_score import BERTScorer
 
-with OptionalImports(messages=REQUIREMENT_EVALUATE):
+with OptionalImports(
+    messages=format_import_errors("evaluate", purpose="using certain metrics")
+):
     import evaluate
 
 logger = logging.getLogger(__name__)
