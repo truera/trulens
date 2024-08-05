@@ -344,14 +344,17 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
+    model_config: ClassVar[dict] = dict(
+        arbitrary_types_allowed=True, extra="allow"
+    )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback fuctions."""
 
     true_labels: List[int]
+    custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
+
     k: Optional[int] = (
         None  # top k results to consider in NDCG@k, precision@k, recall@k, etc
     )
-
-    # TODO take custom aggregation functions as input
 
     n_bins: int = 5  # number of bins for ECE
 
@@ -359,7 +362,19 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         self, true_labels: List[int], k: Optional[int] = None, **kwargs
     ):
         # TODO: automatically load from IR / benchmarking datasets or just set the DB url for smaller serialization overhead?
-        super().__init__(true_labels=true_labels, k=k, **kwargs)
+        super().__init__(
+            true_labels=true_labels, k=k, custom_agg_funcs={}, **kwargs
+        )
+
+    def register_custom_agg_func(
+        self,
+        name: str,
+        func: Callable[[List[float], "GroundTruthAggregator"], float],
+    ) -> None:
+        """Register a custom aggregation function."""
+        self.custom_agg_funcs[name] = func
+
+        setattr(self, name, lambda scores: func(scores, self))
 
     def ndcg_at_k(self, scores: List[float]) -> float:
         """
