@@ -1,4 +1,4 @@
-This readme presents the goals, planning, and design of feedback function reorganization work. 
+This readme presents the goals, planning, and design of feedback function reorganization work.
 
 # Goals
 
@@ -14,7 +14,7 @@ Highest level abstraction of feedback should be free of implementation details a
 
 Examples of other tools with similar abstraction are:
 
-- [Langchain eval criteria](https://python.langchain.com/docs/guides/evaluation/string/criteria_eval_chain) . No organization is involved but implementation is somewhat abstracted. 
+- [Langchain eval criteria](https://python.langchain.com/docs/guides/evaluation/string/criteria_eval_chain) . No organization is involved but implementation is somewhat abstracted.
 - [OpenAI moderation](https://platform.openai.com/docs/guides/moderation)  . A minimal level organization is present there. Restricted to concepts related to OpenAI usage policies. Specific moderation model involved/exposed but typical usage ignores it.
 
 Exposed in this layer:
@@ -26,6 +26,7 @@ Some initial thoughts on root organization:
 QUESTION: should positive/negative desirability to be part of this initial abstraction.
 
 Feedback
+
 - NaturalLanguage
   - Syntax
     - Language Match
@@ -42,7 +43,7 @@ Feedback
     - Helpfulness
     - Controversiality
     - Moderation
-      - Stereotypes 
+      - Stereotypes
       - Legality
         - Criminality
       - Harmfulness

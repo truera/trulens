@@ -45,13 +45,13 @@ else:
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
 def record_viewer(record_json, app_json, key=None):
-    """Create a new instance of "record_viewer", which produces a timeline 
+    """Create a new instance of "record_viewer", which produces a timeline
 
     Parameters
     ----------
     record_json: obj
         JSON of the record serialized by `json.loads`.
-    
+
     app_json: obj
         JSON of the app serialized by `json.loads`.
 

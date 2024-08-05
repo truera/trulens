@@ -5,8 +5,8 @@ import pydantic
 
 from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LITELLM
+from trulens_eval.utils.imports import OptionalImports
 
 with OptionalImports(messages=REQUIREMENT_LITELLM) as opt:
     import litellm
@@ -26,7 +26,7 @@ class LiteLLM(LLMProvider):
     Create an LiteLLM Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
         from trulens_eval.feedback.provider.litellm import LiteLLM
         litellm_provider = LiteLLM()
@@ -48,7 +48,7 @@ class LiteLLM(LLMProvider):
         model_engine: Optional[str] = None,
         completion_kwargs: Optional[Dict] = None,
         endpoint: Optional[Endpoint] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -58,14 +58,15 @@ class LiteLLM(LLMProvider):
             model_engine = self.DEFAULT_MODEL_ENGINE
 
         from litellm.utils import get_llm_provider
+
         litellm_provider = get_llm_provider(model_engine)[1]
 
         if completion_kwargs is None:
             completion_kwargs = {}
 
-        if model_engine.startswith("azure/") and (completion_kwargs is None or
-                                                  "api_base"
-                                                  not in completion_kwargs):
+        if model_engine.startswith("azure/") and (
+            completion_kwargs is None or "api_base" not in completion_kwargs
+        ):
             raise ValueError(
                 "Azure model engine requires 'api_base' parameter to litellm completions. "
                 "Provide it to LiteLLM provider in the 'completion_kwargs' parameter:"
@@ -83,10 +84,10 @@ provider = LiteLLM(
 
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
-        self_kwargs['model_engine'] = model_engine
-        self_kwargs['litellm_provider'] = litellm_provider
-        self_kwargs['completion_args'] = completion_kwargs
-        self_kwargs['endpoint'] = LiteLLMEndpoint(
+        self_kwargs["model_engine"] = model_engine
+        self_kwargs["litellm_provider"] = litellm_provider
+        self_kwargs["completion_args"] = completion_kwargs
+        self_kwargs["endpoint"] = LiteLLMEndpoint(
             litellm_provider=litellm_provider, **kwargs
         )
 
@@ -98,22 +99,18 @@ provider = LiteLLM(
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
-
         completion_args = kwargs
-        completion_args['model'] = self.model_engine
+        completion_args["model"] = self.model_engine
         completion_args.update(self.completion_args)
 
         if messages is not None:
-            completion_args['messages'] = messages
+            completion_args["messages"] = messages
 
         elif prompt is not None:
-            completion_args['messages'] = [
-                {
-                    "role": "system",
-                    "content": prompt
-                }
+            completion_args["messages"] = [
+                {"role": "system", "content": prompt}
             ]
 
         else:

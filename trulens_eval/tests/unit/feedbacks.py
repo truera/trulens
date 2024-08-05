@@ -1,8 +1,5 @@
-from typing import Optional
-
 from trulens_eval.feedback.feedback import SkipEval
 from trulens_eval.feedback.provider import Provider
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
 
 # Globally importable classes/functions to be used for testing feedback
 # functions.
@@ -11,7 +8,7 @@ from trulens_eval.feedback.provider.endpoint.base import Endpoint
 def skip_if_odd(val: float):
     """Feedback function that returns its argument as long as it is even and
     raises SkipEval if it is odd.
-    
+
     This is used to test the SkipEval functionality.
     """
 
@@ -43,7 +40,7 @@ class CustomProvider(Provider):
         return 0.4 + self.attr
 
 
-class CustomClassNoArgs():
+class CustomClassNoArgs:
     # This one is ok as it has no init arguments so we can deserialize it just
     # from its module and name.
 
@@ -59,7 +56,7 @@ class CustomClassNoArgs():
         return 0.7
 
 
-class CustomClassWithArgs():
+class CustomClassWithArgs:
     # These should fail as we don't know how to initialize this class during
     # deserialization.
 
@@ -87,7 +84,6 @@ def make_nonglobal_feedbacks():
     # incorrectly.
 
     class NG:  # "non-global"
-
         @staticmethod
         def NGcustom_feedback_function(t1: str) -> float:
             return 0.1
@@ -109,7 +105,7 @@ def make_nonglobal_feedbacks():
             def method(self, t1: str) -> float:
                 return 0.4 + self.attr
 
-        class NGCustomClassNoArgs():
+        class NGCustomClassNoArgs:
             # This one is ok as it has no init arguments so we can deserialize it just
             # from its module and name.
 
@@ -124,7 +120,7 @@ def make_nonglobal_feedbacks():
             def method(self, t1: str) -> float:
                 return 0.7
 
-        class NGCustomClassWithArgs():
+        class NGCustomClassWithArgs:
             # These should fail as we don't know how to initialize this class during
             # deserialization.
 

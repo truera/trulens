@@ -2,46 +2,45 @@
 Utilities for langchain apps. Includes component categories that organize
 various langchain classes and example classes:
 """
+
 from typing import Type
 
 from trulens_eval import app
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LANGCHAIN
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.serial import JSON
 
 with OptionalImports(messages=REQUIREMENT_LANGCHAIN):
-    import langchain
+    pass
 
 
 class Prompt(app.Prompt, app.LangChainComponent):
-
     @property
     def template(self) -> str:
-        return self.json['template']
+        return self.json["template"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['template']))
+        return super().unsorted_parameters(skip={"template"})
 
     @staticmethod
     def class_is(cls: Class) -> bool:
         return cls.noserio_issubclass(
             module_name="langchain.prompts.base",
-            class_name="BasePromptTemplate"
+            class_name="BasePromptTemplate",
         ) or cls.noserio_issubclass(
             module_name="langchain.schema.prompt_template",
-            class_name="BasePromptTemplate"
+            class_name="BasePromptTemplate",
         )  # langchain >= 0.230
 
 
 class LLM(app.LLM, app.LangChainComponent):
-
     @property
     def model_name(self) -> str:
-        return self.json['model_name']
+        return self.json["model_name"]
 
     def unsorted_parameters(self):
-        return super().unsorted_parameters(skip=set(['model_name']))
+        return super().unsorted_parameters(skip={"model_name"})
 
     @staticmethod
     def class_is(cls: Class) -> bool:

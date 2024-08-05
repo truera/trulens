@@ -20,7 +20,7 @@ OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
 def optional_test(testmethodorclass):
     """
     Only run the decorated test if the environment variable with_optional
-    evalutes true. These are meant to be run only in an environment where
+    evaluates true. These are meant to be run only in an environment where
     optional packages have been installed.
     """
 
@@ -32,7 +32,7 @@ def optional_test(testmethodorclass):
 def requiredonly_test(testmethodorclass):
     """
     Only runs the decorated test if the environment variable with_optional
-    evalutes to false or is not set. Decorated tests are meant to run
+    evaluates to false or is not set. Decorated tests are meant to run
     specifically when optional imports are not installed.
     """
 
@@ -50,16 +50,10 @@ def module_installed(module: str) -> bool:
 
 
 class JSONTestCase(TestCase):
-
     def assertJSONEqual(
-        self,
-        j1,
-        j2,
-        path: Lens = None,
-        skips=None,
-        numeric_places: int = 7
+        self, j1, j2, path: Lens = None, skips=None, numeric_places: int = 7
     ) -> None:
-        skips = skips or set([])
+        skips = skips or set()
         path = path or Lens()
 
         def recur(j1, j2, path):
@@ -78,7 +72,6 @@ class JSONTestCase(TestCase):
                 self.assertEqual(j1, j2, ps)
 
         elif isinstance(j1, Dict):
-
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 

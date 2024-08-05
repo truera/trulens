@@ -1,17 +1,16 @@
 from concurrent.futures import as_completed
-from concurrent.futures import wait
 from typing import List
 
 from trulens_eval.feedback import Feedback
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_LLAMA
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.threading import ThreadPoolExecutor
 
 with OptionalImports(messages=REQUIREMENT_LLAMA):
     import llama_index
-    from llama_index.core.indices.vector_store.base import VectorStoreIndex
-    from llama_index.core.query_engine.retriever_query_engine import \
-        RetrieverQueryEngine
+    from llama_index.core.query_engine.retriever_query_engine import (
+        RetrieverQueryEngine,
+    )
     from llama_index.indices.query.schema import QueryBundle
     from llama_index.schema import NodeWithScore
 
@@ -28,7 +27,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
     Args:
         feedback (Feedback): use this feedback function to score each document.
         threshold (float): and keep documents only if their feedback value is at least this threshold.
-    
+
     !!! example "Using TruLens guardrail context filters with Llama-Index"
         ```python
         from trulens_eval.guardrails.llama import WithFeedbackFilterNodes
@@ -51,8 +50,12 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
     """
 
     def __init__(
-        self, query_engine: RetrieverQueryEngine, feedback: Feedback,
-        threshold: float, *args, **kwargs
+        self,
+        query_engine: RetrieverQueryEngine,
+        feedback: Feedback,
+        threshold: float,
+        *args,
+        **kwargs,
     ):
         self.query_engine = query_engine
         self.feedback = feedback
@@ -81,9 +84,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         with ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
             future_to_node = {
                 ex.submit(
-                    lambda node=node: self.
-                    feedback(query, node.node.get_text())
-                ): node for node in nodes
+                    lambda node=node: self.feedback(query, node.node.get_text())
+                ): node
+                for node in nodes
             }
             filtered = []
             for future in as_completed(future_to_node):
@@ -93,8 +96,12 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
                     raise ValueError(
                         "Guardrails can only be used with feedback functions that return a float."
                     )
-                if (self.feedback.higher_is_better and result > self.threshold) or \
-                   (not self.feedback.higher_is_better and result < self.threshold):
+                if (
+                    self.feedback.higher_is_better and result > self.threshold
+                ) or (
+                    not self.feedback.higher_is_better
+                    and result < self.threshold
+                ):
                     filtered.append(node)
 
         filtered_nodes = list(filtered)

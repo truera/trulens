@@ -1,7 +1,7 @@
 """Import utilities for required and optional imports.
 
 Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically. 
+line. Hopefully this wraps automatically.
 """
 
 import builtins
@@ -45,6 +45,7 @@ def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
 if sys.version_info >= (3, 9):
     # This does not exist in 3.8 .
     from importlib.abc import Traversable
+
     _trulens_eval_resources: Traversable = resources.files("trulens_eval")
     """Traversable for resources in the trulens_eval package."""
 
@@ -69,25 +70,27 @@ def static_resource(filepath: Union[Path, str]) -> Path:
         # This is deprecated starting 3.11
         parts = filepath.parts
         with resources.path("trulens_eval", parts[0]) as _path:
-            # NOTE: resources.path does not allow the resource to incude folders.
+            # NOTE: resources.path does not allow the resource to include folders.
             for part in parts[1:]:
                 _path = _path / part
             return _path
 
 
-required_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource("requirements.txt"))
+required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource("requirements.txt")
+)
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
-optional_packages: Dict[str, requirements.Requirement] = \
-    requirements_of_file(static_resource("requirements.optional.txt"))
+optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource("requirements.optional.txt")
+)
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""
 
 all_packages: Dict[str, requirements.Requirement] = {
     **required_packages,
-    **optional_packages
+    **optional_packages,
 }
 """Mapping of optional and required package names to the requirement object
 with info about that requirement including version constraints."""
@@ -112,13 +115,11 @@ def get_package_version(name: str) -> Optional[version.Version]:
         return None
 
 
-MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = \
-    """Optional package %s is not installed. Related optional functionality will not
+MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = """Optional package %s is not installed. Related optional functionality will not
 be available.
 """
 
-MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
-    """Required package {req.name} is not installed. Please install it with pip:
+MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = """Required package {req.name} is not installed. Please install it with pip:
 
     ```bash
     pip install '{req}'
@@ -126,32 +127,28 @@ MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND = \
 
 If your distribution is in a bad place beyond this package, you may need to
 reinstall trulens_eval so that all of the dependencies get installed:
-    
+
     ```bash
     pip uninstall -y trulens_eval
     pip install trulens_eval
     ```
 """
 
-MESSAGE_FRAGMENT_VERSION_MISMATCH = \
-    """Package {req.name} is installed but has a version conflict:
+MESSAGE_FRAGMENT_VERSION_MISMATCH = """Package {req.name} is installed but has a version conflict:
     Requirement: {req}
     Installed: {dist.version}
 """
 
-MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL = \
-    """This package is optional for trulens_eval so this may not be a problem but if
+MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL = """This package is optional for trulens_eval so this may not be a problem but if
 you need to use the related optional features and find there are errors, you
 will need to resolve the conflict:
 """
 
-MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED = \
-    """This package is required for trulens_eval. Please resolve the conflict by
+MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED = """This package is required for trulens_eval. Please resolve the conflict by
 installing a compatible version with:
 """
 
-MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP = \
-    """
+MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP = """
     ```bash
     pip install '{req}'
     ```
@@ -160,7 +157,7 @@ If you are running trulens_eval in a notebook, you may need to restart the
 kernel after resolving the conflict. If your distribution is in a bad place
 beyond this package, you may need to reinstall trulens_eval so that all of the
 dependencies get installed and hopefully corrected:
-    
+
     ```bash
     pip uninstall -y trulens_eval
     pip install trulens_eval
@@ -238,7 +235,7 @@ def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
 
 
 @dataclass
-class ImportErrorMessages():
+class ImportErrorMessages:
     """Container for messages to show when an optional package is not found or
     has some other import error."""
 
@@ -253,7 +250,7 @@ class ImportErrorMessages():
 def format_import_errors(
     packages: Union[str, Sequence[str]],
     purpose: Optional[str] = None,
-    throw: Union[bool, Exception] = False
+    throw: Union[bool, Exception] = False,
 ) -> ImportErrorMessages:
     """Format two messages for missing optional package or bad import from an
     optional package.
@@ -280,14 +277,13 @@ def format_import_errors(
             logger.warning("Package %s not present in requirements.", pkg)
             requirements.append(pkg)
 
-    packs = ','.join(packages)
+    packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
     is_are = "is" if len(packages) == 1 else "are"
     it_them = "it" if len(packages) == 1 else "them"
     this_these = "this" if len(packages) == 1 else "these"
 
-    msg = (
-        f"""
+    msg = f"""
 {','.join(packages)} {pack_s} {is_are} required for {purpose}.
 You should be able to install {it_them} with pip:
 
@@ -295,13 +291,11 @@ You should be able to install {it_them} with pip:
     pip install {' '.join(map(lambda a: f'"{a}"', requirements))}
     ```
 """
-    )
 
-    msg_pinned = (
-        f"""
+    msg_pinned = f"""
 You have {packs} installed but we could not import the required
 components. There may be a version incompatibility. Please try installing {this_these}
-exact {pack_s} with pip: 
+exact {pack_s} with pip:
 
     ```bash
     pip install {' '.join(map(lambda a: f'"{a}"', requirements_pinned))}
@@ -313,7 +307,6 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     pip uninstall -y '{' '.join(packages)}'
     ```
 """
-    )
 
     if isinstance(throw, Exception):
         print(msg)
@@ -327,11 +320,11 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
 
 REQUIREMENT_LLAMA = format_import_errors(
-    'llama-index', purpose="instrumenting LlamaIndex apps"
+    "llama-index", purpose="instrumenting LlamaIndex apps"
 )
 
 REQUIREMENT_LANGCHAIN = format_import_errors(
-    'langchain', purpose="instrumenting LangChain apps"
+    "langchain", purpose="instrumenting LangChain apps"
 )
 
 REQUIREMENT_RAILS = format_import_errors(
@@ -340,8 +333,8 @@ REQUIREMENT_RAILS = format_import_errors(
 
 REQUIREMENT_PINECONE = format_import_errors(
     # package name is "pinecone-client" but module is "pinecone"
-    ['pinecone-client', 'langchain_community'],
-    purpose="running TruBot"
+    ["pinecone-client", "langchain_community"],
+    purpose="running TruBot",
 )
 
 REQUIREMENT_SKLEARN = format_import_errors(
@@ -349,24 +342,24 @@ REQUIREMENT_SKLEARN = format_import_errors(
 )
 
 REQUIREMENT_LITELLM = format_import_errors(
-    ['litellm'], purpose="using LiteLLM models"
+    ["litellm"], purpose="using LiteLLM models"
 )
 
 REQUIREMENT_BEDROCK = format_import_errors(
-    ['boto3', 'botocore'], purpose="using Bedrock models"
+    ["boto3", "botocore"], purpose="using Bedrock models"
 )
 
 REQUIREMENT_OPENAI = format_import_errors(
-    ['openai', 'langchain_community'], purpose="using OpenAI models"
+    ["openai", "langchain_community"], purpose="using OpenAI models"
 )
 
 REQUIREMENT_CORTEX = format_import_errors(
-    ['snowflake-snowpark-python', 'snowflake-connector-python'],
-    purpose="using Snowflake Cortex serverless LLM functions"
+    ["snowflake-snowpark-python", "snowflake-connector-python"],
+    purpose="using Snowflake Cortex serverless LLM functions",
 )
 
 REQUIREMENT_GROUNDEDNESS = format_import_errors(
-    'nltk', purpose="using some groundedness feedback functions"
+    "nltk", purpose="using some groundedness feedback functions"
 )
 
 REQUIREMENT_BERT_SCORE = format_import_errors(
@@ -383,7 +376,7 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 
 
 # Try to pretend to be a type as well as an instance.
-class Dummy(type, object):
+class Dummy(type):
     """Class to pretend to be a module or some other imported object.
 
     Will raise an error if accessed in some dynamic way. Accesses that are
@@ -414,17 +407,18 @@ class Dummy(type, object):
         return str(self)
 
     def __new__(cls, name, *args, **kwargs):
-        if len(args) >= 2 and isinstance(args[1],
-                                         dict) and "__classcell__" in args[1]:
+        if (
+            len(args) >= 2
+            and isinstance(args[1], dict)
+            and "__classcell__" in args[1]
+        ):
             # Used as type, for subclassing for example.
 
             return type.__new__(cls, name, args[0], args[1])
         else:
-
             return type.__new__(cls, name, (cls,), kwargs)
 
     def __init__(self, name: str, *args, **kwargs):
-
         if len(args) >= 2 and isinstance(args[1], dict):
             # Used as type, in subclassing for example.
 
@@ -436,7 +430,7 @@ class Dummy(type, object):
             exception_class = src.exception_class
 
         else:
-            message: str = kwargs.get('message', None)
+            message: str = kwargs.get("message", None)
             exception_class: Type[Exception] = kwargs.get(
                 "exception_class", ModuleNotFoundError
             )
@@ -499,22 +493,28 @@ class Dummy(type, object):
 
         # Prevent pydantic inspecting this object as if it were a type from triggering the exception
         # message below.
-        if name in ["__pydantic_generic_metadata__",
-                    "__get_pydantic_core_schema__", "__get_validators__",
-                    "__get_pydantic_json_schema__", "__modify_schema__",
-                    "__origin__", "__dataclass_fields__"]:
+        if name in [
+            "__pydantic_generic_metadata__",
+            "__get_pydantic_core_schema__",
+            "__get_validators__",
+            "__get_pydantic_json_schema__",
+            "__modify_schema__",
+            "__origin__",
+            "__dataclass_fields__",
+        ]:
             raise AttributeError()
 
         # If we are still in an optional import block, continue making dummies
         # inside this dummy.
-        if self.importer is not None and (self.importer.importing and
-                                          not self.importer.fail):
+        if self.importer is not None and (
+            self.importer.importing and not self.importer.fail
+        ):
             return Dummy(
                 name=self.name + "." + name,
                 message=self.message,
                 importer=self.importer,
                 original_exception=self.original_exception,
-                exception_class=ModuleNotFoundError
+                exception_class=ModuleNotFoundError,
             )
 
         # If we are no longer in optional imports context or context said to
@@ -523,7 +523,7 @@ class Dummy(type, object):
         raise self.exception_class(self.message)
 
 
-class OptionalImports(object):
+class OptionalImports:
     """Helper context manager for doing multiple imports from an optional
     modules
 
@@ -616,7 +616,7 @@ class OptionalImports(object):
                 message=self.messages.module_not_found,
                 importer=self,
                 original_exception=e,
-                exception_class=ModuleNotFoundError
+                exception_class=ModuleNotFoundError,
             )
 
         except ImportError as e:
@@ -628,7 +628,7 @@ class OptionalImports(object):
                 message=self.messages.import_error,
                 exception_class=ImportError,
                 importer=self,
-                original_exception=e
+                original_exception=e,
             )
 
     def __enter__(self):

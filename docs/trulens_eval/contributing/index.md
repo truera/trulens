@@ -34,7 +34,7 @@ functions library so others can benefit!
 - Make sure to add its definition to this
   [list](https://github.com/truera/trulens/blob/main/docs/trulens_eval/api/providers.md).
 
-## 🤝 Add new feedback function providers.
+## 🤝 Add new feedback function providers
 
 Feedback functions often rely on a model provider, such as OpenAI or
 HuggingFace. If you need a new model provider to utilize feedback functions for
@@ -127,7 +127,6 @@ Packages](optional.md) for details.
    include-markdown "../../../trulens_eval/CONTRIBUTORS.md"
    heading-offset=2
 %}
-
 
 {%
    include-markdown "../../../trulens_explain/CONTRIBUTORS.md"

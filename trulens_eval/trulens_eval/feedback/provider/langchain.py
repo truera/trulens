@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def _convert_message(message: Dict) -> BaseMessage:
     """Convert a message to a LangChain BaseMessage."""
-    if not "role" in message or message["role"] == "user":
+    if "role" not in message or message["role"] == "user":
         return HumanMessage(content=message["content"])
     return AIMessage(content=message["content"])
 
@@ -26,7 +26,7 @@ class Langchain(LLMProvider):
     Create a LangChain Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
         from trulens_eval.feedback.provider.langchain import Langchain
         from langchain_community.llms import OpenAI
@@ -46,7 +46,7 @@ class Langchain(LLMProvider):
         chain: Union[BaseLLM, BaseChatModel],
         *args,
         model_engine: str = "",
-        **kwargs
+        **kwargs,
     ):
         self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
@@ -60,7 +60,7 @@ class Langchain(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         if prompt is not None:
             predict = self.endpoint.chain.predict(prompt, **kwargs)

@@ -4,7 +4,7 @@ based on user input.
 
 # Running:
 
-Start with streamlit on the command line: 
+Start with streamlit on the command line:
 
 ```bash
 streamlit run Example_Thumbs_Application.py
@@ -19,6 +19,7 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import ChatPromptTemplate
 from langchain.prompts.chat import HumanMessagePromptTemplate
+
 # from langchain.chat_models import ChatOpenAI # Deprecated
 from langchain_openai import ChatOpenAI
 import streamlit as st
@@ -40,8 +41,7 @@ tru = Tru()
 def setup_chain():
     full_prompt = HumanMessagePromptTemplate(
         prompt=PromptTemplate(
-            template=
-            "Provide a helpful response with relevant background information for the following: {prompt}",
+            template="Provide a helpful response with relevant background information for the following: {prompt}",
             input_variables=["prompt"],
         )
     )
@@ -51,7 +51,7 @@ def setup_chain():
 
     chain = LLMChain(llm=chat, prompt=chat_prompt_template)
 
-    tc = TruChain(chain, app_id='Streamlit App')
+    tc = TruChain(chain, app_id="Streamlit App")
     tru.add_app(app=tc)
     tru.run_dashboard(_dev=dev_path)
     return tc
@@ -75,7 +75,7 @@ if user_input:
 
     # Display response
     st.write("Here's some help for you:")
-    st.write(gpt3_response['text'])
+    st.write(gpt3_response["text"])
 
     # Allow user to rate the response with emojis
     col1, col2 = st.columns(2)
@@ -99,5 +99,5 @@ if user_input:
             name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
             app_id=tc.app_id,
-            result=thumb_result
+            result=thumb_result,
         )
