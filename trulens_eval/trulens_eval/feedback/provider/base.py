@@ -225,7 +225,7 @@ class LLMProvider(Provider):
         if (
             confidence_score
             and relevance_score
-            and 0 <= float(confidence_score.group(1)) <= 10
+            and 0 <= float(confidence_score.group(1)) <= 1
             and min_score_val
             <= float(relevance_score.group(0))
             <= max_score_val
@@ -236,7 +236,7 @@ class LLMProvider(Provider):
             return (
                 (relevance_score - min_score_val)
                 / (max_score_val - min_score_val),
-                {"confidence_score": confidence / 10.0},
+                {"confidence_score": confidence},
             )
         else:
             raise ValueError("Confidence score not found in response.")

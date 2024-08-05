@@ -318,9 +318,9 @@ class ContextRelevance(Relevance, WithPrompt):
         """
     )
     verb_confidence_prompt = PromptTemplate.from_template(
-        """Finally after generating the RELEVANCE score, provide the confidence level CONFIDENCE on a scale of 0 to 10 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
+        """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
         other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
-        0 and 10 that your scoring is accurate, without any extra commentary whatsoever;
+        0 and 1.0 that your scoring is accurate, without any extra commentary whatsoever;
         just the probability!>
         """
     )
