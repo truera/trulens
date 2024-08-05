@@ -31,7 +31,7 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    tru: Optional[Tru],
+    tru: Optional[Tru] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,

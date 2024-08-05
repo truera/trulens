@@ -221,15 +221,13 @@ class Tru(python.SingletonPerName):
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
-            if (
-                sum((1 if v is not None else 0 for v in database_args.values()))
-                > 0
-            ):
-                logger.warning(
-                    "Tru was already initialized. "
-                    "Cannot change database configuration after initialization."
-                )
-                self.warning()
+            for v in database_args.values():
+                if v is not None:
+                    logger.warning(
+                        "Tru was already initialized. Cannot change database configuration after initialization."
+                    )
+                    self.warning()
+                    break
 
             return
 

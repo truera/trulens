@@ -9,8 +9,9 @@ To view and examine application logs and feedback results, TruLens provides a bu
 !!! example "Launch the TruLens dashboard"
 
     ```python
+    from trulens.dashboard import run_dashboard
     tru = Tru(database_url = ...) # or default.sqlite by default
-    tru.run_dashboard()
+    run_dashboard(tru)
     ```
 
 By default, the dashboard will find and run on an unused port number. You can also specify a port number for the dashboard to run on. The function will output a link where the dashboard is running.
@@ -18,8 +19,8 @@ By default, the dashboard will find and run on an unused port number. You can al
 !!! example "Specify a port"
 
     ```python
-    tru = Tru()
-    tru.run_dashboard(port=8502)
+    from trulens.dashboard import run_dashboard
+    run_dashboard(port=8502)
     ```
 
 !!! note

@@ -25,7 +25,7 @@ Similarly, providers are now packaged separately from the core library. To use a
 from trulens.providers.openai import OpenAI
 ```
 
-To find a full list of providers, please refer to the [API Reference][trulens.providers].
+To find a full list of providers, please refer to the [API Reference][trulens.providers.cortex].
 
 
 ## Common Import Changes
@@ -45,4 +45,4 @@ As a result of these changes, the package structure for the TruLens varies from 
 | `trulens_eval.guardrails.llama` | [`trulens.instrument.llamaindex.guardrails`][trulens.instrument.llamaindex.guardrails] | `trulens-instrument-llamaindex` |
 | `Tru().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
-To find a specific definition, use the search functionality or go directly to the [API Reference](reference/trulens/core).
+To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/trulens/core/index.md).
