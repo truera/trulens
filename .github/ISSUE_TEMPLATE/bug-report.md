@@ -4,7 +4,7 @@ about: Thanks for taking the time to fill out this bug report! Please complete t
   following form to help us assist you.
 title: "[BUG]"
 labels: bug
-assignees: yuvneshtruera
+assignees: sfc-gh-jreini
 
 ---
 
@@ -21,10 +21,11 @@ A clear and concise description of what you expected to happen.
 Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks. If the issue is related to the TruLens dashboard, please also include a screenshot.
 
 **Environment:**
- - OS: [e.g. MacOS, Windows]
- - Python Version
- - TruLens version
- - Versions of other relevant installed libraries
+
+- OS: [e.g. MacOS, Windows]
+- Python Version
+- TruLens version
+- Versions of other relevant installed libraries
 
 **Additional context**
 Add any other context about the problem here.

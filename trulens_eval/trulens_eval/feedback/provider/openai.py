@@ -7,8 +7,8 @@ from trulens_eval.feedback.provider.base import LLMProvider
 from trulens_eval.feedback.provider.endpoint import OpenAIClient
 from trulens_eval.feedback.provider.endpoint import OpenAIEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.pace import Pace
 from trulens_eval.utils.pyschema import CLASS_INFO
 
@@ -28,15 +28,15 @@ class OpenAI(LLMProvider):
     Create an OpenAI Provider with out of the box feedback functions.
 
     !!! example
-    
+
         ```python
-        from trulens_eval.feedback.provider.openai import OpenAI 
+        from trulens_eval.feedback.provider.openai import OpenAI
         openai_provider = OpenAI()
         ```
 
     Args:
         model_engine: The OpenAI completion model. Defaults to
-            `gpt-3.5-turbo`
+            `gpt-4o-mini`
 
         **kwargs: Additional arguments to pass to the
             [OpenAIEndpoint][trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint]
@@ -45,7 +45,7 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
@@ -58,7 +58,7 @@ class OpenAI(LLMProvider):
         pace: Optional[Pace] = None,
         rpm: Optional[int] = None,
         model_engine: Optional[str] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -67,13 +67,13 @@ class OpenAI(LLMProvider):
         if model_engine is None:
             model_engine = self.DEFAULT_MODEL_ENGINE
 
-        # Seperate set of args for our attributes because only a subset go into
+        # Separate set of args for our attributes because only a subset go into
         # endpoint below.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
-        self_kwargs['model_engine'] = model_engine
+        self_kwargs["model_engine"] = model_engine
 
-        self_kwargs['endpoint'] = OpenAIEndpoint(
+        self_kwargs["endpoint"] = OpenAIEndpoint(
             *args, pace=pace, rpm=rpm, **kwargs
         )
 
@@ -86,16 +86,16 @@ class OpenAI(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
-        if 'model' not in kwargs:
-            kwargs['model'] = self.model_engine
+        if "model" not in kwargs:
+            kwargs["model"] = self.model_engine
 
-        if 'temperature' not in kwargs:
-            kwargs['temperature'] = 0.0
+        if "temperature" not in kwargs:
+            kwargs["temperature"] = 0.0
 
-        if 'seed' not in kwargs:
-            kwargs['seed'] = 123
+        if "seed" not in kwargs:
+            kwargs["seed"] = 123
 
         if messages is not None:
             completion = self.endpoint.client.chat.completions.create(
@@ -104,10 +104,7 @@ class OpenAI(LLMProvider):
 
         elif prompt is not None:
             completion = self.endpoint.client.chat.completions.create(
-                messages=[{
-                    "role": "system",
-                    "content": prompt
-                }], **kwargs
+                messages=[{"role": "system", "content": prompt}], **kwargs
             )
 
         else:
@@ -129,7 +126,7 @@ class OpenAI(LLMProvider):
         speech.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -156,7 +153,7 @@ class OpenAI(LLMProvider):
         threatening speech.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -184,7 +181,7 @@ class OpenAI(LLMProvider):
         self harm.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -212,7 +209,7 @@ class OpenAI(LLMProvider):
         speech.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -240,7 +237,7 @@ class OpenAI(LLMProvider):
         sexual minors.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -269,7 +266,7 @@ class OpenAI(LLMProvider):
         violence.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -297,7 +294,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -325,7 +322,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -340,7 +337,7 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not harrassment) and 1.0 (harrassment).
+            float: A value between 0.0 (not harassment) and 1.0 (harassment).
         """
         openai_response = self._moderation(text)
 
@@ -352,7 +349,7 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         !!! example
-    
+
             ```python
             from trulens_eval import Feedback
             from trulens_eval.feedback.provider.openai import OpenAI
@@ -377,7 +374,7 @@ class OpenAI(LLMProvider):
 class AzureOpenAI(OpenAI):
     """
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
-    functionality as OpenAI out of the box feedback functions, excluding the 
+    functionality as OpenAI out of the box feedback functions, excluding the
     moderation endpoint which is not supported by Azure. Please export the
     following env variables. These can be retrieved from https://oai.azure.com/
     .
@@ -411,7 +408,7 @@ class AzureOpenAI(OpenAI):
         self,
         deployment_name: str,
         endpoint: Optional[Endpoint] = None,
-        **kwargs: dict
+        **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
@@ -430,7 +427,7 @@ class AzureOpenAI(OpenAI):
             del client_kwargs["model_engine"]
         else:
             # but include in provider args
-            kwargs['model_engine'] = deployment_name
+            kwargs["model_engine"] = deployment_name
 
         kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
 

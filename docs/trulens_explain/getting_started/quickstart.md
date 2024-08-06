@@ -16,4 +16,4 @@ notebooks:
 Check out the
 [Installation](https://truera.github.io/trulens/trulens_explain/install/)
 instructions for information on how to install the library, use it, and
-contribute. 
+contribute.

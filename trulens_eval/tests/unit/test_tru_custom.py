@@ -6,14 +6,12 @@ from unittest import main
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.unit.test import JSONTestCase
-
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.tru_custom_app import TruCustomApp
 
 
 class TestTruCustomApp(JSONTestCase):
-
     @staticmethod
     def setUpClass():
         Tru().reset_database()
@@ -81,7 +79,7 @@ class TestTruCustomApp(JSONTestCase):
         # Specifically, timestamp and meta differ and therefore record_id
         # differs.
         self.assertJSONEqual(
-            recording1[1], recording2[0], skips=['record_id', 'ts', 'meta']
+            recording1[1], recording2[0], skips=["record_id", "ts", "meta"]
         )
 
         self.assertEqual(recording1[0].meta, "meta1")
@@ -90,5 +88,5 @@ class TestTruCustomApp(JSONTestCase):
         self.assertEqual(recording2[0].meta, "meta2")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

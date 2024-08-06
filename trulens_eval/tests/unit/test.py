@@ -30,7 +30,7 @@ true) or read and compared (if false/undefined)."""
 
 def optional_test(testmethodorclass):
     """Only run the decorated test if the environment variable with_optional
-    evalutes true.
+    evaluates true.
     
     These are meant to be run only in an environment where optional packages
     have been installed.
@@ -42,9 +42,8 @@ def optional_test(testmethodorclass):
 
 
 def requiredonly_test(testmethodorclass):
-    """
-    Only runs the decorated test if the environment variable with_optional
-    evalutes to false or is not set.
+    """Only runs the decorated test if the environment variable with_optional
+    evaluates to false or is not set.
     
     Decorated tests are meant to run specifically when optional imports are not
     installed.
@@ -73,7 +72,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
     removed. 
     
     Sequences are returned as tuples and container types are returned as
-    frozendicts. Floats are retuned as 0.0 to avoid tolerance issues. Note that
+    frozendicts. Floats are returned as 0.0 to avoid tolerance issues. Note that
     the returned objects are only used for ordering their originals and are not
     compared themselves.
 
@@ -321,7 +320,6 @@ class JSONTestCase(TestCase):
                 self.assertEqual(j1, j2, ps)
 
         elif isinstance(j1, Dict):
-
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 

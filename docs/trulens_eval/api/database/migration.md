@@ -14,7 +14,7 @@ from trulens_eval import Tru
 
 tru = Tru(
    database_url="<sqlalchemy_url>",
-   database_prefix="trulens_" # default, may be ommitted
+   database_prefix="trulens_" # default, may be omitted
 )
 tru.migrate_database()
 ```

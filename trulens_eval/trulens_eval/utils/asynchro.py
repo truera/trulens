@@ -62,9 +62,10 @@ May be checked with
 CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
-ThunkMaybeAwaitable = Union[mod_python_utils.Thunk[T],
-                            mod_python_utils.Thunk[Awaitable[T]]]
-"""Thunk or coroutine thunk. 
+ThunkMaybeAwaitable = Union[
+    mod_python_utils.Thunk[T], mod_python_utils.Thunk[Awaitable[T]]
+]
+"""Thunk or coroutine thunk.
 
 May be checked with
 [is_really_coroutinefunction][trulens_eval.utils.python.is_really_coroutinefunction].
@@ -121,7 +122,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
 
         try:
             # If have nest_asyncio, can run in current thread.
-            import nest_asyncio
+
             return loop.run_until_complete(awaitable)
         except:
             pass

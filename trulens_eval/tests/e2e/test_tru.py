@@ -9,7 +9,6 @@ from pathlib import Path
 from unittest import TestCase
 
 from tests.unit.test import optional_test
-
 from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
@@ -20,15 +19,16 @@ from trulens_eval.tru_custom_app import TruCustomApp
 
 
 class TestTru(TestCase):
-
     @staticmethod
     def setUpClass():
         pass
 
     def setUp(self):
         check_keys(
-            "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY",
-            "PINECONE_ENV"
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY",
+            "PINECONE_API_KEY",
+            "PINECONE_ENV",
         )
 
     def test_init(self):
@@ -39,23 +39,23 @@ class TestTru(TestCase):
 
         # Try all combinations of arguments to Tru constructor.
         test_args = dict()
-        test_args['database_url'] = [None, "sqlite:///default_url.db"]
-        test_args['database_file'] = [None, "default_file.db"]
-        test_args['database_redact_keys'] = [None, True, False]
+        test_args["database_url"] = [None, "sqlite:///default_url.db"]
+        test_args["database_file"] = [None, "default_file.db"]
+        test_args["database_redact_keys"] = [None, True, False]
 
         tru = None
 
-        for url in test_args['database_url']:
-            for file in test_args['database_file']:
-                for redact in test_args['database_redact_keys']:
+        for url in test_args["database_url"]:
+            for file in test_args["database_file"]:
+                for redact in test_args["database_redact_keys"]:
                     with self.subTest(url=url, file=file, redact=redact):
                         args = dict()
                         if url is not None:
-                            args['database_url'] = url
+                            args["database_url"] = url
                         if file is not None:
-                            args['database_file'] = file
+                            args["database_file"] = file
                         if redact is not None:
-                            args['database_redact_keys'] = redact
+                            args["database_redact_keys"] = redact
 
                         if url is not None and file is not None:
                             # Specifying both url and file should throw exception.
@@ -97,7 +97,6 @@ class TestTru(TestCase):
         return DummyApp()
 
     def _create_basic(self):
-
         def custom_application(prompt: str) -> str:
             return "a response"
 
@@ -150,8 +149,9 @@ class TestTru(TestCase):
 
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
+
         os.system(
-            'wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/'
+            "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
         )
 
         documents = SimpleDirectoryReader("data").load_data()
@@ -162,7 +162,7 @@ class TestTru(TestCase):
 
     def test_required_constructors(self):
         """
-        Test the capitilized methods of Tru class that are aliases for various
+        Test the capitalized methods of Tru class that are aliases for various
         app types. This test includes only ones that do not require optional
         packages.
         """
@@ -277,7 +277,7 @@ class TestTru(TestCase):
 
         feedbacks = self._create_feedback_functions()
 
-        expected_feedback_names = set(f.name for f in feedbacks)
+        expected_feedback_names = {f.name for f in feedbacks}
 
         tru = Tru()
 
@@ -293,7 +293,7 @@ class TestTru(TestCase):
                 record=record,
                 feedback_functions=feedbacks,
                 app=tru_app,
-                wait=True
+                wait=True,
             )
         )
 
@@ -303,8 +303,8 @@ class TestTru(TestCase):
         # Check that the results are for the feedbacks we submitted.
         self.assertEqual(
             set(expected_feedback_names),
-            set(res.name for res in feedback_results),
-            "feedback result names do not match requested feedback names"
+            {res.name for res in feedback_results},
+            "feedback result names do not match requested feedback names",
         )
 
         # Check that the structure of returned tuples is correct.
@@ -333,7 +333,7 @@ class TestTru(TestCase):
         app = self._create_custom()
 
         feedbacks = self._create_feedback_functions()
-        expected_feedback_names = set(f.name for f in feedbacks)
+        expected_feedback_names = {f.name for f in feedbacks}
 
         tru = Tru()
 
@@ -351,7 +351,7 @@ class TestTru(TestCase):
                 record=record,
                 feedback_functions=feedbacks,
                 app=tru_app,
-                wait=False
+                wait=False,
             )
         )
 
@@ -361,7 +361,7 @@ class TestTru(TestCase):
         self.assertLess(
             (end_time - start_time).total_seconds(),
             2.0,  # TODO: get it to return faster
-            "Non-blocking run_feedback_functions did not return fast enough."
+            "Non-blocking run_feedback_functions did not return fast enough.",
         )
 
         # Check we get the right number of results.

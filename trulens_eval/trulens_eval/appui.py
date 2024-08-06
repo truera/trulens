@@ -5,14 +5,14 @@ from typing import Callable, List, Mapping, Optional, Sequence, Union
 
 from trulens_eval import app as mod_app
 from trulens_eval.instruments import Instrument
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_NOTEBOOK
+from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.json import JSON_BASES
 from trulens_eval.utils.json import jsonify_for_ui
 from trulens_eval.utils.serial import Lens
 
 with OptionalImports(messages=REQUIREMENT_NOTEBOOK) as opt:
-    # Here just for the assertion below. Including in a seperate context because
+    # Here just for the assertion below. Including in a separate context because
     # auto import organizer might move it below another import and if that other
     # import fails, this name will not be defined to check the assertion below.
 
@@ -75,8 +75,10 @@ class SelectorValue(HasTraits):
     obj = traitlets.Any()
 
     def __init__(
-        self, selector: Selector, stdout_display: widgets.Output,
-        instrument: Instrument
+        self,
+        selector: Selector,
+        stdout_display: widgets.Output,
+        instrument: Instrument,
     ):
         self.selector = selector
         self.obj = None
@@ -146,7 +148,7 @@ class SelectorValue(HasTraits):
 
                         ret_html += "</div>"
 
-                except Exception as e:
+                except Exception:
                     self.w_listing.layout.border = "1px solid red"
                     return
 
@@ -154,15 +156,14 @@ class SelectorValue(HasTraits):
         self.w_listing.value = f"<div>{ret_html}</div>"
 
 
-class RecordWidget():
-
+class RecordWidget:
     def __init__(
         self,
         record_selections,
         instrument: Instrument,
         record=None,
         human_or_input=None,
-        stdout_display: widgets.Output = None
+        stdout_display: widgets.Output = None,
     ):
         self.record = record
         self.record_selections = record_selections
@@ -171,7 +172,7 @@ class RecordWidget():
         self.human_or_input = widgets.HBox([human_or_input], layout=debug_style)
         self.w_human = widgets.HBox(
             [widgets.HTML("<b>human:</b>"), self.human_or_input],
-            layout=debug_style
+            layout=debug_style,
         )
         self.d_comp = widgets.HTML(layout=debug_style)
         self.d_extras = widgets.VBox(layout=debug_style)
@@ -185,9 +186,7 @@ class RecordWidget():
 
         self.d = widgets.VBox(
             [self.w_human, self.d_comp, self.d_extras],
-            layout={
-                **debug_style, "border": "5px solid #aaaaaa"
-            }
+            layout={**debug_style, "border": "5px solid #aaaaaa"},
         )
 
     def update_selections(self):
@@ -197,7 +196,7 @@ class RecordWidget():
                 sv = SelectorValue(
                     selector=s,
                     stdout_display=self.stdout_display,
-                    instrument=self.instrument
+                    instrument=self.instrument,
                 )
                 self.record_values[s] = sv
                 self.d_extras.children += (sv.w,)
@@ -238,7 +237,7 @@ class AppUI(traitlets.HasTraits):
         app: mod_app.App,
         use_async: bool = False,
         app_selectors: Optional[List[Union[str, Lens]]] = None,
-        record_selectors: Optional[List[Union[str, Lens]]] = None
+        record_selectors: Optional[List[Union[str, Lens]]] = None,
     ):
         self.use_async = use_async
 
@@ -260,10 +259,7 @@ class AppUI(traitlets.HasTraits):
 
         self.display_top = widgets.VBox([], layout=debug_style)
         self.display_side = widgets.VBox(
-            [], layout={
-                'width': "50%",
-                **debug_style
-            }
+            [], layout={"width": "50%", **debug_style}
         )
 
         self.display_stdout = widgets.Output()
@@ -277,7 +273,7 @@ class AppUI(traitlets.HasTraits):
             record_selections=self.record_selections,
             human_or_input=self.main_input,
             stdout_display=self.display_stdout,
-            instrument=self.app.instrument
+            instrument=self.app.instrument,
         )
         self.current_record_record = None
 
@@ -292,24 +288,24 @@ class AppUI(traitlets.HasTraits):
         self.record_selector_button.on_click(self.add_record_selection)
 
         outputs_widget = widgets.Accordion(children=[self.display_stdout])
-        outputs_widget.set_title(0, 'stdpipes')
+        outputs_widget.set_title(0, "stdpipes")
 
         self.display_bottom = widgets.VBox(
             [
                 widgets.HBox(
                     [self.main_input_button, self.main_input],
-                    layout=debug_style
+                    layout=debug_style,
                 ),
                 widgets.HBox(
                     [self.app_selector_button, self.app_selector],
-                    layout=debug_style
+                    layout=debug_style,
                 ),
                 widgets.HBox(
                     [self.record_selector_button, self.record_selector],
-                    layout=debug_style
+                    layout=debug_style,
                 ),
             ],
-            layout=debug_style
+            layout=debug_style,
         )
 
         self.display_top.children += (self.current_record.d,)
@@ -320,13 +316,13 @@ class AppUI(traitlets.HasTraits):
                     [
                         widgets.VBox(
                             [self.display_top, self.display_bottom],
-                            layout={
-                                **debug_style, 'width': '50%'
-                            }
-                        ), self.display_side
+                            layout={**debug_style, "width": "50%"},
+                        ),
+                        self.display_side,
                     ],
-                    layout=debug_style
-                ), outputs_widget
+                    layout=debug_style,
+                ),
+                outputs_widget,
             ]
         )
 
@@ -339,7 +335,6 @@ class AppUI(traitlets.HasTraits):
                 self._add_record_selector(selector)
 
     def make_on_delete_record_selector(self, selector):
-
         def on_delete(ev):
             self.record_selections.remove(selector)
 
@@ -349,7 +344,6 @@ class AppUI(traitlets.HasTraits):
         return on_delete
 
     def make_on_delete_app_selector(self, selector):
-
         def on_delete(ev):
             sw = self.app_selections[selector]
             del self.app_selections[selector]
@@ -368,14 +362,13 @@ class AppUI(traitlets.HasTraits):
     def _add_app_selector(self, selector: Union[Lens, str]):
         with self.display_stdout:
             sel = Selector(
-                select=selector,
-                make_on_delete=self.make_on_delete_app_selector
+                select=selector, make_on_delete=self.make_on_delete_app_selector
             )
 
         sw = SelectorValue(
             selector=sel,
             stdout_display=self.display_stdout,
-            instrument=self.app.instrument
+            instrument=self.app.instrument,
         )
         self.app_selections[sel] = sw
         sw.obj = self.app
@@ -389,7 +382,7 @@ class AppUI(traitlets.HasTraits):
         with self.display_stdout:
             sel = Selector(
                 select=selector,
-                make_on_delete=self.make_on_delete_record_selector
+                make_on_delete=self.make_on_delete_record_selector,
             )
 
         self.record_selections.append(sel)
@@ -418,7 +411,6 @@ class AppUI(traitlets.HasTraits):
                 comp = ""
 
                 def run_in_thread(comp):
-
                     async def run_in_main_loop(comp):
                         comp_generator = await self.app.main_acall(human)
                         async for tok in comp_generator:
@@ -451,7 +443,7 @@ class AppUI(traitlets.HasTraits):
             record_selections=self.record_selections,
             human_or_input=self.main_input,
             stdout_display=self.display_stdout,
-            instrument=self.app.instrument
+            instrument=self.app.instrument,
         )
         self.records.append(self.current_record)
         self.display_top.children += (self.current_record.d,)

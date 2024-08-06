@@ -1,19 +1,9 @@
 import logging
-from typing import Any, Callable, List, Optional
-
-from trulens_eval import Feedback
-from trulens_eval import Select
-from trulens_eval import Tru
-from trulens_eval import TruChain
-from trulens_eval import TruLlama
-from trulens_eval.app import App
+from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 from ast import literal_eval
 import json
-from logging import StreamHandler
-
-import numpy as np
 
 
 class GenerateTestSet:
@@ -32,12 +22,12 @@ class GenerateTestSet:
 
     def _generate_themes(self, test_breadth: int) -> str:
         """
-        Generates themes of the context available using a RAG application. 
+        Generates themes of the context available using a RAG application.
         These themes, which comprise the test breadth, will be used as categories for test set generation.
-        
+
         Parameters:
         test_breadth (int): The breadth of the test.
-        
+
         Returns:
         list: A list of test categories.
         """
@@ -49,16 +39,16 @@ class GenerateTestSet:
         Themes must be three words or less. The {test_breadth} key themes are:
         """
         )
-        themes = themes.response if hasattr(themes, 'response') else themes
+        themes = themes.response if hasattr(themes, "response") else themes
         return themes
 
     def _format_themes(self, themes: str, test_breadth: int) -> list:
         """
         Formats the themes into a python list using an LLM.
-        
+
         Parameters:
         themes (str): The themes to be formatted.
-        
+
         Returns:
         list: A list of formatted themes.
         """
@@ -68,9 +58,9 @@ class GenerateTestSet:
             f"Themes: {themes}\n\n"
             "Python list:"
         )
-        test_categories = response.response if hasattr(
-            response, 'response'
-        ) else response
+        test_categories = (
+            response.response if hasattr(response, "response") else response
+        )
         # Attempt to evaluate the string as a Python literal.
         try:
             test_categories = literal_eval(test_categories)
@@ -84,16 +74,16 @@ class GenerateTestSet:
         self,
         test_category: str,
         test_depth: int,
-        examples: Optional[list] = None
+        examples: Optional[list] = None,
     ) -> str:
         """
         Generate raw test prompts for a given category, optionally using few shot examples.
-        
+
         Parameters:
         test_category (str): The category for which to generate test prompts.
         test_depth (int): The depth of the test prompts.
         examples (Optional[list]): An optional list of examples to guide the style of the questions.
-        
+
         Returns:
         str: A string containing test prompts.
         """
@@ -107,22 +97,22 @@ class GenerateTestSet:
                 f"{formatted_examples}\n\n"
             )
         else:
-            prompt = (
-                f"Provide {test_depth} questions on the topic of '{test_category}' that are answerable by the provided context."
-            )
+            prompt = f"Provide {test_depth} questions on the topic of '{test_category}' that are answerable by the provided context."
         raw_test_prompts = self.app_callable(prompt)
-        raw_test_prompts = raw_test_prompts.response if hasattr(
-            raw_test_prompts, 'response'
-        ) else raw_test_prompts
+        raw_test_prompts = (
+            raw_test_prompts.response
+            if hasattr(raw_test_prompts, "response")
+            else raw_test_prompts
+        )
         return raw_test_prompts
 
     def _format_test_prompts(self, raw_test_prompts: str) -> list:
         """
         Format the raw test prompts into a python list using an LLM.
-        
+
         Parameters:
         raw_test_prompts (str): The raw test prompts to be formatted.
-        
+
         Returns:
         list: A list of formatted test prompts.
         """
@@ -133,9 +123,9 @@ class GenerateTestSet:
             f"""\n\n Return only a python list of the exact format ["<question 1>","<question 2>", ...]."""
         )
         response = self.app_callable(formatted_prompt)
-        test_prompts = response.response if hasattr(
-            response, 'response'
-        ) else response
+        test_prompts = (
+            response.response if hasattr(response, "response") else response
+        )
         test_prompts = literal_eval(test_prompts)
         return test_prompts
 
@@ -143,16 +133,16 @@ class GenerateTestSet:
         self,
         test_category: str,
         test_depth: int,
-        examples: Optional[list] = None
+        examples: Optional[list] = None,
     ) -> list:
         """
         Generate test prompts for a given category, optionally using few shot examples.
-        
+
         Parameters:
         test_category (str): The category for which to generate test prompts.
         test_depth (int): The depth of the test prompts.
         examples (Optional[list]): An optional list of examples to guide the style of the questions.
-        
+
         Returns:
         list: A list of test prompts.
         """
@@ -166,16 +156,16 @@ class GenerateTestSet:
         self,
         test_breadth: int,
         test_depth: int,
-        examples: Optional[list] = None
+        examples: Optional[list] = None,
     ) -> dict:
         """
         Generate a test set, optionally using few shot examples provided.
-        
+
         Parameters:
         test_breadth (int): The breadth of the test set.
         test_depth (int): The depth of the test set.
         examples (Optional[list]): An optional list of examples to guide the style of the questions.
-        
+
         Returns:
         dict: A dictionary containing the test set.
 
@@ -200,15 +190,17 @@ class GenerateTestSet:
                 test_set = {}
                 for test_category in test_categories:
                     if examples:
-                        test_set[test_category
-                                ] = self._generate_and_format_test_prompts(
-                                    test_category, test_depth, examples
-                                )
+                        test_set[test_category] = (
+                            self._generate_and_format_test_prompts(
+                                test_category, test_depth, examples
+                            )
+                        )
                     else:
-                        test_set[test_category
-                                ] = self._generate_and_format_test_prompts(
-                                    test_category, test_depth
-                                )
+                        test_set[test_category] = (
+                            self._generate_and_format_test_prompts(
+                                test_category, test_depth
+                            )
+                        )
                 return test_set
             except Exception as e:
                 logger.error(f"Error generating test set: {e}")

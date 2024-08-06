@@ -5,11 +5,10 @@
 
 from trulens_eval.feedback.v2 import feedback as v2
 
-COT_REASONS_TEMPLATE = \
-"""
+COT_REASONS_TEMPLATE = """
 Please answer using the entire template below.
 
-TEMPLATE: 
+TEMPLATE:
 Score: <The score 0-10 based on the given criteria>
 Criteria: <Provide the criteria for this evaluation>
 Supporting Evidence: <Provide your reasons for scoring based on the listed criteria step by step. Tie it back to the evaluation being completed.>
@@ -17,9 +16,9 @@ Supporting Evidence: <Provide your reasons for scoring based on the listed crite
 
 # Keep this in line with the LLM output template as above
 GROUNDEDNESS_REASON_TEMPLATE = """
-Criteria: {statement_sentence} 
-Supporting Evidence: {supporting_evidence} 
-Score: {score} 
+Criteria: {statement_sentence}
+Supporting Evidence: {supporting_evidence}
+Score: {score}
 """
 
 LLM_GROUNDEDNESS_FULL_PROMPT = """Give me the INFORMATION OVERLAP of this SOURCE and STATEMENT.
@@ -30,8 +29,16 @@ STATEMENT: {hypothesis}
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt.template
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt.template
 
+LLM_ANSWERABILITY_SYSTEM = v2.Answerability.system_prompt.template
+LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt.template
+
+LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt.template
+LLM_ABSTENTION_USER = v2.Abstention.user_prompt.template
+
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
-context_relevance_VERB_2S_TOP1 = v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+context_relevance_VERB_2S_TOP1 = (
+    v2.QuestionStatementRelevanceVerb2STop1Confidence.prompt.template
+)
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
 
 ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt.template
@@ -51,13 +58,11 @@ Respond with all sentences, unchanged from the excerpt, that are directly relate
 SENTIMENT_SYSTEM = v2.Sentiment.system_prompt.template
 SENTIMENT_USER = v2.Sentiment.user_prompt.template
 
-CORRECT_SYSTEM = \
-""" 
+CORRECT_SYSTEM = """
 You are a fact bot and you answer with verifiable facts
 """
 
-AGREEMENT_SYSTEM = \
-""" 
+AGREEMENT_SYSTEM = """
 You will continually start seeing responses to the prompt:
 
 %s
@@ -66,7 +71,7 @@ The expected answer is:
 
 %s
 
-Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer. 
+Answer only with an integer from 1 to 10 based on how semantically similar the responses are to the expected answer.
 where 0 is no semantic similarity at all and 10 is perfect agreement between the responses and the expected answer.
 On a NEW LINE, give the integer score and nothing more.
 """
@@ -85,7 +90,9 @@ LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT = v2.Maliciousness.system_prompt.template
 
 LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT = v2.Helpfulness.system_prompt.template
 
-LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = v2.Controversiality.system_prompt.template
+LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT = (
+    v2.Controversiality.system_prompt.template
+)
 
 LANGCHAIN_MISOGYNY_SYSTEM_PROMPT = v2.Misogyny.system_prompt.template
 
@@ -104,7 +111,9 @@ SUBMISSION:
 
 {submission}"""
 
-LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
+LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM = (
+    LANGCHAIN_PROMPT_TEMPLATE_SYSTEM + COT_REASONS_TEMPLATE
+)
 
 STEREOTYPES_SYSTEM_PROMPT = v2.Stereotypes.system_prompt.template
 STEREOTYPES_USER_PROMPT = v2.Stereotypes.user_prompt.template

@@ -7,8 +7,8 @@ from typing import Any, Callable, ClassVar, Optional
 
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
 from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_CORTEX
+from trulens_eval.utils.imports import OptionalImports
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class CortexCallback(EndpointCallback):
 
     def handle_generation(self, response: dict) -> None:
         """Get the usage information from Cortex LLM function response's usage field."""
-        usage = response['usage']
+        usage = response["usage"]
 
         # Increment number of requests.
         super().handle_generation(response)
@@ -45,8 +45,9 @@ class CortexCallback(EndpointCallback):
             ("n_completion_tokens", "completion_tokens"),
         ]:
             setattr(
-                self.cost, cost_field,
-                getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0)
+                self.cost,
+                cost_field,
+                getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0),
             )
 
 
@@ -59,13 +60,14 @@ class CortexEndpoint(Endpoint):
             if len(kwargs) > 0:
                 logger.warning(
                     "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name, pp.pformat(kwargs)
+                    self.name,
+                    pp.pformat(kwargs),
                 )
                 self.warning()
             return
 
-        kwargs['name'] = "cortex"
-        kwargs['callback_class'] = CortexCallback
+        kwargs["name"] = "cortex"
+        kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
         self._instrument_class(Session, "sql")
@@ -74,17 +76,20 @@ class CortexEndpoint(Endpoint):
         return super(Endpoint, cls).__new__(cls, name="cortex")
 
     def handle_wrapped_call(
-        self, func: Callable, bindings: inspect.BoundArguments, response: Any,
-        callback: Optional[EndpointCallback]
+        self,
+        func: Callable,
+        bindings: inspect.BoundArguments,
+        response: Any,
+        callback: Optional[EndpointCallback],
     ) -> None:
-
         counted_something = False
 
-        if isinstance(response,
-                      DataFrame):  # response is a snowflake dataframe instance
+        if isinstance(
+            response, DataFrame
+        ):  # response is a snowflake dataframe instance
             response: dict = json.loads(response.collect()[0][0])
 
-            if 'usage' in response:
+            if "usage" in response:
                 counted_something = True
 
                 self.global_callback.handle_generation(response=response)
@@ -95,5 +100,5 @@ class CortexEndpoint(Endpoint):
             if not counted_something:
                 logger.warning(
                     "Unrecognized Cortex response format. It did not have usage information:\n%s",
-                    pp.pformat(response)
+                    pp.pformat(response),
                 )

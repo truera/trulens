@@ -3,7 +3,7 @@
 # These need to be changed to adapt to your deployment:
 # - user: currently "ubuntu"
 # - repo folder: currently "/home/ubuntu/trulens"
-# - conda setup script: currently "init_conda.sh" whih is based on miniconda
+# - conda setup script: currently "init_conda.sh" which is based on miniconda
 #   installation to /home/ubuntu/miniconda3
 # - conda environment: currently py311_trulens
 

@@ -1,7 +1,7 @@
-"""
-# Custom class application
+"""Custom class application
 
-This wrapper is the most flexible option for instrumenting an application, and can be used to instrument any custom python class.
+This wrapper is the most flexible option for instrumenting an application, and
+can be used to instrument any custom python class.
 
 !!! example
 
@@ -12,7 +12,7 @@ This wrapper is the most flexible option for instrumenting an application, and c
 
     ```python
     from trulens_eval.tru_custom_app import instrument
-    from custom_retriever import CustomRetriever 
+    from custom_retriever import CustomRetriever
 
 
     class CustomApp:
@@ -67,7 +67,7 @@ this example, case `CustomApp` and `CustomRetriever` are components.
     # Normal app Usage:
     response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-    # Wrapping app with `TruCustomApp`: 
+    # Wrapping app with `TruCustomApp`:
     tru_recorder = TruCustomApp(ca)
 
     # Tracked usage:
@@ -82,7 +82,7 @@ apps as well including the feedback functions, metadata, etc.
 
 In cases you do not have access to a class to make the necessary decorations for
 tracking, you can instead use one of the static methods of `instrument`, for
-example, the alterative for making sure the custom retriever gets instrumented
+example, the alternative for making sure the custom retriever gets instrumented
 is via:
 
 ```python
@@ -141,26 +141,26 @@ app.print_instrumented()
 
 ### output example:
 Components:
-	TruCustomApp (Other) at 0x171bd3380 with path *.__app__
-	CustomApp (Custom) at 0x12114b820 with path *.__app__.app
-	CustomLLM (Custom) at 0x12114be50 with path *.__app__.app.llm
-	CustomMemory (Custom) at 0x12114bf40 with path *.__app__.app.memory
-	CustomRetriever (Custom) at 0x12114bd60 with path *.__app__.app.retriever
-	CustomTemplate (Custom) at 0x12114bf10 with path *.__app__.app.template
+        TruCustomApp (Other) at 0x171bd3380 with path *.__app__
+        CustomApp (Custom) at 0x12114b820 with path *.__app__.app
+        CustomLLM (Custom) at 0x12114be50 with path *.__app__.app.llm
+        CustomMemory (Custom) at 0x12114bf40 with path *.__app__.app.memory
+        CustomRetriever (Custom) at 0x12114bd60 with path *.__app__.app.retriever
+        CustomTemplate (Custom) at 0x12114bf10 with path *.__app__.app.template
 
 Methods:
 Object at 0x12114b820:
-	<function CustomApp.retrieve_chunks at 0x299132ca0> with path *.__app__.app
-	<function CustomApp.respond_to_query at 0x299132d30> with path *.__app__.app
-	<function CustomApp.arespond_to_query at 0x299132dc0> with path *.__app__.app
+        <function CustomApp.retrieve_chunks at 0x299132ca0> with path *.__app__.app
+        <function CustomApp.respond_to_query at 0x299132d30> with path *.__app__.app
+        <function CustomApp.arespond_to_query at 0x299132dc0> with path *.__app__.app
 Object at 0x12114be50:
-	<function CustomLLM.generate at 0x299106b80> with path *.__app__.app.llm
+        <function CustomLLM.generate at 0x299106b80> with path *.__app__.app.llm
 Object at 0x12114bf40:
-	<function CustomMemory.remember at 0x299132670> with path *.__app__.app.memory
+        <function CustomMemory.remember at 0x299132670> with path *.__app__.app.memory
 Object at 0x12114bd60:
-	<function CustomRetriever.retrieve_chunks at 0x299132790> with path *.__app__.app.retriever
+        <function CustomRetriever.retrieve_chunks at 0x299132790> with path *.__app__.app.retriever
 Object at 0x12114bf10:
-	<function CustomTemplate.fill at 0x299132a60> with path *.__app__.app.template
+        <function CustomTemplate.fill at 0x299132a60> with path *.__app__.app.template
 ```
 
 - If an instrumented / decorated method's owner object cannot be found when
@@ -229,7 +229,7 @@ class TruCustomApp(mod_app.App):
 
         ```python
         from trulens_eval import instrument
-        
+
         class CustomApp:
 
             def __init__(self):
@@ -250,7 +250,7 @@ class TruCustomApp(mod_app.App):
                 output = self.template.fill(question=input, answer=answer)
 
                 return output
-        
+
         ca = CustomApp()
         ```
 
@@ -258,7 +258,7 @@ class TruCustomApp(mod_app.App):
 
         ```python
         from trulens_eval import instrument
-        
+
         class CustomApp:
 
             def __init__(self):
@@ -277,7 +277,7 @@ class TruCustomApp(mod_app.App):
                 output = self.template.fill(question=input, answer=answer)
 
                 return output
-        
+
         custom_app = CustomApp()
 
         instrument.method(CustomApp, "retrieve_chunks")
@@ -287,8 +287,8 @@ class TruCustomApp(mod_app.App):
     in feedback functions. This is done by using the `Select` class to select
     the arguments and returns of the method.
 
-    Doing so follows the structure: 
-    
+    Doing so follows the structure:
+
     - For args: `Select.RecordCalls.<method_name>.args.<arg_name>`
 
     - For returns: `Select.RecordCalls.<method_name>.rets.<ret_name>`
@@ -312,7 +312,7 @@ class TruCustomApp(mod_app.App):
         ```python
         from trulens_eval import TruCustomApp
 
-        tru_recorder = TruCustomApp(custom_app, 
+        tru_recorder = TruCustomApp(custom_app,
             app_id="Custom Application v1",
             feedbacks=[f_context_relevance])
 
@@ -337,9 +337,9 @@ class TruCustomApp(mod_app.App):
 
     root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
-    functions_to_instrument: ClassVar[Set[Callable]] = set([])
+    functions_to_instrument: ClassVar[Set[Callable]] = set()
     """Methods marked as needing instrumentation.
-    
+
     These are checked to make sure the object walk finds them. If not, a message
     is shown to let user know how to let the TruCustomApp constructor know where
     these methods are.
@@ -352,16 +352,16 @@ class TruCustomApp(mod_app.App):
     """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
-        kwargs['app'] = app
-        kwargs['root_class'] = Class.of_object(app)
+        kwargs["app"] = app
+        kwargs["root_class"] = Class.of_object(app)
 
         instrument = Instrument(
-            app=self  # App mixes in WithInstrumentCallbacks
-        )
-        kwargs['instrument'] = instrument
+            app=self
+        )  # App mixes in WithInstrumentCallbacks
+        kwargs["instrument"] = instrument
 
-        if 'main_method' in kwargs:
-            main_method = kwargs['main_method']
+        if "main_method" in kwargs:
+            main_method = kwargs["main_method"]
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
@@ -386,13 +386,15 @@ class TruCustomApp(mod_app.App):
 
                 app_self = main_method_loaded.__self__
 
-                assert app_self == app, "`main_method`'s bound self must be the same as `app`."
+                assert (
+                    app_self == app
+                ), "`main_method`'s bound self must be the same as `app`."
 
                 cls = app_self.__class__
                 mod = cls.__module__
 
-            kwargs['main_method'] = main_method
-            kwargs['main_method_loaded'] = main_method_loaded
+            kwargs["main_method"] = main_method
+            kwargs["main_method_loaded"] = main_method_loaded
 
             instrument.include_modules.add(mod)
             instrument.include_classes.add(cls)
@@ -403,7 +405,7 @@ class TruCustomApp(mod_app.App):
 
         # Needed to split this part to after the instrumentation so that the
         # getattr below gets the instrumented version of main method.
-        if 'main_method' in kwargs:
+        if "main_method" in kwargs:
             # Set main_method to the unbound version. Will be passing in app for
             # "self" manually when needed.
             main_method_loaded = getattr(cls, main_name)
@@ -452,12 +454,11 @@ class TruCustomApp(mod_app.App):
                 )
 
                 path.set(
-                    self.app_extra_json, {
-                        PLACEHOLDER:
-                            "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
-                        m.__name__:
-                            f"Placeholder for method {m.__name__}."
-                    }
+                    self.app_extra_json,
+                    {
+                        PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                        m.__name__: f"Placeholder for method {m.__name__}.",
+                    },
                 )
 
         # Check that any functions marked with `TruCustomApp.instrument` has been
@@ -477,7 +478,7 @@ class TruCustomApp(mod_app.App):
                     try:
                         next(full_path.get(json))
 
-                    except Exception as e:
+                    except Exception:
                         logger.warning(
                             f"App has no component owner of instrumented method {m} at path {full_path}. "
                             f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
@@ -485,12 +486,11 @@ class TruCustomApp(mod_app.App):
                         )
 
                         path.set(
-                            self.app_extra_json, {
-                                PLACEHOLDER:
-                                    "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
-                                m.__name__:
-                                    f"Placeholder for method {m.__name__}."
-                            }
+                            self.app_extra_json,
+                            {
+                                PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
+                                m.__name__: f"Placeholder for method {m.__name__}.",
+                            },
                         )
 
     def main_call(self, human: str):
@@ -540,6 +540,6 @@ class instrument(base_instrument):
         TruCustomApp.functions_to_instrument.add(getattr(cls, name))
 
 
-import trulens_eval  # for App class annotations
+import trulens_eval  # noqa: F401
 
 TruCustomApp.model_rebuild()
