@@ -27,6 +27,7 @@ import warnings
 
 import pydantic
 
+from trulens_eval.utils.python import OpaqueWrapper
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_issubclass
 from trulens_eval.utils.serial import SerialModel
@@ -135,9 +136,16 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
 
         try:
             v = safe_getattr(obj, k, get_prop=include_props)
+
+            if isinstance(v, OpaqueWrapper):
+                # Don't expose the contents of opaque wrappers.
+                continue
+
             ret[k] = v
+
         except Exception as e:
             logger.debug(str(e))
+            logger.debug(str(e.__traceback__))
 
     return ret
 

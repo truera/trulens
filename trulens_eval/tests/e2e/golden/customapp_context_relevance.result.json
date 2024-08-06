@@ -1,0 +1,31 @@
+{
+  "feedback_result_id": "feedback_result_hash_5ecab43501a0e2e88db2bde3a456f7bc",
+  "record_id": "record_hash_2b94501522f41136287301685661234d",
+  "feedback_definition_id": "feedback_definition_hash_7f50d489184a6d8280e533abd3924737",
+  "last_ts": "2024-08-06T12:27:34.132321",
+  "status": "done",
+  "cost": {
+    "n_requests": 0,
+    "n_successful_requests": 0,
+    "n_classes": 0,
+    "n_tokens": 0,
+    "n_stream_chunks": 0,
+    "n_prompt_tokens": 0,
+    "n_completion_tokens": 0,
+    "cost": 0.0
+  },
+  "name": "context_relevance",
+  "calls": [
+    {
+      "args": {
+        "question": "hello",
+        "context": "This is my response to a prompt of length 167 with a model derp with temperature 0.5."
+      },
+      "ret": 0.0,
+      "meta": {}
+    }
+  ],
+  "result": 0.0,
+  "error": null,
+  "multi_result": "null"
+}

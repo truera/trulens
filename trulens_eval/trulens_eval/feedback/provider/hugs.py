@@ -1,5 +1,7 @@
 from abc import abstractmethod
 from concurrent.futures import wait
+import functools
+from inspect import signature
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, get_args, get_origin
 
@@ -12,8 +14,8 @@ from tqdm.auto import tqdm
 from trulens_eval.feedback import prompts
 from trulens_eval.feedback.provider.base import Provider
 from trulens_eval.feedback.provider.endpoint import HuggingfaceEndpoint
-from trulens_eval.feedback.provider.endpoint.base import DummyEndpoint
 from trulens_eval.feedback.provider.endpoint.base import Endpoint
+from trulens_eval.feedback.provider.endpoint.dummy import DummyEndpoint
 from trulens_eval.utils.python import Future
 from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.threading import ThreadPoolExecutor
@@ -39,9 +41,6 @@ HUGS_CONTEXT_RELEVANCE_API_URL = (
     "https://api-inference.huggingface.co/models/truera/context_relevance"
 )
 HUGS_HALLUCINATION_API_URL = "https://api-inference.huggingface.co/models/vectara/hallucination_evaluation_model"
-
-import functools
-from inspect import signature
 
 
 # TODO: move this to a more general place and apply it to other feedbacks that need it.
@@ -472,7 +471,7 @@ class Huggingface(HuggingfaceBase):
 
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "huggingface",
         endpoint: Optional[Endpoint] = None,
         **kwargs,
     ):
@@ -744,9 +743,12 @@ class HuggingfaceLocal(HuggingfaceBase):
 
 
 class Dummy(Huggingface):
+    """A version of a Huggingface provider that uses a dummy endpoint and thus
+    produces fake results without making any networked calls to huggingface."""
+
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "dummyhugs",
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,

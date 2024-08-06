@@ -861,7 +861,22 @@ class App(
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
+
+        Args:
+            func: The main function we are targetting in this determination.
+
+            sig: The signature of the above.
+
+            bindings: The arguments to be passed to the function.
+
+        Returns:
+            The main input string.
         """
+
+        if bindings is None:
+            raise RuntimeError(
+                f"Cannot determine main input of unbound call to {func}: {sig}."
+            )
 
         # ignore self
         all_args = list(v for k, v in bindings.arguments.items() if k != "self")
@@ -1141,8 +1156,16 @@ class App(
 
             assert len(calls) > 0, "No information recorded in call."
 
-            main_in = self.main_input(func, sig, bindings)
-            main_out = self.main_output(func, sig, bindings, ret)
+            if bindings is not None:
+                main_in = self.main_input(func, sig, bindings)
+            else:
+                main_in = None
+
+            if error is None:
+                assert bindings is not None, "No bindings despite no error."
+                main_out = self.main_output(func, sig, bindings, ret)
+            else:
+                main_out = None
 
             updates = dict(
                 main_input=jsonify(main_in),

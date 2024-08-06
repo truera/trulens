@@ -44,6 +44,8 @@ markdown_extensions:
 watch:
   - trulens_explain/trulens
   - trulens_eval/trulens_eval
+  - trulens_eval/tests
+  - trulens_eval/examples
 
 plugins:
   - include-markdown:
@@ -274,17 +276,22 @@ nav:
           - 🦜️🔗 Langchain Guardrails: trulens_eval/api/guardrails/langchain.md
           - 🦙 Llama-Index Guardrails: trulens_eval/api/guardrails/llama.md
       - 🗄 Database:
-        - trulens_eval/api/database/index.md
-        - ✨ Migration: trulens_eval/api/database/migration.md
-        - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
+          - trulens_eval/api/database/index.md
+          - ✨ Migration: trulens_eval/api/database/migration.md
+          - 🧪 SQLAlchemy: trulens_eval/api/database/sqlalchemy.md
       - Streamlit: trulens_eval/api/streamlit.md
-      - Utils:
+      - 🧰 Utils:
           # - trulens_eval/api/utils/index.md
           - trulens_eval/api/utils/python.md
           - trulens_eval/api/utils/serial.md
           - trulens_eval/api/utils/json.md
-          - trulens_eval/api/utils/frameworks.md
+          # - trulens_eval/api/utils/frameworks.md # most of the content moved to guardrails docs
           - trulens_eval/api/utils/utils.md
+      - 📏 Dev:
+          - 📏 DummyApp: trulens_eval/api/dev/dummy_app.md
+          - 📏 DummyProvider: trulens_eval/api/provider/dummy.md
+          - 📏 DummyEndpoint: trulens_eval/api/endpoint/dummy.md
+          # - trulens_eval/api/testing/test.md # namespace clash with trulens_explain needs to be resolved
   - 🤝 Contributing:
       - trulens_eval/contributing/index.md
       - 🧭 Design: trulens_eval/contributing/design.md
