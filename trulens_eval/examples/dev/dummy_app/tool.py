@@ -65,7 +65,7 @@ class DummyStackTool(DummyTool):
 
     last_stack = None
     """The last stack that was rendered.
-    
+
     You can use this to get the readout even if this tool is used deep in an app
     that processes the return from the tool in destructive ways."""
 

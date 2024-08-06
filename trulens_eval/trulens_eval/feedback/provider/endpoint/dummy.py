@@ -75,7 +75,7 @@ class DummyAPI(pydantic.BaseModel):
         pydantic.NonNegativeFloat, pydantic.NonNegativeFloat
     ] = (0.7, 3.7)
     """How much time to indicate as needed to load the model.
-    
+
     Parameters of a uniform distribution.
     """
 
@@ -101,7 +101,7 @@ class DummyAPI(pydantic.BaseModel):
 
     delay: pydantic.NonNegativeFloat = 0.0
     """How long to delay each request.
-    
+
     Delay is normally distributed with this mean and half this standard
     deviation, in seconds. Any delay sample below 0 is replaced with 0.
     """

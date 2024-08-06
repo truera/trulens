@@ -15,5 +15,5 @@ Please include any other details of this change useful for _TruLens_ developers.
 - [ ] Breaking change (fix or feature that would cause existing functionality to
   not work as expected)
 - [ ] New Tests
-- [ ] This change includes re-generated golden test results 
+- [ ] This change includes re-generated golden test results
 - [ ] This change requires a documentation update
