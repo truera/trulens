@@ -355,12 +355,33 @@ class LLMProvider(Provider):
             )
             return score, {}
 
+    def _determine_output_space(
+        self, min_score_val: int, max_score_val: int
+    ) -> str:
+        """
+        Determines the output space based on min_score_val and max_score_val.
+
+        Args:
+            min_score_val (int): Minimum value for the score range.
+            max_score_val (int): Maximum value for the score range.
+
+        Returns:
+            str: The corresponding output space.
+        """
+        for output in OutputSpace:
+            if output.value == (min_score_val, max_score_val):
+                return output.name
+        raise ValueError(
+            f"Invalid score range: [{min_score_val}, {max_score_val}]. Must match one of the predefined output spaces."
+        )
+
     def context_relevance(
         self,
         question: str,
         context: str,
         criteria: str = "",
-        output_space: str = "",
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> float:
         """
@@ -384,11 +405,16 @@ class LLMProvider(Provider):
             question (str): A question being asked.
             context (str): Context related to the question.
             criteria (str): Overriding evaluation criteria for evaluation .
-            output_space (str): Overriding output space for evaluation.
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
         if criteria and output_space:
             ContextRelevance.override_critera_and_output_space(
                 criteria, output_space
@@ -401,6 +427,8 @@ class LLMProvider(Provider):
                 question=question,
                 context=context,
             ),
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
             temperature=temperature,
         )
 
@@ -409,7 +437,8 @@ class LLMProvider(Provider):
         question: str,
         context: str,
         criteria: str = "",
-        output_space: str = "",
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
@@ -432,8 +461,11 @@ class LLMProvider(Provider):
 
         Args:
             question (str): A question being asked.
-
             context (str): Context related to the question.
+            criteria (str): Overriding evaluation criteria for evaluation .
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
@@ -446,6 +478,10 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
 
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
         if criteria and output_space:
             ContextRelevance.override_critera_and_output_space(
                 criteria, output_space
@@ -454,6 +490,8 @@ class LLMProvider(Provider):
         return self.generate_score_and_reasons(
             system_prompt=ContextRelevance.system_prompt.template,
             user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
             temperature=temperature,
         )
 
@@ -462,7 +500,8 @@ class LLMProvider(Provider):
         question: str,
         context: str,
         criteria: str = "",
-        output_space: str = "",
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict[str, float]]:
         """
@@ -485,13 +524,20 @@ class LLMProvider(Provider):
 
         Args:
             question (str): A question being asked.
-
             context (str): Context related to the question.
-
+            criteria (str): Overriding evaluation criteria for evaluation .
+            min_score_val (int): The minimum score value. Defaults to 0.
+            max_score_val (int): The maximum score value. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
             Dict[str, float]: A dictionary containing the confidence score.
         """
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
         if criteria and output_space:
             ContextRelevance.override_critera_and_output_space(
                 criteria, output_space
@@ -506,6 +552,8 @@ class LLMProvider(Provider):
                     question=question,
                     context=context,
                 ),
+                min_score_val=min_score_val,
+                max_score_val=max_score_val,
                 temperature=temperature,
             )
         except ValueError as e:

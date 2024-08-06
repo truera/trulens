@@ -212,43 +212,43 @@ BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or 
 LIKERT_0_10_PROMPT = "0 to 10, where 0 is the lowest score according to the criteria and 10 is the highest possible score"  # legacy, to be deprecated
 
 
-class OutputSpace(str, Enum):
+class OutputSpace(Enum):
     """
     Enum for valid output spaces of scores.
     """
 
-    LIKERT_0_10 = "likert-0-10"  # legacy
-    LIKERT_0_3 = "likert-0-3"
-    BINARY = "binary"
+    LIKERT_0_3 = (0, 3)
     # note: we will be deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space in the near release
+    LIKERT_0_10 = (0, 10)
+    BINARY = (0, 1)
 
 
-class EvalCriteria(pydantic.BaseModel):
+class EvalSchema(pydantic.BaseModel):
     criteria: str
     output_space: str
 
     @pydantic.field_validator("output_space")
-    def validate_output_space(cls, v):
-        if v not in [
-            OutputSpace.LIKERT_0_3,
-            OutputSpace.BINARY,
-            OutputSpace.LIKERT_0_10,
+    def validate_output_space(cls, output_space: str):
+        if output_space not in [
+            OutputSpace.LIKERT_0_3.name,
+            OutputSpace.BINARY.name,
+            OutputSpace.LIKERT_0_10.name,
         ]:
             raise ValueError(
-                'output_space must be either "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+                'output_space must be one of the ranges from "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
-        return v
+        return output_space
 
     def get_output_scale_prompt(self) -> str:
-        if self.output_space == OutputSpace.LIKERT_0_3:
+        if self.output_space == OutputSpace.LIKERT_0_3.name:
             return LIKERT_0_3_PROMPT
-        elif self.output_space == OutputSpace.LIKERT_0_10:
+        elif self.output_space == OutputSpace.LIKERT_0_10.name:
             return LIKERT_0_10_PROMPT
-        elif self.output_space == OutputSpace.BINARY:
+        elif self.output_space == OutputSpace.BINARY.name:
             return BINARY_0_1_PROMPT
         else:
             raise ValueError(
-                'output_space must be either "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+                'output_space must be one of the ranges from "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
 
 
@@ -267,7 +267,7 @@ class ContextRelevance(Relevance, WithPrompt):
         - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of 3, which is the full mark.
         - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
         """
-    output_space: str = OutputSpace.LIKERT_0_3
+    output_space: str = OutputSpace.LIKERT_0_3.name
 
     system_prompt_template: ClassVar[PromptTemplate] = (
         PromptTemplate.from_template(
@@ -292,7 +292,7 @@ class ContextRelevance(Relevance, WithPrompt):
 
     @staticmethod
     def validate_criteria_and_output_space(criteria: str, output_space: str):
-        validated = EvalCriteria(criteria=criteria, output_space=output_space)
+        validated = EvalSchema(criteria=criteria, output_space=output_space)
         return validated
 
     @classmethod
@@ -342,38 +342,6 @@ class ContextRelevance(Relevance, WithPrompt):
 
         - Never elaborate.
         """.format(output_space_prompt=output_space_prompt, criteria=criteria)
-    )
-
-
-class ContextRelevanceOld(Relevance, WithPrompt):
-    # openai.context_relevance
-    # openai.context_relevance_with_cot_reasons
-
-    system_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from 0 to 3 where 0 is the least relevant and 3 is the most relevant.
-
-        A few additional scoring guidelines:
-
-        - Long CONTEXTS should score equally well as short CONTEXTS.
-
-        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
-
-        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
-
-        - CONTEXT that is RELEVANT to none of the QUESTION should score 0.
-        - CONTEXT that is RELEVANT to some of the QUESTION should score of 1 or 2.
-        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 3.
-        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
-
-        - Never elaborate."""
-    )
-    user_prompt: ClassVar[PromptTemplate] = PromptTemplate.from_template(
-        """QUESTION: {question}
-
-        CONTEXT: {context}
-
-        RELEVANCE: """
     )
 
 
