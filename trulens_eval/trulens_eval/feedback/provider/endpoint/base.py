@@ -6,8 +6,6 @@ import functools
 import inspect
 import logging
 from pprint import PrettyPrinter
-import random
-import sys
 from time import sleep
 from types import ModuleType
 from typing import (
@@ -38,7 +36,6 @@ from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import is_really_coroutinefunction
-from trulens_eval.utils.python import locals_except
 from trulens_eval.utils.python import module_name
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import wrap_awaitable
