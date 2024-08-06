@@ -31,14 +31,20 @@ class TruBenchmarkExperiment:
 
     cortex = Cortex(model_engine="snowflake-arctic")
 
-    def context_relevance_to_score(input, output, temperature=0):
+    def context_relevance_ff_to_score(input, output, temperature=0):
         return cortex.context_relevance(question=input, context=output, temperature=temperature)
 
-    benchmark_params = BenchmarkParams(temperature=0.5)
-    benchmark_experiment = TruBenchmarkExperiment(ground_truth, context_relevance_to_score, benchmark_params)
 
-    true_labels = benchmark_experiment.load_true_labels()
+    tru_labels = [1, 0, 0, ...] # ground truth labels
     mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
+
+    tru_benchmark_artic = tru.BenchmarkExperiment(
+        app_id="MAE",
+        ground_truth=golden_set,
+        trace_to_score_fn=context_relevance_ff_to_score,
+        agg_funcs=[mae_agg_func],
+        benchmark_params=BenchmarkParams(temperature=0.5),
+    )
     """
 
     def __init__(
@@ -48,6 +54,14 @@ class TruBenchmarkExperiment:
         agg_funcs: List[AggCallable],
         benchmark_params: BenchmarkParams,
     ):
+        """Create a benchmark experiment class which defines custom
+        feedback functions and aggregators to evaluate the feedback function on a ground truth dataset.
+        Args:
+            ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth data to evaluate the feedback function on
+            trace_to_score_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
+            agg_funcs (List[AggCallable]): list of aggregation functions to compute metrics on the feedback scores
+            benchmark_params (BenchmarkParams): benchmark configuration parameters
+        """
         # TODO: instance type check of ground_truth argument + handle groundtruth_impl
         self.ground_truth = ground_truth
         self.trace_to_score_fn = trace_to_score_fn
