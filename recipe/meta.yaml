@@ -1,0 +1,74 @@
+{% set name = "trulens-eval" %}
+{% set version = "0.33.0" %}
+{% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
+{% set poetry = pyproject.get('tool', {}).get('poetry') %}
+
+package:
+  name: {{ poetry.get('name') }}
+  version: {{ poetry.get('version') }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/trulens_eval-{{ version }}.tar.gz
+  sha256: dbf5e463e3bd5d22a8024c4d7d6c26fbae665efb40ae578b030656f2fb094eae
+
+build:
+  entry_points:
+    - trulens-eval=trulens_eval.utils.command_line:main
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - pip
+    - python
+  run:
+    - python >=3.8,<3.13
+    - numpy >=1.23.5
+    - frozendict >=2.3.8
+    - munch >=3.0.0
+    - dill >=0.3.7
+    - tqdm >=4.66.1
+    - nltk >=3.8.1
+    - requests >=2.31.0
+    - nest-asyncio >=1.5.8
+    - typing-extensions >=4.9.0
+    - psutil >=5.9.8
+    - pip >=24.0
+    - packaging >=23.2
+    - python-dotenv >=1.0.0
+    - pydantic >=2,<3
+    - merkle-json >=1.0.0
+    - langchain >=0.1.14
+    - langchain-core >=0.1.6
+    - langchain-community >=0.0.38
+    - typing_inspect >=0.8.0
+    - millify >=0.1.1
+    - humanize >=4.6.0
+    - streamlit >=1.33.0
+    - streamlit-aggrid ==0.3.4
+    - streamlit-extras >=0.4.0
+    - streamlit-pills >=0.3.0
+    - rich >=13.6.0
+    - sqlalchemy >=2.0.19
+    - alembic >=1.11.2
+
+test:
+  imports:
+    - trulens_eval
+  commands:
+    - pip check
+    - trulens-eval --help
+  requires:
+    - pip
+
+about:
+  home: https://www.trulens.org
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+  license_file: trulens_eval/LICENSE
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu
