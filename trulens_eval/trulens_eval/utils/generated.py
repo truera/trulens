@@ -27,15 +27,6 @@ class ParseError(Exception):
         self.pattern = pattern
 
 
-def validate_rating(rating, min_val=0, max_val=10) -> float:
-    """Validate a rating is in a specified range."""
-
-    if not min_val <= rating <= max_val:
-        raise ValueError(f"Rating must be in [{min_val}, {max_val}].")
-
-    return rating
-
-
 # Various old patterns that didn't work as well:
 # PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
 # PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
@@ -79,23 +70,13 @@ def re_configured_rating(
 
     vals = set()
     for match in matches:
-        try:
-            if allow_decimal:
-                vals.add(
-                    validate_rating(
-                        float(match),
-                        min_val=min_score_val,
-                        max_val=max_score_val,
-                    )
-                )
-            else:
-                vals.add(
-                    validate_rating(
-                        int(match), min_val=min_score_val, max_val=max_score_val
-                    )
-                )
-        except ValueError:
-            pass
+        rating = float(match) if allow_decimal else int(match)
+        if min_score_val <= rating <= max_score_val:
+            vals.add(rating)
+        else:
+            raise ValueError(
+                f"Rating must be in [{min_score_val}, {max_score_val}]."
+            )
 
     if not vals:
         raise ParseError(f"{min_score_val}-{max_score_val} rating", s)
