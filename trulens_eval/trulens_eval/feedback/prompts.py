@@ -35,7 +35,7 @@ LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt.template
 LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt.template
 LLM_ABSTENTION_USER = v2.Abstention.user_prompt.template
 
-CONTEXT_RELEVANCE_SYSTEM_OLD = v2.ContextRelevanceOld.system_prompt.template
+
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt.template
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt.template
 
