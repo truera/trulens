@@ -390,7 +390,7 @@ class Tru(python.SingletonPerName):
 
         return TruVirtual(tru=self, app=app, **kwargs)
 
-    def BenchmarkExperiment(
+    def create_benchmark_experiment(
         self,
         app_id: str,
         ground_truth: Union[List, Callable, FunctionOrMethod],

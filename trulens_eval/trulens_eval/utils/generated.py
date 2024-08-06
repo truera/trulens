@@ -28,10 +28,10 @@ class ParseError(Exception):
 
 
 def validate_rating(rating, min_val=0, max_val=10) -> float:
-    """Validate a rating is specified_range."""
+    """Validate a rating is in a specified range."""
 
     if not min_val <= rating <= max_val:
-        raise ValueError(f"Rating must be between {min_val} and {max_val}.")
+        raise ValueError(f"Rating must be in [{min_val}, {max_val}].")
 
     return rating
 
@@ -63,6 +63,9 @@ def re_configured_rating(
 
     Args:
         s: String to extract rating from.
+        min_score_val: Minimum value of the rating scale.
+        max_score_val: Maximum value of the rating scale.
+        allow_decimal: Whether to allow and capture decimal numbers (floats).
 
     Returns:
         int: Extracted rating.
