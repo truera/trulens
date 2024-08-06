@@ -41,7 +41,7 @@ class TruBenchmarkExperiment:
     tru_benchmark_artic = tru.BenchmarkExperiment(
         app_id="MAE",
         ground_truth=golden_set,
-        trace_to_score_fn=context_relevance_ff_to_score,
+        feedback_fn=context_relevance_ff_to_score,
         agg_funcs=[mae_agg_func],
         benchmark_params=BenchmarkParams(temperature=0.5),
     )
@@ -50,7 +50,7 @@ class TruBenchmarkExperiment:
     def __init__(
         self,
         ground_truth: Union[List, Callable, FunctionOrMethod],
-        trace_to_score_fn: Callable,
+        feedback_fn: Callable,
         agg_funcs: List[AggCallable],
         benchmark_params: BenchmarkParams,
     ):
@@ -58,13 +58,13 @@ class TruBenchmarkExperiment:
         feedback functions and aggregators to evaluate the feedback function on a ground truth dataset.
         Args:
             ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth data to evaluate the feedback function on
-            trace_to_score_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
+            feedback_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
             agg_funcs (List[AggCallable]): list of aggregation functions to compute metrics on the feedback scores
             benchmark_params (BenchmarkParams): benchmark configuration parameters
         """
         # TODO: instance type check of ground_truth argument + handle groundtruth_impl
         self.ground_truth = ground_truth
-        self.trace_to_score_fn = trace_to_score_fn
+        self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
         self.f_benchmark_metrics: List[mod_feedback.Feedback] = [
@@ -82,20 +82,18 @@ class TruBenchmarkExperiment:
 
     @instrument
     def run_score_generation_on_single_row(
-        self, row, trace_to_score_fn: Callable
+        self, row, feedback_fn: Callable
     ) -> Union[float, Tuple[float, float]]:
-        """Generate a score with the trace_to_score_fn
+        """Generate a score with the feedback_fn
 
         Returns:
             Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
         """
 
         benchmark_params_dict: dict = self.benchmark_params.model_dump()
-        ret = trace_to_score_fn(
-            row["query"], row["response"], benchmark_params_dict
-        )
+        ret = feedback_fn(row["query"], row["response"], benchmark_params_dict)
 
-        # TODO: better define the shape of arguments of trace_to_score_fn
+        # TODO: better define the shape of arguments of feedback_fn
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
@@ -127,7 +125,7 @@ class TruBenchmarkExperiment:
                 executor.submit(
                     self.run_score_generation_on_single_row,
                     row,
-                    self.trace_to_score_fn,
+                    self.feedback_fn,
                 ): row
                 for row in self.ground_truth
             }
