@@ -111,8 +111,14 @@ clean-dashboard:
 	rm -rf src/dashboard/*.egg-info
 
 clean: clean-dashboard
-	rm -rf dist build
-	git clean -fxd
+	git clean --dry-run -fxd
+	echo "Do you wish to remove these files? (y/N)"
+	select yn in "y" "N"; do \
+		case $$yn in \
+			y ) git clean -fxd;; \
+			* ) exit;; \
+		esac; \
+	done
 
 ## Step: Build wheels
 build-dashboard: env clean-dashboard
@@ -136,19 +142,15 @@ build: $(POETRY_DIRS)
 	make build-dashboard
 
 ## Step: Upload wheels to pypi
-# Usage: TOKEN=... make upload-pypi-instrument-langchain
-upload-%: build
-	pushd dist/trulens-$*/
-	poetry run twine upload -u __token__ -p $(TOKEN) *.whl
-	popd
+# Usage: TOKEN=... make upload-trulnes-instrument-langchain
+upload-%:
+	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-all: build
-	poetry run `twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run `twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*
 
 upload-testpypi-%: build
-	pushd dist/trulens-$*/
-	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) *.whl
-	popd
+	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-testpypi-all: build
-	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*

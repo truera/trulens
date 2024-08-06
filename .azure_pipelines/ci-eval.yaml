@@ -1,8 +1,7 @@
 trigger: none
 
 pr:
-  # Run this pipeline for any PR from a branch that starts with "releases/" that
-  # changed code in trulens src directory or to eval notebooks in the docs folder.
+  # Run this pipeline for any PR from a branch that starts with "releases/"
   branches:
     include:
       - releases/*
@@ -55,7 +54,7 @@ jobs:
           poetry install --only tests --sync
           make run-precommit
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
-        displayName: Format Diffs
+        displayName: Run Pre-commits
 
       - bash: |
           make test-e2e-optional

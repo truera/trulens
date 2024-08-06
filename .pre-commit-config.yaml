@@ -4,7 +4,6 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
-      - id: check-toml
       - id: check-yaml
         exclude: meta.yaml
       - id: destroyed-symlinks

@@ -4,8 +4,6 @@
 trigger: none
 
 pr:
-  # Run this pipeline for any PR that wishes to push to main that changes code
-  # inside trulens folder.
   branches:
     include:
       - main
@@ -60,7 +58,7 @@ jobs:
           poetry install --only tests --sync
           make run-precommit
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
-        displayName: Format Diffs
+        displayName: Run Pre-commits
 
       - bash: |
           set -e
