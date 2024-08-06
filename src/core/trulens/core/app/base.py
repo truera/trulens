@@ -652,32 +652,9 @@ class App(
         access the retrieved contexts that would appear in a record were these
         components to execute.
         """
-        if app is None:
-            raise ValueError(
-                "Could not determine context selection without `app` argument."
-            )
-
-        # Checking by module name so we don't have to try to import either
-        # langchain or llama_index beforehand.
-        if type(app).__module__.startswith("langchain"):
-            from trulens.instrument.langchain import TruChain
-
-            return TruChain.select_context(app)
-
-        if type(app).__module__.startswith("llama_index"):
-            from trulens.instrument.llamaindex import TruLlama
-
-            return TruLlama.select_context(app)
-
-        elif type(app).__module__.startswith("nemoguardrails"):
-            from trulens.instrument.nemo import TruRails
-
-            return TruRails.select_context(app)
-
-        else:
-            raise ValueError(
-                f"Could not determine context from unrecognized `app` type {type(app)}."
-            )
+        raise NotImplementedError(
+            "`select_context` not implemented for base App. Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
+        )
 
     def __hash__(self):
         return hash(id(self))
