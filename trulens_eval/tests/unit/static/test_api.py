@@ -45,17 +45,18 @@ class TestAPI(JSONTestCase):
                 highs[mem.qualname] = type_qualname(mem.typ)
                 if inspect.isclass(mem.val):
                     high_classes.add(mem.val)
-          
+
             for mem in mod.api_lows:
                 lows[mem.qualname] = type_qualname(mem.typ)
                 if inspect.isclass(mem.val):
                     low_classes.add(mem.val)
-          
+
             objects["module " + modname] = {"highs": highs, "lows": lows}
 
         # Enumerate all public classes found in the prior step.
-        for classes, api_level in zip([high_classes, low_classes], ["high", "low"]):
-
+        for classes, api_level in zip(
+            [high_classes, low_classes], ["high", "low"]
+        ):
             for class_ in classes:
                 members = get_class_members(class_, class_api_level=api_level)
 
@@ -67,7 +68,10 @@ class TestAPI(JSONTestCase):
                 for mem in members.api_lows:
                     lows[mem.qualname] = type_qualname(mem.typ)
 
-                objects["class " + type_qualname(class_)] = {"highs": highs, "lows": lows}
+                objects["class " + type_qualname(class_)] = {
+                    "highs": highs,
+                    "lows": lows,
+                }
 
         return objects
 
@@ -76,6 +80,7 @@ class TestAPI(JSONTestCase):
             actual=self.members,
             golden_filename="api.yaml",
         )
+
 
 if __name__ == "__main__":
     main()

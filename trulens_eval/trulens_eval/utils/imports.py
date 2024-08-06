@@ -18,7 +18,17 @@ from pprint import PrettyPrinter
 import re
 import sys
 from types import ModuleType
-from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
@@ -688,5 +698,3 @@ class OptionalImports:
             raise ImportError(self.messages.import_error) from exc_value
 
         # Exception will be propagated unless we return True so we don't return it.
-
-
