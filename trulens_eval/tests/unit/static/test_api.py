@@ -53,15 +53,20 @@ class TestAPI(JSONTestCase):
           
             objects["module " + modname] = {"highs": highs, "lows": lows}
 
+        # Enumerate all public classes found in the prior step.
         for classes, api_level in zip([high_classes, low_classes], ["high", "low"]):
+
             for class_ in classes:
                 members = get_class_members(class_, class_api_level=api_level)
+
                 highs = {}
                 lows = {}
+
                 for mem in members.api_highs:
                     highs[mem.qualname] = type_qualname(mem.typ)
                 for mem in members.api_lows:
                     lows[mem.qualname] = type_qualname(mem.typ)
+
                 objects["class " + type_qualname(class_)] = {"highs": highs, "lows": lows}
 
         return objects

@@ -8,7 +8,7 @@ import functools
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Mapping, Optional, Sequence, Set, TypeVar
+from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar
 import unittest
 from unittest import TestCase
 

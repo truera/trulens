@@ -36,7 +36,6 @@ def get_module_names(
         matching = re.compile(re.escape(matching) + r".*")
 
     for modinfo in pkgutil.iter_modules([str(path)]):
-        print(modinfo)
         if matching is not None and not matching.fullmatch(modinfo.name):
             continue
 
@@ -299,8 +298,7 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
             group = publics
 
         if not any(
-            (base.__name__.startswith("trulens_eval"))
-            and hasattr(base, name)
+            (base.__name__.startswith("trulens_eval")) and hasattr(base, name)
             for base in class_.__bases__
         ):
             # View the class-equivalent of a definitions as members of a class
