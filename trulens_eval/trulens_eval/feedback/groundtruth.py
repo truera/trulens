@@ -13,7 +13,6 @@ from trulens_eval.utils.imports import OptionalImports
 from trulens_eval.utils.imports import REQUIREMENT_BERT_SCORE
 from trulens_eval.utils.imports import REQUIREMENT_EVALUATE
 from trulens_eval.utils.imports import REQUIREMENT_OPENAI
-from trulens_eval.utils.pyschema import Class
 from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.pyschema import WithClassInfo
 from trulens_eval.utils.serial import SerialModel
@@ -134,7 +133,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     # TODEP
     def agreement_measure(
-        self, prompt: str, response: str
+        self,
+        prompt: str,
+        response: str,
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
         """
         Uses OpenAI's Chat GPT Model. A function that that measures
@@ -172,7 +173,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_configured_rating(agreement_txt) / 3,
+                re_configured_rating(agreement_txt, max_score_val=3) / 3,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:

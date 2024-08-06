@@ -699,10 +699,18 @@ class COTExplained(Feedback):
                     score = 0
                     for line in response.split("\n"):
                         if "Score" in line:
-                            score = re_configured_rating(line) / normalize
+                            score = (
+                                re_configured_rating(
+                                    line, max_score_val=normalize
+                                )
+                                / normalize
+                            )
                     return score, {"reason": response}
                 else:
-                    return re_configured_rating(response) / normalize
+                    return (
+                        re_configured_rating(response, max_score_val=normalize)
+                        / normalize
+                    )
 
         return FeedbackWithExplanation(**feedback)
 

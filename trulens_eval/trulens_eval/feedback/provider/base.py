@@ -653,7 +653,12 @@ class LLMProvider(Provider):
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
-        return mod_generated_utils.re_configured_rating(agreement_txt) / 3
+        return (
+            mod_generated_utils.re_configured_rating(
+                agreement_txt, min_score_val=0, max_score_val=3
+            )
+            / 3
+        )
 
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """
@@ -1242,7 +1247,12 @@ class LLMProvider(Provider):
             reasons += assessment + "\n\n"
             if assessment:
                 first_line = assessment.split("\n")[0]
-                score = mod_generated_utils.re_configured_rating(first_line) / 3
+                score = (
+                    mod_generated_utils.re_configured_rating(
+                        first_line, min_score_val=0, max_score_val=3
+                    )
+                    / 3
+                )
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0

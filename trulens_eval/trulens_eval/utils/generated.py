@@ -111,26 +111,4 @@ def re_0_10_rating(s: str) -> int:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """
 
-    matches = PATTERN_NUMBER.findall(s)
-    if not matches:
-        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
-
-    vals = set()
-    for match in matches:
-        try:
-            vals.add(
-                validate_rating(float(match))
-            )  # Handle float numbers as well
-        except ValueError:
-            pass
-
-    if not vals:
-        raise ParseError("0-10 rating", s)
-
-    if len(vals) > 1:
-        logger.warning(
-            "Multiple valid rating values found in the string: %s", s
-        )
-
-    # Min to handle cases like "The rating is 8 out of 10."
-    return min(vals)
+    return re_configured_rating(s, 0, 10)
