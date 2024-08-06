@@ -19,7 +19,6 @@ from nltk.tokenize import sent_tokenize
 import numpy as np
 import requests
 import torch
-from tqdm.auto import tqdm
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from trulens.core.feedback import Endpoint
@@ -227,9 +226,7 @@ class HuggingfaceBase(Provider):
         if isinstance(source, list):
             source = " ".join(map(str, source))
         hypotheses = sent_tokenize(statement)
-        for i, hypothesis in enumerate(
-            tqdm(hypotheses, desc="Groundendess per statement in source")
-        ):
+        for i, hypothesis in enumerate(hypotheses):
             score = self._doc_groundedness(
                 premise=source, hypothesis=hypothesis
             )

@@ -406,7 +406,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
             # TODO: figure out useful things to print.
             # feedback_ident = (
-            #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
+            #     f"[last seen {elapsed} seconds ago] "
             #    f"{row.fname} for app {row.app_json['app_id']}"
             # )
 
@@ -949,7 +949,7 @@ Feedback function signature:
                 num_total = num_skipped + num_evaled
                 warnings.warn(
                     (
-                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        f"{num_skipped}/{num_total}={100.0 * num_skipped / num_total:0.1f}"
                         "% evaluation(s) were skipped because they raised SkipEval "
                         "(see earlier warnings for listing)."
                     ),
