@@ -66,15 +66,3 @@ Some wrappers include additional shorthands:
   from trulens.instrument.langchain import TruChain
   context = TruChain.select_context(retriever_chain)
   ```
-
-### _LlamaIndex_ and _LangChain_ specific selectors
-
-- `App.select_context()` -- outputs the selector of the context part of the
-  engine output. Can be used for both _LlamaIndex_ and _LangChain_ apps.
-
-  Usage:
-
-  ```python
-  from trulens.core.app import App
-  context = App.select_context(rag_app)
-  ```

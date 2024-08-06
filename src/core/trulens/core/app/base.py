@@ -199,6 +199,7 @@ class TrulensComponent(ComponentView):
 
     @staticmethod
     def of_json(json: JSON) -> "TrulensComponent":
+        # NOTE: This import is here to avoid circular imports.
         from trulens.core.utils.trulens import component_of_json
 
         return component_of_json(json)

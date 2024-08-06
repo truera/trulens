@@ -243,8 +243,8 @@ class TruLlama(mod_app.App):
         import numpy as np
 
         # Select context to be used in feedback.
-        from trulens.core.app import App
-        context = App.select_context(rag_chain)
+        from trulens.instrument.llamaindex import TruLlama
+        context = TruLlama.select_context(query_engine)
 
         # Use feedback
         f_context_relevance = (

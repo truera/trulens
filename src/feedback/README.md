@@ -78,12 +78,6 @@ The components of this specifications are:
   - `NeMo.select_context()` -- outputs the selector for the retrieved context
     from the app's internal `search_relevant_chunks` method.
 
-For ease of switching between frameworks, the select_context shortcut is also available from the trulens.core.app.App.
-
-```python
-from trulens.core.app import App
-context = App.select_context(rag_chain) # can be langchain, llama-index or nemo app.
-```
 
 ## Fine-grained Selection and Aggregation
 

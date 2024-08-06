@@ -199,8 +199,8 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.core.app import App
-            context = App.select_context(rag_app)
+            from trulens.instrument.langchain import TruChain
+            context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
                 .on_input()
@@ -239,8 +239,8 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.core.app import App
-            context = App.select_context(rag_app)
+            from trulens.instrument.langchain import TruChain
+            context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
                 .on_input()
