@@ -74,7 +74,7 @@ def re_configured_rating(
         if min_score_val <= rating <= max_score_val:
             vals.add(rating)
         else:
-            raise ValueError(
+            logger.warning(
                 f"Rating must be in [{min_score_val}, {max_score_val}]."
             )
 
