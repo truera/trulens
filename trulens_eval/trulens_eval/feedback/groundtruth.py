@@ -173,7 +173,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_configured_rating(agreement_txt, max_score_val=3) / 3,
+                re_configured_rating(
+                    agreement_txt, min_score_val=0, max_score_val=3
+                )
+                / 3,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:

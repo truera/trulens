@@ -701,14 +701,18 @@ class COTExplained(Feedback):
                         if "Score" in line:
                             score = (
                                 re_configured_rating(
-                                    line, max_score_val=normalize
+                                    line,
+                                    min_score_val=0,
+                                    max_score_val=normalize,
                                 )
                                 / normalize
                             )
                     return score, {"reason": response}
                 else:
                     return (
-                        re_configured_rating(response, max_score_val=normalize)
+                        re_configured_rating(
+                            response, min_score_val=0, max_score_val=normalize
+                        )
                         / normalize
                     )
 
