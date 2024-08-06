@@ -1,6 +1,6 @@
 # conda metadata build recipe
 
-{% set pyproject = load_file_data('pyproject.toml') %}
+{% set pyproject = load_file_data('../pyproject.toml', from_recipe_dir=True) %}
 {% set poetry = pyproject.get('tool', {}).get('poetry') %}
 
 package:
