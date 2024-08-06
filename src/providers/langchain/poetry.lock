@@ -323,13 +323,13 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langsmith"
-version = "0.1.96"
+version = "0.1.98"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.96-py3-none-any.whl", hash = "sha256:1e8285c3f84cffebc761ff5624647de20686dbbf659f5d1135918261f85bad13"},
-    {file = "langsmith-0.1.96.tar.gz", hash = "sha256:01b7fa7d538b6409ee74bff458cc3dcdc1799fc70d329f79eb26ba54c32991ae"},
+    {file = "langsmith-0.1.98-py3-none-any.whl", hash = "sha256:f79e8a128652bbcee4606d10acb6236973b5cd7dde76e3741186d3b97b5698e9"},
+    {file = "langsmith-0.1.98.tar.gz", hash = "sha256:e07678219a0502e8f26d35294e72127a39d25e32fafd091af5a7bb661e9a6bd1"},
 ]
 
 [package.dependencies]
