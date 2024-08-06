@@ -1,5 +1,6 @@
 """Testing utilities."""
 
+import builtins
 from collections import namedtuple
 import importlib
 import inspect
@@ -7,7 +8,7 @@ from pathlib import Path
 import pkgutil
 import re
 from types import ModuleType
-from typing import Iterable, Optional, Set, Union
+from typing import Iterable, List, Optional, Set, Union
 
 
 def get_module_names(
@@ -35,6 +36,7 @@ def get_module_names(
         matching = re.compile(re.escape(matching) + r".*")
 
     for modinfo in pkgutil.iter_modules([str(path)]):
+        print(modinfo)
         if matching is not None and not matching.fullmatch(modinfo.name):
             continue
 
@@ -42,7 +44,8 @@ def get_module_names(
 
         if modinfo.ispkg:
             for submod in get_module_names(
-                path / modinfo.name, matching=matching
+                path / modinfo.name,
+                matching=None,  # Intentionally not passing matching here as we want to only use matching on the qualified module name, which we do below.
             ):
                 submodqualname = modinfo.name + "." + submod
 
@@ -54,10 +57,16 @@ def get_module_names(
                 yield submodqualname
 
 
-_Member = namedtuple("_Member", ["mod", "qualname", "val", "typ"])
+Member = namedtuple("Member", ["mod", "qualname", "val", "typ"])
 
 
-def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[_Member]:
+def type_qualname(typ: type) -> str:
+    """Get the fully qualified name of a type."""
+
+    return typ.__module__ + "." + typ.__qualname__
+
+
+def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
     """Get all exports of the given module, i.e. members that are listed in
     `__all__`.
 
@@ -82,7 +91,8 @@ def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[_Member]:
     for name in mod.__all__:
         val = inspect.getattr_static(mod, name)
         qualname = mod.__name__ + "." + name
-        yield _Member(mod, qualname, val, type(val))
+        yield Member(mod, qualname, val, type(val))
+
 
 def _isdefinedin(val, mod: Union[ModuleType, None]):
     """Check if a value has a defining module and if it is the given module.
@@ -96,11 +106,12 @@ def _isdefinedin(val, mod: Union[ModuleType, None]):
 
     try:
         return mod is inspect.getmodule(val)
-    
+
     except Exception:
         return mod is None
-    
-def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[_Member]:
+
+
+def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
     """Get all members defined in the given module, i.e. members that are not
     aliases with definitions somewhere else.
 
@@ -130,12 +141,12 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[_Member]:
             continue
 
         qualname = mod.__name__ + "." + item
-        yield _Member(mod, qualname, val, type(val))
+        yield Member(mod, qualname, val, type(val))
 
 
 def get_definitions(
     path: Path, matching: Optional[Union[re.Pattern, str]] = None
-) -> Iterable[_Member]:
+) -> Iterable[Member]:
     """Get all definitions in the given path.
 
     Definitions are members that are not aliases with definitions somewhere
@@ -164,7 +175,7 @@ def get_definitions(
 
 def get_exports(
     path: Path, matching: Optional[Union[re.Pattern, str]] = None
-) -> Iterable[_Member]:
+) -> Iterable[Member]:
     """Get all exports in the given path.
 
     Exports are values whose names are in the `__all__` special variable of
@@ -198,13 +209,13 @@ def get_exports(
         for name in mod.__all__:
             val = getattr(mod, name)
             qualname = modname + "." + name
-            yield _Member(modname, qualname, val, type(val))
+            yield Member(modname, qualname, val, type(val))
 
 
-_Members = namedtuple(
-    "_Members",
+Members = namedtuple(
+    "Members",
     [
-        "mod",
+        "obj",
         "exports",
         "definitions",
         "access_publics",
@@ -214,33 +225,114 @@ _Members = namedtuple(
         "api_lows",
     ],
 )
+"""Members of a module or a class organized into several groups.
+
+_Exports_ of are members listed in __all__. Exports does not apply to classes.
+
+_Definitions_ are non-base type members whose value comes from the module or
+class itself (as opposed to being an alias for a
+    definition in some other module).
+
+The types of _access_:
+
+    - _private_: Members whose names start with two underscores but does not end
+        with two underscores.
+
+    - _friend_: Members whose names start with one underscore.
+
+    - _public_: Members whose names do not start with an underscore.
+
+The levels of API of modules:
+
+    - _high-level_: Public members that are exported. It is an error to have an
+      exported member that is not public.
+
+    - _low-level_: Public members that are either defined in the given module or
+      are base types (str, int, ...).
+
+The API level of class members is the API level of the class itself.
+"""
 
 
-def get_module_members(mod: Union[str, ModuleType]) -> Optional[_Members]:
+def get_class_members(class_: type, class_api_level: str = "low") -> Members:
+    """Get all members of a class.
+
+    Args:
+        cls: The class.
+
+    Returns:
+        Iterable of Member namedtuples.
+    """
+
+    definitions: List[Member] = []
+    exports: List[Member] = []
+    publics: List[Member] = []
+    friends: List[Member] = []
+    privates: List[Member] = []
+
+    highs: List[Member] = []
+    lows: List[Member] = []
+
+    for name, val in inspect.getmembers_static(class_):
+        qualname = class_.__module__ + "." + class_.__qualname__ + "." + name
+        member = Member(class_.__module__, qualname, val, type(val))
+
+        is_def = False
+        is_public = False
+
+        if any(
+            (not base.__name__.startswith("trulens_eval"))
+            and hasattr(base, name)
+            for base in class_.__bases__
+        ):
+            # Skip anything that is a member of non trulens_eval bases.
+            continue
+
+        if name.startswith("__") and not name.endswith("__"):
+            group = privates
+
+        elif name.startswith("_"):
+            group = friends
+
+        else:
+            is_public = True
+            group = publics
+
+        if not any(
+            (base.__name__.startswith("trulens_eval"))
+            and hasattr(base, name)
+            for base in class_.__bases__
+        ):
+            # View the class-equivalent of a definitions as members of a class
+            # that are not members of its bases.
+            is_def = True
+            definitions.append(member)
+
+        # There is no class-equivalent notion of exports.
+        group.append(member)
+
+        if is_public and is_def:
+            if class_api_level == "high":
+                highs.append(member)
+            else:
+                lows.append(member)
+
+    return Members(
+        class_,
+        exports=exports,
+        definitions=definitions,
+        access_publics=publics,
+        access_friends=friends,
+        access_privates=privates,
+        api_highs=highs,
+        api_lows=lows,
+    )
+
+
+def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
     """Get all members of a module organized into exports, definitions;
     three types of access: public, friends, privates; and two levels of API:
     high-level and low-level.
-
-    Exports are members listed in __all__. Definitions are non-base type members
-    whose value comes from the module itself (as opposed to being an alias for a
-    definition in some other module).
-
-    The types of access:
-
-    - private: Members whose names start with two underscores but does not end
-        with two underscores.
-
-    - friends: Members whose names start with one underscore.
-
-    - public: Members whose names do not start with an underscore.
-
-    The levels of API:
-
-    - high-level: Public members that are exported. It is an error to have an
-      exported member that is not public.
-
-    - low-level: Public members that are either defined in the given module or
-      are base types (str, int, ...).
 
     Args:
         mod: The module or its name.
@@ -259,20 +351,22 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[_Members]:
         except Exception:
             return None
 
-    definitions = []
-    exports = []
-    publics = []
-    friends = []
-    privates = []
+    definitions: List[Member] = []
+    exports: List[Member] = []
+    publics: List[Member] = []
+    friends: List[Member] = []
+    privates: List[Member] = []
 
     highs = []
     lows = []
 
     export_set: Set[str] = set(inspect.getattr_static(mod, "__all__", []))
 
+    classes = set()
+
     for name, val in inspect.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
-        member = _Member(mod, qualname, val, type(val))
+        member = Member(mod, qualname, val, type(val))
 
         is_def = False
         is_public = False
@@ -283,26 +377,46 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[_Members]:
             is_def = True
             definitions.append(member)
 
+            if inspect.isclass(val):
+                classes.add(val)
+
         if _isdefinedin(val, None):
+            # Is a base type that does not define a owner module.
             is_base = True
 
         if name in export_set:
             is_export = True
             exports.append(member)
 
-        if name.startswith("__") and name.endswith("__"):
+        if (
+            name.startswith("__")
+            and name.endswith("__")
+            and not hasattr(builtins, name)
+            and name
+            not in [
+                "__file__",
+                "__cached__",
+                "__builtins__",
+                "__warningregistry__",
+            ]
+        ):
+            # Checking if name is in builtins filters out standard module
+            # attributes like __package__. A few other standard attributes are
+            # filtered out too.
             is_public = True
-            publics.append(member)
+            group = publics
 
-        elif name.startswith("__"): # and not ends with
-            privates.append(member)
-                
+        elif name.startswith("__"):  # and not ends with
+            group = privates
+
         elif name.startswith("_"):
-            friends.append(member)
+            group = friends
 
         else:
             is_public = True
-            publics.append(member)
+            group = publics
+
+        group.append(member)
 
         if (not is_public) and (name in export_set):
             raise ValueError(
@@ -315,7 +429,7 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[_Members]:
             elif is_def or is_base:
                 lows.append(member)
 
-    return _Members(
+    return Members(
         mod,
         exports=exports,
         definitions=definitions,

@@ -3,31 +3,32 @@
 These make sure components considered high or low level API are accessible.
 """
 
+import inspect
 from pathlib import Path
-import sys
-from unittest import TestCase
+from typing import Dict
 from unittest import main
 
-from trulens_eval.tests.test import module_installed
-from trulens_eval.tests.test import optional_test
-from trulens_eval.tests.test import requiredonly_test
+from tests.test import JSONTestCase
+from tests.utils import Member
+from tests.utils import get_module_members
+from tests.utils import get_module_names, get_class_members
+from tests.utils import type_qualname
 import trulens_eval
-from trulens_eval.instruments import Instrument
-from trulens_eval.tests.utils import get_module_members
-from trulens_eval.utils.imports import Dummy
-from trulens_eval.utils.imports import get_module_names
 
 
-class TestAPI(TestCase):
+class TestAPI(JSONTestCase):
     """API Tests."""
 
     def setUp(self):
-        pass
+        self.members = self.get_current_members()
 
-    def get_current_members(self):
+    def get_current_members(self) -> Dict[str, Dict[str, Member]]:
         """Get the API members of the current trulens_eval module."""
 
-        modules = {}
+        objects = {}
+
+        high_classes = set()
+        low_classes = set()
 
         # Enumerate all trulens_eval modules:
         for modname in get_module_names(
@@ -41,13 +42,35 @@ class TestAPI(TestCase):
             lows = {}
 
             for mem in mod.api_highs:
-                highs[mem.qualname] = mem
+                highs[mem.qualname] = type_qualname(mem.typ)
+                if inspect.isclass(mem.val):
+                    high_classes.add(mem.val)
+          
+            for mem in mod.api_lows:
+                lows[mem.qualname] = type_qualname(mem.typ)
+                if inspect.isclass(mem.val):
+                    low_classes.add(mem.val)
+          
+            objects["module " + modname] = {"highs": highs, "lows": lows}
 
-            for mem in mod.api_highs:
-                lows[mem.qualname] = mem
+        for classes, api_level in zip([high_classes, low_classes], ["high", "low"]):
+            for class_ in classes:
+                members = get_class_members(class_, class_api_level=api_level)
+                highs = {}
+                lows = {}
+                for mem in members.api_highs:
+                    highs[mem.qualname] = type_qualname(mem.typ)
+                for mem in members.api_lows:
+                    lows[mem.qualname] = type_qualname(mem.typ)
+                objects["class " + type_qualname(class_)] = {"highs": highs, "lows": lows}
 
-            modules[modname] = {"highs": highs, "lows": lows}
+        return objects
 
+    def test_apis(self):
+        self.assertGoldenJSONEqual(
+            actual=self.members,
+            golden_filename="api.yaml",
+        )
 
 if __name__ == "__main__":
     main()

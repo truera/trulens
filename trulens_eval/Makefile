@@ -74,6 +74,14 @@ test-static:
 	$(CONDA)
 	python -m unittest tests.unit.static.test_static
 
+# API tests.
+test-api:
+	$(CONDA)
+	python -m unittest tests.unit.static.test_api
+test-write-api:
+	$(CONDA)
+	WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
+
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
@@ -85,7 +93,8 @@ test-serial: # has golden file
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
 test-write-golden-%:
-	$(CONDA); WRITE_GOLDEN=1 python -m unittest tests.e2e.test_$* || true
+	$(CONDA)
+	WRITE_GOLDEN=1 python -m unittest tests.e2e.test_$* || true
 
 test-e2e:
 	$(CONDA)

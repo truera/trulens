@@ -16,7 +16,7 @@ are expected.
 from unittest import main
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.unit.test import JSONTestCase
+from tests.test import JSONTestCase
 
 from trulens_eval import Feedback
 from trulens_eval.feedback.provider.dummy import DummyProvider
