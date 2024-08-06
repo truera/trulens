@@ -365,7 +365,7 @@
             {
               "alloc": 0,
               "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyTool",
@@ -404,7 +404,7 @@
             {
               "alloc": 0,
               "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyTool",
@@ -477,7 +477,7 @@
           }
         },
         "delay": 0.0,
-        "description": "ensamble agent 0",
+        "description": "ensemble agent 0",
         "seed": 3735928559,
         "use_app": false,
         "use_recorder": false,
@@ -777,7 +777,7 @@
             {
               "alloc": 0,
               "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyTool",
@@ -816,7 +816,7 @@
             {
               "alloc": 0,
               "delay": 0.0,
-              "description": "Return repr(self).",
+              "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyTool",
@@ -889,7 +889,7 @@
           }
         },
         "delay": 0.0,
-        "description": "ensamble agent 1",
+        "description": "ensemble agent 1",
         "seed": 3735928559,
         "use_app": false,
         "use_recorder": false,
@@ -1186,7 +1186,7 @@
       {
         "alloc": 0,
         "delay": 0.0,
-        "description": "Return repr(self).",
+        "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
         "seed": 3735928559,
         "tru_class_info": {
           "name": "DummyTool",
@@ -1225,7 +1225,7 @@
       {
         "alloc": 0,
         "delay": 0.0,
-        "description": "Return repr(self).",
+        "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
         "seed": 3735928559,
         "tru_class_info": {
           "name": "DummyTool",

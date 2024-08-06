@@ -1,5 +1,4 @@
-"""
-Tests serialization of various components into JSON.
+"""Tests serialization of various components into JSON.
 
 These tests make sure that:
 
@@ -117,7 +116,7 @@ class TestSerial(JSONTestCase):
                             'record_id',
                             'feedback_result_id',
                             # Skip these if non-determinism becomes a problem:
-                            #'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret'
+                            'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret'
                         ]
                     )
                 )

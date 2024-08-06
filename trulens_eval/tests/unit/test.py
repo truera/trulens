@@ -102,6 +102,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
 
     elif is_dataclass(obj):
         ret = {}
+
         for f in fields(obj):
             if f.name in skips:
                 continue
@@ -123,7 +124,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
     elif isinstance(obj, pydantic.v1.BaseModel):
         ret = {}
 
-        for f in j1.__fields__:
+        for f in obj.__fields__:
             if f in skips:
                 continue
 
@@ -132,13 +133,13 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
         return frozendict(ret)
 
     else:
-        return obj
+        raise TypeError(f"Unhandled type {type(obj).__name__}.")
 
 
 def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
-    """Return a sorted version of `obj` by string order.
+    """Return a sorted version of `seq` by string order.
 
-    Items are convered to strings using `hashable_skip` with `skips`
+    Items are converted to strings using `hashable_skip` with `skips`
     keys/attributes skipped.
 
     Args:
