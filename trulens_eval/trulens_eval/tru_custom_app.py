@@ -52,7 +52,7 @@ app: components and methods used by components. The `instrument` must decorate
 each method that the user wishes to track.
 
 The owner classes of any decorated method is then viewed as an app component. In
-this example, case `CustomApp` and `CustomRetriever` are components. 
+this example, case `CustomApp` and `CustomRetriever` are components.
 
     !!! example
 

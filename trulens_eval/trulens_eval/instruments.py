@@ -47,13 +47,13 @@ from trulens_eval.utils.json import jsonify
 from trulens_eval.utils.pyschema import Method
 from trulens_eval.utils.pyschema import clean_attributes
 from trulens_eval.utils.pyschema import safe_getattr
+from trulens_eval.utils.python import OpaqueWrapper
 from trulens_eval.utils.python import callable_name
 from trulens_eval.utils.python import caller_frame
 from trulens_eval.utils.python import class_name
 from trulens_eval.utils.python import get_first_local_in_call_stack
 from trulens_eval.utils.python import id_str
 from trulens_eval.utils.python import is_really_coroutinefunction
-from trulens_eval.utils.python import OpaqueWrapper
 from trulens_eval.utils.python import safe_hasattr
 from trulens_eval.utils.python import safe_signature
 from trulens_eval.utils.python import wrap_awaitable
@@ -733,11 +733,13 @@ class Instrument:
         # Recursively instrument inner components
         if hasattr(obj, "__dict__"):
             for attr_name, attr_value in obj.__dict__.items():
-                if isinstance(attr_value,
-                              OpaqueWrapper):  # never look past opaque wrapper
+                if isinstance(
+                    attr_value, OpaqueWrapper
+                ):  # never look past opaque wrapper
                     continue
-                if any(isinstance(attr_value, cls)
-                       for cls in self.include_classes):
+                if any(
+                    isinstance(attr_value, cls) for cls in self.include_classes
+                ):
                     inner_query = query[attr_name]
                     self.instrument_object(attr_value, inner_query, done)
 
