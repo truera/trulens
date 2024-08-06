@@ -148,7 +148,9 @@ class LLMProvider(Provider):
 
             user_prompt: An optional user prompt.
 
-            normalize: The normalization factor for the score.
+            min_score_val: The minimum score value.
+
+            max_score_val: The maximum score value.
 
             temperature: The temperature for the LLM response.
 
@@ -195,7 +197,9 @@ class LLMProvider(Provider):
 
             user_prompt: An optional user prompt.
 
-            normalize: The normalization factor for the score.
+            min_score_val: The minimum score value.
+
+            max_score_val: The maximum score value.
 
             temperature: The temperature for the LLM response.
 
@@ -257,7 +261,9 @@ class LLMProvider(Provider):
 
             user_prompt: An optional user prompt. Defaults to None.
 
-            normalize: The normalization factor for the score.
+            min_score_val: The minimum score value.
+
+            max_score_val: The maximum score value.
 
             temperature: The temperature for the LLM response.
 
