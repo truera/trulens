@@ -36,13 +36,15 @@ export PATH=$PATH:$HOME/.local/bin
 
 ## Install the TruLens project
 
-Install `trulens` into your environment, including optional dependencies, by running the following command:
+Install `trulens` into your environment by running the following command:
 
 ```bash
 poetry install
 ```
 
-To install the exact environment specified by `poetry.lock` without user-specified dependencies , use the `--sync` flag. This also installs optional dependencies.
+This will install dependencies specified in `poetry.lock`, which is built from `pyproject.toml`.
+
+To synchronize the exact environment specified by `poetry.lock` use the `--sync` flag. In addition to installing relevant dependencies, `--sync` will remove any packages not specified in `poetry.lock`.
 
 ```bash
 poetry install --sync
