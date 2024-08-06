@@ -5,7 +5,7 @@ Tests for TruCustomApp.
 from unittest import main
 
 from examples.expositional.end2end_apps.custom_app.custom_app import CustomApp
-from tests.unit.test import JSONTestCase
+from trulens_eval.tests.test import JSONTestCase
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
 from trulens_eval.tru_custom_app import TruCustomApp

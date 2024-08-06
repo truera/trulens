@@ -5,8 +5,8 @@ Tests for TruLlama.
 import unittest
 from unittest import main
 
-from tests.unit.test import JSONTestCase
-from tests.unit.test import optional_test
+from trulens_eval.tests.test import JSONTestCase
+from trulens_eval.tests.test import optional_test
 from trulens_eval.keys import check_keys
 from trulens_eval.utils.asynchro import sync
 

@@ -5,6 +5,7 @@ line. Hopefully this wraps automatically.
 """
 
 import builtins
+from collections import namedtuple
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
@@ -14,8 +15,10 @@ import logging
 from pathlib import Path
 import pkgutil
 from pprint import PrettyPrinter
+import re
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Tuple, Type, Union
+from types import ModuleType
+from typing import Any, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
 
 from packaging import requirements
 from packaging import version
@@ -166,7 +169,8 @@ dependencies get installed and hopefully corrected:
 
 
 class VersionConflict(Exception):
-    """Exception to raise when a version conflict is found in a required package."""
+    """Exception to raise when a version conflict is found in a required
+    package."""
 
 
 def check_imports(ignore_version_mismatch: bool = False):
@@ -686,102 +690,3 @@ class OptionalImports:
         # Exception will be propagated unless we return True so we don't return it.
 
 
-def get_modules(path: Path, startswith: Optional[str] = None) -> Iterable[str]:
-    """Get all module names in the given path that start with the given
-    prefix.
-    
-    Args:
-        path: The path to search for modules.
-
-        startswith: If given, only modules that with this prefix are returned.
-
-    Returns:
-        Iterable of module names. These are fully qualified.
-    """
-
-    for modinfo in pkgutil.iter_modules([str(path)]):
-
-        if startswith is not None and not modinfo.name.startswith(startswith):
-            continue
-
-        yield modinfo.name
-
-        if modinfo.ispkg:
-            for submod in get_modules(path / modinfo.name, startswith=None):
-                submodqualname = modinfo.name + "." + submod
-
-                if startswith is not None and not submodqualname.startswith(
-                        startswith):
-                    continue
-
-                yield modinfo.name + "." + submod
-
-
-def get_defined_members(modname: str) -> Iterable[Tuple[str, Any]]:
-    """Get all members defined in the given module, i.e. members that are not
-    aliases with definitions somewhere else.
-    
-    A limitation is that basic types like int, str, etc. are not produced as
-    their location of definition cannot be easily checked.
-
-    Args:
-        modname: The module name.
-
-    Returns:
-        Iterable of tuples (qualname, val) where qualname is the fully qualified
-        name of the member and val is the value of the member.
-    """
-
-    try:
-        mod = importlib.import_module(modname)
-    except BaseException:
-        return
-
-    for item, val in inspect.getmembers_static(mod):
-        if item.startswith("_"):
-            continue
-
-        defmod = inspect.getmodule(val)
-
-        # Check for aliases: classes/modules defined somewhere outside of
-        # mod. Note that this cannot check for aliasing of basic python
-        # values which are not references.
-        if defmod is None or defmod.__name__ != modname:
-            continue
-
-        if len(item) == 1:
-            # Type var names.
-            continue
-
-        qualname = modname + "." + item
-        yield (qualname, val)
-
-
-def get_definitions(
-    path: Path,
-    startswith: Optional[str] = None
-) -> Iterable[Tuple[str, str, Any]]:
-    """Get all definitions in the given path whose modules start with the given
-    prefix.
-    
-    Definitions are members that are not aliases with definitions somewhere
-    else. A limitation is that basic types like int, str, etc. are not produced
-    as their location of definition cannot be easily checked.
-
-    Args:
-        path: The path to search for definitions.
-
-        startswith: If given, only definitions for modules that with this prefix
-            are returned. If None, all modules in the path are searched.
-
-    Returns:
-        Iterable of tuples (modname, qualname, val) where modname is the module
-        name, qualname is the fully qualified name of the member and val is the
-        value of the member.
-    """
-
-    for modname in get_modules(path, startswith=startswith):
-
-        for qualname, val in get_defined_members(modname):
-
-            yield (modname, qualname, val)

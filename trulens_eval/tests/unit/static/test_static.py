@@ -8,13 +8,13 @@ import sys
 from unittest import TestCase
 from unittest import main
 
-from tests.unit.test import module_installed
-from tests.unit.test import optional_test
-from tests.unit.test import requiredonly_test
+from trulens_eval.tests.test import module_installed
+from trulens_eval.tests.test import optional_test
+from trulens_eval.tests.test import requiredonly_test
 import trulens_eval
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import Dummy
-from trulens_eval.utils.imports import get_modules
+from trulens_eval.utils.imports import get_module_names
 
 # Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -64,7 +64,7 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 # packages.
 
 # Get all modules inside trulens_eval:
-all_trulens_mods = get_modules(
+all_trulens_mods = get_module_names(
     Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
 )
 

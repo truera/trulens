@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 
-from tests.unit.test import optional_test
+from trulens_eval.tests.test import optional_test
 from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp

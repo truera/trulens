@@ -1,3 +1,6 @@
+"""TestCase subclass with JSON comparisons and test enable/disable flag
+handling."""
+
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime

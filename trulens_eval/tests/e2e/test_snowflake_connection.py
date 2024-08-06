@@ -9,7 +9,7 @@ import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from tests.unit.test import optional_test
+from trulens_eval.tests.test import optional_test
 
 from trulens_eval import Tru
 
