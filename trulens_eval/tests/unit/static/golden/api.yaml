@@ -6,37 +6,43 @@ class trulens_eval.app.App:
   highs: {}
   lows:
     trulens_eval.app.App.app: typing.Any
-    trulens_eval.app.App.app_extra_json: typing.Union
+    trulens_eval.app.App.app_extra_json: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.app.App.app_id: builtins.str
     trulens_eval.app.App.awith_: builtins.function
     trulens_eval.app.App.awith_record: builtins.function
-    trulens_eval.app.App.db: Optional[trulens_eval.database.base.DB]
+    trulens_eval.app.App.db: typing.Optional[trulens_eval.database.base.DB, builtins.NoneType]
     trulens_eval.app.App.dummy_record: builtins.function
-    trulens_eval.app.App.feedback_definitions: typing.Sequence
+    trulens_eval.app.App.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.app.App.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.app.App.feedbacks: typing.List
+    trulens_eval.app.App.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
     trulens_eval.app.App.format_instrumented_methods: builtins.function
-    trulens_eval.app.App.initial_app_loader_dump: typing.Optional
-    trulens_eval.app.App.instrument: typing.Optional
+    trulens_eval.app.App.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.app.App.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
     trulens_eval.app.App.instrumented: builtins.function
-    trulens_eval.app.App.instrumented_methods: typing.Dict
+    trulens_eval.app.App.instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable,
+      trulens_eval.utils.serial.Lens]]
     trulens_eval.app.App.main_acall: builtins.function
     trulens_eval.app.App.main_call: builtins.function
     trulens_eval.app.App.main_input: builtins.function
     trulens_eval.app.App.main_output: builtins.function
-    trulens_eval.app.App.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.app.App.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.app.App.metadata: typing.Dict
     trulens_eval.app.App.print_instrumented: builtins.function
     trulens_eval.app.App.print_instrumented_components: builtins.function
     trulens_eval.app.App.print_instrumented_methods: builtins.function
-    trulens_eval.app.App.recording_contexts: _contextvars.ContextVar
-    trulens_eval.app.App.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.app.App.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.app.App.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.app.App.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.app.App.select_context: builtins.classmethod
     trulens_eval.app.App.selector_check_warning: builtins.bool
     trulens_eval.app.App.selector_nocheck: builtins.bool
     trulens_eval.app.App.tags: builtins.str
-    trulens_eval.app.App.tru: Optional[trulens_eval.tru.Tru]
+    trulens_eval.app.App.tru: typing.Optional[trulens_eval.tru.Tru, builtins.NoneType]
     trulens_eval.app.App.tru_class_info: trulens_eval.utils.pyschema.Class
     trulens_eval.app.App.wait_for_feedback_results: builtins.function
     trulens_eval.app.App.with_: builtins.function
@@ -147,8 +153,9 @@ class trulens_eval.database.migrations.DbRevisions:
   lows:
     trulens_eval.database.migrations.DbRevisions.ahead: builtins.property
     trulens_eval.database.migrations.DbRevisions.behind: builtins.property
-    trulens_eval.database.migrations.DbRevisions.current: typing.Optional
-    trulens_eval.database.migrations.DbRevisions.history: typing.List
+    trulens_eval.database.migrations.DbRevisions.current: typing.Optional[builtins.str,
+      builtins.NoneType]
+    trulens_eval.database.migrations.DbRevisions.history: typing.List[builtins.str]
     trulens_eval.database.migrations.DbRevisions.in_sync: builtins.property
     trulens_eval.database.migrations.DbRevisions.latest: builtins.property
     trulens_eval.database.migrations.DbRevisions.load: builtins.classmethod
@@ -172,13 +179,15 @@ class trulens_eval.database.sqlalchemy.SQLAlchemyDB:
   highs: {}
   lows:
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.delete_app: builtins.function
-    trulens_eval.database.sqlalchemy.SQLAlchemyDB.engine: typing.Optional
+    trulens_eval.database.sqlalchemy.SQLAlchemyDB.engine: typing.Optional[sqlalchemy.engine.base.Engine,
+      builtins.NoneType]
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.engine_params: builtins.dict
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.from_db_url: builtins.classmethod
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.from_tru_args: builtins.classmethod
-    trulens_eval.database.sqlalchemy.SQLAlchemyDB.orm: typing.Type
+    trulens_eval.database.sqlalchemy.SQLAlchemyDB.orm: typing.Type[trulens_eval.database.orm.ORM]
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.redact_keys: builtins.bool
-    trulens_eval.database.sqlalchemy.SQLAlchemyDB.session: typing.Optional
+    trulens_eval.database.sqlalchemy.SQLAlchemyDB.session: typing.Optional[sqlalchemy.orm.session.sessionmaker,
+      builtins.NoneType]
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.session_params: builtins.dict
     trulens_eval.database.sqlalchemy.SQLAlchemyDB.table_prefix: builtins.str
 class trulens_eval.database.sqlalchemy.SnowflakeImpl:
@@ -194,19 +203,27 @@ class trulens_eval.feedback.embeddings.Embeddings:
 class trulens_eval.feedback.feedback.Feedback:
   highs: {}
   lows:
-    trulens_eval.feedback.feedback.Feedback.agg: typing.Optional
+    trulens_eval.feedback.feedback.Feedback.agg: typing.Optional[typing.Callable[typing.Iterable[builtins.float],
+      builtins.float], builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.aggregate: builtins.function
-    trulens_eval.feedback.feedback.Feedback.aggregator: typing.Union
+    trulens_eval.feedback.feedback.Feedback.aggregator: typing.Union[trulens_eval.utils.pyschema.Function,
+      trulens_eval.utils.pyschema.Method, builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.check_selectors: builtins.function
-    trulens_eval.feedback.feedback.Feedback.combinations: typing.Optional
+    trulens_eval.feedback.feedback.Feedback.combinations: typing.Optional[trulens_eval.schema.feedback.FeedbackCombinations,
+      builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.evaluate_deferred: builtins.staticmethod
     trulens_eval.feedback.feedback.Feedback.extract_selection: builtins.function
     trulens_eval.feedback.feedback.Feedback.feedback_definition_id: builtins.str
-    trulens_eval.feedback.feedback.Feedback.higher_is_better: typing.Optional
-    trulens_eval.feedback.feedback.Feedback.if_exists: typing.Optional
+    trulens_eval.feedback.feedback.Feedback.higher_is_better: typing.Optional[builtins.bool,
+      builtins.NoneType]
+    trulens_eval.feedback.feedback.Feedback.if_exists: typing.Optional[trulens_eval.utils.serial.Lens,
+      builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.if_missing: trulens_eval.schema.feedback.FeedbackOnMissingParameters
-    trulens_eval.feedback.feedback.Feedback.imp: typing.Optional
-    trulens_eval.feedback.feedback.Feedback.implementation: typing.Union
+    trulens_eval.feedback.feedback.Feedback.imp: typing.Optional[typing.Callable[A,
+      typing.Union[builtins.float, typing.Tuple[builtins.float, typing.Dict[builtins.str,
+      typing.Any]]]], builtins.NoneType]
+    trulens_eval.feedback.feedback.Feedback.implementation: typing.Union[trulens_eval.utils.pyschema.Function,
+      trulens_eval.utils.pyschema.Method, builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.of_feedback_definition: builtins.staticmethod
     trulens_eval.feedback.feedback.Feedback.on: builtins.function
     trulens_eval.feedback.feedback.Feedback.on_default: builtins.function
@@ -217,9 +234,10 @@ class trulens_eval.feedback.feedback.Feedback:
     trulens_eval.feedback.feedback.Feedback.on_response: builtins.function
     trulens_eval.feedback.feedback.Feedback.run: builtins.function
     trulens_eval.feedback.feedback.Feedback.run_and_log: builtins.function
-    trulens_eval.feedback.feedback.Feedback.selectors: typing.Dict
+    trulens_eval.feedback.feedback.Feedback.selectors: typing.Dict[builtins.str, trulens_eval.utils.serial.Lens]
     trulens_eval.feedback.feedback.Feedback.sig: builtins.property
-    trulens_eval.feedback.feedback.Feedback.supplied_name: typing.Optional
+    trulens_eval.feedback.feedback.Feedback.supplied_name: typing.Optional[builtins.str,
+      builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.feedback.feedback.InvalidSelector:
   highs: {}
@@ -235,8 +253,10 @@ class trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.bert_score: builtins.function
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.bert_scorer: builtins.object
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.bleu: builtins.function
-    trulens_eval.feedback.groundtruth.GroundTruthAgreement.ground_truth: typing.Union
-    trulens_eval.feedback.groundtruth.GroundTruthAgreement.ground_truth_imp: typing.Optional
+    trulens_eval.feedback.groundtruth.GroundTruthAgreement.ground_truth: typing.Union[typing.List[typing.Dict],
+      trulens_eval.utils.pyschema.FunctionOrMethod]
+    trulens_eval.feedback.groundtruth.GroundTruthAgreement.ground_truth_imp: typing.Optional[typing.Callable,
+      builtins.NoneType]
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.provider: trulens_eval.feedback.provider.base.Provider
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.rouge: builtins.function
     trulens_eval.feedback.groundtruth.GroundTruthAgreement.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -256,7 +276,8 @@ class trulens_eval.feedback.provider.base.LLMProvider:
     trulens_eval.feedback.provider.base.LLMProvider.correctness_with_cot_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.criminality: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.criminality_with_cot_reasons: builtins.function
-    trulens_eval.feedback.provider.base.LLMProvider.endpoint: typing.Optional
+    trulens_eval.feedback.provider.base.LLMProvider.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
+      builtins.NoneType]
     trulens_eval.feedback.provider.base.LLMProvider.generate_score: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.generate_score_and_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.groundedness_measure_with_cot_reasons: builtins.function
@@ -284,7 +305,8 @@ class trulens_eval.feedback.provider.base.LLMProvider:
 class trulens_eval.feedback.provider.base.Provider:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.base.Provider.endpoint: typing.Optional
+    trulens_eval.feedback.provider.base.Provider.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
+      builtins.NoneType]
     trulens_eval.feedback.provider.base.Provider.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.feedback.provider.bedrock.Bedrock:
   highs: {}
@@ -305,7 +327,8 @@ class trulens_eval.feedback.provider.cortex.Cortex:
 class trulens_eval.feedback.provider.dummy.DummyProvider:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.dummy.DummyProvider.endpoint: typing.Optional
+    trulens_eval.feedback.provider.dummy.DummyProvider.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
+      builtins.NoneType]
     trulens_eval.feedback.provider.dummy.DummyProvider.model_engine: builtins.str
     trulens_eval.feedback.provider.dummy.DummyProvider.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.feedback.provider.endpoint.base.Endpoint:
@@ -313,7 +336,7 @@ class trulens_eval.feedback.provider.endpoint.base.Endpoint:
   lows:
     trulens_eval.feedback.provider.endpoint.base.Endpoint.ENDPOINT_SETUPS: builtins.list
     trulens_eval.feedback.provider.endpoint.base.Endpoint.EndpointSetup: builtins.type
-    trulens_eval.feedback.provider.endpoint.base.Endpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.base.Endpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.base.Endpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.base.Endpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.base.Endpoint.handle_wrapped_call: builtins.function
@@ -322,7 +345,8 @@ class trulens_eval.feedback.provider.endpoint.base.Endpoint:
     trulens_eval.feedback.provider.endpoint.base.Endpoint.pace: trulens_eval.utils.pace.Pace
     trulens_eval.feedback.provider.endpoint.base.Endpoint.pace_me: builtins.function
     trulens_eval.feedback.provider.endpoint.base.Endpoint.post: builtins.function
-    trulens_eval.feedback.provider.endpoint.base.Endpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.base.Endpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.base.Endpoint.print_instrumented: builtins.classmethod
     trulens_eval.feedback.provider.endpoint.base.Endpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.base.Endpoint.rpm: builtins.float
@@ -351,13 +375,14 @@ class trulens_eval.feedback.provider.endpoint.bedrock.BedrockCallback:
 class trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.client: typing.Any
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.region_name: builtins.str
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint.rpm: builtins.float
@@ -370,12 +395,13 @@ class trulens_eval.feedback.provider.endpoint.cortex.CortexCallback:
 class trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -392,7 +418,8 @@ class trulens_eval.feedback.provider.endpoint.dummy.DummyAPI:
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.error_prob: builtins.float
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.freeze_prob: builtins.float
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.loading_prob: builtins.float
-    trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.loading_time_uniform_params: typing.Tuple
+    trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.loading_time_uniform_params: typing.Tuple[typing.Annotated[builtins.float],
+      typing.Annotated[builtins.float]]
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.ndt: trulens_eval.feedback.provider.endpoint.dummy.NonDeterminism
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.overloaded_prob: builtins.float
     trulens_eval.feedback.provider.endpoint.dummy.DummyAPI.post: builtins.function
@@ -404,12 +431,13 @@ class trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint:
   highs: {}
   lows:
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.api: trulens_eval.feedback.provider.endpoint.dummy.DummyAPI
-    trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -433,12 +461,13 @@ class trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceCallback:
 class trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -450,13 +479,14 @@ class trulens_eval.feedback.provider.endpoint.langchain.LangchainCallback:
 class trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.chain: typing.Any
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -468,20 +498,21 @@ class trulens_eval.feedback.provider.endpoint.litellm.LiteLLMCallback:
 class trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.litellm_provider: builtins.str
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.feedback.provider.endpoint.openai.OpenAICallback:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.openai.OpenAICallback.chunks: typing.List
+    trulens_eval.feedback.provider.endpoint.openai.OpenAICallback.chunks: typing.List[langchain_core.outputs.generation.Generation]
     trulens_eval.feedback.provider.endpoint.openai.OpenAICallback.cost: trulens_eval.schema.base.Cost
     trulens_eval.feedback.provider.endpoint.openai.OpenAICallback.endpoint: trulens_eval.feedback.provider.endpoint.base.Endpoint
     trulens_eval.feedback.provider.endpoint.openai.OpenAICallback.langchain_handler: langchain_community.callbacks.openai_info.OpenAICallbackHandler
@@ -489,19 +520,21 @@ class trulens_eval.feedback.provider.endpoint.openai.OpenAIClient:
   highs: {}
   lows:
     trulens_eval.feedback.provider.endpoint.openai.OpenAIClient.REDACTED_KEYS: builtins.list
-    trulens_eval.feedback.provider.endpoint.openai.OpenAIClient.client: typing.Union
+    trulens_eval.feedback.provider.endpoint.openai.OpenAIClient.client: typing.Union[openai.OpenAI,
+      openai.lib.azure.AzureOpenAI]
     trulens_eval.feedback.provider.endpoint.openai.OpenAIClient.client_cls: trulens_eval.utils.pyschema.Class
     trulens_eval.feedback.provider.endpoint.openai.OpenAIClient.client_kwargs: builtins.dict
 class trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.callback_class: typing.Type
+    trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.callback_class: typing.Type[trulens_eval.feedback.provider.endpoint.base.EndpointCallback]
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.callback_name: builtins.str
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.client: trulens_eval.feedback.provider.endpoint.openai.OpenAIClient
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.name: builtins.str
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.pace: trulens_eval.utils.pace.Pace
-    trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.post_headers: typing.Dict
+    trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.post_headers: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.retries: builtins.int
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.rpm: builtins.float
     trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -519,7 +552,8 @@ class trulens_eval.feedback.provider.hugs.HuggingfaceBase:
   highs: {}
   lows:
     trulens_eval.feedback.provider.hugs.HuggingfaceBase.context_relevance: builtins.function
-    trulens_eval.feedback.provider.hugs.HuggingfaceBase.endpoint: typing.Optional
+    trulens_eval.feedback.provider.hugs.HuggingfaceBase.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
+      builtins.NoneType]
     trulens_eval.feedback.provider.hugs.HuggingfaceBase.groundedness_measure_with_nli: builtins.function
     trulens_eval.feedback.provider.hugs.HuggingfaceBase.hallucination_evaluator: builtins.function
     trulens_eval.feedback.provider.hugs.HuggingfaceBase.language_match: builtins.function
@@ -531,7 +565,8 @@ class trulens_eval.feedback.provider.hugs.HuggingfaceBase:
 class trulens_eval.feedback.provider.hugs.HuggingfaceLocal:
   highs: {}
   lows:
-    trulens_eval.feedback.provider.hugs.HuggingfaceLocal.endpoint: typing.Optional
+    trulens_eval.feedback.provider.hugs.HuggingfaceLocal.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
+      builtins.NoneType]
     trulens_eval.feedback.provider.hugs.HuggingfaceLocal.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.feedback.provider.langchain.Langchain:
   highs: {}
@@ -543,7 +578,8 @@ class trulens_eval.feedback.provider.litellm.LiteLLM:
   highs: {}
   lows:
     trulens_eval.feedback.provider.litellm.LiteLLM.DEFAULT_MODEL_ENGINE: builtins.str
-    trulens_eval.feedback.provider.litellm.LiteLLM.completion_args: typing.Dict
+    trulens_eval.feedback.provider.litellm.LiteLLM.completion_args: typing.Dict[builtins.str,
+      builtins.str]
     trulens_eval.feedback.provider.litellm.LiteLLM.endpoint: trulens_eval.feedback.provider.endpoint.base.Endpoint
     trulens_eval.feedback.provider.litellm.LiteLLM.model_engine: builtins.str
     trulens_eval.feedback.provider.litellm.LiteLLM.tru_class_info: trulens_eval.utils.pyschema.Class
@@ -581,11 +617,13 @@ class trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments:
   highs: {}
   lows:
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.feedback: trulens_eval.feedback.feedback.Feedback
-    trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.metadata: typing.Optional
+    trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.metadata: typing.Optional[typing.Dict[builtins.str,
+      typing.Any], builtins.NoneType]
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.of_retriever: builtins.staticmethod
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.search_kwargs: builtins.dict
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.search_type: builtins.str
-    trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.tags: typing.Optional
+    trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.tags: typing.Optional[typing.List[builtins.str],
+      builtins.NoneType]
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.threshold: builtins.float
     trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments.vectorstore: langchain_core.vectorstores.base.VectorStore
 class trulens_eval.guardrails.llama.WithFeedbackFilterNodes:
@@ -628,14 +666,17 @@ class trulens_eval.keys.ApiKeyError:
 class trulens_eval.schema.app.AppDefinition:
   highs: {}
   lows:
-    trulens_eval.schema.app.AppDefinition.app: trulens_eval.utils.serial.JSONized
-    trulens_eval.schema.app.AppDefinition.app_extra_json: typing.Union
+    trulens_eval.schema.app.AppDefinition.app: trulens_eval.utils.serial.JSONized[trulens_eval.schema.app.AppDefinition]
+    trulens_eval.schema.app.AppDefinition.app_extra_json: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.schema.app.AppDefinition.app_id: builtins.str
     trulens_eval.schema.app.AppDefinition.continue_session: builtins.staticmethod
-    trulens_eval.schema.app.AppDefinition.feedback_definitions: typing.Sequence
+    trulens_eval.schema.app.AppDefinition.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.schema.app.AppDefinition.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
     trulens_eval.schema.app.AppDefinition.get_loadable_apps: builtins.staticmethod
-    trulens_eval.schema.app.AppDefinition.initial_app_loader_dump: typing.Optional
+    trulens_eval.schema.app.AppDefinition.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
     trulens_eval.schema.app.AppDefinition.jsonify_extra: builtins.function
     trulens_eval.schema.app.AppDefinition.metadata: typing.Dict
     trulens_eval.schema.app.AppDefinition.new_session: builtins.staticmethod
@@ -666,8 +707,10 @@ class trulens_eval.schema.base.Perf:
 class trulens_eval.schema.feedback.FeedbackCall:
   highs: {}
   lows:
-    trulens_eval.schema.feedback.FeedbackCall.args: typing.Dict
-    trulens_eval.schema.feedback.FeedbackCall.meta: typing.Dict
+    trulens_eval.schema.feedback.FeedbackCall.args: typing.Dict[builtins.str, typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]]
+    trulens_eval.schema.feedback.FeedbackCall.meta: typing.Dict[builtins.str, typing.Any]
     trulens_eval.schema.feedback.FeedbackCall.ret: builtins.float
 class trulens_eval.schema.feedback.FeedbackCombinations:
   highs: {}
@@ -679,16 +722,23 @@ class trulens_eval.schema.feedback.FeedbackCombinations:
 class trulens_eval.schema.feedback.FeedbackDefinition:
   highs: {}
   lows:
-    trulens_eval.schema.feedback.FeedbackDefinition.aggregator: typing.Union
-    trulens_eval.schema.feedback.FeedbackDefinition.combinations: typing.Optional
+    trulens_eval.schema.feedback.FeedbackDefinition.aggregator: typing.Union[trulens_eval.utils.pyschema.Function,
+      trulens_eval.utils.pyschema.Method, builtins.NoneType]
+    trulens_eval.schema.feedback.FeedbackDefinition.combinations: typing.Optional[trulens_eval.schema.feedback.FeedbackCombinations,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackDefinition.feedback_definition_id: builtins.str
-    trulens_eval.schema.feedback.FeedbackDefinition.higher_is_better: typing.Optional
-    trulens_eval.schema.feedback.FeedbackDefinition.if_exists: typing.Optional
+    trulens_eval.schema.feedback.FeedbackDefinition.higher_is_better: typing.Optional[builtins.bool,
+      builtins.NoneType]
+    trulens_eval.schema.feedback.FeedbackDefinition.if_exists: typing.Optional[trulens_eval.utils.serial.Lens,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackDefinition.if_missing: trulens_eval.schema.feedback.FeedbackOnMissingParameters
-    trulens_eval.schema.feedback.FeedbackDefinition.implementation: typing.Union
+    trulens_eval.schema.feedback.FeedbackDefinition.implementation: typing.Union[trulens_eval.utils.pyschema.Function,
+      trulens_eval.utils.pyschema.Method, builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackDefinition.name: builtins.property
-    trulens_eval.schema.feedback.FeedbackDefinition.selectors: typing.Dict
-    trulens_eval.schema.feedback.FeedbackDefinition.supplied_name: typing.Optional
+    trulens_eval.schema.feedback.FeedbackDefinition.selectors: typing.Dict[builtins.str,
+      trulens_eval.utils.serial.Lens]
+    trulens_eval.schema.feedback.FeedbackDefinition.supplied_name: typing.Optional[builtins.str,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackDefinition.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.schema.feedback.FeedbackMode:
   highs: {}
@@ -710,16 +760,20 @@ class trulens_eval.schema.feedback.FeedbackOnMissingParameters:
 class trulens_eval.schema.feedback.FeedbackResult:
   highs: {}
   lows:
-    trulens_eval.schema.feedback.FeedbackResult.calls: typing.List
+    trulens_eval.schema.feedback.FeedbackResult.calls: typing.List[trulens_eval.schema.feedback.FeedbackCall]
     trulens_eval.schema.feedback.FeedbackResult.cost: trulens_eval.schema.base.Cost
-    trulens_eval.schema.feedback.FeedbackResult.error: typing.Optional
-    trulens_eval.schema.feedback.FeedbackResult.feedback_definition_id: typing.Optional
+    trulens_eval.schema.feedback.FeedbackResult.error: typing.Optional[builtins.str,
+      builtins.NoneType]
+    trulens_eval.schema.feedback.FeedbackResult.feedback_definition_id: typing.Optional[builtins.str,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackResult.feedback_result_id: builtins.str
     trulens_eval.schema.feedback.FeedbackResult.last_ts: datetime.datetime
-    trulens_eval.schema.feedback.FeedbackResult.multi_result: typing.Optional
+    trulens_eval.schema.feedback.FeedbackResult.multi_result: typing.Optional[builtins.str,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackResult.name: builtins.str
     trulens_eval.schema.feedback.FeedbackResult.record_id: builtins.str
-    trulens_eval.schema.feedback.FeedbackResult.result: typing.Optional
+    trulens_eval.schema.feedback.FeedbackResult.result: typing.Optional[builtins.float,
+      builtins.NoneType]
     trulens_eval.schema.feedback.FeedbackResult.status: trulens_eval.schema.feedback.FeedbackResultStatus
 class trulens_eval.schema.feedback.FeedbackResultStatus:
   highs: {}
@@ -754,31 +808,50 @@ class trulens_eval.schema.record.Record:
   highs: {}
   lows:
     trulens_eval.schema.record.Record.app_id: builtins.str
-    trulens_eval.schema.record.Record.calls: typing.List
-    trulens_eval.schema.record.Record.cost: typing.Optional
-    trulens_eval.schema.record.Record.feedback_and_future_results: typing.Optional
-    trulens_eval.schema.record.Record.feedback_results: typing.Optional
+    trulens_eval.schema.record.Record.calls: typing.List[trulens_eval.schema.record.RecordAppCall]
+    trulens_eval.schema.record.Record.cost: typing.Optional[trulens_eval.schema.base.Cost,
+      builtins.NoneType]
+    trulens_eval.schema.record.Record.feedback_and_future_results: typing.Optional[typing.List[typing.Tuple[trulens_eval.schema.feedback.FeedbackDefinition,
+      concurrent.futures._base.Future[trulens_eval.schema.feedback.FeedbackResult]]],
+      builtins.NoneType]
+    trulens_eval.schema.record.Record.feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens_eval.schema.feedback.FeedbackResult]],
+      builtins.NoneType]
     trulens_eval.schema.record.Record.layout_calls_as_app: builtins.function
-    trulens_eval.schema.record.Record.main_error: typing.Union
-    trulens_eval.schema.record.Record.main_input: typing.Union
-    trulens_eval.schema.record.Record.main_output: typing.Union
-    trulens_eval.schema.record.Record.meta: typing.Union
-    trulens_eval.schema.record.Record.perf: typing.Optional
+    trulens_eval.schema.record.Record.main_error: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.schema.record.Record.main_input: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.schema.record.Record.main_output: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.schema.record.Record.meta: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.schema.record.Record.perf: typing.Optional[trulens_eval.schema.base.Perf,
+      builtins.NoneType]
     trulens_eval.schema.record.Record.record_id: builtins.str
-    trulens_eval.schema.record.Record.tags: typing.Optional
+    trulens_eval.schema.record.Record.tags: typing.Optional[builtins.str, builtins.NoneType]
     trulens_eval.schema.record.Record.ts: datetime.datetime
     trulens_eval.schema.record.Record.wait_for_feedback_results: builtins.function
 class trulens_eval.schema.record.RecordAppCall:
   highs: {}
   lows:
-    trulens_eval.schema.record.RecordAppCall.args: typing.Union
+    trulens_eval.schema.record.RecordAppCall.args: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.schema.record.RecordAppCall.call_id: builtins.str
-    trulens_eval.schema.record.RecordAppCall.error: typing.Optional
+    trulens_eval.schema.record.RecordAppCall.error: typing.Optional[builtins.str,
+      builtins.NoneType]
     trulens_eval.schema.record.RecordAppCall.method: builtins.property
-    trulens_eval.schema.record.RecordAppCall.perf: typing.Optional
+    trulens_eval.schema.record.RecordAppCall.perf: typing.Optional[trulens_eval.schema.base.Perf,
+      builtins.NoneType]
     trulens_eval.schema.record.RecordAppCall.pid: builtins.int
-    trulens_eval.schema.record.RecordAppCall.rets: typing.Union
-    trulens_eval.schema.record.RecordAppCall.stack: typing.List
+    trulens_eval.schema.record.RecordAppCall.rets: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.schema.record.RecordAppCall.stack: typing.List[trulens_eval.schema.record.RecordAppCallMethod]
     trulens_eval.schema.record.RecordAppCall.tid: builtins.int
     trulens_eval.schema.record.RecordAppCall.top: builtins.property
 class trulens_eval.schema.record.RecordAppCallMethod:
@@ -789,7 +862,7 @@ class trulens_eval.schema.record.RecordAppCallMethod:
 class trulens_eval.streamlit.FeedbackDisplay:
   highs: {}
   lows:
-    trulens_eval.streamlit.FeedbackDisplay.calls: typing.List
+    trulens_eval.streamlit.FeedbackDisplay.calls: typing.List[trulens_eval.schema.feedback.FeedbackCall]
     trulens_eval.streamlit.FeedbackDisplay.icon: builtins.str
     trulens_eval.streamlit.FeedbackDisplay.score: builtins.float
 class trulens_eval.tru.Tru:
@@ -827,26 +900,34 @@ class trulens_eval.tru_basic_app.TruBasicApp:
   highs: {}
   lows:
     trulens_eval.tru_basic_app.TruBasicApp.app: trulens_eval.tru_basic_app.TruWrapperApp
-    trulens_eval.tru_basic_app.TruBasicApp.app_extra_json: typing.Union
+    trulens_eval.tru_basic_app.TruBasicApp.app_extra_json: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_basic_app.TruBasicApp.app_id: builtins.str
     trulens_eval.tru_basic_app.TruBasicApp.call_with_record: builtins.function
-    trulens_eval.tru_basic_app.TruBasicApp.db: typing.Optional
-    trulens_eval.tru_basic_app.TruBasicApp.feedback_definitions: typing.Sequence
+    trulens_eval.tru_basic_app.TruBasicApp.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_basic_app.TruBasicApp.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_basic_app.TruBasicApp.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_basic_app.TruBasicApp.feedbacks: typing.List
-    trulens_eval.tru_basic_app.TruBasicApp.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_basic_app.TruBasicApp.instrument: typing.Optional
-    trulens_eval.tru_basic_app.TruBasicApp.instrumented_methods: typing.Dict
-    trulens_eval.tru_basic_app.TruBasicApp.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_basic_app.TruBasicApp.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
+    trulens_eval.tru_basic_app.TruBasicApp.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_basic_app.TruBasicApp.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_basic_app.TruBasicApp.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_basic_app.TruBasicApp.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_basic_app.TruBasicApp.metadata: typing.Dict
-    trulens_eval.tru_basic_app.TruBasicApp.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_basic_app.TruBasicApp.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_basic_app.TruBasicApp.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_basic_app.TruBasicApp.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_basic_app.TruBasicApp.root_callable: pydantic.fields.FieldInfo
     trulens_eval.tru_basic_app.TruBasicApp.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.tru_basic_app.TruBasicApp.selector_check_warning: builtins.bool
     trulens_eval.tru_basic_app.TruBasicApp.selector_nocheck: builtins.bool
     trulens_eval.tru_basic_app.TruBasicApp.tags: builtins.str
-    trulens_eval.tru_basic_app.TruBasicApp.tru: typing.Optional
+    trulens_eval.tru_basic_app.TruBasicApp.tru: typing.Optional[trulens_eval.tru.Tru,
+      builtins.NoneType]
     trulens_eval.tru_basic_app.TruBasicApp.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_basic_app.TruBasicCallableInstrument:
   highs: {}
@@ -862,53 +943,70 @@ class trulens_eval.tru_chain.TruChain:
   lows:
     trulens_eval.tru_chain.TruChain.acall_with_record: builtins.function
     trulens_eval.tru_chain.TruChain.app: typing.Any
-    trulens_eval.tru_chain.TruChain.app_extra_json: typing.Union
+    trulens_eval.tru_chain.TruChain.app_extra_json: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_chain.TruChain.app_id: builtins.str
     trulens_eval.tru_chain.TruChain.call_with_record: builtins.function
-    trulens_eval.tru_chain.TruChain.db: typing.Optional
-    trulens_eval.tru_chain.TruChain.feedback_definitions: typing.Sequence
+    trulens_eval.tru_chain.TruChain.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_chain.TruChain.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_chain.TruChain.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_chain.TruChain.feedbacks: typing.List
-    trulens_eval.tru_chain.TruChain.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_chain.TruChain.instrument: typing.Optional
-    trulens_eval.tru_chain.TruChain.instrumented_methods: typing.Dict
-    trulens_eval.tru_chain.TruChain.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_chain.TruChain.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
+    trulens_eval.tru_chain.TruChain.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_chain.TruChain.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_chain.TruChain.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_chain.TruChain.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_chain.TruChain.metadata: typing.Dict
-    trulens_eval.tru_chain.TruChain.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_chain.TruChain.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_chain.TruChain.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_chain.TruChain.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_chain.TruChain.root_callable: pydantic.fields.FieldInfo
     trulens_eval.tru_chain.TruChain.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.tru_chain.TruChain.selector_check_warning: builtins.bool
     trulens_eval.tru_chain.TruChain.selector_nocheck: builtins.bool
     trulens_eval.tru_chain.TruChain.tags: builtins.str
-    trulens_eval.tru_chain.TruChain.tru: typing.Optional
+    trulens_eval.tru_chain.TruChain.tru: typing.Optional[trulens_eval.tru.Tru, builtins.NoneType]
     trulens_eval.tru_chain.TruChain.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_custom_app.TruCustomApp:
   highs: {}
   lows:
     trulens_eval.tru_custom_app.TruCustomApp.app: typing.Any
-    trulens_eval.tru_custom_app.TruCustomApp.app_extra_json: typing.Union
+    trulens_eval.tru_custom_app.TruCustomApp.app_extra_json: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_custom_app.TruCustomApp.app_id: builtins.str
-    trulens_eval.tru_custom_app.TruCustomApp.db: typing.Optional
-    trulens_eval.tru_custom_app.TruCustomApp.feedback_definitions: typing.Sequence
+    trulens_eval.tru_custom_app.TruCustomApp.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_custom_app.TruCustomApp.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_custom_app.TruCustomApp.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_custom_app.TruCustomApp.feedbacks: typing.List
+    trulens_eval.tru_custom_app.TruCustomApp.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
     trulens_eval.tru_custom_app.TruCustomApp.functions_to_instrument: builtins.set
-    trulens_eval.tru_custom_app.TruCustomApp.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_custom_app.TruCustomApp.instrument: typing.Optional
-    trulens_eval.tru_custom_app.TruCustomApp.instrumented_methods: typing.Dict
-    trulens_eval.tru_custom_app.TruCustomApp.main_method: typing.Optional
-    trulens_eval.tru_custom_app.TruCustomApp.main_method_loaded: typing.Optional
-    trulens_eval.tru_custom_app.TruCustomApp.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_custom_app.TruCustomApp.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_custom_app.TruCustomApp.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_custom_app.TruCustomApp.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_custom_app.TruCustomApp.main_method: typing.Optional[trulens_eval.utils.pyschema.Function,
+      builtins.NoneType]
+    trulens_eval.tru_custom_app.TruCustomApp.main_method_loaded: typing.Optional[typing.Callable,
+      builtins.NoneType]
+    trulens_eval.tru_custom_app.TruCustomApp.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_custom_app.TruCustomApp.metadata: typing.Dict
-    trulens_eval.tru_custom_app.TruCustomApp.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_custom_app.TruCustomApp.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_custom_app.TruCustomApp.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_custom_app.TruCustomApp.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_custom_app.TruCustomApp.root_callable: pydantic.fields.FieldInfo
     trulens_eval.tru_custom_app.TruCustomApp.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.tru_custom_app.TruCustomApp.selector_check_warning: builtins.bool
     trulens_eval.tru_custom_app.TruCustomApp.selector_nocheck: builtins.bool
     trulens_eval.tru_custom_app.TruCustomApp.tags: builtins.str
-    trulens_eval.tru_custom_app.TruCustomApp.tru: typing.Optional
+    trulens_eval.tru_custom_app.TruCustomApp.tru: typing.Optional[trulens_eval.tru.Tru,
+      builtins.NoneType]
     trulens_eval.tru_custom_app.TruCustomApp.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_custom_app.instrument:
   highs: {}
@@ -921,8 +1019,11 @@ class trulens_eval.tru_llama.TruLlama:
   lows:
     trulens_eval.tru_llama.TruLlama.achat: builtins.function
     trulens_eval.tru_llama.TruLlama.achat_with_record: builtins.function
-    trulens_eval.tru_llama.TruLlama.app: typing.Union
-    trulens_eval.tru_llama.TruLlama.app_extra_json: typing.Union
+    trulens_eval.tru_llama.TruLlama.app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine,
+      llama_index.core.chat_engine.types.BaseChatEngine]
+    trulens_eval.tru_llama.TruLlama.app_extra_json: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_llama.TruLlama.app_id: builtins.str
     trulens_eval.tru_llama.TruLlama.aquery: builtins.function
     trulens_eval.tru_llama.TruLlama.aquery_with_record: builtins.function
@@ -930,19 +1031,24 @@ class trulens_eval.tru_llama.TruLlama:
     trulens_eval.tru_llama.TruLlama.astream_chat_with_record: builtins.function
     trulens_eval.tru_llama.TruLlama.chat: builtins.function
     trulens_eval.tru_llama.TruLlama.chat_with_record: builtins.function
-    trulens_eval.tru_llama.TruLlama.db: typing.Optional
-    trulens_eval.tru_llama.TruLlama.feedback_definitions: typing.Sequence
+    trulens_eval.tru_llama.TruLlama.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_llama.TruLlama.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_llama.TruLlama.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_llama.TruLlama.feedbacks: typing.List
-    trulens_eval.tru_llama.TruLlama.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_llama.TruLlama.instrument: typing.Optional
-    trulens_eval.tru_llama.TruLlama.instrumented_methods: typing.Dict
-    trulens_eval.tru_llama.TruLlama.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_llama.TruLlama.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
+    trulens_eval.tru_llama.TruLlama.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_llama.TruLlama.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_llama.TruLlama.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_llama.TruLlama.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_llama.TruLlama.metadata: typing.Dict
     trulens_eval.tru_llama.TruLlama.query: builtins.function
     trulens_eval.tru_llama.TruLlama.query_with_record: builtins.function
-    trulens_eval.tru_llama.TruLlama.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_llama.TruLlama.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_llama.TruLlama.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_llama.TruLlama.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_llama.TruLlama.root_callable: pydantic.fields.FieldInfo
     trulens_eval.tru_llama.TruLlama.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.tru_llama.TruLlama.select_source_nodes: builtins.classmethod
@@ -951,7 +1057,7 @@ class trulens_eval.tru_llama.TruLlama:
     trulens_eval.tru_llama.TruLlama.stream_chat: builtins.function
     trulens_eval.tru_llama.TruLlama.stream_chat_with_record: builtins.function
     trulens_eval.tru_llama.TruLlama.tags: builtins.str
-    trulens_eval.tru_llama.TruLlama.tru: typing.Optional
+    trulens_eval.tru_llama.TruLlama.tru: typing.Optional[trulens_eval.tru.Tru, builtins.NoneType]
     trulens_eval.tru_llama.TruLlama.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_rails.FeedbackActions:
   highs: {}
@@ -979,50 +1085,65 @@ class trulens_eval.tru_rails.TruRails:
   highs: {}
   lows:
     trulens_eval.tru_rails.TruRails.app: nemoguardrails.rails.llm.llmrails.LLMRails
-    trulens_eval.tru_rails.TruRails.app_extra_json: typing.Union
+    trulens_eval.tru_rails.TruRails.app_extra_json: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_rails.TruRails.app_id: builtins.str
-    trulens_eval.tru_rails.TruRails.db: typing.Optional
-    trulens_eval.tru_rails.TruRails.feedback_definitions: typing.Sequence
+    trulens_eval.tru_rails.TruRails.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_rails.TruRails.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_rails.TruRails.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_rails.TruRails.feedbacks: typing.List
-    trulens_eval.tru_rails.TruRails.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_rails.TruRails.instrument: typing.Optional
-    trulens_eval.tru_rails.TruRails.instrumented_methods: typing.Dict
-    trulens_eval.tru_rails.TruRails.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_rails.TruRails.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
+    trulens_eval.tru_rails.TruRails.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_rails.TruRails.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_rails.TruRails.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_rails.TruRails.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_rails.TruRails.metadata: typing.Dict
-    trulens_eval.tru_rails.TruRails.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_rails.TruRails.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_rails.TruRails.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_rails.TruRails.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_rails.TruRails.root_callable: pydantic.fields.FieldInfo
     trulens_eval.tru_rails.TruRails.root_class: trulens_eval.utils.pyschema.Class
     trulens_eval.tru_rails.TruRails.selector_check_warning: builtins.bool
     trulens_eval.tru_rails.TruRails.selector_nocheck: builtins.bool
     trulens_eval.tru_rails.TruRails.tags: builtins.str
-    trulens_eval.tru_rails.TruRails.tru: typing.Optional
+    trulens_eval.tru_rails.TruRails.tru: typing.Optional[trulens_eval.tru.Tru, builtins.NoneType]
     trulens_eval.tru_rails.TruRails.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_virtual.TruVirtual:
   highs: {}
   lows:
     trulens_eval.tru_virtual.TruVirtual.add_record: builtins.function
     trulens_eval.tru_virtual.TruVirtual.app: trulens_eval.tru_virtual.VirtualApp
-    trulens_eval.tru_virtual.TruVirtual.app_extra_json: typing.Union
+    trulens_eval.tru_virtual.TruVirtual.app_extra_json: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
     trulens_eval.tru_virtual.TruVirtual.app_id: builtins.str
-    trulens_eval.tru_virtual.TruVirtual.db: typing.Optional
-    trulens_eval.tru_virtual.TruVirtual.feedback_definitions: typing.Sequence
+    trulens_eval.tru_virtual.TruVirtual.db: typing.Optional[trulens_eval.database.base.DB,
+      builtins.NoneType]
+    trulens_eval.tru_virtual.TruVirtual.feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     trulens_eval.tru_virtual.TruVirtual.feedback_mode: trulens_eval.schema.feedback.FeedbackMode
-    trulens_eval.tru_virtual.TruVirtual.feedbacks: typing.List
-    trulens_eval.tru_virtual.TruVirtual.initial_app_loader_dump: typing.Optional
-    trulens_eval.tru_virtual.TruVirtual.instrument: typing.Optional
-    trulens_eval.tru_virtual.TruVirtual.instrumented_methods: typing.Dict
-    trulens_eval.tru_virtual.TruVirtual.manage_pending_feedback_results_thread: typing.Optional
+    trulens_eval.tru_virtual.TruVirtual.feedbacks: typing.List[trulens_eval.feedback.feedback.Feedback]
+    trulens_eval.tru_virtual.TruVirtual.initial_app_loader_dump: typing.Optional[trulens_eval.utils.serial.SerialBytes,
+      builtins.NoneType]
+    trulens_eval.tru_virtual.TruVirtual.instrument: typing.Optional[trulens_eval.instruments.Instrument,
+      builtins.NoneType]
+    trulens_eval.tru_virtual.TruVirtual.instrumented_methods: typing.Dict[builtins.int,
+      typing.Dict[typing.Callable, trulens_eval.utils.serial.Lens]]
+    trulens_eval.tru_virtual.TruVirtual.manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
+      builtins.NoneType]
     trulens_eval.tru_virtual.TruVirtual.metadata: typing.Dict
-    trulens_eval.tru_virtual.TruVirtual.recording_contexts: _contextvars.ContextVar
-    trulens_eval.tru_virtual.TruVirtual.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet
+    trulens_eval.tru_virtual.TruVirtual.recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
+    trulens_eval.tru_virtual.TruVirtual.records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     trulens_eval.tru_virtual.TruVirtual.root_callable: trulens_eval.utils.pyschema.Method
     trulens_eval.tru_virtual.TruVirtual.root_class: typing.Any
     trulens_eval.tru_virtual.TruVirtual.selector_check_warning: builtins.bool
     trulens_eval.tru_virtual.TruVirtual.selector_nocheck: builtins.bool
     trulens_eval.tru_virtual.TruVirtual.tags: builtins.str
-    trulens_eval.tru_virtual.TruVirtual.tru: typing.Optional
+    trulens_eval.tru_virtual.TruVirtual.tru: typing.Optional[trulens_eval.tru.Tru,
+      builtins.NoneType]
     trulens_eval.tru_virtual.TruVirtual.tru_class_info: trulens_eval.utils.pyschema.Class
 class trulens_eval.tru_virtual.VirtualApp:
   highs: {}
@@ -1032,17 +1153,30 @@ class trulens_eval.tru_virtual.VirtualRecord:
   highs: {}
   lows:
     trulens_eval.tru_virtual.VirtualRecord.app_id: builtins.str
-    trulens_eval.tru_virtual.VirtualRecord.calls: typing.List
-    trulens_eval.tru_virtual.VirtualRecord.cost: typing.Optional
-    trulens_eval.tru_virtual.VirtualRecord.feedback_and_future_results: typing.Optional
-    trulens_eval.tru_virtual.VirtualRecord.feedback_results: typing.Optional
-    trulens_eval.tru_virtual.VirtualRecord.main_error: typing.Union
-    trulens_eval.tru_virtual.VirtualRecord.main_input: typing.Union
-    trulens_eval.tru_virtual.VirtualRecord.main_output: typing.Union
-    trulens_eval.tru_virtual.VirtualRecord.meta: typing.Union
-    trulens_eval.tru_virtual.VirtualRecord.perf: typing.Optional
+    trulens_eval.tru_virtual.VirtualRecord.calls: typing.List[trulens_eval.schema.record.RecordAppCall]
+    trulens_eval.tru_virtual.VirtualRecord.cost: typing.Optional[trulens_eval.schema.base.Cost,
+      builtins.NoneType]
+    trulens_eval.tru_virtual.VirtualRecord.feedback_and_future_results: typing.Optional[typing.List[typing.Tuple[trulens_eval.schema.feedback.FeedbackDefinition,
+      concurrent.futures._base.Future[trulens_eval.schema.feedback.FeedbackResult]]],
+      builtins.NoneType]
+    trulens_eval.tru_virtual.VirtualRecord.feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens_eval.schema.feedback.FeedbackResult]],
+      builtins.NoneType]
+    trulens_eval.tru_virtual.VirtualRecord.main_error: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.tru_virtual.VirtualRecord.main_input: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.tru_virtual.VirtualRecord.main_output: typing.Union[builtins.str,
+      builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.tru_virtual.VirtualRecord.meta: typing.Union[builtins.str, builtins.int,
+      builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
+      typing.Dict[builtins.str, typing.Any]]
+    trulens_eval.tru_virtual.VirtualRecord.perf: typing.Optional[trulens_eval.schema.base.Perf,
+      builtins.NoneType]
     trulens_eval.tru_virtual.VirtualRecord.record_id: builtins.str
-    trulens_eval.tru_virtual.VirtualRecord.tags: typing.Optional
+    trulens_eval.tru_virtual.VirtualRecord.tags: typing.Optional[builtins.str, builtins.NoneType]
     trulens_eval.tru_virtual.VirtualRecord.ts: datetime.datetime
 class trulens_eval.utils.containers.BlockingSet:
   highs: {}
@@ -1095,7 +1229,7 @@ class trulens_eval.utils.pace.Pace:
     trulens_eval.utils.pace.Pace.last_mark: datetime.datetime
     trulens_eval.utils.pace.Pace.lock: _thread.lock
     trulens_eval.utils.pace.Pace.mark: builtins.function
-    trulens_eval.utils.pace.Pace.mark_expirations: typing.Deque
+    trulens_eval.utils.pace.Pace.mark_expirations: typing.Deque[datetime.datetime]
     trulens_eval.utils.pace.Pace.marks_per_second: builtins.float
     trulens_eval.utils.pace.Pace.max_marks: builtins.int
     trulens_eval.utils.pace.Pace.seconds_per_period: builtins.float
@@ -1104,14 +1238,15 @@ class trulens_eval.utils.pyschema.Bindings:
   highs: {}
   lows:
     trulens_eval.utils.pyschema.Bindings.args: typing.Tuple
-    trulens_eval.utils.pyschema.Bindings.kwargs: typing.Dict
+    trulens_eval.utils.pyschema.Bindings.kwargs: typing.Dict[builtins.str, typing.Any]
     trulens_eval.utils.pyschema.Bindings.load: builtins.function
     trulens_eval.utils.pyschema.Bindings.of_bound_arguments: builtins.staticmethod
 class trulens_eval.utils.pyschema.Class:
   highs: {}
   lows:
     trulens_eval.utils.pyschema.Class.base_class: builtins.function
-    trulens_eval.utils.pyschema.Class.bases: typing.Optional
+    trulens_eval.utils.pyschema.Class.bases: typing.Optional[typing.Sequence[trulens_eval.utils.pyschema.Class],
+      builtins.NoneType]
     trulens_eval.utils.pyschema.Class.load: builtins.function
     trulens_eval.utils.pyschema.Class.module: trulens_eval.utils.pyschema.Module
     trulens_eval.utils.pyschema.Class.name: builtins.str
@@ -1122,7 +1257,8 @@ class trulens_eval.utils.pyschema.Class:
 class trulens_eval.utils.pyschema.Function:
   highs: {}
   lows:
-    trulens_eval.utils.pyschema.Function.cls: typing.Optional
+    trulens_eval.utils.pyschema.Function.cls: typing.Optional[trulens_eval.utils.pyschema.Class,
+      builtins.NoneType]
     trulens_eval.utils.pyschema.Function.module: trulens_eval.utils.pyschema.Module
     trulens_eval.utils.pyschema.Function.name: builtins.str
     trulens_eval.utils.pyschema.Function.of_function: builtins.staticmethod
@@ -1144,13 +1280,15 @@ class trulens_eval.utils.pyschema.Module:
     trulens_eval.utils.pyschema.Module.module_name: builtins.str
     trulens_eval.utils.pyschema.Module.of_module: builtins.function
     trulens_eval.utils.pyschema.Module.of_module_name: builtins.function
-    trulens_eval.utils.pyschema.Module.package_name: typing.Optional
+    trulens_eval.utils.pyschema.Module.package_name: typing.Optional[builtins.str,
+      builtins.NoneType]
 class trulens_eval.utils.pyschema.Obj:
   highs: {}
   lows:
     trulens_eval.utils.pyschema.Obj.cls: trulens_eval.utils.pyschema.Class
     trulens_eval.utils.pyschema.Obj.id: builtins.int
-    trulens_eval.utils.pyschema.Obj.init_bindings: typing.Optional
+    trulens_eval.utils.pyschema.Obj.init_bindings: typing.Optional[trulens_eval.utils.pyschema.Bindings,
+      builtins.NoneType]
     trulens_eval.utils.pyschema.Obj.load: builtins.function
     trulens_eval.utils.pyschema.Obj.of_object: builtins.staticmethod
 class trulens_eval.utils.pyschema.WithClassInfo:
@@ -1193,7 +1331,7 @@ class trulens_eval.utils.serial.GetIndex:
 class trulens_eval.utils.serial.GetIndices:
   highs: {}
   lows:
-    trulens_eval.utils.serial.GetIndices.indices: typing.Tuple
+    trulens_eval.utils.serial.GetIndices.indices: typing.Tuple[builtins.int, ...]
 class trulens_eval.utils.serial.GetItem:
   highs: {}
   lows:
@@ -1205,13 +1343,13 @@ class trulens_eval.utils.serial.GetItemOrAttribute:
 class trulens_eval.utils.serial.GetItems:
   highs: {}
   lows:
-    trulens_eval.utils.serial.GetItems.items: typing.Tuple
+    trulens_eval.utils.serial.GetItems.items: typing.Tuple[builtins.str, ...]
 class trulens_eval.utils.serial.GetSlice:
   highs: {}
   lows:
-    trulens_eval.utils.serial.GetSlice.start: typing.Optional
-    trulens_eval.utils.serial.GetSlice.step: typing.Optional
-    trulens_eval.utils.serial.GetSlice.stop: typing.Optional
+    trulens_eval.utils.serial.GetSlice.start: typing.Optional[builtins.int, builtins.NoneType]
+    trulens_eval.utils.serial.GetSlice.step: typing.Optional[builtins.int, builtins.NoneType]
+    trulens_eval.utils.serial.GetSlice.stop: typing.Optional[builtins.int, builtins.NoneType]
 class trulens_eval.utils.serial.JSONized:
   highs: {}
   lows: {}
@@ -1226,7 +1364,8 @@ class trulens_eval.utils.serial.Lens:
     trulens_eval.utils.serial.Lens.is_immediate_prefix_of: builtins.function
     trulens_eval.utils.serial.Lens.is_prefix_of: builtins.function
     trulens_eval.utils.serial.Lens.of_string: builtins.staticmethod
-    trulens_eval.utils.serial.Lens.path: typing.Tuple
+    trulens_eval.utils.serial.Lens.path: typing.Tuple[trulens_eval.utils.serial.Step,
+      ...]
     trulens_eval.utils.serial.Lens.set: builtins.function
     trulens_eval.utils.serial.Lens.set_or_append: builtins.function
     trulens_eval.utils.serial.Lens.validate_from_string: builtins.classmethod

@@ -12,7 +12,7 @@ from tests.test import JSONTestCase
 from tests.utils import Member
 from tests.utils import get_module_members
 from tests.utils import get_module_names, get_class_members
-from tests.utils import type_qualname
+from tests.utils import type_str
 import trulens_eval
 
 
@@ -42,12 +42,12 @@ class TestAPI(JSONTestCase):
             lows = {}
 
             for mem in mod.api_highs:
-                highs[mem.qualname] = type_qualname(mem.typ)
+                highs[mem.qualname] = type_str(mem.typ)
                 if inspect.isclass(mem.val):
                     high_classes.add(mem.val)
 
             for mem in mod.api_lows:
-                lows[mem.qualname] = type_qualname(mem.typ)
+                lows[mem.qualname] = type_str(mem.typ)
                 if inspect.isclass(mem.val):
                     low_classes.add(mem.val)
 
@@ -64,11 +64,11 @@ class TestAPI(JSONTestCase):
                 lows = {}
 
                 for mem in members.api_highs:
-                    highs[mem.qualname] = type_qualname(mem.typ)
+                    highs[mem.qualname] = type_str(mem.typ)
                 for mem in members.api_lows:
-                    lows[mem.qualname] = type_qualname(mem.typ)
+                    lows[mem.qualname] = type_str(mem.typ)
 
-                objects["class " + type_qualname(class_)] = {
+                objects["class " + type_str(class_)] = {
                     "highs": highs,
                     "lows": lows,
                 }

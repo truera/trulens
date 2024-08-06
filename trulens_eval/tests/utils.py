@@ -8,7 +8,16 @@ from pathlib import Path
 import pkgutil
 import re
 from types import ModuleType
-from typing import ForwardRef, Iterable, List, Optional, Set, Union
+from typing import (
+    ForwardRef,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 
 def get_module_names(
@@ -71,8 +80,13 @@ Contents:
 """
 
 
-def type_qualname(typ: Union[type | ForwardRef]) -> str:
-    """Get the fully qualified name of a type or ForwardRef."""
+def type_str(typ: Union[type | ForwardRef | TypeVar]) -> str:
+    """Render the type/type constructor with all referenced types using fully
+    qualified names.
+
+    Can also handle ForwardRefs as long as they have been evaluated already,
+    ellipses, and TypeVars.
+    """
 
     if isinstance(typ, ForwardRef):
         if not typ.__forward_evaluated__:
@@ -80,9 +94,20 @@ def type_qualname(typ: Union[type | ForwardRef]) -> str:
                 f"Not evaluated ForwardRefs are not supported: {typ}."
             )
 
-        return typ.__forward_arg__
+        return type_str(typ.__forward_value__)
 
-    return typ.__module__ + "." + typ.__qualname__
+    if isinstance(typ, TypeVar):
+        return typ.__name__
+
+    if typ is ...:
+        return "..."
+
+    ret = typ.__module__ + "." + typ.__qualname__
+
+    if hasattr(typ, "__args__"):
+        ret += "[" + ", ".join(type_str(arg) for arg in typ.__args__) + "]"
+
+    return ret
 
 
 def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
@@ -93,7 +118,7 @@ def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
         mod: The module or its name.
 
     Returns:
-        Iterable of Member namedtuples
+        Iterable of Member namedtuples.
     """
 
     if isinstance(mod, str):
