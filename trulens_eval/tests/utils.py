@@ -8,7 +8,7 @@ from pathlib import Path
 import pkgutil
 import re
 from types import ModuleType
-from typing import Iterable, List, Optional, Set, Union
+from typing import ForwardRef, Iterable, List, Optional, Set, Union
 
 
 def get_module_names(
@@ -56,11 +56,31 @@ def get_module_names(
                 yield submodqualname
 
 
-Member = namedtuple("Member", ["mod", "qualname", "val", "typ"])
+Member = namedtuple("Member", ["obj", "qualname", "val", "typ"])
+"""Class/module member information.
+
+Contents:
+
+    - obj: object or class owning the member
+
+    - qualname: fully qualified name of the member
+
+    - val: member's value
+
+    - typ: member's type
+"""
 
 
-def type_qualname(typ: type) -> str:
-    """Get the fully qualified name of a type."""
+def type_qualname(typ: Union[type | ForwardRef]) -> str:
+    """Get the fully qualified name of a type or ForwardRef."""
+
+    if isinstance(typ, ForwardRef):
+        if not typ.__forward_evaluated__:
+            raise ValueError(
+                f"Not evaluated ForwardRefs are not supported: {typ}."
+            )
+
+        return typ.__forward_arg__
 
     return typ.__module__ + "." + typ.__qualname__
 
@@ -73,9 +93,7 @@ def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
         mod: The module or its name.
 
     Returns:
-        Iterable of namedtuples (mod, qualname, val, typ) where qualname is the
-            fully qualified name of the member, val is its value, and typ is its
-            type.
+        Iterable of Member namedtuples
     """
 
     if isinstance(mod, str):
@@ -272,16 +290,38 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
     highs: List[Member] = []
     lows: List[Member] = []
 
-    for name, val in inspect.getmembers_static(class_):
+    static_members = [
+        (k, v, type(v)) for k, v in inspect.getmembers_static(class_)
+    ]
+
+    slot_members = []
+    if hasattr(class_, "__slots__"):
+        slot_members = [
+            (name, v := getattr(class_, name), type(v))
+            for name in class_.__slots__
+        ]
+
+    # Cannot get attributes of pydantic models in the above ways so we have
+    # special handling for them here:
+    fields_members = []
+    if hasattr(class_, "__fields__"):
+        fields_members = [
+            (name, field.default, field.annotation)
+            for name, field in class_.__fields__.items()
+        ]
+
+    for name, val, typ in static_members + slot_members + fields_members:
         qualname = class_.__module__ + "." + class_.__qualname__ + "." + name
-        member = Member(class_.__module__, qualname, val, type(val))
+        member = Member(class_.__module__, qualname, val, typ)
 
         is_def = False
         is_public = False
 
         if any(
-            (not base.__name__.startswith("trulens_eval"))
-            and hasattr(base, name)
+            (
+                (not base.__name__.startswith("trulens_eval"))
+                and hasattr(base, name)
+            )
             for base in class_.__bases__
         ):
             # Skip anything that is a member of non trulens_eval bases.
