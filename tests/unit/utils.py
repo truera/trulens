@@ -21,7 +21,7 @@ ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
 def optional_test(testmethodorclass):
     """
     Only run the decorated test if the environment variable with_optional
-    evalutes true. These are meant to be run only in an environment where
+    evaluates true. These are meant to be run only in an environment where
     all optional packages have been installed.
     """
 

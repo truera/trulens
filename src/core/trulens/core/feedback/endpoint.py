@@ -324,7 +324,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"Endpoint {self.name} request failed {self.retries+1} time(s): \n\t"
+            f"Endpoint {self.name} request failed {self.retries + 1} time(s): \n\t"
             + ("\n\t".join(map(str, errors)))
         )
 
@@ -421,14 +421,22 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         produced_func
                     )
                     Endpoint.instrumented_methods[object].append(
-                        (produced_func, instrumented_produced_func, type(self))
+                        (
+                            produced_func,
+                            instrumented_produced_func,
+                            type(self),
+                        )
                     )
                     return instrumented_produced_func
                 else:
                     return produced_func
 
             Endpoint.instrumented_methods[cls].append(
-                (func, metawrap, type(self))
+                (
+                    func,
+                    metawrap,
+                    type(self),
+                )
             )
 
             setattr(cls, wrapper_method_name, metawrap)
@@ -815,7 +823,7 @@ class DummyEndpoint(Endpoint):
 
         assert (
             error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0
-        ), "Probabilites should not exceed 1.0 ."
+        ), "Probabilities should not exceed 1.0 ."
         assert rpm > 0
         assert alloc >= 0
         assert delay >= 0.0
