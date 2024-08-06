@@ -235,7 +235,7 @@ class EvalSchema(pydantic.BaseModel):
             OutputSpace.LIKERT_0_10.name,
         ]:
             raise ValueError(
-                'output_space must be one of the ranges from "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
         return output_space
 
@@ -248,7 +248,7 @@ class EvalSchema(pydantic.BaseModel):
             return BINARY_0_1_PROMPT
         else:
             raise ValueError(
-                'output_space must be one of the ranges from "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
 
 
