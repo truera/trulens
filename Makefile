@@ -112,13 +112,11 @@ clean-dashboard:
 
 clean: clean-dashboard
 	git clean --dry-run -fxd
-	echo "Do you wish to remove these files? (y/N)"
-	select yn in "y" "N"; do \
-		case $$yn in \
-			y ) git clean -fxd;; \
-			* ) exit;; \
-		esac; \
-	done
+	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
+	echo
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		git clean -fxd; \
+	fi;
 
 ## Step: Build wheels
 build-dashboard: env clean-dashboard
