@@ -31,7 +31,7 @@ true) or read and compared (if false/undefined)."""
 def optional_test(testmethodorclass):
     """Only run the decorated test if the environment variable with_optional
     evaluates true.
-    
+
     These are meant to be run only in an environment where optional packages
     have been installed.
     """
@@ -44,7 +44,7 @@ def optional_test(testmethodorclass):
 def requiredonly_test(testmethodorclass):
     """Only runs the decorated test if the environment variable with_optional
     evaluates to false or is not set.
-    
+
     Decorated tests are meant to run specifically when optional imports are not
     installed.
     """
@@ -69,8 +69,8 @@ T = TypeVar("T")
 
 def hashable_skip(obj: T, skips: Set[str]) -> T:
     """Return a hashable copy of `obj` with all keys/attributes in `skips`
-    removed. 
-    
+    removed.
+
     Sequences are returned as tuples and container types are returned as
     frozendicts. Floats are returned as 0.0 to avoid tolerance issues. Note that
     the returned objects are only used for ordering their originals and are not
@@ -184,7 +184,7 @@ class JSONTestCase(TestCase):
 
                 !!! WARNING
                     YAML dumper does not fully serialize all types which
-                    prevents them from being loaded again.            
+                    prevents them from being loaded again.
 
             skips: A set of keys to skip in the comparison.
 
@@ -204,7 +204,7 @@ class JSONTestCase(TestCase):
             AssertionError: If the actual JSON-like object does not match the
                 expected JSON-like object
 
-            AssertionError: If the golden file is written.  
+            AssertionError: If the golden file is written.
         """
 
         write_golden: bool = bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
@@ -240,7 +240,7 @@ class JSONTestCase(TestCase):
                 skips=skips,
                 numeric_places=numeric_places,
                 unordereds=unordereds,
-                unordered=unordered
+                unordered=unordered,
             )
 
     def assertJSONEqual(
@@ -254,7 +254,7 @@ class JSONTestCase(TestCase):
         unordered: bool = False,
     ) -> None:
         """Assert equality between JSON-like `j1` and `j2`.
-        
+
         The `path` argument is used to track the path to the current object in
         the JSON structure. It is used to provide more informative error
         messages in case of a mismatch. The `skips` argument is used to skip
@@ -268,12 +268,12 @@ class JSONTestCase(TestCase):
             - datetime
             - dataclasses
             - pydantic models
-        
+
         Args:
             j1: The first JSON-like object.
 
             j2: The second JSON-like object.
-            
+
             path: The path to the current object in the JSON structure.
 
             skips: A set of keys to skip in the comparison.
@@ -306,7 +306,7 @@ class JSONTestCase(TestCase):
                 skips=skips,
                 numeric_places=numeric_places,
                 unordered=unordered,
-                unordereds=unordereds
+                unordereds=unordereds,
             )
 
         ps = str(path)
@@ -355,7 +355,7 @@ class JSONTestCase(TestCase):
                     getattr(j1, f.name),
                     getattr(j2, f.name),
                     path[f.name],
-                    unordered=f.name in unordereds
+                    unordered=f.name in unordereds,
                 )
 
         elif isinstance(j1, BaseModel):
@@ -369,7 +369,7 @@ class JSONTestCase(TestCase):
                     getattr(j1, f),
                     getattr(j2, f),
                     path[f],
-                    unordered=f in unordereds
+                    unordered=f in unordereds,
                 )
 
         elif isinstance(j1, pydantic.v1.BaseModel):
@@ -383,7 +383,7 @@ class JSONTestCase(TestCase):
                     getattr(j1, f),
                     getattr(j2, f),
                     path[f],
-                    unordered=f in unordereds
+                    unordered=f in unordereds,
                 )
 
         else:

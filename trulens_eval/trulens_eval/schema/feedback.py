@@ -176,7 +176,7 @@ class FeedbackMode(str, Enum):
 
     Specify this using the `feedback_mode` to [App][trulens_eval.app.App]
     constructors.
-    
+
     !!! Note
         This class extends [str][str] to allow users to compare its values with
         their string representations, i.e. in `if mode == "none": ...`. Internal
@@ -202,7 +202,7 @@ class FeedbackMode(str, Enum):
 class FeedbackResultStatus(str, Enum):
     """For deferred feedback evaluation, these values indicate status of
     evaluation.
-    
+
     !!! Note
         This class extends [str][str] to allow users to compare its values with
         their string representations, i.e. in `if status == "done": ...`. Internal

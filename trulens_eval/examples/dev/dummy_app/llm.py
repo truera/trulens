@@ -8,7 +8,7 @@ from trulens_eval.tru_custom_app import instrument
 
 class DummyLLM(Dummy):
     """Dummy LLM.
-    
+
     Uses DummyAPI to make calls that have similar call stacks to real API
     invocations. DummyAPI use incorporates dummy costs.
     """
@@ -24,9 +24,9 @@ class DummyLLM(Dummy):
         self.api = DummyAPI(*args, **kwargs)
 
     @instrument
-    def stream(self,
-               prompt: str,
-               temperature: Optional[float] = None) -> Iterable[str]:
+    def stream(
+        self, prompt: str, temperature: Optional[float] = None
+    ) -> Iterable[str]:
         """Fake LLM generation streaming."""
 
         if temperature is None:
@@ -36,7 +36,7 @@ class DummyLLM(Dummy):
 
         comp = self.api.completion(
             model=self.model, temperature=temperature, prompt=prompt
-        )['completion']
+        )["completion"]
 
         for c in comp.split():
             self.dummy_wait(delay=0.05)
@@ -44,9 +44,7 @@ class DummyLLM(Dummy):
 
     @instrument
     async def astream(
-        self,
-        prompt: str,
-        temperature: Optional[float] = None
+        self, prompt: str, temperature: Optional[float] = None
     ) -> AsyncIterable[str]:
         """Fake LLM generation streaming."""
 
@@ -57,7 +55,7 @@ class DummyLLM(Dummy):
 
         comp = await self.api.acompletion(
             model=self.model, temperature=temperature, prompt=prompt
-        )['completion']
+        )["completion"]
 
         for c in comp.split():
             await self.dummy_await(delay=0.05)
@@ -72,7 +70,7 @@ class DummyLLM(Dummy):
 
         return self.api.completion(
             model=self.model, temperature=temperature, prompt=prompt
-        )['completion']
+        )["completion"]
 
     @instrument
     async def agenerate(
@@ -87,4 +85,4 @@ class DummyLLM(Dummy):
             await self.api.acompletion(
                 model=self.model, temperature=temperature, prompt=prompt
             )
-        )['completion']
+        )["completion"]

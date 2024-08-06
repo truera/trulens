@@ -8,7 +8,7 @@ from trulens_eval.tru_custom_app import TruCustomApp
 
 class DummyAgent(Dummy):
     """Dummy agent implementation.
-    
+
     This agent serves to demonstrate both the span type for agents but also the
     use of _TruLens-Eval_ internally in an app that is instrumented using
     _TruLens-Eval_.
@@ -37,7 +37,7 @@ class DummyAgent(Dummy):
         description: Optional[str] = None,
         use_app: bool = False,
         use_recorder: bool = False,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
         super().__init__(*args, **kwargs)
 

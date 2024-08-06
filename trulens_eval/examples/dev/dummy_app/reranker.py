@@ -19,7 +19,7 @@ class DummyReranker(Dummy):
         self,
         query_text: str,
         chunks: List[str],
-        chunk_scores: Optional[List[float]] = None
+        chunk_scores: Optional[List[float]] = None,
     ) -> List[Tuple[str, float]]:
         """Fake chunk reranker."""
 
@@ -34,14 +34,14 @@ class DummyReranker(Dummy):
             for chunk in chunks
         ]
 
-        return sorted(chunks_and_scores, key=lambda cs: cs[1])[:self.top_n]
+        return sorted(chunks_and_scores, key=lambda cs: cs[1])[: self.top_n]
 
     @instrument
     async def arerank(
         self,
         query_text: str,
         chunks: List[str],
-        chunk_scores: Optional[List[float]] = None
+        chunk_scores: Optional[List[float]] = None,
     ) -> List[Tuple[str, float]]:
         """Fake chunk reranker."""
 
@@ -56,4 +56,4 @@ class DummyReranker(Dummy):
             for chunk in chunks
         ]
 
-        return sorted(chunks_and_scores, key=lambda cs: cs[1])[:self.top_n]
+        return sorted(chunks_and_scores, key=lambda cs: cs[1])[: self.top_n]

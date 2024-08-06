@@ -45,12 +45,12 @@ class NonDeterminism(pydantic.BaseModel):
     np_random: Any = Field(exclude=True)
     """Numpy Random number generator."""
 
-    seed: int = 0xdeadbeef
+    seed: int = 0xDEADBEEF
     """Control randomness."""
 
     def __init__(self, **kwargs):
-        kwargs['random'] = None
-        kwargs['np_random'] = None
+        kwargs["random"] = None
+        kwargs["np_random"] = None
 
         super().__init__(**kwargs)
 
@@ -71,8 +71,9 @@ class DummyAPI(pydantic.BaseModel):
     this class are instrumented for cost tracking testing.
     """
 
-    loading_time_uniform_params: Tuple[pydantic.NonNegativeFloat,
-                                       pydantic.NonNegativeFloat] = (0.7, 3.7)
+    loading_time_uniform_params: Tuple[
+        pydantic.NonNegativeFloat, pydantic.NonNegativeFloat
+    ] = (0.7, 3.7)
     """How much time to indicate as needed to load the model.
     
     Parameters of a uniform distribution.
@@ -109,8 +110,13 @@ class DummyAPI(pydantic.BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        assert self.error_prob + self.freeze_prob + self.overloaded_prob + self.loading_prob <= 1.0, \
-            "Total probabilites should not exceed 1.0 ."
+        assert (
+            self.error_prob
+            + self.freeze_prob
+            + self.overloaded_prob
+            + self.loading_prob
+            <= 1.0
+        ), "Total probabilites should not exceed 1.0 ."
 
     async def apost(
         self, url: str, payload: JSON, timeout: Optional[float] = None
@@ -139,10 +145,16 @@ class DummyAPI(pydantic.BaseModel):
         r = self.ndt.discrete_choice(
             seq=["normal", "freeze", "error", "loading", "overloaded"],
             probs=[
-                1 - self.freeze_prob - self.error_prob - self.loading_prob -
-                self.overloaded_prob, self.freeze_prob, self.error_prob,
-                self.loading_prob, self.overloaded_prob
-            ]
+                1
+                - self.freeze_prob
+                - self.error_prob
+                - self.loading_prob
+                - self.overloaded_prob,
+                self.freeze_prob,
+                self.error_prob,
+                self.loading_prob,
+                self.overloaded_prob,
+            ],
         )
 
         if r == "freeze":
@@ -177,15 +189,14 @@ class DummyAPI(pydantic.BaseModel):
             return self.post(url, payload, timeout=timeout)
 
         elif r == "normal":
-
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
             else:
                 return self._fake_completion(
-                    model=payload['model'],
-                    prompt=payload['prompt'],
-                    temperature=payload['temperature']
+                    model=payload["model"],
+                    prompt=payload["prompt"],
+                    temperature=payload["temperature"],
                 )
 
         else:
@@ -197,21 +208,16 @@ class DummyAPI(pydantic.BaseModel):
         generated_text: str = f"This is my response to a prompt of length {len(prompt)} with a model {model} with temperature {temperature}."
 
         return {
-            'completion': generated_text,
-            'status': 'success',
-            'usage':
-                {
-                    # Fake usage information.
-                    'n_tokens':
-                        len(generated_text.split()) + len(prompt.split()),
-                    'n_prompt_tokens':
-                        len(prompt.split()),
-                    'n_completion_tokens':
-                        len(generated_text.split()),
-                    'cost':
-                        len(generated_text) * 0.0002 +
-                        len(prompt.split()) * 0.0001
-                }
+            "completion": generated_text,
+            "status": "success",
+            "usage": {
+                # Fake usage information.
+                "n_tokens": len(generated_text.split()) + len(prompt.split()),
+                "n_prompt_tokens": len(prompt.split()),
+                "n_completion_tokens": len(generated_text.split()),
+                "cost": len(generated_text) * 0.0002
+                + len(prompt.split()) * 0.0001,
+            },
         }
 
     def completion(
@@ -223,12 +229,12 @@ class DummyAPI(pydantic.BaseModel):
         return self.post(
             url="https://fakeservice.com/completion",
             payload={
-                'mode': 'completion',
-                'model': model,
-                'prompt': prompt,
-                'temperature': temperature,
-                'args': args  # include extra args to see them in post span
-            }
+                "mode": "completion",
+                "model": model,
+                "prompt": prompt,
+                "temperature": temperature,
+                "args": args,  # include extra args to see them in post span
+            },
         )
 
     async def acompletion(
@@ -240,12 +246,12 @@ class DummyAPI(pydantic.BaseModel):
         return await self.apost(
             url="https://fakeservice.com/completion",
             payload={
-                'mode': 'completion',
-                'model': model,
-                'prompt': prompt,
-                'temperature': temperature,
-                'args': args  # include extra args to see them in post span
-            }
+                "mode": "completion",
+                "model": model,
+                "prompt": prompt,
+                "temperature": temperature,
+                "args": args,  # include extra args to see them in post span
+            },
         )
 
     def _fake_classification(self):
@@ -255,16 +261,9 @@ class DummyAPI(pydantic.BaseModel):
         r3 = 1 - (r1 + r2)
 
         return [
-            {
-                'label': 'LABEL_1',
-                'score': r1
-            }, {
-                'label': 'LABEL_2',
-                'score': r2
-            }, {
-                'label': 'LABEL_0',
-                'score': r3
-            }
+            {"label": "LABEL_1", "score": r1},
+            {"label": "LABEL_2", "score": r2},
+            {"label": "LABEL_0", "score": r3},
         ]
 
     def classification(
@@ -274,14 +273,13 @@ class DummyAPI(pydantic.BaseModel):
 
         # Fake http post request, might raise an exception or cause delays.
         return self.post(
-            url=
-            "https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
+            url="https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
             payload={
-                'mode': 'classification',
-                'model': model,
-                'inputs': text,
-                'args': args  # include extra args to see them in post span
-            }
+                "mode": "classification",
+                "model": model,
+                "inputs": text,
+                "args": args,  # include extra args to see them in post span
+            },
         )
 
     async def aclassification(
@@ -291,20 +289,19 @@ class DummyAPI(pydantic.BaseModel):
 
         # Fake http post request, might raise an exception or cause delays.
         return await self.apost(
-            url=
-            "https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
+            url="https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
             payload={
-                'mode': 'classification',
-                'model': model,
-                'inputs': text,
-                'args': args  # include extra args to see them in post span
-            }
+                "mode": "classification",
+                "model": model,
+                "inputs": text,
+                "args": args,  # include extra args to see them in post span
+            },
         )
 
 
-class DummyAPICreator():
+class DummyAPICreator:
     """Creator of DummyAPI methods.
-    
+
     This is used for testing instrumentation of classes like
     `boto3.ClientCreator`.
     """
@@ -315,7 +312,7 @@ class DummyAPICreator():
 
     def create_method(self, method_name: str) -> DummyAPI:
         """Dynamically create a method that behaves like a DummyAPI method.
-        
+
         This method should be instrumented by `DummyEndpoint` for testing method
         creation like that of `boto3.ClientCreator._create_api_method`.
         """
@@ -353,7 +350,7 @@ class DummyEndpointCallback(EndpointCallback):
 
 class DummyEndpoint(Endpoint):
     """Endpoint for testing purposes.
-    
+
     Does not make any network calls and just pretends to.
     """
 
@@ -367,7 +364,7 @@ class DummyEndpoint(Endpoint):
         self,
         name: str = "dummyendpoint",
         rpm: float = DEFAULT_RPM * 10,
-        **kwargs
+        **kwargs,
     ):
         if safe_hasattr(self, "callback_class"):
             # Already created with SingletonPerName mechanism
@@ -375,10 +372,10 @@ class DummyEndpoint(Endpoint):
 
         assert rpm > 0
 
-        kwargs['name'] = name
-        kwargs['callback_class'] = DummyEndpointCallback
+        kwargs["name"] = name
+        kwargs["callback_class"] = DummyEndpointCallback
 
-        kwargs['api'] = DummyAPI(**kwargs)
+        kwargs["api"] = DummyAPI(**kwargs)
         # Will use fake api for fake feedback evals.
 
         super().__init__(
@@ -387,7 +384,7 @@ class DummyEndpoint(Endpoint):
 
         logger.info(
             "Using DummyEndpoint with %s",
-            locals_except('self', 'name', 'kwargs', '__class__')
+            locals_except("self", "name", "kwargs", "__class__"),
         )
 
         # Instrument existing DummyAPI class. These are used by the custom_app
@@ -401,8 +398,8 @@ class DummyEndpoint(Endpoint):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
-                wrapped_method_filter=lambda f: f.__name__ in
-                ['completion', 'classify']
+                wrapped_method_filter=lambda f: f.__name__
+                in ["completion", "classify"],
             )
 
     def post(
@@ -420,7 +417,10 @@ class DummyEndpoint(Endpoint):
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
-            "\tresponse: %s", func, bindings, response
+            "\tresponse: %s",
+            func,
+            bindings,
+            response,
         )
 
         if "usage" in response:
@@ -440,5 +440,5 @@ class DummyEndpoint(Endpoint):
         if not counted_something:
             logger.warning(
                 "Could not find usage information in DummyAPI response:\n%s",
-                pformat(response)
+                pformat(response),
             )

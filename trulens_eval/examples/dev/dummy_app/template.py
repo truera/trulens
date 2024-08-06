@@ -19,13 +19,13 @@ class DummyTemplate(Dummy):
     @instrument
     def fill(self, question: str, context: str) -> str:
         """Fill in the template with the question and answer.
-        
+
         Args:
             question: The question to fill in.
-            
+
             context: The context to fill in.
         """
 
-        return self.template \
-            .replace("{question}", question) \
-            .replace("{context}", context)
+        return self.template.replace("{question}", question).replace(
+            "{context}", context
+        )

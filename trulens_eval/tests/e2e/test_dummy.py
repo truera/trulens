@@ -43,13 +43,19 @@ class TestDummy(JSONTestCase):
             golden_filename="dummy.json",
             skips=set(
                 [
-                    "record_id", 'start_time', 'end_time', 'ts', 'pid', 'tid',
-                    'call_id', 'id'
+                    "record_id",
+                    "start_time",
+                    "end_time",
+                    "ts",
+                    "pid",
+                    "tid",
+                    "call_id",
+                    "id",
                 ]
             ),
-            unordereds=set(["calls"])
+            unordereds=set(["calls"]),
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -342,7 +342,7 @@ def run_before(callback: Callable):
 STACK = "__tru_stack"
 
 
-def superstack() -> Iterator['frame']:
+def superstack() -> Iterator["frame"]:
     """Get the current stack (not including this function) with frames reaching
     across Tasks and threads.
     """
@@ -363,8 +363,10 @@ def superstack() -> Iterator['frame']:
         if id(f.f_code) == id(_future_target_wrapper.__code__):
             locs = f.f_locals
 
-            assert "pre_start_stack" in locs, "Pre thread start stack expected but not found."
-            for fi in locs['pre_start_stack']:
+            assert (
+                "pre_start_stack" in locs
+            ), "Pre thread start stack expected but not found."
+            for fi in locs["pre_start_stack"]:
                 q.put(fi.frame)
 
             continue
@@ -372,7 +374,7 @@ def superstack() -> Iterator['frame']:
     return
 
 
-def caller_frame(offset=0) -> 'frame':
+def caller_frame(offset=0) -> "frame":
     """
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .

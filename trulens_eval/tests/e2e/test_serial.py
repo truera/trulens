@@ -42,7 +42,7 @@ class TestSerial(JSONTestCase):
             overloaded_prob=0.0,
             rpm=1000,
             alloc=0,
-            delay=0.0
+            delay=0.0,
         )
 
         d_hugs = Dummy(
@@ -52,24 +52,25 @@ class TestSerial(JSONTestCase):
             overloaded_prob=0.0,
             rpm=1000,
             alloc=0,
-            delay=0.0
+            delay=0.0,
         )
 
-        feedback_language_match = Feedback(d_hugs.language_match
-                                          ).on_input_output()
-        feedback_context_relevance = Feedback(d.context_relevance
-                                             ).on_input_output()
+        feedback_language_match = Feedback(
+            d_hugs.language_match
+        ).on_input_output()
+        feedback_context_relevance = Feedback(
+            d.context_relevance
+        ).on_input_output()
 
         ta = TruCustomApp(
             ca,
             app_id="customapp",
-            feedbacks=[feedback_language_match, feedback_context_relevance]
+            feedbacks=[feedback_language_match, feedback_context_relevance],
         )
 
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
-                actual=ta.model_dump(),
-                golden_filename="customapp.json"
+                actual=ta.model_dump(), golden_filename="customapp.json"
             )
 
         with ta as recorder:
@@ -77,8 +78,7 @@ class TestSerial(JSONTestCase):
 
         with self.subTest("app result serialization"):
             self.assertGoldenJSONEqual(
-                actual=res,
-                golden_filename="customapp_result.json"
+                actual=res, golden_filename="customapp_result.json"
             )
 
         record = recorder.get()
@@ -89,10 +89,16 @@ class TestSerial(JSONTestCase):
                 golden_filename="customapp_record.json",
                 skips=set(
                     [
-                        'end_time', 'start_time', 'record_id', 'pid', 'tid',
-                        'id', 'ts', 'call_id'
+                        "end_time",
+                        "start_time",
+                        "record_id",
+                        "pid",
+                        "tid",
+                        "id",
+                        "ts",
+                        "call_id",
                     ]
-                )
+                ),
             )
 
         feedbacks = record.wait_for_feedback_results()
@@ -102,7 +108,7 @@ class TestSerial(JSONTestCase):
                 self.assertGoldenJSONEqual(
                     actual=fdef.model_dump(),
                     golden_filename=f"customapp_{name}.def.json",
-                    skips=set(['feedback_definition_id', 'id'])
+                    skips=set(["feedback_definition_id", "id"]),
                 )
             with self.subTest(f"feedback result {name} serialization"):
                 self.assertGoldenJSONEqual(
@@ -110,17 +116,21 @@ class TestSerial(JSONTestCase):
                     golden_filename=f"customapp_{name}.result.json",
                     skips=set(
                         [
-                            'feedback_definition_id',
-                            'id',
-                            'last_ts',
-                            'record_id',
-                            'feedback_result_id',
+                            "feedback_definition_id",
+                            "id",
+                            "last_ts",
+                            "record_id",
+                            "feedback_result_id",
                             # Skip these if non-determinism becomes a problem:
-                            'result', 'LABEL_0', 'LABEL_1', 'LABEL_2', 'ret'
+                            "result",
+                            "LABEL_0",
+                            "LABEL_1",
+                            "LABEL_2",
+                            "ret",
                         ]
-                    )
+                    ),
                 )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

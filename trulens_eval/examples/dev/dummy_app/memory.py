@@ -26,8 +26,8 @@ class DummyMemory(Dummy):
         self.dummy_wait()
 
         self.messages.append(
-            data +
-            f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
+            data
+            + f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
         )
 
     @instrument
@@ -38,6 +38,6 @@ class DummyMemory(Dummy):
         await self.dummy_await()
 
         self.messages.append(
-            data +
-            f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
+            data
+            + f" and I'm keeping around {sys.getsizeof(self.temporary)} bytes"
         )

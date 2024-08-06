@@ -3,7 +3,14 @@ from collections import defaultdict
 from concurrent.futures import wait
 import logging
 from typing import (
-    Any, AsyncIterable, Dict, Iterable, List, Optional, Tuple, Type
+    Any,
+    AsyncIterable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
 )
 
 from examples.dev.dummy_app.agent import DummyAgent
@@ -24,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class DummyApp(Dummy):
     """Dummy app implementation.
-    
+
     Contains:
         - A memory component of type
           [DummyMemory][examples.dev.dummy_app.memory.DummyMemory].
@@ -76,9 +83,8 @@ class DummyApp(Dummy):
         num_tools: int = 3,
         use_parallel: bool = False,
         comp_kwargs: Optional[Dict[Type, Dict[str, Any]]] = None,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
-
         super().__init__(**kwargs)
 
         assert num_tools >= 1, "Need at least one tool."
@@ -96,16 +102,19 @@ class DummyApp(Dummy):
         self.template = DummyTemplate(
             "Please answer the following question given the context.\n"
             "QUESTION: {question}\n"
-            "CONTEXT: {context}\n", **kwargs, **comp_kwargs[DummyTemplate]
+            "CONTEXT: {context}\n",
+            **kwargs,
+            **comp_kwargs[DummyTemplate],
         )
 
         # Put some tools into the app and make sure the first is the one that
         # dumps the stack.
-        self.tools = [DummyStackTool(**kwargs, **comp_kwargs[DummyStackTool])
-                     ] + [
-                         DummyTool(**kwargs, **comp_kwargs[DummyTool])
-                         for _ in range(num_tools - 1)
-                     ]
+        self.tools = [
+            DummyStackTool(**kwargs, **comp_kwargs[DummyStackTool])
+        ] + [
+            DummyTool(**kwargs, **comp_kwargs[DummyTool])
+            for _ in range(num_tools - 1)
+        ]
 
         self.agents = [
             DummyAgent(
@@ -113,8 +122,9 @@ class DummyApp(Dummy):
                 app=DummyApp(num_agents=0),
                 description=f"ensemble agent {i}",
                 **kwargs,
-                **comp_kwargs[DummyAgent]
-            ) for i in range(num_agents)
+                **comp_kwargs[DummyAgent],
+            )
+            for i in range(num_agents)
         ]
 
         self.reranker = DummyReranker(**kwargs, **comp_kwargs[DummyReranker])
@@ -126,38 +136,35 @@ class DummyApp(Dummy):
         self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
         """Process a (retrieved) chunk by a specified tool.
-        
+
         Args:
             chunk_and_score: The chunk to process including its text and score.
 
             tool_num: The tool number to use.
         """
 
-        return (
-            self.tools[tool_num % len(self.tools)].invoke(chunk_and_score[0])
-        )
+        return self.tools[tool_num % len(self.tools)].invoke(chunk_and_score[0])
 
     @instrument
     async def aprocess_chunk_by_tool(
         self, chunk_and_score: Tuple[str, float], tool_num: int = 0
     ) -> str:
         """Process a (retrieved) chunk by a specified tool.
-        
+
         Args:
             chunk_and_score: The chunk to process including its text and score.
 
             tool_num: The tool number to use.
         """
 
-        return (
-            await
-            self.tools[tool_num % len(self.tools)].ainvoke(chunk_and_score[0])
+        return await self.tools[tool_num % len(self.tools)].ainvoke(
+            chunk_and_score[0]
         )
 
     @instrument
     def get_context(self, query: str) -> List[str]:
         """Invoke and process contexts retrieval.
-        
+
         Args:
             query: The input to retrieve context for.
         """
@@ -178,8 +185,9 @@ class DummyApp(Dummy):
                 ex.submit(
                     self.process_chunk_by_tool,
                     chunk_and_score=chunk,
-                    tool_num=i
-                ) for i, chunk in enumerate(chunks)
+                    tool_num=i,
+                )
+                for i, chunk in enumerate(chunks)
             )
 
             wait(futures)
@@ -196,7 +204,7 @@ class DummyApp(Dummy):
     @instrument
     async def aget_context(self, query: str) -> List[str]:
         """Invoke and process contexts retrieval.
-        
+
         Args:
             query: The input to retrieve context for.
         """
@@ -213,9 +221,11 @@ class DummyApp(Dummy):
             # sets?
             tasks = list(
                 asyncio.create_task(
-                    self.
-                    aprocess_chunk_by_tool(chunk_and_score=chunk, tool_num=i)
-                ) for i, chunk in enumerate(chunks)
+                    self.aprocess_chunk_by_tool(
+                        chunk_and_score=chunk, tool_num=i
+                    )
+                )
+                for i, chunk in enumerate(chunks)
             )
 
             results, _ = await asyncio.wait(tasks)
@@ -233,9 +243,9 @@ class DummyApp(Dummy):
     @instrument
     def respond_to_query(self, query: str) -> str:
         """Respond to a query.
-        
+
         This is the main method.
-        
+
         Args:
             query: The query to respond to.
         """
@@ -268,9 +278,9 @@ class DummyApp(Dummy):
     @instrument
     async def arespond_to_query(self, query: str) -> str:
         """Respond to a query.
-        
+
         This is the main method.
-        
+
         Args:
             query: The query to respond to.
         """
@@ -305,9 +315,9 @@ class DummyApp(Dummy):
     @instrument
     def stream_respond_to_query(self, query: str) -> Iterable[str]:
         """Respond to a query.
-        
+
         This is the main method.
-        
+
         Args:
             query: The query to respond to.
         """
@@ -343,9 +353,9 @@ class DummyApp(Dummy):
     @instrument
     async def astream_respond_to_query(self, query: str) -> AsyncIterable[str]:
         """Respond to a query.
-        
+
         This is the main method.
-        
+
         Args:
             query: The query to respond to.
         """

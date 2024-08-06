@@ -65,7 +65,14 @@ from .tool import DummyStackTool
 from .tool import DummyTool
 
 __all__ = [
-    "DummyAgent", "DummyApp", "Dummy", "DummyLLM", "DummyReranker",
-    "DummyRetriever", "DummyTool", "DummyMemory", "DummyTemplate",
-    "DummyStackTool"
+    "DummyAgent",
+    "DummyApp",
+    "Dummy",
+    "DummyLLM",
+    "DummyReranker",
+    "DummyRetriever",
+    "DummyTool",
+    "DummyMemory",
+    "DummyTemplate",
+    "DummyStackTool",
 ]

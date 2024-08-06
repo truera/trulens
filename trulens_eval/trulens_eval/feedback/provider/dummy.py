@@ -8,7 +8,7 @@ from trulens_eval.utils.python import locals_except
 
 class DummyProvider(LLMProvider):
     """Fake LLM provider.
-    
+
     Does not make any networked requests but pretends to. Uses
     [DummyEndpoint][trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint].
     """
@@ -25,11 +25,11 @@ class DummyProvider(LLMProvider):
         alloc: int = 1024 * 1024,
         rpm: float = 600,
         delay: float = 1.0,
-        seed: int = 0xdeadbeef,
-        **kwargs
+        seed: int = 0xDEADBEEF,
+        **kwargs,
     ):
-        kwargs['name'] = name
-        kwargs['endpoint'] = DummyEndpoint(
+        kwargs["name"] = name
+        kwargs["endpoint"] = DummyEndpoint(
             name="dummyendpoint", **locals_except("self", "name", "kwargs")
         )
 
@@ -39,7 +39,7 @@ class DummyProvider(LLMProvider):
         self,
         prompt: Optional[str] = None,
         messages: Optional[Sequence[Dict]] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """
         Fake chat completion.
@@ -53,4 +53,4 @@ class DummyProvider(LLMProvider):
 
         return self.endpoint.api.completion(
             model=self.model_engine, prompt=prompt, **kwargs
-        )['completion']
+        )["completion"]

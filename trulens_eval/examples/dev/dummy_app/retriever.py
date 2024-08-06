@@ -8,7 +8,7 @@ from trulens_eval.tru_custom_app import instrument
 
 class DummyRetriever(Dummy):
     """Dummy retriever.
-    
+
     Fakes the retrieval of a few chunks.
     """
 
@@ -31,9 +31,10 @@ class DummyRetriever(Dummy):
             [
                 f"Relevant chunk: {data.upper()}",
                 f"Relevant chunk: {data[::-1] * 3}",
-                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
-            ] * 3
-        )[:self.num_contexts]
+                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something.",
+            ]
+            * 3
+        )[: self.num_contexts]
 
     @instrument
     async def aretrieve_chunks(self, data):
@@ -49,6 +50,7 @@ class DummyRetriever(Dummy):
             [
                 f"Relevant chunk: {data.upper()}",
                 f"Relevant chunk: {data[::-1] * 3}",
-                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something."
-            ] * 3
-        )[:self.num_contexts]
+                f"Relevant chunk: I allocated {sys.getsizeof(temporary)} bytes to pretend I'm doing something.",
+            ]
+            * 3
+        )[: self.num_contexts]

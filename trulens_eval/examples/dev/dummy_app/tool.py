@@ -8,8 +8,15 @@ from trulens_eval.utils.python import superstack
 
 # A few string->string functions to use as "tools".
 str_maps = [
-    str.capitalize, str.casefold, str.lower, str.lstrip, str.rstrip, str.strip,
-    str.swapcase, str.title, str.upper
+    str.capitalize,
+    str.casefold,
+    str.lower,
+    str.lstrip,
+    str.rstrip,
+    str.strip,
+    str.swapcase,
+    str.title,
+    str.upper,
 ]
 
 
@@ -21,7 +28,7 @@ class DummyTool(Dummy):
         *args,
         description: Optional[str] = None,
         imp: Optional[Callable] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -87,7 +94,8 @@ class DummyStackTool(DummyTool):
                 fmod = fmod.__name__
             ffunc = frame.f_code.co_name
             if not fmod.startswith("examples.") or fmod.startswith(
-                    "trulens_eval"):
+                "trulens_eval"
+            ):
                 continue
 
             ret += f"""

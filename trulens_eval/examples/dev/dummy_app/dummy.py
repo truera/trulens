@@ -6,23 +6,23 @@ from typing import Optional
 from trulens_eval.utils.python import OpaqueWrapper
 
 
-class Dummy():
+class Dummy:
     """Dummy component base class.
-     
+
     Provides operations to inject performance-related characteristics into the
     dummy app and maintains random number generators for controlling
     non-determinism.
 
     Args:
         delay: How long to wait in the dummy wait operations.
-        
+
         alloc: How much memory to allocate in the dummy allocate operations.
-        
+
         seed: Random seed for the dummy random number generator.
     """
 
     def __init__(
-        self, delay: float = 0.0, alloc: int = 0, seed: int = 0xdeadbeef
+        self, delay: float = 0.0, alloc: int = 0, seed: int = 0xDEADBEEF
     ):
         self.delay = delay
         self.alloc = alloc
