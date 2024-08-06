@@ -50,7 +50,10 @@ PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 
 
 def re_configured_rating(
-    s: str, min_score_val: int = 0, max_score_val: int = 3
+    s: str,
+    min_score_val: int = 0,
+    max_score_val: int = 3,
+    allow_decimal: bool = False,
 ) -> int:
     """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable to the ranges like 4-point Likert scale or binary (0 or 1).
 
@@ -74,11 +77,20 @@ def re_configured_rating(
     vals = set()
     for match in matches:
         try:
-            vals.add(
-                validate_rating(
-                    int(match), min_val=min_score_val, max_val=max_score_val
+            if allow_decimal:
+                vals.add(
+                    validate_rating(
+                        float(match),
+                        min_val=min_score_val,
+                        max_val=max_score_val,
+                    )
                 )
-            )
+            else:
+                vals.add(
+                    validate_rating(
+                        int(match), min_val=min_score_val, max_val=max_score_val
+                    )
+                )
         except ValueError:
             pass
 
@@ -111,4 +123,6 @@ def re_0_10_rating(s: str) -> int:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """
 
-    return re_configured_rating(s, 0, 10)
+    return re_configured_rating(
+        s, min_score_val=0, max_score_val=10, allow_decimal=True
+    )
