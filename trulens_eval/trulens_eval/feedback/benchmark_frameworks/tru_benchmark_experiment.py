@@ -35,12 +35,11 @@ class TruBenchmarkExperiment:
         return cortex.context_relevance(question=input, context=output, temperature=temperature)
 
 
-    tru_labels = [1, 0, 0, ...] # ground truth labels
+    tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
     mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
 
     tru_benchmark_artic = tru.BenchmarkExperiment(
         app_id="MAE",
-        ground_truth=golden_set,
         feedback_fn=context_relevance_ff_to_score,
         agg_funcs=[mae_agg_func],
         benchmark_params=BenchmarkParams(temperature=0.5),
@@ -49,7 +48,6 @@ class TruBenchmarkExperiment:
 
     def __init__(
         self,
-        ground_truth: Union[List, Callable, FunctionOrMethod],
         feedback_fn: Callable,
         agg_funcs: List[AggCallable],
         benchmark_params: BenchmarkParams,
@@ -57,13 +55,11 @@ class TruBenchmarkExperiment:
         """Create a benchmark experiment class which defines custom
         feedback functions and aggregators to evaluate the feedback function on a ground truth dataset.
         Args:
-            ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth data to evaluate the feedback function on
             feedback_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
             agg_funcs (List[AggCallable]): list of aggregation functions to compute metrics on the feedback scores
             benchmark_params (BenchmarkParams): benchmark configuration parameters
         """
-        # TODO: instance type check of ground_truth argument + handle groundtruth_impl
-        self.ground_truth = ground_truth
+
         self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
@@ -108,16 +104,22 @@ class TruBenchmarkExperiment:
         return ret
 
     @instrument
-    def collect_feedback_scores(
+    def __call__(
         self,
+        ground_truth: Union[List, Callable, FunctionOrMethod],
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
 
+        ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
+
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
+
+        # TODO: instance type check of ground_truth argument + handle groundtruth_impl
+
         scores = []
         meta_scores = []
         with ThreadPoolExecutor() as executor:
@@ -127,7 +129,7 @@ class TruBenchmarkExperiment:
                     row,
                     self.feedback_fn,
                 ): row
-                for row in self.ground_truth
+                for row in ground_truth
             }
             for future in as_completed(future_to_row):
                 try:

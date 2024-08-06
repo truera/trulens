@@ -353,7 +353,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
     )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback fuctions."""
 
-    true_labels: List[int]
+    true_labels: List[int]  # ground truth labels in [0, 1, 0, ...] format
     custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
 
     k: Optional[int] = (
@@ -478,8 +478,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Calculate the mean reciprocal rank. Can be used for meta-evaluation.
 
         Args:
-            relevance_scores (List[float]): scores returned by feedback function
-            true_labels (List[int]): true relevance labels
+            scores (List[float]): scores returned by feedback function
 
         Returns:
             float: Mean reciprocal rank
@@ -502,7 +501,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         Args:
             scores (List[float]): scores returned by feedback function
-            true_labels (List[int]): true relevance labels
 
         Returns:
             float: Area under the ROC curve
