@@ -10,10 +10,12 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
 
 For example, for Postgres database `trulens` running on `localhost` with username `trulensuser` and password `password` set up a connection like so.
 
-```
-from trulens.core import Tru
-tru = Tru(database_url="postgresql://trulensuser:password@localhost/trulens")
-```
+!!! example "Connecting with a Database URL"
+
+    ```python
+    from trulens.core import Tru
+    tru = Tru(database_url="postgresql://trulensuser:password@localhost/trulens")
+    ```
 
 After which you should receive the following message:
 
@@ -27,17 +29,19 @@ Data can also logged to a SQLAlchemy-compatible engine referred to by `database_
 
 See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls) for more details on SQLAlchemy database engines.
 
-```
-from trulens.core import Tru
-from sqlalchemy import create_engine
+!!! example "Connecting with a Database Engine"
 
-engine = create_engine(
-    "postgresql://trulensuser:password@localhost/trulens",
-    connect_args={"connection_factory": MyConnectionFactory},
-)
+    ```python
+    from trulens.core import Tru
+    from sqlalchemy import create_engine
 
-tru = Tru(database_engine=engine)
-```
+    engine = create_engine(
+        "postgresql://trulensuser:password@localhost/trulens",
+        connect_args={"connection_factory": MyConnectionFactory},
+    )
+
+    tru = Tru(database_engine=engine)
+    ```
 
 After which you should receive the following message:
 
