@@ -77,10 +77,10 @@ test-static:
 # API tests.
 test-api:
 	$(CONDA)
-	python -m unittest tests.unit.static.test_api
+	TEST_OPTIONAL=1 python -m unittest tests.unit.static.test_api
 test-write-api:
 	$(CONDA)
-	WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.

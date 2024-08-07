@@ -18,6 +18,8 @@ from typing import (
     Union,
 )
 
+from trulens_eval.utils import python as python_utils
+
 
 def get_module_names(
     path: Path, matching: Optional[Union[re.Pattern, str]] = None
@@ -174,7 +176,7 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
         except Exception:
             return
 
-    for item, val in inspect.getmembers_static(mod):
+    for item, val in python_utils.getmembers_static(mod):
         # Check for aliases: classes/modules defined somewhere outside of
         # mod. Note that this cannot check for aliasing of basic python
         # values which are not references.
@@ -315,7 +317,7 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
     lows: List[Member] = []
 
     static_members = [
-        (k, v, type(v)) for k, v in inspect.getmembers_static(class_)
+        (k, v, type(v)) for k, v in python_utils.getmembers_static(class_)
     ]
 
     slot_members = []
@@ -426,7 +428,7 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
 
     classes = set()
 
-    for name, val in inspect.getmembers_static(mod):
+    for name, val in python_utils.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
         member = Member(mod, qualname, val, type(val))
 

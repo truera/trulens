@@ -203,8 +203,9 @@ class trulens_eval.feedback.embeddings.Embeddings:
 class trulens_eval.feedback.feedback.Feedback:
   highs: {}
   lows:
-    trulens_eval.feedback.feedback.Feedback.agg: typing.Optional[typing.Callable[typing.Iterable[builtins.float],
-      builtins.float], builtins.NoneType]
+    trulens_eval.feedback.feedback.Feedback.agg: typing.Optional[typing.Callable[typing.Union[typing.Iterable[builtins.float],
+      typing.Iterable[typing.Tuple[builtins.float, builtins.float]]], builtins.float],
+      builtins.NoneType]
     trulens_eval.feedback.feedback.Feedback.aggregate: builtins.function
     trulens_eval.feedback.feedback.Feedback.aggregator: typing.Union[trulens_eval.utils.pyschema.Function,
       trulens_eval.utils.pyschema.Method, builtins.NoneType]
@@ -245,6 +246,28 @@ class trulens_eval.feedback.feedback.InvalidSelector:
 class trulens_eval.feedback.feedback.SkipEval:
   highs: {}
   lows: {}
+class trulens_eval.feedback.groundtruth.GroundTruthAggregator:
+  highs: {}
+  lows:
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.auc: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.brier_score: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.custom_agg_funcs: typing.Dict[builtins.str,
+      typing.Callable]
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.ece: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.ir_hit_rate: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.k: typing.Optional[builtins.int,
+      builtins.NoneType]
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.kendall_tau: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.mae: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.mrr: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.n_bins: builtins.int
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.ndcg_at_k: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.precision_at_k: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.recall_at_k: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.register_custom_agg_func: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.spearman_correlation: builtins.function
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.tru_class_info: trulens_eval.utils.pyschema.Class
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator.true_labels: typing.List[builtins.int]
 class trulens_eval.feedback.groundtruth.GroundTruthAgreement:
   highs: {}
   lows:
@@ -269,6 +292,7 @@ class trulens_eval.feedback.provider.base.LLMProvider:
     trulens_eval.feedback.provider.base.LLMProvider.conciseness: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.conciseness_with_cot_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.context_relevance: builtins.function
+    trulens_eval.feedback.provider.base.LLMProvider.context_relevance_verb_confidence: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.context_relevance_with_cot_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.controversiality: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.controversiality_with_cot_reasons: builtins.function
@@ -278,6 +302,7 @@ class trulens_eval.feedback.provider.base.LLMProvider:
     trulens_eval.feedback.provider.base.LLMProvider.criminality_with_cot_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.endpoint: typing.Optional[trulens_eval.feedback.provider.endpoint.base.Endpoint,
       builtins.NoneType]
+    trulens_eval.feedback.provider.base.LLMProvider.generate_confidence_score: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.generate_score: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.generate_score_and_reasons: builtins.function
     trulens_eval.feedback.provider.base.LLMProvider.groundedness_measure_with_cot_reasons: builtins.function
@@ -711,7 +736,8 @@ class trulens_eval.schema.feedback.FeedbackCall:
       builtins.int, builtins.float, builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any],
       typing.Dict[builtins.str, typing.Any]]]
     trulens_eval.schema.feedback.FeedbackCall.meta: typing.Dict[builtins.str, typing.Any]
-    trulens_eval.schema.feedback.FeedbackCall.ret: builtins.float
+    trulens_eval.schema.feedback.FeedbackCall.ret: typing.Union[builtins.float, typing.List[builtins.float],
+      typing.List[typing.Tuple]]
 class trulens_eval.schema.feedback.FeedbackCombinations:
   highs: {}
   lows:
@@ -880,6 +906,7 @@ class trulens_eval.tru.Tru:
     trulens_eval.tru.Tru.add_feedback: builtins.function
     trulens_eval.tru.Tru.add_feedbacks: builtins.function
     trulens_eval.tru.Tru.add_record: builtins.function
+    trulens_eval.tru.Tru.create_benchmark_experiment: builtins.function
     trulens_eval.tru.Tru.delete_app: builtins.function
     trulens_eval.tru.Tru.find_unused_port: builtins.function
     trulens_eval.tru.Tru.get_app: builtins.function
@@ -1541,6 +1568,7 @@ module trulens_eval.feedback:
     trulens_eval.feedback.Cortex: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.Embeddings: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.Feedback: pydantic._internal._model_construction.ModelMetaclass
+    trulens_eval.feedback.GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.GroundTruthAgreement: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.Huggingface: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
@@ -1565,6 +1593,7 @@ module trulens_eval.feedback.feedback:
 module trulens_eval.feedback.groundtruth:
   highs: {}
   lows:
+    trulens_eval.feedback.groundtruth.GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
     trulens_eval.feedback.groundtruth.GroundTruthAgreement: pydantic._internal._model_construction.ModelMetaclass
 module trulens_eval.feedback.prompts:
   highs: {}
@@ -1608,7 +1637,6 @@ module trulens_eval.feedback.prompts:
     trulens_eval.feedback.prompts.STEREOTYPES_USER_PROMPT: builtins.str
     trulens_eval.feedback.prompts.SYSTEM_FIND_SUPPORTING: builtins.str
     trulens_eval.feedback.prompts.USER_FIND_SUPPORTING: builtins.str
-    trulens_eval.feedback.prompts.context_relevance_VERB_2S_TOP1: builtins.str
 module trulens_eval.feedback.provider:
   highs:
     trulens_eval.feedback.provider.AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
@@ -1919,7 +1947,7 @@ module trulens_eval.utils.generated:
   lows:
     trulens_eval.utils.generated.ParseError: builtins.type
     trulens_eval.utils.generated.re_0_10_rating: builtins.function
-    trulens_eval.utils.generated.validate_rating: builtins.function
+    trulens_eval.utils.generated.re_configured_rating: builtins.function
 module trulens_eval.utils.imports:
   highs: {}
   lows:

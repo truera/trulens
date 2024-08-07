@@ -36,6 +36,23 @@ T = TypeVar("T")
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
 
+if sys.version_info >= (3, 11):
+    getmembers_static = inspect.getmembers_static
+else:
+
+    def getmembers_static(obj, predicate=None):
+        """Implementation of inspect.getmembers_static for python < 3.11."""
+
+        if predicate is None:
+            predicate = lambda name, value: True
+
+        return [
+            (name, value)
+            for name in dir(obj)
+            if predicate(name, value := getattr(obj, name))
+        ]
+
+
 if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
