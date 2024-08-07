@@ -20,11 +20,9 @@ jobs:
     steps:
       - template: templates/env-setup.yaml
       - template: templates/run-precommits.yaml
-      - template: templates/run-tests.yaml
+      - template: templates/run-optional-tests.yaml
         parameters:
-          testOptional: true
           testSuite: e2e
-      - template: templates/run-tests.yaml
+      - template: templates/run-optional-tests.yaml
         parameters:
-          testOptional: true
           testSuite: notebook

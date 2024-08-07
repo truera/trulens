@@ -1,30 +1,9 @@
 parameters:
-- name: testOptional
-  type: boolean
-  default: false
 - name: testSuite
   type: string # must be one of: unit, e2e, notebook
 
 steps:
   - bash: |
       set -e
-      make test-${{ parameters.testSuite }}
-    env:
-      # enables optional tests, see tests/unit/test.py
-      TEST_OPTIONAL: ${{ parameters.testOptional }}
-
-      # tests make use of various APIs:
-      OPENAI_API_KEY: $(OPENAI_API_KEY)
-      HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
-      PINECONE_API_KEY: $(PINECONE_API_KEY)
-      PINECONE_ENV: $(PINECONE_ENV)
-      HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
-
-      # some tests log into Snowflake.
-      SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
-      SNOWFLAKE_USER: $(SNOWFLAKE_USER)
-      SNOWFLAKE_USER_PASSWORD: $(SNOWFLAKE_USER_PASSWORD)
-      SNOWFLAKE_DATABASE: $(SNOWFLAKE_DATABASE)
-      SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
-      SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
-    displayName: Run Test Suite
+      make test-${{ parameters.testSuite }}-required
+    displayName: Run Required Test Suite
