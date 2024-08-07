@@ -48,7 +48,6 @@ from trulens_eval.utils import python
 from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
-from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import Future  # code style exception
 from trulens_eval.utils.python import OpaqueWrapper
 
