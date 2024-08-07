@@ -6,7 +6,16 @@ import json
 import logging
 from sqlite3 import OperationalError
 from typing import (
-    Any, ClassVar, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+    Any,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
 )
 import warnings
 
@@ -28,8 +37,9 @@ from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.database.migrations import DbRevisions
 from trulens_eval.database.migrations import upgrade_db
 from trulens_eval.database.migrations.data import data_migrate
-from trulens_eval.database.utils import \
-    check_db_revision as alembic_check_db_revision
+from trulens_eval.database.utils import (
+    check_db_revision as alembic_check_db_revision,
+)
 from trulens_eval.database.utils import is_legacy_sqlite
 from trulens_eval.database.utils import is_memory_sqlite
 from trulens_eval.schema import app as mod_app_schema
@@ -51,18 +61,18 @@ logger = logging.getLogger(__name__)
 
 
 class SnowflakeImpl(DefaultImpl):
-    __dialect__ = 'snowflake'
+    __dialect__ = "snowflake"
 
 
 class SQLAlchemyDB(DB):
     """Database implemented using sqlalchemy.
-    
+
     See abstract class [DB][trulens_eval.database.base.DB] for method reference.
     """
 
     table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
-    """The prefix to use for all table names. 
-    
+    """The prefix to use for all table names.
+
     [DB][trulens_eval.database.base.DB] interface requirement.
     """
 
@@ -78,7 +88,7 @@ class SQLAlchemyDB(DB):
     session: Optional[sessionmaker] = None
     """Sqlalchemy session(maker)."""
 
-    model_config: ClassVar[dict] = {'arbitrary_types_allowed': True}
+    model_config: ClassVar[dict] = {"arbitrary_types_allowed": True}
 
     orm: Type[mod_orm.ORM]
     """
@@ -92,13 +102,13 @@ class SQLAlchemyDB(DB):
         self,
         redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
         table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ):
         super().__init__(
             redact_keys=redact_keys,
             table_prefix=table_prefix,
             orm=mod_orm.make_orm_for_prefix(table_prefix=table_prefix),
-            **kwargs
+            **kwargs,
         )
         self._reload_engine()
         if is_memory_sqlite(self.engine):
@@ -118,14 +128,15 @@ class SQLAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = mod_db.
-        DEFAULT_DATABASE_REDACT_KEYS,
+        database_redact_keys: Optional[
+            bool
+        ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
-        **kwargs: Dict[str, Any]
+        **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens_eval.tru.Tru] class to
         create a database.
-        
+
         Emits warnings if appropriate.
         """
 
@@ -141,23 +152,25 @@ class SQLAlchemyDB(DB):
                     "use `database_url` instead as in `database_url='sqlite:///filename'."
                 ),
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
 
         if database_url is None:
-            database_url = f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
+            database_url = (
+                f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
+            )
 
-        if 'table_prefix' not in kwargs:
-            kwargs['table_prefix'] = database_prefix
+        if "table_prefix" not in kwargs:
+            kwargs["table_prefix"] = database_prefix
 
-        if 'redact_keys' not in kwargs:
-            kwargs['redact_keys'] = database_redact_keys
+        if "redact_keys" not in kwargs:
+            kwargs["redact_keys"] = database_redact_keys
 
         new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s Tru initialized with db url %s ." %
-            (text.UNICODE_SQUID, new_db.engine.url)
+            "%s Tru initialized with db url %s ."
+            % (text.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:
             print(
@@ -221,9 +234,7 @@ class SQLAlchemyDB(DB):
         try:
             # Expect to get the the behind exception.
             alembic_check_db_revision(
-                self.engine,
-                prefix=self.table_prefix,
-                prior_prefix=prior_prefix
+                self.engine, prefix=self.table_prefix, prior_prefix=prior_prefix
             )
 
             # If we get here, our db revision does not need upgrade.
@@ -231,7 +242,6 @@ class SQLAlchemyDB(DB):
 
         except DatabaseVersionException as e:
             if e.reason == DatabaseVersionException.Reason.BEHIND:
-
                 revisions = DbRevisions.load(self.engine)
                 from_version = revisions.current
                 ### SCHEMA MIGRATION ###
@@ -251,8 +261,7 @@ class SQLAlchemyDB(DB):
                         self.engine, revision="head", prefix=self.table_prefix
                     )
 
-                self._reload_engine(
-                )  # let sqlalchemy recognize the migrated schema
+                self._reload_engine()  # let sqlalchemy recognize the migrated schema
 
                 ### DATA MIGRATION ###
                 data_migrate(self, from_version)
@@ -268,16 +277,18 @@ class SQLAlchemyDB(DB):
                 prior_prefix = e.prior_prefix
 
                 logger.warning(
-                    "Renaming tables from prefix \"%s\" to \"%s\".",
-                    prior_prefix, self.table_prefix
+                    'Renaming tables from prefix "%s" to "%s".',
+                    prior_prefix,
+                    self.table_prefix,
                 )
                 # logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
 
                 with self.engine.connect() as c:
-                    for table_name in ['alembic_version'
-                                      ] + [c._table_base_name
-                                           for c in self.orm.registry.values()
-                                           if hasattr(c, "_table_base_name")]:
+                    for table_name in ["alembic_version"] + [
+                        c._table_base_name
+                        for c in self.orm.registry.values()
+                        if hasattr(c, "_table_base_name")
+                    ]:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
 
@@ -287,8 +298,8 @@ class SQLAlchemyDB(DB):
 
                         c.execute(
                             sql_text(
-                                """ALTER TABLE %s RENAME TO %s;""" %
-                                (old_version_table, new_version_table)
+                                """ALTER TABLE %s RENAME TO %s;"""
+                                % (old_version_table, new_version_table)
                             )
                         )
 
@@ -299,7 +310,7 @@ class SQLAlchemyDB(DB):
     def reset_database(self):
         """See [DB.reset_database][trulens_eval.database.base.DB.reset_database]."""
 
-        #meta = MetaData()
+        # meta = MetaData()
         meta = self.orm.metadata  #
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
@@ -314,8 +325,11 @@ class SQLAlchemyDB(DB):
 
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.session.begin() as session:
-            if session.query(self.orm.Record
-                            ).filter_by(record_id=record.record_id).first():
+            if (
+                session.query(self.orm.Record)
+                .filter_by(record_id=record.record_id)
+                .first()
+            ):
                 session.merge(_rec)  # update existing
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
@@ -343,8 +357,11 @@ class SQLAlchemyDB(DB):
         """See [DB.get_app][trulens_eval.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
-            if _app := session.query(self.orm.AppDefinition
-                                    ).filter_by(app_id=app_id).first():
+            if (
+                _app := session.query(self.orm.AppDefinition)
+                .filter_by(app_id=app_id)
+                .first()
+            ):
                 return json.loads(_app.app_json)
 
     def get_apps(self) -> Iterable[JSON]:
@@ -362,9 +379,11 @@ class SQLAlchemyDB(DB):
         # TODO: thread safety
 
         with self.session.begin() as session:
-            if _app := session.query(self.orm.AppDefinition
-                                    ).filter_by(app_id=app.app_id).first():
-
+            if (
+                _app := session.query(self.orm.AppDefinition)
+                .filter_by(app_id=app.app_id)
+                .first()
+            ):
                 _app.app_json = app.model_dump_json()
             else:
                 _app = self.orm.AppDefinition.parse(
@@ -384,8 +403,11 @@ class SQLAlchemyDB(DB):
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
         with self.Session.begin() as session:
-            _app = session.query(orm.AppDefinition).filter_by(app_id=app_id
-                                                             ).first()
+            _app = (
+                session.query(orm.AppDefinition)
+                .filter_by(app_id=app_id)
+                .first()
+            )
             if _app:
                 session.delete(_app)
                 logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
@@ -400,9 +422,13 @@ class SQLAlchemyDB(DB):
         # TODO: thread safety
 
         with self.session.begin() as session:
-            if _fb_def := session.query(self.orm.FeedbackDefinition) \
-                    .filter_by(feedback_definition_id=feedback_definition.feedback_definition_id) \
-                    .first():
+            if (
+                _fb_def := session.query(self.orm.FeedbackDefinition)
+                .filter_by(
+                    feedback_definition_id=feedback_definition.feedback_definition_id
+                )
+                .first()
+            ):
                 _fb_def.app_json = feedback_definition.model_dump_json()
             else:
                 _fb_def = self.orm.FeedbackDefinition.parse(
@@ -411,16 +437,18 @@ class SQLAlchemyDB(DB):
                 session.merge(_fb_def)  # .add was not thread safe
 
             logger.info(
-                "%s added feedback definition %s", UNICODE_CHECK,
-                _fb_def.feedback_definition_id
+                "%s added feedback definition %s",
+                UNICODE_CHECK,
+                _fb_def.feedback_definition_id,
             )
 
             return _fb_def.feedback_definition_id
 
     def get_feedback_defs(
         self,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens_eval.database.base.DB.get_feedback_defs]."""
 
@@ -448,8 +476,13 @@ class SQLAlchemyDB(DB):
             feedback_result, redact_keys=self.redact_keys
         )
         with self.session.begin() as session:
-            if session.query(self.orm.FeedbackResult) \
-                    .filter_by(feedback_result_id=feedback_result.feedback_result_id).first():
+            if (
+                session.query(self.orm.FeedbackResult)
+                .filter_by(
+                    feedback_result_id=feedback_result.feedback_result_id
+                )
+                .first()
+            ):
                 session.merge(_feedback_result)  # update existing
             else:
                 session.merge(
@@ -472,8 +505,11 @@ class SQLAlchemyDB(DB):
                 icon = "???"
 
             logger.info(
-                "%s feedback result %s %s %s", icon, _feedback_result.name,
-                status.name, _feedback_result.feedback_result_id
+                "%s feedback result %s %s %s",
+                icon,
+                _feedback_result.name,
+                status.name,
+                _feedback_result.feedback_result_id,
             )
 
             return _feedback_result.feedback_result_id
@@ -494,14 +530,18 @@ class SQLAlchemyDB(DB):
         shuffle: bool = False,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ):
         if count:
             q = sa.func.count(self.orm.FeedbackResult.feedback_result_id)
@@ -543,15 +583,19 @@ class SQLAlchemyDB(DB):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: bool = False
+        shuffle: bool = False,
     ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens_eval.database.base.DB.get_feedback_count_by_status]."""
 
@@ -560,8 +604,9 @@ class SQLAlchemyDB(DB):
                 count=True, **locals_except("self", "session")
             )
 
-            results = session.query(self.orm.FeedbackResult.status,
-                                    q).group_by(self.orm.FeedbackResult.status)
+            results = session.query(self.orm.FeedbackResult.status, q).group_by(
+                self.orm.FeedbackResult.status
+            )
 
             return {
                 mod_feedback_schema.FeedbackResultStatus(row[0]): row[1]
@@ -572,15 +617,19 @@ class SQLAlchemyDB(DB):
         self,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-        feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID
-                                        ] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
-            Union[mod_feedback_schema.FeedbackResultStatus,
-                  Sequence[mod_feedback_schema.FeedbackResultStatus]]] = None,
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
+        ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
-        shuffle: Optional[bool] = False
+        shuffle: Optional[bool] = False,
     ) -> pd.DataFrame:
         """See [DB.get_feedback][trulens_eval.database.base.DB.get_feedback]."""
 
@@ -595,7 +644,7 @@ class SQLAlchemyDB(DB):
         self,
         app_ids: Optional[List[str]] = None,
         offset: Optional[int] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens_eval.database.base.DB.get_records_and_feedback]."""
 
@@ -648,9 +697,8 @@ no_perf = mod_base_schema.Perf.min().model_dump()
 
 
 def _extract_feedback_results(
-    results: Iterable[orm.FeedbackResult]
+    results: Iterable[orm.FeedbackResult],
 ) -> pd.DataFrame:
-
     def _extract(_result: self.orm.FeedbackResult):
         app_json = json.loads(_result.record.app.app_json)
         _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
@@ -667,10 +715,12 @@ def _extract_feedback_results(
             _result.multi_result,
             _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
-            if _result.record.perf_json != MIGRATION_UNKNOWN_STR else no_perf,
+            if _result.record.perf_json != MIGRATION_UNKNOWN_STR
+            else no_perf,
             json.loads(_result.calls_json)["calls"],
             json.loads(_result.feedback_definition.feedback_json)
-            if _result.feedback_definition is not None else None,
+            if _result.feedback_definition is not None
+            else None,
             json.loads(_result.record.record_json),
             app_json,
             _type,
@@ -679,21 +729,21 @@ def _extract_feedback_results(
     df = pd.DataFrame(
         data=(_extract(r) for r in results),
         columns=[
-            'record_id',
-            'feedback_result_id',
-            'feedback_definition_id',
-            'last_ts',
-            'status',
-            'error',
-            'fname',
-            'result',
-            'multi_result',
-            'cost_json',
-            'perf_json',
-            'calls_json',
-            'feedback_json',
-            'record_json',
-            'app_json',
+            "record_id",
+            "feedback_result_id",
+            "feedback_definition_id",
+            "last_ts",
+            "status",
+            "error",
+            "fname",
+            "result",
+            "multi_result",
+            "cost_json",
+            "perf_json",
+            "calls_json",
+            "feedback_json",
+            "record_json",
+            "app_json",
             "type",
         ],
     )
@@ -703,9 +753,8 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, mod_base_schema.Perf]]
+    series: Iterable[Union[str, dict, mod_base_schema.Perf]],
 ) -> pd.Series:
-
     def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
@@ -728,7 +777,6 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-
     def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
@@ -749,8 +797,14 @@ class AppsExtractor:
 
     app_cols = ["app_id", "app_json", "type"]
     rec_cols = [
-        "record_id", "input", "output", "tags", "record_json", "cost_json",
-        "perf_json", "ts"
+        "record_id",
+        "input",
+        "output",
+        "tags",
+        "record_json",
+        "cost_json",
+        "perf_json",
+        "ts",
     ]
     extra_cols = ["latency", "total_tokens", "total_cost"]
     all_cols = app_cols + rec_cols + extra_cols
@@ -761,7 +815,7 @@ class AppsExtractor:
     def get_df_and_cols(
         self,
         apps: Optional[List[orm.AppDefinition]] = None,
-        records: Optional[List[orm.Record]] = None
+        records: Optional[List[orm.Record]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records dataframe which joins in information from apps and
         feedback results.
@@ -774,13 +828,15 @@ class AppsExtractor:
                 with `apps`.
         """
 
-        assert apps is None or records is None, "`apps` and `records` are mutually exclusive"
+        assert (
+            apps is None or records is None
+        ), "`apps` and `records` are mutually exclusive"
 
         if apps is not None:
             df = pd.concat(self.extract_apps(apps))
 
         elif records is not None:
-            apps = set(record.app for record in records)
+            apps = {record.app for record in records}
             df = pd.concat(self.extract_apps(apps=apps, records=records))
 
         else:
@@ -796,7 +852,7 @@ class AppsExtractor:
     def extract_apps(
         self,
         apps: Iterable[orm.AppDefinition],
-        records: Optional[List[orm.Record]] = None
+        records: Optional[List[orm.Record]] = None,
     ) -> Iterable[pd.DataFrame]:
         """
         Creates record rows with app information.
@@ -818,7 +874,8 @@ class AppsExtractor:
                     # using _app.records here as doing so might get all of the
                     # records even the ones not in `records`
                     _recs = (
-                        record for record in records
+                        record
+                        for record in records
                         if record.app_id == _app.app_id
                     )
 
@@ -834,7 +891,7 @@ class AppsExtractor:
 
                             df[col] = str(
                                 Class.model_validate(
-                                    json.loads(_app.app_json).get('root_class')
+                                    json.loads(_app.app_json).get("root_class")
                                 )
                             )
 
@@ -849,29 +906,33 @@ class AppsExtractor:
                 )
                 print(f"Error details: {e}")
 
-    def extract_records(self,
-                        records: Iterable[orm.Record]) -> Iterable[pd.Series]:
-
+    def extract_records(
+        self, records: Iterable[orm.Record]
+    ) -> Iterable[pd.Series]:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
 
             try:
                 for _res in _rec.feedback_results:
-
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
-                    if _res.multi_result is not None and (multi_result :=
-                                                          json.loads(
-                                                              _res.multi_result
-                                                          )) is not None:
+                    if (
+                        _res.multi_result is not None
+                        and (multi_result := json.loads(_res.multi_result))
+                        is not None
+                    ):
                         for key, val in multi_result.items():
-                            if val is not None:  # avoid getting Nones into np.mean
+                            if (
+                                val is not None
+                            ):  # avoid getting Nones into np.mean
                                 name = f"{_res.name}:::{key}"
                                 values[name] = val
                                 self.feedback_columns.add(name)
-                    elif _res.result is not None:  # avoid getting Nones into np.mean
+                    elif (
+                        _res.result is not None
+                    ):  # avoid getting Nones into np.mean
                         values[_res.name].append(_res.result)
                         self.feedback_columns.add(_res.name)
 
@@ -881,9 +942,11 @@ class AppsExtractor:
                 }
 
                 for col in self.rec_cols:
-                    row[col] = datetime.fromtimestamp(
-                        _rec.ts
-                    ).isoformat() if col == "ts" else getattr(_rec, col)
+                    row[col] = (
+                        datetime.fromtimestamp(_rec.ts).isoformat()
+                        if col == "ts"
+                        else getattr(_rec, col)
+                    )
 
                 yield row
 
@@ -897,10 +960,8 @@ class AppsExtractor:
 
 
 def flatten(nested: Iterable[Iterable[Any]]) -> List[Any]:
-
     def _flatten(_nested):
         for iterable in _nested:
-            for element in iterable:
-                yield element
+            yield from iterable
 
     return list(_flatten(nested))

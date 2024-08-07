@@ -10,7 +10,6 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
 
 from trulens_eval import Tru
-from trulens_eval.database import base as mod_db
 from trulens_eval.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens_eval.utils.streamlit import init_from_args
 from trulens_eval.ux import styles
@@ -28,8 +27,7 @@ def leaderboard():
 
     set_page_config(page_title="Leaderboard")
 
-    tru = Tru(
-    )  # get singletone whether this file was imported or executed from command line.
+    tru = Tru()  # get singletone whether this file was imported or executed from command line.
 
     lms = tru.db
 
@@ -42,8 +40,8 @@ def leaderboard():
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
-            row.feedback_json.get("supplied_name", "") or
-            row.feedback_json["implementation"]["name"]
+            row.feedback_json.get("supplied_name", "")
+            or row.feedback_json["implementation"]["name"]
         ): row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
@@ -70,15 +68,17 @@ def leaderboard():
         # st.text('Metadata' + str(metadata))
         st.header(app, help=draw_metadata(metadata))
         app_feedback_col_names = [
-            col_name for col_name in feedback_col_names
+            col_name
+            for col_name in feedback_col_names
             if not app_df[col_name].isna().all()
         ]
         col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
             5 + len(app_feedback_col_names)
         )
         latency_mean = (
-            app_df["latency"].
-            apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None).mean()
+            app_df["latency"]
+            .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
+            .mean()
         )
 
         # app_df_feedback = df.loc[df.app_id == app]
@@ -88,7 +88,8 @@ def leaderboard():
             "Average Latency (Seconds)",
             (
                 f"{millify(round(latency_mean, 5), precision=2)}"
-                if not math.isnan(latency_mean) else "nan"
+                if not math.isnan(latency_mean)
+                else "nan"
             ),
         )
         col3.metric(
@@ -99,10 +100,11 @@ def leaderboard():
             "Total Tokens",
             millify(
                 sum(
-                    tokens for tokens in app_df.total_tokens
+                    tokens
+                    for tokens in app_df.total_tokens
                     if tokens is not None
                 ),
-                precision=2
+                precision=2,
             ),
         )
 
@@ -120,7 +122,7 @@ def leaderboard():
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
-                    delta_color="normal"
+                    delta_color="normal",
                 )
             else:
                 cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
@@ -129,9 +131,11 @@ def leaderboard():
                     value=f"{round(mean, 2)}",
                     delta=f"{cat.icon} {cat.adjective}",
                     delta_color=(
-                        "normal" if cat.compare(
+                        "normal"
+                        if cat.compare(
                             mean, CATEGORY.PASS[cat.direction].threshold
-                        ) else "inverse"
+                        )
+                        else "inverse"
                     ),
                 )
 

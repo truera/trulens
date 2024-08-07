@@ -65,7 +65,8 @@ class CATEGORY:
                 threshold=threshold,
                 direction=direction.name,
                 compare=operator.ge
-                if direction.name == "HIGHER_IS_BETTER" else operator.le,
+                if direction.name == "HIGHER_IS_BETTER"
+                else operator.le,
                 **styling[category_name],
             )
 
@@ -74,7 +75,7 @@ class CATEGORY:
         adjective="unknown",
         threshold=np.nan,
         color="#aaaaaa",
-        icon="?"
+        icon="?",
     )
 
     # order matters here because `of_score` returns the first best category
@@ -82,7 +83,9 @@ class CATEGORY:
 
     @staticmethod
     def of_score(score: float, higher_is_better: bool = True) -> Category:
-        direction_key = "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
+        direction_key = (
+            "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
+        )
 
         for cat in map(operator.itemgetter(direction_key), CATEGORY.ALL):
             if cat.compare(score, cat.threshold):
@@ -115,9 +118,10 @@ stmetricdelta_hidearrow = """
 valid_directions = ["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]
 
 cellstyle_jscode = {
-    k: f"""function(params) {{
+    k: """function(params) {
         let v = parseFloat(params.value);
-        """ + "\n".join(
+        """
+    + "\n".join(
         f"""
         if (v {'>=' if k == "HIGHER_IS_BETTER" else '<='} {cat.threshold}) {{
             return {{
@@ -125,14 +129,17 @@ cellstyle_jscode = {
                 'backgroundColor': '{cat.color}'
             }};
         }}
-    """ for cat in map(operator.itemgetter(k), CATEGORY.ALL)
-    ) + f"""
+    """
+        for cat in map(operator.itemgetter(k), CATEGORY.ALL)
+    )
+    + f"""
         // i.e. not a number
         return {{
             'color': 'black',
             'backgroundColor': '{CATEGORY.UNKNOWN.color}'
         }};
-    }}""" for k in valid_directions
+    }}"""
+    for k in valid_directions
 }
 
 hide_table_row_index = """

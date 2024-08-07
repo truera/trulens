@@ -59,19 +59,7 @@ jobs:
 
           pip install -r requirements.dev.txt --verbose
 
-          yapf --version
-          isort --vn
-
-          ./format.sh --eval
-
-          num_changed_files=`git ls-files --others -m --exclude-standard ./trulens_eval | wc -l`
-          if [ $num_changed_files -ne 0 ]; then
-            echo "The following files have changed after running format.sh. Please format your code and update the PR."
-            git ls-files --others -m --exclude-standard ./trulens_eval
-            echo "\n\nOutputting git diff for checked in files.\n"
-            git diff
-            exit 1
-          fi
+          pre-commit run --all-files --show-diff-on-failure
         condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
         displayName: Format diffs
 
@@ -88,7 +76,7 @@ jobs:
           set -e
           source activate $(python-version)
 
-          pip install -r requirements.test.txt --verbose 
+          pip install -r requirements.test.txt --verbose
 
         displayName: Install testing packages
 
@@ -99,7 +87,7 @@ jobs:
           python --version
           pip --version
           pip list --verbose
-  
+
         displayName: Describe python env
 
       - bash: |
@@ -157,7 +145,7 @@ jobs:
         env:
           # enables optional tests, see tests/unit/test.py
           TEST_OPTIONAL: true
-  
+
           # tests make use of various APIs:
           OPENAI_API_KEY: $(OPENAI_API_KEY)
           HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
@@ -165,5 +153,12 @@ jobs:
           PINECONE_ENV: $(PINECONE_ENV)
           HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
 
-        displayName: Unit tests with optional packages
+          # some tests log into Snowflake.
+          SNOWFLAKE_ACCOUNT: $(SNOWFLAKE_ACCOUNT)
+          SNOWFLAKE_USER: $(SNOWFLAKE_USER)
+          SNOWFLAKE_USER_PASSWORD: $(SNOWFLAKE_USER_PASSWORD)
+          SNOWFLAKE_DATABASE: $(SNOWFLAKE_DATABASE)
+          SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
+          SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
 
+        displayName: Unit tests with optional packages

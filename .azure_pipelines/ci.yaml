@@ -69,7 +69,7 @@ jobs:
           CONDA_FILENAME=$(condaEnvFileSuffix)
           CONDA_YAML="trulens_explain/tools/conda_${CONDA_FILENAME}.yaml"
           echo $CONDA
-          conda env create --force --quiet --file $CONDA_YAML
+          conda env create --yes --quiet --file $CONDA_YAML
           conda init bash
         displayName: Create Anaconda environment
       - bash: |
@@ -86,11 +86,11 @@ jobs:
           cd ./trulens_explain
           pip install -r $(requirementsFile)
           python -m ipykernel install --user --name $(condaEnvFileSuffix) --display-name "$(condaEnvFileSuffix)"
+          pip install -r requirements.dev.txt
         displayName: Install pip package
       - bash: |
           set -e
           source activate $(condaEnvFileSuffix)
-          echo Using $(yapf --version) isort $(isort --vn)
           ./format.sh --explain
         displayName: Format Code
       - bash: |
