@@ -50,7 +50,6 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
     from snowflake.snowpark import Session
     from snowflake.sqlalchemy import URL
 
-
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)

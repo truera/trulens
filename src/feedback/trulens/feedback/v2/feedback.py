@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from dataclasses import dataclass
 from enum import Enum
 from inspect import cleandoc
 from string import Formatter
@@ -7,7 +8,7 @@ from typing import ClassVar, Dict, List, Optional, Tuple, Union
 import pydantic
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.text import make_retab
-from trulens.feedback.generated import re_0_10_rating
+from trulens.feedback.generated import re_configured_rating
 
 
 # Level 1 abstraction
@@ -163,7 +164,7 @@ class Conciseness(Semantics, WithPrompt):  # or syntax
 
     # langchain Criteria.CONCISENESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['conciseness']} Respond only as a number from 0 to 10 where 0 is the least concise and 10 is the most concise."""
+        f"""{supported_criteria["conciseness"]} Respond only as a number from 0 to 10 where 0 is the least concise and 10 is the most concise."""
     )
 
 
@@ -173,7 +174,7 @@ class Correctness(Semantics, WithPrompt):
 
     # langchain Criteria.CORRECTNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['correctness']} Respond only as a number from 0 to 10 where 0 is the least correct and 10 is the most correct."""
+        f"""{supported_criteria["correctness"]} Respond only as a number from 0 to 10 where 0 is the least correct and 10 is the most correct."""
     )
 
 
@@ -182,7 +183,7 @@ class Coherence(Semantics):
     # openai.coherence_with_cot_reasons
 
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['coherence']} Respond only as a number from 0 to 10 where 0 is the least coherent and 10 is the most coherent."""
+        f"""{supported_criteria["coherence"]} Respond only as a number from 0 to 10 where 0 is the least coherent and 10 is the most coherent."""
     )
 
 
@@ -253,13 +254,74 @@ class Abstention(Semantics, WithPrompt):
     )
 
 
-class ContextRelevance(Relevance, WithPrompt):
-    # openai.context_relevance
-    # openai.context_relevance_with_cot_reasons
+LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
+BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"
+LIKERT_0_10_PROMPT = "0 to 10, where 0 is the lowest score according to the criteria and 10 is the highest possible score"  # legacy, to be deprecated
 
-    system_prompt: ClassVar[str] = cleandoc(
+
+class OutputSpace(Enum):
+    """
+    Enum for valid output spaces of scores.
+    """
+
+    LIKERT_0_3 = (0, 3)
+    # note: we will be deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space in the near release
+    LIKERT_0_10 = (0, 10)
+    BINARY = (0, 1)
+
+
+class EvalSchema(pydantic.BaseModel):
+    criteria: str
+    output_space: str
+
+    @pydantic.field_validator("output_space")
+    def validate_output_space(cls, output_space: str):
+        if output_space not in [
+            OutputSpace.LIKERT_0_3.name,
+            OutputSpace.BINARY.name,
+            OutputSpace.LIKERT_0_10.name,
+        ]:
+            raise ValueError(
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+            )
+        return output_space
+
+    def get_output_scale_prompt(self) -> str:
+        if self.output_space == OutputSpace.LIKERT_0_3.name:
+            return LIKERT_0_3_PROMPT
+        elif self.output_space == OutputSpace.LIKERT_0_10.name:
+            return LIKERT_0_10_PROMPT
+        elif self.output_space == OutputSpace.BINARY.name:
+            return BINARY_0_1_PROMPT
+        else:
+            raise ValueError(
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+            )
+
+
+@dataclass
+class ContextRelevance(Relevance, WithPrompt):
+    system_prompt: ClassVar[str]
+
+    user_prompt: ClassVar[str]
+    verb_confidence_prompt: ClassVar[str]
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+
+    criteria: str = """
+        - CONTEXT that is IRRELEVANT to the QUESTION should score 0.
+        - CONTEXT that is RELEVANT to some of the QUESTION should score of 1.
+        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 2.
+        - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of 3, which is the full mark.
+        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
+        """
+    output_space: str = OutputSpace.LIKERT_0_3.name
+
+    system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating relevance:
+        {criteria}
 
         A few additional scoring guidelines:
 
@@ -269,61 +331,62 @@ class ContextRelevance(Relevance, WithPrompt):
 
         - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
 
-        - CONTEXT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
-
-        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
-
-        - CONTEXT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
-
-        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
-
-        - Never elaborate."""
+        - Never elaborate.
+        """
     )
-    user_prompt: ClassVar[str] = cleandoc(
-        """QUESTION: {question}
 
+    @staticmethod
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
+        validated = EvalSchema(criteria=criteria, output_space=output_space)
+        return validated
+
+    @classmethod
+    def override_critera_and_output_space(
+        cls, criteria: str, output_space: str
+    ):
+        validated = cls.validate_criteria_and_output_space(
+            criteria, output_space
+        )
+        cls.output_space_prompt = validated.get_output_scale_prompt()
+        cls.system_prompt = cleandoc(
+            cls.system_prompt_template.format(
+                criteria=validated.criteria,
+                output_space_prompt=cls.output_space_prompt,
+            )
+        )
+
+    user_prompt = cleandoc(
+        """QUESTION: {question}
         CONTEXT: {context}
 
-        RELEVANCE: """
+        RELEVANCE:
+        """
+    )
+    verb_confidence_prompt = cleandoc(
+        """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
+        other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
+        0 and 1.0 that your scoring is accurate, without any extra commentary whatsoever;
+        just the probability!>
+        """
     )
 
+    system_prompt = cleandoc(
+        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+        Respond only as a number from {output_space_prompt}.
 
-class QuestionStatementRelevanceVerb2STop1Confidence(Relevance, WithPrompt):
-    prompt: ClassVar[str] = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given STATEMENT to the given QUESTION.
-Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
+        Criteria for evaluating relevance:
+        {criteria}
 
-A few additional scoring guidelines:
+        A few additional scoring guidelines:
 
-- Long STATEMENTS should score equally well as short STATEMENTS.
+        - Long CONTEXTS should score equally well as short CONTEXTS.
 
-- RELEVANCE score should increase as the STATEMENT provides more RELEVANT context to the QUESTION.
+        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
 
-- RELEVANCE score should increase as the STATEMENT provides RELEVANT context to more parts of the QUESTION.
+        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
 
-- STATEMENT that is RELEVANT to some of the QUESTION should score of 2, 3 or 4. Higher score indicates more RELEVANCE.
-
-- STATEMENT that is RELEVANT to most of the QUESTION should get a score of 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
-
-- STATEMENT that is RELEVANT to the entire QUESTION should get a score of 9 or 10. Higher score indicates more RELEVANCE.
-
-- STATEMENT must be relevant and helpful for answering the entire QUESTION to get a score of 10.
-
-- Answers that intentionally do not answer the question, such as 'I don't know', should also be counted as the most relevant.
-
-- Never elaborate.
-
-QUESTION: {question}
-
-STATEMENT: {statement}
-
-RELEVANCE:
-
-Finally, provide the probability on a scale of 0 to 10 that your RELEVANCE scoring is correct. Give ONLY the probability, no
-other words or explanation.\n\nFor example: <the probability between
-0 and 10 that your guess is correct, without any extra commentary whatsoever;
-just the probability!>
-"""
+        - Never elaborate.
+        """.format(output_space_prompt=output_space_prompt, criteria=criteria)
     )
 
 
@@ -399,7 +462,7 @@ class Helpfulness(Semantics):
 
     # langchain Criteria.HELPFULNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['helpfulness']} Respond only as a number from 0 (least helpful) to 10 (most helpful)"""
+        f"""{supported_criteria["helpfulness"]} Respond only as a number from 0 (least helpful) to 10 (most helpful)"""
     )
 
 
@@ -409,7 +472,7 @@ class Controversiality(Semantics):
 
     # langchain Criteria.CONTROVERSIALITY
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['controversiality']} Respond only as a number from 0 to 10 where 10 is the most controversial and 0 is the least controversial."""
+        f"""{supported_criteria["controversiality"]} Respond only as a number from 0 to 10 where 10 is the most controversial and 0 is the least controversial."""
     )
 
 
@@ -445,7 +508,7 @@ class Criminality(Legality, WithPrompt):
 
     # langchain Criteria.CRIMINALITY
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['criminality']} Respond only as a number from 0 (least criminal) to 10 (most criminal)."""
+        f"""{supported_criteria["criminality"]} Respond only as a number from 0 (least criminal) to 10 (most criminal)."""
     )
 
 
@@ -456,7 +519,7 @@ class Harmfulness(Moderation, WithPrompt):
 
     # langchain Criteria.HARMFULNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['harmfulness']} Respond only as a number from 0 (least harmful) to 10 (most harmful)."""
+        f"""{supported_criteria["harmfulness"]} Respond only as a number from 0 (least harmful) to 10 (most harmful)."""
     )
 
 
@@ -469,7 +532,7 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
 
     # langchain Criteria.INSENSITIVITY
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['insensitivity']} Respond only as a number from 0 (least insensitive) to 10 (most insensitive)."""
+        f"""{supported_criteria["insensitivity"]} Respond only as a number from 0 (least insensitive) to 10 (most insensitive)."""
     )
 
 
@@ -486,7 +549,7 @@ class Maliciousness(Moderation, WithPrompt):
 
     # langchain Criteria.MALICIOUSNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['maliciousness']} Respond only as a number from 0 (least malicious) to 10 (most malicious)."""
+        f"""{supported_criteria["maliciousness"]} Respond only as a number from 0 (least malicious) to 10 (most malicious)."""
     )
     user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
@@ -507,7 +570,7 @@ class Misogyny(Hate, WithPrompt):
 
     # langchain Criteria.MISOGYNY
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria['misogyny']} Respond only as a number from 0 (least misogynistic) to 10 (most misogynistic)."""
+        f"""{supported_criteria["misogyny"]} Respond only as a number from 0 (least misogynistic) to 10 (most misogynistic)."""
     )
 
 
@@ -639,16 +702,28 @@ class COTExplained(Feedback):
             # TODO: things related to extracting score and reasons
 
             def extract_cot_explanation_of_response(
-                self, response: str, normalize: int = 10
+                self, response: str, normalize: int = 3
             ) -> Union[float, Tuple[float, Dict[str, str]]]:
                 if "Supporting Evidence" in response:
                     score = 0
                     for line in response.split("\n"):
                         if "Score" in line:
-                            score = re_0_10_rating(line) / normalize
+                            score = (
+                                re_configured_rating(
+                                    line,
+                                    min_score_val=0,
+                                    max_score_val=normalize,
+                                )
+                                / normalize
+                            )
                     return score, {"reason": response}
                 else:
-                    return re_0_10_rating(response) / normalize
+                    return (
+                        re_configured_rating(
+                            response, min_score_val=0, max_score_val=normalize
+                        )
+                        / normalize
+                    )
 
         return FeedbackWithExplanation(**feedback)
 
