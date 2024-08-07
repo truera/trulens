@@ -30,9 +30,9 @@ jobs:
       - template: templates/run-precommits.yaml
       - template: templates/run-tests.yaml
         parameters:
-          test-optional: false
-          test-suite: unit
+          testOptional: false
+          testSuite: unit
       - template: templates/run-tests.yaml
         parameters:
-          test-optional: true
-          test-suite: unit
+          testOptional: true
+          testSuite: unit

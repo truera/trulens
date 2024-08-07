@@ -22,9 +22,9 @@ jobs:
       - template: templates/run-precommits.yaml
       - template: templates/run-tests.yaml
         parameters:
-          test-optional: true
-          test-suite: e2e
+          testOptional: true
+          testSuite: e2e
       - template: templates/run-tests.yaml
         parameters:
-          test-optional: true
-          test-suite: notebook
+          testOptional: true
+          testSuite: notebook

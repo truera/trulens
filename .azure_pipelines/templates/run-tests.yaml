@@ -1,17 +1,17 @@
 parameters:
-- name: test-optional
+- name: testOptional
   type: boolean
   default: false
-- name: test-suite
+- name: testSuite
   type: string # must be one of: unit, e2e, notebook
 
 steps:
   - bash: |
       set -e
-      make test-${{ parameters.test-suite }}
+      make test-${{ parameters.testSuite }}
     env:
       # enables optional tests, see tests/unit/test.py
-      TEST_OPTIONAL: ${{ parameters.test-optional }}
+      TEST_OPTIONAL: ${{ parameters.testOptional }}
 
       # tests make use of various APIs:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
