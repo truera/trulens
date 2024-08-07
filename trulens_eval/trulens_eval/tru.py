@@ -52,6 +52,8 @@ logger = logging.getLogger(__name__)
 DASHBOARD_START_TIMEOUT: Annotated[int, Doc("Seconds to wait for dashboard to start")] \
     = 30
 
+RECORDS_BATCH_TIMEOUT: Annotated[int, Doc("Seconds to wait for records to be batched")] \
+    = 10
 
 def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
@@ -157,7 +159,6 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     batch_record_queue = queue.Queue()
-    batch_thread = None
 
     def __init__(
         self,
@@ -377,20 +378,16 @@ class Tru(python.SingletonPerName):
 
     update_record = add_record
 
-    def add_record_async(
+    def add_record_nowait(
         self,
-        record: Optional[mod_record_schema.Record] = None,
-        **kwargs: dict
-    ) -> mod_types_schema.RecordID:
-        if record is None:
-            record = mod_record_schema.Record(**kwargs)
-        else:
-            record.update(**kwargs)
+        record: mod_record_schema.Record,
+    ) -> None:
+        """Add a record to the queue to be inserted in the next batch."""
         self.batch_record_queue.put(record)
 
     def batch_loop(self):
         while True:
-            time.sleep(10)
+            time.sleep(RECORDS_BATCH_TIMEOUT)
             records = []
             while True:
                 try:
@@ -406,6 +403,25 @@ class Tru(python.SingletonPerName):
                     for record in records:
                         self.batch_record_queue.put(record)
                     logger.error("Re-queued records due to insertion error {}", e)
+                    continue
+                feedback_results = []
+                apps = {}
+                for record in records:
+                    app_id = record.app_id
+                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    feedback_definitions = app.get("feedback_definitions", [])
+                    #TODO(Dave): Modify this to add only client side feedback results
+                    for feedback_definition_id in feedback_definitions:
+                        feedback_results.append(mod_feedback_schema.FeedbackResult(
+                            feedback_definition_id=feedback_definition_id,
+                            record_id=record.record_id,
+                            name="feedback_name", # this will be updated later by deferred evaluator
+                        ))
+                try:
+                    self.db.batch_insert_feedback(feedback_results)
+                except Exception as e:
+                    logger.error("Failed to insert feedback results {}", e)
+                
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
