@@ -65,7 +65,7 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 
 # Get all modules inside trulens_eval:
 all_trulens_mods = get_module_names(
-    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
+    Path(trulens_eval.__file__).parent.parent, matching="trulens_eval"
 )
 
 # Things which should not be imported at all.
