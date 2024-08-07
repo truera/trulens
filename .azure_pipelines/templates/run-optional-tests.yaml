@@ -3,8 +3,7 @@ parameters:
   type: string # must be one of: unit, e2e, notebook
 
 steps:
-  - ${{ if eq(parameters.testOptional, true) }}:
-    bash: |
+  - bash: |
       set -e
       make test-${{ parameters.testSuite }}-optional
     env:
