@@ -87,9 +87,10 @@ class TruBenchmarkExperiment:
         """
 
         benchmark_params_dict: dict = self.benchmark_params.model_dump()
-        ret = feedback_fn(row["query"], row["response"], benchmark_params_dict)
 
-        # TODO: better define the shape of arguments of feedback_fn
+        # TODO: better define the shape of arguments of feedback_fn after GT database schema is finalized
+
+        ret = feedback_fn(row["query"], row["response"], benchmark_params_dict)
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
