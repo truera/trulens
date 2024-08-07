@@ -326,14 +326,14 @@ class JSONTestCase(TestCase):
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 
-            with self.subTest("keys"):
+            with self.subTest("keys", path=ps):
                 self.assertSetEqual(ks1, ks2, ps)
 
             for k in ks1:
                 if k in skips or k not in ks2:
                     continue
 
-                with self.subTest(k):
+                with self.subTest(k, path=ps):
                     recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
 
         elif isinstance(j1, Sequence):
@@ -344,7 +344,7 @@ class JSONTestCase(TestCase):
                 j2 = str_sorted(j2, skips=skips)
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
-                with self.subtest(i):
+                with self.subtest(i, path=ps):
                     recur(v1, v2, path=path[i])
 
         elif isinstance(j1, datetime):
@@ -355,7 +355,7 @@ class JSONTestCase(TestCase):
                 if f.name in skips:
                     continue
 
-                with self.subTest(f.name):
+                with self.subTest(f.name, path=ps):
                     self.assertTrue(hasattr(j2, f.name))
 
                     recur(
@@ -370,7 +370,7 @@ class JSONTestCase(TestCase):
                 if f in skips:
                     continue
 
-                with self.subTest(f):
+                with self.subTest(f, path=ps):
                     self.assertTrue(hasattr(j2, f))
 
                     recur(
@@ -385,7 +385,7 @@ class JSONTestCase(TestCase):
                 if f in skips:
                     continue
 
-                with self.subTest(f):
+                with self.subTest(f, path=ps):
                     self.assertTrue(hasattr(j2, f))
 
                     recur(
