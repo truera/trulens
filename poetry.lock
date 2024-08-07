@@ -2,13 +2,13 @@
 
 [[package]]
 name = "aiohappyeyeballs"
-version = "2.3.4"
+version = "2.3.5"
 description = "Happy Eyeballs for asyncio"
 optional = false
-python-versions = "<4.0,>=3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "aiohappyeyeballs-2.3.4-py3-none-any.whl", hash = "sha256:40a16ceffcf1fc9e142fd488123b2e218abc4188cf12ac20c67200e1579baa42"},
-    {file = "aiohappyeyeballs-2.3.4.tar.gz", hash = "sha256:7e1ae8399c320a8adec76f6c919ed5ceae6edd4c3672f4d9eae2b27e37c80ff6"},
+    {file = "aiohappyeyeballs-2.3.5-py3-none-any.whl", hash = "sha256:4d6dea59215537dbc746e93e779caea8178c866856a721c9c660d7a5a7b8be03"},
+    {file = "aiohappyeyeballs-2.3.5.tar.gz", hash = "sha256:6fa48b9f1317254f122a07a131a86b71ca6946ca989ce6326fff54a99a920105"},
 ]
 
 [[package]]
@@ -352,17 +352,6 @@ files = [
 ]
 
 [[package]]
-name = "atpublic"
-version = "5.0"
-description = "Keep all y'all's __all__'s in sync"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "atpublic-5.0-py3-none-any.whl", hash = "sha256:b651dcd886666b1042d1e38158a22a4f2c267748f4e97fde94bc492a4a28a3f3"},
-    {file = "atpublic-5.0.tar.gz", hash = "sha256:d5cb6cbabf00ec1d34e282e8ce7cbc9b74ba4cb732e766c24e2d78d1ad7f723f"},
-]
-
-[[package]]
 name = "attrs"
 version = "24.2.0"
 description = "Classes Without Boilerplate"
@@ -519,17 +508,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.34.155"
+version = "1.34.156"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.34.155-py3-none-any.whl", hash = "sha256:445239ea2ba7f4084ddbd71f721c14d0a6d08e06f6ba51b5403a16b6544b3f1e"},
-    {file = "boto3-1.34.155.tar.gz", hash = "sha256:e8d2e128c74e84199edccdc3a6b4b1c6fb36d6fdb5688eb92931827f02c6fa5b"},
+    {file = "boto3-1.34.156-py3-none-any.whl", hash = "sha256:cbbd453270b8ce94ef9da60dfbb6f9ceeb3eeee226b635aa9ec44b1def98cc96"},
+    {file = "boto3-1.34.156.tar.gz", hash = "sha256:b33e9a8f8be80d3053b8418836a7c1900410b23a30c7cb040927d601a1082e68"},
 ]
 
 [package.dependencies]
-botocore = ">=1.34.155,<1.35.0"
+botocore = ">=1.34.156,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -538,13 +527,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.34.155"
+version = "1.34.156"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.34.155-py3-none-any.whl", hash = "sha256:f2696c11bb0cad627d42512937befd2e3f966aedd15de00d90ee13cf7a16b328"},
-    {file = "botocore-1.34.155.tar.gz", hash = "sha256:3aa88abfef23909f68d3e6679a3d4b4bb3c6288a6cfbf9e253aa68dac8edad64"},
+    {file = "botocore-1.34.156-py3-none-any.whl", hash = "sha256:c48f8c8996216dfdeeb0aa6d3c0f2c7ae25234766434a2ea3e57bdc08494bdda"},
+    {file = "botocore-1.34.156.tar.gz", hash = "sha256:5d1478c41ab9681e660b3322432fe09c4055759c317984b7b8d3af9557ff769a"},
 ]
 
 [package.dependencies]
@@ -2780,13 +2769,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.28"
+version = "0.2.29"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.28-py3-none-any.whl", hash = "sha256:0728761d02ce696a1c6a57cfad18b874cf6c9566ba86120e2f542e442cb77a06"},
-    {file = "langchain_core-0.2.28.tar.gz", hash = "sha256:589f907fcb1f15acea55ea3f451a37faaa61c2e68b3d39d436cf73ca3dd23ef5"},
+    {file = "langchain_core-0.2.29-py3-none-any.whl", hash = "sha256:846c04a3bb72e409a9b928e0eb3ea1762e1473f2c4fb6df2596fbd7b3ab75973"},
+    {file = "langchain_core-0.2.29.tar.gz", hash = "sha256:491324745a7afee5a7b285c3904edd9dd0c6efa7daf26b92fec6e84a2d2f5d10"},
 ]
 
 [package.dependencies]
@@ -2869,13 +2858,13 @@ regex = ["regex"]
 
 [[package]]
 name = "litellm"
-version = "1.43.0"
+version = "1.43.1"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.43.0-py3-none-any.whl", hash = "sha256:0a91b84637e9f5b2cf31f210f682e04134f9c1837501763685dc1a58ec25f685"},
-    {file = "litellm-1.43.0.tar.gz", hash = "sha256:0d0faa25470783dc9f30894a3bb86c90cd3ff72cf769393eaac563e53d2ec162"},
+    {file = "litellm-1.43.1-py3-none-any.whl", hash = "sha256:57a3ce38889782f014f371cd794a1cad4e7d9b97412d75ff8b051bc8fc4f4e4d"},
+    {file = "litellm-1.43.1.tar.gz", hash = "sha256:f7132938b6e2120e40b01b2210087ca05c51f2f90cebf33495adb53e7f9aaaab"},
 ]
 
 [package.dependencies]
@@ -2912,19 +2901,19 @@ pydantic = ">=1.10"
 
 [[package]]
 name = "llama-index"
-version = "0.10.61"
+version = "0.10.62"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index-0.10.61-py3-none-any.whl", hash = "sha256:a988a183d45c8e8e3a9488b8139f12972ab944a1c5c399a8f8a60996b0ff9239"},
-    {file = "llama_index-0.10.61.tar.gz", hash = "sha256:a2b22cf858ff2b75f4a37f172f16779b7c478622984103122eff48703ab3be3c"},
+    {file = "llama_index-0.10.62-py3-none-any.whl", hash = "sha256:13af83c70860ba570e4ff34e57b8b3e48cf4967c925456f5526c77c52004fb44"},
+    {file = "llama_index-0.10.62.tar.gz", hash = "sha256:b649a645bb5281a30077b74671132734f360c77370b6ef453d91a065c0029867"},
 ]
 
 [package.dependencies]
 llama-index-agent-openai = ">=0.1.4,<0.3.0"
 llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = "0.10.61"
+llama-index-core = "0.10.62"
 llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
 llama-index-indices-managed-llama-cloud = ">=0.2.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
@@ -2969,13 +2958,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.61"
+version = "0.10.62"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.61-py3-none-any.whl", hash = "sha256:62008d2c3bea9398388941b49fda711735a252c193ac08a1867ee2710f032114"},
-    {file = "llama_index_core-0.10.61.tar.gz", hash = "sha256:46b1923df5d90fe860f894c58cc1c9c621a743d75c2077ddb3aaeecba7ffdd41"},
+    {file = "llama_index_core-0.10.62-py3-none-any.whl", hash = "sha256:c48c4b8bdd0ad6eec3f7c4ca129509cdbe5614f3d2ed76bec30999899a38b962"},
+    {file = "llama_index_core-0.10.62.tar.gz", hash = "sha256:227f011829497e654bb32ab6907318f613c3a9a6809e08c20163395c26838606"},
 ]
 
 [package.dependencies]
@@ -3088,13 +3077,13 @@ query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "l
 
 [[package]]
 name = "llama-index-llms-openai"
-version = "0.1.28"
+version = "0.1.29"
 description = "llama-index llms openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_llms_openai-0.1.28-py3-none-any.whl", hash = "sha256:4b87836f08ef32b04436646431c3fb57eacf74536270e3291fbb652d04012c62"},
-    {file = "llama_index_llms_openai-0.1.28.tar.gz", hash = "sha256:d07312dcf62ba7654310633dfd5c02d39bbe32761cbe8b121dd338d3b6a5b350"},
+    {file = "llama_index_llms_openai-0.1.29-py3-none-any.whl", hash = "sha256:8ae9a9f595b3654405fd54f3dbc8b58b259be8eeea2f58650609869e8362cab5"},
+    {file = "llama_index_llms_openai-0.1.29.tar.gz", hash = "sha256:15a4fa65a3d2ecf7e29a090273ec595d44553baea72a1ebe5b42fe3c527f7121"},
 ]
 
 [package.dependencies]
@@ -3103,13 +3092,13 @@ openai = ">=1.40.0,<2.0.0"
 
 [[package]]
 name = "llama-index-multi-modal-llms-openai"
-version = "0.1.8"
+version = "0.1.9"
 description = "llama-index multi-modal-llms openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_multi_modal_llms_openai-0.1.8-py3-none-any.whl", hash = "sha256:16ae72ac3c5201ebd1d4b62203930c1768149ec85c3e477e5e51ed2ef8db1067"},
-    {file = "llama_index_multi_modal_llms_openai-0.1.8.tar.gz", hash = "sha256:5e2c94a6415a2509cad035ccea34461959ae327a5900d3e820417e9ebb9a13ec"},
+    {file = "llama_index_multi_modal_llms_openai-0.1.9-py3-none-any.whl", hash = "sha256:614f40427a4671e72742780be8fda77297dbf2942519bffcb2c9de8696a9edff"},
+    {file = "llama_index_multi_modal_llms_openai-0.1.9.tar.gz", hash = "sha256:dbacf44d5c2cca07ca424eacd1337583002d70387a3c1868cf8ae743b1dbec4a"},
 ]
 
 [package.dependencies]
@@ -4034,13 +4023,13 @@ test = ["mypy (>=1.0)", "pytest (>=7.0.0)"]
 
 [[package]]
 name = "more-itertools"
-version = "10.3.0"
+version = "10.4.0"
 description = "More routines for operating on iterables, beyond itertools"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "more-itertools-10.3.0.tar.gz", hash = "sha256:e5d93ef411224fbcef366a6e8ddc4c5781bc6359d43412a65dd5964e46111463"},
-    {file = "more_itertools-10.3.0-py3-none-any.whl", hash = "sha256:ea6a02e24a9161e51faad17a8782b92a0df82c12c1c8886fec7f0c3fa1a1b320"},
+    {file = "more-itertools-10.4.0.tar.gz", hash = "sha256:fe0e63c4ab068eac62410ab05cccca2dc71ec44ba8ef29916a0090df061cf923"},
+    {file = "more_itertools-10.4.0-py3-none-any.whl", hash = "sha256:0f7d9f83a0a8dcfa8a2694a770590d98a67ea943e3d9f5298309a484758c4e27"},
 ]
 
 [[package]]
@@ -4161,20 +4150,20 @@ files = [
 
 [[package]]
 name = "munch"
-version = "3.0.0"
+version = "2.5.0"
 description = "A dot-accessible dictionary (a la JavaScript objects)"
 optional = false
-python-versions = ">=3.6"
+python-versions = "*"
 files = [
-    {file = "munch-3.0.0-py2.py3-none-any.whl", hash = "sha256:0e4108418cfea898dcad01ff9569c30ff58f01d6f699331d04364f51623627c0"},
-    {file = "munch-3.0.0.tar.gz", hash = "sha256:5284603030c00906d9d64d8108728c004fbeb91fc1c1e4caca342bc48f2a6dfd"},
+    {file = "munch-2.5.0-py2.py3-none-any.whl", hash = "sha256:6f44af89a2ce4ed04ff8de41f70b226b984db10a91dcc7b9ac2efc1c77022fdd"},
+    {file = "munch-2.5.0.tar.gz", hash = "sha256:2d735f6f24d4dba3417fa448cae40c6e896ec1fdab6cdb5e6510999758a4dbd2"},
 ]
 
 [package.dependencies]
 six = "*"
 
 [package.extras]
-testing = ["astroid (>=2.0)", "coverage", "pylint (>=2.3.1,<2.4.0)", "pytest"]
+testing = ["astroid (>=1.5.3,<1.6.0)", "astroid (>=2.0)", "coverage", "pylint (>=1.7.2,<1.8.0)", "pylint (>=2.3.1,<2.4.0)", "pytest"]
 yaml = ["PyYAML (>=5.1.0)"]
 
 [[package]]
@@ -4759,13 +4748,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.40.0"
+version = "1.40.1"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.40.0-py3-none-any.whl", hash = "sha256:eb6909abaacd62ef28c275a5c175af29f607b40645b0a49d2856bbed62edb2e7"},
-    {file = "openai-1.40.0.tar.gz", hash = "sha256:1b7b316e27b2333b063ee62b6539b74267c7282498d9a02fc4ccb38a9c14336c"},
+    {file = "openai-1.40.1-py3-none-any.whl", hash = "sha256:cf5929076c6ca31c26f1ed207e9fd19eb05404cc9104f64c9d29bb0ac0c5bcd4"},
+    {file = "openai-1.40.1.tar.gz", hash = "sha256:cb1294ac1f8c6a1acbb07e090698eb5ad74a7a88484e77126612a4f22579673d"},
 ]
 
 [package.dependencies]
@@ -4914,8 +4903,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -5123,6 +5112,21 @@ files = [
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
 type = ["mypy (>=1.8)"]
+
+[[package]]
+name = "plotly"
+version = "5.23.0"
+description = "An open-source, interactive data visualization library for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "plotly-5.23.0-py3-none-any.whl", hash = "sha256:76cbe78f75eddc10c56f5a4ee3e7ccaade7c0a57465546f02098c0caed6c2d1a"},
+    {file = "plotly-5.23.0.tar.gz", hash = "sha256:89e57d003a116303a34de6700862391367dd564222ab71f8531df70279fc0193"},
+]
+
+[package.dependencies]
+packaging = "*"
+tenacity = ">=6.2.0"
 
 [[package]]
 name = "pluggy"
@@ -6928,25 +6932,6 @@ pandas = ["pandas (>=1.0.0,<3.0.0)", "pyarrow"]
 secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
-name = "snowflake-core"
-version = "0.9.0"
-description = "Snowflake Python API for Resource Management"
-optional = false
-python-versions = "<3.12,>=3.8"
-files = [
-    {file = "snowflake_core-0.9.0-py3-none-any.whl", hash = "sha256:19adcf3662364c15c2d25367479fe3a6361015d64d05146e20c35fdecfae0fb2"},
-    {file = "snowflake_core-0.9.0.tar.gz", hash = "sha256:027ba663ca5b797acebd8baaed17b9f885649037d61d40ad3342ad6b2f3d9571"},
-]
-
-[package.dependencies]
-atpublic = ">=4"
-pydantic = ">=2"
-python-dateutil = ">=2.8.2"
-requests = "*"
-snowflake-snowpark-python = ">=1.5.0,<2.0.0"
-urllib3 = "*"
-
-[[package]]
 name = "snowflake-snowpark-python"
 version = "1.20.0"
 description = "Snowflake Snowpark for Python"
@@ -7266,19 +7251,20 @@ streamlit = ">=0.63"
 
 [[package]]
 name = "streamlit-extras"
-version = "0.4.3"
+version = "0.4.6"
 description = "A library to discover, try, install and share Streamlit extras"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "streamlit_extras-0.4.3-py3-none-any.whl", hash = "sha256:36fb6af37572ee38b421922114ca4bf89cb846afd5cad2c955182120cf6aa8ac"},
-    {file = "streamlit_extras-0.4.3.tar.gz", hash = "sha256:5b3e77d6d3f6cce05de237e5bb0da87168dbfff77036f78d6b8fc1d2fbc563af"},
+    {file = "streamlit_extras-0.4.6-py3-none-any.whl", hash = "sha256:65cce206a2887b907b7c55c95435d4fcfa1d3dd55e027bfb45f4b069ebe8ce14"},
+    {file = "streamlit_extras-0.4.6.tar.gz", hash = "sha256:d4b4cafdaab2923bb84f124f8a23139edaa6bd8e6df75a2e0140e5541059f347"},
 ]
 
 [package.dependencies]
 entrypoints = ">=0.4"
 htbuilder = ">=0.6.2"
 markdownlit = ">=0.0.5"
+plotly = ">=1.0.0"
 prometheus-client = ">=0.14.0"
 protobuf = "!=3.20.2"
 st-annotated-text = ">=3.0.0"
@@ -7910,7 +7896,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a1"
+version = "1.0.1a2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7918,23 +7904,23 @@ files = []
 develop = true
 
 [package.dependencies]
-alembic = "^1.11"
-dill = "^0.3"
-munch = "^3.0"
+alembic = "^1.8.1"
+dill = "^0.3.8"
+munch = "^2.5"
 nest-asyncio = "^1.5"
-numpy = "^1.23"
+numpy = ">=1.23"
+pandas = "^2.1"
 pydantic = "^2"
-python-dotenv = "^1.0"
-snowflake-connector-python = {version = "^3.11.0", optional = true, markers = "python_version < \"3.12\""}
-snowflake-core = {version = "^0.9.0", optional = true, markers = "python_version < \"3.12\""}
-snowflake-snowpark-python = {version = "^1.20.0", optional = true, markers = "python_version < \"3.12\""}
+python-dotenv = ">=0.21,<2.0"
+rich = "^13.6"
+snowflake-connector-python = {version = "^3.11", optional = true, markers = "python_version < \"3.12\""}
+snowflake-snowpark-python = {version = "^1.18", optional = true, markers = "python_version < \"3.12\""}
 snowflake-sqlalchemy = {version = "^1.6", optional = true, markers = "python_version < \"3.12\""}
 sqlalchemy = "^2.0"
-tqdm = "^4.66"
 typing_extensions = "^4.9"
 
 [package.extras]
-snowflake = ["snowflake-connector-python (>=3.11.0,<4.0.0)", "snowflake-core (>=0.9.0,<0.10.0)", "snowflake-snowpark-python (>=1.20.0,<2.0.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
+snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-python (>=1.18,<2.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]
 type = "directory"
@@ -7952,6 +7938,7 @@ develop = true
 [package.dependencies]
 ipywidgets = ">=8.1.3"
 jupyter = ">=1"
+pandas = ">=2.1,<3"
 psutil = ">=5.9"
 rich = ">=13.6"
 streamlit = ">=1.33"
@@ -7979,7 +7966,7 @@ develop = true
 
 [package.dependencies]
 nltk = "^3.8"
-numpy = "^1.23"
+numpy = ">=1.23"
 pydantic = "^2"
 trulens-core = "^1.0.0"
 
@@ -8094,10 +8081,9 @@ develop = true
 
 [package.dependencies]
 nltk = "^3.8"
-numpy = "^1.23"
+numpy = ">=1.23"
 requests = "^2.31"
 torch = "^2.1.2"
-tqdm = "^4.66"
 transformers = "^4.38.1"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"

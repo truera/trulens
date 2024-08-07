@@ -1121,13 +1121,13 @@ six = ">=1.5"
 
 [[package]]
 name = "python-dotenv"
-version = "0.21.1"
+version = "1.0.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "python-dotenv-0.21.1.tar.gz", hash = "sha256:1c93de8f636cde3ce377292818d0e440b6e45a82f215c3744979151fa8151c49"},
-    {file = "python_dotenv-0.21.1-py3-none-any.whl", hash = "sha256:41e12e0318bebc859fcc4d97d4db8d20ad21721a6aa5047dd59f090391cb549a"},
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
 ]
 
 [package.extras]
@@ -1579,4 +1579,4 @@ snowflake = ["snowflake-connector-python", "snowflake-snowpark-python", "snowfla
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "0cc272e85cbc0a2a7e1a888c9d5a33633d9936c882d2235dfb180f1c04657f3f"
+content-hash = "27cfe95b0b396a280205c0ae5375b5c281a32d83abe5e230013819dfff5a3bb8"
