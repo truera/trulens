@@ -79,7 +79,7 @@ Contents:
 """
 
 
-def type_str(typ: Union[type | ForwardRef | TypeVar]) -> str:
+def type_str(typ: Union[type, ForwardRef, TypeVar]) -> str:
     """Render the type/type constructor with all referenced types using fully
     qualified names.
 
