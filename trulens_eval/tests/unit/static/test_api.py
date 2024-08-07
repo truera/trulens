@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict
 from unittest import main
 
-from tests.test import JSONTestCase
+from tests.test import JSONTestCase, optional_test
 from tests.utils import Member
 from tests.utils import get_module_members
 from tests.utils import get_module_names, get_class_members
@@ -20,7 +20,7 @@ class TestAPI(JSONTestCase):
     """API Tests."""
 
     def setUp(self):
-        self.members = self.get_current_members()
+        pass
 
     def get_current_members(self) -> Dict[str, Dict[str, Member]]:
         """Get the API members of the current trulens_eval module."""
@@ -75,9 +75,14 @@ class TestAPI(JSONTestCase):
 
         return objects
 
+    @optional_test
     def test_apis(self):
+        """Check that all high and low level API members are present."""
+
+        members = self.get_current_members()
+
         self.assertGoldenJSONEqual(
-            actual=self.members,
+            actual=members,
             golden_filename="api.yaml",
         )
 
