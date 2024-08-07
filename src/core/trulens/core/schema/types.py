@@ -56,5 +56,5 @@ FeedbackResultID: typing_extensions.TypeAlias = str
 """Unique identifier for a feedback result.
 
 By default these are hashes of feedback result content as json. See
-[FeedbackResult.feedback_result_id][trulens.core.schema.feedback.FeedbackResult.feedback_result_id].
+[FeedbackResult.feedback_result_id][trulens.core.schema.feedback.FeedbackResult].
 """

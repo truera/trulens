@@ -198,7 +198,7 @@ class GetAttribute(StepItemOrAttribute):
         if obj is None:
             obj = Bunch()
 
-        # might cause isses
+        # might cause issues
         obj = copy(obj)
 
         if hasattr(obj, self.attribute):
@@ -293,7 +293,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
     """A step in a path lens that selects an item or an attribute.
 
     Note:
-        _TruLens-Eval_ allows lookuping elements within sequences if the subelements
+        _TruLens_ allows lookuping elements within sequences if the subelements
         have the item or attribute. We issue warning if this is ambiguous (looking
         up in a sequence of more than 1 element).
     """
@@ -314,8 +314,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
 
         if isinstance(obj, Sequence) and not isinstance(obj, str):
             if len(obj) == 1:
-                for r in self.get(obj=obj[0]):
-                    yield r
+                yield from self.get(obj=obj[0])
             elif len(obj) == 0:
                 raise ValueError(
                     f"Object not a dictionary or sequence of dictionaries: {obj}."
@@ -330,8 +329,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                 )
                 for sub_obj in obj:
                     try:
-                        for r in self.get(obj=sub_obj):
-                            yield r
+                        yield from self.get(obj=sub_obj)
                     except Exception:
                         pass
 
@@ -1034,8 +1032,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         else:
             for start_selection in start_items:
-                for last_selection in last_step.get(start_selection):
-                    yield last_selection
+                yield from last_step.get(start_selection)
 
     def _append(self, step: Step) -> Lens:
         return Lens(path=self.path + (step,))
@@ -1099,14 +1096,12 @@ def leaf_queries(obj_json: JSON, query: Lens = None) -> Iterable[Lens]:
     elif isinstance(obj_json, Dict):
         for k, v in obj_json.items():
             sub_query = query[k]
-            for res in leaf_queries(obj_json[k], sub_query):
-                yield res
+            yield from leaf_queries(obj_json[k], sub_query)
 
     elif isinstance(obj_json, Sequence):
         for i, v in enumerate(obj_json):
             sub_query = query[i]
-            for res in leaf_queries(obj_json[i], sub_query):
-                yield res
+            yield from leaf_queries(obj_json[i], sub_query)
 
     else:
         yield query
@@ -1128,24 +1123,21 @@ def all_queries(obj: Any, query: Lens = None) -> Iterable[Lens]:
         for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
-            for res in all_queries(v, sub_query):
-                yield res
+            yield from all_queries(v, sub_query)
 
     elif isinstance(obj, Dict):
         yield query
 
         for k, v in obj.items():
             sub_query = query[k]
-            for res in all_queries(obj[k], sub_query):
-                yield res
+            yield from all_queries(obj[k], sub_query)
 
     elif isinstance(obj, Sequence):
         yield query
 
         for i, v in enumerate(obj):
             sub_query = query[i]
-            for res in all_queries(obj[i], sub_query):
-                yield res
+            yield from all_queries(obj[i], sub_query)
 
     else:
         yield query
@@ -1167,20 +1159,17 @@ def all_objects(obj: Any, query: Lens = None) -> Iterable[Tuple[Lens, Any]]:
         for k in obj.model_fields:
             v = getattr(obj, k)
             sub_query = query[k]
-            for res in all_objects(v, sub_query):
-                yield res
+            yield from all_objects(v, sub_query)
 
     elif isinstance(obj, Dict):
         for k, v in obj.items():
             sub_query = query[k]
-            for res in all_objects(obj[k], sub_query):
-                yield res
+            yield from all_objects(obj[k], sub_query)
 
     elif isinstance(obj, Sequence):
         for i, v in enumerate(obj):
             sub_query = query[i]
-            for res in all_objects(obj[i], sub_query):
-                yield res
+            yield from all_objects(obj[i], sub_query)
 
     elif isinstance(obj, Iterable):
         logger.debug(

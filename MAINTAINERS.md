@@ -2,11 +2,12 @@ The current maintainers of _TruLens_ are:
 
 | Name | Employer | Github Name |
 | ---- | -------- | ---------------- |
-| Aaron Varghese | Truera | arn-tru |
-| Corey Hu | Truera | coreyhu |
-| Daniel Huang | Truera | daniel-huang-1230 |
-| Garett Tok Ern Liang | Truera | walnutdust |
-| Josh Reini | Truera | joshreini1 |
-| Piotr Mardziel | Truera | piotrm0 |
-| Ricardo Aravena | Truera | raravena80 |
-| Shayak Sen | Truera | shayaks |
+| Corey Hu | Snowflake | sfc-gh-chu |
+| Daniel Huang | Snowflake | sfc-gh-dhuang |
+| David Kurokawa | Snowflake | sfc-gh-dkurokawa |
+| Garett Tok Ern Liang | Snowflake | sfc-gh-gtokernliang  |
+| Josh Reini | Snowflake | sfc-gh-jreini |
+| Piotr Mardziel | Snowflake | sfc-gh-pmardziel |
+| Prudhvi Dharmana | Snowflake | sfc-gh-pdharmana |
+| Ricardo Aravena | Snowflake | sfc-gh-raravena |
+| Shayak Sen | Snowflake | sfc-gh-shsen |

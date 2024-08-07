@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 import functools
+import importlib
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -66,7 +67,7 @@ class EndpointCallback(SerialModel):
     """
 
     endpoint: Endpoint = Field(exclude=True)
-    """Thhe endpoint owning this callback."""
+    """The endpoint owning this callback."""
 
     cost: Cost = Field(default_factory=Cost)
     """Costs tracked by this callback."""
@@ -323,13 +324,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"Endpoint {self.name} request failed {self.retries+1} time(s): \n\t"
+            f"Endpoint {self.name} request failed {self.retries + 1} time(s): \n\t"
             + ("\n\t".join(map(str, errors)))
         )
 
     def run_me(self, thunk: Thunk[T]) -> T:
         """
-        DEPRECTED: Run the given thunk, returning itse output, on pace with the api.
+        DEPRECATED: Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
 
         DEPRECATED: Use `run_in_pace` instead.
@@ -420,14 +421,22 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         produced_func
                     )
                     Endpoint.instrumented_methods[object].append(
-                        (produced_func, instrumented_produced_func, type(self))
+                        (
+                            produced_func,
+                            instrumented_produced_func,
+                            type(self),
+                        )
                     )
                     return instrumented_produced_func
                 else:
                     return produced_func
 
             Endpoint.instrumented_methods[cls].append(
-                (func, metawrap, type(self))
+                (
+                    func,
+                    metawrap,
+                    type(self),
+                )
             )
 
             setattr(cls, wrapper_method_name, metawrap)
@@ -478,9 +487,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         for endpoint in Endpoint.ENDPOINT_SETUPS:
             if locals().get(endpoint.arg_flag):
                 try:
-                    mod = __import__(
-                        endpoint.module_name, fromlist=[endpoint.class_name]
-                    )
+                    mod = importlib.import_module(endpoint.module_name)
                     cls = safe_getattr(mod, endpoint.class_name)
                 except Exception:
                     # If endpoint uses optional packages, will get either module
@@ -816,7 +823,7 @@ class DummyEndpoint(Endpoint):
 
         assert (
             error_prob + freeze_prob + overloaded_prob + loading_prob <= 1.0
-        ), "Probabilites should not exceed 1.0 ."
+        ), "Probabilities should not exceed 1.0 ."
         assert rpm > 0
         assert alloc >= 0
         assert delay >= 0.0

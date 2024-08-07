@@ -26,6 +26,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pypirc
 MANIFEST
 *.whl
 
@@ -56,3 +57,6 @@ test-output.xml
 .coverage
 coverage.xml
 htmlcov/
+
+# mypy
+.mypy-cache/

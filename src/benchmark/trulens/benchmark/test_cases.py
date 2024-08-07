@@ -171,10 +171,8 @@ def calculate_expected_score(normalized_metrics_lst, weights_lst):
     assert len(normalized_metrics_lst) == len(weights_lst)
     return round(
         sum(
-            [
-                normalized_metrics_lst[i] * weights_lst[i]
-                for i in range(len(normalized_metrics_lst))
-            ]
+            normalized_metrics_lst[i] * weights_lst[i]
+            for i in range(len(normalized_metrics_lst))
         )
         / sum(weights_lst),
         2,
@@ -182,7 +180,7 @@ def calculate_expected_score(normalized_metrics_lst, weights_lst):
 
 
 def generate_summeval_groundedness_golden_set(file_path):
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         data = json.load(f)
 
     for item in data["rows"]:
@@ -208,10 +206,10 @@ def generate_summeval_groundedness_golden_set(file_path):
 def generate_meetingbank_comprehensiveness_benchmark(
     human_annotation_file_path, meetingbank_file_path
 ):
-    with open(meetingbank_file_path, "r") as f:
+    with open(meetingbank_file_path) as f:
         transcripts_data = json.load(f)
 
-    with open(human_annotation_file_path, "r") as f:
+    with open(human_annotation_file_path) as f:
         annotation_data = json.load(f)
 
     def get_transcript_as_string(transcripts_data, meeting_name, section):
@@ -259,16 +257,14 @@ def generate_meetingbank_comprehensiveness_benchmark(
                 "query": transcripts_str,
                 "response": summary,
                 "expected_score": calculate_expected_score(
-                    [
-                        avg_informativeness_score
-                    ],  #  normalize score from 1 to 5 to 0 to 1.0
-                    [1.0],
+                    [avg_informativeness_score],
+                    [1.0],  #  normalize score from 1 to 5 to 0 to 1.0
                 ),
             }
 
 
 def generate_ms_marco_context_relevance_benchmark(file_path):
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         data = json.load(f)
 
     for item in data["rows"]:

@@ -29,7 +29,7 @@ class OpenAI(LLMProvider):
 
     Args:
         model_engine: The OpenAI completion model. Defaults to
-            `gpt-3.5-turbo`
+            `gpt-4o-mini`
 
         **kwargs: Additional arguments to pass to the
             [OpenAIEndpoint][trulens.providers.openai.endpoint.OpenAIEndpoint]
@@ -38,7 +38,7 @@ class OpenAI(LLMProvider):
             and finally to the OpenAI client.
     """
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-3.5-turbo"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "gpt-4o-mini"
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
@@ -60,7 +60,7 @@ class OpenAI(LLMProvider):
         if model_engine is None:
             model_engine = self.DEFAULT_MODEL_ENGINE
 
-        # Seperate set of args for our attributes because only a subset go into
+        # Separate set of args for our attributes because only a subset go into
         # endpoint below.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
@@ -330,7 +330,7 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not harrassment) and 1.0 (harrassment).
+            float: A value between 0.0 (not harassment) and 1.0 (harassment).
         """
         openai_response = self._moderation(text)
 

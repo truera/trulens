@@ -135,8 +135,8 @@ class TP(SingletonPerName):  # "thread processing"
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
-        # Keep a seperate pool for threads whose function is only to wait for
-        # the tasks executed in the above pool. Keeping this seperate to prevent
+        # Keep a separate pool for threads whose function is only to wait for
+        # the tasks executed in the above pool. Keeping this separate to prevent
         # the deadlock whereas the wait thread waits for a tasks which will
         # never be run because the thread pool is filled with wait threads.
         self.thread_pool_debug_tasks = ThreadPoolExecutor(

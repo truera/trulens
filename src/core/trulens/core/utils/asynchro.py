@@ -5,7 +5,7 @@ NOTE: we cannot name a module "async" as it is a python keyword.
 
 ## Synchronous vs. Asynchronous
 
-Some functions in trulens_eval come with asynchronous versions. Those use "async
+Some functions in TruLens come with asynchronous versions. Those use "async
 def" instead of "def" and typically start with the letter "a" in their name with
 the rest matching their synchronous version.
 

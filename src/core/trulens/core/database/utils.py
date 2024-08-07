@@ -87,7 +87,7 @@ def check_db_revision(
 
     if prefix == prior_prefix:
         raise ValueError(
-            "prior_prefix and prefix canot be the same. Use None for prior_prefix if it is unknown."
+            "prior_prefix and prefix cannot be the same. Use None for prior_prefix if it is unknown."
         )
 
     ins = sqlalchemy.inspect(engine)

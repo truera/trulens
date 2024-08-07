@@ -491,7 +491,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             if len(par_names) == 0:
                 raise TypeError(
                     f"Feedback implementation {self.imp} with signature {sig} has no more inputs. "
-                    "Perhaps you meant to evalute it on App output only instead of app input and output?"
+                    "Perhaps you meant to evaluate it on App output only instead of app input and output?"
                 )
 
             return par_names[0]
@@ -739,7 +739,7 @@ Feedback function signature:
                     )
 
             except Exception as e:
-                msg += f"Some non-existant object because: {pretty_repr(e)}"
+                msg += f"Some non-existent object because: {pretty_repr(e)}"
 
         if check_good:
             return True
@@ -1102,7 +1102,7 @@ Feedback function signature:
 
             **kwargs: Additional keyword arguments to use instead of looking
                 them up from source data. Any parameters specified here will be
-                used as the assignment value and the selector for that paremeter
+                used as the assignment value and the selector for that parameter
                 will be ignored.
 
         """

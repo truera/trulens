@@ -1,8 +1,8 @@
 """Database Tests
 
 Some of the tests in file require a running docker container which hosts the
-tested databases. See `trulens_eval/docker/test-database.yaml` and/or
-`trulens_eval/Makefile` target `test-database` for how to get this container
+tested databases. See `docker/test-database.yaml` and/or
+`Makefile` target `test-database` for how to get this container
 running.
 
 - Tests migration of old databases to new ones.
@@ -191,7 +191,7 @@ class TestDbV2Migration(TestCase):
 
     def test_future_db(self) -> None:
         """Check handling of database that is newer than the current
-        trulens_eval's db version.
+        TruLens's db version.
 
         We expect a warning and exception."""
 
@@ -297,7 +297,7 @@ def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
 
     with TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
         # NOTE: The parameters below come from the docker definition in the
-        # `trulens_eval/docker/test-database.yaml` file.
+        # `docker/test-database.yaml` file.
         url = {
             "sqlite_memory": "sqlite:///:memory:",
             # TODO: Test this one more.

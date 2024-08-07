@@ -6,16 +6,19 @@ requires = [
 
 [tool.poetry]
 name = "trulens-core"
-version = "0.33.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-  "Truera Inc <all@truera.com>",
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
 license = "MIT"
 readme = "README.md"
 packages = [
   { include = "trulens" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -30,7 +33,6 @@ munch = "^3.0"
 dill = "^0.3"
 tqdm = "^4.66"
 typing_extensions = "^4.9"
-psutil = "^5.9"
 pydantic = "^2"
 merkle-json = "^1.0"
 sqlalchemy = "^2.0"
@@ -38,9 +40,22 @@ alembic = "^1.11"
 nest-asyncio = "^1.5"
 python-dotenv = "^1.0"
 
-[tool.poetry.group.optional]
+snowflake-core = { version = "^0.9.0", python = "<3.12", optional = true }
+snowflake-connector-python = { version = "^3.11.0", python = "<3.12", optional = true }
+snowflake-snowpark-python = { version = "^1.20.0", python = "<3.12", optional = true }
+snowflake-sqlalchemy = { version = "^1.6", python = "<3.12", optional = true }
+
+[tool.poetry.group.openai]
 optional = true
 
-[tool.poetry.group.optional.dependencies]
+[tool.poetry.group.openai.dependencies]
 openai = "^1.37"
 httpx = "^0.27"
+
+[tool.poetry.extras]
+snowflake = [
+  "snowflake-core",
+  "snowflake-connector-python",
+  "snowflake-snowpark-python",
+  "snowflake-sqlalchemy",
+]

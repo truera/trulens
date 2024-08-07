@@ -31,7 +31,7 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    tru: Tru,
+    tru: Optional[Tru] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
@@ -55,6 +55,8 @@ def run_dashboard(
             is set.
 
     """
+    if not tru:
+        tru = Tru()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:

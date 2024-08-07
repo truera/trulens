@@ -1,6 +1,7 @@
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
+import importlib
 import os
 from typing import Dict, Optional, Sequence
 import unittest
@@ -20,7 +21,7 @@ ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
 def optional_test(testmethodorclass):
     """
     Only run the decorated test if the environment variable with_optional
-    evalutes true. These are meant to be run only in an environment where
+    evaluates true. These are meant to be run only in an environment where
     all optional packages have been installed.
     """
 
@@ -32,7 +33,7 @@ def optional_test(testmethodorclass):
 def requiredonly_test(testmethodorclass):
     """
     Only runs the decorated test if the environment variable with_optional
-    evalutes to false or is not set. Decorated tests are meant to run
+    evaluates to false or is not set. Decorated tests are meant to run
     specifically when optional imports are not installed.
 
     ALLOW_EXTRA_DEPS will allow optional imports to be installed
@@ -47,7 +48,7 @@ def requiredonly_test(testmethodorclass):
 
 def module_installed(module: str) -> bool:
     try:
-        __import__(module)
+        importlib.import_module(module)
         return True
     except ImportError:
         return False
@@ -62,7 +63,7 @@ class JSONTestCase(TestCase):
         skips=None,
         numeric_places: int = 7,
     ) -> None:
-        skips = skips or set([])
+        skips = skips or set()
         path = path or Lens()
 
         def recur(j1, j2, path):

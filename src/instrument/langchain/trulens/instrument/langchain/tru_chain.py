@@ -50,7 +50,7 @@ pp = PrettyPrinter()
 
 
 class LangChainInstrument(Instrument):
-    """Instruemtnation for LangChain apps."""
+    """Instrumentation for LangChain apps."""
 
     class Default:
         """Instrumentation specification for LangChain apps."""
@@ -163,8 +163,9 @@ class TruChain(mod_app.App):
         import numpy as np
 
         # Select context to be used in feedback.
-        from trulens.core.app import App
-        context = App.select_context(rag_chain)
+        from trulens.instrument.langchain import TruChain
+        context = TruChain.select_context(rag_chain)
+
 
         # Use feedback
         f_context_relevance = (

@@ -224,7 +224,7 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
     raise ValueError(f"Invalid filter {f}. Type, or a Tuple of Types expected.")
 
 
-class Instrument(object):
+class Instrument:
     """Instrumentation tools."""
 
     INSTRUMENT = "__tru_instrumented"
@@ -418,7 +418,7 @@ class Instrument(object):
             )
             # Note: are empty sets false?
             if contexts is None:
-                contexts = set([])
+                contexts = set()
 
             # And add any new contexts from all apps wishing to record this
             # function. This may produce some of the same contexts that were
@@ -471,7 +471,7 @@ class Instrument(object):
             # subsequent (inner) calls will see it. For every root_method in the
             # call stack, we make a call record to add to the existing list
             # found in the stack. Path stored in `query` of this method may
-            # differ between apps that use it so we have to create a seperate
+            # differ between apps that use it so we have to create a separate
             # frame identifier for each, and therefore the stack. We also need
             # to use a different stack for the same reason. We index the stack
             # in `stacks` via id of the (unique) list `record`.
@@ -706,7 +706,7 @@ class Instrument(object):
     ):
         """Instrument the given object `obj` and its components."""
 
-        done = done or set([])
+        done = done or set()
 
         cls = type(obj)
 
@@ -965,6 +965,7 @@ class Instrument(object):
 
                                 async def bound(*args, **kwargs):
                                     return await unbound(obj, *args, **kwargs)
+
                             else:
 
                                 def bound(*args, **kwargs):

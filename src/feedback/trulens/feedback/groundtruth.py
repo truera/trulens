@@ -3,19 +3,22 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-from trulens.core.utils.imports import REQUIREMENT_BERT_SCORE
-from trulens.core.utils.imports import REQUIREMENT_EVALUATE
 from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 from trulens.feedback.generated import re_0_10_rating
 from trulens.feedback.llm_provider import LLMProvider
 
-with OptionalImports(messages=REQUIREMENT_BERT_SCORE):
+with OptionalImports(
+    messages=format_import_errors("bert-score", purpose="measuring BERT Score")
+):
     from bert_score import BERTScorer
 
-with OptionalImports(messages=REQUIREMENT_EVALUATE):
+with OptionalImports(
+    messages=format_import_errors("evaluate", purpose="using certain metrics")
+):
     import evaluate
 
 logger = logging.getLogger(__name__)
@@ -40,8 +43,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def __init__(
         self,
-        provider: LLMProvider,
         ground_truth: Union[List, Callable, FunctionOrMethod],
+        provider: LLMProvider,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
@@ -50,19 +53,22 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Usage 1:
         ```
         from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.openai import OpenAI
         golden_set = [
             {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
             {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
         ]
-        ground_truth_collection = GroundTruthAgreement(golden_set)
+        ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
         ```
 
         Usage 2:
         ```
         from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.cortex import Cortex
         ground_truth_imp = llm_app
         response = llm_app(prompt)
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp)
+
+        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
         ```
 
         Args:
@@ -139,11 +145,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
@@ -177,7 +185,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def absolute_error(self, prompt: str, response: str, score: float) -> float:
         """
-        Method to look up the numeric expected score from a golden set and take the differnce.
+        Method to look up the numeric expected score from a golden set and take the difference.
 
         Primarily used for evaluation of model generated feedback against human feedback
 
@@ -186,12 +194,17 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.bedrock import Bedrock
 
             golden_set =
             {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
             {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+
+            bedrock = Bedrock(
+                model_id="amazon.titan-text-express-v1", region_name="us-east-1"
+            )
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=bedrock)
 
             f_groundtruth = Feedback(ground_truth.absolute_error.on(Select.Record.calls[0].args.args[0]).on(Select.Record.calls[0].args.args[1]).on_output()
             ```
@@ -220,11 +233,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
@@ -273,11 +287,12 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ```python
             from trulens.core import Feedback
             from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
             golden_set = [
                 {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
                 {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
             ]
-            ground_truth_collection = GroundTruthAgreement(golden_set)
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
             feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```

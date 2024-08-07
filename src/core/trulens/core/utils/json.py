@@ -153,7 +153,7 @@ def jsonify(
     """
 
     # NOTE(piotrm): We might need to do something special for the below types as
-    # they are stateful if iterated. That is, they might be iteratable only once
+    # they are stateful if iterated. That is, they might be iterable only once
     # and iterating will break their user's interfaces.
     """
     if isinstance(obj, typing.Iterator):
@@ -199,6 +199,7 @@ def jsonify(
 
         def recur_key(k):
             return isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
+
     else:
 
         def recur_key(k):

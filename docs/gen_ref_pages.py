@@ -1,6 +1,5 @@
 """Generate the code reference pages and navigation."""
 
-from inspect import cleandoc
 import os
 from pathlib import Path
 from typing import Optional, Tuple
@@ -16,8 +15,7 @@ docs_reference_path = Path("reference")
 
 mod_symbol = '<code class="doc-symbol doc-symbol-nav doc-symbol-module"></code>'
 
-pack_symbol = '(package)' # <code class="doc-symbol doc-symbol-nav doc-symbol-package"></code>'
-
+pack_symbol = "(package)"  # <code class="doc-symbol doc-symbol-nav doc-symbol-package"></code>'
 
 
 _SPECIAL_FORMATTING = {
@@ -50,7 +48,7 @@ def format_parts(parts: Tuple[str, ...]) -> Tuple[str, ...]:
             # trulens.providers.langchain.provider -> providers is nonmodule, langchain is package-level, provider is module
             seen_package_level = True
             return pack_symbol + " " + _SPECIAL_FORMATTING[part]
-        
+
         if not seen_package_level:
             return part
 
@@ -60,7 +58,9 @@ def format_parts(parts: Tuple[str, ...]) -> Tuple[str, ...]:
 
 
 def write_to_gen_files(
-    parts: Tuple[str, ...], content: Optional[str] = None, doc_path: Optional[Path] = None
+    parts: Tuple[str, ...],
+    content: Optional[str] = None,
+    doc_path: Optional[Path] = None,
 ):
     doc_path = doc_path or Path(*parts)
 
@@ -78,10 +78,12 @@ def write_to_gen_files(
     if parts[0] == "trulens_eval":
         # and (len(parts) <= 1 or parts[1] not in ("core", "instrument", "providers", "feedback", "benchmark", "dashboard")):
         nav_parts = format_parts(("api", *parts))
-    elif parts[0] == "trulens" and len(parts) == 1 or parts[-1] in ["providers"]:
+    elif (
+        parts[0] == "trulens" and len(parts) == 1 or parts[-1] in ["providers"]
+    ):
         nav_parts = format_parts(("api", *parts))
-#    elif parts[0].startswith("trulens") and len(parts) == 1:
-#        return
+    #    elif parts[0].startswith("trulens") and len(parts) == 1:
+    #        return
     else:
         nav_parts = format_parts(parts)
 
@@ -127,12 +129,11 @@ for package in packages:
 
         if not len(parts):
             continue
-        if (
-            package == "dashboard"
-            and len(parts) > 2
-            and parts[2] == "react_components"
-        ):
-            continue
+        if package == "dashboard":
+            if parts[0] != "trulens":
+                continue
+            if len(parts) > 2 and parts[2] == "react_components":
+                continue
         if not os.path.exists(path.parent / "__init__.py"):
             print(
                 "Skipping due to missing python module: ",

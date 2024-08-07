@@ -199,8 +199,8 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.core.app import App
-            context = App.select_context(rag_app)
+            from trulens.instrument.langchain import TruChain
+            context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
                 .on_input()
@@ -239,8 +239,8 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.core.app import App
-            context = App.select_context(rag_app)
+            from trulens.instrument.langchain import TruChain
+            context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
                 .on_input()
@@ -409,7 +409,7 @@ class LLMProvider(Provider):
         """
         warnings.warn(
             "`model_agreement` has been deprecated. "
-            "Use `GroundTruthAgreement(ground_truth)` instead.",
+            "Use `GroundTruthAgreement(ground_truth, provider)` instead.",
             DeprecationWarning,
         )
         chat_response = self._create_chat_completion(
@@ -1169,7 +1169,7 @@ class LLMProvider(Provider):
 
         In the case of abstentions, the LLM will be asked to consider the answerability of the question given the source material.
 
-        If the quesiton is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
+        If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
         Example:
 

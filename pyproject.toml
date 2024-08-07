@@ -6,28 +6,42 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "0.33.0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-  "Truera Inc <all@truera.com>",
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
 license = "MIT"
 readme = "README.md"
 packages = [
   { from = "_trulens", include = "trulens" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-api = "^0.33"
-trulens-core = "^0.33"
-trulens-feedback = "^0.33"
-trulens-dashboard = "^0.33"
+trulens-core = { version = "^1.0.0", extras = [
+  "snowflake",
+], allow-prereleases = true }
+trulens-api = { version = "^1.0.0", allow-prereleases = true }
+trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
+trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
 
-[tool.poetry.group.db-tests.dependencies]
+[tool.poetry.group.tests-db]
+optional = true
+
+[tool.poetry.group.tests-db.dependencies]
 psycopg2-binary = "^2.9"
 pymysql = "^1.1"
 cryptography = "^41.0"
@@ -62,10 +76,6 @@ trulens-instrument-langchain = { path = "src/instrument/langchain", develop = tr
 trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
 trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
 
-[tool.poetry.group.notebook.dependencies]
-jupyter = "^1.0"
-ipywidgets = "^8.1"
-
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
 trulens-providers-langchain = { path = "src/providers/langchain", develop = true }
@@ -75,10 +85,16 @@ trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 
 [tool.poetry.group.required.dependencies]
+python = "^3.9,!=3.9.7"
+trulens-core = { path = "src/core", extras = [
+  "snowflake",
+], develop = true }
 trulens-api = { path = "src/api", develop = true }
-trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
+
+[tool.poetry.group.tests]
+optional = true
 
 [tool.poetry.group.tests.dependencies]
 pytest = "^8.3"
@@ -90,19 +106,17 @@ ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
 
+[tool.poetry.group.tests-optional]
+optional = true
+
+[tool.poetry.group.tests-optional.dependencies]
+llama-index-embeddings-huggingface = "^0.2.2"
+llama-index-embeddings-openai = "^0.1.10"
+
 [tool.ruff]
 line-length = 80
-include = [
-  "src/*.py",
-  "tests/*.py",
-  "tests/*.ipynb",
-  "examples/*.py",
-  "examples/*.ipynb",
-]
 extend-exclude = [
-  "*.ipynb",
-  "examples/expositional/*",
-  "examples/experimental/*",
+  "examples/expositional",
 ]
 
 [tool.ruff.lint]

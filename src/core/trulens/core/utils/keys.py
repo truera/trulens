@@ -149,7 +149,7 @@ REDACTED_VALUE = "__tru_redacted"
 
 # Treat these value as not valid keys. Use any as a templates to suggest a user
 # fills in the key.
-TEMPLATE_VALUES = set(["to fill in"])
+TEMPLATE_VALUES = {"to fill in"}
 
 global cohere_agent
 cohere_agent = None

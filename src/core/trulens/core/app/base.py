@@ -199,6 +199,7 @@ class TrulensComponent(ComponentView):
 
     @staticmethod
     def of_json(json: JSON) -> "TrulensComponent":
+        # NOTE: This import is here to avoid circular imports.
         from trulens.core.utils.trulens import component_of_json
 
         return component_of_json(json)
@@ -648,32 +649,9 @@ class App(
         access the retrieved contexts that would appear in a record were these
         components to execute.
         """
-        if app is None:
-            raise ValueError(
-                "Could not determine context selection without `app` argument."
-            )
-
-        # Checking by module name so we don't have to try to import either
-        # langchain or llama_index beforehand.
-        if type(app).__module__.startswith("langchain"):
-            from trulens.instrument.langchain import TruChain
-
-            return TruChain.select_context(app)
-
-        if type(app).__module__.startswith("llama_index"):
-            from trulens.instrument.llamaindex import TruLlama
-
-            return TruLlama.select_context(app)
-
-        elif type(app).__module__.startswith("nemoguardrails"):
-            from trulens.instrument.nemo import TruRails
-
-            return TruRails.select_context(app)
-
-        else:
-            raise ValueError(
-                f"Could not determine context from unrecognized `app` type {type(app)}."
-            )
+        raise NotImplementedError(
+            "`select_context` not implemented for base App. Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
+        )
 
     def __hash__(self):
         return hash(id(self))
@@ -1216,7 +1194,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         recording, producing `func` results. The record of the computation is
         available through other means like the database or dashboard. If you
         need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
+        or the `App` as a context manager instead.
         """
 
         awaitable, _ = self.with_record(func, *args, **kwargs)
@@ -1234,7 +1212,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         recording, producing `func` results. The record of the computation is
         available through other means like the database or dashboard. If you
         need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context mananger instead.
+        or the `App` as a context manager instead.
         """
 
         res, _ = self.with_record(func, *args, **kwargs)

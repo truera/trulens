@@ -10,8 +10,7 @@ In Markdown, this can be done with a single underscore character on both sides
 of the term. In unstyled text, use the capitalization as below. This does not
 apply when referring to things like package names, classes, methods.
 
-- _TruLens_, _TruLens-Eval_, _TruLens-Explain_ . Since version 0.34, the name
-  _TruLens-Eval_ is being deprecated in favor of just _TruLens_.
+- _TruLens_
 
 - _LangChain_
 

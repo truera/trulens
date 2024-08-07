@@ -3,6 +3,7 @@ Static tests, i.e. ones that don't run anything substantial. This should find
 issues that occur from merely importing trulens.
 """
 
+import importlib
 from pathlib import Path
 import pkgutil
 import sys
@@ -18,7 +19,7 @@ from tests.unit.utils import module_installed
 from tests.unit.utils import optional_test
 from tests.unit.utils import requiredonly_test
 
-# Importing any of these should throw ImportError (or its sublcass
+# Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
 # package that the values depend on. Tests will first make sure the named
 # package is not installed and then check that importing any of those named
@@ -49,10 +50,6 @@ optional_mods = dict(
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
     optional_mods["nemoguardrails"] = ["trulens.instrument.nemo"]
-    optional_mods["snowflake"] = [
-        "trulens.providers.cortex.provider",
-        "trulens.providers.cortex.endpoint",
-    ]
 else:
     assert not module_installed(
         "snowflake-snowpark-python"
@@ -88,7 +85,7 @@ def get_all_modules(path: Path, startswith=None):
     return ret
 
 
-# Get all modules inside trulens_eval:
+# Get all modules inside trulens:
 all_trulens_mods = get_all_modules(
     Path(trulens.core.__file__).parent.parent, startswith="trulens"
 )
@@ -121,7 +118,7 @@ class TestStatic(TestCase):
 
         for mod in base_mods:
             with self.subTest(mod=mod):
-                __import__(mod)
+                importlib.import_module(mod)
 
     def _test_instrumentation(self, i: Instrument):
         """Check that the instrumentation specification is good in these ways:
@@ -139,7 +136,7 @@ class TestStatic(TestCase):
                 if isinstance(cls, Dummy):  # (1)
                     original_exception = cls.original_exception
                     self.fail(
-                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original expception={original_exception}"
+                        f"Instrumented class {cls.name} is dummy meaning it was not importable. Original exception={original_exception}"
                     )
 
                 # Disabled #2 test right now because of too many failures. We
@@ -205,7 +202,7 @@ class TestStatic(TestCase):
                     with self.subTest(mod=mod):
                         # Make sure the import raises ImportError:
                         with self.assertRaises(ImportError):
-                            __import__(mod)
+                            importlib.import_module(mod)
 
     @optional_test
     def test_import_optional_success(self):
@@ -225,7 +222,7 @@ class TestStatic(TestCase):
                 for mod in mods:
                     with self.subTest(mod=mod):
                         # Make sure we can import the module now.
-                        __import__(mod)
+                        importlib.import_module(mod)
 
 
 if __name__ == "__main__":

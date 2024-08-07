@@ -1,40 +1,50 @@
-from typing import Dict, Tuple, TypeVar, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
-from pydantic import PrivateAttr
-from trulens.core.utils.imports import REQUIREMENT_INSTRUMENT_LLAMA
 from trulens.core.utils.imports import REQUIREMENT_SKLEARN
 from trulens.core.utils.imports import OptionalImports
+from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 
-with OptionalImports(messages=REQUIREMENT_SKLEARN):
-    pass
+with OptionalImports(REQUIREMENT_SKLEARN):
+    import sklearn.metrics
 
-with OptionalImports(messages=REQUIREMENT_INSTRUMENT_LLAMA):
-    from llama_index.core.service_context import ServiceContext
-
-Embedder = TypeVar("Embedder", bound="Embedder")
+with OptionalImports(
+    messages=format_import_errors(
+        "llama_index", purpose="using llama-index embedding models"
+    )
+):
+    from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations."""
 
-    _embed_model: Embedder = PrivateAttr()
+    _embed_model: BaseEmbedding
 
-    def __init__(self, embed_model: Embedder = None):
+    def __init__(self, embed_model: BaseEmbedding):
         """Instantiates embeddings for feedback functions.
-        ```
-        f_embed = feedback.Embeddings(embed_model=embed_model)
-        ```
+        !!! example
+
+            Below is just one example. Embedders from llama-index are supported:
+            https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+
+            ```python
+            from llama_index.embeddings.openai import OpenAIEmbedding
+            from trulens.feedback.embeddings import Embeddings
+
+            embed_model = OpenAIEmbedding()
+
+            f_embed = Embedding(embed_model=embed_model)
+            ```
 
         Args:
-            embed_model ('Embedder'): Supported embedders taken from llama-index: https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
+            embed_model: Supports embedders from llama-index:
+                https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
         """
-
-        service_context = ServiceContext.from_defaults(embed_model=embed_model)
-        self._embed_model = service_context.embed_model
         super().__init__()
+        self._embed_model = embed_model
 
     def cosine_distance(
         self, query: str, document: str
@@ -44,28 +54,21 @@ class Embeddings(WithClassInfo, SerialModel):
 
         Example:
 
-            Below is just one example. See supported embedders:
-            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
-            from langchain.embeddings.openai import OpenAIEmbeddings
+            Below is just one example. Embedders from llama-index are supported:
+            https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+
 
             ```python
-            model_name = 'text-embedding-ada-002'
+            from llama_index.embeddings.openai import OpenAIEmbedding
+            from trulens.feedback.embeddings import Embeddings
 
-            embed_model = OpenAIEmbeddings(
-                model=model_name,
-                openai_api_key=OPENAI_API_KEY
-            )
+            embed_model = OpenAIEmbedding()
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
             f_embed_dist = feedback.Feedback(f_embed.cosine_distance)\
-                .on_input()\
-                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+                .on_input_output()
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide
-            :
-            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.
@@ -74,7 +77,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -87,13 +89,10 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.cosine_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]
 
     def manhattan_distance(
         self, query: str, document: str
@@ -103,28 +102,20 @@ class Embeddings(WithClassInfo, SerialModel):
 
         Example:
 
-            Below is just one example. See supported embedders:
-            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
-            from langchain.embeddings.openai import OpenAIEmbeddings
+            Below is just one example. Embedders from llama-index are supported:
+            https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
             ```python
-            model_name = 'text-embedding-ada-002'
+            from llama_index.embeddings.openai import OpenAIEmbedding
+            from trulens.feedback.embeddings import Embeddings
 
-            embed_model = OpenAIEmbeddings(
-                model=model_name,
-                openai_api_key=OPENAI_API_KEY
-            )
+            embed_model = OpenAIEmbedding()
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
             f_embed_dist = feedback.Feedback(f_embed.manhattan_distance)\
-                .on_input()\
-                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+                .on_input_output()
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide
-            :
-            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.
@@ -133,7 +124,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -146,13 +136,10 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.manhattan_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]
 
     def euclidean_distance(
         self, query: str, document: str
@@ -162,28 +149,20 @@ class Embeddings(WithClassInfo, SerialModel):
 
         Example:
 
-            Below is just one example. See supported embedders:
-            https://gpt-index.readthedocs.io/en/latest/core_modules/model_modules/embeddings/root.html
-            from langchain.embeddings.openai import OpenAIEmbeddings
+            Below is just one example. Embedders from llama-index are supported:
+            https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
             ```python
-            model_name = 'text-embedding-ada-002'
+            from llama_index.embeddings.openai import OpenAIEmbedding
+            from trulens.feedback.embeddings import Embeddings
 
-            embed_model = OpenAIEmbeddings(
-                model=model_name,
-                openai_api_key=OPENAI_API_KEY
-            )
+            embed_model = OpenAIEmbedding()
 
             # Create the feedback function
             f_embed = feedback.Embeddings(embed_model=embed_model)
             f_embed_dist = feedback.Feedback(f_embed.euclidean_distance)\
-                .on_input()\
-                .on(Select.Record.app.combine_documents_chain._call.args.inputs.input_documents[:].page_content)
+                .on_input_output()
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide
-            :
-            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
         Args:
             query (str): A text prompt to a vector DB.
@@ -192,7 +171,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Returns:
             - float: the embedding vector distance
         """
-        import sklearn
 
         query_embed = np.asarray(
             self._embed_model.get_query_embedding(query)
@@ -205,10 +183,7 @@ class Embeddings(WithClassInfo, SerialModel):
             1, -1
         )  # sklearn expects 2d array (first dimension number of samples)
 
+        # final results will be dimensions (sample query x sample doc) === (1,1)
         return sklearn.metrics.pairwise.euclidean_distances(
             query_embed, document_embed
-        )[
-            0
-        ][
-            0
-        ]  # final results will be dimensions (sample query x sample doc) === (1,1)
+        )[0][0]

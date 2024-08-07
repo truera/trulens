@@ -23,6 +23,7 @@ jobs:
     strategy:
       matrix:
         latest:
+          # Snowflake libraries are not available on >=3.12.
           python-version: "3.11"
 
     steps:

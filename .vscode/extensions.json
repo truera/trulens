@@ -1,21 +1,9 @@
 {
-    "recommendations": [
-        // Soft dependencies (Have settings configured)
-        "ms-python.python",
-        "charliermarsh.ruff",
-        "tamasfe.even-better-toml",
-        "ms-python.vscode-pylance",
-        "ms-python.mypy-type-checker",
-        "njpwerner.autodocstring",
-        "redhat.vscode-yaml",
-        "streetsidesoftware.code-spell-checker",
-        "ryanluker.vscode-coverage-gutters",
-        "github.vscode-pull-request-github",
-        // Highly recommended
-        "njqdev.vscode-python-typehint",
-        "davidanson.vscode-markdownlint",
-        "ms-toolsai.jupyter",
-        "visualstudioexptteam.vscodeintellicode",
-        "visualstudioexptteam.intellicode-api-usage-examples"
-    ]
+  "recommendations": [
+    "ms-python.python",
+    "charliermarsh.ruff",
+    "ms-toolsai.jupyter",
+    "tamasfe.even-better-toml",
+    "github.vscode-pull-request-github",
+  ]
 }

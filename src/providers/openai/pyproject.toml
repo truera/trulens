@@ -6,16 +6,19 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-openai"
-version = "0.33.0"
+version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
-  "Truera Inc <all@truera.com>",
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
 license = "MIT"
 readme = "README.md"
 packages = [
   { include = "trulens" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -25,10 +28,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = "^0.33"
-trulens-feedback = "^0.33"
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
+trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 openai = "^1.37"
-langchain-openai = "^0.1"
+langchain-openai = "^0.1.19"
+langchain-community = "^0.2.10"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

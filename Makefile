@@ -3,64 +3,67 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-POETRY_DIRS := $(shell find . -not -path "./dist/*" -maxdepth 4 -name "*poetry.lock" -exec dirname {} \;)
+POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
 
 # Create the poetry env for building website, docs, formatting, etc.
-.env/create:
+env:
 	poetry install
 
+env-%:
+	poetry install --with $*
+
+env-required:
+	poetry install --only required,tests --sync
+
+env-optional:
+	poetry install --with tests,tests-optional --sync --verbose
+
+
 # Lock the poetry dependencies for all the subprojects.
-lock: .env/create $(POETRY_DIRS)
+lock: $(POETRY_DIRS) clean-dashboard
 	for dir in $(POETRY_DIRS); do \
+		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
 	done
 
 # Run the ruff linter.
-lint: .env/create
+lint: env
 	poetry run ruff check --fix
 
 # Run the ruff formatter.
-format: .env/create
+format: env
 	poetry run ruff format
 
-precommit-hooks: .env/create
+precommit-hooks:
 	poetry run pre-commit install
 
-typestubs: .env/create $(POETRY_DIRS)
-	stubgen src/core -o out/trulens
-	stubgen src/feedback -o out/trulens
-	stubgen src/dashboard -o out/trulens
-	stubgen src/benchmark -o out/trulens
-	stubgen src/providers/* -o out/trulens/providers
-	stubgen src/instrument/* -o out/trulens/instrument
-
-run-precommit: precommit-hooks
+run-precommit:
 	poetry run pre-commit run --all-files --show-diff-on-failure
 
 # Start a jupyer lab instance.
-lab: .env/create
+lab: env
 	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
 # Build the documentation website.
-docs: .env/create $(shell find docs -type f) mkdocs.yml
+docs: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs build --clean
 	rm -Rf site/overrides
 
 # Serve the documentation website.
-docs-serve: .env/create
+docs-serve: env-docs
 	poetry run mkdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
-docs-serve-debug: .env/create
+docs-serve-debug: env-docs
 	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-docs-serve-dirty: .env/create
+docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
 
-docs-upload: .env/create $(shell find docs -type f) mkdocs.yml
+docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.
@@ -73,25 +76,20 @@ trubot:
 
 # Run a test with the optional flag set, meaning @optional_test decorated tests
 # are run.
-required-env: .env/create
-	poetry install --only required,tests --sync
-
-optional-env: .env/create
-	poetry install --sync --verbose
 
 coverage:
 	ALLOW_OPTIONAL_ENV_VAR=true pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Runs required tests
-test-%-required: required-env
+test-%-required: env-required
 	make test-$*
 
 # Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: required-env
+test-%-allow-optional: env
 	ALLOW_OPTIONAL_ENV_VAR=true make test-$*
 
 # Requires the full optional environment to be set up.
-test-%-optional: optional-env
+test-%-optional: env-optional
 	TEST_OPTIONAL=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
@@ -106,7 +104,7 @@ test-static:
 
 test-deprecation:
 	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
-	
+
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
@@ -118,23 +116,48 @@ test-notebook:
 
 # Release Steps:
 ## Step: Clean repo:
-clean:
-	git clean -fxd
+clean-dashboard:
+	rm -rf src/dashboard/*.egg-info
+
+clean: clean-dashboard
+	git clean --dry-run -fxd
+	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
+	echo
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		git clean -fxd; \
+	fi;
 
 ## Step: Build wheels
-build-dashboard: .env/create
-	rm -rf src/dashboard/*.egg-info
-	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist;
+build-dashboard: env clean-dashboard
+	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
 
-build: $(POETRY_DIRS) clean lock
+build: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
+		echo "Building $$dir"; \
 		pushd $$dir; \
-		poetry build -o $(REPO_ROOT)/dist; \
+		if [[ "$$dir" == "." ]]; then \
+			pkg_name=trulens; \
+		else \
+			pkg_path=$${dir#./src/}; \
+			pkg_name=trulens-$${pkg_path//\//-}; \
+		fi; \
+		echo $$pkg_name; \
+		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/; \
+		rm -rf .venv; \
 		popd; \
 	done
 	make build-dashboard
 
 ## Step: Upload wheels to pypi
-## Usage: TOKEN=... make upload
-upload: build
-	poetry run twine upload -u __token__ -p $(TOKEN) dist/*.whl
+# Usage: TOKEN=... make upload-trulnes-instrument-langchain
+upload-%:
+	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
+
+upload-all: build
+	poetry run `twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*
+
+upload-testpypi-%: build
+	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
+
+upload-testpypi-all: build
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*

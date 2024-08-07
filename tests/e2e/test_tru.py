@@ -10,7 +10,9 @@ from unittest import TestCase
 
 from trulens.core import Feedback
 from trulens.core import Tru
+from trulens.core import TruBasicApp
 from trulens.core import TruCustomApp
+from trulens.core import TruVirtual
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
 from trulens.providers.huggingface.provider import Dummy
@@ -163,12 +165,11 @@ class TestTru(TestCase):
 
     def test_required_constructors(self):
         """
-        Test the capitilized methods of Tru class that are aliases for various
+        Test the capitalized methods of Tru class that are aliases for various
         app types. This test includes only ones that do not require optional
         packages.
         """
-        tru = Tru()
-        from trulens.core import TruBasicApp
+        Tru()
 
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
@@ -197,14 +198,14 @@ class TestTru(TestCase):
         with self.subTest(type="TruCustomApp"):
             app = self._create_custom()
 
-            tru.Custom(app)
-            tru.Custom(app=app)
+            TruCustomApp(app)
+            TruCustomApp(app=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
-                tru.Custom()
+                TruCustomApp()
             with self.assertRaises(Exception):
-                tru.Custom(None)
+                TruCustomApp(None)
 
             # Specifying custom app using any of these other argument names
             # should be an error.
@@ -212,10 +213,10 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        tru.Custom(**{arg: app})
+                        TruCustomApp(**{arg: app})
 
         with self.subTest(type="TruVirtual"):
-            tru.Virtual(None)
+            TruVirtual(None)
 
     @optional_test
     def test_langchain_constructors(self):
@@ -286,7 +287,7 @@ class TestTru(TestCase):
 
         feedbacks = self._create_feedback_functions()
 
-        expected_feedback_names = set(f.name for f in feedbacks)
+        expected_feedback_names = {f.name for f in feedbacks}
 
         tru = Tru()
 
@@ -342,7 +343,7 @@ class TestTru(TestCase):
         app = self._create_custom()
 
         feedbacks = self._create_feedback_functions()
-        expected_feedback_names = set(f.name for f in feedbacks)
+        expected_feedback_names = {f.name for f in feedbacks}
 
         tru = Tru()
 
