@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-core"
-version = "1.0.1a1"
+version = "1.0.1a2"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,20 +28,20 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-numpy = "^1.23"
-munch = "^3.0"
-dill = "^0.3"
-tqdm = "^4.66"
+numpy = ">=1.23"
+munch = "^2.5"
+dill = "^0.3.8"
 typing_extensions = "^4.9"
 pydantic = "^2"
+pandas = "^2.1"
+rich = "^13.6"
 sqlalchemy = "^2.0"
-alembic = "^1.11"
+alembic = "^1.8.1"
 nest-asyncio = "^1.5"
-python-dotenv = "^1.0"
+python-dotenv = "^0.21"
 
-snowflake-core = { version = "^0.9.0", python = "<3.12", optional = true }
-snowflake-connector-python = { version = "^3.11.0", python = "<3.12", optional = true }
-snowflake-snowpark-python = { version = "^1.20.0", python = "<3.12", optional = true }
+snowflake-connector-python = { version = "^3.11", python = "<3.12", optional = true }
+snowflake-snowpark-python = { version = "^1.18", python = "<3.12", optional = true }
 snowflake-sqlalchemy = { version = "^1.6", python = "<3.12", optional = true }
 
 [tool.poetry.group.openai]
@@ -53,7 +53,6 @@ httpx = "^0.27"
 
 [tool.poetry.extras]
 snowflake = [
-  "snowflake-core",
   "snowflake-connector-python",
   "snowflake-snowpark-python",
   "snowflake-sqlalchemy",
