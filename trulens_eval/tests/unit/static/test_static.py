@@ -8,9 +8,9 @@ import sys
 from unittest import TestCase
 from unittest import main
 
-from trulens_eval.tests.test import module_installed
-from trulens_eval.tests.test import optional_test
-from trulens_eval.tests.test import requiredonly_test
+from tests.test import module_installed
+from tests.test import optional_test
+from tests.test import requiredonly_test
 import trulens_eval
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import Dummy

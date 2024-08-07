@@ -12,8 +12,8 @@ from langchain.memory import ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 
-from trulens_eval.tests.test import JSONTestCase
-from trulens_eval.tests.test import optional_test
+from tests.test import JSONTestCase
+from tests.test import optional_test
 from trulens_eval import Tru
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys

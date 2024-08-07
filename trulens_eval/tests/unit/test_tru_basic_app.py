@@ -4,7 +4,7 @@ Tests for TruBasicApp.
 
 from unittest import main
 
-from trulens_eval.tests.test import JSONTestCase
+from tests.test import JSONTestCase
 from trulens_eval import Tru
 from trulens_eval import TruBasicApp
 from trulens_eval.keys import check_keys

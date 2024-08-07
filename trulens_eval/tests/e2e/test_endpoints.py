@@ -10,7 +10,7 @@ from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
 
-from trulens_eval.tests.test import optional_test
+from tests.test import optional_test
 from trulens_eval.feedback.provider.endpoint import Endpoint
 from trulens_eval.keys import check_keys
 

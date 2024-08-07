@@ -172,9 +172,9 @@ class JSONTestCase(TestCase):
         `actual` and the content of `golden_filename`.
 
         If the environment variable
-        [WRITE_GOLDEN_VAR][trulens_eval.tests.test.WRITE_GOLDEN_VAR] is
+        [WRITE_GOLDEN_VAR][tests.test.WRITE_GOLDEN_VAR] is
         set, the golden file will be overwritten with the `actual` content. See
-        [assertJSONEqual][trulens_eval.tests.test.assertJSONEqual] for
+        [assertJSONEqual][tests.test.assertJSONEqual] for
         details on the equality check.
 
         Args:
