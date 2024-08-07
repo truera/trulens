@@ -326,13 +326,15 @@ class JSONTestCase(TestCase):
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 
-            self.assertSetEqual(ks1, ks2, ps)
+            with self.subTest("keys"):
+                self.assertSetEqual(ks1, ks2, ps)
 
             for k in ks1:
-                if k in skips:
+                if k in skips or k not in ks2:
                     continue
 
-                recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
+                with self.subTest(k):
+                    recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
 
         elif isinstance(j1, Sequence):
             self.assertEqual(len(j1), len(j2), ps)
@@ -342,7 +344,8 @@ class JSONTestCase(TestCase):
                 j2 = str_sorted(j2, skips=skips)
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
-                recur(v1, v2, path=path[i])
+                with self.subtest(i):
+                    recur(v1, v2, path=path[i])
 
         elif isinstance(j1, datetime):
             self.assertEqual(j1, j2, ps)
@@ -352,42 +355,45 @@ class JSONTestCase(TestCase):
                 if f.name in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f.name))
+                with self.subTest(f.name):
+                    self.assertTrue(hasattr(j2, f.name))
 
-                recur(
-                    getattr(j1, f.name),
-                    getattr(j2, f.name),
-                    path[f.name],
-                    unordered=f.name in unordereds,
-                )
+                    recur(
+                        getattr(j1, f.name),
+                        getattr(j2, f.name),
+                        path[f.name],
+                        unordered=f.name in unordereds,
+                    )
 
         elif isinstance(j1, BaseModel):
             for f in j1.model_fields:
                 if f in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f))
+                with self.subTest(f):
+                    self.assertTrue(hasattr(j2, f))
 
-                recur(
-                    getattr(j1, f),
-                    getattr(j2, f),
-                    path[f],
-                    unordered=f in unordereds,
-                )
+                    recur(
+                        getattr(j1, f),
+                        getattr(j2, f),
+                        path[f],
+                        unordered=f in unordereds,
+                    )
 
         elif isinstance(j1, pydantic.v1.BaseModel):
             for f in j1.__fields__:
                 if f in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f))
+                with self.subTest(f):
+                    self.assertTrue(hasattr(j2, f))
 
-                recur(
-                    getattr(j1, f),
-                    getattr(j2, f),
-                    path[f],
-                    unordered=f in unordereds,
-                )
+                    recur(
+                        getattr(j1, f),
+                        getattr(j2, f),
+                        path[f],
+                        unordered=f in unordereds,
+                    )
 
         else:
             raise RuntimeError(
