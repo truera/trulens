@@ -11,7 +11,7 @@ from unittest import main
 from tests.test import module_installed
 from tests.test import optional_test
 from tests.test import requiredonly_test
-from tests.utils.imports import get_module_names
+from tests.utils import get_module_names
 import trulens_eval
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import Dummy
