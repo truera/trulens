@@ -1,4 +1,4 @@
-# conda metadata build recipe
+# conda metadata build recipe for trulens-core
 
 {% set pyproject = load_file_data('../../src/core/pyproject.toml', from_recipe_dir=True) %}
 {% set poetry = pyproject.get('tool', {}).get('poetry') %}
@@ -10,9 +10,8 @@ package:
   version: {{ version }}
 
 source:
-  path: ../../src/core
-  {# url: https://pypi.io/packages/source/{{ name[0] }}/{{ name | replace("-", "_") }}/{{ name | replace("-", "_") }}-{{ version }}.tar.gz #}
-  {# sha256: 3d262120d24f62d75c197f13ef42465583e5c4b6340316a904be659803912c80 #}
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name | replace("-", "_") }}/{{ name | replace("-", "_") }}-{{ version }}.tar.gz #}
+  sha256: 3d262120d24f62d75c197f13ef42465583e5c4b6340316a904be659803912c80
 
 build:
   noarch: python
