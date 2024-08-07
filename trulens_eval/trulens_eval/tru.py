@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import queue
-import time
 from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
@@ -12,12 +10,14 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from pprint import PrettyPrinter
+import queue
 import re
 import socket
 import subprocess
 import sys
 import threading
 from threading import Thread
+import time
 from time import sleep
 from typing import (
     Any,
@@ -50,7 +50,6 @@ from trulens_eval.utils import python
 from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
-from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import Future  # code style exception
 from trulens_eval.utils.python import OpaqueWrapper
 
@@ -62,8 +61,10 @@ DASHBOARD_START_TIMEOUT: Annotated[
     int, Doc("Seconds to wait for dashboard to start")
 ] = 30
 
-RECORDS_BATCH_TIMEOUT: Annotated[int, Doc("Seconds to wait for records to be batched")] \
-    = 10
+RECORDS_BATCH_TIMEOUT: Annotated[
+    int, Doc("Seconds to wait for records to be batched")
+] = 10
+
 
 def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
@@ -525,7 +526,9 @@ class Tru(python.SingletonPerName):
                     # Re-queue the records that failed to be inserted
                     for record in records:
                         self.batch_record_queue.put(record)
-                    logger.error("Re-queued records due to insertion error {}", e)
+                    logger.error(
+                        "Re-queued records due to insertion error {}", e
+                    )
                     continue
                 feedback_results = []
                 apps = {}
@@ -533,18 +536,19 @@ class Tru(python.SingletonPerName):
                     app_id = record.app_id
                     app = apps.setdefault(app_id, self.get_app(app_id=app_id))
                     feedback_definitions = app.get("feedback_definitions", [])
-                    #TODO(Dave): Modify this to add only client side feedback results
+                    # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:
-                        feedback_results.append(mod_feedback_schema.FeedbackResult(
-                            feedback_definition_id=feedback_definition_id,
-                            record_id=record.record_id,
-                            name="feedback_name", # this will be updated later by deferred evaluator
-                        ))
+                        feedback_results.append(
+                            mod_feedback_schema.FeedbackResult(
+                                feedback_definition_id=feedback_definition_id,
+                                record_id=record.record_id,
+                                name="feedback_name",  # this will be updated later by deferred evaluator
+                            )
+                        )
                 try:
                     self.db.batch_insert_feedback(feedback_results)
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
-                
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
