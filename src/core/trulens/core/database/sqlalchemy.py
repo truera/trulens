@@ -127,6 +127,7 @@ class SQLAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
+        database_engine: Optional[sa.Engine] = None,
         database_redact_keys: Optional[
             bool
         ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
@@ -164,6 +165,9 @@ class SQLAlchemyDB(DB):
 
         if "redact_keys" not in kwargs:
             kwargs["redact_keys"] = database_redact_keys
+
+        if database_engine is not None:
+            new_db: DB = database_engine
 
         new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 

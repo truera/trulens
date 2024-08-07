@@ -26,6 +26,7 @@ from typing import (
 
 import humanize
 import pandas
+import sqlalchemy as sa
 from tqdm.auto import tqdm
 from trulens.core import feedback
 from trulens.core.database.base import DB
@@ -105,6 +106,9 @@ class Tru(python.SingletonPerName):
             on SQLAlchemy database URLs. (defaults to
             `sqlite://DEFAULT_DATABASE_FILE`).
 
+        database_engine: SQL-Alchemy compatible database engine.
+            Defaults to `None`.
+
         database_file: Path to a local SQLite database file.
 
             **Deprecated**: Use `database_url` instead.
@@ -170,6 +174,7 @@ class Tru(python.SingletonPerName):
         self,
         database: Optional[DB] = None,
         database_url: Optional[str] = None,
+        database_engine: Optional[sa.Engine] = None,
         database_file: Optional[str] = None,
         database_redact_keys: Optional[bool] = None,
         database_prefix: Optional[str] = None,
@@ -187,6 +192,18 @@ class Tru(python.SingletonPerName):
         if database_args is None:
             database_args = {}
 
+        if database_engine is not None:
+            if database is not None:
+                raise ValueError(
+                    "`database` must be `None` if `database_engine` is set!"
+                )
+            if database_url is not None:
+                raise ValueError(
+                    "`database_url` must be `None` if `database_engine` is set!"
+                )
+            # Use the provided database_engine
+            self.database_engine = database_engine
+
         if snowflake_connection_parameters is not None:
             if database is not None:
                 raise ValueError(
@@ -195,6 +212,10 @@ class Tru(python.SingletonPerName):
             if database_url is not None:
                 raise ValueError(
                     "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if database_engine is not None:
+                raise ValueError(
+                    "`database_engine` must be `None` if `snowflake_connection_parameters` is set!"
                 )
             if not name:
                 raise ValueError(
