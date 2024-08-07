@@ -76,10 +76,10 @@ test-static:
 
 # API tests.
 test-api:
-	$(CONDA)
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
 	TEST_OPTIONAL=1 python -m unittest tests.unit.static.test_api
 test-write-api:
-	$(CONDA)
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
@@ -163,13 +163,9 @@ lab:
 	$(CONDA)
 	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
-example_app:
-	$(CONDA)
-	$(PYENV) streamlit run trulens_eval/Example_Application.py
-
 example_trubot:
 	$(CONDA)
-	$(PYENV) streamlit run trulens_eval/Example_TruBot.py
+	$(PYENV) streamlit run examples/expositional/end2end_apps/trubot/App_TruBot.py
 
 # Start the dashboard.
 leaderboard:
