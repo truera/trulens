@@ -16,7 +16,6 @@ from typing import (
     Set,
     TypeVar,
     Union,
-    get_args,
 )
 
 
