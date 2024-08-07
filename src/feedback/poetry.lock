@@ -241,17 +241,6 @@ files = [
 ]
 
 [[package]]
-name = "merkle-json"
-version = "1.0.0"
-description = "Generates an MD5 unique hash of an Json object"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "merkle-json-1.0.0.tar.gz", hash = "sha256:2deb0e78beeb5cd9b515853bdc82bad341fa92538efe460f0142318dc4c6919d"},
-    {file = "merkle_json-1.0.0-py3-none-any.whl", hash = "sha256:832a626f0049e8de22b3096d6183100887e83bfabf238a64e1107ac1efa8499e"},
-]
-
-[[package]]
 name = "munch"
 version = "3.0.0"
 description = "A dot-accessible dictionary (a la JavaScript objects)"
@@ -695,7 +684,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -705,7 +694,6 @@ develop = true
 [package.dependencies]
 alembic = "^1.11"
 dill = "^0.3"
-merkle-json = "^1.0"
 munch = "^3.0"
 nest-asyncio = "^1.5"
 numpy = "^1.23"
