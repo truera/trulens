@@ -87,7 +87,7 @@ class Tru(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requres annotation
+            Custom apps containing custom structures and methods. Requires annotation
             of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual

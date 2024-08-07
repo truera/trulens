@@ -103,7 +103,7 @@ class TestFeedbackConstructors(TestCase):
             # (CustomClassWithArgs.class_method, 0.9),
             # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.
@@ -136,7 +136,7 @@ class TestFeedbackConstructors(TestCase):
             (CustomClassWithArgs.class_method, 0.9),
             (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
                 with self.assertRaises(Exception):
                     Feedback.model_validate(f.model_dump())
@@ -159,7 +159,7 @@ class TestFeedbackConstructors(TestCase):
             # (NG.CustomClassWithArgs.class_method, 0.9),
             # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.

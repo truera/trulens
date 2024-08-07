@@ -567,7 +567,7 @@ class SerialModel(pydantic.BaseModel):
 
         return jsonify(self, **kwargs)
 
-    # NOTE(piotrm): regaring model_validate: custom deserialization is done in
+    # NOTE(piotrm): regarding model_validate: custom deserialization is done in
     # WithClassInfo class but only for classes that mix it in.
 
     def update(self, **d: Dict[Any, Any]) -> SerialModel:

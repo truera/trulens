@@ -608,7 +608,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 mostly empty record for checking ahead of producing one. The
                 utility method
                 [App.dummy_record][trulens.core.app.App.dummy_record] is built
-                for this prupose.
+                for this purpose.
 
             source_data: Additional data to select from when extracting feedback
                 function arguments.
@@ -949,7 +949,7 @@ Feedback function signature:
                 num_total = num_skipped + num_evaled
                 warnings.warn(
                     (
-                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        f"{num_skipped}/{num_total}={100.0 * num_skipped / num_total:0.1f}"
                         "% evaluation(s) were skipped because they raised SkipEval "
                         "(see earlier warnings for listing)."
                     ),
