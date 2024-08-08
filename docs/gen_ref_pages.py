@@ -102,6 +102,7 @@ def write_to_gen_files(
 
 core_packages = [
     "api",
+    "legacy",
     "core",
     "feedback",
     "dashboard",
