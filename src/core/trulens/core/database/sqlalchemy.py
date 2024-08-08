@@ -168,8 +168,9 @@ class SQLAlchemyDB(DB):
 
         if database_engine is not None:
             new_db: DB = database_engine
-
-        new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
+            
+        else:
+            new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
             "%s Tru initialized with db url %s ."
