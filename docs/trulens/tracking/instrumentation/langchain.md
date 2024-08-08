@@ -100,7 +100,6 @@ be used to access the retrieved text for evaluation.
     )
     ```
 
-
 You can find the full quickstart available here: [LangChain Quickstart](trulens.org/trulens/getting_started/quickstarts/langchain_quickstart/)
 
 ## Async Support
@@ -147,7 +146,7 @@ Once you have created the async LLM chain you can instrument it just as before.
         )
     ```
 
-For more usage examples, check out the [LangChain cookbook](https://github.com/truera/trulens/tree/main/examples/expositional/frameworks/langchain).
+For examples of using `TruChain`, check out the [_TruLens_ Cookbook](trulens.org/examples/)
 
 ## Appendix: Instrumented LangChain Classes and Methods
 
