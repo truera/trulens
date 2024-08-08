@@ -125,8 +125,7 @@ class SQLAlchemyDB(DB):
     @classmethod
     def from_tru_args(
         cls,
-        database_url: Optional[str] = None,
-        database_file: Optional[str] = None,
+        database_url: str,
         database_redact_keys: Optional[
             bool
         ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
@@ -138,26 +137,6 @@ class SQLAlchemyDB(DB):
 
         Emits warnings if appropriate.
         """
-
-        if None not in (database_url, database_file):
-            raise ValueError(
-                "Please specify at most one of `database_url` and `database_file`"
-            )
-
-        if database_file:
-            warnings.warn(
-                (
-                    "`database_file` is deprecated, "
-                    "use `database_url` instead as in `database_url='sqlite:///filename'."
-                ),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-        if database_url is None:
-            database_url = (
-                f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
-            )
 
         if "table_prefix" not in kwargs:
             kwargs["table_prefix"] = database_prefix
@@ -767,7 +746,7 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 
 
 class AppsExtractor:
-    """Utilities for creating dataframes from orm instances."""
+    """Utilities for creating DataFrames from orm instances."""
 
     app_cols = ["app_id", "app_json", "type"]
     rec_cols = [
@@ -791,7 +770,7 @@ class AppsExtractor:
         apps: Optional[List["mod_orm.ORM.AppDefinition"]] = None,
         records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Produces a records dataframe which joins in information from apps and
+        """Produces a records DataFrame which joins in information from apps and
         feedback results.
 
         Args:

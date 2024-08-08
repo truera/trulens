@@ -60,7 +60,7 @@ def humanize_seconds(seconds: float):
 
 
 class Tru(python.SingletonPerName):
-    """Tru is the main class that provides an entry points to trulens.
+    """Tru is the main class that provides an entry points to TruLens.
 
     Tru lets you:
 
@@ -86,39 +86,39 @@ class Tru(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requres annotation
+            Custom apps containing custom structures and methods. Requires annotation
             of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
-        database: Database to use. If not provided, an
-            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
-            will be initialized based on the other arguments.
+        app_name (str, optional): The name of the app. Defaults to "default".
 
-        database_url: Database URL. Defaults to a local SQLite
+        database (Optional[DB], optional): Database to use. If not provided, an
+            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
+            will be initialized based on the other arguments. Defaults to None.
+
+        database_url (Optional[str], optional): Database URL. Defaults to a local SQLite
             database file at `"default.sqlite"` See [this
             article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
             on SQLAlchemy database URLs. (defaults to
-            `sqlite://DEFAULT_DATABASE_FILE`).
+            `sqlite://{app_name}.sqlite`).
 
-        database_file: Path to a local SQLite database file.
-
-            **Deprecated**: Use `database_url` instead.
-
-        database_prefix: Prefix for table names for trulens to use.
-            May be useful in some databases hosting other apps.
-
-        database_redact_keys: Whether to redact secret keys in data to be
+        database_redact_keys (bool, optional): Whether to redact secret keys in data to be
             written to database (defaults to `False`)
 
-        database_args: Additional arguments to pass to the database constructor.
+        database_prefix (Optional[str], optional): Prefix for table names for trulens to use.
+            May be useful in some databases hosting other apps. Defaults to None.
 
-        snowflake_connection_parameters: Connection arguments to Snowflake database to use.
+        database_args (Optional[Dict[str, Any]], optional): Additional arguments to pass to the database constructor. Defaults to None.
 
-        name: Name of the app.
+        database_check_revision (bool, optional): Whether to check the database revision on
+            init. This prompt determine whether database migration is required. Defaults to True.
+
+        snowflake_connection_parameters (Optional[Dict[str, str]], optional): Connection arguments to Snowflake database to use. Defaults to None.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -163,59 +163,22 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     def __new__(cls, *args, **kwargs) -> Tru:
-        return super().__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls, *args, **kwargs)
+        assert isinstance(inst, Tru)
+        return inst
 
     def __init__(
         self,
+        app_name: str = "default",
         database: Optional[DB] = None,
         database_url: Optional[str] = None,
-        database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = None,
+        database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
-        name: Optional[str] = None,
     ):
-        """
-        Args:
-            database_check_revision: Whether to check the database revision on
-                init. This prompt determine whether database migration is required.
-        """
-
-        if database_args is None:
-            database_args = {}
-
-        if snowflake_connection_parameters is not None:
-            if database is not None:
-                raise ValueError(
-                    "`database` must be `None` if `snowflake_connection_parameters` is set!"
-                )
-            if database_url is not None:
-                raise ValueError(
-                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
-                )
-            if not name:
-                raise ValueError(
-                    "`name` must be set if `snowflake_connection_parameters` is set!"
-                )
-            schema_name = self._validate_and_compute_schema_name(name)
-            database_url = self._create_snowflake_database_url(
-                snowflake_connection_parameters, schema_name
-            )
-
-        database_args.update(
-            {
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_file": database_file,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+        database_args = database_args or {}
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
@@ -227,7 +190,6 @@ class Tru(python.SingletonPerName):
                     )
                     self.warning()
                     break
-
             return
 
         if database is not None:
@@ -238,7 +200,14 @@ class Tru(python.SingletonPerName):
 
             self.db = database
         else:
-            self.db = SQLAlchemyDB.from_tru_args(**database_args)
+            self.db = self._init_db(
+                app_name=app_name,
+                database_args=database_args,
+                snowflake_connection_parameters=snowflake_connection_parameters,
+                database_url=database_url,
+                database_redact_keys=database_redact_keys,
+                database_prefix=database_prefix,
+            )
 
         if database_check_revision:
             try:
@@ -247,13 +216,51 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-    @staticmethod
-    def _validate_and_compute_schema_name(name):
-        if not re.match(r"^[A-Za-z0-9_]+$", name):
-            raise ValueError(
-                "`name` must contain only alphanumeric and underscore characters!"
+    def _init_db(
+        self,
+        app_name: str,
+        database_args: Dict[str, Any],
+        snowflake_connection_parameters: Optional[Dict[str, str]] = None,
+        database_url: Optional[str] = None,
+        database_redact_keys: bool = False,
+        database_prefix: Optional[str] = None,
+    ) -> DB:
+        if snowflake_connection_parameters is not None:
+            if database_url is not None:
+                raise ValueError(
+                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if not app_name:
+                raise ValueError(
+                    "`app_name` must be set if `snowflake_connection_parameters` is set!"
+                )
+            schema_name = self._validate_and_compute_schema_name(app_name)
+            database_url = self._create_snowflake_database_url(
+                snowflake_connection_parameters, schema_name
             )
-        return f"TRULENS_APP__{name.upper()}"
+        else:
+            database_url = database_url or f"sqlite:///{app_name}.sqlite"
+
+        database_args.update(
+            {
+                k: v
+                for k, v in {
+                    "database_url": database_url,
+                    "database_redact_keys": database_redact_keys,
+                    "database_prefix": database_prefix,
+                }.items()
+                if v is not None
+            }
+        )
+        return SQLAlchemyDB.from_tru_args(**database_args)
+
+    @staticmethod
+    def _validate_and_compute_schema_name(app_name: str):
+        if not re.match(r"^[A-Za-z0-9_]+$", app_name):
+            raise ValueError(
+                "`app_name` must contain only alphanumeric and underscore characters!"
+            )
+        return f"TRULENS_APP__{app_name.upper()}"
 
     @staticmethod
     def _create_snowflake_database_url(
@@ -704,9 +711,9 @@ class Tru(python.SingletonPerName):
             limit: Limit on the number of records to return.
 
         Returns:
-            Dataframe of records with their feedback results.
+            DataFrame of records with their feedback results.
 
-            List of feedback names that are columns in the dataframe.
+            List of feedback names that are columns in the DataFrame.
         """
 
         if app_ids is None:
@@ -731,8 +738,8 @@ class Tru(python.SingletonPerName):
             group_by_metadata_key: A key included in record metadata that you want to group results by.
 
         Returns:
-            Dataframe of apps with their feedback results aggregated.
-            If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
+            DataFrame of apps with their feedback results aggregated.
+            If group_by_metadata_key is provided, the DataFrame will be grouped by the specified key.
         """
 
         if app_ids is None:
