@@ -25,6 +25,8 @@ requirements:
     - nltk >=3.8.0,<4.0.0
     - pydantic >=2.0.0,<3.0.0
     - numpy >=1.23.0,<2.0.0
+    - scikit-learn >=1.3.0,<2
+    - scipy >=1.10.1,<2
 
 test:
   imports:
@@ -38,7 +40,6 @@ about:
   home: https://trulens.org/
   summary: Library to systematically track and evaluate LLM based applications.
   license: MIT
-#  license_file: PLEASE_ADD_LICENSE_FILE
 
 extra:
   recipe-maintainers:
