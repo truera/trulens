@@ -21,7 +21,8 @@ CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; 
 # Run the code formatter.
 format: .conda/docs
 	$(CONDA) .conda/docs
-	bash format.sh
+	bash format.sh --eval
+	pre-commit run --all-files
 
 # Start a jupyer lab instance.
 lab:
