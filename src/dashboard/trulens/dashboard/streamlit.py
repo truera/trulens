@@ -3,7 +3,6 @@ import json
 import math
 from typing import List
 
-from millify import millify
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
@@ -12,6 +11,7 @@ from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
+from trulens.core.utils.text import format_quantity
 from trulens.dashboard import display
 from trulens.dashboard.react_components.record_viewer import record_viewer
 from trulens.dashboard.ux import styles
@@ -94,18 +94,18 @@ def trulens_leaderboard(app_ids: List[str] = None):
         col2.metric(
             "Average Latency (Seconds)",
             (
-                f"{millify(round(latency_mean, 5), precision=2)}"
+                f"{format_quantity(round(latency_mean, 5), precision=2)}"
                 if not math.isnan(latency_mean)
                 else "nan"
             ),
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",
-            millify(
+            format_quantity(
                 sum(
                     tokens
                     for tokens in app_df.total_tokens

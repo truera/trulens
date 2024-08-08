@@ -3,7 +3,6 @@ from datetime import datetime
 import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
-from merkle_json import MerkleJson
 import pandas as pd
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.schema.app import AppDefinition
@@ -16,7 +15,6 @@ from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSONized
 from trulens.core.utils.serial import SerialModel
 
-mj = MerkleJson()
 NoneType = type(None)
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,6 @@ from typing import Callable, List
 import uuid
 
 import pydantic
-from tqdm import tqdm
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -300,10 +299,7 @@ def _serialization_asserts(db) -> None:
                 """
         )
         columns = c.fetchall()
-        for col_idx, col in tqdm(
-            enumerate(columns),
-            desc=f"Validating clean migration of table {table}",
-        ):
+        for col_idx, col in enumerate(columns):
             col_name_idx = 1
             col_name = col[col_name_idx]
             # This is naive for now...
