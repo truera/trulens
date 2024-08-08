@@ -15,7 +15,6 @@ brew install make
 echo 'PATH="$HOMEBREW_PREFIX/opt/make/libexec/gnubin:$PATH"' >> ~/.zshrc
 ```
 
-
 ## Clone the repository
 
 ```bash
