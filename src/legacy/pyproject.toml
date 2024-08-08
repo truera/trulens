@@ -5,7 +5,7 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-api"
+name = "trulens-legacy"
 version = "1.0.0a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [

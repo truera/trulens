@@ -245,7 +245,7 @@ REQUIREMENT_FEEDBACK = format_import_errors(
 
 # Optional app types:
 REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
-    "trulens-instrument-llama", purpose="instrumenting LlamaIndex apps"
+    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
 )
 REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
     "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
@@ -265,10 +265,6 @@ REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
 REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
     "trulens-providers-huggingface",
     purpose="evaluating feedback using Huggingface",
-)
-REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL = format_import_errors(
-    "trulens-providers-huggingface-local",
-    purpose="evaluating feedback using local Huggingface",
 )
 REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
     "trulens-providers-langchain", purpose="evaluating feedback using LangChain"

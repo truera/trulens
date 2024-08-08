@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """
 !!! warning
     This module is deprecated and will be removed. Use `trulens.core`
@@ -8,10 +9,11 @@
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 from trulens.core.utils.deprecation import packages_dep_warn
+
 packages_dep_warn("trulens_eval")
 
 # TODO: get this from poetry
-__version_info__ = (0, 33, 0)
+__version_info__ = (1, 0, 0)
 """Version number components for major, minor, patch."""
 
 __version__ = ".".join(map(str, __version_info__))
@@ -24,7 +26,7 @@ __version__ = ".".join(map(str, __version_info__))
 
 # check_imports()
 
-from trulens.core.utils import deprecation
+from trulens.core import schema as core_schema
 from trulens.core import tru as mod_tru
 from trulens.core.app import basic as mod_tru_basic_app
 from trulens.core.app import custom as mod_tru_custom_app
@@ -32,7 +34,7 @@ from trulens.core.app import virtual as mod_tru_virtual
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.feedback import provider as mod_provider
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core import schema as core_schema
+from trulens.core.utils import deprecation
 from trulens.core.utils import imports as imports_utils
 from trulens.core.utils import threading as threading_utils
 
@@ -58,11 +60,7 @@ with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
 ):
     from trulens.providers.huggingface.provider import Huggingface
-
-with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL
-):
-    from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
@@ -84,7 +82,7 @@ with imports_utils.OptionalImports(
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA
 ):
-    from trulens.instrument.llama.tru_llama import TruLlama
+    from trulens.instrument.llamaindex.tru_llama import TruLlama
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO

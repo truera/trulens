@@ -1,3 +1,5 @@
+# ruff: noqa: E402, F822
+
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 # TODO: get this from poetry
@@ -12,9 +14,8 @@ __version__ = ".".join(map(str, __version_info__))
 # this sequence.
 # from trulens.utils.imports import check_imports
 
-# check_imports()
-
 import importlib
+from typing import TYPE_CHECKING
 
 from trulens.core import schema as core_schema
 from trulens.core import tru as mod_tru
@@ -26,7 +27,6 @@ from trulens.core.feedback import provider as mod_provider
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import threading as threading_utils
 from trulens.core.utils.imports import get_package_version
-
 
 # Common classes:
 Tru = mod_tru.Tru
@@ -50,8 +50,8 @@ _OPTIONAL_PROVIDERS = {
         "trulens.providers.huggingface.provider",
     ),
     "HuggingfaceLocal": (
-        "trulens-providers-huggingface-local",
-        "trulens.providers.huggingfacelocal.provider",
+        "trulens-providers-huggingface",
+        "trulens.providers.huggingface.provider",
     ),
     "Langchain": (
         "trulens-providers-langchain",
@@ -81,13 +81,23 @@ _OPTIONAL_APPS = {
     ),
     "TruLlama": (
         "trulens-instrument-llamaindex",
-        "trulens.instrument.llama.tru_llama",
+        "trulens.instrument.llamaindex.tru_llama",
     ),
     "TruRails": (
         "trulens-instrument-nemo",
         "trulens.instrument.nemo.tru_rails",
     ),
 }
+
+if TYPE_CHECKING:
+    from trulens.providers.bedrock.provider import Bedrock
+    from trulens.providers.cortex.provider import Cortex
+    from trulens.providers.huggingface.provider import Huggingface
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+    from trulens.providers.langchain.provider import Langchain
+    from trulens.providers.litellm.provider import LiteLLM
+    from trulens.providers.openai.provider import AzureOpenAI
+    from trulens.providers.openai.provider import OpenAI
 
 
 def __getattr__(attr):
@@ -148,7 +158,8 @@ def __getattr__(attr):
             ) from e
 
     raise AttributeError(
-        f"Module {__name__} has no attribute {attr}. It has:\n  {"\n  ".join(__all__)}"
+        f"Module {__name__} has no attribute {attr}. It has:\n  "
+        + ("\n  ".join(__all__))
     )
 
 

@@ -1,20 +1,18 @@
-"""
-!!! warning
-    This module is deprecated and will be removed. Use `trulens.core.feedback`
-    or `trulens.feedback` instead.
+# ruff: noqa: E402
+"""Aliases.
+
+Aliases to new locations of various names. This module is deprecated and will be
+removed in a future release.
 """
 
-from trulens.core.utils.deprecation import packages_dep_warn
 from trulens.core.utils import deprecation
 
-packages_dep_warn("trulens_eval.feedback")
+from trulens_eval import packages_dep_warn
 
+packages_dep_warn("trulens_eval.feedback.provider")
+
+from trulens.core.feedback.provider import Provider
 from trulens.core.utils import imports as imports_utils
-
-with imports_utils.OptionalImports(messages=imports_utils.REQUIREMENT_FEEDBACK):
-    from trulens.feedback.feedback import Feedback
-    from trulens.feedback.embeddings import Embeddings
-    from trulens.feedback.groundtruth import GroundTruthAgreement
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
@@ -33,29 +31,23 @@ with imports_utils.OptionalImports(
     from trulens.providers.openai.provider import OpenAI
 
 with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
+):
+    from trulens.providers.cortex.provider import Cortex
+
+with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
 ):
     from trulens.providers.huggingface.provider import Huggingface
-
-with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE_LOCAL
-):
-    from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
     from trulens.providers.langchain.provider import Langchain
 
-with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
-):
-    from trulens.providers.cortex.provider import Cortex
-
 __all__ = [
-    "Feedback",
-    "Embeddings",
-    "GroundTruthAgreement",
+    "Provider",
     "OpenAI",
     "AzureOpenAI",
     "Huggingface",
@@ -71,6 +63,6 @@ __all__ = [
 deprecation.moved(
     globals(),
     names=__all__,
-    old="trulens_eval.feedback",
-    new="trulens.feedback",
+    old="trulens_eval.feedback.provider",
+    new="trulens.providers",
 )

@@ -1,6 +1,8 @@
+# ruff: noqa: E402
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 import importlib
+from typing import TYPE_CHECKING
 
 from trulens.core.utils.imports import get_package_version
 
@@ -8,10 +10,11 @@ if TYPE_CHECKING:
     from trulens.providers.bedrock.provider import Bedrock
     from trulens.providers.cortex.provider import Cortex
     from trulens.providers.huggingface.provider import Huggingface
-    from trulens.providers.huggingfacelocal.provider import HuggingfaceLocal
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
     from trulens.providers.langchain.provider import Langchain
     from trulens.providers.litellm.provider import LiteLLM
-    from trulens.providers.openai.provider import AzureOpenAI, OpenAI
+    from trulens.providers.openai.provider import AzureOpenAI
+    from trulens.providers.openai.provider import OpenAI
 
 _OPTIONAL_PROVIDERS = {
     "Bedrock": (
@@ -24,8 +27,8 @@ _OPTIONAL_PROVIDERS = {
         "trulens.providers.huggingface.provider",
     ),
     "HuggingfaceLocal": (
-        "trulens-providers-huggingface-local",
-        "trulens.providers.huggingfacelocal.provider",
+        "trulens-providers-huggingface",
+        "trulens.providers.huggingface.provider",
     ),
     "Langchain": (
         "trulens-providers-langchain",
@@ -41,6 +44,7 @@ _OPTIONAL_PROVIDERS = {
         "trulens.providers.openai.provider",
     ),
 }
+
 
 def __getattr__(attr):
     if attr in _OPTIONAL_PROVIDERS:
@@ -72,12 +76,19 @@ def __getattr__(attr):
             ) from e
 
     raise AttributeError(
-        f"Module {__name__} has no attribute {attr}. It has:\n  {"\n  ".join(__all__)}"
+        f"Module {__name__} has no attribute {attr}. It has:\n  "
+        + ("\n  ".join(__all__))
     )
+
 
 # This has to be statically assigned though we would prefer to use _OPTIONAL_PROVIDERS.keys():
 __all__ = [
     "Bedrock",
     "Cortex",
-    "Huggingface", "HuggingfaceLocal", "Langchain", "LiteLLM", "OpenAI", "AzureOpenAI"
+    "Huggingface",
+    "HuggingfaceLocal",
+    "Langchain",
+    "LiteLLM",
+    "OpenAI",
+    "AzureOpenAI",
 ]

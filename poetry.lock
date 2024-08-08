@@ -8117,6 +8117,22 @@ type = "directory"
 url = "src/instrument/nemo"
 
 [[package]]
+name = "trulens-legacy"
+version = "1.0.0"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+typing_extensions = "^4.9.0"
+
+[package.source]
+type = "directory"
+url = "src/legacy"
+
+[[package]]
 name = "trulens-providers-bedrock"
 version = "1.0.1a0"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -8753,4 +8769,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "8926aa143f7a4a9989ba963dedfdff1b7fe208d60a05b740c046b6a33fe81ac0"
+content-hash = "91bde6c4eda00085948a9de3066a42fa39aef6e5b20c1051b5450575c6ff96c0"

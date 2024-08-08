@@ -103,7 +103,7 @@ test-static:
 	poetry run pytest --rootdir=. tests/unit/static/test_static.py
 
 test-deprecation:
-	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
+	TEST_OPTIONAL=1 poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.

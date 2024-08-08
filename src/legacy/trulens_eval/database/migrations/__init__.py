@@ -1,3 +1,4 @@
+# ruff: noqa: E402, F403, F401
 """
 !!! warning
     This module is deprecated and will be removed. Use

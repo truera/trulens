@@ -10,6 +10,7 @@ from trulens.core.utils import imports as imports_utils
 
 PACKAGES_MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
 
+
 def packages_dep_warn(module: str):
     """Issue a deprecation warning for a backwards-compatibility modules.
 
@@ -23,6 +24,7 @@ def packages_dep_warn(module: str):
         DeprecationWarning,
         stacklevel=3,
     )
+
 
 def has_deprecated(obj: Union[Callable, Type]) -> bool:
     """Check if a function or class has been deprecated."""

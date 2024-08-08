@@ -31,6 +31,7 @@ python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
   "snowflake",
 ], allow-prereleases = true }
+trulens-legacy = { version = "^1.0.0", allow-prereleases = true } # to remove after deprecation period
 trulens-api = { version = "^1.0.0", allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
@@ -90,6 +91,7 @@ trulens-core = { path = "src/core", extras = [
   "snowflake",
 ], develop = true }
 trulens-api = { path = "src/api", develop = true }
+trulens-legacy = { path = "src/legacy", develop = true } # to remove after deprecation period
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
 

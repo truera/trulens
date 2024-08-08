@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """
 !!! warning
     This module is deprecated and will be removed. Use `trulens.core.schema`

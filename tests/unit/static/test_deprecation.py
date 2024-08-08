@@ -2,10 +2,14 @@
 Derpecation tests.
 """
 
+from enum import Enum
 import importlib
+import inspect
 import sys
-from unittest import main
 from unittest import TestCase
+from unittest import main
+
+from tests.unit.utils import optional_test
 
 
 class TestDeprecation(TestCase):
@@ -84,6 +88,7 @@ class TestDeprecation(TestCase):
             "trulens_eval.react_components.record_viewer": ["record_viewer"],
         }
 
+    @optional_test
     def test_init_aliases(self):
         """Check that all trulens_eval.*.__init__ aliases are still usable
         produce deprecation messages when used.
@@ -112,6 +117,14 @@ class TestDeprecation(TestCase):
                     continue
 
                 for name in names:
+                    if name in [
+                        "Cortex",
+                        "CortexEndpoint",
+                        "TruRails",
+                    ] and sys.version_info >= (3, 12):
+                        # These require python 3.12 .
+                        continue
+
                     with self.subTest(name=name):
                         # Can get the named object from module:
                         self.assertTrue(
@@ -120,6 +133,10 @@ class TestDeprecation(TestCase):
                         )
 
                         val = getattr(mod, name)
+
+                        if inspect.isclass(val) and issubclass(val, Enum):
+                            # The deprecation warning scheme does not work for Enums.
+                            continue
 
                         with self.subTest("alias call deprecation warning"):
                             with self.assertWarns(DeprecationWarning):

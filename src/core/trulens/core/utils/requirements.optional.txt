@@ -75,14 +75,13 @@ kaggle   >= 1.5.13
 
 
 # Trulens packages
-trulens-feedback >= 0.33
-trulens-instrument-llama >= 0.33
-trulens-instrument-langchain >= 0.33
-trulens-instrument-nemo >= 0.33
-trulens-providers-bedrock >= 0.33
-trulens-providers-cortex >= 0.33
-trulens-providers-huggingface >= 0.33
-trulens-providers-huggingface-local >= 0.33
-trulens-providers-langchain >= 0.33
-trulens-providers-litellm >= 0.33
-trulens-providers-openai >= 0.33
+trulens-feedback >= 1.0.0
+trulens-instrument-llama >= 1.0.0
+trulens-instrument-langchain >= 1.0.0
+trulens-instrument-nemo >= 1.0.0
+trulens-providers-bedrock >= 1.0.0
+trulens-providers-cortex >= 1.0.0
+trulens-providers-huggingface >= 1.0.0
+trulens-providers-langchain >= 1.0.0
+trulens-providers-litellm >= 1.0.0
+trulens-providers-openai >= 1.0.0
