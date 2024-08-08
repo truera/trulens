@@ -1,5 +1,21 @@
 # Development Guide
 
+## Dev dependencies
+
+### Install homebrew
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+### Install make
+
+```bash
+brew install make
+echo 'PATH="$HOMEBREW_PREFIX/opt/make/libexec/gnubin:$PATH"' >> ~/.zshrc
+```
+
+
 ## Clone the repository
 
 ```bash
