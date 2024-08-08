@@ -7,6 +7,8 @@ import snowflake.connector
 from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
 
 
 class Cortex(LLMProvider):
@@ -33,14 +35,46 @@ class Cortex(LLMProvider):
         )
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
+        connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "role": os.environ["SNOWFLAKE_ROLE"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+
+        if "SNOWFLAKE_USER_PASSWORD" in os.environ:
+            connection_parameters["password"] = os.environ[
+                "SNOWFLAKE_USER_PASSWORD"
+            ]
+
+        if "SNOWFLAKE_PRIVATE_KEY" in os.environ:
+            # Retrieve the private key as a string from the environment
+            private_key_str = os.getenv("SNOWFLAKE_PRIVATE_KEY")
+
+            # Convert the string to bytes
+            private_key_bytes = private_key_str.encode()
+
+            connection_parameters["private_key"] = (
+                serialization.load_pem_private_key(
+                    private_key_bytes, password=None, backend=default_backend()
+                )
+            )
+
+        if "SNOWFLAKE_PRIVATE_KEY_FILE" in os.environ:
+            connection_parameters["private_key_file"] = os.environ[
+                "SNOWFLAKE_PRIVATE_KEY_FILE_PATH"
+            ]
+
+        if "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in os.environ:
+            connection_parameters["private_key_file_pwd"] = os.environ[
+                "SNOWFLAKE_PRIVATE_KEY_FILE_PWD"
+            ]
+
         # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            user=os.environ["SNOWFLAKE_USER"],
-            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+            **connection_parameters
         )
         super().__init__(**self_kwargs)
 
