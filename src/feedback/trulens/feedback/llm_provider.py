@@ -71,7 +71,7 @@ class LLMProvider(Provider):
         system_prompt: str,
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 10,
         temperature: float = 0.0,
     ) -> float:
         """
@@ -120,7 +120,7 @@ class LLMProvider(Provider):
         verb_confidence_prompt: str,
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 10,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict[str, float]]:
         """
@@ -184,7 +184,7 @@ class LLMProvider(Provider):
         system_prompt: str,
         user_prompt: Optional[str] = None,
         min_score_val: int = 0,
-        max_score_val: int = 3,
+        max_score_val: int = 10,
         temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
