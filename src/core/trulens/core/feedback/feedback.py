@@ -61,7 +61,9 @@ ImpCallable = Callable[[A], Union[float, Tuple[float, Dict[str, Any]]]]
 Those take in any number of arguments and return either a single float or a
 float and a dictionary (of metadata)."""
 
-AggCallable = Callable[[Iterable[float]], float]
+AggCallable = Callable[
+    [Union[Iterable[float], Iterable[Tuple[float, float]]]], float
+]
 """Signature of aggregation functions."""
 
 
@@ -931,8 +933,8 @@ Feedback function signature:
 
                 else:
                     assert isinstance(
-                        result_val, float
-                    ), f"Feedback function output must be a float or dict but was {type(result_val)}."
+                        result_val, (float, list)
+                    ), f"Feedback function output must be a float, a list of floats, or dict but was {type(result_val)}."
                     feedback_call = feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )

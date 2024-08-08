@@ -13,6 +13,7 @@ from typing import (
     Hashable,
     List,
     Optional,
+    Tuple,
     TypeVar,
     Union,
 )
@@ -114,7 +115,7 @@ class FeedbackCall(serial.SerialModel):
     args: Dict[str, Optional[serial.JSON]]
     """Arguments to the feedback function."""
 
-    ret: float
+    ret: Union[float, List[float], List[Tuple]]
     """Return value."""
 
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)
@@ -127,7 +128,7 @@ class FeedbackCall(serial.SerialModel):
             out += f"{tab}{k} = {v}\n"
         out += f"{tab}ret = {self.ret}\n"
         if self.meta:
-            out += f"{tab}meta = \n{retab(tab=tab*2, s=pformat(self.meta))}\n"
+            out += f"{tab}meta = \n{retab(tab=tab * 2, s=pformat(self.meta))}\n"
 
         return out
 
