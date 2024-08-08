@@ -10,12 +10,14 @@ from multiprocessing import Process
 import os
 from pathlib import Path
 from pprint import PrettyPrinter
+import queue
 import re
 import socket
 import subprocess
 import sys
 import threading
 from threading import Thread
+import time
 from time import sleep
 from typing import (
     Any,
@@ -48,7 +50,6 @@ from trulens_eval.utils import python
 from trulens_eval.utils import serial
 from trulens_eval.utils import threading as tru_threading
 from trulens_eval.utils.imports import static_resource
-from trulens_eval.utils.pyschema import FunctionOrMethod
 from trulens_eval.utils.python import Future  # code style exception
 from trulens_eval.utils.python import OpaqueWrapper
 
@@ -59,6 +60,10 @@ logger = logging.getLogger(__name__)
 DASHBOARD_START_TIMEOUT: Annotated[
     int, Doc("Seconds to wait for dashboard to start")
 ] = 30
+
+RECORDS_BATCH_TIMEOUT: Annotated[
+    int, Doc("Seconds to wait for records to be batched")
+] = 10
 
 
 def humanize_seconds(seconds: float):
@@ -168,6 +173,8 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
+    batch_record_queue = queue.Queue()
+
     def __init__(
         self,
         database: Optional[DB] = None,
@@ -251,6 +258,9 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
+
+        self.batch_thread = threading.Thread(target=self.batch_loop)
+        self.batch_thread.start()
 
     @staticmethod
     def _validate_and_compute_schema_name(name):
@@ -488,10 +498,57 @@ class Tru(python.SingletonPerName):
             record = mod_record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
-
         return self.db.insert_record(record=record)
 
     update_record = add_record
+
+    def add_record_nowait(
+        self,
+        record: mod_record_schema.Record,
+    ) -> None:
+        """Add a record to the queue to be inserted in the next batch."""
+        self.batch_record_queue.put(record)
+
+    def batch_loop(self):
+        while True:
+            time.sleep(RECORDS_BATCH_TIMEOUT)
+            records = []
+            while True:
+                try:
+                    record = self.batch_record_queue.get_nowait()
+                    records.append(record)
+                except queue.Empty:
+                    break
+            if records:
+                try:
+                    self.db.batch_insert_record(records)
+                except Exception as e:
+                    # Re-queue the records that failed to be inserted
+                    for record in records:
+                        self.batch_record_queue.put(record)
+                    logger.error(
+                        "Re-queued records due to insertion error {}", e
+                    )
+                    continue
+                feedback_results = []
+                apps = {}
+                for record in records:
+                    app_id = record.app_id
+                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    feedback_definitions = app.get("feedback_definitions", [])
+                    # TODO(Dave): Modify this to add only client side feedback results
+                    for feedback_definition_id in feedback_definitions:
+                        feedback_results.append(
+                            mod_feedback_schema.FeedbackResult(
+                                feedback_definition_id=feedback_definition_id,
+                                record_id=record.record_id,
+                                name="feedback_name",  # this will be updated later by deferred evaluator
+                            )
+                        )
+                try:
+                    self.db.batch_insert_feedback(feedback_results)
+                except Exception as e:
+                    logger.error("Failed to insert feedback results {}", e)
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
@@ -573,7 +630,6 @@ class Tru(python.SingletonPerName):
                         on_done(temp)
                     finally:
                         return temp
-
                 return temp
 
             fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
@@ -583,9 +639,6 @@ class Tru(python.SingletonPerName):
             # Have to roll the on_done callback into the submitted function
             # because the result() is returned before callback runs otherwise.
             # We want to do db work before result is returned.
-
-            # if on_done is not None:
-            #    fut.add_done_callback(on_done)
 
             feedbacks_and_futures.append((ffunc, fut))
 

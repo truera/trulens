@@ -89,7 +89,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: mod_record_schema.Record,
+        record: mod_record_schema.Record
     ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
@@ -101,6 +101,22 @@ class DB(SerialModel, abc.ABC):
             The id of the given record.
         """
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def batch_insert_record(
+        self,
+        records: List[mod_record_schema.Record]
+    ) -> List[mod_types_schema.RecordID]:
+        """
+        Upsert a batch of records into the database.
+
+        Args:
+            records: The records to insert or update.
+        
+        Returns:
+            The ids of the given records.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -172,6 +188,22 @@ class DB(SerialModel, abc.ABC):
 
         Returns:
             The id of the given feedback result.
+        """
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def batch_insert_feedback(
+        self,
+        feedback_results: List[mod_feedback_schema.FeedbackResult]
+    ) -> List[mod_types_schema.FeedbackResultID]:
+        """Upsert a batch of feedback results into the database.
+
+        Args:
+            feedback_results: The feedback results to insert or update.
+
+        Returns:
+            The ids of the given feedback results.
         """
 
         raise NotImplementedError()
