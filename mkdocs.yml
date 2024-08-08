@@ -277,7 +277,7 @@ nav:
   #     - LLM Agents: trulens/guides/use_cases_agent.md
   #     - Dev to Prod: trulens/guides/use_cases_production.md
   - API Reference: reference/
-  - Cookbook: examples/
+  - 🧑‍🍳 Cookbook: examples/
   - 🤝 Contributing:
       - trulens/contributing/index.md
       - 🧭 Design: trulens/contributing/design.md

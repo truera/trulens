@@ -140,7 +140,7 @@ You can also print the response tokens as they are generated using the `response
         print(c)
     ```
 
-You can find more examples of using TruLens with Llama-Index apps in the [TruLens cookbook]().
+For examples of using `TruLlama`, check out the [_TruLens_ Cookbook](trulens.org/examples/)
 
 ## Appendix: LlamaIndex Instrumented Classes and Methods
 
