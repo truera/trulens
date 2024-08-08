@@ -107,6 +107,8 @@ be used to access the retrieved text for evaluation.
     )
     ```
 
+For examples of using `TruRails`, check out the [_TruLens_ Cookbook](trulens.org/examples/)
+
 ## Appendix: Instrumented Nemo Classes and Methods
 
 The modules, classes, and methods that trulens instruments can be retrieved from
