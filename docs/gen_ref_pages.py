@@ -75,15 +75,16 @@ def write_to_gen_files(
 
     full_doc_path = docs_reference_path / doc_path
 
-    if parts[0] == "trulens_eval":
-        # and (len(parts) <= 1 or parts[1] not in ("core", "instrument", "providers", "feedback", "benchmark", "dashboard")):
-        nav_parts = format_parts(("api", *parts))
+    if (
+        parts[0] == "trulens_eval"
+    ):  # legacy module is in the trulens-legacy package
+        nav_parts = format_parts(("legacy", *parts))
     elif (
         parts[0] == "trulens" and len(parts) == 1 or parts[-1] in ["providers"]
     ):
-        nav_parts = format_parts(("api", *parts))
-    #    elif parts[0].startswith("trulens") and len(parts) == 1:
-    #        return
+        nav_parts = format_parts(
+            ("api", *parts)
+        )  # trulens-api contains these modules
     else:
         nav_parts = format_parts(parts)
 
