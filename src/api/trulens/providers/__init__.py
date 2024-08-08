@@ -1,10 +1,9 @@
 # ruff: noqa: E402
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
-import importlib
 from typing import TYPE_CHECKING
 
-from trulens.core.utils.imports import get_package_version
+from trulens.core.utils import imports as import_utils
 
 if TYPE_CHECKING:
     from trulens.providers.bedrock.provider import Bedrock
@@ -16,7 +15,8 @@ if TYPE_CHECKING:
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-_OPTIONAL_PROVIDERS = {
+# Providers:
+_PROVIDERS = {
     "Bedrock": (
         "trulens-providers-bedrock",
         "trulens.providers.bedrock.provider",
@@ -45,41 +45,11 @@ _OPTIONAL_PROVIDERS = {
     ),
 }
 
+_KINDS = {"provider": _PROVIDERS}
 
-def __getattr__(attr):
-    if attr in _OPTIONAL_PROVIDERS:
-        package_name, module_name = _OPTIONAL_PROVIDERS[attr]
+help, help_str = import_utils.make_help_str(_KINDS)
 
-        installed_version = get_package_version(package_name)
-
-        if installed_version is None:
-            raise ImportError(
-                f"""The {attr} provider requires the {package_name} package. You can install it with pip:
-    ```bash
-    pip install {package_name}
-    ```
-"""
-            )
-
-        try:
-            mod = importlib.import_module(module_name)
-            return getattr(mod, attr)
-
-        except ImportError as e:
-            raise ImportError(
-                f"""Could not import the {attr} provider. You might need to re-install {package_name}:
-    ```bash
-    pip uninstall -y {package_name}
-    pip install {package_name}
-    ```
-"""
-            ) from e
-
-    raise AttributeError(
-        f"Module {__name__} has no attribute {attr}. It has:\n  "
-        + ("\n  ".join(__all__))
-    )
-
+__getattr__ = import_utils.make_getattr_override(_KINDS, help_str)
 
 # This has to be statically assigned though we would prefer to use _OPTIONAL_PROVIDERS.keys():
 __all__ = [

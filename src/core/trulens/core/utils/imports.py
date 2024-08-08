@@ -6,6 +6,7 @@ line. Hopefully this wraps automatically.
 
 import builtins
 from dataclasses import dataclass
+import importlib
 from importlib import metadata
 from importlib import resources
 import inspect
@@ -13,15 +14,176 @@ from inspect import cleandoc
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
+import subprocess
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
+from trulens.core.utils.python import caller_frame
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
+
+NO_INSTALL: bool = False
+"""If set, will not automatically install any optional trulens modules and fail
+in the typical way if a module is missing."""
+
+
+def pip(*args) -> subprocess.CompletedProcess:
+    """Execute pip with the given arguments."""
+
+    logger.debug("Running pip", *args)
+
+    return subprocess.run(
+        [sys.executable, "-m", "pip", *args], capture_output=True, check=True
+    )
+
+
+def install(package_name: str):
+    """Install a package with pip."""
+
+    logger.info("Installing package %s", package_name)
+
+    pip("install", package_name)
+
+    return get_package_version(package_name)
+
+
+def make_help_str(
+    kinds: Dict[str, Dict],
+) -> Tuple[Callable[[], None], Callable[[], str]]:
+    """Create a help string that lists all available classes and their installation status."""
+
+    mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
+
+    def help_str() -> str:
+        ret = f"Module '{mod.__name__}' from '{mod.__file__}'\n"
+        for kind, items in kinds.items():
+            ret += f"Supported {kind}s: \n"  # TODO: pluralize
+            for class_, (package_name, _) in items.items():
+                version = get_package_version(package_name)
+                ret += (
+                    f"  {class_}\t[{package_name}]\t["
+                    + (str(version) if version is not None else "not installed")
+                    + "]\n"
+                )
+
+        if NO_INSTALL:
+            ret += "\nYou can enable automatic installs by calling `trulens.set_no_install(False)`."
+        else:
+            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.set_no_install()`."
+
+        return ret
+
+    def help() -> None:
+        """Print a help message that lists all available classes and their installation status."""
+
+        print(help_str())
+
+    return help, help_str
+
+
+def make_getattr_override(
+    # mod: ModuleType,
+    kinds: Dict[str, Dict],
+    help_str: Union[str, Callable[[], str]],
+) -> Any:
+    mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
+    # print(mod)
+
+    def getattr_(attr):
+        nonlocal mod
+
+        # print("getattr", attr)
+
+        if attr in [
+            "_ipython_canary_method_should_not_exist_",
+            "_ipython_display_",
+        ]:
+            raise AttributeError()
+
+        for kind, options in kinds.items():
+            if attr in options:
+                package_name, module_name = options[attr]
+
+                try:
+                    mod = import_module(
+                        package_name=package_name,
+                        module_name=module_name,
+                        purpose=f"using the {attr} {kind}",
+                    )
+                    return getattr(mod, attr)
+
+                except ImportError as e:
+                    raise ImportError(
+                        f"""Could not import the {attr} {kind}. You might need to re-install {package_name}:
+            ```bash
+            pip uninstall -y {package_name}
+            pip install {package_name}
+            ```
+        """
+                    ) from e
+
+        # We also need to the case of an import of a sub-module instead of
+        # something in __all__ (enumerated in kinds) so we try that here.
+        try:
+            submod = importlib.import_module(mod.__name__ + "." + attr)
+            return submod
+        except Exception:
+            # Use the same error message as the below.
+            pass
+
+        raise ImportError(
+            f"Module {mod.__name__} has no attribute {attr}.\n"
+            + (help_str if isinstance(help_str, str) else help_str())
+        )
+
+    return getattr_
+
+
+def import_module(
+    package_name: str, module_name: str, purpose: Optional[str] = None
+):
+    """Import a module of the given package but install it if it is not already
+    installed.
+
+    If purpose is given, will use that for the message printed before the
+    installation if it does happen.
+    """
+
+    try:
+        if (package := get_package_version(package_name)) is None:
+            if NO_INSTALL:
+                raise ImportError(f"Package {package_name} is not installed.")
+
+            if purpose is None:
+                print(f"Installing {package_name} for use of {module_name} ...")
+            else:
+                print(
+                    f"Installing package {package_name} required for {purpose} ..."
+                )
+
+            package = install(package_name)
+
+    except subprocess.CalledProcessError as e:
+        raise ImportError(f"Could not install {package_name}.") from e
+
+    if package is None:
+        raise ImportError(f"Could not install {package}.")
+
+    return importlib.import_module(module_name)
 
 
 def safe_importlib_package_name(package_name: str) -> str:

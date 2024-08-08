@@ -3,9 +3,6 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-import scipy.stats as stats
-from sklearn.metrics import ndcg_score
-from sklearn.metrics import roc_auc_score
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -23,6 +20,17 @@ with OptionalImports(
     messages=format_import_errors("evaluate", purpose="using certain metrics")
 ):
     import evaluate
+
+with OptionalImports(
+    format_import_errors("scipy", purpose="using certain metrics")
+):
+    import scipy.stats as stats
+
+with OptionalImports(
+    format_import_errors("sklearn", purpose="using certain metrics")
+):
+    from sklearn.metrics import ndcg_score
+    from sklearn.metrics import roc_auc_score
 
 logger = logging.getLogger(__name__)
 
