@@ -897,13 +897,13 @@ requests = ">=2,<3"
 
 [[package]]
 name = "llama-cloud"
-version = "0.0.12"
+version = "0.0.13"
 description = ""
 optional = false
 python-versions = "<4,>=3.8"
 files = [
-    {file = "llama_cloud-0.0.12-py3-none-any.whl", hash = "sha256:0bdbe34f8e711eb226239ef2c2178b269bfd203359026a6afa0eec8c1aff88c6"},
-    {file = "llama_cloud-0.0.12.tar.gz", hash = "sha256:caa52fd89b4d174c3abd4ae6a46c502d9713487056f76f03681f0b07562f840b"},
+    {file = "llama_cloud-0.0.13-py3-none-any.whl", hash = "sha256:b641450308b80c85eeae7ef9cb5a3b4a3b1823d5cde05b626ce33f7494ec6229"},
+    {file = "llama_cloud-0.0.13.tar.gz", hash = "sha256:0e3165a22f8df34a00d13f1f5739438ba4d620f2d8a9289df830078a39fe6f1f"},
 ]
 
 [package.dependencies]

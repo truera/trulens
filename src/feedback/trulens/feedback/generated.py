@@ -27,15 +27,6 @@ class ParseError(Exception):
         self.pattern = pattern
 
 
-def validate_rating(rating) -> float:
-    """Validate a rating is between 0 and 10."""
-
-    if not 0 <= rating <= 10:
-        raise ValueError("Rating must be between 0 and 10")
-
-    return rating
-
-
 # Various old patterns that didn't work as well:
 # PATTERN_0_10: re.Pattern = re.compile(r"\s*([0-9]+)\s*$")
 # PATTERN_0_10: re.Pattern = re.compile(r"\b([0-9]|10)(?=\D*$|\s*\.)")
@@ -47,6 +38,56 @@ PATTERN_NUMBER: re.Pattern = re.compile(r"([+-]?[0-9]+\.[0-9]*|[1-9][0-9]*|0)")
 
 PATTERN_INTEGER: re.Pattern = re.compile(r"([+-]?[1-9][0-9]*|0)")
 """Regex that matches integers."""
+
+
+def re_configured_rating(
+    s: str,
+    min_score_val: int = 0,
+    max_score_val: int = 3,
+    allow_decimal: bool = False,
+) -> int:
+    """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable to the ranges like 4-point Likert scale or binary (0 or 1).
+
+    If the string does not match an integer/a float or matches an integer/a float outside the
+    {min_score_val} - {max_score_val} range, raises an error instead. If multiple numbers are found within
+    the expected 0-10 range, the smallest is returned.
+
+    Args:
+        s: String to extract rating from.
+        min_score_val: Minimum value of the rating scale.
+        max_score_val: Maximum value of the rating scale.
+        allow_decimal: Whether to allow and capture decimal numbers (floats).
+
+    Returns:
+        int: Extracted rating.
+
+    Raises:
+        ParseError: If no integers/floats between 0 and 10 are found in the string.
+    """
+    matches = PATTERN_NUMBER.findall(s)
+    if not matches:
+        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
+
+    vals = set()
+    for match in matches:
+        rating = float(match) if allow_decimal else int(match)
+        if min_score_val <= rating <= max_score_val:
+            vals.add(rating)
+        else:
+            logger.warning(
+                f"Rating must be in [{min_score_val}, {max_score_val}]."
+            )
+
+    if not vals:
+        raise ParseError(f"{min_score_val}-{max_score_val} rating", s)
+
+    if len(vals) > 1:
+        logger.warning(
+            "Multiple valid rating values found in the string: %s", s
+        )
+
+    # Min to handle cases like "The rating is 1 out of 3."
+    return min(vals)
 
 
 def re_0_10_rating(s: str) -> int:
@@ -66,26 +107,6 @@ def re_0_10_rating(s: str) -> int:
         ParseError: If no integers/floats between 0 and 10 are found in the string.
     """
 
-    matches = PATTERN_NUMBER.findall(s)
-    if not matches:
-        raise ParseError("int or float number", s, pattern=PATTERN_NUMBER)
-
-    vals = set()
-    for match in matches:
-        try:
-            vals.add(
-                validate_rating(float(match))
-            )  # Handle float numbers as well
-        except ValueError:
-            pass
-
-    if not vals:
-        raise ParseError("0-10 rating", s)
-
-    if len(vals) > 1:
-        logger.warning(
-            "Multiple valid rating values found in the string: %s", s
-        )
-
-    # Min to handle cases like "The rating is 8 out of 10."
-    return min(vals)
+    return re_configured_rating(
+        s, min_score_val=0, max_score_val=10, allow_decimal=True
+    )

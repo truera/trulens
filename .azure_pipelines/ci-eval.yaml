@@ -6,13 +6,6 @@ pr:
     include:
       - releases/*
 
-# schedules:
-#  - cron: "0 0 * * *"
-#    displayName: Daily midnight build
-#    branches:
-#      include:
-#        - main
-
 jobs:
   - job: ReleaseTests
     pool:
@@ -24,54 +17,12 @@ jobs:
         latest:
           python-version: 3.11
 
-
     steps:
-      - checkout: self
-        clean: true
-
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '$(python-version)'
-
-      - bash: |
-          # Install poetry
-          curl -sSL https://install.python-poetry.org | python3 -
-
-          # Show python version
-          echo "Using $(python --version) ($(which python))"
-          poetry config virtualenvs.create false
-
-          # NOTE: workaround for langchain typecheck error
-          # https://github.com/truera/trulens/issues/1308
-          poetry run pip install pip==24.1.2
-
-          poetry run python --version
-          poetry run pip --version
-        displayName: Env Setup
-
-      - bash: |
-          set -e
-          poetry install --only tests --sync
-          make run-precommit
-        condition: eq(variables['python-version'], 3.12) # only run format check with latest python version
-        displayName: Run Pre-commits
-
-      - bash: |
-          make test-e2e-optional
-        displayName: Run e2e tests
-        env:
-          OPENAI_API_KEY: $(OPENAI_API_KEY)
-          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
-          PINECONE_API_KEY: $(PINECONE_API_KEY)
-          PINECONE_ENV: $(PINECONE_ENV)
-          HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
-
-      - bash: |
-          make test-notebook-optional
-        displayName: Run notebook tests
-        env:
-          OPENAI_API_KEY: $(OPENAI_API_KEY)
-          HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
-          PINECONE_API_KEY: $(PINECONE_API_KEY)
-          PINECONE_ENV: $(PINECONE_ENV)
-          HUGGINGFACEHUB_API_TOKEN: $(HUGGINGFACEHUB_API_TOKEN)
+      - template: templates/env-setup.yaml
+      - template: templates/run-precommits.yaml
+      - template: templates/run-optional-tests.yaml
+        parameters:
+          testSuite: e2e
+      - template: templates/run-optional-tests.yaml
+        parameters:
+          testSuite: notebook
