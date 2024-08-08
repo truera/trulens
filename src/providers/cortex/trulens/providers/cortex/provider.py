@@ -2,13 +2,13 @@ import json
 import os
 from typing import ClassVar, Dict, Optional, Sequence
 
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.backends import default_backend
 
 
 class Cortex(LLMProvider):
@@ -64,7 +64,7 @@ class Cortex(LLMProvider):
 
         if "SNOWFLAKE_PRIVATE_KEY_FILE" in os.environ:
             connection_parameters["private_key_file"] = os.environ[
-                "SNOWFLAKE_PRIVATE_KEY_FILE_PATH"
+                "SNOWFLAKE_PRIVATE_KEY_FILE"
             ]
 
         if "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in os.environ:
