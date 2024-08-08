@@ -228,11 +228,11 @@ nav:
           - trulens/getting_started/dashboard/index.md
   - Component Guides:
     - Instrumentation:
-        - trulens/tracking/instrumentation/index.ipynb
+        - trulens/tracking/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provider here.
-        - trulens/tracking/instrumentation/langchain.ipynb
-        - trulens/tracking/instrumentation/llama_index.ipynb
-        - trulens/tracking/instrumentation/nemo.ipynb
+        - trulens/tracking/instrumentation/langchain.md
+        - trulens/tracking/instrumentation/llama_index.md
+        - trulens/tracking/instrumentation/nemo.md
     - Logging:
         - trulens/tracking/logging/where_to_log/index.md
         - ❄️ Logging in Snowflake: trulens/tracking/logging/where_to_log/log_in_snowflake.md
