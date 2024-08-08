@@ -5,15 +5,30 @@ line. Hopefully this wraps automatically.
 """
 
 import builtins
+from collections import namedtuple
 from dataclasses import dataclass
 from importlib import metadata
 from importlib import resources
+import importlib
 import inspect
 import logging
 from pathlib import Path
+import pkgutil
 from pprint import PrettyPrinter
+import re
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
+from types import ModuleType
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
@@ -164,7 +179,8 @@ dependencies get installed and hopefully corrected:
 
 
 class VersionConflict(Exception):
-    """Exception to raise when a version conflict is found in a required package."""
+    """Exception to raise when a version conflict is found in a required
+    package."""
 
 
 def check_imports(ignore_version_mismatch: bool = False):

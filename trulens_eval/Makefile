@@ -74,8 +74,27 @@ test-static:
 	$(CONDA)
 	python -m unittest tests.unit.static.test_static
 
+# API tests.
+test-api:
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
+	TEST_OPTIONAL=1 python -m unittest tests.unit.static.test_api
+test-write-api:
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
+
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
+
+# Dummy and serial e2e tests do not involve any costly requests.
+test-dummy: # has golden file
+	$(CONDA); python -m unittest tests.e2e.test_dummy
+test-serial: # has golden file
+	$(CONDA); python -m unittest tests.e2e.test_serial
+test-golden: test-dummy test-serial
+test-write-golden: test-write-golden-dummy test-write-golden-serial
+test-write-golden-%:
+	$(CONDA)
+	WRITE_GOLDEN=1 python -m unittest tests.e2e.test_$* || true
 
 test-e2e:
 	$(CONDA)
@@ -144,13 +163,9 @@ lab:
 	$(CONDA)
 	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
-example_app:
-	$(CONDA)
-	$(PYENV) streamlit run trulens_eval/Example_Application.py
-
 example_trubot:
 	$(CONDA)
-	$(PYENV) streamlit run trulens_eval/Example_TruBot.py
+	$(PYENV) streamlit run examples/expositional/end2end_apps/trubot/App_TruBot.py
 
 # Start the dashboard.
 leaderboard:

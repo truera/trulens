@@ -4,14 +4,14 @@ issues that occur from merely importing trulens.
 """
 
 from pathlib import Path
-import pkgutil
 import sys
 from unittest import TestCase
 from unittest import main
 
-from tests.unit.test import module_installed
-from tests.unit.test import optional_test
-from tests.unit.test import requiredonly_test
+from tests.test import module_installed
+from tests.test import optional_test
+from tests.test import requiredonly_test
+from tests.utils import get_module_names
 import trulens_eval
 from trulens_eval.instruments import Instrument
 from trulens_eval.utils.imports import Dummy
@@ -63,31 +63,9 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 # Every module not mentioned above should be importable without any optional
 # packages.
 
-
-def get_all_modules(path: Path, startswith=None):
-    ret = []
-    for modinfo in pkgutil.iter_modules([str(path)]):
-        if startswith is not None and not modinfo.name.startswith(startswith):
-            continue
-
-        ret.append(modinfo.name)
-        if modinfo.ispkg:
-            for submod in get_all_modules(path / modinfo.name, startswith=None):
-                submodqualname = modinfo.name + "." + submod
-
-                if startswith is not None and not submodqualname.startswith(
-                    startswith
-                ):
-                    continue
-
-                ret.append(modinfo.name + "." + submod)
-
-    return ret
-
-
 # Get all modules inside trulens_eval:
-all_trulens_mods = get_all_modules(
-    Path(trulens_eval.__file__).parent.parent, startswith="trulens_eval"
+all_trulens_mods = get_module_names(
+    Path(trulens_eval.__file__).parent.parent, matching="trulens_eval"
 )
 
 # Things which should not be imported at all.
@@ -114,6 +92,9 @@ base_mods = [
 
 
 class TestStatic(TestCase):
+    """Static tests, those that are not expected to execute real code other than
+    code involved in loading and executing modules."""
+
     def setUp(self):
         pass
 

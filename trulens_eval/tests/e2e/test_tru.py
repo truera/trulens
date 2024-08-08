@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest import TestCase
 
-from tests.unit.test import optional_test
+from tests.test import optional_test
 from trulens_eval import Feedback
 from trulens_eval import Tru
 from trulens_eval import TruCustomApp
@@ -92,11 +92,9 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import (
-            CustomApp,
-        )
+        from examples.dev.dummy_app.app import DummyApp
 
-        return CustomApp()
+        return DummyApp()
 
     def _create_basic(self):
         def custom_application(prompt: str) -> str:
