@@ -2,6 +2,14 @@
 
 ## Dev dependencies
 
+### Node.js
+
+TruLens uses Node.js for building react components for the dashboard. Install Node.js with the following command:
+
+```bash
+
+
+
 ### Install homebrew
 
 ```bash
