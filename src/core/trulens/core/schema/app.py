@@ -93,7 +93,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["tags"] = ""
         kwargs["metadata"] = {}
         kwargs["app_extra_json"] = app_extra_json or dict()
-        kwargs["feedback_definitions"] = [f.feedback_definition_id for f in kwargs.get('feedbacks', [])]
+        kwargs["feedback_definitions"] = [
+            f.feedback_definition_id for f in kwargs.get("feedbacks", [])
+        ]
 
         super().__init__(**kwargs)
 

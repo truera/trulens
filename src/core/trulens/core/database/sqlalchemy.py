@@ -336,15 +336,16 @@ class SQLAlchemyDB(DB):
             logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
 
             return _rec.record_id
-    
 
     def batch_insert_record(
-        self,
-        records: List[mod_record_schema.Record]
+        self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
         """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
         with self.session.begin() as session:
-            records_list = [self.orm.Record.parse(r, redact_keys=self.redact_keys) for r in records]
+            records_list = [
+                self.orm.Record.parse(r, redact_keys=self.redact_keys)
+                for r in records
+            ]
             session.bulk_save_objects(records_list)
             logger.info(f"{UNICODE_CHECK} added record batch")
             # return record ids from orm objects
@@ -510,14 +511,16 @@ class SQLAlchemyDB(DB):
             )
 
             return _feedback_result.feedback_result_id
-    
+
     def batch_insert_feedback(
-        self,
-        feedback_results: List[mod_feedback_schema.FeedbackResult]
+        self, feedback_results: List[mod_feedback_schema.FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
-            feedback_results_list = [self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys) for f in feedback_results]
+            feedback_results_list = [
+                self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
+                for f in feedback_results
+            ]
             session.bulk_save_objects(feedback_results_list)
             return [f.feedback_result_id for f in feedback_results_list]
 

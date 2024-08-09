@@ -105,24 +105,21 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def batch_insert_record(
-        self,
-        records: List[Record]
+        self, records: List[Record]
     ) -> List[mod_types_schema.RecordID]:
         """
         Upsert a batch of records into the database.
 
         Args:
             records: The records to insert or update.
-        
+
         Returns:
             The ids of the given records.
         """
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(
-        self, app: AppDefinition
-    ) -> mod_types_schema.AppID:
+    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
@@ -194,8 +191,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def batch_insert_feedback(
-        self,
-        feedback_results: List[FeedbackResult]
+        self, feedback_results: List[FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
         """Upsert a batch of feedback results into the database.
 
