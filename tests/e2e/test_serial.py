@@ -15,12 +15,13 @@ are expected.
 
 from unittest import main
 
+from trulens.core import Feedback
+from trulens.core.app.custom import TruCustomApp
+from trulens.core.feedback.dummy.provider import DummyProvider
+from trulens.providers.huggingface.provider import Dummy
+
 from examples.dev.dummy_app.app import DummyApp
-from tests.unit.test import JSONTestCase
-from trulens_eval import Feedback
-from trulens_eval.feedback.provider.dummy import DummyProvider
-from trulens_eval.feedback.provider.hugs import Dummy
-from trulens_eval.tru_custom_app import TruCustomApp
+from tests.test import JSONTestCase
 
 
 class TestSerial(JSONTestCase):

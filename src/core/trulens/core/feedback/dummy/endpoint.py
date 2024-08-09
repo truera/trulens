@@ -1,5 +1,4 @@
-"""
-Dummy API and Endpoint.
+"""Dummy API and Endpoint.
 
 These are are meant to resemble (make similar sequences of calls) real APIs and
 Endpoints but not they do not actually make any network requests. Some
@@ -15,19 +14,18 @@ import random
 from time import sleep
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
 
-from numpy import random as np_random
 import numpy as np
+from numpy import random as np_random
 import pydantic
 from pydantic import Field
-
-from trulens_eval.feedback.provider.endpoint.base import DEFAULT_RPM
-from trulens_eval.feedback.provider.endpoint.base import Endpoint
-from trulens_eval.feedback.provider.endpoint.base import EndpointCallback
-from trulens_eval.feedback.provider.endpoint.base import INSTRUMENT
-from trulens_eval.utils.python import locals_except
-from trulens_eval.utils.python import safe_hasattr
-from trulens_eval.utils.serial import JSON
-from trulens_eval.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.feedback.endpoint import DEFAULT_RPM
+from trulens.core.feedback.endpoint import INSTRUMENT
+from trulens.core.feedback.endpoint import Endpoint
+from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core.utils.python import locals_except
+from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +133,7 @@ class DummyAPI(pydantic.BaseModel):
             timeout = DEFAULT_NETWORK_TIMEOUT
 
         # allocate some data to pretend we are doing hard work
-        temporary = np.empty(self.alloc, dtype=np.int8)
+        temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
 
         if self.delay > 0.0:
             sleep(

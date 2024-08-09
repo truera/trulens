@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional
 
-from examples.dev.dummy_app.dummy import Dummy
+from trulens.core.app.custom import TruCustomApp
+from trulens.core.app.custom import instrument
 
-from trulens_eval.tru_custom_app import instrument
-from trulens_eval.tru_custom_app import TruCustomApp
+from examples.dev.dummy_app.dummy import Dummy
 
 
 class DummyAgent(Dummy):

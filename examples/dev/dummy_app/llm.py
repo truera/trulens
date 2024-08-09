@@ -1,9 +1,9 @@
 from typing import AsyncIterable, Iterable, Optional
 
-from examples.dev.dummy_app.dummy import Dummy
+from trulens.core.app.custom import instrument
+from trulens.core.feedback.dummy.endpoint import DummyAPI
 
-from trulens_eval.feedback.provider.endpoint.dummy import DummyAPI
-from trulens_eval.tru_custom_app import instrument
+from examples.dev.dummy_app.dummy import Dummy
 
 
 class DummyLLM(Dummy):

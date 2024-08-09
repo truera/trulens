@@ -1,9 +1,9 @@
 import json
 from typing import Dict, Optional, Sequence
 
-from trulens_eval.feedback.provider.base import LLMProvider
-from trulens_eval.feedback.provider.endpoint import DummyEndpoint
-from trulens_eval.utils.python import locals_except
+from trulens.core.feedback.dummy.endpoint import DummyEndpoint
+from trulens.core.utils.python import locals_except
+from trulens.feedback.llm_provider import LLMProvider
 
 
 class DummyProvider(LLMProvider):

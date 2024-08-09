@@ -1,10 +1,10 @@
 import inspect
 from typing import Any, Callable, List, Optional
 
-from examples.dev.dummy_app.dummy import Dummy
+from trulens.core.app.custom import instrument
+from trulens.core.utils.python import superstack
 
-from trulens_eval.tru_custom_app import instrument
-from trulens_eval.utils.python import superstack
+from examples.dev.dummy_app.dummy import Dummy
 
 # A few string->string functions to use as "tools".
 str_maps = [

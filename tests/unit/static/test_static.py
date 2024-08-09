@@ -15,9 +15,9 @@ import trulens.core
 from trulens.core.instruments import Instrument
 from trulens.core.utils.imports import Dummy
 
-from tests.unit.utils import module_installed
-from tests.unit.utils import optional_test
-from tests.unit.utils import requiredonly_test
+from tests.test import module_installed
+from tests.test import optional_test
+from tests.test import requiredonly_test
 
 # Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the

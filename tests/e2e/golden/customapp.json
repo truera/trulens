@@ -2,47 +2,47 @@
   "tru_class_info": {
     "name": "TruCustomApp",
     "module": {
-      "package_name": "trulens_eval",
-      "module_name": "trulens_eval.tru_custom_app"
+      "package_name": "trulens.core.app",
+      "module_name": "trulens.core.app.custom"
     },
     "bases": [
       {
         "name": "TruCustomApp",
         "module": {
-          "package_name": "trulens_eval",
-          "module_name": "trulens_eval.tru_custom_app"
+          "package_name": "trulens.core.app",
+          "module_name": "trulens.core.app.custom"
         },
         "bases": null
       },
       {
         "name": "App",
         "module": {
-          "package_name": "trulens_eval",
-          "module_name": "trulens_eval.app"
+          "package_name": "trulens.core.app",
+          "module_name": "trulens.core.app.base"
         },
         "bases": null
       },
       {
         "name": "AppDefinition",
         "module": {
-          "package_name": "trulens_eval.schema",
-          "module_name": "trulens_eval.schema.app"
+          "package_name": "trulens.core.schema",
+          "module_name": "trulens.core.schema.app"
         },
         "bases": null
       },
       {
         "name": "WithClassInfo",
         "module": {
-          "package_name": "trulens_eval.utils",
-          "module_name": "trulens_eval.utils.pyschema"
+          "package_name": "trulens.core.utils",
+          "module_name": "trulens.core.utils.pyschema"
         },
         "bases": null
       },
       {
         "name": "SerialModel",
         "module": {
-          "package_name": "trulens_eval.utils",
-          "module_name": "trulens_eval.utils.serial"
+          "package_name": "trulens.core.utils",
+          "module_name": "trulens.core.utils.serial"
         },
         "bases": null
       },
@@ -57,8 +57,8 @@
       {
         "name": "WithInstrumentCallbacks",
         "module": {
-          "package_name": "trulens_eval",
-          "module_name": "trulens_eval.instruments"
+          "package_name": "trulens.core",
+          "module_name": "trulens.core.instruments"
         },
         "bases": null
       },

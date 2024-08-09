@@ -1,5 +1,4 @@
 from examples.dev.dummy_app.app import DummyApp
-
 from trulens_eval import TruApp
 
 ca = DummyApp()

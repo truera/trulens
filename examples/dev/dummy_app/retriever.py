@@ -1,9 +1,8 @@
-import random
 import sys
 
-from examples.dev.dummy_app.dummy import Dummy
+from trulens.core.app.custom import instrument
 
-from trulens_eval.tru_custom_app import instrument
+from examples.dev.dummy_app.dummy import Dummy
 
 
 class DummyRetriever(Dummy):

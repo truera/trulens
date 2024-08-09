@@ -24,9 +24,9 @@ env-optional:
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS) clean-dashboard
-	for dir in $(POETRY_DIRS); do
-		echo "Creating lockfile for $$dir/pyproject.toml";
-		poetry lock -C $$dir;
+	for dir in $(POETRY_DIRS); do \
+		echo "Creating lockfile for $$dir/pyproject.toml"; \
+		poetry lock -C $$dir; \
 	done
 
 # Run the ruff linter.
@@ -86,20 +86,23 @@ coverage:
 # the latest (supported) python version.
 test-static:
 	$(CONDA)
-	poetry run pytest --rootdir=. tests/* tests.unit.static.test_static
+	poetry run pytest --rootdir=. tests.unit.static.test_static
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
-	$(CONDA); poetry run pytest --rootdir=. tests/* tests.e2e.test_dummy
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
 test-serial: # has golden file
-	$(CONDA); poetry run pytest --rootdir=. tests/* tests.e2e.test_serial
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_serial.py
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
 test-write-golden-%:
-	$(CONDA); WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/* tests.e2e.test_$* || true
+	$(CONDA)
+	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
 
 # Runs required tests
 test-%-required: env-required
@@ -145,18 +148,18 @@ build-dashboard: env clean-dashboard
 
 build: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do
-		echo "Building $$dir";
-		pushd $$dir;
-		if [[ "$$dir" == "." ]]; then
-			pkg_name=trulens;
-		else
-			pkg_path=$${dir#./src/};
-			pkg_name=trulens-$${pkg_path//\//-};
-		fi;
-		echo $$pkg_name;
-		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/;
-		rm -rf .venv;
-		popd;
+		echo "Building $$dir"; \
+		pushd $$dir; \
+		if [[ "$$dir" == "." ]]; then \
+			pkg_name=trulens; \
+		else \
+			pkg_path=$${dir#./src/}; \
+			pkg_name=trulens-$${pkg_path//\//-}; \
+		fi; \
+		echo $$pkg_name; \
+		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/; \
+		rm -rf .venv; \
+		popd; \
 	done
 	make build-dashboard
 

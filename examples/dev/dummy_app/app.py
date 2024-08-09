@@ -13,6 +13,9 @@ from typing import (
     Type,
 )
 
+from trulens.core.app.custom import instrument
+from trulens.core.utils.threading import ThreadPoolExecutor
+
 from examples.dev.dummy_app.agent import DummyAgent
 from examples.dev.dummy_app.dummy import Dummy
 from examples.dev.dummy_app.llm import DummyLLM
@@ -22,9 +25,6 @@ from examples.dev.dummy_app.retriever import DummyRetriever
 from examples.dev.dummy_app.template import DummyTemplate
 from examples.dev.dummy_app.tool import DummyStackTool
 from examples.dev.dummy_app.tool import DummyTool
-
-from trulens_eval.tru_custom_app import instrument
-from trulens_eval.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
