@@ -55,6 +55,8 @@ def pip(*args) -> subprocess.CompletedProcess:
 def install(package_name: str):
     """Install a package with pip."""
 
+    package_name = safe_importlib_package_name(package_name)
+
     logger.info("Installing package %s", package_name)
 
     pip("install", package_name)
@@ -102,7 +104,6 @@ def make_getattr_override(
     help_str: Union[str, Callable[[], str]],
 ) -> Any:
     mod = sys.modules[caller_module(offset=1)]
-    print(mod)
 
     def getattr_(attr):
         nonlocal mod
@@ -164,13 +165,28 @@ def import_module(
     installation if it does happen.
     """
 
+    package_name = safe_importlib_package_name(package_name)
+
+    if purpose is None:
+        purpose = f"using {module_name}"
+
     try:
         if (package := get_package_version(package_name)) is None:
             if NO_INSTALL:
-                raise ImportError(f"Package {package_name} is not installed.")
+                # Throwing RuntimeError as I don't want this to be caught by the
+                # importing try blocks. Needs this to be the final error.
+                raise RuntimeError(f"Package {package_name} is not installed.")
 
-            if purpose is None:
-                print(f"Installing {package_name} for use of {module_name} ...")
+            if sys.version_info >= (3, 12) and package_name in [
+                "trulens-providers-cortex",
+                "trulens-instrument-nemo",
+            ]:
+                # These require python < 3.12 .
+                # RuntimeError here on purpose. See above.
+                raise RuntimeError(
+                    f"Package {package_name} required for {purpose} does not support python >= 3.12."
+                )
+
             else:
                 print(
                     f"Installing package {package_name} required for {purpose} ..."
@@ -179,15 +195,21 @@ def import_module(
             package = install(package_name)
 
     except subprocess.CalledProcessError as e:
+        # ImportError here on purpose. Want this to be caught in importing try
+        # blocks to give additional information.
         raise ImportError(f"Could not install {package_name}.") from e
 
     if package is None:
+        # Same
         raise ImportError(f"Could not install {package}.")
 
     return importlib.import_module(module_name)
 
 
 def safe_importlib_package_name(package_name: str) -> str:
+    """Convert a package name that may have periods in it to one that uses
+    hyphens for periods but only if the python version is old."""
+
     return (
         package_name
         if sys.version_info >= (3, 10)

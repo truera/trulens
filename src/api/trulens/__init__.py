@@ -11,6 +11,9 @@ __version__ = ".".join(map(str, __version_info__))
 
 from typing import TYPE_CHECKING
 
+from trulens import feedback as mod_feedback
+from trulens import instrument as mod_instrument
+from trulens import providers as mod_providers
 from trulens.core.utils import imports as import_utils
 
 
@@ -26,31 +29,39 @@ if TYPE_CHECKING:
     from trulens.core.feedback.feedback import Feedback
     from trulens.core.feedback.provider import Provider
 
-    # TODO: other enums
-    # Utilities
-    from trulens.core.schema import Select
-
-    # Enums
-    from trulens.core.schema.feedback import FeedbackMode
+    # schema enums
+    from trulens.core.schema import feedback as feedback_schema
     from trulens.core.tru import Tru
     from trulens.core.utils.threading import TP
 
-_CLASSES = {
+    FeedbackMode = feedback_schema.FeedbackMode
+    FeedbackResultStatus = feedback_schema.FeedbackResultStatus
+    FeedbackOnMissingParameters = feedback_schema.FeedbackOnMissingParameters
+    FeedbackCombinations = feedback_schema.FeedbackCombinations
+
+    # schema classes
+    FeedbackResult = feedback_schema.FeedbackResult
+    FeedbackCall = feedback_schema.FeedbackCall
+    FeedbackDefinition = feedback_schema.FeedbackDefinition
+
+    # Utilities
+    from trulens.core.schema import Select
+
+
+_CLASSES = {  # **mod_feedback._CLASSES, # these are too specific to be included here
     "Tru": ("trulens-core", "trulens.core.tru"),
     "TP": ("trulens-core", "trulens.core.utils.threading"),
     "Feedback": ("trulens-core", "trulens.core.feedback.feedback"),
     "Provider": ("trulens-core", "trulens.core.feedback.provider"),
 }
 
-_ENUMS = {
-    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
-}
-_UTILITIES = {
-    "Select": ("trulens-core", "trulens.core.schema"),
-}
+_ENUMS = mod_feedback._ENUMS
+
+_UTILITIES = mod_feedback._UTILITIES
+
+_SCHEMAS = mod_feedback._SCHEMAS
 
 # Providers:
-
 if TYPE_CHECKING:
     from trulens.providers.bedrock.provider import Bedrock
     from trulens.providers.cortex.provider import Cortex
@@ -61,34 +72,7 @@ if TYPE_CHECKING:
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-_PROVIDERS = {
-    "Bedrock": (
-        "trulens-providers-bedrock",
-        "trulens.providers.bedrock.provider",
-    ),
-    "Cortex": ("trulens-providers-cortex", "trulens.providers.cortex.provider"),
-    "Huggingface": (
-        "trulens-providers-huggingface",
-        "trulens.providers.huggingface.provider",
-    ),
-    "HuggingfaceLocal": (
-        "trulens-providers-huggingface",
-        "trulens.providers.huggingface.provider",
-    ),
-    "Langchain": (
-        "trulens-providers-langchain",
-        "trulens.providers.langchain.provider",
-    ),
-    "LiteLLM": (
-        "trulens-providers-litellm",
-        "trulens.providers.litellm.provider",
-    ),
-    "OpenAI": ("trulens-providers-openai", "trulens.providers.openai.provider"),
-    "AzureOpenAI": (
-        "trulens-providers-openai",
-        "trulens.providers.openai.provider",
-    ),
-}
+_PROVIDERS = mod_providers._PROVIDERS
 
 # Recorders:
 if TYPE_CHECKING:
@@ -99,23 +83,7 @@ if TYPE_CHECKING:
     from trulens.instrument.llamaindex.tru_llama import TruLlama
     from trulens.instrument.nemo.tru_rails import TruRails
 
-_RECORDERS = {
-    "TruBasicApp": ("trulens-core", "trulens.core.app.tru_basic_app"),
-    "TruCustomApp": ("trulens-core", "trulens.core.app.tru_custom_app"),
-    "TruVirtual": ("trulens-core", "trulens.core.app.tru_virtual"),
-    "TruChain": (
-        "trulens-instrument-langchain",
-        "trulens.instrument.langchain.tru_chain",
-    ),
-    "TruLlama": (
-        "trulens-instrument-llamaindex",
-        "trulens.instrument.llamaindex.tru_llama",
-    ),
-    "TruRails": (
-        "trulens-instrument-nemo",
-        "trulens.instrument.nemo.tru_rails",
-    ),
-}
+_RECORDERS = mod_instrument._RECORDERS
 
 _KINDS = {
     "provider": _PROVIDERS,
@@ -123,6 +91,7 @@ _KINDS = {
     "class": _CLASSES,
     "enum": _ENUMS,
     "utility": _UTILITIES,
+    "schema": _SCHEMAS,
 }
 
 help, help_str = import_utils.make_help_str(_KINDS)
@@ -130,23 +99,29 @@ help, help_str = import_utils.make_help_str(_KINDS)
 __getattr__ = import_utils.make_getattr_override(_KINDS, help_str=help_str)
 
 __all__ = [
-    "Tru",  # main interface
-    # app types
+    # recorders types
     "TruBasicApp",
     "TruCustomApp",
     "TruVirtual",
-    # Cannot use dynamic: *list(_OPTIONAL_APPS.keys()),
     "TruChain",
     "TruLlama",
     "TruRails",
-    # app setup
+    # enums
     "FeedbackMode",
-    # feedback setup
-    "Feedback",
+    "FeedbackResultStatus",
+    "FeedbackOnMissingParameters",
+    "FeedbackCombinations",
+    # schema classes
+    "FeedbackResult",
+    "FeedbackCall",
+    "FeedbackDefinition",
+    # selector utilities
     "Select",
-    # feedback providers
+    # classes
+    "Feedback",
     "Provider",
-    # Cannot use dynamic: *list(_OPTIONAL_PROVIDERS.keys()),
+    "Tru",
+    # providers
     "AzureOpenAI",
     "OpenAI",
     "Langchain",
