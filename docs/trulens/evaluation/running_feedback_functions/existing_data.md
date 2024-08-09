@@ -155,7 +155,7 @@ Then, the feedback functions can be passed to `TruVirtual` to construct the `rec
 from trulens.core.app.virtual import TruVirtual
 
 virtual_recorder = TruVirtual(
-    app_id="a virtual app",
+    app_version="a virtual app",
     app=virtual_app,
     feedbacks=[f_context_relevance]
 )

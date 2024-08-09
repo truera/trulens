@@ -328,7 +328,7 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         _, returned_feedback_names = tru.get_records_and_feedback(
-            app_ids=[tru_app.app_id]
+            app_versions=[tru_app.app_id]
         )
 
         # Check we got the right feedback names from db.
@@ -397,7 +397,7 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         _, returned_feedback_names = tru.get_records_and_feedback(
-            app_ids=[tru_app.app_id]
+            app_versions=[tru_app.app_id]
         )
 
         # Check we got the right feedback names.
@@ -413,7 +413,7 @@ class TestTru(TestCase):
 
     # def test_add_app(self):
     #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     app_definition = mod_app_schema.AppDefinition(app_version=app_id, model_dump_json="{}")
     #     tru = Tru()
 
     #     # Action: Add the app to the database
@@ -428,7 +428,7 @@ class TestTru(TestCase):
     # def test_delete_app(self):
     #     # Setup: Add an app to the database
     #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     app_definition = mod_app_schema.AppDefinition(app_version=app_id, model_dump_json="{}")
     #     tru = Tru()
     #     tru.add_app(app_definition)
 

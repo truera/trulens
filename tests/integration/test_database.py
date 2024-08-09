@@ -480,7 +480,7 @@ def _populate_data(db: DB):
     )
     app = TruBasicApp(
         text_to_text=lambda x: x,
-        # app_id="test",
+        # app_version="test",
         db=db,
         feedbacks=[fb],
         feedback_mode=FeedbackMode.WITH_APP_THREAD,

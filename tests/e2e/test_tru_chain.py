@@ -54,7 +54,9 @@ class TestTruChain(JSONTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = TruChain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
+        tc = TruChain(
+            chain, app_version=app_id, feedback_mode=FeedbackMode.WITH_APP
+        )
 
         return tc
 
@@ -65,7 +67,7 @@ class TestTruChain(JSONTestCase):
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
         tru = Tru()
-        tc = self._create_basic_chain(app_id="metaplain")
+        tc = self._create_basic_chain(app_version="metaplain")
 
         message = "What is 1+2?"
         meta = "this is plain metadata"
@@ -114,7 +116,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id="metajson")
+        tc = self._create_basic_chain(app_version="metajson")
 
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")

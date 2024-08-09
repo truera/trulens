@@ -50,7 +50,7 @@ def setup_chain():
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
     chain = chat_prompt_template | chat | StrOutputParser()
 
-    tc = TruChain(chain, app_id="Streamlit App")
+    tc = TruChain(chain, app_version="Streamlit App")
     tru.add_app(app=tc)
     run_dashboard(tru, _dev=dev_path)
     return tc
@@ -97,6 +97,6 @@ if user_input:
         tru.add_feedback(
             name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
-            app_id=tc.app_id,
+            app_version=tc.app_id,
             result=thumb_result,
         )

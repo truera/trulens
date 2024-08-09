@@ -24,7 +24,7 @@ from trulens.instrument.langchain import TruChain
 # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
 tru_recorder = TruChain(
     chain,
-    app_id='Chain1_ChatApplication',
+    app_version='Chain1_ChatApplication',
     feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 ```
 
@@ -47,7 +47,7 @@ from trulens.core import FeedbackMode
 
 tru_recorder = TruChain(
     chain,
-    app_id='Chain1_ChatApplication',
+    app_version='Chain1_ChatApplication',
     feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
     feedback_mode=FeedbackMode.DEFERRED
     )

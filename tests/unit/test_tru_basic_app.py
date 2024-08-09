@@ -31,7 +31,7 @@ class TestTruBasicApp(JSONTestCase):
 
         self.tru_basic_app_recorder = TruBasicApp(
             self.basic_app,
-            app_id="Custom Application v1",
+            app_version="Custom Application v1",
             feedback_mode=FeedbackMode.WITH_APP,
         )
 
@@ -50,7 +50,7 @@ class TestTruBasicApp(JSONTestCase):
         self.assertIsNotNone(rec2)
 
         # Check the database has the record
-        records = self.tru.get_records_and_feedback(app_ids=[])[0]
+        records = self.tru.get_records_and_feedback(app_versions=[])[0]
 
         self.assertEqual(len(records), 1)
 
