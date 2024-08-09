@@ -104,7 +104,13 @@ class ComponentViewMeta(ABCMeta):
         dict_: Dict[str, Any],
     ):
         newtype = type.__init__(cls, classname, bases, dict_)
-        _component_impls[classname] = cls  # type: ignore[assignment]
+
+        if hasattr(cls, "component_of_json"):
+            # Only register the higher-level classes that can enumerate this
+            # subclasses. Otherwise an infinite loop will result in the of_json
+            # logic below.
+
+            _component_impls[classname] = cls  # type: ignore[assignment]
         return newtype
 
 
@@ -119,14 +125,15 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
         self.json = json
         self.cls = Class.of_class_info(json)
 
-    @staticmethod
-    def of_json(json: JSON) -> "ComponentView":
+    @classmethod
+    def of_json(cls, json: JSON) -> "ComponentView":
         """
         Sort the given json into the appropriate component view type.
         """
 
         cls_obj = Class.of_class_info(json)
-        for name, view in _component_impls.items():
+
+        for _, view in _component_impls.items():
             # NOTE: includes prompt, llm, tool, agent, memory, other which may be overridden
             if view.class_is(cls_obj):
                 return view.of_json(json)
@@ -288,8 +295,8 @@ class CustomComponent(ComponentView):
         # Assumes this is the last check done.
         return True
 
-    @staticmethod
-    def of_json(json: JSON) -> "CustomComponent":
+    @classmethod
+    def of_json(cls, json: JSON) -> "CustomComponent":
         return CustomComponent.component_of_json(json)
 
 
