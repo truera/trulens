@@ -231,6 +231,7 @@ class Tru(python.SingletonPerName):
                 k: v
                 for k, v in {
                     "database_url": database_url,
+                    "database_engine": database_engine,
                     "database_file": database_file,
                     "database_redact_keys": database_redact_keys,
                     "database_prefix": database_prefix,
