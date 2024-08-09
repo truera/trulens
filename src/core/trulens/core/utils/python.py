@@ -41,14 +41,14 @@ if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
 
-    In python < 3.9, a subclass of [concurrent.futures.Future][] with
+    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
     `Generic[A]` is used instead.
     """
 
     Queue = queue.Queue
     """Alias for [queue.Queue][] .
 
-    In python < 3.9, a subclass of [queue.Queue][] with
+    In python < 3.9, a sublcass of [queue.Queue][] with
     `Generic[A]` is used instead.
     """
 
@@ -63,7 +63,7 @@ else:
     class Future(Generic[A], futures.Future):
         """Alias for [concurrent.futures.Future][].
 
-        In python < 3.9, a subclass of [concurrent.futures.Future][] with
+        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
         `Generic[A]` is used instead.
         """
 
@@ -71,7 +71,7 @@ else:
     class Queue(Generic[A], queue.Queue):
         """Alias for [queue.Queue][] .
 
-        In python < 3.9, a subclass of [queue.Queue][] with
+        In python < 3.9, a sublcass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
 

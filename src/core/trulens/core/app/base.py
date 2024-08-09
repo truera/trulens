@@ -504,7 +504,7 @@ class App(
     recording_contexts: contextvars.ContextVar[RecordingContext] = (
         pydantic.Field(None, exclude=True)
     )
-    """Sequences of records produced by the this class used as a context manager
+    """Sequnces of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
     Using a context var so that context managers can be nested.

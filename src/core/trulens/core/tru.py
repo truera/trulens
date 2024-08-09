@@ -50,7 +50,6 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
     from snowflake.snowpark import Session
     from snowflake.sqlalchemy import URL
 
-
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
@@ -91,7 +90,8 @@ class Tru(python.SingletonPerName):
             of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
             records.
 
     Args:

@@ -2,7 +2,7 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
 from trulens.feedback import LLMProvider
-from trulens.feedback.generated import re_0_10_rating
+from trulens.feedback.generated import re_configured_rating
 from trulens.providers.bedrock.endpoint import BedrockEndpoint
 
 logger = logging.getLogger(__name__)
@@ -191,7 +191,8 @@ class Bedrock(LLMProvider):
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> float:
         """
@@ -221,14 +222,17 @@ class Bedrock(LLMProvider):
             func=self._create_chat_completion, messages=llm_messages
         )
 
-        return re_0_10_rating(response) / normalize
+        return (re_configured_rating(response) - min_score_val) / (
+            max_score_val - min_score_val
+        )
 
     # overwrite base to use prompt instead of messages
     def generate_score_and_reasons(
         self,
         system_prompt: str,
         user_prompt: Optional[str] = None,
-        normalize: float = 10.0,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
         temperature: float = 0.0,
     ) -> Union[float, Tuple[float, Dict]]:
         """
@@ -265,7 +269,14 @@ class Bedrock(LLMProvider):
             criteria = None
             for line in response.split("\n"):
                 if "Score" in line:
-                    score = re_0_10_rating(line) / normalize
+                    score = (
+                        re_configured_rating(
+                            line,
+                            min_score_val=min_score_val,
+                            max_score_val=max_score_val,
+                        )
+                        - min_score_val
+                    ) / (max_score_val - min_score_val)
                 if "Criteria" in line:
                     parts = line.split(":")
                     if len(parts) > 1:
@@ -283,4 +294,11 @@ class Bedrock(LLMProvider):
             }
             return score, reasons
         else:
-            return re_0_10_rating(response) / normalize
+            return (
+                re_configured_rating(
+                    response,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
+                )
+                - min_score_val
+            ) / (max_score_val - min_score_val)
