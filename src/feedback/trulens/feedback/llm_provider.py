@@ -443,7 +443,7 @@ class LLMProvider(Provider):
         template to check the relevance of the context to the question.
         Also uses chain of thought methodology and emits the reasons.
 
-        !!! example
+        Example:
 
             ```python
             from trulens.instrument.llamaindex import TruLlama
@@ -1327,7 +1327,6 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            import re
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
 
