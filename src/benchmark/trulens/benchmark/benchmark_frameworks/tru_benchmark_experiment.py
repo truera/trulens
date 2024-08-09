@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Tuple, Union
 from pydantic import BaseModel
 from trulens.core import Feedback
 from trulens.core import Select
+from trulens.core.app import TruCustomApp
 from trulens.core.app.custom import instrument
 from trulens.core.feedback.feedback import AggCallable
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -149,3 +150,25 @@ class TruBenchmarkExperiment:
             return scores, meta_scores
         else:
             return scores
+          
+@staticmethod
+def create_benchmark_experiment_app(
+    app_id: str, benchmark_experiment: TruBenchmarkExperiment, **kwargs
+) -> TruCustomApp:
+    """Create a Custom app for special use case: benchmarking feedback functions.
+
+    Args:
+        app_id (str): user-defined identifier of the experiment run.
+        feedback_fn (Callable): feedback function of interest to perform meta-evaluation on.
+        agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
+        benchmark_params (Any): parameters for the benchmarking experiment.
+
+    Returns:
+        trulens.core.app.TruCustomApp: Custom app wrapper for benchmarking feedback functions.
+    """
+
+    return TruCustomApp(
+        benchmark_experiment,
+        app_id=app_id,
+        feedbacks=benchmark_experiment.f_benchmark_metrics,
+        **kwargs,

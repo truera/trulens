@@ -34,7 +34,7 @@ class Cortex(LLMProvider):
             self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         )
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
-
+        
         connection_parameters = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
             "user": os.environ["SNOWFLAKE_USER"],
