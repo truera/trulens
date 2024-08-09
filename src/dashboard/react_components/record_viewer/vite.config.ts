@@ -7,7 +7,7 @@ export default defineConfig({
   base: '',
   plugins: [react()],
   build: {
-    outDir: '../../trulens/dashboard/react_components/record_viewer/dist',
+    outDir: '../../trulens/dashboard/components/record_viewer/dist',
   },
   resolve: {
     alias: {
