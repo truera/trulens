@@ -65,7 +65,6 @@ docs-serve-debug: env-docs
 docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
-
 docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
 
@@ -151,7 +150,7 @@ build-dashboard: env clean-dashboard
 	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
 
 build: $(POETRY_DIRS)
-	for dir in $(POETRY_DIRS); do
+	for dir in $(POETRY_DIRS); do \
 		echo "Building $$dir"; \
 		pushd $$dir; \
 		if [[ "$$dir" == "." ]]; then \
