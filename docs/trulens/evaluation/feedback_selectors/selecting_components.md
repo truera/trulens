@@ -105,7 +105,7 @@ It can be accessed via the JSON-like via
 json_like['app']['combine_documents_chain']['_call']
 ```
 
-The application structure can also be viewed in the TruLens user inerface.
+The application structure can also be viewed in the TruLens user interface.
 You can view this structure on the `Evaluations` page by scrolling down to the
 `Timeline`.
 
@@ -126,7 +126,7 @@ The top level record also contains these helper accessors
 
 As in the `f_context_relevance` example, a selector for a _single_ argument may point
 to more than one aspect of a record/app. These are specified using the slice or
-lists in key/index poisitions. In that case, the feedback function is evaluated
+lists in key/index positions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main
 feedback result.
 

@@ -20,7 +20,7 @@ def rag_triad(
 
     If a particular lens is not provided, the relevant selectors will be
     missing. These can be filled in later or the triad can be used for rails
-    feedback actions whick fill in the selectors based on specification from
+    feedback actions which fill in the selectors based on specification from
     within colang.
 
     Args:

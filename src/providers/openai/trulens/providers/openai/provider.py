@@ -357,7 +357,7 @@ class OpenAI(LLMProvider):
             text (str): Text to evaluate.
 
         Returns:
-            float: A value between 0.0 (not harrassment/threatening) and 1.0 (harrassment/threatening).
+            float: A value between 0.0 (not harassment/threatening) and 1.0 (harassment/threatening).
         """
         openai_response = self._moderation(text)
 
