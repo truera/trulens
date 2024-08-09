@@ -125,7 +125,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     # in local files instead of the DB. Leaving here for now as
                     # serialization of large apps might make this necessary
                     # again.
-                    # """
                     # path_json = Path.cwd() / f"{app_id}.json"
                     # path_dill = Path.cwd() / f"{app_id}.dill"
 
@@ -136,7 +135,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     #     fh.write(dump)
 
                     # print(f"Wrote loadable app to {path_json} and {path_dill}.")
-                    # """
 
             except Exception as e:
                 logger.warning(

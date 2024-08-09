@@ -610,7 +610,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 mostly empty record for checking ahead of producing one. The
                 utility method
                 [App.dummy_record][trulens.core.app.App.dummy_record] is built
-                for this prupose.
+                for this purpose.
 
             source_data: Additional data to select from when extracting feedback
                 function arguments.

@@ -227,7 +227,7 @@ def jsonify(
         return noserio(obj)
 
     skip_excluded = not include_excluded
-    # Hack so that our models do not get exludes dumped which causes many
+    # Hack so that our models do not get exclude dumped which causes many
     # problems. Another variable set here so we can recurse with the original
     # include_excluded .
     if isinstance(obj, SerialModel):

@@ -142,7 +142,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     instrumented_methods: ClassVar[
         Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]
     ] = defaultdict(list)
-    """Mapping of classe/module-methods that have been instrumented for cost
+    """Mapping of classes/module-methods that have been instrumented for cost
      tracking along with the wrapper methods and the class that instrumented
      them.
 
