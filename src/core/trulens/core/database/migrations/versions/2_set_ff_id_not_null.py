@@ -1,4 +1,4 @@
-"""First revision.
+"""set feedback function id to not nullable.
 
 Revision ID: 2
 Revises: 1
