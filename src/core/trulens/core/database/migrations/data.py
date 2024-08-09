@@ -131,7 +131,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         test_json
                                     )
                                 elif attr_name == "app_json":
-                                    mod_app_schema.AppDefinition.model_validate(
+                                    mod_app_schema.VersionDefinition.model_validate(
                                         test_json
                                     )
                                 else:
