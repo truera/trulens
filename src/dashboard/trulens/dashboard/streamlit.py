@@ -236,5 +236,5 @@ def trulens_trace(record: Record):
     """
 
     tru = Tru()
-    app = tru.get_app_version(app_version=record.app_version)
+    app = tru.get_version(app_version=record.app_version)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)

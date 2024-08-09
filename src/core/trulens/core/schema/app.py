@@ -238,7 +238,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         tru = Tru()
 
-        apps = tru.get_all_app_versions()
+        apps = tru.get_all_versions()
         for app in apps:
             dump = app.get("initial_app_loader_dump")
             if dump is not None:

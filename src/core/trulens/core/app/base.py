@@ -691,7 +691,7 @@ class App(
         if self.tru is not None:
             self.db = self.tru.db
 
-            self.db.insert_app(app=self)
+            self.db.insert_app_version(app=self)
 
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
