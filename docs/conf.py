@@ -13,6 +13,8 @@
 import os
 import sys
 
+from recommonmark.parser import CommonMarkParser
+
 os.environ["TRULENS_BACKEND"] = "keras"
 sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../"))
@@ -70,7 +72,6 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-from recommonmark.parser import CommonMarkParser
 
 source_parsers = {".md": CommonMarkParser}
 
