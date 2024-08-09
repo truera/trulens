@@ -50,7 +50,7 @@ urls.Repository = "https://github.com/truera/trulens"
 
 [tool.setuptools.package-data]
 trulens = [
-  'dashboard/react_components/*/dist/**/*',
+  'dashboard/components/*/dist/**/*',
 ]
 
 [tool.setuptools.packages.find]
