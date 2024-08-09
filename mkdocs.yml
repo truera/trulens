@@ -132,7 +132,7 @@ plugins:
             #- typing_extensions
             # members:
             # filters:
-            #   - "!^_" # exlude all members starting with _
+            #   - "!^_" # exclude all members starting with _
             #   - "!^tru_class_info" # don't show tru_class_info
             #   - "^__init__$" # but always include __init__ modules and methods
             #   - "^__call__$" # and __call__ methods

@@ -1,7 +1,7 @@
 """
 # 🕸✨ Database Migration
 
-When upgrading _TruLens_, it may sometimes be required to migrade the
+When upgrading _TruLens_, it may sometimes be required to migrate the
 database to incorporate changes in existing database created from the previously
 installed version. The changes to database schemas is handled by
 [Alembic](https://github.com/sqlalchemy/alembic/) while some data changes are
@@ -15,7 +15,7 @@ from trulens.core import Tru
 
 tru = Tru(
    database_url="<sqlalchemy_url>",
-   database_prefix="trulens_" # default, may be ommitted
+   database_prefix="trulens_" # default, may be omitted
 )
 tru.migrate_database()
 ```

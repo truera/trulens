@@ -1,7 +1,7 @@
 # 🧭 Design Goals and Principles
 
 ***Minimal time/effort-to-value*** If a user already has an llm app coded in one of the
-   supported libraries, give them some value with the minimal efford beyond that
+   supported libraries, give them some value with the minimal effort beyond that
    app.
 
 Currently to get going, a user needs to add  4 lines of python:
@@ -26,7 +26,7 @@ the [Instrumentation](#instrumentation) section below.
 ### App Data
 
 We collect app components and parameters by walking over its structure and
-producing a json reprensentation with everything we deem relevant to track. The
+producing a json representation with everything we deem relevant to track. The
 function [jsonify][trulens.core.utils.json.jsonify] is the root of this process.
 
 #### class/system specific
@@ -113,7 +113,7 @@ instrumented versions.
 The instrumented versions of functions/methods record the inputs/outputs and
 some additional data (see
 [RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod]). As more than
-one instrumented call may take place as part of a app invokation, they are
+one instrumented call may take place as part of a app invocation, they are
 collected and returned together in the `calls` field of
 [Record][trulens.core.schema.record.Record].
 

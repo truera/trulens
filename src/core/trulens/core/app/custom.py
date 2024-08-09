@@ -408,7 +408,7 @@ class TruCustomApp(App):
             # "self" manually when needed.
             main_method_loaded = getattr(cls, main_name)
 
-            # This will be serialized as part of this TruCustomApp. Importatly, it is unbound.
+            # This will be serialized as part of this TruCustomApp. Importantly, it is unbound.
             main_method = Function.of_function(main_method_loaded, cls=cls)
 
             self.main_method = main_method

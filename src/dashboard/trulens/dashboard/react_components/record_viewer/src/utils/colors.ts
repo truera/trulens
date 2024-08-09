@@ -5,7 +5,7 @@
  */
 export type Color = string;
 type ColorDictionary = { [k: Color]: Color };
-//  Data Vizualization Color Scale
+//  Data Visualization Color Scale
 export enum DVColor {
   PRIMARY = 0,
   LIGHT = 1,
@@ -106,7 +106,7 @@ export const BLACK: Color = '#212121';
  * @link https://www.figma.com/file/ZdKEFr5HqxjGg2KUU51akl/%F0%9F%8C%88-Colors?node-id=958%3A47
  */
 
-// Data Vizualization Colors
+// Data Visualization Colors
 export const CO01: DVColorScale = ['#54A08E', '#A4CBC1', '#366567', '#7BADA4', '#1C383E'];
 export const CO02: DVColorScale = ['#F8D06D', '#F0EC89', '#AD743E', '#F4E07B', '#5C291A'];
 export const CO03: DVColorScale = ['#5690C5', '#8DA6BF', '#274F69', '#6D90B1', '#0B1D26'];
@@ -119,7 +119,7 @@ export const CO09: DVColorScale = ['#74B3C0', '#99D4D2', '#537F88', '#BFE6DD', '
 export const CO10: DVColorScale = ['#A484BD', '#CBC7E4', '#745E86', '#B5A5D1', '#45384F'];
 
 const DVColors: DVColorScale[] = [CO01, CO02, CO03, CO04, CO05, CO06, CO07, CO08, CO09, CO10];
-// List of primary Datavizualization Colors
+// List of primary DataVisualization Colors
 export const COLORS: Color[] = DVColors.map((c) => c[DVColor.PRIMARY]);
 // Returns an Object that maps color primary dataviz colors to the selected color hue
 const getColorMap = (i: DVColor): ColorDictionary =>

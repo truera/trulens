@@ -79,7 +79,7 @@ A = TypeVar("A")
 ATTRIBUTE_ERROR_MESSAGE = """
 {class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
 you are calling a {app_class_name} method, retrieve it from that app instead of from
-{class_name}. If you need to record your app's behaviour, use {class_name} as a context
+{class_name}. If you need to record your app's behavior, use {class_name} as a context
 manager as in this example:
 
 ```python
@@ -127,7 +127,7 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
 
         cls_obj = Class.of_class_info(json)
         for name, view in _component_impls.items():
-            # NOTE: includes prompt, llm, tool, agent, memory, other which may be overriden
+            # NOTE: includes prompt, llm, tool, agent, memory, other which may be overridden
             if view.class_is(cls_obj):
                 return view.of_json(json)
 
@@ -314,7 +314,7 @@ class RecordingContext:
     """Manager of the creation of records from record calls.
 
     An instance of this class is produced when using an
-    [App][trulens.core.app.App] as a context mananger, i.e.:
+    [App][trulens.core.app.App] as a context manager, i.e.:
 
     Example:
         ```python
@@ -504,7 +504,7 @@ class App(
     recording_contexts: contextvars.ContextVar[RecordingContext] = (
         pydantic.Field(None, exclude=True)
     )
-    """Sequnces of records produced by the this class used as a context manager
+    """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
     Using a context var so that context managers can be nested.

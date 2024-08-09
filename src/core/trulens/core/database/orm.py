@@ -81,7 +81,7 @@ def new_base(prefix: str) -> Type[T]:
     """Create a new base class for ORM classes.
 
     Note: This is a function to be able to define classes extending different
-    SQLAlchemy delcarative bases. Each different such bases has a different set
+    SQLAlchemy declarative bases. Each different such bases has a different set
     of mappings from classes to table names. If we only had one of these, our
     code will never be able to have two different sets of mappings at the same
     time. We need to be able to have multiple mappings for performing things

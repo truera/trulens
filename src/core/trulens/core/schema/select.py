@@ -39,7 +39,7 @@ class Select:
     RecordCalls: Query = Record.app  # type: ignore
     """Selector for the calls made by the wrapped app.
 
-    Layed out by path into components.
+    Laid out by path into components.
     """
 
     RecordCall: Query = Record.calls[-1]
