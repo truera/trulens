@@ -62,17 +62,16 @@ with OptionalImports(messages=REQUIREMENT_OPENAI):
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 T = TypeVar("T")
-primitive_types = Union[str, int, bool, float, complex]
 
 
 def _recursive_hash(
-    value: Union[dict, list, primitive_types, None],
+    value: Union[dict, list, str, int, bool, float, complex, None],
     ignore_none=False,
 ) -> str:
     """Hash a json-like structure. Implementation is simplified from merkle_json.
 
     Args:
-        value (Union[dict, list, primitive_types, None]): The value or object to hash.
+        value (Union[dict, list, str, int, bool, float, complex, None]): The value or object to hash.
         ignore_none (bool, optional): If provided, ignore None values in the hash. Defaults to False.
 
     Returns:
@@ -93,7 +92,7 @@ def _recursive_hash(
         return _recursive_hash(acc, ignore_none=ignore_none)
     elif isinstance(
         value,
-        primitive_types,
+        (str, int, bool, float, complex),
     ):
         return hashlib.md5(str(value).encode("utf-8")).hexdigest()
     elif value is None:
