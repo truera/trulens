@@ -13,15 +13,15 @@ serialized into json. Most are extended with non-serialized fields in other file
 | [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] | [App][trulens.core.app.App], Tru{Chain, Llama, ...} |
 | [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition] | [Feedback][trulens.core.Feedback] |
 
-`VersionDefinition.app` is the JSON-ized version of a wrapped app while `App.app` is the
+`VersionDefinition.app` is the JSONized version of a wrapped app while `App.app` is the
 actual wrapped app. We can thus inspect the contents of a wrapped app without
-having to construct it. Additionally, JSONized objects like `VersionDefinition.app`
+having to construct it. Additionally, JSONized objects like `AppVersionDefinition.app`
 feature information about the encoded object types in the dictionary under the
 `util.py:CLASS_INFO` key.
 
 """
 
-from trulens.core.schema.app import VersionDefinition
+from trulens.core.schema.app import AppVersionDefinition
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResult
@@ -29,7 +29,7 @@ from trulens.core.schema.record import Record
 from trulens.core.schema.select import Select
 
 __all__ = [
-    "VersionDefinition",
+    "AppVersionDefinition",
     "Select",
     "FeedbackDefinition",
     "FeedbackResult",

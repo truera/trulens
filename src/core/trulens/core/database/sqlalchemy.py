@@ -46,6 +46,7 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema.app import AppVersionDefinition
 from trulens.core.utils import text
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.python import locals_except
@@ -337,7 +338,7 @@ class SQLAlchemyDB(DB):
                 yield json.loads(_app.app_json)
 
     def insert_app_version(
-        self, app_version: mod_app_schema.AppVersionDefinition
+        self, app_version: AppVersionDefinition
     ) -> mod_types_schema.VersionTag:
         """See [DB.insert_app_version][trulens.core.database.base.DB.insert_app_version]."""
 
@@ -776,14 +777,14 @@ class AppsExtractor:
 
     def get_df_and_cols(
         self,
-        apps: Optional[List["mod_orm.ORM.AppVersionDefinition"]] = None,
+        app_versions: Optional[List["mod_orm.ORM.AppVersionDefinition"]] = None,
         records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records DataFrame which joins in information from apps and
         feedback results.
 
         Args:
-            apps: If given, includes all records of all of the apps in this
+            app_versions: If given, includes all records of all of the apps in this
                 iterable.
 
             records: If given, includes only these records. Mutually exclusive
@@ -791,15 +792,15 @@ class AppsExtractor:
         """
 
         assert (
-            apps is None or records is None
+            app_versions is None or records is None
         ), "`apps` and `records` are mutually exclusive"
 
-        if apps is not None:
-            df = pd.concat(self.extract_apps(apps))
+        if app_versions is not None:
+            df = pd.concat(self.extract_apps(app_versions))
 
         elif records is not None:
-            apps = {record.app for record in records}
-            df = pd.concat(self.extract_apps(apps=apps, records=records))
+            app_versions = {record.ver for record in records}
+            df = pd.concat(self.extract_apps(app_versions, records=records))
 
         else:
             raise ValueError("'apps` or `records` must be provided")
@@ -813,7 +814,7 @@ class AppsExtractor:
 
     def extract_apps(
         self,
-        apps: Iterable["mod_orm.ORM.AppVersionDefinition"],
+        app_versions: Iterable[AppVersionDefinition],
         records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Iterable[pd.DataFrame]:
         """
@@ -826,7 +827,7 @@ class AppsExtractor:
         yield pd.DataFrame(
             [], columns=self.app_cols + self.rec_cols
         )  # prevent empty iterator
-        for _app in apps:
+        for _app in app_versions:
             try:
                 if records is None:
                     # If records not provided, get all of them for `_app`.

@@ -280,7 +280,7 @@ class DB(SerialModel, abc.ABC):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records fom the database.
+        """Get records from the database.
 
         Args:
             version_tags: If given, retrieve only the records for the given versions.

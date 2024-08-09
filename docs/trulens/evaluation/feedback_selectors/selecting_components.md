@@ -105,7 +105,7 @@ It can be accessed via the JSON-like via
 json_like['app']['combine_documents_chain']['_call']
 ```
 
-The application structure can also be viewed in the TruLens user inerface.
+The application structure can also be viewed in the TruLens user interface.
 You can view this structure on the `Evaluations` page by scrolling down to the
 `Timeline`.
 

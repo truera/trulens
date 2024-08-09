@@ -128,9 +128,8 @@ class AppVersionDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     # in local files instead of the DB. Leaving here for now as
                     # serialization of large apps might make this necessary
                     # again.
-                    # """
-                    # path_json = Path.cwd() / f"{version_tag}.json"
-                    # path_dill = Path.cwd() / f"{version_tag}.dill"
+                    # path_json = Path.cwd() / f"{app_id}.json"
+                    # path_dill = Path.cwd() / f"{app_id}.dill"
 
                     # with path_json.open("w") as fh:
                     #     fh.write(json_str_of_obj(self))
@@ -139,7 +138,6 @@ class AppVersionDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     #     fh.write(dump)
 
                     # print(f"Wrote loadable app to {path_json} and {path_dill}.")
-                    # """
 
             except Exception as e:
                 logger.warning(
