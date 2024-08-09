@@ -32,7 +32,7 @@ from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
@@ -361,16 +361,14 @@ class Tru(python.SingletonPerName):
             Callable[
                 [
                     Union[
-                        mod_feedback_schema.FeedbackResult,
-                        Future[mod_feedback_schema.FeedbackResult],
+                        feedback_schema.FeedbackResult,
+                        Future[feedback_schema.FeedbackResult],
                     ],
                     None,
                 ]
             ]
         ] = None,
-    ) -> List[
-        Tuple[feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]
-    ]:
+    ) -> List[Tuple[feedback.Feedback, Future[feedback_schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -433,7 +431,7 @@ class Tru(python.SingletonPerName):
 
                 return temp
 
-            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
+            fut: Future[feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback, ffunc=ffunc, app=app, record=record
             )
 
@@ -455,8 +453,8 @@ class Tru(python.SingletonPerName):
         app: Optional[mod_app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
-        Iterable[mod_feedback_schema.FeedbackResult],
-        Iterable[Future[mod_feedback_schema.FeedbackResult]],
+        Iterable[feedback_schema.FeedbackResult],
+        Iterable[Future[feedback_schema.FeedbackResult]],
     ]:
         """Run a collection of feedback functions and report their result.
 
@@ -505,7 +503,7 @@ class Tru(python.SingletonPerName):
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
+            Future[feedback_schema.FeedbackResult], feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in self._submit_feedback_functions(
@@ -562,8 +560,8 @@ class Tru(python.SingletonPerName):
         self,
         feedback_result_or_future: Optional[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ] = None,
         **kwargs: dict,
@@ -591,19 +589,19 @@ class Tru(python.SingletonPerName):
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
-                kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
+                kwargs["status"] = feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
-                **kwargs
-            )
+            feedback_result_or_future = feedback_schema.FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result()
+                feedback_result_or_future: feedback_schema.FeedbackResult = (
+                    feedback_result_or_future.result()
+                )
 
             elif isinstance(
-                feedback_result_or_future, mod_feedback_schema.FeedbackResult
+                feedback_result_or_future, feedback_schema.FeedbackResult
             ):
                 pass
             else:
@@ -621,8 +619,8 @@ class Tru(python.SingletonPerName):
         self,
         feedback_results: Iterable[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ],
     ) -> List[mod_types_schema.FeedbackResultID]:
@@ -837,8 +835,7 @@ class Tru(python.SingletonPerName):
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
             queue_done = (
-                queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE)
-                or 0
+                queue_stats.get(feedback_schema.FeedbackResultStatus.DONE) or 0
             )
             queue_total = sum(queue_stats.values())
 
@@ -871,7 +868,7 @@ class Tru(python.SingletonPerName):
             runs_stats = defaultdict(int)
 
             futures_map: Dict[
-                Future[mod_feedback_schema.FeedbackResult], pandas.Series
+                Future[feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
@@ -880,7 +877,7 @@ class Tru(python.SingletonPerName):
                     new_futures: List[
                         Tuple[
                             pandas.Series,
-                            Future[mod_feedback_schema.FeedbackResult],
+                            Future[feedback_schema.FeedbackResult],
                         ]
                     ] = feedback.Feedback.evaluate_deferred(
                         tru=self,
@@ -938,9 +935,7 @@ class Tru(python.SingletonPerName):
 
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = (
-                    queue_stats.get(
-                        mod_feedback_schema.FeedbackResultStatus.DONE
-                    )
+                    queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
                     or 0
                 )
                 queue_total = sum(queue_stats.values())

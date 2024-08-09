@@ -210,7 +210,7 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.utils import serial
@@ -534,7 +534,7 @@ class TruVirtual(App):
     def add_record(
         self,
         record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
+        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
     ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
@@ -560,7 +560,7 @@ class TruVirtual(App):
 
         # Wait for results if mode is WITH_APP.
         if (
-            feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP
+            feedback_mode == feedback_schema.FeedbackMode.WITH_APP
             and record.feedback_results is not None
         ):
             futs = record.feedback_results

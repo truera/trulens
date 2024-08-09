@@ -368,6 +368,7 @@ class AzureOpenAI(OpenAI):
     """
     !!! warning
         _Azure OpenAI_ does not support the _OpenAI_ moderation endpoint.
+
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
     functionality as OpenAI out of the box feedback functions, excluding the
     moderation endpoint which is not supported by Azure. Please export the
@@ -390,8 +391,6 @@ class AzureOpenAI(OpenAI):
             response="Poland is in Europe."
         ) # low relevance
         ```
-
-
 
     Args:
         deployment_name: The name of the deployment.

@@ -6,6 +6,7 @@ line. Hopefully this wraps automatically.
 
 import builtins
 from dataclasses import dataclass
+import importlib
 from importlib import metadata
 from importlib import resources
 import inspect
@@ -13,18 +14,202 @@ from inspect import cleandoc
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
+import subprocess
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
+from trulens.core.utils.python import caller_frame
+from trulens.core.utils.python import caller_module
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
+NO_INSTALL: bool = False
+"""If set, will not automatically install any optional trulens modules and fail
+in the typical way if a module is missing."""
+
+
+def pip(*args) -> subprocess.CompletedProcess:
+    """Execute pip with the given arguments."""
+
+    logger.debug("Running pip", *args)
+
+    return subprocess.run(
+        [sys.executable, "-m", "pip", *args], capture_output=True, check=True
+    )
+
+
+def install(package_name: str):
+    """Install a package with pip."""
+
+    package_name = safe_importlib_package_name(package_name)
+
+    logger.info("Installing package %s", package_name)
+
+    pip("install", package_name)
+
+    return get_package_version(package_name)
+
+
+def make_help_str(
+    kinds: Dict[str, Dict],
+) -> Tuple[Callable[[], None], Callable[[], str]]:
+    """Create a help string that lists all available classes and their installation status."""
+
+    mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
+
+    def help_str() -> str:
+        ret = f"Module '{mod.__name__}' from '{mod.__file__}'\n"
+        for kind, items in kinds.items():
+            ret += f"{kind}: \n"  # TODO: pluralize
+            for class_, (package_name, _) in items.items():
+                version = get_package_version(package_name)
+                ret += (
+                    f"  {class_}\t[{package_name}]\t["
+                    + (str(version) if version is not None else "not installed")
+                    + "]\n"
+                )
+
+        if NO_INSTALL:
+            ret += "\nYou can enable automatic installs by calling `trulens.set_no_install(False)`."
+        else:
+            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.set_no_install()`."
+
+        return ret
+
+    def help() -> None:
+        """Print a help message that lists all available classes and their installation status."""
+
+        print(help_str())
+
+    return help, help_str
+
+
+def make_getattr_override(
+    # mod: ModuleType,
+    kinds: Dict[str, Dict],
+    help_str: Union[str, Callable[[], str]],
+) -> Any:
+    mod = sys.modules[caller_module(offset=1)]
+
+    def getattr_(attr):
+        nonlocal mod
+
+        # print("getattr", attr)
+
+        if attr in [
+            "_ipython_canary_method_should_not_exist_",
+            "_ipython_display_",
+        ]:
+            raise AttributeError()
+
+        for kind, options in kinds.items():
+            if attr in options:
+                package_name, module_name = options[attr]
+
+                try:
+                    mod = import_module(
+                        package_name=package_name,
+                        module_name=module_name,
+                        purpose=f"using the {attr} {kind}",
+                    )
+                    return getattr(mod, attr)
+
+                except ImportError as e:
+                    raise ImportError(
+                        f"""Could not import the {attr} {kind}. You might need to re-install {package_name}:
+            ```bash
+            pip uninstall -y {package_name}
+            pip install {package_name}
+            ```
+        """
+                    ) from e
+
+        # We also need to the case of an import of a sub-module instead of
+        # something in __all__ (enumerated in kinds) so we try that here.
+        try:
+            submod = importlib.import_module(mod.__name__ + "." + attr)
+            return submod
+        except Exception:
+            # Use the same error message as the below.
+            pass
+
+        raise ImportError(
+            f"Module {mod.__name__} has no attribute {attr}.\n"
+            + (help_str if isinstance(help_str, str) else help_str())
+        )
+
+    return getattr_
+
+
+def import_module(
+    package_name: str, module_name: str, purpose: Optional[str] = None
+):
+    """Import a module of the given package but install it if it is not already
+    installed.
+
+    If purpose is given, will use that for the message printed before the
+    installation if it does happen.
+    """
+
+    package_name = safe_importlib_package_name(package_name)
+
+    if purpose is None:
+        purpose = f"using {module_name}"
+
+    try:
+        if (package := get_package_version(package_name)) is None:
+            if NO_INSTALL:
+                # Throwing RuntimeError as I don't want this to be caught by the
+                # importing try blocks. Needs this to be the final error.
+                raise RuntimeError(f"Package {package_name} is not installed.")
+
+            if sys.version_info >= (3, 12) and package_name in [
+                "trulens-providers-cortex",
+                "trulens-instrument-nemo",
+            ]:
+                # These require python < 3.12 .
+                # RuntimeError here on purpose. See above.
+                raise RuntimeError(
+                    f"Package {package_name} required for {purpose} does not support python >= 3.12."
+                )
+
+            else:
+                print(
+                    f"Installing package {package_name} required for {purpose} ..."
+                )
+
+            package = install(package_name)
+
+    except subprocess.CalledProcessError as e:
+        # ImportError here on purpose. Want this to be caught in importing try
+        # blocks to give additional information.
+        raise ImportError(f"Could not install {package_name}.") from e
+
+    if package is None:
+        # Same
+        raise ImportError(f"Could not install {package}.")
+
+    return importlib.import_module(module_name)
+
 
 def safe_importlib_package_name(package_name: str) -> str:
+    """Convert a package name that may have periods in it to one that uses
+    hyphens for periods but only if the python version is old."""
+
     return (
         package_name
         if sys.version_info >= (3, 10)
@@ -238,6 +423,57 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
+# Optional sub-packages:
+REQUIREMENT_FEEDBACK = format_import_errors(
+    "trulens-feedback", purpose="evaluating feedback functions"
+)
+
+# Optional app types:
+REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
+    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
+)
+REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
+    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
+)
+REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
+    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
+)
+
+# Optional provider types:
+
+REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
+    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
+)
+REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
+    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
+)
+REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
+    "trulens-providers-huggingface",
+    purpose="evaluating feedback using Huggingface",
+)
+REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
+    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
+)
+REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
+    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
+)
+REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
+    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
+)
+
+# Other optionals:
+REQUIREMENT_SKLEARN = format_import_errors(
+    "scikit-learn", purpose="using embedding vector distances"
+)
+REQUIREMENT_BERT_SCORE = format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+REQUIREMENT_EVALUATE = format_import_errors(
+    "evaluate", purpose="using certain metrics"
+)
+REQUIREMENT_NOTEBOOK = format_import_errors(
+    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
+)
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
 )

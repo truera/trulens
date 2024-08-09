@@ -1,7 +1,7 @@
 # ✅ Standards
 
 Enumerations of standards for code and its documentation to be maintained in
-`trulens`. Ongoing work aims at adapting these standards to existing code.
+_TruLens_. Ongoing work aims at adapting these standards to existing code.
 
 ## Proper Names
 
@@ -30,27 +30,41 @@ apply when referring to things like package names, classes, methods.
 
 ## Python
 
-### Format
+### Formatting
 
-- Use `pylint` for various code issues.
+- Use `ruff` to format code with configuration:
 
-- Use `yapf` to format code with configuration:
+  ```toml
+  [tool.ruff]
+  line-length = 80
+  ```
+
+  Additionally configure `ruff` with `lint` and `isort` as described later in
+  this document. A full `ruff` configuration is found in the root
+  `pyproject.toml`.
+
+- Use `ruff.lint` for various code issues:
 
     ```toml
-    [style]
-    based_on_style = google
-    DEDENT_CLOSING_BRACKETS=true
-    SPLIT_BEFORE_FIRST_ARGUMENT=true
-    SPLIT_COMPLEX_COMPREHENSION=true
-    COLUMN_LIMIT=80
+    [tool.ruff.lint.pydocstyle]
+    convention = "google"
     ```
-
-  !!! Warning
-    `yapf` version matters. The one we expect and compare against in pull requests can be found in `requirements.dev.txt`.
 
 ### Imports
 
-- Use `isort` to organize import statements.
+- Use `ruff.lint.isort` to organize import statements:
+
+  ```toml
+    [tool.ruff.lint.isort]
+    force-single-line = true
+    force-sort-within-sections = true
+    single-line-exclusions = [
+      "typing",
+    ]
+    known-first-party = [
+      "src",
+    ]
+  ```
 
 - Generally import modules only as per
   <https://google.github.io/styleguide/pyguide.html#22-imports> with some
@@ -100,16 +114,16 @@ Deprecated:
 
 More details if necessary.
 
-Examples:
+Example:
 
-```python
-# example if needed
-```
+  ```python
+  # example if needed
+  ```
 
 Attrs:
-    attribute_name (attribute_type): Description.
+    attribute_name: Description.
 
-    attribute_name (attribute_type): Description.
+    attribute_name: Description.
 """
 ````
 
@@ -120,11 +134,11 @@ Attrs:
 
 More details if necessary.
 
-Examples:
+Example:
 
-```python
-# example if needed
-```
+  ```python
+  # example if needed
+  ```
 
 Args:
     argument_name: Description. Some long description of argument may wrap over to the next line and needs to
@@ -135,6 +149,8 @@ Args:
 Returns:
 
     return_type: Description.
+
+    return_type: More descriptions if there is more than one return value.
 
     Additional return discussion. Use list above to point out return components if there are multiple relevant components.
 
