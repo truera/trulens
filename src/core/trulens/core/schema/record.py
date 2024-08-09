@@ -68,6 +68,9 @@ class RecordAppCall(serial.SerialModel):
     perf: Optional[mod_base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
+    cost: Optional[mod_base_schema.Cost] = None
+    """Costs associated with the call."""
+
     pid: int
     """Process id."""
 
@@ -100,7 +103,7 @@ class Record(serial.SerialModel, Hashable):
     record_id: mod_types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_version: mod_types_schema.AppVersion
     """The app that produced this record."""
 
     cost: Optional[mod_base_schema.Cost] = None

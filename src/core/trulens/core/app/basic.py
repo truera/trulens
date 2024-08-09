@@ -77,7 +77,7 @@ class TruBasicApp(App):
         from trulens.core import TruBasicApp
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruBasicApp(custom_application,
-            app_id="Custom Application v1",
+            app_version="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         # Basic app works by turning your callable into an app

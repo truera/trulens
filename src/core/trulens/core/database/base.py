@@ -104,7 +104,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
+    def insert_app_version(
+        self, app: AppDefinition
+    ) -> mod_types_schema.AppVersion:
         """
         Upsert an `app` into the database.
 
@@ -247,11 +249,13 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
-        """Get the app with the given id from the database.
+    def get_app_version(
+        self, app_version: mod_types_schema.AppVersion
+    ) -> Optional[JSONized]:
+        """Get the app version with the given version tag from the database.
 
         Returns:
-            The jsonized version of the app with the given id. Deserialization
+            The JSON-ized version of the app with the given id. Deserialization
                 can be done with
                 [App.model_validate][trulens.core.app.App.model_validate].
 
@@ -259,22 +263,34 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
-        """Get all apps."""
+    def get_app_versions(self) -> Iterable[JSON]:
+        """Get all app versions."""
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_app_version(
+        self, app_version: mod_types_schema.AppVersion
+    ) -> None:
+        """
+        Deletes an app from the database based on its app_version.
+
+        Args:
+            app_version (schema.AppID): The unique identifier of the app to be deleted.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_versions: Optional[List[mod_types_schema.AppVersion]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records from the database.
 
         Args:
-            app_ids: If given, retrieve only the records for the given apps.
+            app_versions: If given, retrieve only the records for the given app versions.
                 Otherwise all apps are retrieved.
 
             offset: Database row offset.
@@ -282,7 +298,7 @@ class DB(SerialModel, abc.ABC):
             limit: Limit on rows (records) returned.
 
         Returns:
-            A dataframe with the records.
+            A DatFrame with the records.
 
             A list of column names that contain feedback results.
         """

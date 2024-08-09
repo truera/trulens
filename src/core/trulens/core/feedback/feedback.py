@@ -409,7 +409,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             # TODO: figure out useful things to print.
             # feedback_ident = (
             #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
-            #    f"{row.fname} for app {row.app_json['app_id']}"
+            #    f"{row.fname} for app {row.app_json['app_version']}"
             # )
 
             if row.status == mod_feedback_schema.FeedbackResultStatus.NONE:

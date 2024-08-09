@@ -60,7 +60,7 @@ def humanize_seconds(seconds: float):
 
 
 class Tru(python.SingletonPerName):
-    """Tru is the main class that provides an entry points to trulens.
+    """Tru is the main class that provides an entry point to TruLens.
 
     Tru lets you:
 
@@ -95,31 +95,30 @@ class Tru(python.SingletonPerName):
             records.
 
     Args:
-        database: Database to use. If not provided, an
-            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
-            will be initialized based on the other arguments.
+        app_name (str, optional): The name of the app. Defaults to "default".
 
-        database_url: Database URL. Defaults to a local SQLite
+        database (Optional[DB], optional): Database to use. If not provided, an
+            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
+            will be initialized based on the other arguments. Defaults to None.
+
+        database_url (Optional[str], optional): Database URL. Defaults to a local SQLite
             database file at `"default.sqlite"` See [this
             article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
             on SQLAlchemy database URLs. (defaults to
-            `sqlite://DEFAULT_DATABASE_FILE`).
+            `sqlite://{app_name}.sqlite`).
 
-        database_file: Path to a local SQLite database file.
-
-            **Deprecated**: Use `database_url` instead.
-
-        database_prefix: Prefix for table names for trulens to use.
-            May be useful in some databases hosting other apps.
-
-        database_redact_keys: Whether to redact secret keys in data to be
+        database_redact_keys (bool, optional): Whether to redact secret keys in data to be
             written to database (defaults to `False`)
 
-        database_args: Additional arguments to pass to the database constructor.
+        database_prefix (Optional[str], optional): Prefix for table names for trulens to use.
+            May be useful in some databases hosting other apps. Defaults to None.
 
-        snowflake_connection_parameters: Connection arguments to Snowflake database to use.
+        database_args (Optional[Dict[str, Any]], optional): Additional arguments to pass to the database constructor. Defaults to None.
 
-        name: Name of the app.
+        database_check_revision (bool, optional): Whether to check the database revision on
+            init. This prompt determine whether database migration is required. Defaults to True.
+
+        snowflake_connection_parameters (Optional[Dict[str, str]], optional): Connection arguments to Snowflake database to use. Defaults to None.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -143,7 +142,7 @@ class Tru(python.SingletonPerName):
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
 
-    Will be an opqaue wrapper if it is not ready to use due to migration requirements.
+    Will be an opaque wrapper if it is not ready to use due to migration requirements.
     """
 
     _dashboard_urls: Optional[str] = None
@@ -164,59 +163,22 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     def __new__(cls, *args, **kwargs) -> Tru:
-        return super().__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls, *args, **kwargs)
+        assert isinstance(inst, Tru)
+        return inst
 
     def __init__(
         self,
+        app_name: str = "default",
         database: Optional[DB] = None,
         database_url: Optional[str] = None,
-        database_file: Optional[str] = None,
-        database_redact_keys: Optional[bool] = None,
+        database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
-        name: Optional[str] = None,
     ):
-        """
-        Args:
-            database_check_revision: Whether to check the database revision on
-                init. This prompt determine whether database migration is required.
-        """
-
-        if database_args is None:
-            database_args = {}
-
-        if snowflake_connection_parameters is not None:
-            if database is not None:
-                raise ValueError(
-                    "`database` must be `None` if `snowflake_connection_parameters` is set!"
-                )
-            if database_url is not None:
-                raise ValueError(
-                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
-                )
-            if not name:
-                raise ValueError(
-                    "`name` must be set if `snowflake_connection_parameters` is set!"
-                )
-            schema_name = self._validate_and_compute_schema_name(name)
-            database_url = self._create_snowflake_database_url(
-                snowflake_connection_parameters, schema_name
-            )
-
-        database_args.update(
-            {
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_file": database_file,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+        database_args = database_args or {}
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
@@ -228,7 +190,6 @@ class Tru(python.SingletonPerName):
                     )
                     self.warning()
                     break
-
             return
 
         if database is not None:
@@ -239,7 +200,14 @@ class Tru(python.SingletonPerName):
 
             self.db = database
         else:
-            self.db = SQLAlchemyDB.from_tru_args(**database_args)
+            self.db = self._init_db(
+                app_name=app_name,
+                database_args=database_args,
+                snowflake_connection_parameters=snowflake_connection_parameters,
+                database_url=database_url,
+                database_redact_keys=database_redact_keys,
+                database_prefix=database_prefix,
+            )
 
         if database_check_revision:
             try:
@@ -248,13 +216,51 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-    @staticmethod
-    def _validate_and_compute_schema_name(name):
-        if not re.match(r"^[A-Za-z0-9_]+$", name):
-            raise ValueError(
-                "`name` must contain only alphanumeric and underscore characters!"
+    def _init_db(
+        self,
+        app_name: str,
+        database_args: Dict[str, Any],
+        snowflake_connection_parameters: Optional[Dict[str, str]] = None,
+        database_url: Optional[str] = None,
+        database_redact_keys: bool = False,
+        database_prefix: Optional[str] = None,
+    ) -> DB:
+        if snowflake_connection_parameters is not None:
+            if database_url is not None:
+                raise ValueError(
+                    "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if not app_name:
+                raise ValueError(
+                    "`app_name` must be set if `snowflake_connection_parameters` is set!"
+                )
+            schema_name = self._validate_and_compute_schema_name(app_name)
+            database_url = self._create_snowflake_database_url(
+                snowflake_connection_parameters, schema_name
             )
-        return f"TRULENS_APP__{name.upper()}"
+        else:
+            database_url = database_url or f"sqlite:///{app_name}.sqlite"
+
+        database_args.update(
+            {
+                k: v
+                for k, v in {
+                    "database_url": database_url,
+                    "database_redact_keys": database_redact_keys,
+                    "database_prefix": database_prefix,
+                }.items()
+                if v is not None
+            }
+        )
+        return SQLAlchemyDB.from_tru_args(**database_args)
+
+    @staticmethod
+    def _validate_and_compute_schema_name(app_name: str):
+        if not re.match(r"^[A-Za-z0-9_]+$", app_name):
+            raise ValueError(
+                "`app_name` must contain only alphanumeric and underscore characters!"
+            )
+        return f"TRULENS_APP__{app_name.upper()}"
 
     @staticmethod
     def _create_snowflake_database_url(
@@ -275,7 +281,8 @@ class Tru(python.SingletonPerName):
 
     @staticmethod
     def _create_snowflake_schema_if_not_exists(
-        snowflake_connection_parameters: Dict[str, str], schema_name: str
+        snowflake_connection_parameters: Dict[str, str],
+        schema_name: str,
     ):
         session = Session.builder.configs(
             snowflake_connection_parameters
@@ -365,8 +372,8 @@ class Tru(python.SingletonPerName):
                         mod_feedback_schema.FeedbackResult,
                         Future[mod_feedback_schema.FeedbackResult],
                     ],
-                    None,
-                ]
+                ],
+                None,
             ]
         ] = None,
     ) -> List[
@@ -392,30 +399,30 @@ class Tru(python.SingletonPerName):
             feedback function and the second is the future of the feedback result.
         """
 
-        app_id = record.app_id
+        app_version = record.app_version
 
         self.db: DB
 
         if app is None:
             app = mod_app_schema.AppDefinition.model_validate(
-                self.db.get_app(app_id=app_id)
+                self.db.get_app_version(app_version=app_version)
             )
-            if app is None:
+            if app_version is None:
                 raise RuntimeError(
-                    f"App {app_id} not present in db. "
+                    f"Version `{app_version}` not present in db. "
                     "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
                 )
 
         else:
             assert (
-                app_id == app.app_id
+                app_version == app.app_version
             ), "Record was produced by a different app."
 
-            if self.db.get_app(app_id=app.app_id) is None:
+            if self.db.get_app_version(app_version=app_version) is None:
                 logger.warning(
-                    f"App {app_id} was not present in database. Adding it."
+                    f"Version `{app_version}` was not present in database. Adding it."
                 )
-                self.add_app(app=app)
+                self.add_version(app_version=app_version)
 
         feedbacks_and_futures = []
 
@@ -424,8 +431,12 @@ class Tru(python.SingletonPerName):
         for ffunc in feedback_functions:
             # Run feedback function and the on_done callback. This makes sure
             # that Future.result() returns only after on_done has finished.
-            def run_and_call_callback(ffunc, app, record):
-                temp = ffunc.run(app=app, record=record)
+            def run_and_call_callback(
+                ffunc: feedback.Feedback,
+                app_version: mod_app_schema.AppDefinition,
+                record: mod_record_schema.Record,
+            ):
+                temp = ffunc.run(app_version=app_version, record=record)
                 if on_done is not None:
                     try:
                         on_done(temp)
@@ -435,7 +446,10 @@ class Tru(python.SingletonPerName):
                 return temp
 
             fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
-                run_and_call_callback, ffunc=ffunc, app=app, record=record
+                run_and_call_callback,
+                ffunc=ffunc,
+                app_version=app_version,
+                record=record,
             )
 
             # Have to roll the on_done callback into the submitted function
@@ -533,9 +547,9 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_version(
+        self, app_version: mod_app_schema.AppVersionDefinition
+    ) -> mod_types_schema.VersionTag:
         """
         Add an app to the database and return its unique id.
 
@@ -547,17 +561,17 @@ class Tru(python.SingletonPerName):
 
         """
 
-        return self.db.insert_app(app=app)
+        return self.db.insert_app_version(app_version=app_version)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_version(self, version_tag: mod_types_schema.VersionTag) -> None:
         """
-        Deletes an app from the database based on its app_id.
+        Deletes an version from the app based on its version tag.
 
         Args:
-            app_id (schema.AppID): The unique identifier of the app to be deleted.
+            version (schema.VersionTag): The unique identifier of the app version to be deleted.
         """
-        self.db.delete_app(app_id=app_id)
-        logger.info(f"App with ID {app_id} has been successfully deleted.")
+        self.db.delete_app_version(version_tag=version_tag)
+        logger.info(f"App with ID {version_tag} has been successfully deleted.")
 
     def add_feedback(
         self,
@@ -649,18 +663,18 @@ class Tru(python.SingletonPerName):
 
         return ids
 
-    def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> serial.JSONized[mod_app_schema.AppDefinition]:
+    def get_version(
+        self, version_tag: mod_types_schema.VersionTag
+    ) -> Optional[serial.JSONized[mod_app_schema.AppVersionDefinition]]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
 
         Example:
             ```python
             from trulens.core.schema import app
-            app_json = tru.get_app(app_id="Custom Application v1")
-            app = app.AppDefinition.model_validate(app_json)
+            app_json = tru.get_version(version="Custom Application v1")
+            app = app.AppVersionDefinition.model_validate(app_json)
             ```
 
         Warning:
@@ -668,15 +682,17 @@ class Tru(python.SingletonPerName):
             its implementations feature attributes not meant to be deserialized.
 
         Args:
-            app_id: The unique identifier [str][] of the app to look up.
+            version_tag: The unique identifier [str] of the app to look up.
 
         Returns:
             JSON-ized version of the app.
         """
 
-        return self.db.get_app(app_id)
+        return self.db.get_app_version(version_tag=version_tag)
 
-    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
+    def get_all_app_versions(
+        self,
+    ) -> Iterable[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -686,62 +702,62 @@ class Tru(python.SingletonPerName):
             Same Deserialization caveats as [get_app][trulens.core.tru.Tru.get_app].
         """
 
-        return self.db.get_apps()
+        return self.db.get_app_versions()
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        versions: Optional[List[mod_types_schema.VersionTag]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
-            app_ids: A list of app ids to filter records by. If empty or not given, all
-                apps' records will be returned.
+            versions: A list of version tags to filter records by. If empty or not given, records
+            from all versions will be returned.
 
             offset: Record row offset.
 
             limit: Limit on the number of records to return.
 
         Returns:
-            Dataframe of records with their feedback results.
+            DataFrame of records with their feedback results.
 
-            List of feedback names that are columns in the dataframe.
+            List of feedback names that are columns in the DataFrame.
         """
 
-        if app_ids is None:
-            app_ids = []
+        if versions is None:
+            versions = []
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            app_ids, offset=offset, limit=limit
+            versions, offset=offset, limit=limit
         )
 
         return df, feedback_columns
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        versions: Optional[List[mod_types_schema.VersionTag]] = None,
         group_by_metadata_key: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
-            app_ids: A list of app ids to filter records by. If empty or not given, all
+            versions: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
             group_by_metadata_key: A key included in record metadata that you want to group results by.
 
         Returns:
-            Dataframe of apps with their feedback results aggregated.
-            If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
+            DataFrame of apps with their feedback results aggregated.
+            If group_by_metadata_key is provided, the DataFrame will be grouped by the specified key.
         """
 
-        if app_ids is None:
-            app_ids = []
+        if versions is None:
+            versions = []
 
-        df, feedback_cols = self.db.get_records_and_feedback(app_ids)
+        df, feedback_cols = self.db.get_records_and_feedback(versions)
 
-        col_agg_list = feedback_cols + ["latency", "total_cost"]
+        col_agg_list = list(feedback_cols) + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:
             df["meta"] = [
@@ -755,13 +771,15 @@ class Tru(python.SingletonPerName):
                 for item in df["meta"]
             ]
             return (
-                df.groupby(["app_id", str(group_by_metadata_key)])[col_agg_list]
+                df.groupby(["version_tag", str(group_by_metadata_key)])[
+                    col_agg_list
+                ]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
         else:
             return (
-                df.groupby("app_id")[col_agg_list]
+                df.groupby("version_tag")[col_agg_list]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )

@@ -337,35 +337,37 @@ class SQLAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
-        """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
+    def get_app_version(
+        self, app_version: mod_types_schema.AppVersion
+    ) -> Optional[JSONized]:
+        """See [DB.get_app_version][trulens.core.database.base.DB.get_app_version]."""
 
         with self.session.begin() as session:
             if (
                 _app := session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app_id)
+                .filter_by(app_version=app_version)
                 .first()
             ):
                 return json.loads(_app.app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
-        """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
+    def get_app_versions(self) -> Iterable[JSON]:
+        """See [DB.get_app_versions][trulens.core.database.base.DB.get_app_versions]."""
 
         with self.session.begin() as session:
             for _app in session.query(self.orm.AppDefinition):
                 yield json.loads(_app.app_json)
 
-    def insert_app(
+    def insert_app_version(
         self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
-        """See [DB.insert_app][trulens.core.database.base.DB.insert_app]."""
+    ) -> mod_types_schema.AppVersion:
+        """See [DB.insert_app_version][trulens.core.database.base.DB.insert_app_version]."""
 
         # TODO: thread safety
 
         with self.session.begin() as session:
             if (
                 _app := session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app.app_id)
+                .filter_by(app_version=app.app_version)
                 .first()
             ):
                 _app.app_json = app.model_dump_json()
@@ -375,28 +377,30 @@ class SQLAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
+            logger.info("%s added app %s", UNICODE_CHECK, _app.app_version)
 
-            return _app.app_id
+            return _app.app_version
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app_version(
+        self, app_version: mod_types_schema.AppVersion
+    ) -> None:
         """
-        Deletes an app from the database based on its app_id.
+        Deletes an app from the database based on its app_version.
 
         Args:
-            app_id (schema.AppID): The unique identifier of the app to be deleted.
+            app_version (schema.AppID): The unique identifier of the app to be deleted.
         """
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             _app = (
                 session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app_id)
+                .filter_by(app_version=app_version)
                 .first()
             )
             if _app:
                 session.delete(_app)
-                logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
+                logger.info(f"{UNICODE_CHECK} deleted app {app_version}")
             else:
-                logger.warning(f"App {app_id} not found for deletion.")
+                logger.warning(f"App {app_version} not found for deletion.")
 
     def insert_feedback_definition(
         self, feedback_definition: mod_feedback_schema.FeedbackDefinition
@@ -616,7 +620,7 @@ class SQLAlchemyDB(DB):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[str]] = None,
+        app_versions: Optional[List[str]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -632,8 +636,8 @@ class SQLAlchemyDB(DB):
             # to be with respect to those rows instead of AppDefinition or
             # FeedbackResult rows.
 
-            if app_ids:
-                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+            if app_versions:
+                stmt = stmt.where(self.orm.Record.app_version.in_(app_versions))
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
             # NOTE(piotrm): The joinedload here makes it so that the
@@ -769,7 +773,7 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 class AppsExtractor:
     """Utilities for creating dataframes from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ["app_version", "app_json", "type"]
     rec_cols = [
         "record_id",
         "input",
@@ -850,7 +854,7 @@ class AppsExtractor:
                     _recs = (
                         record
                         for record in records
-                        if record.app_id == _app.app_id
+                        if record.app_version == _app.app_version
                     )
 
                 if _recs:

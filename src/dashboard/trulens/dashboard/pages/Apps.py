@@ -309,10 +309,10 @@ if "records" not in st.session_state:
     st.divider()
 
     for app_json in loadable_apps:
-        st.subheader(app_json["app_id"])
+        st.subheader(app_json["app_version"])
         st.button(
             label="New Session",
-            key=f"select_app_{app_json['app_id']}",
+            key=f"select_app_{app_json['app_version']}",
             on_click=select_app,
             args=(app_json,),
         )
@@ -334,11 +334,11 @@ else:
     app_json = first_record.app_json
 
     # Show the app id and some app-level or session-level controls/links.
-    st.title(f"App Runner: {app_json['app_id']}")
+    st.title(f"App Runner: {app_json['app_version']}")
 
     st.button(label="End session", on_click=end_session)
 
-    # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
+    # st.write(f"TODO: link to {app_json['app_version']} on other pages.")
 
     st.divider()
 

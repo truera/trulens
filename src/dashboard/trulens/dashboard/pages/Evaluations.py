@@ -107,7 +107,9 @@ def render_record_metrics(
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
 
-    app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
+    app_specific_df = app_df[
+        app_df["app_version"] == selected_rows["app_version"][0]
+    ]
 
     token_col, cost_col, latency_col = st.columns(3)
 
@@ -148,7 +150,7 @@ def extract_metadata(row: pd.Series) -> str:
     return str(record_data["meta"])
 
 
-apps = list(app["app_id"] for app in lms.get_apps())
+apps = list(app["app_version"] for app in lms.get_app_versions())
 
 if "app" in st.session_state:
     app = st.session_state.app
@@ -159,7 +161,7 @@ st.query_params["app"] = app
 
 options = st.multiselect("Filter Applications", apps, default=app)
 
-df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
+df_results, feedback_cols = lms.get_records_and_feedback(app_versions=options)
 
 if len(options) == 0:
     st.header("All Applications")
@@ -209,7 +211,7 @@ else:
         gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
 
         gb.configure_column("record_id", header_name="Record ID", hide=True)
-        gb.configure_column("app_id", header_name="App ID")
+        gb.configure_column("app_version", header_name="App ID")
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
@@ -223,7 +225,7 @@ else:
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
-            "app_id",
+            "app_version",
             "type",
             "ts",
             "total_tokens",
@@ -283,7 +285,7 @@ else:
 
             # Breadcrumbs
             st.caption(
-                f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}"
+                f"{selected_rows['app_version'][0]} / {selected_rows['record_id'][0]}"
             )
             st.header(f"{selected_rows['record_id'][0]}")
 

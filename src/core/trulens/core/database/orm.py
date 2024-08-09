@@ -146,10 +146,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             _table_base_name: ClassVar[str] = "apps"
 
-            app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
+            app_version = Column(VARCHAR(256), nullable=False, primary_key=True)
             app_json = Column(TYPE_JSON, nullable=False)
 
-            # records via one-to-many on Record.app_id
+            # records via one-to-many on Record.app_version
             # feedback_results via one-to-many on FeedbackResult.record_id
 
             @classmethod
@@ -159,7 +159,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 redact_keys: bool = False,
             ) -> ORM.AppDefinition:
                 return cls(
-                    app_id=obj.app_id,
+                    app_version=obj.app_version,
                     app_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
@@ -202,7 +202,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            app_id = Column(TYPE_ID, nullable=False)  # foreign key
+            app_version = Column(TYPE_ID, nullable=False)  # foreign key
 
             input = Column(Text)
             output = Column(Text)
@@ -215,8 +215,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             app = relationship(
                 "AppDefinition",
                 backref=backref("records", cascade="all,delete"),
-                primaryjoin="AppDefinition.app_id == Record.app_id",
-                foreign_keys=app_id,
+                primaryjoin="AppDefinition.app_version == Record.app_version",
+                foreign_keys=app_version,
                 order_by="(Record.ts,Record.record_id)",
             )
 
@@ -226,7 +226,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
-                    app_id=obj.app_id,
+                    app_version=obj.app_version,
                     input=json_str_of_obj(
                         obj.main_input, redact_keys=redact_keys
                     ),

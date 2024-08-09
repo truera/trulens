@@ -1105,7 +1105,7 @@ class App(
                 calls=calls,
                 cost=cost,
                 perf=perf,
-                app_id=self.app_id,
+                app_version=self.app_version,
                 tags=self.tags,
                 meta=jsonify(record_metadata),
             )
@@ -1430,7 +1430,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         All args are [Record][trulens.core.schema.record.Record] fields except these:
 
             - `record_id` is generated using the default id naming schema.
-            - `app_id` is taken from this recorder.
+            - `app_version` is taken from this recorder.
             - `calls` field is constructed based on instrumented methods.
         """
 
@@ -1470,7 +1470,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 calls.append(sample_call)
 
         return mod_record_schema.Record(
-            app_id=self.app_id,
+            app_version=self.app_version,
             calls=calls,
             cost=cost,
             perf=perf,

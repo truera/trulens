@@ -1,7 +1,7 @@
 import asyncio
 import json
 import math
-from typing import List
+from typing import List, Optional
 
 from millify import millify
 from pydantic import BaseModel
@@ -27,13 +27,13 @@ class FeedbackDisplay(BaseModel):
     icon: str
 
 
-def trulens_leaderboard(app_ids: List[str] = None):
+def trulens_leaderboard(app_versions: Optional[List[str]] = None):
     """
     Render the leaderboard page.
 
     Args:
 
-        app_ids List[str]: A list of application IDs (default is None)
+        app_versions List[str]: A list of application IDs (default is None)
 
     Example:
 
@@ -46,7 +46,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
     tru = Tru()
 
     lms = tru.db
-    df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
+    df, feedback_col_names = lms.get_records_and_feedback(
+        app_versions=app_versions
+    )
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
@@ -60,22 +62,22 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.write("No records yet...")
         return
 
-    df.sort_values(by="app_id", inplace=True)
+    df.sort_values(by="app_version", inplace=True)
 
     if df.empty:
         st.write("No records yet...")
 
-    if app_ids is None:
-        app_ids = list(df.app_id.unique())
+    if app_versions is None:
+        app_versions = list(df.app_version.unique())
 
-    for app_id in app_ids:
-        app_df = df.loc[df.app_id == app_id]
+    for app_version in app_versions:
+        app_df = df.loc[df.app_version == app_version]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
         metadata = app_json.get("metadata")
-        st.header(app_id, help=draw_metadata(metadata))
+        st.header(app_version, help=draw_metadata(metadata))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -234,5 +236,5 @@ def trulens_trace(record: Record):
     """
 
     tru = Tru()
-    app = tru.get_app(app_id=record.app_id)
+    app = tru.get_app_version(app_version=record.app_version)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)

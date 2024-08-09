@@ -151,7 +151,7 @@ Example: "Integrating Feedback Functions into TruVirtual"
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
-        app_id='a virtual app',
+        app_version='a virtual app',
         app=virtual_app,
         feedbacks=[f_context_relevance]
     )
@@ -431,9 +431,9 @@ class VirtualRecord(mod_record_schema.Record):
             )
         )
 
-        if "app_id" not in kwargs:
-            kwargs["app_id"] = (
-                "No app_id provided."  # this gets replaced by TruVirtual.add_record .
+        if "app_version" not in kwargs:
+            kwargs["app_version"] = (
+                "No `app_version` provided."  # this gets replaced by TruVirtual.add_record .
             )
 
         super().__init__(calls=record_calls, **kwargs)
@@ -480,7 +480,7 @@ class TruVirtual(App):
         )
 
         virtual = TruVirtual(
-            app_id="my_virtual_app",
+            app_version="my_virtual_app",
             app=virtual_app
         )
         ```
@@ -547,7 +547,7 @@ class TruVirtual(App):
         if feedback_mode is None:
             feedback_mode = self.feedback_mode
 
-        record.app_id = self.app_id
+        record.app_version = self.app_version
 
         # Creates feedback futures.
         record.feedback_and_future_results = self._handle_record(
