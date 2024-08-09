@@ -1,6 +1,10 @@
 parameters:
-- name: testSuite
-  type: string # must be one of: unit, e2e, notebook
+  - name: testSuite
+    type: string
+    values:
+      - unit
+      - e2e
+      - notebook
 
 steps:
   - bash: |
