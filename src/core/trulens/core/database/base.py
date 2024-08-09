@@ -276,7 +276,7 @@ class DB(SerialModel, abc.ABC):
         Deletes an app from the database based on its app_version.
 
         Args:
-            app_version (schema.AppID): The unique identifier of the app to be deleted.
+            app_version (schema.AppVersion): The unique identifier of the app to be deleted.
         """
         raise NotImplementedError()
 

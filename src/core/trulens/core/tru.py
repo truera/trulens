@@ -548,8 +548,8 @@ class Tru(python.SingletonPerName):
                 yield fut_result
 
     def add_version(
-        self, app_version: mod_app_schema.AppVersionDefinition
-    ) -> mod_types_schema.VersionTag:
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppVersion:
         """
         Add an app to the database and return its unique id.
 
@@ -561,17 +561,17 @@ class Tru(python.SingletonPerName):
 
         """
 
-        return self.db.insert_app_version(app_version=app_version)
+        return self.db.insert_app_version(app=app)
 
-    def delete_version(self, version_tag: mod_types_schema.VersionTag) -> None:
+    def delete_version(self, app_version: mod_types_schema.AppVersion) -> None:
         """
         Deletes an version from the app based on its version tag.
 
         Args:
-            version (schema.VersionTag): The unique identifier of the app version to be deleted.
+            version (schema.AppVersion): The unique identifier of the app version to be deleted.
         """
-        self.db.delete_app_version(version_tag=version_tag)
-        logger.info(f"App with ID {version_tag} has been successfully deleted.")
+        self.db.delete_app_version(app_version=app_version)
+        logger.info(f"App with ID {app_version} has been successfully deleted.")
 
     def add_feedback(
         self,
@@ -664,17 +664,17 @@ class Tru(python.SingletonPerName):
         return ids
 
     def get_version(
-        self, version_tag: mod_types_schema.VersionTag
-    ) -> Optional[serial.JSONized[mod_app_schema.AppVersionDefinition]]:
+        self, app_version: mod_types_schema.AppVersion
+    ) -> Optional[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up an app from the database.
 
-        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
+        This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
 
         Example:
             ```python
             from trulens.core.schema import app
             app_json = tru.get_version(version="Custom Application v1")
-            app = app.AppVersionDefinition.model_validate(app_json)
+            app = app.AppDefinition.model_validate(app_json)
             ```
 
         Warning:
@@ -682,13 +682,13 @@ class Tru(python.SingletonPerName):
             its implementations feature attributes not meant to be deserialized.
 
         Args:
-            version_tag: The unique identifier [str] of the app to look up.
+            app_version: The unique identifier [str] of the app to look up.
 
         Returns:
             JSON-ized version of the app.
         """
 
-        return self.db.get_app_version(version_tag=version_tag)
+        return self.db.get_app_version(app_version=app_version)
 
     def get_all_app_versions(
         self,
@@ -706,14 +706,14 @@ class Tru(python.SingletonPerName):
 
     def get_records_and_feedback(
         self,
-        versions: Optional[List[mod_types_schema.VersionTag]] = None,
+        app_versions: Optional[List[mod_types_schema.AppVersion]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
         """Get records, their feedback results, and feedback names.
 
         Args:
-            versions: A list of version tags to filter records by. If empty or not given, records
+            app_versions: A list of app version tags to filter records by. If empty or not given, records
             from all versions will be returned.
 
             offset: Record row offset.
@@ -726,18 +726,18 @@ class Tru(python.SingletonPerName):
             List of feedback names that are columns in the DataFrame.
         """
 
-        if versions is None:
-            versions = []
+        if app_versions is None:
+            app_versions = []
 
         df, feedback_columns = self.db.get_records_and_feedback(
-            versions, offset=offset, limit=limit
+            app_versions, offset=offset, limit=limit
         )
 
         return df, feedback_columns
 
     def get_leaderboard(
         self,
-        versions: Optional[List[mod_types_schema.VersionTag]] = None,
+        app_versions: Optional[List[mod_types_schema.AppVersion]] = None,
         group_by_metadata_key: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
@@ -752,10 +752,10 @@ class Tru(python.SingletonPerName):
             If group_by_metadata_key is provided, the DataFrame will be grouped by the specified key.
         """
 
-        if versions is None:
-            versions = []
+        if app_versions is None:
+            app_versions = []
 
-        df, feedback_cols = self.db.get_records_and_feedback(versions)
+        df, feedback_cols = self.db.get_records_and_feedback(app_versions)
 
         col_agg_list = list(feedback_cols) + ["latency", "total_cost"]
 
@@ -771,7 +771,7 @@ class Tru(python.SingletonPerName):
                 for item in df["meta"]
             ]
             return (
-                df.groupby(["version_tag", str(group_by_metadata_key)])[
+                df.groupby(["app_version", str(group_by_metadata_key)])[
                     col_agg_list
                 ]
                 .mean()
@@ -779,7 +779,7 @@ class Tru(python.SingletonPerName):
             )
         else:
             return (
-                df.groupby("version_tag")[col_agg_list]
+                df.groupby("app_version")[col_agg_list]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
