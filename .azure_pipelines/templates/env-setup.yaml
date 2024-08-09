@@ -1,0 +1,23 @@
+steps:
+  - checkout: self
+    clean: true
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python-version)'
+
+  - bash: |
+      # Install poetry
+      curl -sSL https://install.python-poetry.org | python3 -
+
+      # Show python version
+      echo "Using $(python --version) ($(which python))"
+      poetry config virtualenvs.create false
+
+      # NOTE: workaround for langchain typecheck error
+      # https://github.com/truera/trulens/issues/1308
+      poetry run pip install pip==24.1.2
+
+      poetry run python --version
+      poetry run pip --version
+    displayName: Env Setup

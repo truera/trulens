@@ -1,0 +1,13 @@
+parameters:
+  - name: testSuite
+    type: string
+    values:
+      - unit
+      - e2e
+      - notebook
+
+steps:
+  - bash: |
+      set -e
+      make test-${{ parameters.testSuite }}-required
+    displayName: Run Required Test Suite

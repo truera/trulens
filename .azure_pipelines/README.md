@@ -3,14 +3,12 @@
 Note that the pipeline definitions in this folder are for azure pipelines, not
 github pipelines. There are differences between these systems.
 
-- `ci-eval-pr.yaml` is run for all PRs to _TruLens-Eval_. Success is needed for
+- `ci-eval-pr.yaml` is run for all PRs to _TruLens_. Success is needed for
   merging into `main`.
-- `ci-eval.yaml` for _TruLens-Eval_ releases. This includes database migration
+- `ci-eval.yaml` for _TruLens_ releases. This includes database migration
   tests as well as running notebooks. Success is needed for merging into
   `releases/*`. Also, any branch named `releases/*` needs to pass the pipeline
   tests before merging into `main`.
-- `ci.yaml` is run for all PRs to _TruLens-Explain_. Success is needed for
-  merging into `main`.
 
 ## More information
 
