@@ -32,6 +32,7 @@ from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
 from trulens.core.utils.python import caller_frame
+from trulens.core.utils.python import caller_module
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -71,7 +72,7 @@ def make_help_str(
     def help_str() -> str:
         ret = f"Module '{mod.__name__}' from '{mod.__file__}'\n"
         for kind, items in kinds.items():
-            ret += f"Supported {kind}s: \n"  # TODO: pluralize
+            ret += f"{kind}: \n"  # TODO: pluralize
             for class_, (package_name, _) in items.items():
                 version = get_package_version(package_name)
                 ret += (
@@ -100,8 +101,8 @@ def make_getattr_override(
     kinds: Dict[str, Dict],
     help_str: Union[str, Callable[[], str]],
 ) -> Any:
-    mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
-    # print(mod)
+    mod = sys.modules[caller_module(offset=1)]
+    print(mod)
 
     def getattr_(attr):
         nonlocal mod

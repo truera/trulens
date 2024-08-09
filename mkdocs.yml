@@ -58,8 +58,8 @@ plugins:
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
-  - mkdocs-jupyter:
-      include: ["*.ipynb"]
+#  - mkdocs-jupyter:
+#      include: ["*.ipynb"]
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -286,8 +286,6 @@ nav:
       - ⛅ Optional Pckages: trulens/contributing/optional.md
       - ✨ Database Migration: trulens/contributing/migration.md
 
-#  - Resources:
-#    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 extra:
   generator: false
 

@@ -9,24 +9,9 @@ __version_info__ = (1, 0, 0, "a0")
 __version__ = ".".join(map(str, __version_info__))
 """Version number string."""
 
-# This check is intentionally done ahead of the other imports as we want to
-# print out a nice warning/error before an import error happens further down
-# this sequence.
-# from trulens.utils.imports import check_imports
-
 from typing import TYPE_CHECKING
 
-from trulens.core import schema as core_schema
-from trulens.core import tru as mod_tru
-from trulens.core.app import basic as mod_tru_basic_app
-from trulens.core.app import custom as mod_tru_custom_app
-from trulens.core.app import virtual as mod_tru_virtual
-from trulens.core.feedback import feedback as mod_feedback
-from trulens.core.feedback import provider as mod_provider
-from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils import threading as threading_utils
-from trulens.core.utils.imports import get_package_version
 
 
 def set_no_install(val: bool = True) -> None:
@@ -36,17 +21,46 @@ def set_no_install(val: bool = True) -> None:
     import_utils.NO_INSTALL = val
 
 
-# Common classes:
-Tru = mod_tru.Tru
+if TYPE_CHECKING:
+    # Common classes:
+    from trulens.core.feedback.feedback import Feedback
+    from trulens.core.feedback.provider import Provider
 
-TP = threading_utils.TP
-Feedback = mod_feedback.Feedback
-Provider = mod_provider.Provider
-FeedbackMode = feedback_schema.FeedbackMode
-# TODO: other enums
-Select = core_schema.Select
+    # TODO: other enums
+    # Utilities
+    from trulens.core.schema import Select
+
+    # Enums
+    from trulens.core.schema.feedback import FeedbackMode
+    from trulens.core.tru import Tru
+    from trulens.core.utils.threading import TP
+
+_CLASSES = {
+    "Tru": ("trulens-core", "trulens.core.tru"),
+    "TP": ("trulens-core", "trulens.core.utils.threading"),
+    "Feedback": ("trulens-core", "trulens.core.feedback.feedback"),
+    "Provider": ("trulens-core", "trulens.core.feedback.provider"),
+}
+
+_ENUMS = {
+    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
+}
+_UTILITIES = {
+    "Select": ("trulens-core", "trulens.core.schema"),
+}
 
 # Providers:
+
+if TYPE_CHECKING:
+    from trulens.providers.bedrock.provider import Bedrock
+    from trulens.providers.cortex.provider import Cortex
+    from trulens.providers.huggingface.provider import Huggingface
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+    from trulens.providers.langchain.provider import Langchain
+    from trulens.providers.litellm.provider import LiteLLM
+    from trulens.providers.openai.provider import AzureOpenAI
+    from trulens.providers.openai.provider import OpenAI
+
 _PROVIDERS = {
     "Bedrock": (
         "trulens-providers-bedrock",
@@ -76,11 +90,14 @@ _PROVIDERS = {
     ),
 }
 
-
 # Recorders:
-TruBasicApp = mod_tru_basic_app.TruBasicApp
-TruCustomApp = mod_tru_custom_app.TruCustomApp
-TruVirtual = mod_tru_virtual.TruVirtual
+if TYPE_CHECKING:
+    from trulens.core.app.basic import TruBasicApp
+    from trulens.core.app.custom import TruCustomApp
+    from trulens.core.app.virtual import TruVirtual
+    from trulens.instrument.langhain.tru_chain import TruChain
+    from trulens.instrument.llamaindex.tru_llama import TruLlama
+    from trulens.instrument.nemo.tru_rails import TruRails
 
 _RECORDERS = {
     "TruBasicApp": ("trulens-core", "trulens.core.app.tru_basic_app"),
@@ -100,22 +117,12 @@ _RECORDERS = {
     ),
 }
 
-if TYPE_CHECKING:
-    from trulens.instrument.langhain.tru_chain import TruChain
-    from trulens.instrument.llamaindex.tru_llama import TruLlama
-    from trulens.instrument.nemo.tru_rails import TruRails
-    from trulens.providers.bedrock.provider import Bedrock
-    from trulens.providers.cortex.provider import Cortex
-    from trulens.providers.huggingface.provider import Huggingface
-    from trulens.providers.huggingface.provider import HuggingfaceLocal
-    from trulens.providers.langchain.provider import Langchain
-    from trulens.providers.litellm.provider import LiteLLM
-    from trulens.providers.openai.provider import AzureOpenAI
-    from trulens.providers.openai.provider import OpenAI
-
 _KINDS = {
     "provider": _PROVIDERS,
     "recorder": _RECORDERS,
+    "class": _CLASSES,
+    "enum": _ENUMS,
+    "utility": _UTILITIES,
 }
 
 help, help_str = import_utils.make_help_str(_KINDS)
@@ -150,5 +157,4 @@ __all__ = [
     "Cortex",
     # misc utility
     "TP",
-    "get_package_version",
 ]

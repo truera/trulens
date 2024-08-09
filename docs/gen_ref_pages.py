@@ -64,7 +64,7 @@ def write_to_gen_files(
 ):
     doc_path = doc_path or Path(*parts)
 
-    print(parts)
+    #    print(parts)
 
     if parts[-1] == "__init__":
         parts = parts[:-1]
@@ -88,7 +88,7 @@ def write_to_gen_files(
     else:
         nav_parts = format_parts(parts)
 
-    print(nav_parts)
+    #    print(nav_parts)
 
     nav[nav_parts] = doc_path.as_posix()
 
@@ -97,6 +97,7 @@ def write_to_gen_files(
         content = f"#{ident}\n::: {ident}"
 
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
+        print("writing to", full_doc_path)
         fd.write(content)
 
 
@@ -148,5 +149,5 @@ for package in packages:
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
     nav_file.writelines(nav.build_literate_nav())
 
-#    with mkdocs_gen_files.open("reference/index.md", "w+") as nav_file:
-#        nav_file.writelines(nav.build_literate_nav())
+with mkdocs_gen_files.open("reference/index.md", "w") as nav_file:
+    nav_file.writelines(nav.build_literate_nav())

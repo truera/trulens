@@ -343,6 +343,12 @@ def run_before(callback: Callable):
 STACK = "__tru_stack"
 
 
+def caller_module(offset=0) -> str:
+    """Get the caller's (of this function) module name."""
+
+    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+
+
 def caller_frame(offset=0) -> FrameType:
     """
     Get the caller's (of this function) frame. See
