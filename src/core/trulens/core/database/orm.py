@@ -122,7 +122,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
         Warning:
             The relationships between tables established in the classes in this
-            container refer to class names i.e. "VersionDefinition" hence these are
+            container refer to class names i.e. "AppVersionDefinition" hence these are
             important and need to stay consistent between definition of one and
             relationships in another.
         """
@@ -213,9 +213,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             perf_json = Column(TYPE_JSON, nullable=False)
 
             app = relationship(
-                "VersionDefinition",
+                "AppVersionDefinition",
                 backref=backref("records", cascade="all,delete"),
-                primaryjoin="VersionDefinition.version_tag == Record.version_tag",
+                primaryjoin="AppVersionDefinition.version_tag == Record.version_tag",
                 foreign_keys=version_tag,
                 order_by="(Record.ts,Record.record_id)",
             )

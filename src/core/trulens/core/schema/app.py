@@ -150,7 +150,7 @@ class AppVersionDefinition(pyschema.WithClassInfo, serial.SerialModel):
     def continue_session(
         app_definition_json: serial.JSON, app: Any
     ) -> AppVersionDefinition:
-        # initial_app_loader: Optional[Callable] = None) -> 'VersionDefinition':
+        # initial_app_loader: Optional[Callable] = None) -> 'AppVersionDefinition':
         """Instantiate the given `app` with the given state
         `app_definition_json`.
 
