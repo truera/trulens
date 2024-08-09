@@ -106,7 +106,7 @@ class ORM(abc.ABC, Generic[T]):
     registry: Dict[str, Type[T]]
     metadata: MetaData
 
-    AppDefinition: Type[T]
+    AppVersionDefinition: Type[T]
     FeedbackDefinition: Type[T]
     Record: Type[T]
     FeedbackResult: Type[T]
@@ -122,7 +122,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
         Warning:
             The relationships between tables established in the classes in this
-            container refer to class names i.e. "AppDefinition" hence these are
+            container refer to class names i.e. "VersionDefinition" hence these are
             important and need to stay consistent between definition of one and
             relationships in another.
         """
@@ -136,31 +136,31 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
         metadata: MetaData = base.metadata
         """SqlAlchemy metadata object for tables used by trulens."""
 
-        class AppDefinition(base):
-            """ORM class for [AppDefinition][trulens.core.schema.app.AppDefinition].
+        class AppVersionDefinition(base):
+            """ORM class for [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition].
 
             Warning:
                 We don't use any of the typical ORM features and this class is only
                 used as a schema to interact with database through SQLAlchemy.
             """
 
-            _table_base_name: ClassVar[str] = "apps"
+            _table_base_name: ClassVar[str] = "versions"
 
-            app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
+            version_tag = Column(VARCHAR(256), nullable=False, primary_key=True)
             app_json = Column(TYPE_JSON, nullable=False)
 
-            # records via one-to-many on Record.app_id
+            # records via one-to-many on Record.version_tag
             # feedback_results via one-to-many on FeedbackResult.record_id
 
             @classmethod
             def parse(
                 cls,
-                obj: mod_app_schema.AppDefinition,
+                obj: mod_app_schema.AppVersionDefinition,
                 redact_keys: bool = False,
-            ) -> ORM.AppDefinition:
+            ) -> ORM.AppVersionDefinition:
                 return cls(
-                    app_id=obj.app_id,
-                    app_json=obj.model_dump_json(redact_keys=redact_keys),
+                    version_tag=obj.version_tag,
+                    version_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
         class FeedbackDefinition(base):
@@ -202,7 +202,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            app_id = Column(TYPE_ID, nullable=False)  # foreign key
+            version_tag = Column(TYPE_ID, nullable=False)  # foreign key
 
             input = Column(Text)
             output = Column(Text)
@@ -213,10 +213,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             perf_json = Column(TYPE_JSON, nullable=False)
 
             app = relationship(
-                "AppDefinition",
+                "VersionDefinition",
                 backref=backref("records", cascade="all,delete"),
-                primaryjoin="AppDefinition.app_id == Record.app_id",
-                foreign_keys=app_id,
+                primaryjoin="VersionDefinition.version_tag == Record.version_tag",
+                foreign_keys=version_tag,
                 order_by="(Record.ts,Record.record_id)",
             )
 
@@ -226,7 +226,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
-                    app_id=obj.app_id,
+                    version_tag=obj.version_tag,
                     input=json_str_of_obj(
                         obj.main_input, redact_keys=redact_keys
                     ),
@@ -313,7 +313,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
     configure_mappers()  # IMPORTANT
     # Without the above, orm class attributes which are defined using backref
-    # will not be visible, i.e. orm.AppDefinition.records.
+    # will not be visible, i.e. orm.AppVersionDefinition.records.
 
     # base.registry.configure()
 

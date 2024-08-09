@@ -19,7 +19,7 @@ from nemoguardrails.actions.llm.generation import LLMGenerationActions
 from nemoguardrails.kb.kb import KnowledgeBase
 from pydantic import Field
 from trulens.core import feedback
-from trulens.core.app import base as mod_app
+from trulens.core.app import AppVersion
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import Select
@@ -371,7 +371,7 @@ class RailsInstrument(Instrument):
         )
 
 
-class TruRails(mod_app.App):
+class TruRails(AppVersion):
     """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:

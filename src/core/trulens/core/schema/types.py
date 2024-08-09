@@ -24,24 +24,24 @@ def new_call_id() -> CallID:
     return str(uuid.uuid4())
 
 
-AppID: typing_extensions.TypeAlias = str
+VersionTag: typing_extensions.TypeAlias = str
 """Unique identifier for an app.
 
 By default these are hashes of app content as json.
-See [AppDefinition.app_id][trulens.core.schema.app.AppDefinition.app_id].
+See [AppVersionDefinition.version_tag][trulens.core.schema.app.AppVersionDefinition.version_tag].
 """
 
 Tags: typing_extensions.TypeAlias = str
 """Tags for an app or record.
 
-See [AppDefinition.tags][trulens.core.schema.app.AppDefinition.tags] and
+See [AppVersionDefinition.tags][trulens.core.schema.app.AppVersionDefinition.tags] and
 [Record.tags][trulens.core.schema.record.Record.tags].
 """
 
 Metadata: typing_extensions.TypeAlias = Dict
 """Metadata for an app or record.
 
-See [AppDefinition.metadata][trulens.core.schema.app.AppDefinition.metadata] and
+See [AppVersionDefinition.metadata][trulens.core.schema.app.AppVersionDefinition.metadata] and
 [Record.meta][trulens.core.schema.record.Record.meta].
 """
 

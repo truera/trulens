@@ -49,16 +49,16 @@ def leaderboard():
         st.write("No records yet...")
         return
 
-    df = df.sort_values(by="app_id")
+    df = df.sort_values(by="version_tag")
 
     if df.empty:
         st.write("No records yet...")
 
-    apps = list(df.app_id.unique())
+    apps = list(df.version_tag.unique())
     st.markdown("""---""")
 
     for app in apps:
-        app_df = df.loc[df.app_id == app]
+        app_df = df.loc[df.version_tag == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
@@ -80,7 +80,7 @@ def leaderboard():
             .mean()
         )
 
-        # app_df_feedback = df.loc[df.app_id == app]
+        # app_df_feedback = df.loc[df.version_tag == app]
 
         col1.metric("Records", len(app_df))
         col2.metric(
@@ -93,7 +93,7 @@ def leaderboard():
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",

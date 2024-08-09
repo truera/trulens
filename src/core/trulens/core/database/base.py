@@ -6,13 +6,12 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 from merkle_json import MerkleJson
 import pandas as pd
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.app import AppVersionDefinition
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSONized
 from trulens.core.utils.serial import SerialModel
 
@@ -27,12 +26,6 @@ DEFAULT_DATABASE_PREFIX: str = "trulens_"
 """Default prefix for table names for trulens to use.
 
 This includes alembic's version table.
-"""
-
-DEFAULT_DATABASE_FILE: str = "default.sqlite"
-"""Filename for default sqlite database.
-
-The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.
 """
 
 DEFAULT_DATABASE_REDACT_KEYS: bool = False
@@ -104,19 +97,33 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
+    def insert_app_version(
+        self, app_version: AppVersionDefinition
+    ) -> mod_types_schema.VersionTag:
         """
         Upsert an `app` into the database.
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are serialized
+                [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] parts are serialized
                 hence the type hint.
 
         Returns:
-            The id of the given app.
+            The id of the given app version.
         """
 
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_app_version(
+        self, version_tag: mod_types_schema.VersionTag
+    ) -> None:
+        """
+        Deletes an app from the database based on its version_tag.
+
+        Args:
+            version_tag (schema.VersionTag): The unique identifier of the app version to be deleted.
+        """
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -153,7 +160,7 @@ class DB(SerialModel, abc.ABC):
                 all feedback definitions are returned.
 
         Returns:
-            A dataframe with the feedback definitions.
+            A DataFrame with the feedback definitions.
         """
 
         raise NotImplementedError()
@@ -247,7 +254,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
+    def get_app_version(
+        self, version_tag: mod_types_schema.VersionTag
+    ) -> Optional[JSONized]:
         """Get the app with the given id from the database.
 
         Returns:
@@ -259,7 +268,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
+    def get_app_versions(self) -> Iterable[JSONized[AppVersionDefinition]]:
         """Get all apps."""
 
         raise NotImplementedError()
@@ -267,15 +276,15 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        version_tags: Optional[List[mod_types_schema.VersionTag]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Get records fom the database.
 
         Args:
-            app_ids: If given, retrieve only the records for the given apps.
-                Otherwise all apps are retrieved.
+            version_tags: If given, retrieve only the records for the given versions.
+                Otherwise all versions are retrieved.
 
             offset: Database row offset.
 

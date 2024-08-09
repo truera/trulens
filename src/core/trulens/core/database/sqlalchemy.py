@@ -316,66 +316,73 @@ class SQLAlchemyDB(DB):
 
             return _rec.record_id
 
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
-        """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
+    def get_app_version(
+        self, version_tag: mod_types_schema.VersionTag
+    ) -> Optional[JSONized]:
+        """See [DB.get_app_version][trulens.core.database.base.DB.get_app_version]."""
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app_id)
+                _app := session.query(self.orm.AppVersionDefinition)
+                .filter_by(version_tag=version_tag)
                 .first()
             ):
                 return json.loads(_app.app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
-        """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
+    def get_app_versions(self) -> Iterable[JSON]:
+        """See [DB.get_app_versions][trulens.core.database.base.DB.get_app_versions]."""
 
         with self.session.begin() as session:
-            for _app in session.query(self.orm.AppDefinition):
+            for _app in session.query(self.orm.AppVersionDefinition):
                 yield json.loads(_app.app_json)
 
-    def insert_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
-        """See [DB.insert_app][trulens.core.database.base.DB.insert_app]."""
+    def insert_app_version(
+        self, app_version: mod_app_schema.AppVersionDefinition
+    ) -> mod_types_schema.VersionTag:
+        """See [DB.insert_app_version][trulens.core.database.base.DB.insert_app_version]."""
 
         # TODO: thread safety
 
         with self.session.begin() as session:
             if (
-                _app := session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app.app_id)
+                _app := session.query(self.orm.AppVersionDefinition)
+                .filter_by(version_tag=app_version.version_tag)
                 .first()
             ):
-                _app.app_json = app.model_dump_json()
+                _app: mod_app_schema.AppVersionDefinition
+                _app.app_json = app_version.model_dump_json()
             else:
-                _app = self.orm.AppDefinition.parse(
-                    app, redact_keys=self.redact_keys
+                _app: mod_app_schema.AppVersionDefinition = (
+                    self.orm.AppVersionDefinition.parse(
+                        app_version, redact_keys=self.redact_keys
+                    )
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
+            logger.info("%s added app %s", UNICODE_CHECK, _app.version_tag)
 
-            return _app.app_id
+            return _app.version_tag
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app_version(
+        self, version_tag: mod_types_schema.VersionTag
+    ) -> None:
         """
-        Deletes an app from the database based on its app_id.
+        Deletes an app from the database based on its version_tag.
 
         Args:
-            app_id (schema.AppID): The unique identifier of the app to be deleted.
+            version_tag (schema.VersionTag): The unique identifier of the app version to be deleted.
         """
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             _app = (
-                session.query(self.orm.AppDefinition)
-                .filter_by(app_id=app_id)
+                session.query(self.orm.AppVersionDefinition)
+                .filter_by(version_tag=version_tag)
                 .first()
             )
             if _app:
                 session.delete(_app)
-                logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
+                logger.info(f"{UNICODE_CHECK} deleted app {version_tag}")
             else:
-                logger.warning(f"App {app_id} not found for deletion.")
+                logger.warning(f"App {version_tag} not found for deletion.")
 
     def insert_feedback_definition(
         self, feedback_definition: mod_feedback_schema.FeedbackDefinition
@@ -595,7 +602,7 @@ class SQLAlchemyDB(DB):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[str]] = None,
+        version_tags: Optional[List[mod_types_schema.VersionTag]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -608,11 +615,11 @@ class SQLAlchemyDB(DB):
         with self.session.begin() as session:
             stmt = sa.select(self.orm.Record)
             # NOTE: We are selecting records here because offset and limit need
-            # to be with respect to those rows instead of AppDefinition or
+            # to be with respect to those rows instead of VersionDefinition or
             # FeedbackResult rows.
 
-            if app_ids:
-                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+            if version_tags:
+                stmt = stmt.where(self.orm.Record.version_tag.in_(version_tags))
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
             # NOTE(piotrm): The joinedload here makes it so that the
@@ -629,7 +636,7 @@ class SQLAlchemyDB(DB):
             # NOTE: feedback_results order is governed by the order_by on the
             # orm.FeedbackResult.record backref definition. Here, we need to
             # order Records as we did not use an auto join to retrieve them. If
-            # records were to be retrieved from AppDefinition.records via auto
+            # records were to be retrieved from VersionDefinition.records via auto
             # join, though, the orm backref ordering would be able to take hold.
 
             stmt = stmt.limit(limit).offset(offset)
@@ -654,7 +661,9 @@ def _extract_feedback_results(
 ) -> pd.DataFrame:
     def _extract(_result: "mod_orm.FeedbackResult"):
         app_json = json.loads(_result.record.app.app_json)
-        _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
+        _type = mod_app_schema.AppVersionDefinition.model_validate(
+            app_json
+        ).root_class
 
         return (
             _result.record_id,
@@ -748,7 +757,7 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 class AppsExtractor:
     """Utilities for creating DataFrames from orm instances."""
 
-    app_cols = ["app_id", "app_json", "type"]
+    app_cols = ["version_tag", "app_json", "type"]
     rec_cols = [
         "record_id",
         "input",
@@ -767,7 +776,7 @@ class AppsExtractor:
 
     def get_df_and_cols(
         self,
-        apps: Optional[List["mod_orm.ORM.AppDefinition"]] = None,
+        apps: Optional[List["mod_orm.ORM.AppVersionDefinition"]] = None,
         records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records DataFrame which joins in information from apps and
@@ -804,7 +813,7 @@ class AppsExtractor:
 
     def extract_apps(
         self,
-        apps: Iterable["mod_orm.ORM.AppDefinition"],
+        apps: Iterable["mod_orm.ORM.AppVersionDefinition"],
         records: Optional[List["mod_orm.ORM.Record"]] = None,
     ) -> Iterable[pd.DataFrame]:
         """
@@ -829,7 +838,7 @@ class AppsExtractor:
                     _recs = (
                         record
                         for record in records
-                        if record.app_id == _app.app_id
+                        if record.version_tag == _app.version_tag
                     )
 
                 if _recs:
@@ -838,7 +847,7 @@ class AppsExtractor:
                     for col in self.app_cols:
                         if col == "type":
                             # Previous DBs did not contain entire app so we cannot
-                            # deserialize AppDefinition here unless we fix prior DBs
+                            # deserialize VersionDefinition here unless we fix prior DBs
                             # in migration. Because of this, loading just the
                             # `root_class` here.
 

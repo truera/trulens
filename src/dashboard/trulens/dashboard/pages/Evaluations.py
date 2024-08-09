@@ -107,7 +107,9 @@ def render_record_metrics(
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
 
-    app_specific_df = app_df[app_df["app_id"] == selected_rows["app_id"][0]]
+    app_specific_df = app_df[
+        app_df["version_tag"] == selected_rows["version_tag"][0]
+    ]
 
     token_col, cost_col, latency_col = st.columns(3)
 
@@ -148,18 +150,20 @@ def extract_metadata(row: pd.Series) -> str:
     return str(record_data["meta"])
 
 
-apps = list(app["app_id"] for app in lms.get_apps())
+app_versions = list(app["version_tag"] for app in lms.get_app_versions())
 
 if "app" in st.session_state:
-    app = st.session_state.app
+    app_version = st.session_state.app
 else:
-    app = apps
+    app_version = app_versions
 
-st.query_params["app"] = app
+st.query_params["app"] = app_version
 
-options = st.multiselect("Filter Applications", apps, default=app)
+options = st.multiselect(
+    "Filter App Versions", app_versions, default=app_version
+)
 
-df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
+df_results, feedback_cols = lms.get_records_and_feedback(version_tags=options)
 
 if len(options) == 0:
     st.header("All Applications")
@@ -209,7 +213,7 @@ else:
         gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
 
         gb.configure_column("record_id", header_name="Record ID", hide=True)
-        gb.configure_column("app_id", header_name="App ID")
+        gb.configure_column("version_tag", header_name="App ID")
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
@@ -223,7 +227,7 @@ else:
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
-            "app_id",
+            "version_tag",
             "type",
             "ts",
             "total_tokens",
@@ -283,7 +287,7 @@ else:
 
             # Breadcrumbs
             st.caption(
-                f"{selected_rows['app_id'][0]} / {selected_rows['record_id'][0]}"
+                f"{selected_rows['version_tag'][0]} / {selected_rows['record_id'][0]}"
             )
             st.header(f"{selected_rows['record_id'][0]}")
 

@@ -10,7 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 import llama_index
 from pydantic import Field
-from trulens.core.app import base as mod_app
+from trulens.core.app import AppVersion
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 
@@ -210,7 +210,7 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(mod_app.App):
+class TruLlama(AppVersion):
     """Recorder for _LlamaIndex_ applications.
 
     This recorder is designed for LlamaIndex apps, providing a way to
@@ -264,7 +264,7 @@ class TruLlama(mod_app.App):
         from trulens.instrument.llamaindex import TruLlama
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
-            app_id='LlamaIndex_App1',
+            version_tag='LlamaIndex_App1',
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         with tru_recorder as recording:
@@ -283,7 +283,7 @@ class TruLlama(mod_app.App):
         app: A LlamaIndex application.
 
         **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition].
+            and [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition].
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -342,7 +342,7 @@ class TruLlama(mod_app.App):
             return bindings.arguments["message"]
 
         else:
-            return mod_app.App.main_input(self, func, sig, bindings)
+            return AppVersion.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -359,7 +359,7 @@ class TruLlama(mod_app.App):
             if attr is not None:
                 return getattr(ret, attr)
             else:  # attr is None
-                return mod_app.App.main_output(self, func, sig, bindings, ret)
+                return AppVersion.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None

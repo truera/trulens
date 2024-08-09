@@ -239,11 +239,13 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = mod_app_schema.AppDefinition.new_session(
+    app_version = mod_app_schema.AppVersionDefinition.new_session(
         app_definition_json=app_json
     )
 
-    st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
+    st.session_state.records = [
+        ChatRecord(app_json=app_json, app_version=app_version)
+    ]
 
     for typ in ["app", "record"]:
         st.session_state[f"selectors_{typ}"] = []
@@ -304,22 +306,24 @@ if "records" not in st.session_state:
 
     st.title("App Runner")
 
-    loadable_apps = mod_app_schema.AppDefinition.get_loadable_apps()
+    loadable_app_versions = (
+        mod_app_schema.AppVersionDefinition.get_loadable_apps()
+    )
 
     st.divider()
 
-    for app_json in loadable_apps:
-        st.subheader(app_json["app_id"])
+    for app_version_json in loadable_app_versions:
+        st.subheader(app_version_json["version_tag"])
         st.button(
             label="New Session",
-            key=f"select_app_{app_json['app_id']}",
+            key=f"select_app_{app_version_json['version_tag']}",
             on_click=select_app,
-            args=(app_json,),
+            args=(app_version_json,),
         )
 
         st.divider()
 
-    if len(loadable_apps) == 0:
+    if len(loadable_app_versions) == 0:
         st.write(
             "No loadable apps found in database. "
             "To make an app loadable, specify a loader function via the `initial_app_loader` argument when wrapping the app. "
@@ -334,11 +338,11 @@ else:
     app_json = first_record.app_json
 
     # Show the app id and some app-level or session-level controls/links.
-    st.title(f"App Runner: {app_json['app_id']}")
+    st.title(f"App Runner: {app_json['version_tag']}")
 
     st.button(label="End session", on_click=end_session)
 
-    # st.write(f"TODO: link to {app_json['app_id']} on other pages.")
+    # st.write(f"TODO: link to {app_json['version_tag']} on other pages.")
 
     st.divider()
 

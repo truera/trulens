@@ -3,7 +3,7 @@
 from typing import ClassVar, Optional
 
 import pydantic
-from trulens.core.app import base as mod_app
+from trulens.core.app import AppVersion
 from trulens.core.utils.serial import JSON
 
 
@@ -21,7 +21,7 @@ class ChatRecord(pydantic.BaseModel):
     record_json: Optional[JSON] = None
 
     # The final app state for continuing the session.
-    app: mod_app.App
+    app_version: AppVersion
 
     # The state of the app as was when this record was produced.
     app_json: JSON

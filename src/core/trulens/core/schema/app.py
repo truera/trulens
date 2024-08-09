@@ -19,11 +19,11 @@ from trulens.core.utils.json import obj_id_of_obj
 logger = logging.getLogger(__name__)
 
 
-class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
+class AppVersionDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID  # str
+    version_tag: mod_types_schema.VersionTag  # str
     """Unique identifier for this app."""
 
     tags: mod_types_schema.Tags  # str
@@ -47,7 +47,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
     instantiating the subclass of
-    [AppDefinition][trulens.core.schema.app.AppDefinition] that would define it, we
+    [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] that would define it, we
     cannot use [ClassVar][typing.ClassVar].
     """
 
@@ -57,7 +57,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     This is to be filled in by subclass.
     """
 
-    app: serial.JSONized[AppDefinition]
+    app: serial.JSONized[AppVersionDefinition]
     """Wrapped app in jsonized form."""
 
     initial_app_loader_dump: Optional[serial.SerialBytes] = None
@@ -80,7 +80,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[mod_types_schema.AppID] = None,
+        version_tag: Optional[mod_types_schema.VersionTag] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
         feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
@@ -88,7 +88,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         **kwargs,
     ):
         # for us:
-        kwargs["app_id"] = "temporary"  # will be adjusted below
+        kwargs["version_tag"] = "temporary"  # will be adjusted below
         kwargs["feedback_mode"] = feedback_mode
         kwargs["tags"] = ""
         kwargs["metadata"] = {}
@@ -96,10 +96,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         super().__init__(**kwargs)
 
-        if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+        if version_tag is None:
+            version_tag = obj_id_of_obj(obj=self.model_dump(), prefix="app")
 
-        self.app_id = app_id
+        self.version_tag = version_tag
 
         if tags is None:
             tags = "-"  # Set tags to a "-" if None is provided
@@ -129,8 +129,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     # serialization of large apps might make this necessary
                     # again.
                     # """
-                    # path_json = Path.cwd() / f"{app_id}.json"
-                    # path_dill = Path.cwd() / f"{app_id}.dill"
+                    # path_json = Path.cwd() / f"{version_tag}.json"
+                    # path_dill = Path.cwd() / f"{version_tag}.dill"
 
                     # with path_json.open("w") as fh:
                     #     fh.write(json_str_of_obj(self))
@@ -151,8 +151,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     @staticmethod
     def continue_session(
         app_definition_json: serial.JSON, app: Any
-    ) -> AppDefinition:
-        # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
+    ) -> AppVersionDefinition:
+        # initial_app_loader: Optional[Callable] = None) -> 'VersionDefinition':
         """Instantiate the given `app` with the given state
         `app_definition_json`.
 
@@ -165,7 +165,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             app: The app to continue the session with.
 
         Returns:
-            A new `AppDefinition` instance with the given `app` and the given
+            A new `VersionDefinition` instance with the given `app` and the given
                 `app_definition_json` state.
         """
 
@@ -179,7 +179,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     def new_session(
         app_definition_json: serial.JSON,
         initial_app_loader: Optional[Callable] = None,
-    ) -> AppDefinition:
+    ) -> AppVersionDefinition:
         """Create an app instance at the start of a session.
 
         Warning:
@@ -250,7 +250,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def dict(self):
         # Unsure if the check below is needed. Sometimes we have an `app.App`` but
-        # it is considered an `AppDefinition` and is thus using this definition
+        # it is considered an `VersionDefinition` and is thus using this definition
         # of `dict` instead of the one in `app.App`.
         from trulens.core.app import App
 
@@ -279,4 +279,4 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
 
 # HACK013: Need these if using __future__.annotations .
-AppDefinition.model_rebuild()
+AppVersionDefinition.model_rebuild()

@@ -409,7 +409,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             # TODO: figure out useful things to print.
             # feedback_ident = (
             #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
-            #    f"{row.fname} for app {row.app_json['app_id']}"
+            #    f"{row.fname} for app {row.app_json['version_tag']}"
             # )
 
             if row.status == mod_feedback_schema.FeedbackResultStatus.NONE:
@@ -596,7 +596,9 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     def check_selectors(
         self,
-        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON],
+        app_version: Union[
+            mod_app_schema.AppVersionDefinition, mod_serial_utils.JSON
+        ],
         record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False,
@@ -604,13 +606,13 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         """Check that the selectors are valid for the given app and record.
 
         Args:
-            app: The app that produced the record.
+            app_version: The app version that produced the record.
 
             record: The record that the feedback will run on. This can be a
                 mostly empty record for checking ahead of producing one. The
                 utility method
                 [App.dummy_record][trulens.core.app.App.dummy_record] is built
-                for this prupose.
+                for this purpose.
 
             source_data: Additional data to select from when extracting feedback
                 function arguments.
@@ -627,29 +629,29 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ValueError: If a selector is invalid and warning is not set.
         """
 
-        from trulens.core.app.base import App
+        from trulens.core.app.base import AppVersion
 
         if source_data is None:
             source_data = {}
 
         app_type: str = "trulens recorder (`TruChain`, `TruLlama`, etc)"
 
-        if isinstance(app, App):
-            app_type = f"`{type(app).__name__}`"
-            app = mod_json_utils.jsonify(
-                app,
-                instrument=app.instrument,
+        if isinstance(app_version, AppVersion):
+            app_type = f"`{type(app_version).__name__}`"
+            app_version = mod_json_utils.jsonify(
+                app_version,
+                instrument=app_version.instrument,
                 skip_specials=True,
                 redact_keys=True,
             )
 
-        elif isinstance(app, mod_app_schema.AppDefinition):
-            app = mod_json_utils.jsonify(
-                app, skip_specials=True, redact_keys=True
+        elif isinstance(app_version, mod_app_schema.AppVersionDefinition):
+            app_version = mod_json_utils.jsonify(
+                app_version, skip_specials=True, redact_keys=True
             )
 
         source_data = self._construct_source_data(
-            app=app, record=record, source_data=source_data
+            app_version=app_version, record=record, source_data=source_data
         )
 
         # Build the hint message here.
@@ -759,8 +761,8 @@ Feedback function signature:
 
     def run(
         self,
-        app: Optional[
-            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        app_version: Optional[
+            Union[mod_app_schema.AppVersionDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -772,8 +774,8 @@ Feedback function signature:
         names.
 
         Args:
-            app: The app that produced the record. This can be AppDefinition or a jsonized
-                AppDefinition. It will be jsonized if it is not already.
+            app_version: The app version that produced the record. This can be VersionDefinition or a jsonized
+                VersionDefinition. It will be jsonized if it is not already.
 
             record: The record to evaluate the feedback on.
 
@@ -787,10 +789,10 @@ Feedback function signature:
             A FeedbackResult object with the result of the feedback function.
         """
 
-        if isinstance(app, mod_app_schema.AppDefinition):
-            app_json = mod_json_utils.jsonify(app)
+        if isinstance(app_version, mod_app_schema.AppVersionDefinition):
+            app_json = mod_json_utils.jsonify(app_version)
         else:
-            app_json = app
+            app_json = app_version
 
         result_vals = []
 
@@ -951,7 +953,7 @@ Feedback function signature:
                 num_total = num_skipped + num_evaled
                 warnings.warn(
                     (
-                        f"{num_skipped}/{num_total}={100.0*num_skipped/num_total:0.1f}"
+                        f"{num_skipped}/{num_total}={100.0 * num_skipped / num_total:0.1f}"
                         "% evaluation(s) were skipped because they raised SkipEval "
                         "(see earlier warnings for listing)."
                     ),
@@ -1020,7 +1022,9 @@ Feedback function signature:
         self,
         record: mod_record_schema.Record,
         tru: "Tru",
-        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
+        app_version: Union[
+            mod_app_schema.AppVersionDefinition, mod_serial_utils.JSON
+        ] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
         record_id = record.record_id
@@ -1047,9 +1051,9 @@ Feedback function signature:
                 )
             )
 
-            feedback_result = self.run(app=app, record=record).update(
-                feedback_result_id=feedback_result_id
-            )
+            feedback_result = self.run(
+                app_version=app_version, record=record
+            ).update(feedback_result_id=feedback_result_id)
 
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
@@ -1155,8 +1159,8 @@ Feedback function signature:
 
     def _construct_source_data(
         self,
-        app: Optional[
-            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        app_version: Optional[
+            Union[mod_app_schema.AppVersionDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -1165,7 +1169,7 @@ Feedback function signature:
         """Combine sources of data to be selected over for feedback function inputs.
 
         Args:
-            app: The app that produced the record.
+            app_version: The app version that produced the record.
 
             record: The record to evaluate the feedback on.
 
@@ -1186,8 +1190,8 @@ Feedback function signature:
 
         source_data.update(kwargs)
 
-        if app is not None:
-            source_data["__app__"] = app
+        if app_version is not None:
+            source_data["__app__"] = app_version
 
         if record is not None:
             source_data["__record__"] = record.layout_calls_as_app()
@@ -1196,14 +1200,14 @@ Feedback function signature:
 
     def extract_selection(
         self,
-        app: Optional[
-            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
+        app_version: Optional[
+            Union[mod_app_schema.AppVersionDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
     ) -> Iterable[Dict[str, Any]]:
         """
-        Given the `app` that produced the given `record`, extract from `record`
+        Given the `app_version` that produced the given `record`, extract from `record`
         the values that will be sent as arguments to the implementation as
         specified by `self.selectors`. Additional data to select from can be
         provided in `source_data`. All args are optional. If a
@@ -1214,7 +1218,7 @@ Feedback function signature:
 
         return self._extract_selection(
             source_data=self._construct_source_data(
-                app=app, record=record, source_data=source_data
+                app_version=app_version, record=record, source_data=source_data
             )
         )
 

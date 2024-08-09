@@ -7,7 +7,7 @@ from ipywidgets import widgets
 import traitlets
 from traitlets import HasTraits
 from traitlets import Unicode
-from trulens.core.app import base as mod_app
+from trulens.core.app import AppVersion
 from trulens.core.instruments import Instrument
 from trulens.core.utils.json import JSON_BASES
 from trulens.core.utils.json import jsonify_for_ui
@@ -219,7 +219,7 @@ class AppUI(traitlets.HasTraits):
 
     def __init__(
         self,
-        app: mod_app.App,
+        app: AppVersion,
         use_async: bool = False,
         app_selectors: Optional[List[Union[str, Lens]]] = None,
         record_selectors: Optional[List[Union[str, Lens]]] = None,

@@ -14,7 +14,7 @@ from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-from trulens.core.app import base as mod_app
+from trulens.core.app import AppVersion
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema.select import Select
@@ -120,7 +120,7 @@ class LangChainInstrument(Instrument):
         )
 
 
-class TruChain(mod_app.App):
+class TruChain(AppVersion):
     """Recorder for _LangChain_ applications.
 
     This recorder is designed for LangChain apps, providing a way to instrument,
@@ -187,7 +187,7 @@ class TruChain(mod_app.App):
         # Wrap application
         tru_recorder = TruChain(
             chain,
-            app_id='Chain1_ChatApplication',
+            version_tag='Chain1_ChatApplication',
             feedbacks=[f_context_relevance]
         )
 
@@ -203,7 +203,7 @@ class TruChain(mod_app.App):
         app: A LangChain application.
 
         **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition].
+            and [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition].
     """
 
     app: Any  # Chain
@@ -316,7 +316,7 @@ class TruChain(mod_app.App):
 
             return ins[self.app.input_keys[0]]
 
-        return mod_app.App.main_input(self, func, sig, bindings)
+        return AppVersion.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -338,7 +338,7 @@ class TruChain(mod_app.App):
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
-        return mod_app.App.main_output(self, func, sig, bindings, ret)
+        return AppVersion.main_output(self, func, sig, bindings, ret)
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.

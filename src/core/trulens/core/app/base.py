@@ -341,7 +341,11 @@ class RecordingContext:
     - Combinations of the above.
     """
 
-    def __init__(self, app: App, record_metadata: JSON = None):
+    def __init__(
+        self,
+        app_version: AppVersion,
+        record_metadata: Optional[mod_types_schema.Metadata] = None,
+    ):
         self.calls: Dict[
             mod_types_schema.CallID, mod_record_schema.RecordAppCall
         ] = {}
@@ -362,10 +366,12 @@ class RecordingContext:
         self.token: Optional[contextvars.Token] = None
         """Token for context management."""
 
-        self.app: mod_instruments.WithInstrumentCallbacks = app
+        self.app_version: mod_instruments.WithInstrumentCallbacks = app_version
         """App for which we are recording."""
 
-        self.record_metadata = record_metadata
+        self.record_metadata: Optional[mod_types_schema.Metadata] = (
+            record_metadata
+        )
         """Metadata to attach to all records produced in this context."""
 
     def __iter__(self):
@@ -395,7 +401,7 @@ class RecordingContext:
 
     def __hash__(self) -> int:
         # The same app can have multiple recording contexts.
-        return hash(id(self.app)) + hash(id(self.records))
+        return hash(id(self.app_version)) + hash(id(self.records))
 
     def __eq__(self, other):
         return hash(self) == hash(other)
@@ -441,27 +447,27 @@ class RecordingContext:
         return record
 
 
-class App(
-    mod_app_schema.AppDefinition,
+class AppVersion(
+    mod_app_schema.AppVersionDefinition,
     mod_instruments.WithInstrumentCallbacks,
     Hashable,
 ):
-    """Base app recorder type.
+    """Base app version recorder type.
 
     Non-serialized fields here while the serialized ones are defined in
-    [AppDefinition][trulens.core.schema.app.AppDefinition].
+    [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
-    - [TruLlama][trulens.instrument.llamaindex.TruLlama] for _LlamaIndex_ apps.
-    - [TruChain][trulens.instrument.langchain.TruChain] for _LangChain_ apps.
-    - [TruRails][trulens.instrument.nemo.TruRails] for _NeMo Guardrails_
-        apps.
     - [TruVirtual][trulens.core.TruVirtual] for recording
         information about invocations of apps without access to those apps.
     - [TruCustomApp][trulens.core.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
     - [TruBasicApp][trulens.core.TruBasicApp] for apps defined
         solely by a string-to-string method.
+    - [TruLlama][trulens.instrument.llamaindex.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens.instrument.langchain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens.instrument.nemo.TruRails] for _NeMo Guardrails_
+        apps.
     """
 
     model_config: ClassVar[dict] = {
@@ -477,7 +483,7 @@ class App(
     tru: Optional[mod_tru.Tru] = pydantic.Field(default=None, exclude=True)
     """Workspace manager.
 
-    If this is not povided, a singleton [Tru][trulens.core.tru.Tru] will be made
+    If this is not provided, a singleton [Tru][trulens.core.tru.Tru] will be made
     (if not already) and used.
     """
 
@@ -589,7 +595,7 @@ class App(
         """Start the thread that manages the queue of records with
         pending feedback results.
 
-        This is meant to be run permentantly in a separate thread. It will
+        This is meant to be run permanently in a separate thread. It will
         remove records from the set `records_with_pending_feedback_results` as
         their feedback results are computed.
         """
@@ -731,7 +737,7 @@ class App(
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""
 
-        if self.__class__.main_acall is not App.main_acall:
+        if self.__class__.main_acall is not AppVersion.main_acall:
             # Use the async version if available.
             return sync(self.main_acall, human)
 
@@ -740,7 +746,7 @@ class App(
     async def main_acall(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""
 
-        if self.__class__.main_call is not App.main_call:
+        if self.__class__.main_call is not AppVersion.main_call:
             logger.warning("Using synchronous version of main call.")
             # Use the sync version if available.
             return await desync(self.main_call, human)
@@ -810,7 +816,7 @@ class App(
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> str:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -868,7 +874,7 @@ class App(
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> str:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -1105,7 +1111,7 @@ class App(
                 calls=calls,
                 cost=cost,
                 perf=perf,
-                app_id=self.app_id,
+                version_tag=self.version_tag,
                 tags=self.tags,
                 meta=jsonify(record_metadata),
             )
@@ -1385,7 +1391,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return self.tru._submit_feedback_functions(
                 record=record,
                 feedback_functions=self.feedbacks,
-                app=self,
+                app_version=self,
                 on_done=self._add_future_feedback,
             )
 
@@ -1430,7 +1436,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         All args are [Record][trulens.core.schema.record.Record] fields except these:
 
             - `record_id` is generated using the default id naming schema.
-            - `app_id` is taken from this recorder.
+            - `version_tag` is taken from this recorder.
             - `calls` field is constructed based on instrumented methods.
         """
 
@@ -1470,7 +1476,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 calls.append(sample_call)
 
         return mod_record_schema.Record(
-            app_id=self.app_id,
+            version_tag=self.version_tag,
             calls=calls,
             cost=cost,
             perf=perf,

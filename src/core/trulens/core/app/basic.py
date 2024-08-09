@@ -10,7 +10,7 @@ from pprint import PrettyPrinter
 from typing import Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens.core.app import App
+from trulens.core.app import AppVersion
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.utils.pyschema import Class
@@ -64,7 +64,7 @@ class TruBasicCallableInstrument(Instrument):
         )
 
 
-class TruBasicApp(App):
+class TruBasicApp(AppVersion):
     """Instantiates a Basic app that makes little assumptions.
 
     Assumes input text and output text.
@@ -77,7 +77,7 @@ class TruBasicApp(App):
         from trulens.core import TruBasicApp
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruBasicApp(custom_application,
-            app_id="Custom Application v1",
+            version_tag="Custom Application v1",
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         # Basic app works by turning your callable into an app
@@ -99,7 +99,7 @@ class TruBasicApp(App):
             be provided.
 
         **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition]
+            and [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)

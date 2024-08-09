@@ -343,7 +343,7 @@ def _serialization_asserts(db) -> None:
                                 test_json
                             )
                         elif col_name == "app_json":
-                            mod_app_schema.AppDefinition.model_validate(
+                            mod_app_schema.AppVersionDefinition.model_validate(
                                 test_json
                             )
                         else:

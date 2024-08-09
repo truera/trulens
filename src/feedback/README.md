@@ -316,7 +316,7 @@ in the attribute `app`:
 
 ```python
 # app.py:
-class App(AppDefinition, SerialModel):
+class AppVersion(VersionDefinition, SerialModel):
     ...
     # The wrapped app.
     app: Any = Field(exclude=True)

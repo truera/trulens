@@ -68,6 +68,9 @@ class RecordAppCall(serial.SerialModel):
     perf: Optional[mod_base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
+    cost: Optional[mod_base_schema.Cost] = None
+    """Costs associated with the call."""
+
     pid: int
     """Process id."""
 
@@ -100,7 +103,7 @@ class Record(serial.SerialModel, Hashable):
     record_id: mod_types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    version_tag: mod_types_schema.VersionTag
     """The app that produced this record."""
 
     cost: Optional[mod_base_schema.Cost] = None
@@ -217,14 +220,14 @@ class Record(serial.SerialModel, Hashable):
         the app.
 
         Note: We cannot create a validated
-        [AppDefinition][trulens.core.schema.app.AppDefinition] class (or subclass)
+        [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] class (or subclass)
         object here as the layout of records differ in these ways:
 
         - Records do not include anything that is not an instrumented method
           hence have most of the structure of a app missing.
 
         - Records have RecordAppCall as their leafs where method definitions
-          would be in the AppDefinition structure.
+          would be in the VersionDefinition structure.
         """
 
         ret = Bunch(**self.model_dump())

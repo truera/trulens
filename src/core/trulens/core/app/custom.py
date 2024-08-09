@@ -195,7 +195,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-from trulens.core.app import App
+from trulens.core.app import AppVersion
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
 from trulens.core.utils.pyschema import Class
@@ -215,7 +215,7 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(App):
+class TruCustomApp(AppVersion):
     """
     This recorder is the most flexible option for instrumenting an application,
     and can be used to instrument any custom python class.
@@ -311,7 +311,7 @@ class TruCustomApp(App):
         from trulens.core import TruCustomApp
 
         tru_recorder = TruCustomApp(custom_app,
-            app_id="Custom Application v1",
+            version_tag="Custom Application v1",
             feedbacks=[f_context_relevance])
 
         with tru_recorder as recording:
@@ -326,7 +326,7 @@ class TruCustomApp(App):
         app: Any class.
 
         **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition]
+            and [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition]
     """
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -349,7 +349,7 @@ class TruCustomApp(App):
     main_method: Optional[Function] = None
     """Serialized version of the main method."""
 
-    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
+    def __init__(self, app: Any, methods_to_instrument=None, **kwargs):
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)
 

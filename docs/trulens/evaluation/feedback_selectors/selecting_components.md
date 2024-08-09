@@ -87,7 +87,7 @@ response = my_llm_app(query)
 from trulens.instrument.langchain import TruChain
 tru_recorder = TruChain(
     my_llm_app,
-    app_id='Chain1_ChatApplication')
+    version_tag='ChatApp1')
 
 response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
@@ -126,7 +126,7 @@ The top level record also contains these helper accessors
 
 As in the `f_context_relevance` example, a selector for a _single_ argument may point
 to more than one aspect of a record/app. These are specified using the slice or
-lists in key/index poisitions. In that case, the feedback function is evaluated
+lists in key/index positions. In that case, the feedback function is evaluated
 multiple times, its outputs collected, and finally aggregated into a main
 feedback result.
 
@@ -141,54 +141,17 @@ of a feedback implementation are shown alongside the final aggregate result.
 The top level JSON attributes are defined by the class structures.
 
 For a Record:
+See the `Record` class in the [API reference][trulens.core.schema.Record].
 
-```python
-class Record(SerialModel):
-    record_id: RecordID
-    app_id: AppID
-
-    cost: Optional[Cost] = None
-    perf: Optional[Perf] = None
-
-    ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
-
-    tags: str = ""
-
-    main_input: Optional[JSON] = None
-    main_output: Optional[JSON] = None  # if no error
-    main_error: Optional[JSON] = None  # if error
-
-    # The collection of calls recorded. Note that these can be converted into a
-    # json structure with the same paths as the app that generated this record
-    # via `layout_calls_as_app`.
-    calls: Sequence[RecordAppCall] = []
-```
-
-For an App:
-
-```python
-class AppDefinition(WithClassInfo, SerialModel, ABC):
-    ...
-
-    app_id: AppID
-
-    feedback_definitions: Sequence[FeedbackDefinition] = []
-
-    feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
-
-    root_class: Class
-
-    root_callable: ClassVar[FunctionOrMethod]
-
-    app: JSON
-```
+For an App Version:
+See the `VersionDefinition` class in the [API reference][trulens.core.schema.VersionDefinition].
 
 For your app, you can inspect the JSON-like structure by using the `dict`
 method:
 
 ```python
-tru = ... # your app, extending App
-print(tru.dict())
+    tru = ... # your app, extending App
+    print(tru.dict())
 ```
 
 ### Calls made by App Components

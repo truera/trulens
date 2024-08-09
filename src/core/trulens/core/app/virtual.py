@@ -151,7 +151,7 @@ Example: "Integrating Feedback Functions into TruVirtual"
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
-        app_id='a virtual app',
+        version_tag='a virtual app',
         app=virtual_app,
         feedbacks=[f_context_relevance]
     )
@@ -207,7 +207,7 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 
 from pydantic import Field
-from trulens.core.app import App
+from trulens.core.app import AppVersion
 from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -341,7 +341,7 @@ class VirtualRecord(mod_record_schema.Record):
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
         cost: Optional[mod_base_schema.Cost] = None,
         perf: Optional[mod_base_schema.Perf] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs,
     ):
         root_call = mod_record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
@@ -431,15 +431,15 @@ class VirtualRecord(mod_record_schema.Record):
             )
         )
 
-        if "app_id" not in kwargs:
-            kwargs["app_id"] = (
-                "No app_id provided."  # this gets replaced by TruVirtual.add_record .
+        if "version_tag" not in kwargs:
+            kwargs["version_tag"] = (
+                "No `version_tag` provided."  # this gets replaced by TruVirtual.add_record .
             )
 
         super().__init__(calls=record_calls, **kwargs)
 
 
-class TruVirtual(App):
+class TruVirtual(AppVersion):
     """Recorder for virtual apps.
 
     Virtual apps are data only in that they cannot be executed but for whom
@@ -450,7 +450,7 @@ class TruVirtual(App):
     specified here, notably:
 
     See [App][trulens.core.app.App] and
-    [AppDefinition][trulens.core.schema.app.AppDefinition] for constructor
+    [AppVersionDefinition][trulens.core.schema.app.AppVersionDefinition] for constructor
     arguments.
 
     # The `app` field.
@@ -480,7 +480,7 @@ class TruVirtual(App):
         )
 
         virtual = TruVirtual(
-            app_id="my_virtual_app",
+            version_tag="virtual_app v1",
             app=virtual_app
         )
         ```
@@ -547,7 +547,7 @@ class TruVirtual(App):
         if feedback_mode is None:
             feedback_mode = self.feedback_mode
 
-        record.app_id = self.app_id
+        record.version_tag = self.version_tag
 
         # Creates feedback futures.
         record.feedback_and_future_results = self._handle_record(
