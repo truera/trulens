@@ -1,7 +1,0 @@
-# Packages required for development and committing to repo.
-
-# Formatting packages pinned for consistency with format checker.
-ruff == 0.5.5
-pre-commit >= 2.19.0
-yapf == 0.32.0
-isort == 5.10.1
