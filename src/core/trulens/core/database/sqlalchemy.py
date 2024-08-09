@@ -218,9 +218,11 @@ class SQLAlchemyDB(DB):
             engine_params["pool_use_lifo"] = True
 
         return cls(engine_params=engine_params, **kwargs)
-    
+
     @classmethod
-    def from_db_engine(cls, engine: sa.Engine, **kwargs: Dict[str, Any]) -> SQLAlchemyDB:
+    def from_db_engine(
+        cls, engine: sa.Engine, **kwargs: Dict[str, Any]
+    ) -> SQLAlchemyDB:
         """
         Create a database for the given engine.
 
