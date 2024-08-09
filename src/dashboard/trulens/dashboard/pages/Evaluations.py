@@ -22,7 +22,7 @@ from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.core.schema.select import Select
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import Lens
-from trulens.dashboard.react_components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux.components import draw_agent_info
 from trulens.dashboard.ux.components import draw_llm_info

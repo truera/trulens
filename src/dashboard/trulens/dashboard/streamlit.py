@@ -13,7 +13,7 @@ from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard import display
-from trulens.dashboard.react_components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
 
