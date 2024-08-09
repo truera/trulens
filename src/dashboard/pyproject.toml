@@ -48,19 +48,12 @@ urls.Homepage = "https://trulens.org"
 urls.Issues = "https://github.com/truera/trulens/issues"
 urls.Repository = "https://github.com/truera/trulens"
 
-[tool.setuptools.exclude-package-data]
-trulens = [
-  'dashboard/react_components/*/node_modules/*',
-]
-
 [tool.setuptools.package-data]
 trulens = [
-  'dashboard/react_components/**/*',
-  'dashboard/react_components/*/dist/*',
+  'dashboard/react_components/*/dist/**/*',
 ]
 
 [tool.setuptools.packages.find]
 include = [
-  "trulens",
-  "trulens.dashboard",
+  "trulens*",
 ]
