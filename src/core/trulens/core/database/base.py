@@ -121,7 +121,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_app(
-        self, app: mod_app_schema.AppDefinition
+        self, app: AppDefinition
     ) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
@@ -195,7 +195,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def batch_insert_feedback(
         self,
-        feedback_results: List[mod_feedback_schema.FeedbackResult]
+        feedback_results: List[FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
         """Upsert a batch of feedback results into the database.
 
