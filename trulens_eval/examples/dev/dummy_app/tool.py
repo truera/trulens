@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from examples.dev.dummy_app.dummy import Dummy
 
@@ -63,8 +63,8 @@ class DummyTool(Dummy):
 class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invoked."""
 
-    last_stack = None
-    """The last stack that was rendered.
+    last_stacks: List[Any] = []  # Any = stack
+    """The stacks seen during save_stack invocations.
 
     You can use this to get the readout even if this tool is used deep in an app
     that processes the return from the tool in destructive ways."""
@@ -83,7 +83,7 @@ class DummyStackTool(DummyTool):
         # want to be able to take a look at those things which we didn't
         # serialize.
         current_stack = list(superstack())
-        DummyStackTool.last_stack = current_stack
+        DummyStackTool.last_stacks.append(current_stack)
 
         ret = "<table>\n"
         for frame in current_stack:

@@ -318,7 +318,7 @@
               "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
-              "last_stack": null,
+              "last_stacks": [],
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyStackTool",
@@ -730,7 +730,7 @@
               "alloc": 0,
               "delay": 0.0,
               "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
-              "last_stack": null,
+              "last_stacks": [],
               "seed": 3735928559,
               "tru_class_info": {
                 "name": "DummyStackTool",
@@ -1139,7 +1139,7 @@
         "alloc": 0,
         "delay": 0.0,
         "description": "Save the call stack for later rendering or inspection in the recorded\n        trace.",
-        "last_stack": null,
+        "last_stacks": [],
         "seed": 3735928559,
         "tru_class_info": {
           "name": "DummyStackTool",

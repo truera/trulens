@@ -1,5 +1,5 @@
 {
-  "record_id": "record_hash_2b94501522f41136287301685661234d",
+  "record_id": "record_hash_8431a92fc94b2a477236d5cab235e83b",
   "app_id": "customapp",
   "cost": {
     "n_requests": 0,
@@ -12,18 +12,18 @@
     "cost": 0.0
   },
   "perf": {
-    "start_time": "2024-08-06T12:27:33.356168",
-    "end_time": "2024-08-06T12:27:34.054420"
+    "start_time": "2024-08-09T13:56:34.635482",
+    "end_time": "2024-08-09T13:56:35.654104"
   },
-  "ts": "2024-08-06T12:27:34.054459",
+  "ts": "2024-08-09T13:56:35.654148",
   "tags": "-",
   "meta": null,
   "main_input": "hello",
-  "main_output": "This is my response to a prompt of length 167 with a model derp with temperature 0.5.",
+  "main_output": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
   "main_error": null,
   "calls": [
     {
-      "call_id": "b4e02c1d-a144-4576-8b7d-b84e522c0d1c",
+      "call_id": "7c5a6705-6cbc-4b95-9f6d-619bd586b99d",
       "stack": [
         {
           "path": "app",
@@ -37,7 +37,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -55,7 +55,7 @@
                 },
                 "bases": null
               },
-              "id": 13950958096,
+              "id": 14311892816,
               "init_bindings": null
             },
             "name": "invoke"
@@ -68,14 +68,14 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.507673",
-        "end_time": "2024-08-06T12:27:33.515154"
+        "start_time": "2024-08-09T13:56:34.816283",
+        "end_time": "2024-08-09T13:56:34.826603"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "6934f0f0-b491-4606-9c63-20bc9933c83d",
+      "call_id": "fed44372-f820-4401-9862-170eca67f85a",
       "stack": [
         {
           "path": "app",
@@ -89,7 +89,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -107,7 +107,7 @@
                 },
                 "bases": null
               },
-              "id": 13950958096,
+              "id": 14311892816,
               "init_bindings": null
             },
             "name": "invoke"
@@ -120,14 +120,14 @@
       "rets": "Record placeholder",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.545357",
-        "end_time": "2024-08-06T12:27:33.553114"
+        "start_time": "2024-08-09T13:56:34.873288",
+        "end_time": "2024-08-09T13:56:34.883940"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "4689431e-b567-46d0-a44f-96474ea2352c",
+      "call_id": "c8146037-eded-469e-80ba-089139f61b81",
       "stack": [
         {
           "path": "app",
@@ -141,7 +141,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -159,7 +159,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -177,7 +177,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957520,
+              "id": 14311892240,
               "init_bindings": null
             },
             "name": "retrieve_chunks"
@@ -193,14 +193,14 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.622876",
-        "end_time": "2024-08-06T12:27:33.630764"
+        "start_time": "2024-08-09T13:56:34.987211",
+        "end_time": "2024-08-09T13:56:34.999602"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "76860928-cbd2-423c-8305-e68688dcd959",
+      "call_id": "37660d71-abe5-42d9-9e50-2c9e0867b285",
       "stack": [
         {
           "path": "app",
@@ -214,7 +214,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -232,7 +232,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -250,7 +250,7 @@
                 },
                 "bases": null
               },
-              "id": 13950958048,
+              "id": 14311892768,
               "init_bindings": null
             },
             "name": "rerank"
@@ -277,14 +277,14 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.661855",
-        "end_time": "2024-08-06T12:27:33.669888"
+        "start_time": "2024-08-09T13:56:35.050251",
+        "end_time": "2024-08-09T13:56:35.063390"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "a0388c8d-bf92-414c-b093-082f2a060ca3",
+      "call_id": "274c92e4-530e-48b2-98a1-17b5a15d7d78",
       "stack": [
         {
           "path": "app",
@@ -298,7 +298,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -316,7 +316,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -334,7 +334,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -352,7 +352,7 @@
                 },
                 "bases": null
               },
-              "id": 13950945520,
+              "id": 14311890896,
               "init_bindings": null
             },
             "name": "invoke"
@@ -365,14 +365,14 @@
       "rets": "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.741505",
-        "end_time": "2024-08-06T12:27:33.762190"
+        "start_time": "2024-08-09T13:56:35.184843",
+        "end_time": "2024-08-09T13:56:35.224941"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "17477c7c-06e0-4bd3-ba06-b17eaddfd074",
+      "call_id": "c62c39b9-70a7-4e4b-bd4e-c8daa1710690",
       "stack": [
         {
           "path": "app",
@@ -386,7 +386,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -404,7 +404,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -422,7 +422,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -439,14 +439,14 @@
       "rets": "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.701182",
-        "end_time": "2024-08-06T12:27:33.762226"
+        "start_time": "2024-08-09T13:56:35.119320",
+        "end_time": "2024-08-09T13:56:35.225010"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "74a63375-1324-47ac-b6dd-45e7efe59198",
+      "call_id": "565e5578-0aae-42b8-8f47-69226bd1a71c",
       "stack": [
         {
           "path": "app",
@@ -460,7 +460,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -478,7 +478,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -496,7 +496,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -514,7 +514,7 @@
                 },
                 "bases": null
               },
-              "id": 13950956464,
+              "id": 14311891184,
               "init_bindings": null
             },
             "name": "invoke"
@@ -527,14 +527,14 @@
       "rets": "Relevant chunk: olleholleholleh",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.833632",
-        "end_time": "2024-08-06T12:27:33.841717"
+        "start_time": "2024-08-09T13:56:35.331794",
+        "end_time": "2024-08-09T13:56:35.346140"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "072977bb-7f01-4a89-b6da-73cac5f6a793",
+      "call_id": "ce0808f2-3587-4f98-805d-c413999c1dd7",
       "stack": [
         {
           "path": "app",
@@ -548,7 +548,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -566,7 +566,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -584,7 +584,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "process_chunk_by_tool"
@@ -601,14 +601,14 @@
       "rets": "Relevant chunk: olleholleholleh",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.793639",
-        "end_time": "2024-08-06T12:27:33.841745"
+        "start_time": "2024-08-09T13:56:35.275963",
+        "end_time": "2024-08-09T13:56:35.346203"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "ee37094f-04dd-469d-9a2b-f0e78b746613",
+      "call_id": "6712ed0f-84b3-4698-ac49-664aeef2f57d",
       "stack": [
         {
           "path": "app",
@@ -622,7 +622,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -640,7 +640,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "get_context"
@@ -656,14 +656,14 @@
       ],
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.583819",
-        "end_time": "2024-08-06T12:27:33.841761"
+        "start_time": "2024-08-09T13:56:34.931420",
+        "end_time": "2024-08-09T13:56:35.346228"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "3c229caf-2503-49d5-908b-c6696ff7b32b",
+      "call_id": "70228beb-f7bd-4eaf-bc5b-cff588b7b6cf",
       "stack": [
         {
           "path": "app",
@@ -677,7 +677,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -695,7 +695,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957424,
+              "id": 14311892144,
               "init_bindings": null
             },
             "name": "remember"
@@ -708,14 +708,14 @@
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.872815",
-        "end_time": "2024-08-06T12:27:33.880750"
+        "start_time": "2024-08-09T13:56:35.399164",
+        "end_time": "2024-08-09T13:56:35.412282"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "bbb42409-d53f-4b83-94fc-11482d84e283",
+      "call_id": "000306a4-0eb8-4ca5-8105-007b2a8b217f",
       "stack": [
         {
           "path": "app",
@@ -729,7 +729,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -747,7 +747,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957568,
+              "id": 14311892288,
               "init_bindings": null
             },
             "name": "generate"
@@ -757,17 +757,17 @@
       "args": {
         "prompt": "<table>\n\n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>save_stack</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.tool</td>\n                <td>invoke</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>process_chunk_by_tool</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td><genexpr></td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>get_context</td>\n            </tr>\n            \n            <tr>\n                <td>examples.dev.dummy_app.app</td>\n                <td>respond_to_query</td>\n            </tr>\n            </table>\n,Relevant chunk: olleholleholleh"
       },
-      "rets": "This is my response to a prompt of length 880 with a model derp with temperature 0.5.",
+      "rets": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n880 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.911740",
-        "end_time": "2024-08-06T12:27:33.927867"
+        "start_time": "2024-08-09T13:56:35.470222",
+        "end_time": "2024-08-09T13:56:35.494349"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "39446bd1-e105-4eb6-becd-f9f05bc461d8",
+      "call_id": "73f78997-fdc2-4d93-b587-90933575fa54",
       "stack": [
         {
           "path": "app",
@@ -781,7 +781,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -799,7 +799,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957712,
+              "id": 14311892432,
               "init_bindings": null
             },
             "name": "fill"
@@ -808,19 +808,19 @@
       ],
       "args": {
         "question": "hello",
-        "context": "This is my response to a prompt of length 880 with a model derp with temperature 0.5."
+        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n880 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
       },
-      "rets": "Please answer the following question given the context.\nQUESTION: hello\nCONTEXT: This is my response to a prompt of length 880 with a model derp with temperature 0.5.\n",
+      "rets": "Please answer the following question given the context.\nQUESTION: hello\nCONTEXT: \nFirst an integer: 2 . Also, this is my response to a prompt of length\n880 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.959988",
-        "end_time": "2024-08-06T12:27:33.967966"
+        "start_time": "2024-08-09T13:56:35.535777",
+        "end_time": "2024-08-09T13:56:35.545546"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "6a97b526-8f8d-4b36-bb5f-01b6a96b3c02",
+      "call_id": "62df3d4f-2e51-450d-8bf2-1c788a849612",
       "stack": [
         {
           "path": "app",
@@ -834,7 +834,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -852,7 +852,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957568,
+              "id": 14311892288,
               "init_bindings": null
             },
             "name": "generate"
@@ -860,19 +860,19 @@
         }
       ],
       "args": {
-        "prompt": "Please answer the following question given the context.\nQUESTION: hello\nCONTEXT: This is my response to a prompt of length 880 with a model derp with temperature 0.5.\n"
+        "prompt": "Please answer the following question given the context.\nQUESTION: hello\nCONTEXT: \nFirst an integer: 2 . Also, this is my response to a prompt of length\n880 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n\n"
       },
-      "rets": "This is my response to a prompt of length 167 with a model derp with temperature 0.5.",
+      "rets": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.999062",
-        "end_time": "2024-08-06T12:27:34.014872"
+        "start_time": "2024-08-09T13:56:35.584908",
+        "end_time": "2024-08-09T13:56:35.602707"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "02530d3e-753c-4d36-8a92-ba8eaed44cbc",
+      "call_id": "61bb00cd-e6ff-4e5f-a89e-bd081d34ca14",
       "stack": [
         {
           "path": "app",
@@ -886,7 +886,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -904,7 +904,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957424,
+              "id": 14311892144,
               "init_bindings": null
             },
             "name": "remember"
@@ -912,19 +912,19 @@
         }
       ],
       "args": {
-        "data": "This is my response to a prompt of length 167 with a model derp with temperature 0.5."
+        "data": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
       },
       "rets": null,
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:34.046638",
-        "end_time": "2024-08-06T12:27:34.054399"
+        "start_time": "2024-08-09T13:56:35.643225",
+        "end_time": "2024-08-09T13:56:35.654070"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     },
     {
-      "call_id": "74e224dc-23b5-4c07-8c18-2dc77634c096",
+      "call_id": "714fc0e2-9ee8-47e7-be3b-3356b2f20f33",
       "stack": [
         {
           "path": "app",
@@ -938,7 +938,7 @@
                 },
                 "bases": null
               },
-              "id": 13950957328,
+              "id": 14311892048,
               "init_bindings": null
             },
             "name": "respond_to_query"
@@ -948,14 +948,14 @@
       "args": {
         "query": "hello"
       },
-      "rets": "This is my response to a prompt of length 167 with a model derp with temperature 0.5.",
+      "rets": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
       "error": null,
       "perf": {
-        "start_time": "2024-08-06T12:27:33.356168",
-        "end_time": "2024-08-06T12:27:34.054420"
+        "start_time": "2024-08-09T13:56:34.635482",
+        "end_time": "2024-08-09T13:56:35.654104"
       },
-      "pid": 51962,
-      "tid": 13061594
+      "pid": 99442,
+      "tid": 14134719
     }
   ]
 }

@@ -157,6 +157,7 @@ class LLMProvider(Provider):
         Returns:
             The score on a 0-1 scale.
         """
+
         assert self.endpoint is not None, "Endpoint is not set."
         assert (
             max_score_val > min_score_val

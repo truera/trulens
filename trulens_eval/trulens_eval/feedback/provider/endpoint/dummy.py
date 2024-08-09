@@ -205,7 +205,11 @@ class DummyAPI(pydantic.BaseModel):
     def _fake_completion(
         self, model: str, prompt: str, temperature: float
     ) -> Dict:
-        generated_text: str = f"This is my response to a prompt of length {len(prompt)} with a model {model} with temperature {temperature}."
+        generated_text: str = f"""
+First an integer: 2 . Also, this is my response to a prompt of length
+{len(prompt)} with a model {model} with temperature {temperature}. Also, here is
+an integer in case this is being used as a score: 2
+"""
 
         return {
             "completion": generated_text,
