@@ -6,8 +6,7 @@
 
 TruLens uses Node.js for building react components for the dashboard. Install Node.js with the following command:
 
-```bash
-
+See this page for instructions on installing Node.js: [Node.js](https://nodejs.org/en/download/)
 
 
 ### Install homebrew
