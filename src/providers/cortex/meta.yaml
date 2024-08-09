@@ -36,7 +36,7 @@ test:
 
 about:
   home: https://trulens.org/
-  summary: Library to systematically track and evaluate LLM based applications.
+  summary: A TruLens extension package adding Snowflake Cortex support for LLM App evaluation.
   license: MIT
 
 extra:
