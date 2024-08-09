@@ -355,7 +355,7 @@ class LLMProvider(Provider):
             )
 
         return self.generate_score(
-            system_prompt=ContextRelevance.system_prompt.template,
+            system_prompt=ContextRelevance.system_prompt,
             user_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
@@ -422,7 +422,7 @@ class LLMProvider(Provider):
             )
 
         return self.generate_score_and_reasons(
-            system_prompt=ContextRelevance.system_prompt.template,
+            system_prompt=ContextRelevance.system_prompt,
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
@@ -479,8 +479,8 @@ class LLMProvider(Provider):
 
         try:
             return self.generate_confidence_score(
-                verb_confidence_prompt=ContextRelevance.system_prompt.template
-                + ContextRelevance.verb_confidence_prompt.template,
+                verb_confidence_prompt=ContextRelevance.system_prompt
+                + ContextRelevance.verb_confidence_prompt,
                 user_prompt=str.format(
                     prompts.CONTEXT_RELEVANCE_USER,
                     question=question,
