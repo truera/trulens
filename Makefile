@@ -86,10 +86,14 @@ coverage:
 # the latest (supported) python version.
 test-static:
 	$(CONDA)
-	poetry run pytest --rootdir=. tests.unit.static.test_static
+	poetry run pytest --rootdir=. tests/unit/static/test_static.py
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
+
+test-deprecation:
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
