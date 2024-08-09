@@ -12,8 +12,9 @@ from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
-from trulens.dashboard import display
+from trulens.core.utils.trulens import get_feedback_result
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.display import get_icon
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
 
@@ -186,7 +187,7 @@ def trulens_feedback(record: Record):
         feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
             score=call_data["result"],
             calls=[],
-            icon=display.get_icon(fdef=feedback, result=feedback_result.result),
+            icon=get_icon(fdef=feedback, result=feedback_result.result),
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
@@ -203,9 +204,7 @@ def trulens_feedback(record: Record):
 
     if selected_feedback is not None:
         st.dataframe(
-            display.get_feedback_result(
-                record, feedback_name=selected_feedback
-            ),
+            get_feedback_result(record, feedback_name=selected_feedback),
             use_container_width=True,
             hide_index=True,
         )
