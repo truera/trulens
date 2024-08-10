@@ -33,7 +33,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[mod_feedback_schema.FeedbackDefinition] = []
+    feedback_definitions: Sequence[mod_types_schema.FeedbackDefinitionID] = []
     """Feedback functions to evaluate on each record."""
 
     feedback_mode: mod_feedback_schema.FeedbackMode = (
@@ -92,6 +92,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["tags"] = ""
         kwargs["metadata"] = {}
         kwargs["app_extra_json"] = app_extra_json or dict()
+        kwargs["feedback_definitions"] = [
+            f.feedback_definition_id for f in kwargs.get("feedbacks", [])
+        ]
 
         super().__init__(**kwargs)
 
