@@ -10,4 +10,8 @@ steps:
   - bash: |
       set -e
       make test-${{ parameters.testSuite }}-required
+    env:
+      # tests make use of various APIs:
+      OPENAI_API_KEY: $(OPENAI_API_KEY)
+      HUGGINGFACE_API_KEY: $(HUGGINGFACE_API_KEY)
     displayName: Run Required Test Suite
