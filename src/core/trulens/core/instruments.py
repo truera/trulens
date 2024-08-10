@@ -1036,11 +1036,16 @@ class instrument(AddInstruments):
         self.method(cls, name)
 
 
-def tag(key: str, value: Any, collection: bool = False):
+def label_value(
+    value: Any, labels: Union[str, Iterable[str]], collection: bool = False
+):
     """Set inline data for the given key."""
 
     def _find_contexts_frame(f):
         return id(f) == id(mod_endpoint.Endpoint.track_all_costs_tally.__code__)
+
+    if isinstance(labels, str):
+        labels = [labels]
 
     # get previously known inline data
     contexts: Optional[Set[RecordingContext]] = get_first_local_in_call_stack(
@@ -1049,7 +1054,11 @@ def tag(key: str, value: Any, collection: bool = False):
         offset=1,
         skip=python.caller_frame(),
     )
-    # Note: are empty sets false?
-    if contexts:
-        for context in contexts:
-            context.add_inline_data(key, jsonify(value), collection=collection)
+    if contexts is None:
+        return
+
+    for context in contexts:
+        for label in labels:
+            context.add_inline_data(
+                label, jsonify(value), collection=collection
+            )

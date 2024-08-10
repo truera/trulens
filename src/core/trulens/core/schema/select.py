@@ -36,6 +36,9 @@ class Select:
     RecordOutput: Query = Record.main_output
     """Selector for the main app output."""
 
+    RecordInlineData: Query = Record.inline_data
+    """Selector for the inline data of the record."""
+
     RecordCalls: Query = Record.app  # type: ignore
     """Selector for the calls made by the wrapped app.
 
