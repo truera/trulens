@@ -104,6 +104,21 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def batch_insert_record(
+        self, records: List[Record]
+    ) -> List[mod_types_schema.RecordID]:
+        """
+        Upsert a batch of records into the database.
+
+        Args:
+            records: The records to insert or update.
+
+        Returns:
+            The ids of the given records.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
@@ -170,6 +185,21 @@ class DB(SerialModel, abc.ABC):
 
         Returns:
             The id of the given feedback result.
+        """
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def batch_insert_feedback(
+        self, feedback_results: List[FeedbackResult]
+    ) -> List[mod_types_schema.FeedbackResultID]:
+        """Upsert a batch of feedback results into the database.
+
+        Args:
+            feedback_results: The feedback results to insert or update.
+
+        Returns:
+            The ids of the given feedback results.
         """
 
         raise NotImplementedError()
@@ -271,7 +301,7 @@ class DB(SerialModel, abc.ABC):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """Get records fom the database.
+        """Get records from the database.
 
         Args:
             app_ids: If given, retrieve only the records for the given apps.

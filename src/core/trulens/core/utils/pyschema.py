@@ -139,14 +139,14 @@ class Module(SerialModel):
     package_name: Optional[str] = None  # some modules are not in a package
     module_name: str
 
-    def of_module(mod: ModuleType, loadable: bool = False) -> Module:
+    def of_module(mod: ModuleType, loadable: bool = False) -> "Module":
         if loadable and mod.__name__ == "__main__":
             # running in notebook
             raise ImportError(f"Module {mod} is not importable.")
 
         return Module(package_name=mod.__package__, module_name=mod.__name__)
 
-    def of_module_name(module_name: str, loadable: bool = False) -> Module:
+    def of_module_name(module_name: str, loadable: bool = False) -> "Module":
         if loadable and module_name == "__main__":
             # running in notebook
             raise ImportError(f"Module {module_name} is not importable.")
@@ -184,7 +184,7 @@ class Class(SerialModel):
     def __str__(self):
         return f"{self.name}({self.module.module_name if self.module is not None else 'no module'})"
 
-    def base_class(self) -> Class:
+    def base_class(self) -> "Class":
         """
         Get the deepest base class in the same module as this class.
         """
@@ -213,7 +213,7 @@ class Class(SerialModel):
     @staticmethod
     def of_class(
         cls: type, with_bases: bool = False, loadable: bool = False
-    ) -> Class:
+    ) -> "Class":
         ret = Class(
             name=cls.__name__,
             module=Module.of_module_name(object_module(cls), loadable=loadable),
@@ -465,7 +465,7 @@ class FunctionOrMethod(SerialModel):
             return super().model_validate(obj)
 
     @staticmethod
-    def of_callable(c: Callable, loadable: bool = False) -> FunctionOrMethod:
+    def of_callable(c: Callable, loadable: bool = False) -> "FunctionOrMethod":
         """
         Serialize the given callable. If `loadable` is set, tries to add enough
         info for the callable to be deserialized.
@@ -499,7 +499,7 @@ class Method(FunctionOrMethod):
         cls: Optional[type] = None,
         obj: Optional[object] = None,
         loadable: bool = False,
-    ) -> Method:
+    ) -> "Method":
         if obj is None:
             assert inspect.ismethod(
                 meth
@@ -550,7 +550,7 @@ class Function(FunctionOrMethod):
         module: Optional[ModuleType] = None,
         cls: Optional[type] = None,
         loadable: bool = False,
-    ) -> Function:  # actually: class
+    ) -> "Function":  # actually: class
         if module is None:
             module = Module.of_module_name(
                 object_module(func), loadable=loadable

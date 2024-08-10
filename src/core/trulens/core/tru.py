@@ -8,9 +8,11 @@ import json
 import logging
 from multiprocessing import Process
 from pprint import PrettyPrinter
+import queue
 import re
 import threading
 from threading import Thread
+import time
 from time import sleep
 from typing import (
     Any,
@@ -86,11 +88,12 @@ class Tru(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requres annotation
+            Custom apps containing custom structures and methods. Requires annotation
             of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
@@ -139,6 +142,9 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
+    RECORDS_BATCH_TIMEOUT: int = 10
+    """Time to wait before inserting a batch of records into the database."""
+
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
 
@@ -161,6 +167,10 @@ class Tru(python.SingletonPerName):
 
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
+
+    batch_record_queue = queue.Queue()
+
+    batch_thread = None
 
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
@@ -345,10 +355,62 @@ class Tru(python.SingletonPerName):
             record = mod_record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
-
         return self.db.insert_record(record=record)
 
     update_record = add_record
+
+    def add_record_nowait(
+        self,
+        record: mod_record_schema.Record,
+    ) -> None:
+        """Add a record to the queue to be inserted in the next batch."""
+        if self.batch_thread is None:
+            self.batch_thread = threading.Thread(
+                target=self.batch_loop, daemon=True
+            )
+            self.batch_thread.start()
+        self.batch_record_queue.put(record)
+
+    def batch_loop(self):
+        while True:
+            time.sleep(self.RECORDS_BATCH_TIMEOUT)
+            records = []
+            while True:
+                try:
+                    record = self.batch_record_queue.get_nowait()
+                    records.append(record)
+                except queue.Empty:
+                    break
+            if records:
+                try:
+                    self.db.batch_insert_record(records)
+                except Exception as e:
+                    # Re-queue the records that failed to be inserted
+                    for record in records:
+                        self.batch_record_queue.put(record)
+                    logger.error(
+                        "Re-queued records due to insertion error {}", e
+                    )
+                    continue
+                feedback_results = []
+                apps = {}
+                for record in records:
+                    app_id = record.app_id
+                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    feedback_definitions = app.get("feedback_definitions", [])
+                    # TODO(Dave): Modify this to add only client side feedback results
+                    for feedback_definition_id in feedback_definitions:
+                        feedback_results.append(
+                            mod_feedback_schema.FeedbackResult(
+                                feedback_definition_id=feedback_definition_id,
+                                record_id=record.record_id,
+                                name="feedback_name",  # this will be updated later by deferred evaluator
+                            )
+                        )
+                try:
+                    self.db.batch_insert_feedback(feedback_results)
+                except Exception as e:
+                    logger.error("Failed to insert feedback results {}", e)
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
@@ -430,7 +492,6 @@ class Tru(python.SingletonPerName):
                         on_done(temp)
                     finally:
                         return temp
-
                 return temp
 
             fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
@@ -440,9 +501,6 @@ class Tru(python.SingletonPerName):
             # Have to roll the on_done callback into the submitted function
             # because the result() is returned before callback runs otherwise.
             # We want to do db work before result is returned.
-
-            # if on_done is not None:
-            #    fut.add_done_callback(on_done)
 
             feedbacks_and_futures.append((ffunc, fut))
 
