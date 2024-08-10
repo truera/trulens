@@ -356,6 +356,9 @@ class RecordingContext:
         self.records: List[mod_record_schema.Record] = []
         """Completed records."""
 
+        self.inline_data: Dict[str, Any] = {}
+        """Inline data to attach to the currently tracked record."""
+
         self.lock: Lock = Lock()
         """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
 
@@ -410,11 +413,20 @@ class RecordingContext:
             # processing calls with awaitable or generator results.
             self.calls[call.call_id] = call
 
+    def add_inline_data(self, key: str, value: Any, **kwargs):
+        """
+        Add inline data to the currently tracked call list.
+        """
+        with self.lock:
+            # TODO: make value a constant
+            self.inline_data[key] = {"value": value, **kwargs}
+
     def finish_record(
         self,
         calls_to_record: Callable[
             [
                 List[mod_record_schema.RecordAppCall],
+                Dict[str, Dict[str, Any]],
                 mod_types_schema.Metadata,
                 Optional[mod_record_schema.Record],
             ],
@@ -429,9 +441,13 @@ class RecordingContext:
 
         with self.lock:
             record = calls_to_record(
-                list(self.calls.values()), self.record_metadata, existing_record
+                list(self.calls.values()),
+                self.inline_data,
+                self.record_metadata,
+                existing_record,
             )
             self.calls = {}
+            self.inline_data = {}
 
             if existing_record is None:
                 # If existing record was given, we assume it was already
@@ -1088,6 +1104,7 @@ class App(
 
         def build_record(
             calls: Iterable[mod_record_schema.RecordAppCall],
+            inline_data: JSON,
             record_metadata: JSON,
             existing_record: Optional[mod_record_schema.Record] = None,
         ) -> mod_record_schema.Record:
@@ -1107,6 +1124,7 @@ class App(
                 perf=perf,
                 app_id=self.app_id,
                 tags=self.tags,
+                inline_data=jsonify(inline_data),
                 meta=jsonify(record_metadata),
             )
 

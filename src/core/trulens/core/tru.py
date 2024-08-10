@@ -485,7 +485,11 @@ class Tru(python.SingletonPerName):
         for ffunc in feedback_functions:
             # Run feedback function and the on_done callback. This makes sure
             # that Future.result() returns only after on_done has finished.
-            def run_and_call_callback(ffunc, app, record):
+            def run_and_call_callback(
+                ffunc: feedback.Feedback,
+                app: mod_app_schema.AppDefinition,
+                record: mod_record_schema.Record,
+            ):
                 temp = ffunc.run(app=app, record=record)
                 if on_done is not None:
                     try:

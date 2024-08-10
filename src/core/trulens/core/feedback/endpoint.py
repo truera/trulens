@@ -12,6 +12,7 @@ import sys
 from time import sleep
 from types import ModuleType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -20,6 +21,7 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -45,6 +47,9 @@ from trulens.core.utils.python import wrap_awaitable
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+
+if TYPE_CHECKING:
+    from trulens.core.app.base import RecordingContext
 
 logger = logging.getLogger(__name__)
 
@@ -515,6 +520,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     @staticmethod
     def track_all_costs_tally(
         __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        contexts: Set[RecordingContext],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -527,6 +533,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
+        assert contexts, "No recording context set."
 
         result, cbs = Endpoint.track_all_costs(
             __func,

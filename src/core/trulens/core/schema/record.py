@@ -131,6 +131,9 @@ class Record(serial.SerialModel, Hashable):
     main_error: Optional[serial.JSON] = None  # if error
     """The app's main error if there was an error."""
 
+    inline_data: Optional[serial.JSON] = None
+    """Inline data added to the record."""
+
     calls: List[RecordAppCall] = []
     """The collection of calls recorded.
 

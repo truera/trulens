@@ -61,6 +61,7 @@ from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
 if TYPE_CHECKING:
+    from trulens.core.app import App
     from trulens.core.app.base import RecordingContext
 
 logger = logging.getLogger(__name__)
@@ -406,21 +407,22 @@ class Instrument:
                 inspect.isasyncgenfunction(func),
             )
 
-            apps = getattr(tru_wrapper, Instrument.APPS)
+            apps: Iterable[App] = getattr(tru_wrapper, Instrument.APPS)
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
             # Get any contexts already known from higher in the call stack.
-            contexts = get_first_local_in_call_stack(
-                key="contexts",
-                func=find_instrumented,
-                offset=1,
-                skip=python.caller_frame(),
+            _contexts: Optional[Set[RecordingContext]] = (
+                get_first_local_in_call_stack(
+                    key="contexts",
+                    func=find_instrumented,
+                    offset=1,
+                    skip=python.caller_frame(),
+                )
             )
             # Note: are empty sets false?
-            if contexts is None:
-                contexts = set()
+            contexts: Set[RecordingContext] = _contexts or set()
 
             # And add any new contexts from all apps wishing to record this
             # function. This may produce some of the same contexts that were
@@ -480,11 +482,8 @@ class Instrument:
 
             # First prepare the stacks for each context.
             for ctx in contexts:
-                # Get app that has instrumented this method.
-                app = ctx.app
-
                 # The path to this method according to the app.
-                path = app.get_method_path(
+                path = ctx.app.get_method_path(
                     args[0], func
                 )  # hopefully args[0] is self, owner of func
 
@@ -532,7 +531,7 @@ class Instrument:
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
                 rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
-                    func, *args, **kwargs
+                    func, contexts, *args, **kwargs
                 )
 
             except BaseException as e:
@@ -1035,3 +1034,22 @@ class instrument(AddInstruments):
         # Note that this does not actually change the method, just adds it to
         # list of filters.
         self.method(cls, name)
+
+
+def tag(key: str, value: Any, collection: bool = False):
+    """Set inline data for the given key."""
+
+    def _find_contexts_frame(f):
+        return id(f) == id(mod_endpoint.Endpoint.track_all_costs_tally.__code__)
+
+    # get previously known inline data
+    contexts: Optional[Set[RecordingContext]] = get_first_local_in_call_stack(
+        key="contexts",
+        func=_find_contexts_frame,
+        offset=1,
+        skip=python.caller_frame(),
+    )
+    # Note: are empty sets false?
+    if contexts:
+        for context in contexts:
+            context.add_inline_data(key, jsonify(value), collection=collection)

@@ -16,6 +16,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Tuple,
     TypeVar,
@@ -359,7 +360,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         def prepare_feedback(
             row,
-        ) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
+        ) -> Optional[mod_feedback_schema.FeedbackResult]:
             record_json = row.record_json
             record = mod_record_schema.Record.model_validate(record_json)
 
@@ -1047,9 +1048,10 @@ Feedback function signature:
                 )
             )
 
-            feedback_result = self.run(app=app, record=record).update(
-                feedback_result_id=feedback_result_id
-            )
+            feedback_result = self.run(
+                app=app,
+                record=record,
+            ).update(feedback_result_id=feedback_result_id)
 
         except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
@@ -1189,8 +1191,16 @@ Feedback function signature:
         if app is not None:
             source_data["__app__"] = app
 
-        if record is not None:
+        if record:
             source_data["__record__"] = record.layout_calls_as_app()
+
+            if isinstance(record.inline_data, Mapping):
+                inline_data = {
+                    k: val["value"]
+                    for k, val in record.inline_data
+                    if isinstance(val, Mapping) and "value" in val
+                }
+                source_data = {**source_data, **inline_data}
 
         return source_data
 
