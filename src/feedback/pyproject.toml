@@ -7,7 +7,7 @@ requires = [
 [tool.poetry]
 name = "trulens-feedback"
 version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
+description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
