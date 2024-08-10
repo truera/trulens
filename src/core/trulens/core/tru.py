@@ -169,6 +169,8 @@ class Tru(python.SingletonPerName):
 
     batch_record_queue = queue.Queue()
 
+    batch_thread = None
+
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
 
@@ -253,9 +255,6 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
-
-        self.batch_thread = threading.Thread(target=self.batch_loop)
-        self.batch_thread.start()
 
     @staticmethod
     def _validate_and_compute_schema_name(name):
@@ -364,6 +363,11 @@ class Tru(python.SingletonPerName):
         record: mod_record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
+        if self.batch_thread is None:
+            self.batch_thread = threading.Thread(
+                target=self.batch_loop, daemon=True
+            )
+            self.batch_thread.start()
         self.batch_record_queue.put(record)
 
     def batch_loop(self):
