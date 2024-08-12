@@ -70,7 +70,7 @@ def re_configured_rating(
 
     vals = set()
     for match in matches:
-        rating = float(match) if allow_decimal else int(match)
+        rating = float(match) if allow_decimal else int(float(match))
         if min_score_val <= rating <= max_score_val:
             vals.add(rating)
         else:
