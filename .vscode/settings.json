@@ -13,4 +13,7 @@
     "files.exclude": {
         "**/.venv": true
     },
+    "python.analysis.extraPaths": [
+        "./src/dashboard"
+    ],
 }
