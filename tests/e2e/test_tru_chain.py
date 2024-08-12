@@ -42,7 +42,7 @@ class TestTruChain(JSONTestCase):
             "PINECONE_ENV",
         )
 
-    def _create_basic_chain(self, app_id: Optional[str] = None):
+    def _create_basic_chain(self, app_version: Optional[str] = None):
         # Create simple QA chain.
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
@@ -55,7 +55,7 @@ class TestTruChain(JSONTestCase):
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
         tc = TruChain(
-            chain, app_version=app_id, feedback_mode=FeedbackMode.WITH_APP
+            chain, app_version=app_version, feedback_mode=FeedbackMode.WITH_APP
         )
 
         return tc
@@ -64,7 +64,7 @@ class TestTruChain(JSONTestCase):
     def test_record_metadata_plain(self):
         # Test inclusion of metadata in records.
 
-        # Need unique app_id per test as they may be run in parallel and have
+        # Need unique app_version per test as they may be run in parallel and have
         # same ids.
         tru = Tru()
         tc = self._create_basic_chain(app_version="metaplain")
@@ -78,7 +78,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -87,7 +87,7 @@ class TestTruChain(JSONTestCase):
         new_meta = "this is new meta"
         rec.meta = new_meta
         tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
@@ -97,7 +97,7 @@ class TestTruChain(JSONTestCase):
         # Record with no meta:
         _, rec = tc.with_record(tc.app, message)
         self.assertEqual(rec.meta, None)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
@@ -105,7 +105,7 @@ class TestTruChain(JSONTestCase):
         # Update it to add meta:
         rec.meta = new_meta
         tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = tru.get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
@@ -114,7 +114,7 @@ class TestTruChain(JSONTestCase):
     def test_record_metadata_json(self):
         # Test inclusion of metadata in records.
 
-        # Need unique app_id per test as they may be run in parallel and have
+        # Need unique app_version per test as they may be run in parallel and have
         # same ids.
         tc = self._create_basic_chain(app_version="metajson")
 
@@ -127,7 +127,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -137,7 +137,7 @@ class TestTruChain(JSONTestCase):
         rec.meta = new_meta
         Tru().update_record(rec)
 
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = Tru().get_records_and_feedback([tc.app_version])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
@@ -234,7 +234,7 @@ class TestTruChain(JSONTestCase):
                     "record_id",
                     "tid",
                     "pid",
-                    "app_id",
+                    "app_version",
                     "cost",  # TODO(piotrm): cost tracking not working with async
                 ]
             ),

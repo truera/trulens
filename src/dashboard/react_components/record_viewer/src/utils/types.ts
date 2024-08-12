@@ -1,5 +1,5 @@
 export interface AppJSONRaw {
-  app_id: string;
+  app_version: string;
   feedback_definitions: [];
   feedback_mode: string;
   root_class: {
@@ -111,7 +111,7 @@ export interface CallJSONRaw {
 
 export interface RecordJSONRaw {
   record_id: string;
-  app_id: string;
+  app_version: string;
   cost: {
     n_requests: number;
     n_successful_requests: number;

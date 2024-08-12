@@ -14,7 +14,7 @@ feedback_result = provider.relevance("<some prompt>", "<some response>")
 In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using `tru.run_feedback_functions`:
 
 ```python
-tru_rag = TruCustomApp(rag, app_id = 'RAG v1')
+tru_rag = TruCustomApp(rag, app_version = 'RAG v1')
 
 result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
 feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])

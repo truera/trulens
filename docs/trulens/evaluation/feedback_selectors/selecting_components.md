@@ -145,7 +145,7 @@ For a Record:
 ```python
 class Record(SerialModel):
     record_id: RecordID
-    app_id: AppID
+    app_version: AppVersion
 
     cost: Optional[Cost] = None
     perf: Optional[Perf] = None
@@ -170,7 +170,7 @@ For an App:
 class AppDefinition(WithClassInfo, SerialModel, ABC):
     ...
 
-    app_id: AppID
+    app_version: AppVersion
 
     feedback_definitions: Sequence[FeedbackDefinition] = []
 

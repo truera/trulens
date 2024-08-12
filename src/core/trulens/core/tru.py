@@ -381,7 +381,7 @@ class Tru(python.SingletonPerName):
     def batch_loop(self):
         while True:
             time.sleep(self.RECORDS_BATCH_TIMEOUT)
-            records = []
+            records: List[mod_record_schema.Record] = []
             while True:
                 try:
                     record = self.batch_record_queue.get_nowait()
@@ -402,8 +402,10 @@ class Tru(python.SingletonPerName):
                 feedback_results = []
                 apps = {}
                 for record in records:
-                    app_id = record.app_id
-                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    app_version = record.app_version
+                    app = apps.setdefault(
+                        app_version, self.get_version(app_version=app_version)
+                    )
                     feedback_definitions = app.get("feedback_definitions", [])
                     # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:

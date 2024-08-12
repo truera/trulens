@@ -371,7 +371,7 @@ def debug_dump(db: SQLAlchemyDB):
         print("  # app")
         ress = session.query(db.orm.AppDefinition).all()
         for res in ress:
-            print("    app", res.app_id)  # no feedback results
+            print("    app", res.app_version)  # no feedback results
             for subres in res.records:
                 print("      record", subres.record_id)
 

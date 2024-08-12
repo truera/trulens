@@ -97,6 +97,6 @@ if user_input:
         tru.add_feedback(
             name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
-            app_version=tc.app_id,
+            app_version=tc.app_version,
             result=thumb_result,
         )

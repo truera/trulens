@@ -328,7 +328,7 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         _, returned_feedback_names = tru.get_records_and_feedback(
-            app_versions=[tru_app.app_id]
+            app_versions=[tru_app.app_version]
         )
 
         # Check we got the right feedback names from db.
@@ -397,7 +397,7 @@ class TestTru(TestCase):
 
         # Check that results were added to db.
         _, returned_feedback_names = tru.get_records_and_feedback(
-            app_versions=[tru_app.app_id]
+            app_versions=[tru_app.app_version]
         )
 
         # Check we got the right feedback names.
@@ -412,31 +412,31 @@ class TestTru(TestCase):
         pass
 
     # def test_add_app(self):
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_version=app_id, model_dump_json="{}")
+    #     app_version = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_version=app_version, model_dump_json="{}")
     #     tru = Tru()
 
     #     # Action: Add the app to the database
-    #     added_app_id = tru.add_app(app_definition)
+    #     added_app_version = tru.add_app(app_definition)
 
     #     # Assert: Verify the app was added successfully
-    #     self.assertEqual(app_id, added_app_id)
-    #     retrieved_app = tru.get_app(app_id)
+    #     self.assertEqual(app_version, added_app_version)
+    #     retrieved_app = tru.get_version(app_version)
     #     self.assertIsNotNone(retrieved_app)
-    #     self.assertEqual(retrieved_app['app_id'], app_id)
+    #     self.assertEqual(retrieved_app['app_version'], app_version)
 
     # def test_delete_app(self):
     #     # Setup: Add an app to the database
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_version=app_id, model_dump_json="{}")
+    #     app_version = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_version=app_version, model_dump_json="{}")
     #     tru = Tru()
     #     tru.add_app(app_definition)
 
     #     # Action: Delete the app
-    #     tru.delete_app(app_id)
+    #     tru.delete_app(app_version)
 
     #     # Assert: Verify the app is deleted
-    #     retrieved_app = tru.get_app(app_id)
+    #     retrieved_app = tru.get_app(app_version)
     #     self.assertIsNone(retrieved_app)
 
     def test_add_feedback(self):

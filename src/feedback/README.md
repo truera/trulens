@@ -338,7 +338,7 @@ in the `AppDefinition` class in `schema.py`:
 class AppDefinition(WithClassInfo, SerialModel, ABC):
     ...
 
-    app_id: AppID
+    app_version: AppVersion
 
     feedback_definitions: Sequence[FeedbackDefinition] = []
 
@@ -367,7 +367,7 @@ inputs/outputs and other information collected during the execution of an app:
 ```python
 class Record(SerialModel):
     record_id: RecordID
-    app_id: AppID
+    app_version: AppVersion
 
     cost: Optional[Cost] = None
     perf: Optional[Perf] = None

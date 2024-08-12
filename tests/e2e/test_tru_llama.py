@@ -65,7 +65,7 @@ class TestLlamaIndex(JSONTestCase):
                 [
                     "calls",  # async/sync have different set of internal calls, so cannot easily compare
                     "name",
-                    "app_id",
+                    "app_version",
                     "ts",
                     "start_time",
                     "end_time",
@@ -110,7 +110,7 @@ class TestLlamaIndex(JSONTestCase):
                 [
                     # "calls",
                     "name",
-                    "app_id",
+                    "app_version",
                     "ts",
                     "start_time",
                     "end_time",
@@ -151,7 +151,7 @@ class TestLlamaIndex(JSONTestCase):
                 [
                     "calls",  # async/sync have different set of internal calls, so cannot easily compare
                     "name",
-                    "app_id",
+                    "app_version",
                     "ts",
                     "start_time",
                     "end_time",

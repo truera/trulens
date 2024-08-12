@@ -22,7 +22,7 @@ class RecordViewer extends StreamlitComponentBase {
     /**
      * Actual code begins
      */
-    const root = createTreeFromCalls(recordJSON, appJSON.app_id);
+    const root = createTreeFromCalls(recordJSON, appJSON.app_version);
 
     const nodeMap = createNodeMap(root);
 
