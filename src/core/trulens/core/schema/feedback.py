@@ -58,6 +58,12 @@ class FeedbackMode(str, Enum):
     """Evaluate later via the process started by
     `tru.start_deferred_feedback_evaluator`."""
 
+    SERVER = "server"
+    """Evaluate feedbacks in server mode. This differs from `DEFERRED` mode in that the feedbacks are computed
+    on the server side, not on the client side. However, not all feedbacks can be computed on remote server.
+    To support the both client and server-side feedbacks, the client feedbacks will be computed in
+    `DEFERRED` mode using `tru.start_deferred_feedback_evaluator`."""
+
 
 class FeedbackResultStatus(str, Enum):
     """For deferred feedback evaluation, these values indicate status of

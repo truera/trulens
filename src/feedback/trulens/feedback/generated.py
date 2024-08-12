@@ -73,16 +73,13 @@ def re_configured_rating(
 
     vals = set()
     for match in matches:
-        try:  # catch int("1.0") issues to skip float values when allow_decimal is false.
-            rating = float(match) if allow_decimal else int(match)
-            if min_score_val <= rating <= max_score_val:
-                vals.add(rating)
-            else:
-                logger.warning(
-                    "Rating must be in [%s, %s].", min_score_val, max_score_val
-                )
-        except ValueError:
-            pass
+        rating = float(match) if allow_decimal else int(float(match))
+        if min_score_val <= rating <= max_score_val:
+            vals.add(rating)
+        else:
+            logger.warning(
+                "Rating must be in [%s, %s].", min_score_val, max_score_val
+            )
 
     if not vals:
         raise ParseError(f"{min_score_val}-{max_score_val} rating", s)

@@ -1389,6 +1389,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self.tru: mod_tru.Tru
         self.db: mod_db.DB
 
+        # For server side feedback mode, we write records async
+        if feedback_mode == mod_feedback_schema.FeedbackMode.SERVER:
+            self.tru.add_record_nowait(record=record)
+            return
+
         # Need to add record to db before evaluating feedback functions.
         record_id = self.tru.add_record(record=record)
 
