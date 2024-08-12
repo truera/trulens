@@ -311,7 +311,7 @@ class LLMProvider(Provider):
 
     def context_relevance(
         self,
-        question: str,
+        prompt: str,
         context: str,
         criteria: str = "",
         min_score_val: int = 0,
@@ -336,8 +336,8 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            question (str): A question being asked.
-            context (str): Context related to the question.
+            prompt (str): The prompt to the application
+            context (str): Context related to the prompt.
             criteria (str): Overriding evaluation criteria for evaluation .
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
@@ -358,7 +358,7 @@ class LLMProvider(Provider):
             system_prompt=ContextRelevance.system_prompt,
             user_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE_USER,
-                question=question,
+                question=prompt,
                 context=context,
             ),
             min_score_val=min_score_val,
@@ -368,7 +368,7 @@ class LLMProvider(Provider):
 
     def context_relevance_with_cot_reasons(
         self,
-        question: str,
+        prompt: str,
         context: str,
         criteria: str = "",
         min_score_val: int = 0,
@@ -394,8 +394,8 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            question (str): A question being asked.
-            context (str): Context related to the question.
+            prompt (str): The prompt to the application.
+            context (str): Context related to the prompt.
             criteria (str): Overriding evaluation criteria for evaluation .
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
@@ -406,7 +406,7 @@ class LLMProvider(Provider):
         """
 
         user_prompt = str.format(
-            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
+            prompts.CONTEXT_RELEVANCE_USER, question=prompt, context=context
         )
         user_prompt = user_prompt.replace(
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
@@ -431,7 +431,7 @@ class LLMProvider(Provider):
 
     def context_relevance_verb_confidence(
         self,
-        question: str,
+        prompt: str,
         context: str,
         criteria: str = "",
         min_score_val: int = 0,
@@ -457,8 +457,8 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            question (str): A question being asked.
-            context (str): Context related to the question.
+            prompt (str): The prompt to the application.
+            context (str): Context related to the prompt.
             criteria (str): Overriding evaluation criteria for evaluation .
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
@@ -483,7 +483,7 @@ class LLMProvider(Provider):
                 + ContextRelevance.verb_confidence_prompt,
                 user_prompt=str.format(
                     prompts.CONTEXT_RELEVANCE_USER,
-                    question=question,
+                    question=prompt,
                     context=context,
                 ),
                 min_score_val=min_score_val,
@@ -1314,7 +1314,7 @@ class LLMProvider(Provider):
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
     def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str
+        self, context: str, response: str
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1339,8 +1339,8 @@ class LLMProvider(Provider):
                 )
             ```
         Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
+            context: The source that should support the statement.
+            response: The statement to check groundedness.
 
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
@@ -1349,13 +1349,13 @@ class LLMProvider(Provider):
         groundedness_scores = {}
         reasons_str = ""
 
-        hypotheses = sent_tokenize(statement)
+        hypotheses = sent_tokenize(response)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                premise=f"{source}", hypothesis=f"{hypothesis}"
+                premise=f"{context}", hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(
                 system_prompt, user_prompt
@@ -1392,7 +1392,7 @@ class LLMProvider(Provider):
         return average_groundedness_score, {"reasons": reasons_str}
 
     def groundedness_measure_with_cot_reasons_consider_answerability(
-        self, source: str, statement: str, question: str
+        self, context: str, response: str, prompt: str
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1420,9 +1420,9 @@ class LLMProvider(Provider):
                 )
             ```
         Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
-            question: The question to check answerability.
+            context: The source that should support the statement.
+            response: The statement to check groundedness.
+            prompt: The prompt to check answerability.
 
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
@@ -1440,30 +1440,30 @@ class LLMProvider(Provider):
             )
             return score
 
-        def evaluate_answerability(question, source):
+        def evaluate_answerability(prompt: str, context: str):
             user_prompt = prompts.LLM_ANSWERABILITY_USER.format(
-                question=question, source=source
+                question=prompt, source=context
             )
             score = self.generate_score(
                 prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
             )
             return score
 
-        hypotheses = sent_tokenize(statement)
+        hypotheses = sent_tokenize(response)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
         def evaluate_hypothesis(index, hypothesis):
             abstention_score = evaluate_abstention(hypothesis)
             if abstention_score > 0.5:
-                answerability_score = evaluate_answerability(question, source)
+                answerability_score = evaluate_answerability(prompt, context)
                 if answerability_score > 0.5:
                     return index, 0.0, {"reason": "Answerable abstention"}
                 else:
                     return index, 1.0, {"reason": "Unanswerable abstention"}
             else:
                 user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
-                    premise=f"{source}", hypothesis=f"{hypothesis}"
+                    premise=f"{context}", hypothesis=f"{hypothesis}"
                 )
                 score, reason = self.generate_score_and_reasons(
                     system_prompt, user_prompt
