@@ -7,7 +7,7 @@ requires = [
 [tool.poetry]
 name = "trulens-providers-cortex"
 version = "1.0.1a0"
-description = "Library to systematically track and evaluate LLM based applications."
+description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
