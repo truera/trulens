@@ -98,7 +98,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             f.feedback_definition_id for f in kwargs.get("feedbacks", [])
         ]
 
-        if app_id := kwargs.pop("app_id"):
+        if app_id := kwargs.pop("app_id", None):
             if app_version:
                 raise ValueError(
                     "Cannot provide both `app_id` and `app_version`."
