@@ -87,7 +87,7 @@ test-%-required: env-required
 
 # Runs required tests, but allows optional dependencies to be installed.
 test-%-allow-optional: env
-	ALLOW_OPTIONAS=true make test-$*
+	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-optional
