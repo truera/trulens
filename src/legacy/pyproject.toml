@@ -6,16 +6,19 @@ requires = [
 
 [tool.poetry]
 name = "trulens-legacy"
-version = "1.0.0a0"
-description = "Library to systematically track and evaluate LLM based applications."
+version = "1.0.1a0"
+description = "Backwards-compatibility package for trulens_eval ."
 authors = [
   "Truera Inc <all@truera.com>",
 ]
 license = "MIT"
 readme = "README.md"
 packages = [
-  { include = "trulens" },
+  { include = "trulens_eval" },
 ]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: OS Independent",
@@ -25,4 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-typing_extensions = "^4.9.0"
+trulens-api = { version = "^1.0.0", allow-prereleases = true }
+
+[tool.poetry.group.dev.dependencies]
+trulens-api = { path = "../api", develop = true }

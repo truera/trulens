@@ -98,11 +98,12 @@ API Reference: [Embeddings][trulens.feedback.embeddings].
         show_docstring_modules: false
         show_docstring_parameters: false
         show_docstring_returns: false
-        show_docstring_description: true
+        show_docstring_description: false
         show_docstring_examples: false
         show_docstring_other_parameters: false
         show_docstring_attributes: false
         show_signature: false
+        show_submodules: false
         separate_signature: false
         summary: false
         group_by_category: false

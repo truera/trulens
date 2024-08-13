@@ -64,7 +64,7 @@ def write_to_gen_files(
 ):
     doc_path = doc_path or Path(*parts)
 
-    #    print(parts)
+    print(parts)
 
     if parts[-1] == "__init__":
         parts = parts[:-1]
@@ -149,5 +149,5 @@ for package in packages:
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
     nav_file.writelines(nav.build_literate_nav())
 
-with mkdocs_gen_files.open("reference/index.md", "w") as nav_file:
-    nav_file.writelines(nav.build_literate_nav())
+# with mkdocs_gen_files.open("reference/index.md", "w") as nav_file:
+#    nav_file.writelines(nav.build_literate_nav())

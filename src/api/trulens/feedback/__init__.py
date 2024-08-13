@@ -16,6 +16,13 @@ if TYPE_CHECKING:
     GroundTruthAgreement = mod_groundtruth.GroundTruthAgreement
     LLMProvider = mod_llm_provider.LLMProvider
 
+    # NOTE: This is only needed for static tools to figure out the content of
+    # this module because it is dynamically determined during runtime.
+
+    embeddings = mod_embeddings
+    groundtruth = mod_groundtruth
+    llm_provider = mod_llm_provider
+
 _CLASSES = {
     "Embeddings": ("trulens-feedback", "trulens.feedback.embeddings"),
     "GroundTruthAggregator": (
