@@ -234,6 +234,10 @@ class Tru(python.SingletonPerName):
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
     ) -> DB:
+        if not re.match(r"^[A-Za-z0-9_]+$", app_name):
+            raise ValueError(
+                "`app_name` must contain only alphanumeric and underscore characters!"
+            )
         if snowflake_connection_parameters is not None:
             if database_url is not None:
                 raise ValueError(
@@ -243,7 +247,7 @@ class Tru(python.SingletonPerName):
                 raise ValueError(
                     "`app_name` must be set if `snowflake_connection_parameters` is set!"
                 )
-            schema_name = self._validate_and_compute_schema_name(app_name)
+            schema_name = self._compute_schema_name(app_name)
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
@@ -264,11 +268,7 @@ class Tru(python.SingletonPerName):
         return SQLAlchemyDB.from_tru_args(**database_args)
 
     @staticmethod
-    def _validate_and_compute_schema_name(app_name: str):
-        if not re.match(r"^[A-Za-z0-9_]+$", app_name):
-            raise ValueError(
-                "`app_name` must contain only alphanumeric and underscore characters!"
-            )
+    def _compute_schema_name(app_name: str):
         return f"TRULENS_APP__{app_name.upper()}"
 
     @staticmethod
