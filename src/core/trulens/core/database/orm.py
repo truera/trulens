@@ -270,6 +270,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             name = Column(Text, nullable=False)
             cost_json = Column(TYPE_JSON, nullable=False)
             multi_result = Column(TYPE_JSON)
+            run_location = Column(TYPE_ENUM, nullable=True)
 
             record = relationship(
                 "Record",
@@ -309,6 +310,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                         obj.cost, redact_keys=redact_keys
                     ),
                     multi_result=obj.multi_result,
+                    run_location=obj.run_location.value
+                    if obj.run_location is not None
+                    else None,
                 )
 
     configure_mappers()  # IMPORTANT

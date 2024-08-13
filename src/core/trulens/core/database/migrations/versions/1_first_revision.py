@@ -51,6 +51,7 @@ def upgrade(config) -> None:
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("cost_json", sa.Text(), nullable=False),
         sa.Column("multi_result", sa.Text(), nullable=True),
+        sa.Column("run_location", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("feedback_result_id"),
     )
     op.create_table(

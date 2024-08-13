@@ -121,7 +121,7 @@ class Tru(python.SingletonPerName):
 
         snowflake_connection_parameters: Connection arguments to Snowflake database to use.
 
-        name: Name of the app.
+        app_name: Name of the app.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -185,7 +185,7 @@ class Tru(python.SingletonPerName):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
-        name: Optional[str] = None,
+        app_name: Optional[str] = None,
     ):
         """
         Args:
@@ -205,11 +205,11 @@ class Tru(python.SingletonPerName):
                 raise ValueError(
                     "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
                 )
-            if not name:
+            if not app_name:
                 raise ValueError(
-                    "`name` must be set if `snowflake_connection_parameters` is set!"
+                    "`app_name` must be set if `snowflake_connection_parameters` is set!"
                 )
-            schema_name = self._validate_and_compute_schema_name(name)
+            schema_name = self._validate_and_compute_schema_name(app_name)
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
@@ -828,6 +828,7 @@ class Tru(python.SingletonPerName):
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -840,6 +841,8 @@ class Tru(python.SingletonPerName):
                 thread. NOT CURRENTLY SUPPORTED.
 
             disable_tqdm: If set, will disable progress bar logging from the evaluator.
+
+            run_location: Run only the evaluations corresponding to run_location.
 
         Returns:
             The started process or thread that is executing the deferred feedback
@@ -893,7 +896,9 @@ class Tru(python.SingletonPerName):
             # Getting total counts from the database to start off the tqdm
             # progress bar initial values so that they offer accurate
             # predictions initially after restarting the process.
-            queue_stats = self.db.get_feedback_count_by_status()
+            queue_stats = self.db.get_feedback_count_by_status(
+                run_location=run_location
+            )
             queue_done = (
                 queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE)
                 or 0
@@ -944,6 +949,7 @@ class Tru(python.SingletonPerName):
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
+                        run_location=run_location,
                     )
 
                     # Will likely get some of the same ones that already have running.
@@ -994,7 +1000,9 @@ class Tru(python.SingletonPerName):
                     {name: count for name, count in runs_stats.items()}
                 )
 
-                queue_stats = self.db.get_feedback_count_by_status()
+                queue_stats = self.db.get_feedback_count_by_status(
+                    run_location=run_location
+                )
                 queue_done = (
                     queue_stats.get(
                         mod_feedback_schema.FeedbackResultStatus.DONE
