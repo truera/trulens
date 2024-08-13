@@ -32,8 +32,8 @@ class SnowflakeTestCase(TestCase):
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
-        Tru._instances = {}
-        Tru._id_to_name_map = {}
+        for key in [curr for curr in Tru._instances if curr[0] == "Tru"]:
+            del Tru._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
