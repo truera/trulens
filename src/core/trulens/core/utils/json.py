@@ -90,15 +90,8 @@ def _recursive_hash(
 
             acc += f"{k}:{_recursive_hash(key_val, ignore_none=ignore_none)},"
         return _recursive_hash(acc, ignore_none=ignore_none)
-    elif isinstance(
-        value,
-        (str, int, bool, float, complex),
-    ):
-        return hashlib.md5(str(value).encode("utf-8")).hexdigest()
-    elif value is None:
-        return _recursive_hash(str(value), ignore_none=ignore_none)
     else:
-        return _recursive_hash(str(value), ignore_none=ignore_none)
+        return hashlib.md5(str(value).encode("utf-8")).hexdigest()
 
 
 # Add encoders for some types that pydantic cannot handle but we need.
