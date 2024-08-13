@@ -79,7 +79,7 @@ trubot:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONAL_ENV_VAR=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Runs required tests
 test-%-required: env-required
@@ -87,7 +87,7 @@ test-%-required: env-required
 
 # Runs required tests, but allows optional dependencies to be installed.
 test-%-allow-optional: env
-	ALLOW_OPTIONAL_ENV_VAR=true make test-$*
+	ALLOW_OPTIONAS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-optional
