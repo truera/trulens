@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any, Callable, ClassVar, Optional, Sequence
+import warnings
 
 import dill
 import humanize
@@ -96,6 +97,21 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["feedback_definitions"] = [
             f.feedback_definition_id for f in kwargs.get("feedbacks", [])
         ]
+
+        if app_id := kwargs.pop("app_id"):
+            if app_version:
+                raise ValueError(
+                    "Cannot provide both `app_id` and `app_version`."
+                )
+            warnings.warn(
+                (
+                    "`app_id` is deprecated, "
+                    "use `Tru(app_name='...')` and `App(app_version='...')` instead."
+                ),
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            app_version = app_id
 
         super().__init__(**kwargs)
 
