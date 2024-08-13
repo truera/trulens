@@ -722,12 +722,14 @@ def _extract_feedback_results(
         _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
 
         return (
-            # TODO(this_pr): shouldn't I put something here?
             _result.record_id,
             _result.feedback_result_id,
             _result.feedback_definition_id,
             _result.last_ts,
             mod_feedback_schema.FeedbackResultStatus(_result.status),
+            _result.run_location
+            if _result.run_location is None
+            else mod_feedback_schema.FeedbackRunLocation(_result.run_location),
             _result.error,
             _result.name,
             _result.result,
@@ -753,11 +755,11 @@ def _extract_feedback_results(
             "feedback_definition_id",
             "last_ts",
             "status",
+            "run_location",
             "error",
             "fname",
             "result",
             "multi_result",
-            # TODO(this_pr): shouldn't I put something here?
             "cost_json",
             "perf_json",
             "calls_json",
