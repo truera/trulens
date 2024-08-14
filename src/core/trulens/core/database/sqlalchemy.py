@@ -119,7 +119,8 @@ class SQLAlchemyDB(DB):
             )
 
     def _reload_engine(self):
-        self.engine = sa.create_engine(**self.engine_params)
+        if self.engine is None:
+            self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
@@ -127,6 +128,7 @@ class SQLAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_file: Optional[str] = None,
+        database_engine: Optional[sa.Engine] = None,
         database_redact_keys: Optional[
             bool
         ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
@@ -138,7 +140,6 @@ class SQLAlchemyDB(DB):
 
         Emits warnings if appropriate.
         """
-
         if None not in (database_url, database_file):
             raise ValueError(
                 "Please specify at most one of `database_url` and `database_file`"
@@ -165,7 +166,10 @@ class SQLAlchemyDB(DB):
         if "redact_keys" not in kwargs:
             kwargs["redact_keys"] = database_redact_keys
 
-        new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
+        if database_engine is not None:
+            new_db: DB = SQLAlchemyDB.from_db_engine(database_engine, **kwargs)
+        else:
+            new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
             "%s Tru initialized with db url %s ."
@@ -214,6 +218,24 @@ class SQLAlchemyDB(DB):
             engine_params["pool_use_lifo"] = True
 
         return cls(engine_params=engine_params, **kwargs)
+
+    @classmethod
+    def from_db_engine(
+        cls, engine: sa.Engine, **kwargs: Dict[str, Any]
+    ) -> SQLAlchemyDB:
+        """
+        Create a database for the given engine.
+
+        Args:
+            engine: The database engine.
+
+            kwargs: Additional arguments to pass to the database constructor.
+
+        Returns:
+            A database instance.
+        """
+
+        return cls(engine=engine, **kwargs)
 
     def check_db_revision(self):
         """See
@@ -336,20 +358,6 @@ class SQLAlchemyDB(DB):
             logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
 
             return _rec.record_id
-
-    def batch_insert_record(
-        self, records: List[mod_record_schema.Record]
-    ) -> List[mod_types_schema.RecordID]:
-        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
-        with self.session.begin() as session:
-            records_list = [
-                self.orm.Record.parse(r, redact_keys=self.redact_keys)
-                for r in records
-            ]
-            session.bulk_save_objects(records_list)
-            logger.info(f"{UNICODE_CHECK} added record batch")
-            # return record ids from orm objects
-            return [r.record_id for r in records_list]
 
     def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
         """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
@@ -511,18 +519,6 @@ class SQLAlchemyDB(DB):
             )
 
             return _feedback_result.feedback_result_id
-
-    def batch_insert_feedback(
-        self, feedback_results: List[mod_feedback_schema.FeedbackResult]
-    ) -> List[mod_types_schema.FeedbackResultID]:
-        """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
-        with self.session.begin() as session:
-            feedback_results_list = [
-                self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
-                for f in feedback_results
-            ]
-            session.bulk_save_objects(feedback_results_list)
-            return [f.feedback_result_id for f in feedback_results_list]
 
     def _feedback_query(
         self,
