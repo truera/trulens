@@ -33,6 +33,7 @@ def upgrade(config) -> None:
         sa.Column(
             "feedback_definition_id", sa.VARCHAR(length=256), nullable=False
         ),
+        sa.Column("run_location", sa.Text(), nullable=True),
         sa.Column("feedback_json", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("feedback_definition_id"),
     )
@@ -51,7 +52,6 @@ def upgrade(config) -> None:
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("cost_json", sa.Text(), nullable=False),
         sa.Column("multi_result", sa.Text(), nullable=True),
-        sa.Column("run_location", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("feedback_result_id"),
     )
     op.create_table(

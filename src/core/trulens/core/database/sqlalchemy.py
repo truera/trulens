@@ -233,7 +233,9 @@ class SQLAlchemyDB(DB):
         try:
             # Expect to get the the behind exception.
             alembic_check_db_revision(
-                self.engine, prefix=self.table_prefix, prior_prefix=prior_prefix
+                self.engine,
+                prefix=self.table_prefix,
+                prior_prefix=prior_prefix,
             )
 
             # If we get here, our db revision does not need upgrade.
@@ -257,7 +259,9 @@ class SQLAlchemyDB(DB):
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(
-                        self.engine, revision="head", prefix=self.table_prefix
+                        self.engine,
+                        revision="head",
+                        prefix=self.table_prefix,
                     )
 
                 self._reload_engine()  # let sqlalchemy recognize the migrated schema
@@ -292,13 +296,18 @@ class SQLAlchemyDB(DB):
                         new_version_table = f"{self.table_prefix}{table_name}"
 
                         logger.warning(
-                            "  %s -> %s", old_version_table, new_version_table
+                            "  %s -> %s",
+                            old_version_table,
+                            new_version_table,
                         )
 
                         c.execute(
                             sql_text(
                                 """ALTER TABLE %s RENAME TO %s;"""
-                                % (old_version_table, new_version_table)
+                                % (
+                                    old_version_table,
+                                    new_version_table,
+                                )
                             )
                         )
 
@@ -333,7 +342,10 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
+            logger.info(
+                "{UNICODE_CHECK} added record %s",
+                _rec.record_id,
+            )
 
             return _rec.record_id
 
@@ -389,7 +401,11 @@ class SQLAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
+            logger.info(
+                "%s added app %s",
+                UNICODE_CHECK,
+                _app.app_id,
+            )
 
             return _app.app_id
 
@@ -413,7 +429,8 @@ class SQLAlchemyDB(DB):
                 logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
-        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
+        self,
+        feedback_definition: mod_feedback_schema.FeedbackDefinition,
     ) -> mod_types_schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
 
@@ -430,7 +447,8 @@ class SQLAlchemyDB(DB):
                 _fb_def.app_json = feedback_definition.model_dump_json()
             else:
                 _fb_def = self.orm.FeedbackDefinition.parse(
-                    feedback_definition, redact_keys=self.redact_keys
+                    feedback_definition,
+                    redact_keys=self.redact_keys,
                 )
                 session.merge(_fb_def)  # .add was not thread safe
 
@@ -457,14 +475,21 @@ class SQLAlchemyDB(DB):
             fb_defs = (row[0] for row in session.execute(q))
             return pd.DataFrame(
                 data=(
-                    (fb.feedback_definition_id, json.loads(fb.feedback_json))
+                    (
+                        fb.feedback_definition_id,
+                        json.loads(fb.feedback_json),
+                    )
                     for fb in fb_defs
                 ),
-                columns=["feedback_definition_id", "feedback_json"],
+                columns=[
+                    "feedback_definition_id",
+                    "feedback_json",
+                ],
             )
 
     def insert_feedback(
-        self, feedback_result: mod_feedback_schema.FeedbackResult
+        self,
+        feedback_result: mod_feedback_schema.FeedbackResult,
     ) -> mod_types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
 
@@ -513,7 +538,8 @@ class SQLAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def batch_insert_feedback(
-        self, feedback_results: List[mod_feedback_schema.FeedbackResult]
+        self,
+        feedback_results: List[mod_feedback_schema.FeedbackResult],
     ) -> List[mod_types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
@@ -568,16 +594,25 @@ class SQLAlchemyDB(DB):
             # For legacy reasons, we handle the LOCAL and NULL/None case as the same.
             q = q.filter(
                 sa.or_(
-                    self.orm.FeedbackResult.run_location.is_(None),
-                    self.orm.FeedbackResult.run_location
+                    self.orm.FeedbackDefinition.run_location.is_(None),
+                    self.orm.FeedbackDefinition.run_location
                     == mod_feedback_schema.FeedbackRunLocation.LOCAL.value,
                 )
             )
         else:
-            q = q.filter_by(run_location=run_location.value)
+            q = q.filter(
+                self.orm.FeedbackDefinition.run_location == run_location.value
+            )
+        q = q.filter(
+            self.orm.FeedbackResult.feedback_definition_id
+            == self.orm.FeedbackDefinition.feedback_definition_id
+        )
 
         if status:
-            if isinstance(status, mod_feedback_schema.FeedbackResultStatus):
+            if isinstance(
+                status,
+                mod_feedback_schema.FeedbackResultStatus,
+            ):
                 status = [status.value]
             q = q.filter(
                 self.orm.FeedbackResult.status.in_([s.value for s in status])
@@ -621,7 +656,8 @@ class SQLAlchemyDB(DB):
 
         with self.session.begin() as session:
             q = self._feedback_query(
-                count_by_status=True, **locals_except("self", "session")
+                count_by_status=True,
+                **locals_except("self", "session"),
             )
             results = session.execute(q)
 
@@ -690,7 +726,10 @@ class SQLAlchemyDB(DB):
             # data. Ideally, though, we would be making some sort of lazy
             # DataFrame and then could use the lazy join feature of sqlalchemy.
 
-            stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
+            stmt = stmt.order_by(
+                self.orm.Record.ts,
+                self.orm.Record.record_id,
+            )
             # NOTE: feedback_results order is governed by the order_by on the
             # orm.FeedbackResult.record backref definition. Here, we need to
             # order Records as we did not use an auto join to retrieve them. If
@@ -727,9 +766,6 @@ def _extract_feedback_results(
             _result.feedback_definition_id,
             _result.last_ts,
             mod_feedback_schema.FeedbackResultStatus(_result.status),
-            _result.run_location
-            if _result.run_location is None
-            else mod_feedback_schema.FeedbackRunLocation(_result.run_location),
             _result.error,
             _result.name,
             _result.result,
@@ -755,7 +791,6 @@ def _extract_feedback_results(
             "feedback_definition_id",
             "last_ts",
             "status",
-            "run_location",
             "error",
             "fname",
             "result",
@@ -770,14 +805,19 @@ def _extract_feedback_results(
         ],
     )
     df["latency"] = _extract_latency(df["perf_json"])
-    df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+    df = pd.concat(
+        [df, _extract_tokens_and_cost(df["cost_json"])],
+        axis=1,
+    )
     return df
 
 
 def _extract_latency(
     series: Iterable[Union[str, dict, mod_base_schema.Perf]],
 ) -> pd.Series:
-    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
+    def _extract(
+        perf_json: Union[str, dict, mod_base_schema.Perf],
+    ) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
 
@@ -798,8 +838,12 @@ def _extract_latency(
     return pd.Series(data=(_extract(p) for p in series))
 
 
-def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
+def _extract_tokens_and_cost(
+    cost_json: pd.Series,
+) -> pd.DataFrame:
+    def _extract(
+        _cost_json: Union[str, dict],
+    ) -> Tuple[int, float]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
@@ -868,7 +912,10 @@ class AppsExtractor:
         df.reset_index(
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
-        df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df = pd.concat(
+            [df, _extract_tokens_and_cost(df["cost_json"])],
+            axis=1,
+        )
         return df, list(self.feedback_columns)
 
     def extract_apps(
@@ -945,7 +992,10 @@ class AppsExtractor:
                         and (multi_result := json.loads(_res.multi_result))
                         is not None
                     ):
-                        for key, val in multi_result.items():
+                        for (
+                            key,
+                            val,
+                        ) in multi_result.items():
                             if (
                                 val is not None
                             ):  # avoid getting Nones into np.mean

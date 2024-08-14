@@ -202,9 +202,6 @@ class FeedbackResult(serial.SerialModel):
         default_factory=datetime.datetime.now
     )
 
-    run_location: Optional[FeedbackRunLocation]
-    """Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc)."""
-
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
@@ -232,9 +229,6 @@ class FeedbackResult(serial.SerialModel):
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
         **kwargs,
     ):
-        if "run_location" not in kwargs:
-            kwargs["run_location"] = None
-
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:

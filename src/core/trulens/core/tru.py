@@ -257,6 +257,10 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
+        # TODO: if snowflake_connection_parameters is not None:
+        #    # initialize stream for feedback eval table.
+        #    # initialize task for stream that will import trulens and try to run the Tru.
+
     @staticmethod
     def _validate_and_compute_schema_name(name):
         if not re.match(r"^[A-Za-z0-9_]+$", name):

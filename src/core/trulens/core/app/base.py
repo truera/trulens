@@ -158,7 +158,13 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
     @staticmethod
     def innermost_base(
         bases: Optional[Sequence[Class]] = None,
-        among_modules=set(["langchain", "llama_index", "trulens"]),
+        among_modules=set(
+            [
+                "langchain",
+                "llama_index",
+                "trulens",
+            ]
+        ),
     ) -> Optional[str]:
         """
         Given a sequence of classes, return the first one which comes from one
@@ -268,7 +274,9 @@ class CustomComponent(ComponentView):
     COMPONENT_VIEWS = [Custom]
 
     @staticmethod
-    def constructor_of_class(cls_obj: Class) -> Type["CustomComponent"]:
+    def constructor_of_class(
+        cls_obj: Class,
+    ) -> Type["CustomComponent"]:
         for view in CustomComponent.COMPONENT_VIEWS:
             if view.class_is(cls_obj):
                 return view
@@ -343,7 +351,8 @@ class RecordingContext:
 
     def __init__(self, app: App, record_metadata: JSON = None):
         self.calls: Dict[
-            mod_types_schema.CallID, mod_record_schema.RecordAppCall
+            mod_types_schema.CallID,
+            mod_record_schema.RecordAppCall,
         ] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
@@ -429,7 +438,9 @@ class RecordingContext:
 
         with self.lock:
             record = calls_to_record(
-                list(self.calls.values()), self.record_metadata, existing_record
+                list(self.calls.values()),
+                self.record_metadata,
+                existing_record,
             )
             self.calls = {}
 
@@ -585,7 +596,9 @@ class App(
         # Can use to do things when this object is being garbage collected.
         pass
 
-    def _start_manage_pending_feedback_results(self) -> None:
+    def _start_manage_pending_feedback_results(
+        self,
+    ) -> None:
         """Start the thread that manages the queue of records with
         pending feedback results.
 
@@ -809,7 +822,10 @@ class App(
             return value
 
     def main_input(
-        self, func: Callable, sig: Signature, bindings: BoundArguments
+        self,
+        func: Callable,
+        sig: Signature,
+        bindings: BoundArguments,
     ) -> JSON:
         """
         Determine the main input string for the given function `func` with
@@ -861,13 +877,18 @@ class App(
             return str(focus)
 
         logger.warning(
-            "Could not determine main input/output of %s.", str(all_args)
+            "Could not determine main input/output of %s.",
+            str(all_args),
         )
 
         return "Could not determine main input from " + str(all_args)
 
     def main_output(
-        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+        self,
+        func: Callable,
+        sig: Signature,
+        bindings: BoundArguments,
+        ret: Any,
     ) -> JSON:
         """
         Determine the main out string for the given function `func` with
@@ -894,7 +915,10 @@ class App(
                 return "Could not determine main output from " + str(content)
 
         else:
-            logger.warning("Could not determine main output from %s.", content)
+            logger.warning(
+                "Could not determine main output from %s.",
+                content,
+            )
             return (
                 str(content)
                 if content is not None
@@ -1023,7 +1047,10 @@ class App(
         # structure contains loops.
 
         return json_str_of_obj(
-            self, *args, instrument=self.instrument, **kwargs
+            self,
+            *args,
+            instrument=self.instrument,
+            **kwargs,
         )
 
     def model_dump(self, *args, redact_keys: bool = False, **kwargs):
@@ -1193,7 +1220,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
     async def awith_(
-        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
+        self,
+        func: CallableMaybeAwaitable[A, T],
+        *args,
+        **kwargs,
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -1263,7 +1293,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
 
         awaitable, record = self.with_record(
-            func, *args, record_metadata=record_metadata, **kwargs
+            func,
+            *args,
+            record_metadata=record_metadata,
+            **kwargs,
         )
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
@@ -1273,7 +1306,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return await awaitable, record
 
     def _throw_dep_message(
-        self, method, is_async: bool = False, with_record: bool = False
+        self,
+        method,
+        is_async: bool = False,
+        with_record: bool = False,
     ):
         # Raises a deprecation message for the various methods that pass through to
         # wrapped app while recording.
@@ -1378,7 +1414,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                         name=f.name,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id,
-                        run_location=f.run_location,
                     )
                 )
 
@@ -1395,7 +1430,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 on_done=self._add_future_feedback,
             )
 
-    def _handle_error(self, record: mod_record_schema.Record, error: Exception):
+    def _handle_error(
+        self,
+        record: mod_record_schema.Record,
+        error: Exception,
+    ):
         if self.db is None:
             return
 
@@ -1488,7 +1527,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             tags=tags,
         )
 
-    def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
+    def instrumented(
+        self,
+    ) -> Iterable[Tuple[Lens, ComponentView]]:
         """
         Iteration over instrumented components and their categories.
         """

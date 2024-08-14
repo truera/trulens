@@ -146,7 +146,11 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             _table_base_name: ClassVar[str] = "apps"
 
-            app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
+            app_id = Column(
+                VARCHAR(256),
+                nullable=False,
+                primary_key=True,
+            )
             app_json = Column(TYPE_JSON, nullable=False)
 
             # records via one-to-many on Record.app_id
@@ -176,6 +180,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             feedback_definition_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
             )
+            run_location = Column(TYPE_ENUM, nullable=True)
             feedback_json = Column(TYPE_JSON, nullable=False)
 
             # feedback_results via one-to-many on FeedbackResult.feedback_definition_id
@@ -188,6 +193,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.FeedbackDefinition:
                 return cls(
                     feedback_definition_id=obj.feedback_definition_id,
+                    run_location=None
+                    if obj.run_location is None
+                    else obj.run_location.value,
                     feedback_json=json_str_of_obj(obj, redact_keys=redact_keys),
                 )
 
@@ -222,16 +230,20 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             @classmethod
             def parse(
-                cls, obj: mod_record_schema.Record, redact_keys: bool = False
+                cls,
+                obj: mod_record_schema.Record,
+                redact_keys: bool = False,
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
                     input=json_str_of_obj(
-                        obj.main_input, redact_keys=redact_keys
+                        obj.main_input,
+                        redact_keys=redact_keys,
                     ),
                     output=json_str_of_obj(
-                        obj.main_output, redact_keys=redact_keys
+                        obj.main_output,
+                        redact_keys=redact_keys,
                     ),
                     record_json=json_str_of_obj(obj, redact_keys=redact_keys),
                     tags=obj.tags,
@@ -270,7 +282,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             name = Column(Text, nullable=False)
             cost_json = Column(TYPE_JSON, nullable=False)
             multi_result = Column(TYPE_JSON)
-            run_location = Column(TYPE_ENUM, nullable=True)
 
             record = relationship(
                 "Record",
@@ -302,7 +313,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     status=obj.status.value,
                     error=obj.error,
                     calls_json=json_str_of_obj(
-                        dict(calls=obj.calls), redact_keys=redact_keys
+                        dict(calls=obj.calls),
+                        redact_keys=redact_keys,
                     ),
                     result=obj.result,
                     name=obj.name,
@@ -310,9 +322,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                         obj.cost, redact_keys=redact_keys
                     ),
                     multi_result=obj.multi_result,
-                    run_location=obj.run_location.value
-                    if obj.run_location is not None
-                    else None,
                 )
 
     configure_mappers()  # IMPORTANT
@@ -352,7 +361,11 @@ def make_base_for_prefix(
     # sqlalchemy stores a mapping of class names to the classes we defined in
     # the ORM above. Here we want to create a class with the specific name
     # matching base_type hence use `type` instead of `class SomeName: ...`.
-    return type(base.__name__, (base,), {"_table_prefix": table_prefix})
+    return type(
+        base.__name__,
+        (base,),
+        {"_table_prefix": table_prefix},
+    )
 
 
 # NOTE: lru_cache is important here as we don't want to create multiple classes for
