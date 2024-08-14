@@ -28,8 +28,8 @@ from typing import (
 
 import humanize
 import pandas
-from tqdm.auto import tqdm
 import sqlalchemy as sa
+from tqdm.auto import tqdm
 from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -213,11 +213,6 @@ class Tru(python.SingletonPerName):
             # Use the provided database_engine
             self.database_engine = database_engine
 
-        if database_engine is not None:
-            raise ValueError(
-                "`database_engine` must be `None` if `snowflake_connection_parameters` is set!"
-            )
-
         if snowflake_connection_parameters is not None:
             if database is not None:
                 raise ValueError(
@@ -226,6 +221,10 @@ class Tru(python.SingletonPerName):
             if database_url is not None:
                 raise ValueError(
                     "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
+                )
+            if database_engine is not None:
+                raise ValueError(
+                    "`database_engine` must be `None` if `snowflake_connection_parameters` is set!"
                 )
             if not name:
                 raise ValueError(
