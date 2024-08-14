@@ -46,7 +46,7 @@ def _format_unit(
         value = int(value)
     else:
         value = round(value, precision)
-    if pluralize and value == 1:
+    if pluralize and value != 1:
         # This is a simple heuristic that works for most cases.
         return f"{value} {unit}s"
     return f"{value} {unit}"
@@ -95,21 +95,21 @@ def format_seconds(seconds: float, precision: int = 2) -> str:
     n_hours = seconds // (60 * 60)
     n_minutes = seconds // 60
     if n_days:
-        fmt_result = _format_unit("days", n_days, precision=precision)
+        fmt_result = _format_unit("day", n_days, precision=precision)
         remaining_hours = seconds % (60 * 60 * 24) / (60 * 60)
-        if remaining_hours > 1:
+        if remaining_hours >= 1:
             fmt_result += (
                 f" {_format_unit('hour', remaining_hours, precision=precision)}"
             )
     elif n_hours:
         fmt_result = _format_unit("hour", n_hours, precision=precision)
         remaining_minutes = seconds % (60 * 60) / 60
-        if remaining_minutes > 1:
+        if remaining_minutes >= 1:
             fmt_result += f" {_format_unit('minute', remaining_minutes, precision=precision)}"
     elif n_minutes:
         fmt_result = _format_unit("minute", n_minutes, precision=precision)
         remaining_seconds = seconds % 60
-        if remaining_seconds > 1:
+        if remaining_seconds >= 1:
             fmt_result += f" {_format_unit('second', remaining_seconds, truncate=False, precision=precision)}"
     else:
         fmt_result = _format_unit(
