@@ -7,7 +7,7 @@ running.
 
 - Tests migration of old databases to new ones.
 
-- Tests uses of various DB vender types. A subset of types supported by
+- Tests uses of various DB vendor types. A subset of types supported by
   sqlalchemy:
 
     - sqlite

@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 import numpy as np
 from trulens.core import Feedback
-from trulens.core.utils import serial as mod_serial_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.feedback import LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -11,26 +11,30 @@ logger = logging.getLogger(__name__)
 
 def rag_triad(
     provider: LLMProvider,
-    question: Optional[mod_serial_utils.Lens] = None,
-    answer: Optional[mod_serial_utils.Lens] = None,
-    context: Optional[mod_serial_utils.Lens] = None,
+    question: Optional[serial_utils.Lens] = None,
+    answer: Optional[serial_utils.Lens] = None,
+    context: Optional[serial_utils.Lens] = None,
 ) -> Dict[str, Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
-    generation steps.
+        generation steps.
 
-    If a particular lens is not provided, the relevant selectors will be
-    missing. These can be filled in later or the triad can be used for rails
-    feedback actions whick fill in the selectors based on specification from
-    within colang.
+        If a particular lens is not provided, the relevant selectors will be
+        missing. These can be filled in later or the triad can be used for rails
+    <<<<<<< HEAD
+        feedback actions whick fill in the selectors based on specification from
+    =======
+        feedback actions which fill in the selectors based on specification from
+    >>>>>>> origin/main
+        within colang.
 
-    Args:
-        provider: The provider to use for implementing the feedback functions.
+        Args:
+            provider: The provider to use for implementing the feedback functions.
 
-        question: Selector for the question part.
+            question: Selector for the question part.
 
-        answer: Selector for the answer part.
+            answer: Selector for the answer part.
 
-        context: Selector for the context part.
+            context: Selector for the context part.
     """
 
     assert hasattr(

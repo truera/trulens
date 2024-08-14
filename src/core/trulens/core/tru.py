@@ -8,9 +8,11 @@ import json
 import logging
 from multiprocessing import Process
 from pprint import PrettyPrinter
+import queue
 import re
 import threading
 from threading import Thread
+import time
 from time import sleep
 from typing import (
     Any,
@@ -31,10 +33,10 @@ from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import app as app_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import python
 from trulens.core.utils import serial
 from trulens.core.utils import threading as tru_threading
@@ -86,11 +88,12 @@ class Tru(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requres annotation
-            of methods to instrument.
+            Custom apps containing custom structures and methods. Requires
+            annotation of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
-            apps that do not have a real app to instrument but have a virtual            structure and can log existing captured data as if they were trulens
+            apps that do not have a real app to instrument but have a virtual
+            structure and can log existing captured data as if they were trulens
             records.
 
     Args:
@@ -139,6 +142,9 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
+    RECORDS_BATCH_TIMEOUT: int = 10
+    """Time to wait before inserting a batch of records into the database."""
+
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
 
@@ -161,6 +167,10 @@ class Tru(python.SingletonPerName):
 
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
+
+    batch_record_queue = queue.Queue()
+
+    batch_thread = None
 
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
@@ -326,8 +336,8 @@ class Tru(python.SingletonPerName):
         self.db = db
 
     def add_record(
-        self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
-    ) -> mod_types_schema.RecordID:
+        self, record: Optional[record_schema.Record] = None, **kwargs: dict
+    ) -> types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -342,21 +352,73 @@ class Tru(python.SingletonPerName):
         """
 
         if record is None:
-            record = mod_record_schema.Record(**kwargs)
+            record = record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
-
         return self.db.insert_record(record=record)
 
     update_record = add_record
+
+    def add_record_nowait(
+        self,
+        record: record_schema.Record,
+    ) -> None:
+        """Add a record to the queue to be inserted in the next batch."""
+        if self.batch_thread is None:
+            self.batch_thread = threading.Thread(
+                target=self.batch_loop, daemon=True
+            )
+            self.batch_thread.start()
+        self.batch_record_queue.put(record)
+
+    def batch_loop(self):
+        while True:
+            time.sleep(self.RECORDS_BATCH_TIMEOUT)
+            records = []
+            while True:
+                try:
+                    record = self.batch_record_queue.get_nowait()
+                    records.append(record)
+                except queue.Empty:
+                    break
+            if records:
+                try:
+                    self.db.batch_insert_record(records)
+                except Exception as e:
+                    # Re-queue the records that failed to be inserted
+                    for record in records:
+                        self.batch_record_queue.put(record)
+                    logger.error(
+                        "Re-queued records due to insertion error {}", e
+                    )
+                    continue
+                feedback_results = []
+                apps = {}
+                for record in records:
+                    app_id = record.app_id
+                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    feedback_definitions = app.get("feedback_definitions", [])
+                    # TODO(Dave): Modify this to add only client side feedback results
+                    for feedback_definition_id in feedback_definitions:
+                        feedback_results.append(
+                            feedback_schema.FeedbackResult(
+                                feedback_definition_id=feedback_definition_id,
+                                record_id=record.record_id,
+                                name="feedback_name",  # this will be updated later by deferred evaluator
+                            )
+                        )
+                try:
+                    self.db.batch_insert_feedback(feedback_results)
+                except Exception as e:
+                    logger.error("Failed to insert feedback results {}", e)
 
     # TODO: this method is used by app.py, which represents poor code
     # organization.
     def _submit_feedback_functions(
         self,
-        record: mod_record_schema.Record,
+        record: record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[mod_app_schema.AppDefinition] = None,
+        app: Optional[app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
                 [
@@ -394,7 +456,7 @@ class Tru(python.SingletonPerName):
         self.db: DB
 
         if app is None:
-            app = mod_app_schema.AppDefinition.model_validate(
+            app = app_schema.AppDefinition.model_validate(
                 self.db.get_app(app_id=app_id)
             )
             if app is None:
@@ -428,7 +490,6 @@ class Tru(python.SingletonPerName):
                         on_done(temp)
                     finally:
                         return temp
-
                 return temp
 
             fut: Future[feedback_schema.FeedbackResult] = tp.submit(
@@ -439,18 +500,15 @@ class Tru(python.SingletonPerName):
             # because the result() is returned before callback runs otherwise.
             # We want to do db work before result is returned.
 
-            # if on_done is not None:
-            #    fut.add_done_callback(on_done)
-
             feedbacks_and_futures.append((ffunc, fut))
 
         return feedbacks_and_futures
 
     def run_feedback_functions(
         self,
-        record: mod_record_schema.Record,
+        record: record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[mod_app_schema.AppDefinition] = None,
+        app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
         Iterable[feedback_schema.FeedbackResult],
@@ -479,7 +537,7 @@ class Tru(python.SingletonPerName):
                 is disabled.
         """
 
-        if not isinstance(record, mod_record_schema.Record):
+        if not isinstance(record, record_schema.Record):
             raise ValueError(
                 "`record` must be a `trulens.core.schema.record.Record` instance."
             )
@@ -494,7 +552,7 @@ class Tru(python.SingletonPerName):
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
             )
 
-        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
+        if not (app is None or isinstance(app, app_schema.AppDefinition)):
             raise ValueError(
                 "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
             )
@@ -530,9 +588,7 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -546,7 +602,7 @@ class Tru(python.SingletonPerName):
 
         return self.db.insert_app(app=app)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -565,7 +621,7 @@ class Tru(python.SingletonPerName):
             ]
         ] = None,
         **kwargs: dict,
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
@@ -623,7 +679,7 @@ class Tru(python.SingletonPerName):
                 Future[feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -647,8 +703,8 @@ class Tru(python.SingletonPerName):
         return ids
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> serial.JSONized[mod_app_schema.AppDefinition]:
+        self, app_id: types_schema.AppID
+    ) -> serial.JSONized[app_schema.AppDefinition]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -673,7 +729,7 @@ class Tru(python.SingletonPerName):
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -687,7 +743,7 @@ class Tru(python.SingletonPerName):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -718,7 +774,7 @@ class Tru(python.SingletonPerName):
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.

@@ -13,7 +13,7 @@ from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.dashboard import display
-from trulens.dashboard.react_components.record_viewer import record_viewer
+from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
 
@@ -101,7 +101,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",

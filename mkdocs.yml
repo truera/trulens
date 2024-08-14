@@ -58,8 +58,8 @@ plugins:
         - docs/gen_ref_pages.py
   - literate-nav:
       nav_file: SUMMARY.md
-#  - mkdocs-jupyter:
-#      include: ["*.ipynb"]
+  - mkdocs-jupyter:
+      include: ["*.ipynb"]
   - mkdocstrings:
       # See https://mkdocstrings.github.io/python/usage/configuration/docstrings/ .
       default_handler: python
@@ -77,6 +77,7 @@ plugins:
             - https://docs.sqlalchemy.org/en/20/objects.inv
           paths:
             - src/api
+            - src/legacy
             - src/core
             - src/feedback
             - src/dashboard
@@ -133,7 +134,7 @@ plugins:
             #- typing_extensions
             # members:
             # filters:
-            #   - "!^_" # exlude all members starting with _
+            #   - "!^_" # exclude all members starting with _
             #   - "!^tru_class_info" # don't show tru_class_info
             #   - "^__init__$" # but always include __init__ modules and methods
             #   - "^__call__$" # and __call__ methods

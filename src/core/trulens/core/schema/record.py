@@ -8,9 +8,9 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils import threading as threading_utils
@@ -36,8 +36,8 @@ class RecordAppCallMethod(serial.SerialModel):
 class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
 
-    call_id: mod_types_schema.CallID = pydantic.Field(
-        default_factory=mod_types_schema.new_call_id
+    call_id: types_schema.CallID = pydantic.Field(
+        default_factory=types_schema.new_call_id
     )
     """Unique identifier for this call.
 
@@ -65,7 +65,7 @@ class RecordAppCall(serial.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -97,16 +97,16 @@ class Record(serial.SerialModel, Hashable):
         "arbitrary_types_allowed": True
     }
 
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_id: types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[mod_base_schema.Cost] = None
+    cost: Optional[base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(
@@ -159,7 +159,7 @@ class Record(serial.SerialModel, Hashable):
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(
-        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+        self, record_id: Optional[types_schema.RecordID] = None, **kwargs
     ):
         super().__init__(record_id="temporary", **kwargs)
 

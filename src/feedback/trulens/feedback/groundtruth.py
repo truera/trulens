@@ -83,12 +83,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ```
 
         Args:
-            ground_truth: A list of query/response pairs or a function or
-                callable that returns a ground truth string given a prompt string.
-
-            bert_scorer: Internal Usage for DB serialization.
-
-            provider: Internal Usage for DB serialization.
+            ground_truth (Union[Callable, FunctionOrMethod]): A list of query/response pairs or a function or callable that returns a ground truth string given a prompt string.
+            provider (LLMProvider): The provider to use for agreement measures.
+            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
 
         """
         if isinstance(ground_truth, List):
@@ -168,9 +165,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.agreement_measure).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback
-            Function
-            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt: A text prompt to an agent.
@@ -260,9 +255,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bert_score).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback
-            Function
-            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
 
         Args:
@@ -314,9 +307,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
             feedback = Feedback(ground_truth_collection.bleu).on_input_output()
             ```
-            The `on_input_output()` selector can be changed. See [Feedback
-            Function
-            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
+            The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
             prompt: A text prompt to an agent.

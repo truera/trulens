@@ -18,9 +18,9 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
-from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import app as app_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -81,7 +81,7 @@ def new_base(prefix: str) -> Type[T]:
     """Create a new base class for ORM classes.
 
     Note: This is a function to be able to define classes extending different
-    SQLAlchemy delcarative bases. Each different such bases has a different set
+    SQLAlchemy declarative bases. Each different such bases has a different set
     of mappings from classes to table names. If we only had one of these, our
     code will never be able to have two different sets of mappings at the same
     time. We need to be able to have multiple mappings for performing things
@@ -155,7 +155,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_app_schema.AppDefinition,
+                obj: app_schema.AppDefinition,
                 redact_keys: bool = False,
             ) -> ORM.AppDefinition:
                 return cls(
@@ -222,7 +222,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             @classmethod
             def parse(
-                cls, obj: mod_record_schema.Record, redact_keys: bool = False
+                cls, obj: record_schema.Record, redact_keys: bool = False
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,

@@ -191,6 +191,3 @@ for package in packages:
 
 with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
     nav_file.writelines(nav.build_literate_nav())
-
-# with mkdocs_gen_files.open("reference/index.md", "w") as nav_file:
-#    nav_file.writelines(nav.build_literate_nav())

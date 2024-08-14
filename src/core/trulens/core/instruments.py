@@ -38,9 +38,9 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import python
 from trulens.core.utils.containers import dict_merge_with
 from trulens.core.utils.imports import Dummy
@@ -143,12 +143,12 @@ class WithInstrumentCallbacks:
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
+        existing_record: Optional[record_schema.Record] = None,
     ):
         """
-        Called by instrumented methods if they are root calls (first instrumned
+        Called by instrumented methods if they are root calls (first instrumented
         methods in a call stack).
 
         Args:
@@ -269,19 +269,21 @@ class Instrument:
 
                 if isinstance(cls, Dummy):
                     print(
-                        f"{t*1}Class {cls.__module__}.{cls.__qualname__}\n{t*2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
+                        f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
-                    print(retab(tab=f"{t*3}> ", s=str(cls.original_exception)))
+                    print(
+                        retab(tab=f"{t * 3}> ", s=str(cls.original_exception))
+                    )
                     continue
 
-                print(f"{t*1}Class {cls.__module__}.{cls.__qualname__}")
+                print(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
 
                 for method, class_filter in self.include_methods.items():
                     if class_filter_matches(
                         f=class_filter, obj=cls
                     ) and safe_hasattr(cls, method):
                         f = getattr(cls, method)
-                        print(f"{t*2}Method {method}: {inspect.signature(f)}")
+                        print(f"{t * 2}Method {method}: {inspect.signature(f)}")
 
             print()
 
@@ -290,7 +292,7 @@ class Instrument:
 
         # NOTE: some classes do not support issubclass but do support
         # isinstance. It is thus preferable to do isinstance checks when we can
-        # avoid issublcass checks.
+        # avoid issubclass checks.
         return any(isinstance(obj, cls) for cls in self.include_classes)
 
     def to_instrument_class(self, cls: type) -> bool:  # class
@@ -465,7 +467,7 @@ class Instrument:
             start_time = None
 
             bindings = None
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -504,7 +506,7 @@ class Instrument:
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = mod_record_schema.RecordAppCallMethod(
+                frame_ident = record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -520,7 +522,7 @@ class Instrument:
             # Create a unique call_id for this method call. This will be the
             # same across everyone Record or RecordAppCall that refers to this
             # method invocation.
-            call_id = mod_types_schema.new_call_id()
+            call_id = types_schema.new_call_id()
 
             error_str = None
 
@@ -557,14 +559,14 @@ class Instrument:
             records = {}
 
             def handle_done(rets):
-                # (re) renerate end_time here because cases where the initial end_time was
+                # (re) generate end_time here because cases where the initial end_time was
                 # just to produce an awaitable before being awaited.
                 end_time = datetime.now()
 
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -580,7 +582,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
+                    call = record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -596,7 +598,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
@@ -773,7 +775,7 @@ class Instrument:
                     original_fun = getattr(base, method_name)
 
                     # If an instrument class uses a decorator to wrap one of
-                    # their methods, the wrapper will capture an uninstrumented
+                    # their methods, the wrapper will capture an un-instrumented
                     # version of the inner method which we may fail to
                     # instrument.
                     if hasattr(original_fun, "__wrapped__"):
@@ -896,7 +898,7 @@ class Instrument:
                                             #    sv.__func__, "__code__", unbound.__code__
                                             #)
                                         except Exception as e:
-                                            print(f"\t\t\t{subquery}: cound not instrument because {e}")
+                                            print(f"\t\t\t{subquery}: could not instrument because {e}")
                                                     #self.instrument_bound_methods(sv_self, query=subquery)
 
                         """
@@ -974,7 +976,7 @@ class Instrument:
                             setattr(obj, method_name, bound)
                         except Exception as e:
                             logger.debug(
-                                f"\t\t\t{query}: cound not instrument because {e}"
+                                f"\t\t\t{query}: could not instrument because {e}"
                             )
 
                 else:

@@ -257,7 +257,7 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
         # This is deprecated starting 3.11
         parts = filepath.parts
         with resources.path("trulens", parts[0]) as _path:
-            # NOTE: resources.path does not allow the resource to incude folders.
+            # NOTE: resources.path does not allow the resource to include folders.
             for part in parts[1:]:
                 _path = _path / part
             return _path
@@ -422,6 +422,8 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
+
+# To remove after trulens_eval is removed:
 
 # Optional sub-packages:
 REQUIREMENT_FEEDBACK = format_import_errors(

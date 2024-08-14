@@ -1,6 +1,4 @@
-"""
-TruLens: Don't just vibe check your LLM app!
-"""
+"""TruLens: Don't just vibe check your LLM app!"""
 
 from importlib.metadata import version
 

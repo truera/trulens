@@ -5,6 +5,8 @@ SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
 
+.ONESHELL:
+
 # Create the poetry env for building website, docs, formatting, etc.
 env:
 	poetry install
@@ -21,9 +23,9 @@ env-optional:
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS) clean-dashboard
-	for dir in $(POETRY_DIRS); do \
-		echo "Creating lockfile for $$dir/pyproject.toml"; \
-		poetry lock -C $$dir; \
+	for dir in $(POETRY_DIRS); do
+		echo "Creating lockfile for $$dir/pyproject.toml";
+		poetry lock -C $$dir;
 	done
 
 # Run the ruff linter.
@@ -40,7 +42,7 @@ precommit-hooks:
 run-precommit:
 	poetry run pre-commit run --all-files --show-diff-on-failure
 
-# Start a jupyer lab instance.
+# Start a jupyter lab instance.
 lab: env
 	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
 
@@ -74,11 +76,10 @@ docs-linkcheck: site
 trubot:
 	poetry run python -u examples/trubot/trubot.py
 
-# Run a test with the optional flag set, meaning @optional_test decorated tests
-# are run.
 
+# Generates a coverage report.
 coverage:
-	ALLOW_OPTIONAL_ENV_VAR=true pytest --rootdir=. tests/* --cov src --cov-report html
+	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Runs required tests
 test-%-required: env-required
@@ -86,7 +87,7 @@ test-%-required: env-required
 
 # Runs required tests, but allows optional dependencies to be installed.
 test-%-allow-optional: env
-	ALLOW_OPTIONAL_ENV_VAR=true make test-$*
+	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-optional
@@ -157,7 +158,7 @@ upload-%:
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-all: build
-	poetry run `twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*
 
 upload-testpypi-%: build
 	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
