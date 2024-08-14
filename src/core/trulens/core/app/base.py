@@ -158,13 +158,7 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
     @staticmethod
     def innermost_base(
         bases: Optional[Sequence[Class]] = None,
-        among_modules=set(
-            [
-                "langchain",
-                "llama_index",
-                "trulens",
-            ]
-        ),
+        among_modules=set(["langchain", "llama_index", "trulens"]),
     ) -> Optional[str]:
         """
         Given a sequence of classes, return the first one which comes from one
