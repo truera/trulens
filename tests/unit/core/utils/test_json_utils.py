@@ -5,6 +5,7 @@ from trulens.core.utils.json import _recursive_hash
 @pytest.mark.parametrize(
     "test_input,matching_input,expected",
     [
+        ("", None, STR_HASH := "d41d8cd98f00b204e9800998ecf8427e"),
         ("hello", None, STR_HASH := "5d41402abc4b2a76b9719d911017c592"),
         (5, "5", INT_HASH := "e4da3b7fbbce2345d7772b0674a318d5"),
         (3.4, "3.4", FLOAT_HASH := "31053ad0506e935470ca21b43cae98cf"),
