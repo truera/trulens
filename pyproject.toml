@@ -14,7 +14,7 @@ authors = [
 license = "MIT"
 readme = "README.md"
 packages = [
-  { from = "_trulens", include = "not_trulens" },
+  { from = "_trulens", include = "trulens" },
 ]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/trulens/getting_started/"

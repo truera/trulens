@@ -1,8 +1,8 @@
 # ruff: noqa: E402
-"""Aliases.
-
-Aliases to new locations of various names. This module is deprecated and will be
-removed in a future release.
+"""
+!!! warning
+    This module is deprecated and will be removed. Use `trulens.feedback` and
+    `trulens.providers.*` instead.
 """
 
 from trulens.core.utils import deprecation

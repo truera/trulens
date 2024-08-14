@@ -1,7 +1,8 @@
 # ruff: noqa: E402
 """
 !!! warning
-    This module is deprecated and will be removed. Use `trulens` instead.
+    This module is deprecated and will be removed. Use `trulens.core`,
+    `trulens.feedback`, `trulens.dashboard` instead.
 """
 
 from typing import TYPE_CHECKING, Any

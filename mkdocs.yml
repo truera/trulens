@@ -280,7 +280,9 @@ nav:
   - Cookbook: examples/
   - 🤝 Contributing:
       - trulens/contributing/index.md
+      - Dev Guide: trulens/contributing/development.md
       - 🧭 Design: trulens/contributing/design.md
+      - Release Policies: trulens/contributing/policies.md
       - ✅ Standards: trulens/contributing/standards.md
       - 💣 Tech Debt: trulens/contributing/techdebt.md
       - ⛅ Optional Pckages: trulens/contributing/optional.md

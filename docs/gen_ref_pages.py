@@ -79,12 +79,6 @@ def write_to_gen_files(
         parts[0] == "trulens_eval"
     ):  # legacy module is in the trulens-legacy package
         nav_parts = format_parts(("legacy", *parts))
-    elif (
-        parts[0] == "trulens" and len(parts) == 1 or parts[-1] in ["providers"]
-    ):
-        nav_parts = format_parts(
-            ("api", *parts)
-        )  # trulens-api contains these modules
     else:
         nav_parts = format_parts(parts)
 
@@ -94,7 +88,55 @@ def write_to_gen_files(
 
     if not content:
         ident = ".".join(parts)
-        content = f"#{ident}\n::: {ident}"
+        content = f"# {ident}\n::: {ident}"
+
+        if "legacy" in parts:
+            # Show fewer details in the legacy sections.
+            content += """
+    options:
+        heading_level: 2
+        show_bases: false
+        show_root_heading: false
+        show_root_toc_entry: false
+        show_source: false
+        show_docstring_classes: false
+        show_docstring_modules: false
+        show_docstring_parameters: false
+        show_docstring_returns: false
+        show_docstring_description: true
+        show_docstring_examples: false
+        show_docstring_other_parameters: false
+        show_docstring_attributes: false
+        show_signature: false
+        separate_signature: false
+        summary: false
+        group_by_category: true
+        members_order: alphabetical
+"""
+        if "api" in parts:
+            # Show fewer details in the API sections.
+            content += """
+    options:
+        heading_level: 2
+        show_bases: false
+        show_root_heading: false
+        show_root_toc_entry: false
+        show_source: false
+        show_docstring_classes: false
+        show_docstring_modules: false
+        show_docstring_parameters: false
+        show_docstring_returns: false
+        show_docstring_description: true
+        show_docstring_examples: false
+        show_docstring_other_parameters: false
+        show_docstring_attributes: false
+        show_signature: false
+        separate_signature: false
+        summary: false
+        group_by_category: true
+        members_order: alphabetical
+"""
+    #            content = f"API {ident} [{ident}][{ident}]"
 
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
         print("writing to", full_doc_path)
@@ -121,6 +163,7 @@ print("Collecting from packages:", packages)
 nav["API Reference"] = "index.md"
 nav["providers"] = "providers/index.md"
 nav["instrument"] = "instrument/index.md"
+nav["legacy"] = "legacy/index.md"
 
 for package in packages:
     # create a nav entry for package/index.md
