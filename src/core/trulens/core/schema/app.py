@@ -32,6 +32,7 @@ class RecordIngestMode(str, Enum):
     BUFFERED = "buffered"
     """Records are buffered and ingested in batches to the database."""
 
+
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
