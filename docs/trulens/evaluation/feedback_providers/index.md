@@ -34,7 +34,7 @@ Providers which use large language models for feedback evaluation:
 - [_LangChain_ provider][trulens.providers.langchain.Langchain]
 
 Feedback functions in common across these providers are in their abstract class
-[LLMProvider][trulens.feedback.LLMProvider].
+[LLMProvider][trulens.feedback.llm_provider.LLMProvider].
 
 ## Embedding-based Providers
 

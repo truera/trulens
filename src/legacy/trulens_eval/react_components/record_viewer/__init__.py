@@ -17,3 +17,5 @@ record_viewer = deprecation.function_moved(
     old="trulens_eval.react_components.record_viewer",
     new="trulens.dashboard.react_components.record_viewer",
 )
+
+__all__ = ["record_viewer"]

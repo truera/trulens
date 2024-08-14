@@ -58,9 +58,9 @@ API Reference: [OpenAI][trulens.providers.openai.OpenAI].
 
 ## Generation-based: LLMProvider
 
-API Reference: [LLMProvider][trulens.feedback.LLMProvider].
+API Reference: [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
 
-::: trulens.feedback.LLMProvider
+::: trulens.feedback.llm_provider.LLMProvider
     options:
         heading_level: 4
         show_bases: false

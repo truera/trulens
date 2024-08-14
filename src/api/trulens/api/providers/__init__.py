@@ -1,11 +1,11 @@
 # ruff: noqa: E402
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
 from typing import TYPE_CHECKING
 
 from trulens.core.utils import imports as import_utils
 
 if TYPE_CHECKING:
+    # Needed for static tools:
     from trulens.providers.bedrock.provider import Bedrock
     from trulens.providers.cortex.provider import Cortex
     from trulens.providers.huggingface.provider import Huggingface

@@ -114,6 +114,9 @@ test-e2e:
 test-notebook:
 	poetry run pytest --rootdir=. tests/docs_notebooks/*
 
+install-wheels:
+	pip install dist/*/*.whl
+
 # Release Steps:
 ## Step: Clean repo:
 clean-dashboard:

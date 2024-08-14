@@ -11,7 +11,8 @@ The interactive API is contained in the `trulens-api` package and exposes
 the principal features of each of the _TruLens_ modules. These are enumerated in
 the `__all__` special variable in each applicable module.
 
-- [trulens][trulens] -- Contains everything to get started including workspace manager `Tru` and the contents of the other Interactive API modules below:
+- [trulens][trulens] -- Contains everything to get started including workspace
+  manager `Tru` and the contents of the other Interactive API modules below:
 
 ::: trulens
     options:
@@ -35,6 +36,8 @@ the `__all__` special variable in each applicable module.
         summary: false
         group_by_category: false
         members_order: alphabetical
+
+::: trulens.instrument.langchain.TruChain
 
 - [trulens.providers][trulens.providers] -- Includes all providers.
 

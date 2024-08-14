@@ -1,7 +1,5 @@
 # ruff: noqa: E402, F822
 
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
 # TODO: get this from poetry
 __version_info__ = (1, 0, 0, "a0")
 """Version number components for major, minor, patch."""
@@ -11,20 +9,11 @@ __version__ = ".".join(map(str, __version_info__))
 
 from typing import TYPE_CHECKING
 
-from trulens import feedback as mod_feedback
-from trulens import instrument as mod_instrument
-from trulens import providers as mod_providers
-from trulens.core.utils import imports as import_utils
-
-
-def set_no_install(val: bool = True) -> None:
-    """Sets the NO_INSTALL flag to make sure optional packages are not
-    automatically installed."""
-
-    import_utils.NO_INSTALL = val
-
-
 if TYPE_CHECKING:
+    # This is needed for static tools like mypy and mkdocstrings to figure out
+    # content of this module. Generating stubs for this module must also be done
+    # for mkdocstrings/griffe to work.
+
     # Common classes:
     from trulens.core.feedback.feedback import Feedback
     from trulens.core.feedback.provider import Provider
@@ -45,24 +34,16 @@ if TYPE_CHECKING:
     FeedbackDefinition = feedback_schema.FeedbackDefinition
 
     # Utilities
+    # Recorders:
+    from trulens.core.app.basic import TruBasicApp
+    from trulens.core.app.custom import TruCustomApp
+    from trulens.core.app.virtual import TruVirtual
     from trulens.core.schema import Select
+    from trulens.instrument.langchain.tru_chain import TruChain
+    from trulens.instrument.llamaindex.tru_llama import TruLlama
+    from trulens.instrument.nemo.tru_rails import TruRails
 
-
-_CLASSES = {  # **mod_feedback._CLASSES, # these are too specific to be included here
-    "Tru": ("trulens-core", "trulens.core.tru"),
-    "TP": ("trulens-core", "trulens.core.utils.threading"),
-    "Feedback": ("trulens-core", "trulens.core.feedback.feedback"),
-    "Provider": ("trulens-core", "trulens.core.feedback.provider"),
-}
-
-_ENUMS = mod_feedback._ENUMS
-
-_UTILITIES = mod_feedback._UTILITIES
-
-_SCHEMAS = mod_feedback._SCHEMAS
-
-# Providers:
-if TYPE_CHECKING:
+    # Providers:
     from trulens.providers.bedrock.provider import Bedrock
     from trulens.providers.cortex.provider import Cortex
     from trulens.providers.huggingface.provider import Huggingface
@@ -72,16 +53,25 @@ if TYPE_CHECKING:
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-_PROVIDERS = mod_providers._PROVIDERS
+_CLASSES = {  # **mod_feedback._CLASSES, # these are too specific to be included here
+    "Tru": ("trulens-core", "trulens.core.tru"),
+    "TP": ("trulens-core", "trulens.core.utils.threading"),
+    "Feedback": ("trulens-core", "trulens.core.feedback.feedback"),
+    "Provider": ("trulens-core", "trulens.core.feedback.provider"),
+}
 
-# Recorders:
-if TYPE_CHECKING:
-    from trulens.core.app.basic import TruBasicApp
-    from trulens.core.app.custom import TruCustomApp
-    from trulens.core.app.virtual import TruVirtual
-    from trulens.instrument.langhain.tru_chain import TruChain
-    from trulens.instrument.llamaindex.tru_llama import TruLlama
-    from trulens.instrument.nemo.tru_rails import TruRails
+from trulens.api import feedback as mod_feedback
+from trulens.api import instrument as mod_instrument
+from trulens.api import providers as mod_providers
+from trulens.core.utils import imports as import_utils
+
+_ENUMS = mod_feedback._ENUMS
+
+_UTILITIES = mod_feedback._UTILITIES
+
+_SCHEMAS = mod_feedback._SCHEMAS
+
+_PROVIDERS = mod_providers._PROVIDERS
 
 _RECORDERS = mod_instrument._RECORDERS
 

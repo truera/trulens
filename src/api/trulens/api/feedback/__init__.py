@@ -1,7 +1,5 @@
 # ruff: noqa: E402, F822
 
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
 from typing import TYPE_CHECKING
 
 from trulens.core.utils import imports as import_utils
@@ -45,19 +43,19 @@ _TYPES = {
 }
 
 _ENUMS = {
-    "FeedbackMode": ("trulens-core", "trulens.feedback.feedback"),
-    "FeedbackResultStatus": ("trulens-core", "trulens.feedback.feedback"),
+    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
+    "FeedbackResultStatus": ("trulens-core", "trulens.core.schema.feedback"),
     "FeedbackOnMissingParameters": (
         "trulens-core",
-        "trulens.feedback.feedback",
+        "trulens.core.schema.feedback",
     ),
-    "FeedbackCombinations": ("trulens-core", "trulens.feedback.feedback"),
+    "FeedbackCombinations": ("trulens-core", "trulens.core.schema.feedback"),
 }
 
 _SCHEMAS = {
-    "FeedbackResult": ("trulens-core", "trulens.feedback.feedback"),
-    "FeedbackCall": ("trulens-core", "trulens.feedback.feedback"),
-    "FeedbackDefinition": ("trulens-core", "trulens.feedback.feedback"),
+    "FeedbackResult": ("trulens-core", "trulens.core.schema.feedback"),
+    "FeedbackCall": ("trulens-core", "trulens.core.schema.feedback"),
+    "FeedbackDefinition": ("trulens-core", "trulens.core.schema.feedback"),
 }
 
 _UTILITIES = {

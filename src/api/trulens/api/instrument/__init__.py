@@ -1,18 +1,26 @@
 # ruff: noqa: E402, F822
 
-__path__ = __import__("pkgutil").extend_path(__path__, __name__)
-
 from typing import TYPE_CHECKING
 
 from trulens.core.utils import imports as import_utils
 
 if TYPE_CHECKING:
-    from trulens.core.app.basic import TruBasicApp
-    from trulens.core.app.custom import TruCustomApp
-    from trulens.core.app.virtual import TruVirtual
-    from trulens.instrument.langhain.tru_chain import TruChain
-    from trulens.instrument.llamaindex.tru_llama import TruLlama
-    from trulens.instrument.nemo.tru_rails import TruRails
+    # Needed for static tools to resolve submodules:
+    from trulens.core.app import basic
+    from trulens.core.app import custom
+    from trulens.core.app import virtual
+    from trulens.instrument import langchain
+    from trulens.instrument import llamaindex
+    #    from trulens.instrument import nemo
+
+    # Needed for static tools to determine our exports:
+    TruBasicApp = basic.TruBasicApp
+    TruCustomApp = custom.TruCustomApp
+    TruVirtual = virtual.TruVirtual
+    TruChain = langchain.TruChain
+    TruLlama = llamaindex.TruLlama
+#   TruRails = nemo.TruRails
+
 
 _RECORDERS = {
     "TruBasicApp": ("trulens-core", "trulens.core.app.tru_basic_app"),
@@ -46,5 +54,5 @@ __all__ = [
     "TruVirtual",
     "TruChain",
     "TruLlama",
-    "TruRails",
+    #    "TruRails",
 ]
