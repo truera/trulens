@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import abc
+import datetime
 import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
+from sqlalchemy import DateTime
 from sqlalchemy import Engine
 from sqlalchemy import Float
 from sqlalchemy import Text
@@ -314,6 +316,40 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     ),
                     multi_result=obj.multi_result,
                 )
+
+        class GroundTruth(base):
+            _table_base_name = "ground_truth"
+
+            query_id = Column(Text, primary_key=True, nullable=True)
+            query = Column(Text, nullable=False)
+            expected_response = Column(Text, nullable=True)
+            expected_chunks = Column(TYPE_JSON, nullable=True)
+            metadata = Column(TYPE_JSON, nullable=True)
+            dataset_id = Column(Text, nullable=False)
+            created_at = Column(
+                DateTime, default=datetime.datetime.now, nullable=False
+            )
+            updated_at = Column(
+                DateTime,
+                default=datetime.datetime.now,
+                onupdate=datetime.datetime.now,
+                nullable=False,
+            )
+
+        class Dataset(base):
+            _table_base_name = "dataset"
+
+            dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            metadata = Column(TYPE_JSON, nullable=False)
+            created_at = Column(
+                DateTime, default=datetime.datetime.now, nullable=False
+            )
+            updated_at = Column(
+                DateTime,
+                default=datetime.datetime.now,
+                onupdate=datetime.datetime.now,
+                nullable=False,
+            )
 
     configure_mappers()  # IMPORTANT
     # Without the above, orm class attributes which are defined using backref

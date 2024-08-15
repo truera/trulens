@@ -1097,3 +1097,15 @@ class Tru(python.SingletonPerName):
             self._evaluator_stop = None
 
         self._evaluator_proc = None
+
+    def persist_ground_truth_dataset(
+        self, dataset_df: pandas.DataFrame, dataset_args: dict
+    ):
+        """
+        Usage example: TODO
+
+        Args:
+            dataset_df (pandas.DataFrame): _description_
+            dataset_args (dict): _description_
+        """
+        pass

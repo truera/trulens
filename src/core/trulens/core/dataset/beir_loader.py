@@ -5,6 +5,7 @@ import os
 from typing import Generator, Tuple
 import zipfile
 
+import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
 
@@ -108,7 +109,9 @@ class TruBEIRDataLoader:
         if not fIn.endswith(ext):
             raise ValueError(f"File {fIn} must be present with extension {ext}")
 
-    def load(self, split="test") -> Tuple[Generator, Generator, Generator]:
+    def load_generators(
+        self, split="test"
+    ) -> Tuple[Generator, Generator, Generator]:
         """
         Lazily loads the corpus, queries, and qrels in a memory-efficient way.
         Returns generators instead of loading everything into memory.
@@ -161,7 +164,7 @@ class TruBEIRDataLoader:
             }
 
 
-def load_beir_dataset(dataset_name, data_path, split="test"):
+def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
     """
     Load BEIR dataset.
 
@@ -186,7 +189,7 @@ def load_beir_dataset(dataset_name, data_path, split="test"):
 
     corpus_gen, queries_gen, qrels_gen = TruBEIRDataLoader(
         data_folder=out_dir
-    ).load(split=split)
+    ).load_generators(split=split)
     # Convert the qrels generator to a dictionary to allow lookups
     qrels = {qrel["query_id"]: {} for qrel in qrels_gen}
     for qrel in qrels_gen:
@@ -217,3 +220,43 @@ def load_beir_dataset(dataset_name, data_path, split="test"):
             "dataset_id": dataset_name,
             "metadata": {"source": "BEIR", "dataset": dataset_name},
         }
+
+
+def persist_beir_dataset(
+    dataset_name, data_path, split="test", chunk_size=1000
+) -> pd.DataFrame:
+    """
+    Load BEIR dataset into a DataFrame in chunks.
+
+    Args:
+        dataset_name: Name of the BEIR dataset to load.
+        data_path: Path where the dataset should be downloaded or is stored.
+        split: Dataset split to load (e.g., "train", "test", "dev").
+        chunk_size: Number of records to process in each chunk.
+
+    Returns:
+        A pandas DataFrame containing the dataset entries.
+    """
+    dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
+
+    df = pd.DataFrame()
+
+    chunk = []
+    for idx, entry in enumerate(dataset_gen):
+        chunk.append(entry)
+
+        if (idx + 1) % chunk_size == 0:
+            df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
+            chunk = []  # Reset chunk
+
+    if chunk:
+        df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
+
+    return df
+
+
+def get_beir_dataset_df(dataset_name, data_path, split="test") -> pd.DataFrame:
+    dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
+    dataset_list = list(dataset_gen)
+    df = pd.DataFrame(dataset_list)
+    return df
