@@ -14,9 +14,9 @@ if TYPE_CHECKING:
     from trulens.instrument.nemo.tru_rails import TruRails
 
 _RECORDERS = {
-    "TruBasicApp": ("trulens-core", "trulens.core.app.tru_basic_app"),
-    "TruCustomApp": ("trulens-core", "trulens.core.app.tru_custom_app"),
-    "TruVirtual": ("trulens-core", "trulens.core.app.tru_virtual"),
+    "TruBasicApp": ("trulens-core", "trulens.core.app.basic.tru_basic_app"),
+    "TruCustomApp": ("trulens-core", "trulens.core.app.custom.tru_custom_app"),
+    "TruVirtual": ("trulens-core", "trulens.core.app.virtual.tru_virtual"),
     "TruChain": (
         "trulens-instrument-langchain",
         "trulens.instrument.langchain.tru_chain",
