@@ -9,6 +9,10 @@ import snowflake.connector
 from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
+from dotenv import load_dotenv
+import streamlit as st
+
+load_dotenv()
 
 
 class Cortex(LLMProvider):
@@ -34,24 +38,24 @@ class Cortex(LLMProvider):
             self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         )
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
-
+        
         connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "role": os.environ["SNOWFLAKE_ROLE"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "schema": os.environ["SNOWFLAKE_SCHEMA"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+            "account": st.secrets.get("SNOWFLAKE_ACCOUNT", os.environ.get("SNOWFLAKE_ACCOUNT")),
+            "user": st.secrets.get("SNOWFLAKE_USER", os.environ.get("SNOWFLAKE_USER")),
+            "role": st.secrets.get("SNOWFLAKE_ROLE", os.environ.get("SNOWFLAKE_ROLE")),
+            "database": st.secrets.get("SNOWFLAKE_DATABASE", os.environ.get("SNOWFLAKE_DATABASE")),
+            "schema": st.secrets.get("SNOWFLAKE_SCHEMA", os.environ.get("SNOWFLAKE_SCHEMA")),
+            "warehouse": st.secrets.get("SNOWFLAKE_WAREHOUSE", os.environ.get("SNOWFLAKE_WAREHOUSE")),
         }
 
-        if "SNOWFLAKE_USER_PASSWORD" in os.environ:
-            connection_parameters["password"] = os.environ[
-                "SNOWFLAKE_USER_PASSWORD"
-            ]
+        if "SNOWFLAKE_USER_PASSWORD" in st.secrets or "SNOWFLAKE_USER_PASSWORD" in os.environ:
+            connection_parameters["password"] = st.secrets.get(
+                "SNOWFLAKE_USER_PASSWORD", os.environ.get("SNOWFLAKE_USER_PASSWORD")
+            )
 
-        if "SNOWFLAKE_PRIVATE_KEY" in os.environ:
-            # Retrieve the private key as a string from the environment
-            private_key_str = os.getenv("SNOWFLAKE_PRIVATE_KEY")
+        if "SNOWFLAKE_PRIVATE_KEY" in st.secrets or "SNOWFLAKE_PRIVATE_KEY" in os.environ:
+            # Retrieve the private key as a string from st.secrets or environment
+            private_key_str = st.secrets.get("SNOWFLAKE_PRIVATE_KEY", os.getenv("SNOWFLAKE_PRIVATE_KEY"))
 
             # Convert the string to bytes
             private_key_bytes = private_key_str.encode()
@@ -62,15 +66,15 @@ class Cortex(LLMProvider):
                 )
             )
 
-        if "SNOWFLAKE_PRIVATE_KEY_FILE" in os.environ:
-            connection_parameters["private_key_file"] = os.environ[
-                "SNOWFLAKE_PRIVATE_KEY_FILE"
-            ]
+        if "SNOWFLAKE_PRIVATE_KEY_FILE" in st.secrets or "SNOWFLAKE_PRIVATE_KEY_FILE" in os.environ:
+            connection_parameters["private_key_file"] = st.secrets.get(
+                "SNOWFLAKE_PRIVATE_KEY_FILE", os.environ.get("SNOWFLAKE_PRIVATE_KEY_FILE")
+            )
 
-        if "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in os.environ:
-            connection_parameters["private_key_file_pwd"] = os.environ[
-                "SNOWFLAKE_PRIVATE_KEY_FILE_PWD"
-            ]
+        if "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in st.secrets or "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in os.environ:
+            connection_parameters["private_key_file_pwd"] = st.secrets.get(
+                "SNOWFLAKE_PRIVATE_KEY_FILE_PWD", os.environ.get("SNOWFLAKE_PRIVATE_KEY_FILE_PWD")
+            )
 
         # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
@@ -133,3 +137,7 @@ class Cortex(LLMProvider):
             raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
+
+        completion = json.loads(res[0][0])["choices"][0]["messages"]
+
+        return completion
