@@ -22,9 +22,6 @@ these APIs are:
   aliases. Code written using the production API, therefore, has to import
   components by their full path.
 
-- The interactive API follows a looser set of coding standards than the
-  production API.
-
 Both APIs follow a [deprecation policy](trulens/contributing/policies.md).
 
 ## Interactive API
