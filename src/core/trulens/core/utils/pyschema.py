@@ -609,7 +609,7 @@ class WithClassInfo(pydantic.BaseModel):
     # information using `WithClassInfo` meaning we can then use this method
     # below to load the subclass. Pydantic would only give us `Endpoint`, the
     # parent class.
-    @pydantic.model_validator(mode="before")
+    # @pydantic.model_validator(mode="before")
     @staticmethod
     def load(obj, *args, **kwargs):
         """Deserialize/load this object using the class information in
@@ -663,7 +663,7 @@ class WithClassInfo(pydantic.BaseModel):
 
     def __init__(
         self,
-        *args,
+        /,
         class_info: Optional[Class] = None,
         obj: Optional[object] = None,
         cls: Optional[type] = None,
@@ -689,7 +689,7 @@ class WithClassInfo(pydantic.BaseModel):
 
         kwargs[CLASS_INFO] = class_info
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     @staticmethod
     def get_class(obj_json: Dict):
@@ -704,7 +704,7 @@ class WithClassInfo(pydantic.BaseModel):
         return WithClassInfo(class_info=Class.of_class(cls))
 
     @classmethod
-    def model_validate(cls, *args, **kwargs) -> Any:
+    def model_validate(cls, obj, **kwargs) -> Any:
         # Note: This is here only so we can provide a pointer and some
         # instructions to render into the docs.
         """
@@ -716,7 +716,7 @@ class WithClassInfo(pydantic.BaseModel):
             and handled by [WithClassInfo][trulens.core.utils.pyschema.WithClassInfo].
         """
 
-        return super().model_validate(*args, **kwargs)
+        return super().model_validate(obj, **kwargs)
 
 
 # HACK013:

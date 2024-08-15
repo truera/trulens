@@ -73,10 +73,12 @@ tokenizers     >= 0.13.3  # no direct uses
 datasets >= 2.12.0
 kaggle   >= 1.5.13
 
+snowflake-core >= 0.10.0
+snowflake-sqlalchemy >= 1.6.1
 
 # Trulens packages
 trulens-feedback >= 1.0.0
-trulens-instrument-llama >= 1.0.0
+trulens-instrument-llamaindex >= 1.0.0
 trulens-instrument-langchain >= 1.0.0
 trulens-instrument-nemo >= 1.0.0
 trulens-providers-bedrock >= 1.0.0

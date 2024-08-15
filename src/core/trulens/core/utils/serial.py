@@ -526,8 +526,6 @@ class SerialModel(pydantic.BaseModel):
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
 
-        # yield class_name(type(self))
-
         # If this is a root repr, create a new set for already-formatted objects.
         tok = None
         if SerialModel.formatted_objects.get(None) is None:

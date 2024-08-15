@@ -344,6 +344,80 @@ dependencies get installed and hopefully corrected:
     ```
 """
 
+required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(namespace="core", filepath="utils/requirements.txt")
+)
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
+
+optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(
+        namespace="core", filepath="utils/requirements.optional.txt"
+    )
+)
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
+
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages,
+}
+"""Mapping of optional and required package names to the requirement object
+with info about that requirement including version constraints."""
+
+
+class VersionConflict(Exception):
+    """Exception to raise when a version conflict is found in a required package."""
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    Raises:
+        VersionConflict: If a version mismatch is found in a required package
+            and `ignore_version_mismatch` is not set.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            dist = metadata.distribution(req.name)
+
+        except metadata.PackageNotFoundError as e:
+            if is_optional:
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+
+            else:
+                raise ModuleNotFoundError(
+                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
+                ) from e
+
+        if dist.version not in req.specifier:
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
+
+            if is_optional:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
+
+            else:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
+
+            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message)
+
+            logger.debug(message)
+
 
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
@@ -393,6 +467,14 @@ def format_import_errors(
 
     requirements = []
     requirements_pinned = []
+
+    for pkg in packages:
+        if pkg in all_packages:
+            requirements.append(str(all_packages[pkg]))
+            requirements_pinned.append(str(pin_spec(all_packages[pkg])))
+        else:
+            logger.warning("Package %s not present in requirements.", pkg)
+            requirements.append(pkg)
 
     packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
