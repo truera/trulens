@@ -6,18 +6,53 @@ jupyter notebooks; it makes it most convenient to get started with _TruLens_.
 The development API is instead suited for deployed code. The differences between
 these APIs are:
 
-- By default, interactive API automatically installs optional `trulens-*`
+- _Lazy vs Eager_. All but a few names, interactive API modules' contents is loaded lazily. That
+  is, `from trulens.api import providers` does _not_ result in execution and
+  loading of the providers that `providers` exports. Instead, the loading of a
+  provider happens when it is looked up from `providers` via, e.g.,
+  `providers.Cortex` or imported from `providers` as in `from
+  trulens.api.providers import Cortex`.
+
+  Production API modules' contents and imports are eager.
+
+- _Live documentation_. Each interactive API module documents its exports if displayed in a jupyter notebook or if called via `help`:
+
+  ```python
+  from trulens.api import providers
+  providers # or providers.help()
+  ```
+
+  Shows:
+
+  ```
+  Module 'trulens.api.providers' from '/Users/pmardziel/repos/truera/trulens/src/api/trulens/api/providers/__init__.py contains:
+  provider:
+    Bedrock	[trulens-providers-bedrock]	[1.0.1a0]
+    Cortex	[trulens-providers-cortex]	[not installed]
+    Huggingface	[trulens-providers-huggingface]	[1.0.1a0]
+    HuggingfaceLocal	[trulens-providers-huggingface]	[1.0.1a0]
+    Langchain	[trulens-providers-langchain]	[1.0.1a0]
+    LiteLLM	[trulens-providers-litellm]	[1.0.1a0]
+    OpenAI	[trulens-providers-openai]	[1.0.1a0]
+    AzureOpenAI	[trulens-providers-openai]	[1.0.1a0]
+
+  Importing from this module will install the required package. You can disable this by calling `trulens.api.set_no_install()`.
+  ```
+
+  Production API modules do not provide this functionality though the standard python `help` method may be used as normal.
+
+  When attempting to import a non-existant name from an interactive API module,
+  a message is offered that enumerates its contents and the packages those
+  contents depend on as above. The production API does not do this.
+
+- _Auto-installation_. By default, interactive API automatically installs optional `trulens-*`
   packages as needed. The production API does not do this.
 
-- If automatic installation is disabled, the interactive API prints out
+  If automatic installation is disabled, the interactive API prints out
   instructions for installing optional packages if they are not already
   installed. The production API does not do this.
 
-- When attempting to import a non-existant name from an interactive API module,
-  a message is offered that enumerates its contents and the packages those
-  contents depend on. The production API does not do this.
-
-- The interactive API is composed entirely of module `__init__.py` files that
+- _Alias only vs. Definition only_. The interactive API is composed entirely of module `__init__.py` files that
   export aliases to elements of the production API which itself has no exported
   aliases. Code written using the production API, therefore, has to import
   components by their full path.

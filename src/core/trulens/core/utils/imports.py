@@ -98,7 +98,6 @@ def make_help_str(
 
 
 def make_getattr_override(
-    # mod: ModuleType,
     kinds: Dict[str, Dict],
     help_str: Union[str, Callable[[], str]],
 ) -> Any:
@@ -107,8 +106,20 @@ def make_getattr_override(
 
     mod = sys.modules[caller_module(offset=1)]
 
+    if not isinstance(help_str, str):
+        help_str: str = help_str()
+
+    if mod.__doc__ is None:
+        mod.__doc__ = help_str
+    else:
+        mod.__doc__ += "\n\n" + help_str
+
     def getattr_(attr):
         nonlocal mod
+        nonlocal help_str
+
+        if attr == "_ipython_display_":
+            return lambda: print(help_str)
 
         if attr in [
             "_ipython_canary_method_should_not_exist_",
@@ -149,8 +160,7 @@ def make_getattr_override(
             pass
 
         raise AttributeError(
-            f"Module {mod.__name__} has no attribute {attr}.\n"
-            + (help_str if isinstance(help_str, str) else help_str())
+            f"Module {mod.__name__} has no attribute {attr}.\n" + help_str
         )
 
     return getattr_
