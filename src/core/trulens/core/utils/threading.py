@@ -113,7 +113,7 @@ except Exception:
     pass
 
 
-class TP(SingletonPerName):  # "thread processing"
+class TP(metaclass=SingletonPerName):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.

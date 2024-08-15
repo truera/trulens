@@ -37,13 +37,14 @@ from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import python
 from trulens.core.utils import serial
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.python import Future  # code style exception
+from trulens.core.utils.python import Future
 from trulens.core.utils.python import OpaqueWrapper
+from trulens.core.utils.python import SingletonPerName
+from trulens.core.utils.python import safe_hasattr
 
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
     from snowflake.core import CreateMode
@@ -61,7 +62,7 @@ def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
 
 
-class Tru(python.SingletonPerName):
+class Tru(metaclass=SingletonPerName):
     """Tru is the main class that provides an entry points to trulens.
 
     Tru lets you:
@@ -227,7 +228,7 @@ class Tru(python.SingletonPerName):
             }
         )
 
-        if python.safe_hasattr(self, "db"):
+        if safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             for v in database_args.values():

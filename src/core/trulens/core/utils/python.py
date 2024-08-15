@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 from concurrent import futures
 import dataclasses
+from dataclasses import field
 import inspect
 import logging
 from pprint import PrettyPrinter
@@ -720,15 +721,6 @@ class SingletonInfo(Generic[T]):
     val: T
     """The singleton instance."""
 
-    cls: Type[T]
-    """The class of the singleton instance."""
-
-    frame: Any
-    """The frame where the singleton was created.
-
-    This is used for showing "already created" warnings.
-    """
-
     name: Optional[str] = None
     """The name of the singleton instance.
 
@@ -736,10 +728,17 @@ class SingletonInfo(Generic[T]):
     for each unique name (and class).
     """
 
-    def __init__(self, name: str, val: Any):
-        self.val = val
-        self.cls = val.__class__
-        self.name = name
+    cls: Type[T] = field(init=False)
+    """The class of the singleton instance."""
+
+    frameinfo: Any = field(init=False)
+    """The frame where the singleton was created.
+
+    This is used for showing "already created" warnings.
+    """
+
+    def __post_init__(self):
+        self.cls = self.val.__class__
         self.frameinfo = caller_frameinfo(offset=2)
 
     def warning(self):
@@ -760,7 +759,7 @@ class SingletonInfo(Generic[T]):
         )
 
 
-class SingletonPerName:
+class SingletonPerName(type):
     """
     Class for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
@@ -787,36 +786,22 @@ class SingletonPerName:
                 f"Instance of singleton type/name {k} does not exist."
             )
 
-    def __new__(
-        cls: Type[SingletonPerName],
-        *args,
-        name: Optional[str] = None,
-        **kwargs,
-    ) -> SingletonPerName:
+    def __call__(cls, *args, name: Optional[str] = None, **kwargs):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
-
         k = cls.__name__, name
-
         if k not in cls._instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "*** Creating new %s singleton instance ***",
                 cls.__name__,
-                name,
             )
-            # If exception happens here, the instance should not be added to
-            # _instances.
-            instance = super().__new__(cls)
-
+            instance = super(SingletonPerName, cls).__call__(*args, **kwargs)
             SingletonPerName._id_to_name_map[id(instance)] = name
-            info: SingletonInfo = SingletonInfo(name=name, val=instance)
-            SingletonPerName._instances[k] = info
-        else:
-            info = SingletonPerName._instances[k]
-        obj = info.val
-        assert isinstance(obj, cls)
-        return obj
+            SingletonPerName._instances[k] = SingletonInfo(
+                name=name, val=instance
+            )
+        return SingletonPerName._instances[k].val
 
     @staticmethod
     def delete_singleton_by_name(

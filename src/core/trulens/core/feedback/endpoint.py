@@ -26,6 +26,7 @@ from typing import (
 )
 
 from pydantic import Field
+from pydantic._internal._model_construction import ModelMetaclass
 import requests
 from trulens.core.schema.base import Cost
 from trulens.core.utils import asynchro as mod_asynchro_utils
@@ -93,7 +94,11 @@ class EndpointCallback(SerialModel):
         self.handle(response)
 
 
-class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
+class EndpointMetaclass(SingletonPerName, ModelMetaclass):
+    pass
+
+
+class Endpoint(WithClassInfo, SerialModel, metaclass=EndpointMetaclass):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -193,9 +198,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
 
-    def __new__(cls, *args, name: Optional[str] = None, **kwargs):
-        name = name or cls.__name__
-        return super().__new__(cls, *args, name=name, **kwargs)
+    # def __new__(cls, *args, name: Optional[str] = None, **kwargs):
+    # name = name or cls.__name__
+    #     return super().__new__(cls, *args, name=name, **kwargs)
 
     def __str__(self):
         # Have to override str/repr due to pydantic issue with recursive models.
@@ -228,7 +233,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         if rpm is None:
             rpm = DEFAULT_RPM
 
-        kwargs["name"] = name
+        # kwargs["name"] = name
         kwargs["callback_class"] = callback_class
         kwargs["global_callback"] = callback_class(endpoint=self)
         kwargs["callback_name"] = f"callback_{name}"
@@ -237,7 +242,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             marks_per_second=rpm / 60.0,
         )
 
-        super().__init__(*args, **kwargs)
+        # super().__init__(*args, **kwargs)
 
         logger.debug("Creating new endpoint singleton with name %s.", self.name)
 
