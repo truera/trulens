@@ -7,9 +7,9 @@ requires = [
 [tool.poetry]
 name = "trulens-legacy"
 version = "1.0.1a0"
-description = "Backwards-compatibility package for trulens_eval ."
+description = "Backwards-compatibility package for trulens_eval."
 authors = [
-  "Truera Inc <all@truera.com>",
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
 ]
 license = "MIT"
 readme = "README.md"

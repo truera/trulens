@@ -30,7 +30,7 @@ Changes that result in non-backwards compatible functionality are also reflected
 in the version numbering. In such cases, the appropriate level version change
 will occur at the introduction of the warning period.
 
-## Currently derpecating features
+## Currently deprecating features
 
 - Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of
   `trulens` and several associated required and optional packages. See

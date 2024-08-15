@@ -27,7 +27,7 @@ with OptionalImports(
     import scipy.stats as stats
 
 with OptionalImports(
-    format_import_errors("sklearn", purpose="using certain metrics")
+    format_import_errors("scikit-learn", purpose="using certain metrics")
 ):
     from sklearn.metrics import ndcg_score
     from sklearn.metrics import roc_auc_score
