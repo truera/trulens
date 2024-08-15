@@ -5,40 +5,75 @@
     `trulens.feedback`, `trulens.dashboard` instead.
 """
 
-from typing import TYPE_CHECKING, Any
-import warnings
+from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import imports as imports_utils
 
-from trulens.core.utils.deprecation import packages_dep_warn
+deprecation_utils.packages_dep_warn("trulens_eval")
 
-packages_dep_warn("trulens_eval")
+from trulens.core.app.basic import TruBasicApp
+from trulens.core.app.custom import TruCustomApp
+from trulens.core.app.virtual import TruVirtual
+from trulens.core.feedback.feedback import Feedback
+from trulens.core.feedback.provider import Provider
+from trulens.core.schema import Select
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.tru import Tru
+from trulens.core.utils.threading import TP
 
-import trulens.api as api
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
+):
+    from trulens.providers.litellm.provider import LiteLLM
 
-if TYPE_CHECKING:
-    from trulens.api import TP
-    from trulens.api import AzureOpenAI
-    from trulens.api import Bedrock
-    from trulens.api import Cortex
-    from trulens.api import Feedback
-    from trulens.api import FeedbackMode
-    from trulens.api import Huggingface
-    from trulens.api import HuggingfaceLocal
-    from trulens.api import Langchain
-    from trulens.api import LiteLLM
-    from trulens.api import OpenAI
-    from trulens.api import Provider
-    from trulens.api import Select
-    from trulens.api import Tru
-    from trulens.api import TruBasicApp
-    from trulens.api import TruChain
-    from trulens.api import TruCustomApp
-    from trulens.api import TruLlama
-    from trulens.api import TruRails
-    from trulens.api import TruVirtual
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK
+):
+    from trulens.providers.bedrock.provider import Bedrock
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI
+):
+    from trulens.providers.openai.provider import AzureOpenAI
+    from trulens.providers.openai.provider import OpenAI
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
+):
+    from trulens.providers.cortex.provider import Cortex
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
+):
+    from trulens.providers.huggingface.provider import Huggingface
+    from trulens.providers.huggingface.provider import HuggingfaceLocal
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
+):
+    from trulens.providers.langchain.provider import Langchain
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+):
+    from trulens.instrument.langchain.tru_chain import TruChain
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA
+):
+    from trulens.instrument.llamaindex.tru_llama import TruLlama
+
+with imports_utils.OptionalImports(
+    messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO
+):
+    from trulens.instrument.nemo.tru_rails import TruRails
 
 
+"""
 def __getattr__(attr: str) -> Any:
     # Lazily get everything from trulens package.
+
+    if attr in globals():
+        return globals()[attr]
 
     if attr in __all__:
         warnings.warn(
@@ -50,7 +85,7 @@ def __getattr__(attr: str) -> Any:
         return getattr(api, attr)
 
     raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
-
+"""
 
 __all__ = [
     "Tru",  # main interface
@@ -80,7 +115,6 @@ __all__ = [
     "TP",
 ]
 
-
 # Replace all classes we expose to ones which issue a deprecation warning upon
 # initialization.
-# deprecation.moved(globals(), names=__all__, old="trulens_eval", new="trulens")
+deprecation_utils.moved(globals(), names=__all__)

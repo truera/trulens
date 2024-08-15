@@ -5,10 +5,9 @@
     `trulens.providers.*` instead.
 """
 
-from trulens.core.utils import deprecation
-from trulens.core.utils.deprecation import packages_dep_warn
+from trulens.core.utils import deprecation as deprecation_utils
 
-packages_dep_warn("trulens_eval.feedback.provider.endpoint")
+deprecation_utils.packages_dep_warn("trulens_eval.feedback.provider.endpoint")
 
 from trulens.core.feedback.endpoint import DummyEndpoint
 from trulens.core.feedback.endpoint import Endpoint
@@ -59,7 +58,7 @@ __all__ = [
 
 # Replace all classes we expose to ones which issue a deprecation warning upon
 # initialization.
-deprecation.moved(
+deprecation_utils.moved(
     globals(),
     names=__all__,
     old="trulens_eval.feedback.provider.endpoint",

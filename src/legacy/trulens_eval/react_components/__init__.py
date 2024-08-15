@@ -5,6 +5,6 @@
     `trulens.dashboard.react_components` instead.
 """
 
-from trulens.core.utils.deprecation import packages_dep_warn
+from trulens.core.utils import deprecation as deprecation_utils
 
-packages_dep_warn("trulens_eval.react_components")
+deprecation_utils.packages_dep_warn("trulens_eval.react_components")

@@ -113,6 +113,7 @@ def make_getattr_override(
         if attr in [
             "_ipython_canary_method_should_not_exist_",
             "_ipython_display_",
+            "__warningregistry__",
         ]:
             raise AttributeError()
 
@@ -147,7 +148,7 @@ def make_getattr_override(
             # Use the same error message as the below.
             pass
 
-        raise ImportError(
+        raise AttributeError(
             f"Module {mod.__name__} has no attribute {attr}.\n"
             + (help_str if isinstance(help_str, str) else help_str())
         )

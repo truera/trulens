@@ -5,9 +5,9 @@
     instead.
 """
 
-from trulens_eval import packages_dep_warn
+from trulens.core.utils import deprecation as deprecation_utils
 
-packages_dep_warn("trulens_eval.database")
+deprecation_utils.packages_dep_warn("trulens_eval.database")
 
 from trulens.core.database import *
 from trulens.core.database import base

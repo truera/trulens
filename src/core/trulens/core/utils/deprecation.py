@@ -8,7 +8,9 @@ import warnings
 
 from trulens.core.utils import imports as imports_utils
 
-PACKAGES_MIGRATION_LINK = "https://docs.trulens.org/migration-guide"
+PACKAGES_MIGRATION_LINK = (
+    "https://trulens.org/docs/migration-guide"  # TODO: update link
+)
 
 
 def packages_dep_warn(module: str):
@@ -75,17 +77,29 @@ def function_moved(func: Callable, old: str, new: str):
     return _movedfunction
 
 
-def class_moved(cls: Type, old_location: str, new_location: str):
+def class_moved(
+    cls: Type,
+    old_location: Optional[str] = None,
+    new_location: Optional[str] = None,
+):
     """Issue a warning upon class instantioation that has been moved to a new
     location.
 
     Issues the warning only once.
     """
 
+    if new_location is None:
+        new_location = cls.__module__
+
     message = (
         f"Class `{cls.__name__}` has moved:\n"
-        f"\tOld import: `from {old_location} import {cls.__name__}`\n"
-        f"\tNew import: `from {new_location} import {cls.__name__}`\n "
+        + (
+            f"\tOld import: `from {old_location} import {cls.__name__}`\n"
+            if old_location
+            else ""
+        )
+        + f"\tNew import: `from {new_location} import {cls.__name__}`\n "
+        + f"See {PACKAGES_MIGRATION_LINK} for instructions on migrating to `trulens` modules."
     )
 
     warned = False
@@ -112,8 +126,8 @@ def class_moved(cls: Type, old_location: str, new_location: str):
 
 def moved(
     globals_dict: Dict[str, Any],
-    old: str,
-    new: str,
+    old: Optional[str] = None,
+    new: Optional[str] = None,
     names: Optional[Iterable[str]] = None,
 ):
     """Replace all classes or function in the given dictionary with ones that

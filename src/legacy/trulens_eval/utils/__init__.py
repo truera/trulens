@@ -5,6 +5,6 @@
     instead.
 """
 
-from trulens.core.utils.deprecation import packages_dep_warn
+from trulens.core.utils import deprecation as deprecation_utils
 
-packages_dep_warn("trulens_eval.utils")
+deprecation_utils.packages_dep_warn("trulens_eval.utils")
