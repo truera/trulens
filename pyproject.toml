@@ -107,6 +107,7 @@ pytest-azurepipelines = "^1.0"
 ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
+frozendict = "^2.4"
 
 [tool.poetry.group.tests-optional]
 optional = true

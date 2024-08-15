@@ -5,6 +5,7 @@ SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
 
+# Global setting: execute all commands of a target in a single shell session.
 .ONESHELL:
 
 # Create the poetry env for building website, docs, formatting, etc.
@@ -23,9 +24,9 @@ env-optional:
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS) clean-dashboard
-	for dir in $(POETRY_DIRS); do
-		echo "Creating lockfile for $$dir/pyproject.toml";
-		poetry lock -C $$dir;
+	for dir in $(POETRY_DIRS); do \
+		echo "Creating lockfile for $$dir/pyproject.toml"; \
+		poetry lock -C $$dir; \
 	done
 
 # Run the ruff linter.
@@ -64,7 +65,6 @@ docs-serve-debug: env-docs
 docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
-
 docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run mkdocs gh-deploy
 
@@ -76,10 +76,36 @@ docs-linkcheck: site
 trubot:
 	poetry run python -u examples/trubot/trubot.py
 
-
 # Generates a coverage report.
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+
+# Run the static unit tests only, those in the static subfolder. They are run
+# for every tested python version while those outside of static are run only for
+# the latest (supported) python version.
+test-static:
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/unit/static/test_static.py
+
+# Tests in the e2e folder make use of possibly costly endpoints. They
+# are part of only the less frequently run release tests.
+
+test-deprecation:
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
+
+# Dummy and serial e2e tests do not involve any costly requests.
+test-dummy: # has golden file
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
+test-serial: # has golden file
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_serial.py
+test-golden: test-dummy test-serial
+test-write-golden: test-write-golden-dummy test-write-golden-serial
+test-write-golden-%:
+	$(CONDA)
+	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
 
 # Runs required tests
 test-%-required: env-required

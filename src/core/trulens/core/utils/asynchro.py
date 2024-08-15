@@ -125,12 +125,6 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         except Exception:
             pass
 
-        try:
-            # If have nest_asyncio, can run in current thread.
-            return loop.run_until_complete(awaitable)
-        except Exception:
-            pass
-
         # Otherwise we cannot run a new loop in this thread so we create a
         # new thread to run the awaitable until completion.
 
