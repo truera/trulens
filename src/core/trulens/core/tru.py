@@ -43,12 +43,14 @@ from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.text import format_seconds
 
+tqdm = None
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
     from snowflake.core import CreateMode
     from snowflake.core import Root
     from snowflake.core.schema import Schema
     from snowflake.snowpark import Session
     from snowflake.sqlalchemy import URL
+    from tqdm import tqdm
 
 pp = PrettyPrinter()
 
@@ -821,6 +823,7 @@ class Tru(python.SingletonPerName):
         self,
         restart: bool = False,
         fork: bool = False,
+        disable_tqdm: bool = False,
     ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -832,6 +835,7 @@ class Tru(python.SingletonPerName):
             fork: If set, will start the evaluator in a new process instead of a
                 thread. NOT CURRENTLY SUPPORTED.
 
+            disable_tqdm: If set, will disable progress bar logging from the evaluator.
 
         Returns:
             The started process or thread that is executing the deferred feedback
@@ -882,6 +886,49 @@ class Tru(python.SingletonPerName):
 
             total = 0
 
+            if tqdm:
+                # Getting total counts from the database to start off the tqdm
+                # progress bar initial values so that they offer accurate
+                # predictions initially after restarting the process.
+                queue_stats = self.db.get_feedback_count_by_status()
+                queue_done = (
+                    queue_stats.get(
+                        mod_feedback_schema.FeedbackResultStatus.DONE
+                    )
+                    or 0
+                )
+                queue_total = sum(queue_stats.values())
+
+                # Show the overall counts from the database, not just what has been
+                # looked at so far.
+                tqdm_status = tqdm(
+                    desc="Feedback Status",
+                    initial=queue_done,
+                    unit="feedbacks",
+                    total=queue_total,
+                    postfix={
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    },
+                    disable=disable_tqdm,
+                )
+
+                # Show the status of the results so far.
+                tqdm_total = tqdm(
+                    desc="Done Runs",
+                    initial=0,
+                    unit="runs",
+                    disable=disable_tqdm,
+                )
+
+                # Show what is being waited for right now.
+                tqdm_waiting = tqdm(
+                    desc="Waiting for Runs",
+                    initial=0,
+                    unit="runs",
+                    disable=disable_tqdm,
+                )
+
             runs_stats = defaultdict(int)
 
             futures_map: Dict[
@@ -914,6 +961,15 @@ class Tru(python.SingletonPerName):
                         futures_map[fut] = row
                         total += 1
 
+                    if tqdm:
+                        tqdm_total.total = total
+                        tqdm_total.refresh()
+
+                if tqdm:
+                    tqdm_waiting.total = self.DEFERRED_NUM_RUNS
+                    tqdm_waiting.n = len(futures_map)
+                    tqdm_waiting.refresh()
+
                 # Note whether we have waited for some futures in this
                 # iteration. Will control some extra wait time if there is no
                 # work.
@@ -930,11 +986,38 @@ class Tru(python.SingletonPerName):
                         ):
                             del futures_map[fut]
 
+                            if tqdm:
+                                tqdm_waiting.update(-1)
+                                tqdm_total.update(1)
+
                             feedback_result = fut.result()
                             runs_stats[feedback_result.status.name] += 1
 
                     except futures.TimeoutError:
                         pass
+
+                if tqdm:
+                    tqdm_total.set_postfix(
+                        {name: count for name, count in runs_stats.items()}
+                    )
+
+                    queue_stats = self.db.get_feedback_count_by_status()
+                    queue_done = (
+                        queue_stats.get(
+                            mod_feedback_schema.FeedbackResultStatus.DONE
+                        )
+                        or 0
+                    )
+                    queue_total = sum(queue_stats.values())
+
+                    tqdm_status.n = queue_done
+                    tqdm_status.total = queue_total
+                    tqdm_status.set_postfix(
+                        {
+                            status.name: count
+                            for status, count in queue_stats.items()
+                        }
+                    )
 
                 # Check if any of the running futures should be stopped.
                 futures_copy = list(futures_map.keys())

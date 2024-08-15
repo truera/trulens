@@ -14,6 +14,7 @@ from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.utils.text import format_quantity
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
                 if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        "`initial_app_loader` dump is too big (%s) > %s bytes). "
+                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                     )
                 else:
