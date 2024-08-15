@@ -8,12 +8,12 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import threading as threading_utils
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.core.utils.python import Future
@@ -36,8 +36,8 @@ class RecordAppCallMethod(serial.SerialModel):
 class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
 
-    call_id: mod_types_schema.CallID = pydantic.Field(
-        default_factory=mod_types_schema.new_call_id
+    call_id: types_schema.CallID = pydantic.Field(
+        default_factory=types_schema.new_call_id
     )
     """Unique identifier for this call.
 
@@ -65,7 +65,7 @@ class RecordAppCall(serial.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -99,16 +99,16 @@ class Record(serial.SerialModel, Hashable):
         "arbitrary_types_allowed": True
     }
 
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_id: types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[mod_base_schema.Cost] = None
+    cost: Optional[base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(
@@ -143,8 +143,8 @@ class Record(serial.SerialModel, Hashable):
     feedback_and_future_results: Optional[
         List[
             Tuple[
-                mod_feedback_schema.FeedbackDefinition,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackDefinition,
+                Future[feedback_schema.FeedbackResult],
             ]
         ]
     ] = pydantic.Field(None, exclude=True)
@@ -155,13 +155,13 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[
-        List[Future[mod_feedback_schema.FeedbackResult]]
-    ] = pydantic.Field(None, exclude=True)
+    feedback_results: Optional[List[Future[feedback_schema.FeedbackResult]]] = (
+        pydantic.Field(None, exclude=True)
+    )
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(
-        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+        self, record_id: Optional[types_schema.RecordID] = None, **kwargs
     ):
         super().__init__(record_id="temporary", **kwargs)
 
@@ -176,8 +176,8 @@ class Record(serial.SerialModel, Hashable):
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
     ) -> Dict[
-        mod_feedback_schema.FeedbackDefinition,
-        mod_feedback_schema.FeedbackResult,
+        feedback_schema.FeedbackDefinition,
+        feedback_schema.FeedbackResult,
     ]:
         """Wait for feedback results to finish.
 
@@ -191,7 +191,7 @@ class Record(serial.SerialModel, Hashable):
         """
 
         if feedback_timeout is None:
-            feedback_timeout = mod_threading_utils.TP.DEBUG_TIMEOUT
+            feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 
         if self.feedback_and_future_results is None:
             return {}

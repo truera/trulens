@@ -58,9 +58,9 @@ API Reference: [OpenAI][trulens.providers.openai.OpenAI].
 
 ## Generation-based: LLMProvider
 
-API Reference: [LLMProvider][trulens.feedback.LLMProvider].
+API Reference: [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
 
-::: trulens.feedback.LLMProvider
+::: trulens.feedback.llm_provider.LLMProvider
     options:
         heading_level: 4
         show_bases: false
@@ -98,11 +98,12 @@ API Reference: [Embeddings][trulens.feedback.embeddings].
         show_docstring_modules: false
         show_docstring_parameters: false
         show_docstring_returns: false
-        show_docstring_description: true
+        show_docstring_description: false
         show_docstring_examples: false
         show_docstring_other_parameters: false
         show_docstring_attributes: false
         show_signature: false
+        show_submodules: false
         separate_signature: false
         summary: false
         group_by_category: false

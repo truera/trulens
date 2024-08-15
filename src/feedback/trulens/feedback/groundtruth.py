@@ -3,9 +3,6 @@ from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pydantic
-import scipy.stats as stats
-from sklearn.metrics import ndcg_score
-from sklearn.metrics import roc_auc_score
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -23,6 +20,17 @@ with OptionalImports(
     messages=format_import_errors("evaluate", purpose="using certain metrics")
 ):
     import evaluate
+
+with OptionalImports(
+    format_import_errors("scipy", purpose="using certain metrics")
+):
+    import scipy.stats as stats
+
+with OptionalImports(
+    format_import_errors("scikit-learn", purpose="using certain metrics")
+):
+    from sklearn.metrics import ndcg_score
+    from sklearn.metrics import roc_auc_score
 
 logger = logging.getLogger(__name__)
 
@@ -160,8 +168,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
@@ -250,12 +259,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1
                 being "in agreement".
+
             - dict: with key 'ground_truth_response'
         """
         if self.bert_scorer is None:
@@ -299,8 +310,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             - float: A value between 0 and 1. 0 being "not in agreement" and 1

@@ -46,7 +46,8 @@ provider you need!
 
 ## 🐛 Fix Bugs
 
-Most bugs are reported and tracked in the Github [Issues](https://github.com/truera/trulens/issues) Page. We try our best in
+Most bugs are reported and tracked in the Github
+[Issues](https://github.com/truera/trulens/issues) Page. We try our best in
 triaging and tagging these issues:
 
 Issues tagged as bug are confirmed bugs. New contributors may want to start with
@@ -92,10 +93,18 @@ or [🧙 all open issues](https://github.com/truera/trulens/issues).
 
 ## 👀 Things to be Aware Of
 
+### Development guide
+
+See [Development guide](development.md).
+
 ### 🧭 Design Goals and Principles
 
 The design of the API is governed by the principles outlined in the
 [Design](design.md) doc.
+
+### Release Policies
+
+Versioning and deprecation guidelines are included. [Release policies](policies.md).
 
 ### ✅ Standards
 

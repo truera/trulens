@@ -1,4 +1,4 @@
-# Deprecation Notes
+# Changes prior to the implementation of the deprecation policy
 
 ## Changes in 0.19.0
 

@@ -5,7 +5,7 @@ repo_name: truera/trulens
 repo_url: https://github.com/truera/trulens
 
 markdown_extensions:
-  # Note: disabled most extensions are they were interfering with each other and
+  # Note: disabled most extensions as they were interfering with each other and
   # rendering things poorly.
 
   # https://squidfunk.github.io/mkdocs-material/reference/mathjax/
@@ -76,6 +76,8 @@ plugins:
             - https://docs.llamaindex.ai/en/stable/objects.inv
             - https://docs.sqlalchemy.org/en/20/objects.inv
           paths:
+            - src/api
+            - src/legacy
             - src/core
             - src/feedback
             - src/dashboard
@@ -279,14 +281,14 @@ nav:
   - Cookbook: examples/
   - 🤝 Contributing:
       - trulens/contributing/index.md
+      - Dev Guide: trulens/contributing/development.md
       - 🧭 Design: trulens/contributing/design.md
+      - Release Policies: trulens/contributing/policies.md
       - ✅ Standards: trulens/contributing/standards.md
       - 💣 Tech Debt: trulens/contributing/techdebt.md
       - ⛅ Optional Pckages: trulens/contributing/optional.md
       - ✨ Database Migration: trulens/contributing/migration.md
 
-#  - Resources:
-#    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 extra:
   generator: false
 

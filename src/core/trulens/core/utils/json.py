@@ -15,17 +15,13 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
 from pydantic.v1.json import pydantic_encoder
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.constants import ALL_SPECIAL_KEYS
 from trulens.core.utils.constants import CIRCLE
 from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.imports import REQUIREMENT_OPENAI
+from trulens.core.utils.imports import REQUIREMENT_PROVIDER_OPENAI
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.keys import redact_value
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.pyschema import clean_attributes
-from trulens.core.utils.pyschema import noserio
-from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSON_BASES
@@ -36,7 +32,7 @@ from trulens.core.utils.serial import SerialModel
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with OptionalImports(messages=REQUIREMENT_PROVIDER_OPENAI):
     # httpx.URL and Timeout needed for openai client.
     import httpx
     from openai import Timeout
@@ -94,7 +90,7 @@ def json_default(obj: Any) -> str:
 
     except Exception:
         # Otherwise give up and indicate a non-serialization.
-        return noserio(obj)
+        return pyschema_utils.noserio(obj)
 
 
 def jsonify_for_ui(*args, **kwargs):
@@ -179,7 +175,7 @@ def jsonify(
             "Max depth reached for jsonify of object type '%s'.", type(obj)
         )  # careful about str(obj) in case it is recursive infinitely.
 
-        return noserio(obj)
+        return pyschema_utils.noserio(obj)
 
     skip_excluded = not include_excluded
     # Hack so that our models do not get exclude dumped which causes many
@@ -287,7 +283,7 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update(
             {
-                k: recur(safe_getattr(obj, k))
+                k: recur(pyschema_utils.safe_getattr(obj, k))
                 for k, v in obj.model_fields.items()
                 if (not skip_excluded or not v.exclude) and recur_key(k)
             }
@@ -309,7 +305,7 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
         forward_value.update(
             {
-                k: recur(safe_getattr(obj, k))
+                k: recur(pyschema_utils.safe_getattr(obj, k))
                 for k, v in obj.__fields__.items()
                 if (not skip_excluded or not v.field_info.exclude)
                 and recur_key(k)
@@ -332,7 +328,7 @@ def jsonify(
 
         forward_value.update(
             {
-                f.name: recur(safe_getattr(obj, f.name))
+                f.name: recur(pyschema_utils.safe_getattr(obj, f.name))
                 for f in dataclasses.fields(obj)
                 if recur_key(f.name)
             }
@@ -349,7 +345,7 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
-        kvs = clean_attributes(obj, include_props=True)
+        kvs = pyschema_utils.clean_attributes(obj, include_props=True)
 
         # TODO(piotrm): object walks redo
         forward_value.update(
@@ -373,7 +369,7 @@ def jsonify(
             "Do not know how to jsonify an object of type '%s'.", type(obj)
         )  # careful about str(obj) in case it is recursive infinitely.
 
-        content = noserio(obj)
+        content = pyschema_utils.noserio(obj)
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
@@ -383,10 +379,10 @@ def jsonify(
         and not isinstance(obj, dict)
         and (
             instrument.to_instrument_object(obj)
-            or isinstance(obj, WithClassInfo)
+            or isinstance(obj, pyschema_utils.WithClassInfo)
         )
     ):
-        content[CLASS_INFO] = Class.of_class(
+        content[CLASS_INFO] = pyschema_utils.Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()
 

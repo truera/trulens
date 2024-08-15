@@ -38,9 +38,9 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils.containers import dict_merge_with
 from trulens.core.utils.imports import Dummy
@@ -143,9 +143,9 @@ class WithInstrumentCallbacks:
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
+        existing_record: Optional[record_schema.Record] = None,
     ):
         """
         Called by instrumented methods if they are root calls (first instrumented
@@ -467,7 +467,7 @@ class Instrument:
             start_time = None
 
             bindings = None
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -506,7 +506,7 @@ class Instrument:
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = mod_record_schema.RecordAppCallMethod(
+                frame_ident = record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -522,7 +522,7 @@ class Instrument:
             # Create a unique call_id for this method call. This will be the
             # same across everyone Record or RecordAppCall that refers to this
             # method invocation.
-            call_id = mod_types_schema.new_call_id()
+            call_id = types_schema.new_call_id()
 
             error_str = None
 
@@ -566,7 +566,7 @@ class Instrument:
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -582,7 +582,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
+                    call = record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -598,7 +598,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,

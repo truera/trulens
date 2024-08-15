@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 import numpy as np
 from trulens.core import Feedback
-from trulens.core.utils import serial as mod_serial_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.feedback import LLMProvider
 
 logger = logging.getLogger(__name__)
@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 def rag_triad(
     provider: LLMProvider,
-    question: Optional[mod_serial_utils.Lens] = None,
-    answer: Optional[mod_serial_utils.Lens] = None,
-    context: Optional[mod_serial_utils.Lens] = None,
+    question: Optional[serial_utils.Lens] = None,
+    answer: Optional[serial_utils.Lens] = None,
+    context: Optional[serial_utils.Lens] = None,
 ) -> Dict[str, Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
     generation steps.

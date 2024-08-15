@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 class OpenAI(LLMProvider):
     """
-    Out of the box feedback functions calling OpenAI APIs. Additionally, all feedback functions listed in the base [LLMProvider class][trulens.feedback.LLMProvider] can be run with OpenAI.
+    Out of the box feedback functions calling OpenAI APIs. Additionally, all
+    feedback functions listed in the base [LLMProvider
+    class][trulens.feedback.llm_provider.LLMProvider] can be run with OpenAI.
 
     Create an OpenAI Provider with out of the box feedback functions.
 
@@ -368,6 +370,7 @@ class AzureOpenAI(OpenAI):
     """
     !!! warning
         _Azure OpenAI_ does not support the _OpenAI_ moderation endpoint.
+
     Out of the box feedback functions calling AzureOpenAI APIs. Has the same
     functionality as OpenAI out of the box feedback functions, excluding the
     moderation endpoint which is not supported by Azure. Please export the

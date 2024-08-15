@@ -7,10 +7,10 @@ from typing import Any, Callable, ClassVar, Optional, Sequence
 
 import dill
 import humanize
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import select as mod_select_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
@@ -23,22 +23,22 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID  # str
+    app_id: types_schema.AppID  # str
     """Unique identifier for this app."""
 
-    tags: mod_types_schema.Tags  # str
+    tags: types_schema.Tags  # str
     """Tags for the app."""
 
     metadata: (
-        mod_types_schema.Metadata
+        types_schema.Metadata
     )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[mod_types_schema.FeedbackDefinitionID] = []
+    feedback_definitions: Sequence[types_schema.FeedbackDefinitionID] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: mod_feedback_schema.FeedbackMode = (
-        mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    feedback_mode: feedback_schema.FeedbackMode = (
+        feedback_schema.FeedbackMode.WITH_APP_THREAD
     )
     """How to evaluate feedback functions upon producing a record."""
 
@@ -80,10 +80,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[mod_types_schema.AppID] = None,
-        tags: Optional[mod_types_schema.Tags] = None,
-        metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
+        app_id: Optional[types_schema.AppID] = None,
+        tags: Optional[types_schema.Tags] = None,
+        metadata: Optional[types_schema.Metadata] = None,
+        feedback_mode: feedback_schema.FeedbackMode = feedback_schema.FeedbackMode.WITH_APP_THREAD,
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):
@@ -117,12 +117,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             try:
                 dump = dill.dumps(kwargs["initial_app_loader"], recurse=True)
 
-                if len(dump) > mod_base_schema.MAX_DILL_SIZE:
+                if len(dump) > base_schema.MAX_DILL_SIZE:
                     logger.warning(
                         "`initial_app_loader` dump is too big (%s) > %s bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                         humanize.naturalsize(len(dump)),
-                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE),
+                        humanize.naturalsize(base_schema.MAX_DILL_SIZE),
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)
@@ -265,7 +265,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call inputs."""
 
         return getattr(
-            mod_select_schema.Select.RecordCalls,
+            select_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name,
         ).args
 
@@ -274,7 +274,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """Get the path to the main app's call outputs."""
 
         return getattr(
-            mod_select_schema.Select.RecordCalls,
+            select_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name,
         ).rets
 
