@@ -1,11 +1,11 @@
 """Import utilities for required and optional imports.
 
-Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically.
+Utilities for importing python modules and optional importing.
 """
 
 import builtins
 from dataclasses import dataclass
+import importlib
 from importlib import metadata
 from importlib import resources
 import inspect
@@ -13,18 +13,216 @@ from inspect import cleandoc
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
+import subprocess
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
 from pip._internal.req import parse_requirements
+from trulens.core.utils.python import caller_frame
+from trulens.core.utils.python import caller_module
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
+NO_INSTALL: bool = False
+"""If set, will not automatically install any optional trulens modules and fail
+in the typical way if a module is missing."""
+
+
+def pip(*args) -> subprocess.CompletedProcess:
+    """Execute pip with the given arguments."""
+
+    logger.debug("Running pip", *args)
+
+    return subprocess.run(
+        [sys.executable, "-m", "pip", *args], capture_output=True, check=True
+    )
+
+
+def install(package_name: str):
+    """Install a package with pip."""
+
+    package_name = safe_importlib_package_name(package_name)
+
+    logger.info("Installing package %s", package_name)
+
+    pip("install", package_name)
+
+    return get_package_version(package_name)
+
+
+def make_help_str(
+    kinds: Dict[str, Dict],
+) -> Tuple[Callable[[], None], Callable[[], str]]:
+    """Create a help string that lists all available classes and their installation status."""
+
+    mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
+
+    def help_str() -> str:
+        ret = f"Module '{mod.__name__}' from '{mod.__file__} contains:\n"
+        for kind, items in kinds.items():
+            ret += f"{kind}: \n"  # TODO: pluralize
+            for class_, (package_name, _) in items.items():
+                version = get_package_version(package_name)
+                ret += (
+                    f"  {class_}\t[{package_name}]\t["
+                    + (str(version) if version is not None else "not installed")
+                    + "]\n"
+                )
+
+        if NO_INSTALL:
+            ret += "\nYou can enable automatic installs by calling `trulens.api.set_no_install(False)`."
+        else:
+            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.api.set_no_install()`."
+
+        return ret
+
+    def help() -> None:
+        """Print a help message that lists all available classes and their installation status."""
+
+        print(help_str())
+
+    return help, help_str
+
+
+def make_getattr_override(
+    kinds: Dict[str, Dict],
+    help_str: Union[str, Callable[[], str]],
+) -> Any:
+    """Make a custom __getattr__ function for a module to allow automatic
+    installs of missing modules and better error messages."""
+
+    mod = sys.modules[caller_module(offset=1)]
+
+    if not isinstance(help_str, str):
+        help_str: str = help_str()
+
+    if mod.__doc__ is None:
+        mod.__doc__ = help_str
+    else:
+        mod.__doc__ += "\n\n" + help_str
+
+    def getattr_(attr):
+        nonlocal mod
+        nonlocal help_str
+
+        if attr == "_ipython_display_":
+            return lambda: print(help_str)
+
+        if attr in [
+            "_ipython_canary_method_should_not_exist_",
+            "_ipython_display_",
+            "__warningregistry__",
+        ]:
+            raise AttributeError()
+
+        for kind, options in kinds.items():
+            if attr in options:
+                package_name, module_name = options[attr]
+
+                try:
+                    mod = import_module(
+                        package_name=package_name,
+                        module_name=module_name,
+                        purpose=f"using the {attr} {kind}",
+                    )
+                    return getattr(mod, attr)
+
+                except ImportError as e:
+                    raise ImportError(
+                        f"""Could not import the {attr} {kind}. You might need to re-install {package_name}:
+            ```bash
+            pip uninstall -y {package_name}
+            pip install {package_name}
+            ```
+        """
+                    ) from e
+
+        # We also need to the case of an import of a sub-module instead of
+        # something in __all__ (enumerated in kinds) so we try that here.
+        try:
+            submod = importlib.import_module(mod.__name__ + "." + attr)
+            return submod
+        except Exception:
+            # Use the same error message as the below.
+            pass
+
+        raise AttributeError(
+            f"Module {mod.__name__} has no attribute {attr}.\n" + help_str
+        )
+
+    return getattr_
+
+
+def import_module(
+    package_name: str, module_name: str, purpose: Optional[str] = None
+):
+    """Import a module of the given package but install it if it is not already
+    installed.
+
+    If purpose is given, will use that for the message printed before the
+    installation if it does happen.
+    """
+
+    package_name = safe_importlib_package_name(package_name)
+
+    if purpose is None:
+        purpose = f"using {module_name}"
+
+    try:
+        if (package := get_package_version(package_name)) is None:
+            if NO_INSTALL:
+                # Throwing RuntimeError as I don't want this to be caught by the
+                # importing try blocks. Needs this to be the final error.
+                raise RuntimeError(
+                    f"Package {package_name} is not installed. Enable automatic installation by calling `trulens.api.set_no_install(False)` or install it manually with pip: \n\t```bash\n\tpip install '{package_name}'\n\t```"
+                )
+
+            if sys.version_info >= (3, 12) and package_name in [
+                "trulens-providers-cortex",
+                "trulens-instrument-nemo",
+            ]:
+                # These require python < 3.12 .
+                # RuntimeError here on purpose. See above.
+                raise RuntimeError(
+                    f"Package {package_name} required for {purpose} does not support python >= 3.12."
+                )
+
+            else:
+                print(
+                    f"Installing package {package_name} required for {purpose} ..."
+                )
+
+            package = install(package_name)
+
+    except subprocess.CalledProcessError as e:
+        # ImportError here on purpose. Want this to be caught in importing try
+        # blocks to give additional information.
+        raise ImportError(f"Could not install {package_name}.") from e
+
+    if package is None:
+        # Same
+        raise ImportError(f"Could not install {package_name}.")
+
+    return importlib.import_module(module_name)
+
 
 def safe_importlib_package_name(package_name: str) -> str:
+    """Convert a package name that may have periods in it to one that uses
+    hyphens for periods but only if the python version is old."""
+
     return (
         package_name
         if sys.version_info >= (3, 10)
@@ -146,6 +344,80 @@ dependencies get installed and hopefully corrected:
     ```
 """
 
+required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(namespace="core", filepath="utils/requirements.txt")
+)
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
+
+optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(
+        namespace="core", filepath="utils/requirements.optional.txt"
+    )
+)
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
+
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages,
+}
+"""Mapping of optional and required package names to the requirement object
+with info about that requirement including version constraints."""
+
+
+class VersionConflict(Exception):
+    """Exception to raise when a version conflict is found in a required package."""
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    Raises:
+        VersionConflict: If a version mismatch is found in a required package
+            and `ignore_version_mismatch` is not set.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            dist = metadata.distribution(req.name)
+
+        except metadata.PackageNotFoundError as e:
+            if is_optional:
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+
+            else:
+                raise ModuleNotFoundError(
+                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
+                ) from e
+
+        if dist.version not in req.specifier:
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
+
+            if is_optional:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
+
+            else:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
+
+            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message)
+
+            logger.debug(message)
+
 
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
@@ -196,6 +468,14 @@ def format_import_errors(
     requirements = []
     requirements_pinned = []
 
+    for pkg in packages:
+        if pkg in all_packages:
+            requirements.append(str(all_packages[pkg]))
+            requirements_pinned.append(str(pin_spec(all_packages[pkg])))
+        else:
+            logger.warning("Package %s not present in requirements.", pkg)
+            requirements.append(pkg)
+
     packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
     is_are = "is" if len(packages) == 1 else "are"
@@ -238,6 +518,59 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
+# To remove after trulens_eval is removed:
+
+# Optional sub-packages:
+REQUIREMENT_FEEDBACK = format_import_errors(
+    "trulens-feedback", purpose="evaluating feedback functions"
+)
+
+# Optional app types:
+REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
+    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
+)
+REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
+    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
+)
+REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
+    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
+)
+
+# Optional provider types:
+
+REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
+    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
+)
+REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
+    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
+)
+REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
+    "trulens-providers-huggingface",
+    purpose="evaluating feedback using Huggingface",
+)
+REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
+    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
+)
+REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
+    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
+)
+REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
+    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
+)
+
+# Other optionals:
+REQUIREMENT_SKLEARN = format_import_errors(
+    "scikit-learn", purpose="using embedding vector distances"
+)
+REQUIREMENT_BERT_SCORE = format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+REQUIREMENT_EVALUATE = format_import_errors(
+    "evaluate", purpose="using certain metrics"
+)
+REQUIREMENT_NOTEBOOK = format_import_errors(
+    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
+)
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
 )
