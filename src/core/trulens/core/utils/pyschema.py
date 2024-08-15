@@ -29,6 +29,7 @@ import pydantic
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.constants import ERROR
 from trulens.core.utils.constants import NOSERIO
+from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_issubclass
 from trulens.core.utils.serial import JSON
@@ -128,9 +129,16 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
 
         try:
             v = safe_getattr(obj, k, get_prop=include_props)
+
+            if isinstance(v, OpaqueWrapper):
+                # Don't expose the contents of opaque wrappers.
+                continue
+
             ret[k] = v
+
         except Exception as e:
             logger.debug(str(e))
+            logger.debug(str(e.__traceback__))
 
     return ret
 
