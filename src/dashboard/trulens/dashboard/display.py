@@ -1,8 +1,9 @@
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.dashboard.ux.styles import CATEGORY
 import time
+
 import pandas as pd
+from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.record import Record
+from trulens.dashboard.ux.styles import CATEGORY
 
 
 def get_icon(fdef: FeedbackDefinition, result: float) -> str:
@@ -26,6 +27,7 @@ def get_icon(fdef: FeedbackDefinition, result: float) -> str:
         else True,
     )
     return cat.icon
+
 
 def get_feedback_result(
     tru_record: Record, feedback_name: str, timeout: int = 60

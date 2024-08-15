@@ -4,13 +4,13 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
+from dotenv import load_dotenv
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
+import streamlit as st
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
-from dotenv import load_dotenv
-import streamlit as st
 
 load_dotenv()
 

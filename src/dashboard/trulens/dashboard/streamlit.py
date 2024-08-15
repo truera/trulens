@@ -14,7 +14,7 @@ from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.dashboard import display
 from trulens.dashboard.components.record_viewer import record_viewer
-from trulens.dashboard.ux import styles
+from trulens.dashboard.ux.styles import CATEGORY, stmetricdelta_hidearrow
 from trulens.dashboard.ux.components import draw_metadata
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
@@ -119,7 +119,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
             mean = app_df[col_name].mean()
 
             st.write(
-                styles.stmetricdelta_hidearrow,
+                stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 
@@ -132,7 +132,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color="normal",
                 )
             else:
-                cat = styles.CATEGORY.of_score(
+                cat = CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better
                 )
                 feedback_cols[i].metric(
@@ -142,7 +142,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color=(
                         "normal"
                         if cat.compare(
-                            mean, styles.CATEGORY.PASS[cat.direction].threshold
+                            mean, CATEGORY.PASS[cat.direction].threshold
                         )
                         else "inverse"
                     ),
@@ -203,7 +203,9 @@ def trulens_feedback(record: Record):
 
     if selected_feedback is not None:
         st.dataframe(
-            display.get_feedback_result(record, feedback_name=selected_feedback),
+            display.get_feedback_result(
+                record, feedback_name=selected_feedback
+            ),
             use_container_width=True,
             hide_index=True,
         )
