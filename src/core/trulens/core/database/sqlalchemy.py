@@ -563,14 +563,14 @@ class SQLAlchemyDB(DB):
 
         if (
             run_location is None
-            or run_location == mod_feedback_schema.FeedbackRunLocation.LOCAL
+            or run_location == mod_feedback_schema.FeedbackRunLocation.IN_APP
         ):
-            # For legacy reasons, we handle the LOCAL and NULL/None case as the same.
+            # For legacy reasons, we handle the IN_APP and NULL/None case as the same.
             q = q.filter(
                 sa.or_(
                     self.orm.FeedbackDefinition.run_location.is_(None),
                     self.orm.FeedbackDefinition.run_location
-                    == mod_feedback_schema.FeedbackRunLocation.LOCAL.value,
+                    == mod_feedback_schema.FeedbackRunLocation.IN_APP.value,
                 )
             )
         else:

@@ -68,7 +68,7 @@ class FeedbackMode(str, Enum):
 class FeedbackRunLocation(str, Enum):
     """Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc)."""
 
-    LOCAL = "local"
+    IN_APP = "in_app"
     """Run on the same process (or child process) of the app invocation."""
 
     SNOWFLAKE = "snowflake"
