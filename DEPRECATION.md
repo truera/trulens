@@ -1,38 +1,38 @@
 # Changes prior to the implementation of the deprecation policy
 
-### Changes in 0.19.0
+## Changes in 0.19.0
 
 - Migrated from pydantic v1 to v2 incurring various changes.
 - `SingletonPerName` field `instances` renamed to `_instances` due to possible
   shadowing of `instances` field in subclassed models.
 
-#### Breaking DB changes (migration script should be able to take care of these)
+### Breaking DB changes (migration script should be able to take care of these)
 
 - `ObjSerial` class removed. `Obj` now indicate whether they are loadable when
   `init_bindings` is not None.
 - `WithClassInfo` field `__tru_class_info` renamed to `tru_class_info`
   as pydantic does not allow underscore fields.
 
-### Changes in 0.10.0
+## Changes in 0.10.0
 
-#### Backwards compatible
+### Backwards compatible
 
 - Database interfaces changed from sqlite to sqlalchemy. Sqlite databases are
   supported under the sqlaclchemy interface and other databases such as mysql
   and postgresql are also now usable. Running the migration scripts via
   `Tru().migrate_database()` may be necessary.
 
-### Changes in 0.7.0
+## Changes in 0.7.0
 
-#### Backwards compatible
+### Backwards compatible
 
 - Class `Cost` has new field `n_stream_chunks` to count the number of received
   chunks in streams. This is only counted when streaming mode (i.e. in OpenAI)
   is used.
 
-### Changes in 0.6.0
+## Changes in 0.6.0
 
-#### Backwards compatible
+### Backwards compatible
 
 - Class `Provider` contains the attribute `endpoint` which was previously
   excluded from serialization but is now included.
@@ -43,9 +43,9 @@
 
 - Class `FeedbackCall` has new attribute `meta` for storing additional feedback
 
-### Changes in 0.4.0
+## Changes in 0.4.0
 
-#### Backwards compatible
+### Backwards compatible
 
 - Class `Record` of `schema.py`:
 
