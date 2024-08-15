@@ -1,39 +1,37 @@
 # ruff: noqa: E402, F822
 
-# TODO: get this from poetry
-__version_info__ = (1, 0, 0, "a0")
-"""Version number components for major, minor, patch."""
+from importlib.metadata import version
 
-__version__ = ".".join(map(str, __version_info__))
-"""Version number string."""
+from trulens.core.utils.imports import safe_importlib_package_name
+
+__version__ = version(safe_importlib_package_name(__package__ or __name__))
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # This is needed for static tools like mypy and mkdocstrings to figure out
-    # content of this module. Generating stubs for this module must also be done
-    # for mkdocstrings/griffe to work.
+    # content of this module.
 
     # Common classes:
     from trulens.core.feedback.feedback import Feedback
     from trulens.core.feedback.provider import Provider
 
-    # schema enums
+    # Schema enums:
     from trulens.core.schema import feedback as feedback_schema
     from trulens.core.tru import Tru
     from trulens.core.utils.threading import TP
 
+    # Enums:
     FeedbackMode = feedback_schema.FeedbackMode
     FeedbackResultStatus = feedback_schema.FeedbackResultStatus
     FeedbackOnMissingParameters = feedback_schema.FeedbackOnMissingParameters
     FeedbackCombinations = feedback_schema.FeedbackCombinations
 
-    # schema classes
+    # Schema classes:
     FeedbackResult = feedback_schema.FeedbackResult
     FeedbackCall = feedback_schema.FeedbackCall
     FeedbackDefinition = feedback_schema.FeedbackDefinition
 
-    # Utilities
     # Recorders:
     from trulens.core.app.basic import TruBasicApp
     from trulens.core.app.custom import TruCustomApp
@@ -53,7 +51,8 @@ if TYPE_CHECKING:
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-_CLASSES = {  # **mod_feedback._CLASSES, # these are too specific to be included here
+_CLASSES = {
+    # **mod_feedback._CLASSES, # these are too specific to be included here
     "Tru": ("trulens-core", "trulens.core.tru"),
     "TP": ("trulens-core", "trulens.core.utils.threading"),
     "Feedback": ("trulens-core", "trulens.core.feedback.feedback"),
@@ -65,9 +64,20 @@ from trulens.api import instrument as mod_instrument
 from trulens.api import providers as mod_providers
 from trulens.core.utils import imports as import_utils
 
+
+def set_no_install(val: bool = True) -> None:
+    """Sets the NO_INSTALL flag to make sure optional packages are not
+    automatically installed."""
+    import_utils.NO_INSTALL = val
+
+
 _ENUMS = mod_feedback._ENUMS
 
-_UTILITIES = mod_feedback._UTILITIES
+_UTILITIES = {
+    **mod_feedback._UTILITIES,
+    "set_no_install": ("trulens-api", "trulens.api"),
+    "__version__": ("trulens-core", "trulens.api"),
+}
 
 _SCHEMAS = mod_feedback._SCHEMAS
 
@@ -122,4 +132,6 @@ __all__ = [
     "Cortex",
     # misc utility
     "TP",
+    "set_no_install",
+    "__version__",
 ]

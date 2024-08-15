@@ -78,3 +78,6 @@ def record_viewer(record_json, app_json, key=None):
     )
 
     return component_value
+
+
+__all__ = ["record_viewer"]

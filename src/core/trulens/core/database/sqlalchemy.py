@@ -340,7 +340,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_record(
         self, records: List[record_schema.Record]
     ) -> List[types_schema.RecordID]:
-        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
+        """See [DB.insert_record_batch][trulens.core.database.base.DB.insert_record_batch]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)

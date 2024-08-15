@@ -72,7 +72,7 @@ def make_help_str(
     mod = sys.modules[caller_frame(offset=1).f_locals["__name__"]]
 
     def help_str() -> str:
-        ret = f"Module '{mod.__name__}' from '{mod.__file__}'\n"
+        ret = f"Module '{mod.__name__}' from '{mod.__file__} contains:\n"
         for kind, items in kinds.items():
             ret += f"{kind}: \n"  # TODO: pluralize
             for class_, (package_name, _) in items.items():
@@ -84,9 +84,9 @@ def make_help_str(
                 )
 
         if NO_INSTALL:
-            ret += "\nYou can enable automatic installs by calling `trulens.set_no_install(False)`."
+            ret += "\nYou can enable automatic installs by calling `trulens.api.set_no_install(False)`."
         else:
-            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.set_no_install()`."
+            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.api.set_no_install()`."
 
         return ret
 
@@ -107,8 +107,6 @@ def make_getattr_override(
 
     def getattr_(attr):
         nonlocal mod
-
-        # print("getattr", attr)
 
         if attr in [
             "_ipython_canary_method_should_not_exist_",
@@ -175,7 +173,9 @@ def import_module(
             if NO_INSTALL:
                 # Throwing RuntimeError as I don't want this to be caught by the
                 # importing try blocks. Needs this to be the final error.
-                raise RuntimeError(f"Package {package_name} is not installed.")
+                raise RuntimeError(
+                    f"Package {package_name} is not installed. Enable automatic installation by calling `trulens.api.set_no_install(False)` or install it manually with pip: \n\t```bash\n\tpip install '{package_name}'\n\t```"
+                )
 
             if sys.version_info >= (3, 12) and package_name in [
                 "trulens-providers-cortex",
