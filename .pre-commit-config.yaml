@@ -1,10 +1,11 @@
-exclude: trulens_explain|src\/(core|feedback|providers/.+)\/meta.yaml
+exclude: src\/(core|feedback|providers/.+)\/meta.yaml
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
+        exclude: src/dashboard/trulens/dashboard/.*/dist/.*
       - id: check-yaml
         exclude: meta.yaml
       - id: destroyed-symlinks
