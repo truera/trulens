@@ -1,3 +1,5 @@
+# TODO: get this from pyproject.toml and submodules pyproject.toml
+
 # Unsorted requirements
 protobuf >= 4.23.2  # no direct uses
 watchdog >= 3.0.0  # no direct uses
