@@ -203,9 +203,7 @@ def trulens_feedback(record: Record):
 
     if selected_feedback is not None:
         st.dataframe(
-            display.get_feedback_result(
-                record, feedback_name=selected_feedback
-            ),
+            display.get_feedback_result(record, feedback_name=selected_feedback),
             use_container_width=True,
             hide_index=True,
         )
