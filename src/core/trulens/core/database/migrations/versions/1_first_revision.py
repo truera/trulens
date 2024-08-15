@@ -34,8 +34,7 @@ def upgrade(config) -> None:
             "feedback_definition_id", sa.VARCHAR(length=256), nullable=False
         ),
         sa.Column("run_location", sa.Text(), nullable=True),
-        sa.Column("feedback_json", sa.Text(), nullable=False),
-        sa.PrimaryKeyConstraint("feedback_definition_id"),
+        sa.ColumnyKeyConstraint("feedback_definition_id"),
     )
     op.create_table(
         prefix + "feedbacks",

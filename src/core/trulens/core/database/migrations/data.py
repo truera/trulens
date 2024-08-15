@@ -16,7 +16,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
-sql_alchemy_migration_versions: List[str] = ["1"]
+sql_alchemy_migration_versions: List[str] = ["1", "2"]
 """DB versions that need data migration.
 
 The most recent should be the first in the list.
