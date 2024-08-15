@@ -23,7 +23,7 @@ from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
-from trulens.core.feedback.endpoint import DummyEndpoint
+from trulens.core.feedback.dummy.endpoint import DummyEndpoint
 from trulens.core.utils.python import Future
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.threading import ThreadPoolExecutor
@@ -479,7 +479,7 @@ class Huggingface(HuggingfaceBase):
 
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "huggingface",
         endpoint: Optional[Endpoint] = None,
         **kwargs,
     ):
@@ -746,9 +746,12 @@ class HuggingfaceLocal(HuggingfaceBase):
 
 
 class Dummy(Huggingface):
+    """A version of a Huggingface provider that uses a dummy endpoint and thus
+    produces fake results without making any networked calls to huggingface."""
+
     def __init__(
         self,
-        name: Optional[str] = None,
+        name: str = "dummyhugs",
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
