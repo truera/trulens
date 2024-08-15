@@ -4,7 +4,7 @@ Tests for a Snowflake connection.
 
 from unittest import main
 
-from tests.unit.utils import optional_test
+from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
