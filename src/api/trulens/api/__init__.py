@@ -16,12 +16,13 @@ if TYPE_CHECKING:
     from trulens.core.feedback.feedback import Feedback
     from trulens.core.feedback.provider import Provider
 
-    # Schema enums:
+    # Enums:
     from trulens.core.schema import feedback as feedback_schema
+
+    # Schema enums:
     from trulens.core.tru import Tru
     from trulens.core.utils.threading import TP
 
-    # Enums:
     FeedbackMode = feedback_schema.FeedbackMode
     FeedbackResultStatus = feedback_schema.FeedbackResultStatus
     FeedbackOnMissingParameters = feedback_schema.FeedbackOnMissingParameters

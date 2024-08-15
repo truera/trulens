@@ -1,7 +1,6 @@
 """Import utilities for required and optional imports.
 
-Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically.
+Utilities for importing python modules and optional importing.
 """
 
 import builtins
@@ -103,6 +102,9 @@ def make_getattr_override(
     kinds: Dict[str, Dict],
     help_str: Union[str, Callable[[], str]],
 ) -> Any:
+    """Make a custom __getattr__ function for a module to allow automatic
+    installs of missing modules and better error messages."""
+
     mod = sys.modules[caller_module(offset=1)]
 
     def getattr_(attr):
@@ -201,7 +203,7 @@ def import_module(
 
     if package is None:
         # Same
-        raise ImportError(f"Could not install {package}.")
+        raise ImportError(f"Could not install {package_name}.")
 
     return importlib.import_module(module_name)
 
