@@ -67,26 +67,6 @@ with imports_utils.OptionalImports(
 ):
     from trulens.instrument.nemo.tru_rails import TruRails
 
-
-"""
-def __getattr__(attr: str) -> Any:
-    # Lazily get everything from trulens package.
-
-    if attr in globals():
-        return globals()[attr]
-
-    if attr in __all__:
-        warnings.warn(
-            f"Importing from `{__name__}` is deprecated. Use `trulens` instead:\nfrom trulens import {attr}.",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-
-        return getattr(api, attr)
-
-    raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
-"""
-
 __all__ = [
     "Tru",  # main interface
     # app types
