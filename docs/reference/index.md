@@ -18,9 +18,9 @@ these APIs are:
   contents depend on. The production API does not do this.
 
 - The interactive API is composed entirely of module `__init__.py` files that
-  export aliases to elements of the production API which itself has no
-  `__init__.py` files or exported aliases. Code written using the production
-  API, therefore, has to import components by their full path.
+  export aliases to elements of the production API which itself has no exported
+  aliases. Code written using the production API, therefore, has to import
+  components by their full path.
 
 - The interactive API follows a looser set of coding standards than the
   production API.

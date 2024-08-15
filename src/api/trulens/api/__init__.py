@@ -77,7 +77,7 @@ _ENUMS = mod_feedback._ENUMS
 _UTILITIES = {
     **mod_feedback._UTILITIES,
     "set_no_install": ("trulens-api", "trulens.api"),
-    "__version__": ("trulens-core", "trulens.api"),
+    "__version__": ("trulens-api", "trulens.api"),
 }
 
 _SCHEMAS = mod_feedback._SCHEMAS
