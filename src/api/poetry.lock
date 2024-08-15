@@ -2109,13 +2109,13 @@ yaml = ["PyYAML (>=5.1.0)"]
 
 [[package]]
 name = "narwhals"
-version = "1.4.1"
+version = "1.4.2"
 description = "Extremely lightweight compatibility layer between dataframe libraries"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "narwhals-1.4.1-py3-none-any.whl", hash = "sha256:333bd36999d380926d463f62254ba9a5a6860949d83105edd910b6fff84de253"},
-    {file = "narwhals-1.4.1.tar.gz", hash = "sha256:9e77fc5f11e03995344c2323cd0eea17efc5e6c54a659790e7004fa4fbf02a28"},
+    {file = "narwhals-1.4.2-py3-none-any.whl", hash = "sha256:cee6bb1255f63aa5ea9e268fcda58cb293235494c1dc7eb327d4beb253eaaebf"},
+    {file = "narwhals-1.4.2.tar.gz", hash = "sha256:b33348b1d187208227f404f1808713f434e401951b780a34719e4eade1fa5df5"},
 ]
 
 [package.extras]
@@ -2218,13 +2218,13 @@ files = [
 
 [[package]]
 name = "nltk"
-version = "3.8.2"
+version = "3.8.1"
 description = "Natural Language Toolkit"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "nltk-3.8.2-py3-none-any.whl", hash = "sha256:bae044ae22ebe0b694a87c0012233373209f27d5c76d3572599c842740a62fe0"},
-    {file = "nltk-3.8.2.tar.gz", hash = "sha256:9c051aa981c6745894906d5c3aad27417f3d1c10d91eefca50382fc922966f31"},
+    {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
+    {file = "nltk-3.8.1.zip", hash = "sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3"},
 ]
 
 [package.dependencies]

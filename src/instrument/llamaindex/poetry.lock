@@ -969,13 +969,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.65"
+version = "0.10.66"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.65-py3-none-any.whl", hash = "sha256:bd9b6e213d2df75cc9bd45c0ee8fb5c01539e05a6d39635f664858adc45cce2c"},
-    {file = "llama_index_core-0.10.65.tar.gz", hash = "sha256:4a7007ab0c0f4aa7b2e8788e206e9ad7ea3a7029b32309b9f2fed551dabbd3ba"},
+    {file = "llama_index_core-0.10.66-py3-none-any.whl", hash = "sha256:0d4ffaea4a5f0bdc2243d7e71d5f6926a508737088aa5c0af658ea2deac98b4d"},
+    {file = "llama_index_core-0.10.66.tar.gz", hash = "sha256:70f5cc9da6ee1c550dfde0bd8ab12e77128cc308714958e2cafb7affbc3f5c87"},
 ]
 
 [package.dependencies]
@@ -987,7 +987,7 @@ fsspec = ">=2023.5.0"
 httpx = "*"
 nest-asyncio = ">=1.5.8,<2.0.0"
 networkx = ">=3.0"
-nltk = ">=3.8.2"
+nltk = ">=3.8.1"
 numpy = "<2.0.0"
 openai = ">=1.1.0"
 pandas = "*"
@@ -1033,13 +1033,13 @@ llama-index-core = ">=0.10.48.post1,<0.11.0"
 
 [[package]]
 name = "llama-index-legacy"
-version = "0.9.48.post1"
+version = "0.9.48.post2"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_legacy-0.9.48.post1-py3-none-any.whl", hash = "sha256:583296162385010ebf92d2a612dd0a504575c04dc1638323bb455b1521aabe57"},
-    {file = "llama_index_legacy-0.9.48.post1.tar.gz", hash = "sha256:e8b1603929433fd0cf3287ed700714078534dd202c97bcdbcc83ec3741bb0868"},
+    {file = "llama_index_legacy-0.9.48.post2-py3-none-any.whl", hash = "sha256:2581af680a4e577d4f0accd76e8286c5f1054f28a2fb0e8e5758f09ce5da0176"},
+    {file = "llama_index_legacy-0.9.48.post2.tar.gz", hash = "sha256:a4c1f10b4d19d005674195c449f4e859022c65c816dcba1a619ef5df922aa212"},
 ]
 
 [package.dependencies]
@@ -1051,7 +1051,7 @@ fsspec = ">=2023.5.0"
 httpx = "*"
 nest-asyncio = ">=1.5.8,<2.0.0"
 networkx = ">=3.0"
-nltk = ">=3.8.2"
+nltk = ">=3.8.1"
 numpy = "*"
 openai = ">=1.1.0"
 pandas = "*"
@@ -1458,13 +1458,13 @@ test = ["pytest (>=7.2)", "pytest-cov (>=4.0)"]
 
 [[package]]
 name = "nltk"
-version = "3.8.2"
+version = "3.8.1"
 description = "Natural Language Toolkit"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "nltk-3.8.2-py3-none-any.whl", hash = "sha256:bae044ae22ebe0b694a87c0012233373209f27d5c76d3572599c842740a62fe0"},
-    {file = "nltk-3.8.2.tar.gz", hash = "sha256:9c051aa981c6745894906d5c3aad27417f3d1c10d91eefca50382fc922966f31"},
+    {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
+    {file = "nltk-3.8.1.zip", hash = "sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3"},
 ]
 
 [package.dependencies]
@@ -1528,13 +1528,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.40.6"
+version = "1.40.7"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.40.6-py3-none-any.whl", hash = "sha256:b36372124a779381a420a34dd96f762baa748b6bdfaf83a6b9f2745f72ccc1c5"},
-    {file = "openai-1.40.6.tar.gz", hash = "sha256:2239232bcb7f4bd4ce8e02544b5769618582411cf399816d96686d1b6c1e5c8d"},
+    {file = "openai-1.40.7-py3-none-any.whl", hash = "sha256:e6b9431cefacfbc88fe630b4b42d7a0876ac1203fdfbf61d31d0c10273219622"},
+    {file = "openai-1.40.7.tar.gz", hash = "sha256:f29b00250483883c0a1abfb2710b1eed25321ceb04a73a6792c9784bb7365799"},
 ]
 
 [package.dependencies]
