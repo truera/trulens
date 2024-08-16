@@ -102,13 +102,13 @@ class TruBenchmarkExperiment:
     @instrument
     def __call__(
         self,
-        ground_truth: Union[List, FunctionOrMethod],
+        ground_truth: Union[List, Callable, FunctionOrMethod],
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
 
-        ground_truth (Union[List, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
+        ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
 
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
