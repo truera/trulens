@@ -63,7 +63,7 @@ from trulens.core.utils.serial import GetItemOrAttribute
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_objects
 from trulens.core.workspace.base import BaseWorkspace
-from trulens.core.workspace.sqlalchemy import SQLAlchemyWorkspace
+from trulens.core.workspace.default import DefaultWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -682,7 +682,7 @@ class App(
         if self.workspace is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Creating default Workspace.")
-                self.workspace = SQLAlchemyWorkspace()
+                self.workspace = DefaultWorkspace()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:

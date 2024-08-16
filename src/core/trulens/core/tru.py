@@ -33,8 +33,8 @@ from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
-from trulens.core.workspace.base import BaseWorkspace
-from trulens.core.workspace.sqlalchemy import SQLAlchemyWorkspace
+from trulens.core.workspace import BaseWorkspace
+from trulens.core.workspace import DefaultWorkspace
 
 tqdm = None
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
@@ -79,30 +79,9 @@ class Tru(python.SingletonPerName):
             records.
 
     Args:
-        app_name (str, optional): The name of the app. Defaults to "default".
-
-        database (Optional[DB], optional): Database to use. If not provided, an
-            [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] database
-            will be initialized based on the other arguments. Defaults to None.
-
-        database_url (Optional[str], optional): Database URL. Defaults to a local SQLite
-            database file at `"default.sqlite"` See [this
-            article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls)
-            on SQLAlchemy database URLs. (defaults to
-            `sqlite://{app_name}.sqlite`).
-
-        database_redact_keys (bool, optional): Whether to redact secret keys in data to be
-            written to database (defaults to `False`)
-
-        database_prefix (Optional[str], optional): Prefix for table names for trulens to use.
-            May be useful in some databases hosting other apps. Defaults to None.
-
-        database_args (Optional[Dict[str, Any]], optional): Additional arguments to pass to the database constructor. Defaults to None.
-
-        database_check_revision (bool, optional): Whether to check the database revision on
-            init. This prompt determine whether database migration is required. Defaults to True.
-
-        snowflake_connection_parameters (Optional[Dict[str, str]], optional): Connection arguments to Snowflake database to use. Defaults to None.
+        workspace: Workspace to use. If not provided, a default
+            [DefaultWorkspace][trulens.core.workspace.default.DefaultWorkspace]
+            is created.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -156,7 +135,7 @@ class Tru(python.SingletonPerName):
         self,
         workspace: Optional[BaseWorkspace] = None,
     ):
-        self.workspace = workspace or SQLAlchemyWorkspace()
+        self.workspace = workspace or DefaultWorkspace()
 
     def reset_database(self):
         """Reset the database. Clears all tables.

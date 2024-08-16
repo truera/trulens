@@ -18,7 +18,7 @@ from trulens.core.workspace.base import BaseWorkspace
 logger = logging.getLogger(__name__)
 
 
-class SQLAlchemyWorkspace(BaseWorkspace):
+class DefaultWorkspace(BaseWorkspace):
     def __init__(
         self,
         database: Optional[DB] = None,
@@ -28,24 +28,22 @@ class SQLAlchemyWorkspace(BaseWorkspace):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
     ):
-        """Create a workspace with a database using SQLAlchemy."""
+        """Create a workspace backed by a database."""
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 
         if isinstance(database, DB):
             self._db = database
         elif database is None:
-            database_args.update(
-                {
-                    k: v
-                    for k, v in {
-                        "database_url": database_url,
-                        "database_redact_keys": database_redact_keys,
-                        "database_prefix": database_prefix,
-                    }.items()
-                    if v is not None
-                }
-            )
+            database_args.update({
+                k: v
+                for k, v in {
+                    "database_url": database_url,
+                    "database_redact_keys": database_redact_keys,
+                    "database_prefix": database_prefix,
+                }.items()
+                if v is not None
+            })
             self._db = SQLAlchemyDB.from_tru_args(**database_args)
         else:
             raise ValueError(
