@@ -118,6 +118,9 @@ extend-exclude = [
   "examples/expositional",
 ]
 
+[tool.ruff.format]
+preview = true
+
 [tool.ruff.lint]
 preview = true
 ignore = [
