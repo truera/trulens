@@ -336,6 +336,14 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 nullable=False,
             )
 
+            @classmethod
+            def parse(
+                cls,
+                obj: mod_feedback_schema.FeedbackResult,
+                redact_keys: bool = False,
+            ) -> ORM.GroundTruth:
+                return cls()
+
         class Dataset(base):
             _table_base_name = "dataset"
 
