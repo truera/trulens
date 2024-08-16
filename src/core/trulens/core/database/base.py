@@ -381,13 +381,11 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_dataset(
-        self, dataset_id: mod_types_schema.DatasetID
-    ) -> pd.DataFrame:
-        """Get the dataset with the given id from the database.
+    def get_dataset_by_name(self, name: str) -> Optional[JSONized]:
+        """Get the dataset metadata with the given dataset name.
 
         Returns:
-            The dataset dataframe with the given id.
+            The dataset metadata with the datase name .
         """
         raise NotImplementedError()
 
