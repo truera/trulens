@@ -414,7 +414,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
             # TODO: figure out useful things to print.
             # feedback_ident = (
-            #     f"[last seen {humanize.naturaldelta(elapsed)} ago] "
+            #     f"[last seen {mod_text_utils.format_seconds(elapsed)} ago] "
             #    f"{row.fname} for app {row.app_json['app_id']}"
             # )
 
