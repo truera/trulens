@@ -5,4 +5,4 @@ Dummy provider and endpoint for its LLM. See also
 [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] and
 [DummyProvider][trulens.feedback.dummy.provider.DummyProvider].
 
-<!-- ::: examples.dev.dummy_app -->
+::: dev.dummy_app
