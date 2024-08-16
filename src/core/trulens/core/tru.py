@@ -26,12 +26,15 @@ from typing import (
 )
 
 import pandas
+import pandas as pd
 from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
@@ -141,6 +144,9 @@ class Tru(python.SingletonPerName):
     RECORDS_BATCH_TIMEOUT: int = 10
     """Time to wait before inserting a batch of records into the database."""
 
+    GROUND_TRUTHS_BATCH_TIMEOUT: int = 10
+    """Time to wait before inserting a batch of ground truths into the database."""
+
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
 
@@ -165,6 +171,8 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     batch_record_queue = queue.Queue()
+
+    batch_ground_truth_queue = queue.Queue()
 
     batch_thread = None
 
@@ -820,6 +828,74 @@ class Tru(python.SingletonPerName):
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
+
+    def add_ground_truth_nowait(
+        self,
+        ground_truth: mod_groundtruth_schema.GroundTruth,
+    ) -> None:
+        """Add a ground truth object to the queue to be inserted in the next batch."""
+        if self.batch_ground_truth_thread is None:
+            self.batch_ground_truth_thread = threading.Thread(
+                target=self.batch_ground_truth_loop, daemon=True
+            )
+            self.batch_ground_truth_thread.start()
+        self.batch_ground_truth_queue.put(ground_truth)
+
+    def batch_ground_truth_loop(self):
+        while True:
+            time.sleep(self.GROUND_TRUTHS_BATCH_TIMEOUT)
+            ground_truths = []
+            while True:
+                try:
+                    ground_truth = self.batch_ground_truth_queue.get_nowait()
+                    ground_truths.append(ground_truth)
+                except queue.Empty:
+                    break
+            if ground_truths:
+                try:
+                    self.db.batch_insert_ground_truth(ground_truths)
+                except Exception as e:
+                    # Re-queue the ground truth objects that failed to be inserted
+                    for ground_truth in ground_truths:
+                        self.batch_ground_truth_queue.put(ground_truth)
+                    logger.error(
+                        "Re-queued ground truth objects due to insertion error {}",
+                        e,
+                    )
+                    continue
+
+    def persist_ground_truth_dataset(
+        self,
+        dataset_name: str,
+        ground_truth_df: pd.DataFrame,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+    ):
+        """Persist a ground truth dataset to the database in a batched manner.
+
+        Args:
+            dataset_name: Name of the dataset.
+            ground_truth_df: DataFrame containing the ground truth data.
+            dataset_metadata: Additional metadata to add to the dataset.
+        """
+
+        # Create and insert the dataset record
+        dataset = mod_dataset_schema.Dataset(
+            name=dataset_name,
+            meta=dataset_metadata,
+        )
+        dataset_id = self.db.insert_dataset(dataset=dataset)
+
+        # Iterate over the DataFrame and queue each ground truth object
+        for _, row in ground_truth_df.iterrows():
+            ground_truth = mod_groundtruth_schema.GroundTruth(
+                dataset_id=dataset_id,
+                query=row["query"],
+                query_id=row.get("query_id", None),
+                expected_response=row.get("expected_response", None),
+                expected_chunks=row.get("expected_chunks", None),
+                meta=row.get("meta", None),
+            )
+            self.add_ground_truth_nowait(ground_truth)
 
     def start_evaluator(
         self,
