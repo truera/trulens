@@ -43,6 +43,7 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
@@ -765,7 +766,7 @@ class SQLAlchemyDB(DB):
             # TODO: use a generator instead of a list? (for large datasets)
 
     def insert_dataset(
-        self, dataset: mod_db.Dataset
+        self, dataset: mod_dataset_schema.Dataset
     ) -> mod_types_schema.DatasetID:
         """See [DB.insert_dataset][trulens.core.database.base.DB.insert_dataset]."""
 
