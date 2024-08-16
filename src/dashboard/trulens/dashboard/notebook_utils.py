@@ -34,12 +34,10 @@ def setup_widget_stdout_stderr():
 
     acc = widgets.Accordion(
         children=[
-            widgets.VBox(
-                [
-                    widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
-                    widgets.VBox([widgets.Label("STDERR"), out_stderr]),
-                ]
-            )
+            widgets.VBox([
+                widgets.VBox([widgets.Label("STDOUT"), out_stdout]),
+                widgets.VBox([widgets.Label("STDERR"), out_stderr]),
+            ])
         ],
         open=True,
     )
