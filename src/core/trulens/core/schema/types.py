@@ -60,14 +60,17 @@ By default these are hashes of feedback result content as json. See
 [FeedbackResult.feedback_result_id][trulens.core.schema.feedback.FeedbackResult].
 """
 
-GroundtruthID: typing_extensions.TypeAlias = str
+GroundTruthID: typing_extensions.TypeAlias = str
 """Unique identifier for a groundtruth.
 
-See [Groundtruth.groundtruth_id][trulens.core.schema.groundtruth.Groundtruth.groundtruth_id].
+By default these are hashes of ground truth content as json.
+
+See [Groundtruth.ground_truth_id][trulens.core.schema.groundtruth.Groundtruth.ground_truth_id].
 """
 
 DatasetID: typing_extensions.TypeAlias = str
 """Unique identifier for a dataset.
 
+By default these are hashes of dataset content as json.
 See [Dataset.dataset_id][trulens.core.schema.dataset.Dataset.dataset_id].
 """
