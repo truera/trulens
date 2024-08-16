@@ -19,16 +19,14 @@ from trulens.core.utils.json import _recursive_hash
         (
             ["hello", 5, 3.4, complex(10, 5), True, None],
             "".join(
-                sorted(
-                    [
-                        STR_HASH,
-                        INT_HASH,
-                        FLOAT_HASH,
-                        COMPLEX_HASH,
-                        BOOL_HASH,
-                        NONE_HASH,
-                    ]
-                )
+                sorted([
+                    STR_HASH,
+                    INT_HASH,
+                    FLOAT_HASH,
+                    COMPLEX_HASH,
+                    BOOL_HASH,
+                    NONE_HASH,
+                ])
             ),
             LIST_HASH := "ef75c403b4c1b6940a431469c66b579d",
         ),
