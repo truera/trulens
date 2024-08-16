@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import Enum
 import logging
 from typing import Any, Callable, ClassVar, Optional, Sequence
 
@@ -17,6 +18,19 @@ from trulens.core.utils.json import obj_id_of_obj
 from trulens.core.utils.text import format_quantity
 
 logger = logging.getLogger(__name__)
+
+
+class RecordIngestMode(str, Enum):
+    """Mode of records ingestion.
+
+    Specify this using the `ingest_mode` to [App][trulens.core.app.App] constructors.
+    """
+
+    IMMEDIATE = "immediate"
+    """Each record is ingested one by one and written to the database. This is the default mode."""
+
+    BUFFERED = "buffered"
+    """Records are buffered and ingested in batches to the database."""
 
 
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
@@ -41,6 +55,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
     )
     """How to evaluate feedback functions upon producing a record."""
+
+    record_ingest_mode: RecordIngestMode
+    """Mode of records ingestion."""
 
     root_class: pyschema.Class
     """Class of the main instrumented object.
@@ -84,6 +101,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
         feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
+        record_ingest_mode: RecordIngestMode = RecordIngestMode.IMMEDIATE,
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):
@@ -96,6 +114,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["feedback_definitions"] = [
             f.feedback_definition_id for f in kwargs.get("feedbacks", [])
         ]
+        kwargs["record_ingest_mode"] = record_ingest_mode
 
         super().__init__(**kwargs)
 
@@ -103,6 +122,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
 
         self.app_id = app_id
+        self.record_ingest_mode = record_ingest_mode
 
         if tags is None:
             tags = "-"  # Set tags to a "-" if None is provided
