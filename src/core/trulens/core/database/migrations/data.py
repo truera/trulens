@@ -16,7 +16,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
-sql_alchemy_migration_versions: List[int] = [1]
+sql_alchemy_migration_versions: List[int] = [1, 2]
 """DB versions."""
 
 sqlalchemy_upgrade_paths: Dict[int, Tuple[int, Callable[[DB]]]] = {
