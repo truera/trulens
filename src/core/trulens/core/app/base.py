@@ -9,7 +9,6 @@ import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-from pprint import PrettyPrinter
 import threading
 from threading import Lock
 from typing import (
@@ -31,7 +30,6 @@ from typing import (
 )
 
 import pydantic
-from trulens.core import tru as mod_tru
 from trulens.core.database import base as mod_db
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
@@ -64,10 +62,10 @@ from trulens.core.utils.serial import JSON_BASES_T
 from trulens.core.utils.serial import GetItemOrAttribute
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_objects
+from trulens.core.workspace.base import BaseWorkspace
+from trulens.core.workspace.sqlalchemy import SQLAlchemyWorkspace
 
 logger = logging.getLogger(__name__)
-
-pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
@@ -481,10 +479,10 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[mod_tru.Tru] = pydantic.Field(default=None, exclude=True)
+    workspace: BaseWorkspace = pydantic.Field(default=None, exclude=True)
     """Workspace manager.
 
-    If this is not povided, a singleton [Tru][trulens.core.tru.Tru] will be made
+    If this is not provided, a singleton [Tru][trulens.core.tru.Tru] will be made
     (if not already) and used.
     """
 
@@ -511,7 +509,7 @@ class App(
     recording_contexts: contextvars.ContextVar[RecordingContext] = (
         pydantic.Field(None, exclude=True)
     )
-    """Sequnces of records produced by the this class used as a context manager
+    """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
     Using a context var so that context managers can be nested.
@@ -552,7 +550,7 @@ class App(
 
     def __init__(
         self,
-        tru: Optional[mod_tru.Tru] = None,
+        workspace: Optional[BaseWorkspace] = None,
         feedbacks: Optional[Iterable[mod_feedback.Feedback]] = None,
         **kwargs,
     ):
@@ -562,7 +560,7 @@ class App(
             feedbacks = []
 
         # for us:
-        kwargs["tru"] = tru
+        kwargs["workspace"] = workspace
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts"
@@ -596,7 +594,7 @@ class App(
         """Start the thread that manages the queue of records with
         pending feedback results.
 
-        This is meant to be run permentantly in a separate thread. It will
+        This is meant to be run permanently in a separate thread. It will
         remove records from the set `records_with_pending_feedback_results` as
         their feedback results are computed.
         """
@@ -681,30 +679,26 @@ class App(
 
         """
 
-        if self.tru is None:
+        if self.workspace is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
-                from trulens.core.tru import Tru
-
-                logger.debug("Creating default tru.")
-                self.tru = Tru()
+                logger.debug("Creating default Workspace.")
+                self.workspace = SQLAlchemyWorkspace()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
                 logger.warning(
-                    "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
+                    "`workspace` is specified but `feedback_mode` is `FeedbackMode.NONE`. "
                     "No feedback evaluation and logging will occur."
                 )
 
-        if self.tru is not None:
-            self.db = self.tru.db
-
-            self.db.insert_app(app=self)
+        if self.workspace is not None:
+            self.workspace.add_app(app=self)
 
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
-                    self.db.insert_feedback_definition(f)
+                    self.workspace.add_feedback_definition(f)
 
         else:
             if len(self.feedbacks) > 0:
@@ -1360,7 +1354,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         else:
             res = future_or_result
 
-        self.tru.add_feedback(res)
+        self.workspace.add_feedback(res)
 
     def _handle_record(
         self,
@@ -1383,19 +1377,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if feedback_mode is None:
             feedback_mode = self.feedback_mode
 
-        if self.tru is None or self.feedback_mode is None:
+        if self.feedback_mode is None:
             return None
-
-        self.tru: mod_tru.Tru
-        self.db: mod_db.DB
 
         # If in buffered mode, call add record nowait.
         if self.record_ingest_mode == mod_app_schema.RecordIngestMode.BUFFERED:
-            self.tru.add_record_nowait(record=record)
+            self.workspace.add_record_nowait(record=record)
             return
 
         # Need to add record to db before evaluating feedback functions.
-        record_id = self.tru.add_record(record=record)
+        record_id = self.workspace.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return []
@@ -1403,7 +1394,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # Add empty (to run) feedback to db.
         if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
-                self.db.insert_feedback(
+                self.workspace.add_feedback(
                     mod_feedback_schema.FeedbackResult(
                         name=f.name,
                         record_id=record_id,
@@ -1417,15 +1408,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             mod_feedback_schema.FeedbackMode.WITH_APP,
             mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
         ]:
-            return self.tru._submit_feedback_functions(
+            return self._submit_feedback_functions(
                 record=record,
                 feedback_functions=self.feedbacks,
+                workspace=self.workspace,
                 app=self,
                 on_done=self._add_future_feedback,
             )
 
     def _handle_error(self, record: mod_record_schema.Record, error: Exception):
-        if self.db is None:
+        if self.workspace is None:
             return
 
     def __getattr__(self, __name: str) -> Any:

@@ -147,6 +147,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name: ClassVar[str] = "apps"
 
             app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
+            app_name = Column(VARCHAR(256), nullable=False)
+            app_version = Column(VARCHAR(256), nullable=False)
             app_json = Column(TYPE_JSON, nullable=False)
 
             # records via one-to-many on Record.app_id
@@ -160,6 +162,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.AppDefinition:
                 return cls(
                     app_id=obj.app_id,
+                    app_name=obj.app_name,
+                    app_version=obj.app_version,
                     app_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 

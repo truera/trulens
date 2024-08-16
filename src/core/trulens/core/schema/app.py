@@ -4,7 +4,18 @@ from __future__ import annotations
 
 from enum import Enum
 import logging
-from typing import Any, Callable, ClassVar, Optional, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
+import warnings
 
 import dill
 from trulens.core.schema import base as mod_base_schema
@@ -16,6 +27,13 @@ from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.core.utils.text import format_quantity
+from trulens.core.utils.threading import TP
+
+if TYPE_CHECKING:
+    from trulens.core.feedback import Feedback
+    from trulens.core.schema.record import Record
+    from trulens.core.utils.python import Future
+    from trulens.core.workspace import BaseWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +57,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     app_id: mod_types_schema.AppID  # str
     """Unique identifier for this app."""
+
+    app_name: mod_types_schema.AppName  # str
+    """Name for this app."""
+
+    app_version: mod_types_schema.AppVersion  # str
+    """Version tag for this app."""
 
     tags: mod_types_schema.Tags  # str
     """Tags for the app."""
@@ -97,7 +121,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[mod_types_schema.AppID] = None,
+        app_id: Optional[mod_types_schema.AppName] = None,
+        app_name: Optional[mod_types_schema.AppName] = None,
+        app_version: Optional[mod_types_schema.AppVersion] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
         feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
@@ -118,10 +144,21 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         super().__init__(**kwargs)
 
-        if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+        if app_id is not None:
+            warnings.warn(
+                "The `app_id` parameter is deprecated. Use `app_name` instead.",
+                DeprecationWarning,
+            )
+            if app_name is not None:
+                raise ValueError(
+                    "Cannot provide both `app_id` and `app_name`. "
+                    "Use only `app_name` as `app_id` is deprecated."
+                    "If `app_id` is provided, `app_name` is set to `app_id`."
+                )
 
-        self.app_id = app_id
+        self.app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+        self.app_name = str(app_name or app_id)
+        self.app_version = app_version or "default"
         self.record_ingest_mode = record_ingest_mode
 
         if tags is None:
@@ -242,6 +279,102 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             content["app"].update(self.app_extra_json)
 
         return content
+
+    @staticmethod
+    def _submit_feedback_functions(
+        record: Record,
+        feedback_functions: Sequence[Feedback],
+        workspace: BaseWorkspace,
+        app: Optional[AppDefinition] = None,
+        on_done: Optional[
+            Callable[
+                [
+                    Union[
+                        mod_feedback_schema.FeedbackResult,
+                        Future[mod_feedback_schema.FeedbackResult],
+                    ]
+                ],
+                None,
+            ]
+        ] = None,
+    ) -> List[Tuple[Feedback, Future[mod_feedback_schema.FeedbackResult]]]:
+        """Schedules to run the given feedback functions.
+
+        Args:
+            record: The record on which to evaluate the feedback functions.
+
+            feedback_functions: A collection of feedback functions to evaluate.
+
+            workspace: The workspace to use.
+
+            app: The app that produced the given record. If not provided, it is
+                looked up from the database of this `Tru` instance
+
+            on_done: A callback to call when each feedback function is done.
+
+        Returns:
+
+            List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]
+
+            Produces a list of tuples where the first item in each tuple is the
+            feedback function and the second is the future of the feedback result.
+        """
+
+        app_id = record.app_id
+
+        if app is None:
+            app = AppDefinition.model_validate(workspace.get_app(app_id=app_id))
+            if app is None:
+                raise RuntimeError(
+                    f"App {app_id} not present in db. "
+                    "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
+                )
+
+        else:
+            assert (
+                app_id == app.app_id
+            ), "Record was produced by a different app."
+
+            if workspace.get_app(app_id=app.app_id) is None:
+                logger.warning(
+                    f"App {app_id} was not present in database. Adding it."
+                )
+                workspace.add_app(app=app)
+
+        feedbacks_and_futures = []
+
+        tp = TP()
+
+        for ffunc in feedback_functions:
+            # Run feedback function and the on_done callback. This makes sure
+            # that Future.result() returns only after on_done has finished.
+            def run_and_call_callback(
+                ffunc: Feedback,
+                app: AppDefinition,
+                record: Record,
+            ):
+                temp = ffunc.run(app=app, record=record)
+                if on_done is not None:
+                    try:
+                        on_done(temp)
+                    finally:
+                        return temp
+                return temp
+
+            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
+                run_and_call_callback,
+                ffunc=ffunc,
+                app=app,
+                record=record,
+            )
+
+            # Have to roll the on_done callback into the submitted function
+            # because the result() is returned before callback runs otherwise.
+            # We want to do db work before result is returned.
+
+            feedbacks_and_futures.append((ffunc, fut))
+
+        return feedbacks_and_futures
 
     @staticmethod
     def get_loadable_apps():
