@@ -139,14 +139,10 @@ def get_revision_history(
     with alembic_config(engine, prefix=prefix) as config:
         scripts = ScriptDirectory.from_config(config)
         return list(
-            reversed(
-                [
-                    rev.revision
-                    for rev in scripts.iterate_revisions(
-                        lower="base", upper="head"
-                    )
-                ]
-            )
+            reversed([
+                rev.revision
+                for rev in scripts.iterate_revisions(lower="base", upper="head")
+            ])
         )
 
 

@@ -11,8 +11,8 @@ from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.llamaindex import TruLlama
 
-from tests.unit.utils import JSONTestCase
-from tests.unit.utils import optional_test
+from tests.test import JSONTestCase
+from tests.test import optional_test
 
 
 # All tests require optional packages.
@@ -61,19 +61,17 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             record_sync.model_dump(),
             record_async.model_dump(),
-            skips=set(
-                [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "cost",  # cost is not being correctly tracked in async
-                    "main_output",  # response is not deterministic, so cannot easily compare across runs
-                ]
-            ),
+            skips=set([
+                "calls",  # async/sync have different set of internal calls, so cannot easily compare
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "cost",  # cost is not being correctly tracked in async
+                "main_output",  # response is not deterministic, so cannot easily compare across runs
+            ]),
         )
 
     @unittest.skip("Streaming records not yet recorded properly.")
@@ -106,17 +104,15 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             record_stream,
             record,
-            skips=set(
-                [
-                    # "calls",
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                ]
-            ),
+            skips=set([
+                # "calls",
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+            ]),
         )
 
     async def test_chat_engine_async(self):
@@ -147,17 +143,15 @@ class TestLlamaIndex(JSONTestCase):
         self.assertJSONEqual(
             record_sync.model_dump(),
             record_async.model_dump(),
-            skips=set(
-                [
-                    "calls",  # async/sync have different set of internal calls, so cannot easily compare
-                    "name",
-                    "app_id",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                ]
-            ),
+            skips=set([
+                "calls",  # async/sync have different set of internal calls, so cannot easily compare
+                "name",
+                "app_id",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+            ]),
         )
 
 

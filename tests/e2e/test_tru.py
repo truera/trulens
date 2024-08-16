@@ -6,7 +6,9 @@ from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
+import time
 from unittest import TestCase
+import uuid
 
 from trulens.core import Feedback
 from trulens.core import Tru
@@ -17,7 +19,8 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
 from trulens.providers.huggingface.provider import Dummy
 
-from tests.unit.utils import optional_test
+from tests.test import optional_test
+from tests.unit.feedbacks import custom_feedback_function
 
 
 class TestTru(TestCase):
@@ -94,11 +97,9 @@ class TestTru(TestCase):
                         # cannot change the arguments in next test.
 
     def _create_custom(self):
-        from examples.expositional.end2end_apps.custom_app.custom_app import (
-            CustomApp,
-        )
+        from examples.dev.dummy_app.app import DummyApp
 
-        return CustomApp()
+        return DummyApp()
 
     def _create_basic(self):
         def custom_application(prompt: str) -> str:
@@ -461,6 +462,32 @@ class TestTru(TestCase):
     def test_start_evaluator(self):
         # TODO
         pass
+
+    def test_start_evaluator_with_blocking(self):
+        tru = Tru()
+        f = Feedback(custom_feedback_function).on_default()
+        app_id = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
+        tru_app = TruBasicApp(
+            text_to_text=lambda t: f"returning {t}",
+            feedbacks=[f],
+            feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,
+            app_id=app_id,
+        )
+        with tru_app:
+            tru_app.main_call("test_deferred_mode")
+        time.sleep(2)
+        tru.start_evaluator(return_when_done=True)
+        if tru._evaluator_proc is not None:
+            # We should never get here since the variable isn't supposed to be set.
+            raise ValueError("The evaluator is still running!")
+        records_and_feedback = tru.get_records_and_feedback(app_ids=[app_id])
+        self.assertEqual(len(records_and_feedback), 2)
+        self.assertEqual(records_and_feedback[1], ["custom_feedback_function"])
+        self.assertEqual(records_and_feedback[0].shape[0], 1)
+        self.assertEqual(
+            records_and_feedback[0]["custom_feedback_function"].iloc[0],
+            0.1,
+        )
 
     def test_stop_evaluator(self):
         # TODO
