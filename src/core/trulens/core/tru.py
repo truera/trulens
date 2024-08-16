@@ -410,6 +410,7 @@ class Tru(python.SingletonPerName):
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> Union[Process, Thread]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -422,6 +423,8 @@ class Tru(python.SingletonPerName):
                 thread. NOT CURRENTLY SUPPORTED.
 
             disable_tqdm: If set, will disable progress bar logging from the evaluator.
+
+            run_location: Run only the evaluations corresponding to run_location.
 
         Returns:
             The started process or thread that is executing the deferred feedback
@@ -533,6 +536,7 @@ class Tru(python.SingletonPerName):
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
+                        run_location=run_location,
                     )
 
                     # Will likely get some of the same ones that already have running.
@@ -583,9 +587,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 if tqdm:
-                    tqdm_total.set_postfix(
-                        {name: count for name, count in runs_stats.items()}
-                    )
+                    tqdm_total.set_postfix({
+                        name: count for name, count in runs_stats.items()
+                    })
 
                     queue_stats = (
                         self.workspace.db.get_feedback_count_by_status()
@@ -600,12 +604,10 @@ class Tru(python.SingletonPerName):
 
                     tqdm_status.n = queue_done
                     tqdm_status.total = queue_total
-                    tqdm_status.set_postfix(
-                        {
-                            status.name: count
-                            for status, count in queue_stats.items()
-                        }
-                    )
+                    tqdm_status.set_postfix({
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    })
 
                 # Check if any of the running futures should be stopped.
                 futures_copy = list(futures_map.keys())

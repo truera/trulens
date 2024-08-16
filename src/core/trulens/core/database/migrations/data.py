@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import traceback
-from typing import List
+from typing import Callable, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,41 +16,36 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
-sql_alchemy_migration_versions: List[str] = ["1"]
-"""DB versions that need data migration.
+sql_alchemy_migration_versions: List[int] = [1, 2]
+"""DB versions."""
 
-The most recent should be the first in the list.
-"""
-
-sqlalchemy_upgrade_paths = {
+sqlalchemy_upgrade_paths: Dict[int, Tuple[int, Callable[[DB]]]] = {
     # Dict Structure:
-    # "from_version":("to_version", migrate_method)
+    # from_version: (to_version, migrate_method)
     # Example:
-    # "1":("2"), migrate_alembic_1_to_2
+    # 1: (2, migrate_alembic_1_to_2)
 }
 """A DAG of upgrade functions to get to most recent DB."""
 
 
-def _get_sql_alchemy_compatibility_version(version: str) -> str:
-    """Gets the last compatible version of a DB that needed data migration
+def _get_sql_alchemy_compatibility_version(version: int) -> int:
+    """Gets the last compatible version of a DB that needed data migration.
 
     Args:
         version: The alembic version
 
     Returns:
-        str: An alembic version of the oldest compatible DB
+        int: An alembic version of the oldest compatible DB
     """
 
-    compat_version = int(sql_alchemy_migration_versions[-1])
-    for candidate_version in sql_alchemy_migration_versions:
-        candidate_version_int = int(candidate_version)
-        if (
-            candidate_version_int <= int(version)
-            and candidate_version_int > compat_version
-        ):
-            compat_version = candidate_version_int
-
-    return compat_version
+    for candidate_version in sorted(
+        sql_alchemy_migration_versions, reverse=True
+    ):
+        if candidate_version <= version:
+            return candidate_version
+    raise ValueError(
+        f"The version given {version} is not compatible with any known version! Known versions: {sql_alchemy_migration_versions}"
+    )
 
 
 def _sql_alchemy_serialization_asserts(db: DB) -> None:
@@ -141,7 +136,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                     )
 
 
-def data_migrate(db: DB, from_version: str):
+def data_migrate(db: DB, from_version: Optional[str]):
     """Makes any data changes needed for upgrading from the from_version to the
     current version.
 
@@ -155,9 +150,9 @@ def data_migrate(db: DB, from_version: str):
     """
 
     if from_version is None:
-        sql_alchemy_from_version = "1"
+        sql_alchemy_from_version = 1
     else:
-        sql_alchemy_from_version = from_version
+        sql_alchemy_from_version = int(from_version)
     from_compat_version = _get_sql_alchemy_compatibility_version(
         sql_alchemy_from_version
     )
@@ -169,10 +164,8 @@ def data_migrate(db: DB, from_version: str):
             to_compat_version, migrate_fn = sqlalchemy_upgrade_paths[
                 from_compat_version
             ]
-
-            migrate_fn(db=db)
+            migrate_fn(db)
             from_compat_version = to_compat_version
-
         print("DB Migration complete!")
     except Exception as e:
         tb = traceback.format_exc()

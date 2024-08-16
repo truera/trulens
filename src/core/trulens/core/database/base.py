@@ -4,6 +4,7 @@ import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
+from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.feedback import FeedbackDefinition
@@ -232,6 +233,7 @@ class DB(SerialModel, abc.ABC):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: Optional[bool] = None,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> pd.DataFrame:
         """Get feedback results matching a set of optional criteria:
 
@@ -256,6 +258,8 @@ class DB(SerialModel, abc.ABC):
             limit: limit the number of rows returned.
 
             shuffle: shuffle the rows before returning them.
+
+            run_location: Only get feedback functions with this run_location.
         """
 
         raise NotImplementedError()
@@ -275,6 +279,7 @@ class DB(SerialModel, abc.ABC):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> Dict[FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
