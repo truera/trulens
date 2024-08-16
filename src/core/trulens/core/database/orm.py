@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import abc
-import datetime
 import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
-from sqlalchemy import DateTime
 from sqlalchemy import Engine
 from sqlalchemy import Float
 from sqlalchemy import Text
@@ -21,7 +19,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
 from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.json import json_str_of_obj
 
@@ -112,6 +112,8 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackDefinition: Type[T]
     Record: Type[T]
     FeedbackResult: Type[T]
+    GroundTruth: Type[T]
+    Dataset: Type[T]
 
 
 def new_orm(base: Type[T]) -> Type[ORM[T]]:
@@ -314,46 +316,84 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 )
 
         class GroundTruth(base):
+            """
+            ORM class for [GroundTruth][trulens.core.schema.groundtruth.GroundTruth].
+
+            Warning:
+                We don't use any of the typical ORM features and this class is only
+                used as a schema to interact with database through SQLAlchemy.
+            """
+
             _table_base_name = "ground_truth"
 
-            query_id = Column(Text, primary_key=True, nullable=True)
+            ground_truth_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            query_id = Column(Text, nullable=True)
             query = Column(Text, nullable=False)
             expected_response = Column(Text, nullable=True)
             expected_chunks = Column(TYPE_JSON, nullable=True)
             metadata = Column(TYPE_JSON, nullable=True)
             dataset_id = Column(Text, nullable=False)
-            created_at = Column(
-                DateTime, default=datetime.datetime.now, nullable=False
-            )
-            updated_at = Column(
-                DateTime,
-                default=datetime.datetime.now,
-                onupdate=datetime.datetime.now,
-                nullable=False,
+            ts = Column(TYPE_TIMESTAMP, nullable=False)
+
+            dataset = relationship(
+                "Dataset",
+                backref=backref("ground_truths", cascade="all,delete"),
+                primaryjoin="Dataset.dataset_id == GroundTruth.dataset_id",
+                foreign_keys=dataset_id,
+                order_by="(GroundTruth.ts,GroundTruth.ground_truth_id)",
             )
 
             @classmethod
             def parse(
                 cls,
-                obj: mod_feedback_schema.FeedbackResult,
+                obj: mod_groundtruth_schema.GroundTruth,
                 redact_keys: bool = False,
             ) -> ORM.GroundTruth:
-                return cls()
+                return cls(
+                    ground_truth_id=obj.ground_truth_id,
+                    query_id=obj.query_id,
+                    query=obj.query,
+                    expected_response=obj.expected_response,
+                    expected_chunks=json_str_of_obj(
+                        obj.expected_chunks, redact_keys=redact_keys
+                    ),
+                    metadata=json_str_of_obj(
+                        obj.metadata, redact_keys=redact_keys
+                    ),
+                    dataset_id=obj.dataset_id,
+                    ts=obj.ts.timestamp(),
+                )
 
         class Dataset(base):
+            """
+            ORM class for [Dataset][trulens.core.schema.dataset.Dataset].
+
+            Warning:
+                We don't use any of the typical ORM features and this class is only
+                used as a schema to interact with database through SQLAlchemy.
+            """
+
             _table_base_name = "dataset"
 
             dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            metadata = Column(TYPE_JSON, nullable=False)
-            created_at = Column(
-                DateTime, default=datetime.datetime.now, nullable=False
-            )
-            updated_at = Column(
-                DateTime,
-                default=datetime.datetime.now,
-                onupdate=datetime.datetime.now,
-                nullable=False,
-            )
+            name = Column(Text, nullable=False)
+            metadata = Column(TYPE_JSON, nullable=True)
+            ts = Column(TYPE_TIMESTAMP, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: mod_dataset_schema.Dataset,
+                redact_keys: bool = False,
+            ) -> ORM.Dataset:
+                return cls(
+                    dataset_id=obj.dataset_id,
+                    name=obj.name,
+                    metadata=json_str_of_obj(
+                        obj.metadata, redact_keys=redact_keys
+                    ),
+                    ts=obj.ts.timestamp(),
+                )
 
     configure_mappers()  # IMPORTANT
     # Without the above, orm class attributes which are defined using backref

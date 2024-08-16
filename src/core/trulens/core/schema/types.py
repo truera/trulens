@@ -39,10 +39,11 @@ See [AppDefinition.tags][trulens.core.schema.app.AppDefinition.tags] and
 """
 
 Metadata: typing_extensions.TypeAlias = Dict
-"""Metadata for an app or record.
+"""Metadata for an app, record, groundtruth, or dataset.
 
-See [AppDefinition.metadata][trulens.core.schema.app.AppDefinition.metadata] and
-[Record.meta][trulens.core.schema.record.Record.meta].
+See [AppDefinition.metadata][trulens.core.schema.app.AppDefinition.metadata],
+[Record.meta][trulens.core.schema.record.Record.meta], [Groundtruth.metadata][trulens.core.schema.groundtruth.Groundtruth.metadata], and
+[Dataset.metadata][trulens.core.schema.dataset.Dataset.metadata].
 """
 
 FeedbackDefinitionID: typing_extensions.TypeAlias = str
@@ -57,4 +58,16 @@ FeedbackResultID: typing_extensions.TypeAlias = str
 
 By default these are hashes of feedback result content as json. See
 [FeedbackResult.feedback_result_id][trulens.core.schema.feedback.FeedbackResult].
+"""
+
+GroundtruthID: typing_extensions.TypeAlias = str
+"""Unique identifier for a groundtruth.
+
+See [Groundtruth.groundtruth_id][trulens.core.schema.groundtruth.Groundtruth.groundtruth_id].
+"""
+
+DatasetID: typing_extensions.TypeAlias = str
+"""Unique identifier for a dataset.
+
+See [Dataset.dataset_id][trulens.core.schema.dataset.Dataset.dataset_id].
 """
