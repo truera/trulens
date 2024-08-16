@@ -343,21 +343,6 @@ def run_before(callback: Callable):
 STACK = "__tru_stack"
 
 
-def caller_module(offset=0) -> str:
-    """Get the caller's (of this function) module name."""
-
-    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
-
-
-def caller_frame(offset=0) -> FrameType:
-    """
-    Get the caller's (of this function) frame. See
-    https://docs.python.org/3/reference/datamodel.html#frame-objects .
-    """
-
-    return inspect.stack()[offset + 1].frame
-
-
 def superstack() -> Iterator[FrameType]:
     """Get the current stack (not including this function) with frames reaching
     across Tasks and threads.
@@ -388,6 +373,15 @@ def superstack() -> Iterator[FrameType]:
             continue
 
     return
+
+
+def caller_frame(offset=0) -> FrameType:
+    """
+    Get the caller's (of this function) frame. See
+    https://docs.python.org/3/reference/datamodel.html#frame-objects .
+    """
+
+    return inspect.stack()[offset + 1].frame
 
 
 def caller_frameinfo(
