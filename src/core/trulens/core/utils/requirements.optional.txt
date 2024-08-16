@@ -1,4 +1,4 @@
-# TODO: get this from pyproject.toml and submodules pyproject.toml
+# DEPRECATED; to remove when trulens_eval is removed.
 
 # Unsorted requirements
 protobuf >= 4.23.2  # no direct uses
@@ -78,8 +78,7 @@ kaggle   >= 1.5.13
 snowflake-core >= 0.10.0
 snowflake-sqlalchemy >= 1.6.1
 
-# Trulens packages
-trulens-feedback >= 1.0.0
+# Optional trulens packages
 trulens-instrument-llamaindex >= 1.0.0
 trulens-instrument-langchain >= 1.0.0
 trulens-instrument-nemo >= 1.0.0
