@@ -59,6 +59,16 @@ class FeedbackMode(str, Enum):
     `tru.start_deferred_feedback_evaluator`."""
 
 
+class FeedbackRunLocation(str, Enum):
+    """Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc)."""
+
+    IN_APP = "in_app"
+    """Run on the same process (or child process) of the app invocation."""
+
+    SNOWFLAKE = "snowflake"
+    """Run on a Snowflake server."""
+
+
 class FeedbackResultStatus(str, Enum):
     """For deferred feedback evaluation, these values indicate status of
     evaluation.
@@ -338,6 +348,9 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR
     """How to handle missing parameters in feedback function calls."""
 
+    run_location: Optional[FeedbackRunLocation]
+    """Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc)."""
+
     selectors: Dict[str, serial.Lens]
     """Selectors; pointers into [Records][trulens.core.schema.record.Record] of where
     to get arguments for `imp`."""
@@ -362,6 +375,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
         selectors: Optional[Dict[str, serial.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
+        run_location: Optional[FeedbackRunLocation] = None,
         **kwargs,
     ):
         selectors = selectors or {}
@@ -376,6 +390,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             selectors=selectors,
             if_exists=if_exists,
             if_missing=if_missing,
+            run_location=run_location,
             **kwargs,
         )
 
