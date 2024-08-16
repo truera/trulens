@@ -109,7 +109,7 @@ class TruBEIRDataLoader:
         if not fIn.endswith(ext):
             raise ValueError(f"File {fIn} must be present with extension {ext}")
 
-    def load_generators(
+    def _load_generators(
         self, split="test"
     ) -> Tuple[Generator, Generator, Generator]:
         """
@@ -166,7 +166,7 @@ class TruBEIRDataLoader:
 
 def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
     """
-    Load BEIR dataset.
+    Get generators for BEIR dataset entries with pre-processed fields to match expected TruLens schemas.
 
     Args:
         dataset_name: Name of the BEIR dataset to load.
@@ -189,7 +189,7 @@ def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
 
     corpus_gen, queries_gen, qrels_gen = TruBEIRDataLoader(
         data_folder=out_dir
-    ).load_generators(split=split)
+    )._load_generators(split=split)
     # Convert the qrels generator to a dictionary to allow lookups
     qrels = {qrel["query_id"]: {} for qrel in qrels_gen}
     for qrel in qrels_gen:
@@ -239,24 +239,27 @@ def persist_beir_dataset(
     """
     dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
 
-    df = pd.DataFrame()
+    # df = pd.DataFrame()
 
     chunk = []
     for idx, entry in enumerate(dataset_gen):
         chunk.append(entry)
 
         if (idx + 1) % chunk_size == 0:
-            df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
+            # df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
+            # TODO: write to DB
             chunk = []  # Reset chunk
 
     if chunk:
-        df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
+        # TODO: write to DB
+        pass
 
-    return df
 
-
-def get_beir_dataset_df(dataset_name, data_path, split="test") -> pd.DataFrame:
+def load_beir_dataset_df(dataset_name, data_path, split="test") -> pd.DataFrame:
     dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
     dataset_list = list(dataset_gen)
     df = pd.DataFrame(dataset_list)
     return df
+
+
+# TODO: generalize to any dataset (user-provided dataframes)
