@@ -97,9 +97,9 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
         return obj
 
     if isinstance(obj, Mapping):
-        return frozendict(
-            {k: recur(v) for k, v in obj.items() if k not in skips}
-        )
+        return frozendict({
+            k: recur(v) for k, v in obj.items() if k not in skips
+        })
 
     elif isinstance(obj, Sequence):
         return tuple(recur(v) for v in obj)

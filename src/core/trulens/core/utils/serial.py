@@ -407,12 +407,10 @@ class GetSlice(Step):
         return obj
 
     def __repr__(self) -> str:
-        pieces = ":".join(
-            [
-                "" if p is None else str(p)
-                for p in (self.start, self.stop, self.step)
-            ]
-        )
+        pieces = ":".join([
+            "" if p is None else str(p)
+            for p in (self.start, self.stop, self.step)
+        ])
         if pieces == "::":
             pieces = ":"
 

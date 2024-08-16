@@ -210,18 +210,16 @@ class Tru(python.SingletonPerName):
                 snowflake_connection_parameters, schema_name
             )
 
-        database_args.update(
-            {
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_file": database_file,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+        database_args.update({
+            k: v
+            for k, v in {
+                "database_url": database_url,
+                "database_file": database_file,
+                "database_redact_keys": database_redact_keys,
+                "database_prefix": database_prefix,
+            }.items()
+            if v is not None
+        })
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
@@ -1007,9 +1005,9 @@ class Tru(python.SingletonPerName):
                         pass
 
                 if tqdm:
-                    tqdm_total.set_postfix(
-                        {name: count for name, count in runs_stats.items()}
-                    )
+                    tqdm_total.set_postfix({
+                        name: count for name, count in runs_stats.items()
+                    })
 
                     queue_stats = self.db.get_feedback_count_by_status(
                         run_location=run_location
@@ -1024,12 +1022,10 @@ class Tru(python.SingletonPerName):
 
                     tqdm_status.n = queue_done
                     tqdm_status.total = queue_total
-                    tqdm_status.set_postfix(
-                        {
-                            status.name: count
-                            for status, count in queue_stats.items()
-                        }
-                    )
+                    tqdm_status.set_postfix({
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    })
 
                 # Check if any of the running futures should be stopped.
                 futures_copy = list(futures_map.keys())
