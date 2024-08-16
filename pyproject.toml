@@ -33,6 +33,8 @@ trulens-core = { version = "^1.0.0", extras = [
 ], allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+# Remove after deprecation period:
+trulens_eval = { version = "^1.0.0", allow-prereleases = true }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -90,6 +92,8 @@ trulens-core = { path = "src/core", extras = [
 ], develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
+# Remove after deprecation period.
+trulens_eval = { path = "src/trulens_eval", develop = true, python = "!=3.9.7" }
 
 [tool.poetry.group.tests]
 optional = true

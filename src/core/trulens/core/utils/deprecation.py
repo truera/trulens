@@ -47,12 +47,12 @@ def has_moved(obj: Union[Callable, Type]) -> bool:
 def function_moved(func: Callable, old: str, new: str):
     """Issue a warning upon function call that has been moved to a new location.
 
-    Issues the warning only once.
+    Issues the warning only once. The given callable must have a name, so it
+    cannot be a lambda.
     """
 
-    assert hasattr(
-        func, "__name__"
-    ), "Cannot create dep message without function name."
+    if not hasattr(func, "__name__"):
+        raise TypeError("Cannot create dep message without function name.")
 
     message = (
         f"Function `{func.__name__}` has moved:\n"
@@ -82,7 +82,7 @@ def class_moved(
     old_location: Optional[str] = None,
     new_location: Optional[str] = None,
 ):
-    """Issue a warning upon class instantioation that has been moved to a new
+    """Issue a warning upon class instantiation that has been moved to a new
     location.
 
     Issues the warning only once.
