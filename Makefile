@@ -90,18 +90,6 @@ trubot:
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
-# Run the static unit tests only, those in the static subfolder. They are run
-# for every tested python version while those outside of static are run only for
-# the latest (supported) python version.
-test-static:
-	poetry run pytest --rootdir=. tests/unit/static/test_static.py
-
-# Tests in the e2e folder make use of possibly costly endpoints. They
-# are part of only the less frequently run release tests.
-
-test-deprecation:
-	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
-
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
 	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
