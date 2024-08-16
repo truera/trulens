@@ -11,7 +11,7 @@ from snowflake.core import Root
 from snowflake.snowpark import Session
 from trulens.core import Tru
 
-from tests.unit.utils import optional_test
+from tests.test import optional_test
 
 
 class TestSnowflakeConnection(TestCase):
