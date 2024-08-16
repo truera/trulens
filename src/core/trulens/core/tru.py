@@ -829,7 +829,7 @@ class Tru(python.SingletonPerName):
         fork: bool = False,
         disable_tqdm: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
-        block_till_done: bool = False,
+        return_when_done: bool = False,
     ) -> Optional[Union[Process, Thread]]:
         """
         Start a deferred feedback function evaluation thread or process.
@@ -845,10 +845,10 @@ class Tru(python.SingletonPerName):
 
             run_location: Run only the evaluations corresponding to run_location.
 
-            block_till_done: Instead of running asynchronously, will block until no feedbacks remain.
+            return_when_done: Instead of running asynchronously, will block until no feedbacks remain.
 
         Returns:
-            If block_till_done is True, then returns None. Otherwise, the started process or thread
+            If return_when_done is True, then returns None. Otherwise, the started process or thread
                 that is executing the deferred feedback evaluator.
 
         Relevant constants:
@@ -863,8 +863,8 @@ class Tru(python.SingletonPerName):
 
         assert not fork, "Fork mode not yet implemented."
         assert (
-            (not fork) or (not block_till_done)
-        ), "fork=True implies running asynchronously but block_till_done=True does not!"
+            (not fork) or (not return_when_done)
+        ), "fork=True implies running asynchronously but return_when_done=True does not!"
 
         if self._evaluator_proc is not None:
             if restart:
@@ -1058,9 +1058,9 @@ class Tru(python.SingletonPerName):
                             del futures_map[fut]
 
                 if not did_wait:
-                    # Nothing to run/is running, wait a bit.
                     if stop_when_none_left:
                         break
+                    # Nothing to run/is running, wait a bit.
                     if fork:
                         sleep(10)
                     else:
@@ -1068,7 +1068,7 @@ class Tru(python.SingletonPerName):
 
             print("Evaluator stopped.")
 
-        if block_till_done:
+        if return_when_done:
             runloop(stop_when_none_left=True)
             return None
         else:

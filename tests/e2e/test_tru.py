@@ -476,7 +476,7 @@ class TestTru(TestCase):
         with tru_app:
             tru_app.main_call("test_deferred_mode")
         time.sleep(2)
-        tru.start_evaluator(block_till_done=True)
+        tru.start_evaluator(return_when_done=True)
         if tru._evaluator_proc is not None:
             # We should never get here since the variable isn't supposed to be set.
             raise ValueError("The evaluator is still running!")
