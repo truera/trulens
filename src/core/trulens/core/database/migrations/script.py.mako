@@ -3,8 +3,8 @@
 Revision ID: ${up_revision}
 Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
-
 """
+
 from alembic import op
 import sqlalchemy as sa
 ${imports if imports else ""}
@@ -25,7 +25,7 @@ def upgrade(config) -> None:
     ${upgrades if upgrades else "pass"}
 
 
-def downgrade() -> None:
+def downgrade(config) -> None:
     prefix = config.get_main_option("trulens.table_prefix")
 
     if prefix is None:
