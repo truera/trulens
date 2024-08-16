@@ -230,8 +230,7 @@ class Tru(python.SingletonPerName):
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
-        database_args.update(
-            {
+        database_args.update({
                 k: v
                 for k, v in {
                     "database_url": database_url,
