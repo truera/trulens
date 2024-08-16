@@ -23,6 +23,7 @@ If upgrading DB, You must do this step!!
 If upgrading DB, You must do this step!!
 
 Note: You must create a new schema revision before doing this
+
 Note: Some of these instructions may be outdated and are in progress if being updated.
 
 1. Create a sacrificial OpenAI Key (this will be added to the DB and put into
