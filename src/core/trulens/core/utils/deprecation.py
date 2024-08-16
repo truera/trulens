@@ -3,10 +3,13 @@
 from enum import Enum
 import functools
 import inspect
+import logging
 from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
 import warnings
 
 from trulens.core.utils import imports as imports_utils
+
+logger = logging.getLogger(__name__)
 
 PACKAGES_MIGRATION_LINK = (
     "https://trulens.org/docs/migration-guide"  # TODO: update link
@@ -161,4 +164,4 @@ def moved(
         elif inspect.isfunction(val):
             globals_dict[name] = function_moved(val, old, new)
         else:
-            pass
+            logger.warning("I don't know how to move %s", name)
