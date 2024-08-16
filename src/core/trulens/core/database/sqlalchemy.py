@@ -44,6 +44,7 @@ from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import text
@@ -715,6 +716,92 @@ class SQLAlchemyDB(DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def insert_ground_truth(
+        self, ground_truth: mod_groundtruth_schema.GroundTruth
+    ) -> mod_types_schema.GroundTruthID:
+        """See [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
+
+        # TODO: thread safety
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth.ground_truth_id)
+                .first()
+            ):
+                _ground_truth.ground_truth_json = ground_truth.model_dump_json()
+            else:
+                _ground_truth = self.orm.GroundTruth.parse(
+                    ground_truth, redact_keys=self.redact_keys
+                )
+
+                session.merge(_ground_truth)
+
+            logger.info(
+                f"{UNICODE_CHECK} added ground truth {ground_truth.ground_truth_id}"
+            )
+
+            return _ground_truth.ground_truth_id
+
+    def batch_insert_ground_truth(
+        self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
+    ) -> List[mod_types_schema.GroundTruthID]:
+        """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
+        with self.session.begin() as session:
+            ground_truths_list = []
+
+            for ground_truth in ground_truths:
+                if (
+                    _ground_truth := session.query(self.orm.GroundTruth)
+                    .filter_by(ground_truth_id=ground_truth.ground_truth_id)
+                    .first()
+                ):
+                    _ground_truth.ground_truth_json = (
+                        ground_truth.model_dump_json()
+                    )
+                else:
+                    _ground_truth = self.orm.GroundTruth.parse(
+                        ground_truth, redact_keys=self.redact_keys
+                    )
+                    ground_truths_list.append(_ground_truth)
+
+            session.bulk_save_objects(ground_truths_list)
+            return [gt.ground_truth_id for gt in ground_truths_list]
+
+    def get_ground_truth(
+        self, ground_truth_id: str | None = None
+    ) -> Optional[JSONized]:
+        """See [DB.get_ground_truth][trulens.core.database.base.DB.get_ground_truth]."""
+
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth_id)
+                .first()
+            ):
+                return json.loads(_ground_truth)
+
+    def get_ground_truths_by_dataset(self, dataset_id: str) -> pd.DataFrame:
+        """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
+        with self.session.begin() as session:
+            q = sa.select(self.orm.GroundTruth).filter_by(dataset_id=dataset_id)
+            results = (row[0] for row in session.execute(q))
+
+            return _extract_ground_truths(results)
+
+    def insert_dataset(self, dataset: mod_db.Dataset) -> str:
+        pass
+
+    def get_dataset(self, dataset_id: str) -> Optional[JSONized]:
+        """See [DB.get_dataset][trulens.core.database.base.DB.get_dataset]."""
+
+        with self.session.begin() as session:
+            if (
+                _dataset := session.query(self.orm.Dataset)
+                .filter_by(dataset_id=dataset_id)
+                .first()
+            ):
+                return json.loads(_dataset.dataset_json)
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
@@ -814,6 +901,36 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost"],
+    )
+
+
+def _extract_ground_truths(
+    results: Iterable["mod_orm.GroundTruth"],
+) -> pd.DataFrame:
+    def _extract(_result: "mod_orm.GroundTruth"):
+        ground_truth_json = json.loads(_result.ground_truth_json)
+
+        return (
+            _result.ground_truth_id,
+            _result.dataset_id,
+            ground_truth_json["query"],
+            ground_truth_json["query_id"],
+            ground_truth_json["expected_response"],
+            ground_truth_json["expected_chunks"],
+            ground_truth_json["meta"],
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "ground_truth_id",
+            "dataset_id",
+            "query",
+            "query_id",
+            "expected_response",
+            "expected_chunks",
+            "meta",
+        ],
     )
 
 
