@@ -287,9 +287,9 @@ def jsonify(
     elif isinstance(obj, Dict):
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {k: recur(v) for k, v in obj.items() if recur_key(k)}
-        )
+        forward_value.update({
+            k: recur(v) for k, v in obj.items() if recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -322,13 +322,11 @@ def jsonify(
 
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {
-                k: recur(safe_getattr(obj, k))
-                for k, v in obj.model_fields.items()
-                if (not skip_excluded or not v.exclude) and recur_key(k)
-            }
-        )
+        forward_value.update({
+            k: recur(safe_getattr(obj, k))
+            for k, v in obj.model_fields.items()
+            if (not skip_excluded or not v.exclude) and recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -344,14 +342,11 @@ def jsonify(
 
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {
-                k: recur(safe_getattr(obj, k))
-                for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude)
-                and recur_key(k)
-            }
-        )
+        forward_value.update({
+            k: recur(safe_getattr(obj, k))
+            for k, v in obj.__fields__.items()
+            if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -367,13 +362,11 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
-        forward_value.update(
-            {
-                f.name: recur(safe_getattr(obj, f.name))
-                for f in dataclasses.fields(obj)
-                if recur_key(f.name)
-            }
-        )
+        forward_value.update({
+            f.name: recur(safe_getattr(obj, f.name))
+            for f in dataclasses.fields(obj)
+            if recur_key(f.name)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -389,19 +382,17 @@ def jsonify(
         kvs = clean_attributes(obj, include_props=True)
 
         # TODO(piotrm): object walks redo
-        forward_value.update(
-            {
-                k: recur(v)
-                for k, v in kvs.items()
-                if recur_key(k)
-                and (
-                    isinstance(v, JSON_BASES)
-                    or isinstance(v, Dict)
-                    or isinstance(v, Sequence)
-                    or instrument.to_instrument_object(v)
-                )
-            }
-        )
+        forward_value.update({
+            k: recur(v)
+            for k, v in kvs.items()
+            if recur_key(k)
+            and (
+                isinstance(v, JSON_BASES)
+                or isinstance(v, Dict)
+                or isinstance(v, Sequence)
+                or instrument.to_instrument_object(v)
+            )
+        })
 
         content = forward_value
 
