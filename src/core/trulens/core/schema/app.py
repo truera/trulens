@@ -7,7 +7,6 @@ import logging
 from typing import Any, Callable, ClassVar, Optional, Sequence
 
 import dill
-import humanize
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import select as mod_select_schema
@@ -16,6 +15,7 @@ from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.utils.text import format_quantity
 
 logger = logging.getLogger(__name__)
 
@@ -139,10 +139,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
                 if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        "`initial_app_loader` dump is too big (%s) > %s bytes). "
+                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
-                        humanize.naturalsize(len(dump)),
-                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE),
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)
