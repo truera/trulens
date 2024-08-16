@@ -327,12 +327,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "ground_truth"
 
             ground_truth_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            query_id = Column(Text, nullable=True)
-            query = Column(Text, nullable=False)
-            expected_response = Column(Text, nullable=True)
-            expected_chunks = Column(TYPE_JSON, nullable=True)
-            metadata = Column(TYPE_JSON, nullable=True)
             dataset_id = Column(Text, nullable=False)
+            ground_truth_json = Column(TYPE_JSON, nullable=False)
+
             ts = Column(TYPE_TIMESTAMP, nullable=False)
 
             dataset = relationship(
@@ -351,14 +348,8 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.GroundTruth:
                 return cls(
                     ground_truth_id=obj.ground_truth_id,
-                    query_id=obj.query_id,
-                    query=obj.query,
-                    expected_response=obj.expected_response,
-                    expected_chunks=json_str_of_obj(
-                        obj.expected_chunks, redact_keys=redact_keys
-                    ),
-                    metadata=json_str_of_obj(
-                        obj.metadata, redact_keys=redact_keys
+                    ground_truth_json=obj.model_dump_json(
+                        redact_keys=redact_keys
                     ),
                     dataset_id=obj.dataset_id,
                     ts=obj.ts.timestamp(),
@@ -377,7 +368,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
             name = Column(Text, nullable=False)
-            metadata = Column(TYPE_JSON, nullable=True)
+            meta = Column(TYPE_JSON, nullable=True)
             ts = Column(TYPE_TIMESTAMP, nullable=False)
 
             @classmethod
@@ -389,9 +380,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     name=obj.name,
-                    metadata=json_str_of_obj(
-                        obj.metadata, redact_keys=redact_keys
-                    ),
+                    meta=json_str_of_obj(obj.meta, redact_keys=redact_keys),
                     ts=obj.ts.timestamp(),
                 )
 

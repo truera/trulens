@@ -1,10 +1,76 @@
-import logging
+"""Serializable groundtruth-related classes."""
 
+from __future__ import annotations
+
+import datetime
+import logging
+from typing import Hashable, Optional, Sequence
+
+import pydantic
+from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
+from trulens.core.utils.json import jsonify
+from trulens.core.utils.json import obj_id_of_obj
 
 logger = logging.getLogger(__name__)
 
 
-class GroundTruth(pyschema.WithClassInfo, serial.SerialModel):
-    pass
+class GroundTruth(pyschema.WithClassInfo, serial.SerialModel, Hashable):
+    """Serialized fields of a ground truth data entry."""
+
+    ground_truth_id: mod_types_schema.GroundTruthID  # str
+
+    query: str
+
+    query_id: Optional[str] = None
+
+    expected_response: Optional[str] = (
+        None  # expected response can be empty in GT datasets
+    )
+
+    expected_chunks: Optional[Sequence[str]] = None
+
+    meta: Optional[mod_types_schema.Metadata] = (
+        None  # TODO: which naming are we exactly going with - meta vs metadata?
+    )
+
+    dataset_id: mod_types_schema.DatasetID  # str
+
+    ts: datetime.datetime = pydantic.Field(
+        default_factory=datetime.datetime.now
+    )
+
+    def __init__(
+        self,
+        dataset_id: mod_types_schema.DatasetID,
+        query: str,
+        query_id: Optional[str] = None,
+        expected_response: Optional[str] = None,
+        expected_chunks: Optional[Sequence[str]] = None,
+        meta: Optional[mod_types_schema.Metadata] = None,
+        ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
+        **kwargs,
+    ):
+        kwargs["ground_truth_id"] = "temporary"  # will be updated below
+        kwargs["query"] = query
+        kwargs["query_id"] = query_id
+        kwargs["dataset_id"] = dataset_id
+        kwargs["expected_response"] = expected_response
+        kwargs["expected_chunks"] = expected_chunks
+        kwargs["meta"] = meta if meta is not None else {}
+
+        super().__init__(**kwargs)
+
+        if ground_truth_id is None:
+            ground_truth_id = obj_id_of_obj(
+                jsonify(self), prefix="ground_truth"
+            )
+        self.ground_truth_id = ground_truth_id
+
+    def __hash__(self):
+        return hash(self.ground_truth_id)
+
+
+# HACK013: Need these if using __future__.annotations .
+GroundTruth.model_rebuild()
