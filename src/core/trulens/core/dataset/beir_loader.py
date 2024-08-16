@@ -222,45 +222,8 @@ def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
         }
 
 
-# TODO: MOVE THIS TO tru.py
-# def persist_beir_dataset(
-#     dataset_name, data_path, split="test", chunk_size=1000
-# ) -> pd.DataFrame:
-#     """
-#     Load BEIR dataset into a DataFrame in chunks.
-
-#     Args:
-#         dataset_name: Name of the BEIR dataset to load.
-#         data_path: Path where the dataset should be downloaded or is stored.
-#         split: Dataset split to load (e.g., "train", "test", "dev").
-#         chunk_size: Number of records to process in each chunk.
-
-#     Returns:
-#         A pandas DataFrame containing the dataset entries.
-#     """
-#     dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
-
-#     df = pd.DataFrame()
-
-#     chunk = []
-#     for idx, entry in enumerate(dataset_gen):
-#         chunk.append(entry)
-
-#         if (idx + 1) % chunk_size == 0:
-#             df = pd.concat([df, pd.DataFrame(chunk)], ignore_index=True)
-#             # TODO: write to DB
-#             chunk = []  # Reset chunk
-
-#     if chunk:
-#         # TODO: write to DB
-#         pass
-
-
 def load_beir_dataset_df(dataset_name, data_path, split="test") -> pd.DataFrame:
     dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
     dataset_list = list(dataset_gen)
     df = pd.DataFrame(dataset_list)
     return df
-
-
-# TODO: generalize to any dataset (user-provided dataframes)
