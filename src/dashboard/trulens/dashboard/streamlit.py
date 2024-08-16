@@ -14,10 +14,10 @@ from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
 from trulens.core.utils.trulens import get_feedback_result
 from trulens.dashboard.components.record_viewer import record_viewer
-from trulens.dashboard.ux.styles import CATEGORY, stmetricdelta_hidearrow
 from trulens.dashboard.display import get_icon
-from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
+from trulens.dashboard.ux.styles import CATEGORY
+from trulens.dashboard.ux import stmetricdelta_hidearrow
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
