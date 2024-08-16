@@ -21,7 +21,12 @@ def upgrade(config) -> None:
     if prefix is None:
         raise RuntimeError("trulens.table_prefix is not set")
 
-    # TODO: need to prepend prefix to all table names in the upgrades
+    # TODO: The automatically generated code below likely references
+    #       tables such as "trulens_feedback_defs" or "trulens_records".
+    #       However, the common prefix for these tables "trulens_" is
+    #       actually configurable and so replace it with the variable
+    #       prefix.
+    #       e.g. replace "trulens_records" with prefix + "records".
     ${upgrades if upgrades else "pass"}
 
 
@@ -31,5 +36,10 @@ def downgrade(config) -> None:
     if prefix is None:
         raise RuntimeError("trulens.table_prefix is not set")
 
-    # TODO: need to prepend prefix to all table names in the upgrades
+    # TODO: The automatically generated code below likely references
+    #       tables such as "trulens_feedback_defs" or "trulens_records".
+    #       However, the common prefix for these tables "trulens_" is
+    #       actually configurable and so replace it with the variable
+    #       prefix.
+    #       e.g. replace "trulens_records" with prefix + "records".
     ${downgrades if downgrades else "pass"}
