@@ -27,6 +27,7 @@ from typing import (
 )
 
 import humanize
+from opentelemetry import sdk as otel_sdk
 import pandas
 from tqdm.auto import tqdm
 from trulens.core import feedback
@@ -39,6 +40,7 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
 from trulens.core.utils import serial
+from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
@@ -172,6 +174,17 @@ class Tru(python.SingletonPerName):
 
     batch_thread = None
 
+    _experimental_otel_exporter: Optional[
+        otel_sdk.trace.export.SpanExporter
+    ] = None
+    """OpenTelemetry SpanExporter to send spans to.
+
+    Only works if the _experimental_use_tracing flag is set.
+    """
+
+    _experimental_use_tracing: bool = False
+    """Experimental otel-like tracing enable flag."""
+
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
 
@@ -186,11 +199,19 @@ class Tru(python.SingletonPerName):
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
         name: Optional[str] = None,
+        _experimental_use_tracing: Optional[bool] = False,
+        _experimental_otel_exporter: Optional[
+            otel_sdk.trace.export.SpanExporter
+        ] = None,
     ):
         """
         Args:
             database_check_revision: Whether to check the database revision on
-                init. This prompt determine whether database migration is required.
+                init. This prompt determine whether database migration is
+                required.
+
+            _otel_exporter: OpenTelemetry SpanExporter to use for tracing. If
+                this is enabled, tracing will be done in otel style.
         """
 
         if database_args is None:
@@ -239,6 +260,18 @@ class Tru(python.SingletonPerName):
                     break
 
             return
+
+        if _experimental_otel_exporter is not None:
+            assert isinstance(
+                _experimental_otel_exporter, otel_sdk.trace.export.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+            print(
+                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {_experimental_otel_exporter.__class__.__name__}"
+            )
+            _experimental_use_tracing = True
+
+        self._experimental_otel_exporter = _experimental_otel_exporter
+        self._experimental_use_tracing = _experimental_use_tracing or False
 
         if database is not None:
             if not isinstance(database, DB):
