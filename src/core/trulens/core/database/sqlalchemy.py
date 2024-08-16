@@ -737,7 +737,7 @@ class SQLAlchemyDB(DB):
                 session.merge(_ground_truth)
 
             logger.info(
-                f"{UNICODE_CHECK} added ground truth {ground_truth.ground_truth_id}"
+                f"{UNICODE_CHECK} added ground truth {_ground_truth.ground_truth_id}"
             )
 
             return _ground_truth.ground_truth_id
@@ -787,20 +787,51 @@ class SQLAlchemyDB(DB):
             results = (row[0] for row in session.execute(q))
 
             return _extract_ground_truths(results)
+            # TODO: use a generator instead of a list? (for large datasets)
 
-    def insert_dataset(self, dataset: mod_db.Dataset) -> str:
-        pass
+    def insert_dataset(
+        self, dataset: mod_db.Dataset
+    ) -> mod_types_schema.DatasetID:
+        """See [DB.insert_dataset][trulens.core.database.base.DB.insert_dataset]."""
 
-    def get_dataset(self, dataset_id: str) -> Optional[JSONized]:
+        with self.session.begin() as session:
+            if (
+                _dataset := session.query(self.orm.Dataset)
+                .filter_by(dataset_id=dataset.dataset_id)
+                .first()
+            ):
+                _dataset.dataset_json = dataset.model_dump_json()
+            else:
+                _dataset = self.orm.Dataset.parse(
+                    dataset, redact_keys=self.redact_keys
+                )
+                session.merge(_dataset)
+
+            logger.info(f"{UNICODE_CHECK} added dataset {_dataset.dataset_id}")
+
+            return _dataset.dataset_id
+
+    def get_dataset_by_name(self, name: str) -> Optional[JSONized]:
         """See [DB.get_dataset][trulens.core.database.base.DB.get_dataset]."""
 
         with self.session.begin() as session:
             if (
                 _dataset := session.query(self.orm.Dataset)
-                .filter_by(dataset_id=dataset_id)
+                .filter_by(name=name)
                 .first()
             ):
-                return json.loads(_dataset.dataset_json)
+                return json.loads(_dataset.meta)
+
+    def get_datasets(self) -> pd.DataFrame:
+        """See [DB.get_datasets][trulens.core.database.base.DB.get_datasets]."""
+
+        with self.session.begin() as session:
+            results = session.query(self.orm.Dataset)
+
+            return pd.DataFrame(
+                data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
+                columns=["dataset_id", "name", "meta"],
+            )
 
 
 # Use this Perf for missing Perfs.
