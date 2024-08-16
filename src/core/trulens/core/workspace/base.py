@@ -43,7 +43,9 @@ class BaseWorkspace(ABC):
 
     @property
     @abstractmethod
-    def db(self) -> DB: ...
+    def db(self) -> DB:
+        """Get the database instance."""
+        ...
 
     def reset_database(self):
         """Reset the database. Clears all tables.

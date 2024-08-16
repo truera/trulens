@@ -28,7 +28,7 @@ class SQLAlchemyWorkspace(BaseWorkspace):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
     ):
-        """Create a workspace with a SQLAlchemy database."""
+        """Create a workspace with a database using SQLAlchemy."""
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 
