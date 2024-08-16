@@ -546,7 +546,7 @@ class SQLAlchemyDB(DB):
 
     def _feedback_query(
         self,
-        count: bool = False,
+        count_by_status: bool = False,
         shuffle: bool = False,
         record_id: Optional[mod_types_schema.RecordID] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
@@ -562,9 +562,13 @@ class SQLAlchemyDB(DB):
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ):
-        if count:
-            q = sa.func.count(self.orm.FeedbackResult.feedback_result_id)
+        if count_by_status:
+            q = sa.select(
+                self.orm.FeedbackResult.status,
+                sa.func.count(self.orm.FeedbackResult.feedback_result_id),
+            ).group_by(self.orm.FeedbackResult.status)
         else:
             q = sa.select(self.orm.FeedbackResult)
 
@@ -576,6 +580,27 @@ class SQLAlchemyDB(DB):
 
         if feedback_definition_id:
             q = q.filter_by(feedback_definition_id=feedback_definition_id)
+
+        if (
+            run_location is None
+            or run_location == mod_feedback_schema.FeedbackRunLocation.IN_APP
+        ):
+            # For legacy reasons, we handle the IN_APP and NULL/None case as the same.
+            q = q.filter(
+                sa.or_(
+                    self.orm.FeedbackDefinition.run_location.is_(None),
+                    self.orm.FeedbackDefinition.run_location
+                    == mod_feedback_schema.FeedbackRunLocation.IN_APP.value,
+                )
+            )
+        else:
+            q = q.filter(
+                self.orm.FeedbackDefinition.run_location == run_location.value
+            )
+        q = q.filter(
+            self.orm.FeedbackResult.feedback_definition_id
+            == self.orm.FeedbackDefinition.feedback_definition_id
+        )
 
         if status:
             if isinstance(status, mod_feedback_schema.FeedbackResultStatus):
@@ -616,17 +641,16 @@ class SQLAlchemyDB(DB):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
 
         with self.session.begin() as session:
             q = self._feedback_query(
-                count=True, **locals_except("self", "session")
+                count_by_status=True,
+                **locals_except("self", "session"),
             )
-
-            results = session.query(self.orm.FeedbackResult.status, q).group_by(
-                self.orm.FeedbackResult.status
-            )
+            results = session.execute(q)
 
             return {
                 mod_feedback_schema.FeedbackResultStatus(row[0]): row[1]
@@ -650,6 +674,7 @@ class SQLAlchemyDB(DB):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: Optional[bool] = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> pd.DataFrame:
         """See [DB.get_feedback][trulens.core.database.base.DB.get_feedback]."""
 

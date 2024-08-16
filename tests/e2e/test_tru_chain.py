@@ -19,8 +19,8 @@ from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
 
-from tests.unit.utils import JSONTestCase
-from tests.unit.utils import optional_test
+from tests.test import JSONTestCase
+from tests.test import optional_test
 
 
 class TestTruChain(JSONTestCase):
@@ -222,20 +222,18 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.model_dump(),
             sync_record.model_dump(),
-            skips=set(
-                [
-                    "id",
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "app_id",
-                    "cost",  # TODO(piotrm): cost tracking not working with async
-                ]
-            ),
+            skips=set([
+                "id",
+                "name",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "tid",
+                "pid",
+                "app_id",
+                "cost",  # TODO(piotrm): cost tracking not working with async
+            ]),
         )
 
     @optional_test
@@ -274,20 +272,18 @@ class TestTruChain(JSONTestCase):
         self.assertJSONEqual(
             async_record.model_dump(),
             sync_record.model_dump(),
-            skips=set(
-                [
-                    "id",
-                    "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
-                    "name",
-                    "ts",
-                    "start_time",
-                    "end_time",
-                    "record_id",
-                    "tid",
-                    "pid",
-                    "run_id",
-                ]
-            ),
+            skips=set([
+                "id",
+                "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
+                "name",
+                "ts",
+                "start_time",
+                "end_time",
+                "record_id",
+                "tid",
+                "pid",
+                "run_id",
+            ]),
         )
 
         # Check that we counted the number of chunks at least.
