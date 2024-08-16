@@ -712,8 +712,8 @@ class App(
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
-            for f in self.feedbacks:
+        for f in self.feedbacks:
+            if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
@@ -1400,29 +1400,38 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if len(self.feedbacks) == 0:
             return []
 
-        # Add empty (to run) feedback to db.
-        if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
-            for f in self.feedbacks:
-                self.db.insert_feedback(
-                    mod_feedback_schema.FeedbackResult(
-                        name=f.name,
-                        record_id=record_id,
-                        feedback_definition_id=f.feedback_definition_id,
-                    )
-                )
-
+        if feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
             return None
 
-        elif feedback_mode in [
-            mod_feedback_schema.FeedbackMode.WITH_APP,
-            mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
-        ]:
-            return self.tru._submit_feedback_functions(
-                record=record,
-                feedback_functions=self.feedbacks,
-                app=self,
-                on_done=self._add_future_feedback,
+        if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
+            deferred_feedbacks = self.feedbacks
+            undeferred_feedbacks = []
+        else:
+            deferred_feedbacks = []
+            undeferred_feedbacks = []
+            for f in self.feedbacks:
+                if (
+                    f.run_location
+                    == mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
+                ):
+                    deferred_feedbacks.append(f)
+                else:
+                    undeferred_feedbacks.append(f)
+
+        for f in deferred_feedbacks:
+            self.db.insert_feedback(
+                mod_feedback_schema.FeedbackResult(
+                    name=f.name,
+                    record_id=record_id,
+                    feedback_definition_id=f.feedback_definition_id,
+                )
             )
+        return self.tru._submit_feedback_functions(
+            record=record,
+            feedback_functions=undeferred_feedbacks,
+            app=self,
+            on_done=self._add_future_feedback,
+        )
 
     def _handle_error(self, record: mod_record_schema.Record, error: Exception):
         if self.db is None:
