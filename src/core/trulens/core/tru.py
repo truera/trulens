@@ -829,7 +829,8 @@ class Tru(python.SingletonPerName):
         fork: bool = False,
         disable_tqdm: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
-    ) -> Union[Process, Thread]:
+        block_till_done: bool = False,
+    ) -> Optional[Union[Process, Thread]]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -844,9 +845,11 @@ class Tru(python.SingletonPerName):
 
             run_location: Run only the evaluations corresponding to run_location.
 
+            block_till_done: Instead of running asynchronously, will block until no feedbacks remain.
+
         Returns:
-            The started process or thread that is executing the deferred feedback
-                evaluator.
+            If block_till_done is True, then returns None. Otherwise, the started process or thread
+                that is executing the deferred feedback evaluator.
 
         Relevant constants:
             [RETRY_RUNNING_SECONDS][trulens.core.tru.Tru.RETRY_RUNNING_SECONDS]
@@ -859,6 +862,9 @@ class Tru(python.SingletonPerName):
         """
 
         assert not fork, "Fork mode not yet implemented."
+        assert (
+            (not fork) or (not block_till_done)
+        ), "fork=True implies running asynchronously but block_till_done=True does not!"
 
         if self._evaluator_proc is not None:
             if restart:
@@ -871,7 +877,7 @@ class Tru(python.SingletonPerName):
         if not fork:
             self._evaluator_stop = threading.Event()
 
-        def runloop():
+        def runloop(stop_when_none_left: bool = False):
             assert self._evaluator_stop is not None
 
             print(
@@ -1053,6 +1059,8 @@ class Tru(python.SingletonPerName):
 
                 if not did_wait:
                     # Nothing to run/is running, wait a bit.
+                    if stop_when_none_left:
+                        break
                     if fork:
                         sleep(10)
                     else:
@@ -1060,18 +1068,19 @@ class Tru(python.SingletonPerName):
 
             print("Evaluator stopped.")
 
-        if fork:
-            proc = Process(target=runloop)
+        if block_till_done:
+            runloop(stop_when_none_left=True)
+            return None
         else:
-            proc = Thread(target=runloop)
-            proc.daemon = True
-
-        # Start a persistent thread or process that evaluates feedback functions.
-
-        self._evaluator_proc = proc
-        proc.start()
-
-        return proc
+            if fork:
+                proc = Process(target=runloop)
+            else:
+                proc = Thread(target=runloop)
+                proc.daemon = True
+            # Start a persistent thread or process that evaluates feedback functions.
+            self._evaluator_proc = proc
+            proc.start()
+            return proc
 
     run_evaluator = start_evaluator
 
