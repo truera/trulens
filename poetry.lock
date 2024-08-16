@@ -350,17 +350,6 @@ files = [
 ]
 
 [[package]]
-name = "atpublic"
-version = "5.0"
-description = "Keep all y'all's __all__'s in sync"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "atpublic-5.0-py3-none-any.whl", hash = "sha256:b651dcd886666b1042d1e38158a22a4f2c267748f4e97fde94bc492a4a28a3f3"},
-    {file = "atpublic-5.0.tar.gz", hash = "sha256:d5cb6cbabf00ec1d34e282e8ce7cbc9b74ba4cb732e766c24e2d78d1ad7f723f"},
-]
-
-[[package]]
 name = "attrs"
 version = "24.2.0"
 description = "Classes Without Boilerplate"
@@ -506,17 +495,17 @@ files = [
 
 [[package]]
 name = "boto3"
-version = "1.35.0"
+version = "1.34.161"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.0-py3-none-any.whl", hash = "sha256:ada32dab854c46a877cf967b8a55ab1a7d356c3c87f1c8bd556d446ff03dfd95"},
-    {file = "boto3-1.35.0.tar.gz", hash = "sha256:bdc242e3ea81decc6ea551b04b2c122f088c29269d8e093b55862946aa0fcfc6"},
+    {file = "boto3-1.34.161-py3-none-any.whl", hash = "sha256:4ef285334a0edc3047e27a04caf00f7742e32c0f03a361101e768014ac5709dd"},
+    {file = "boto3-1.34.161.tar.gz", hash = "sha256:a872d8fdb3203c1eb0b12fa9e9d879e6f7fd02983a485f02189e6d5914ccd834"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.0,<1.36.0"
+botocore = ">=1.34.161,<1.35.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -525,13 +514,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.35.0"
+version = "1.34.161"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.35.0-py3-none-any.whl", hash = "sha256:a3c96fe0b6afe7d00bad6ffbe73f2610953065fcdf0ed697eba4e1e5287cc84f"},
-    {file = "botocore-1.35.0.tar.gz", hash = "sha256:6ab2f5a5cbdaa639599e3478c65462c6d6a10173dc8b941bfc69b0c9eb548f45"},
+    {file = "botocore-1.34.161-py3-none-any.whl", hash = "sha256:6c606d2da6f62fde06880aff1190566af208875c29938b6b68741e607817975a"},
+    {file = "botocore-1.34.161.tar.gz", hash = "sha256:16381bfb786142099abf170ce734b95a402a3a7f8e4016358712ac333c5568b2"},
 ]
 
 [package.dependencies]
@@ -1735,13 +1724,13 @@ test = ["objgraph", "psutil"]
 
 [[package]]
 name = "griffe"
-version = "1.0.0"
+version = "0.49.0"
 description = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "griffe-1.0.0-py3-none-any.whl", hash = "sha256:7e113220efc489c2e8189656b1f01c1184417ba5395573ff05cdc7d07a1b0a5e"},
-    {file = "griffe-1.0.0.tar.gz", hash = "sha256:a9df647e5602fc0f826fca1cda5d9a0e554cdea67eb7948f6629dca7336e6afd"},
+    {file = "griffe-0.49.0-py3-none-any.whl", hash = "sha256:c0d505f2a444ac342b22f4647d6444c8db64964b6a379c14f401fc467c0741a3"},
+    {file = "griffe-0.49.0.tar.gz", hash = "sha256:a7e1235c27d8139e0fd24a5258deef6061bc876a9fda8117a5cf7b53ee940a91"},
 ]
 
 [package.dependencies]
@@ -1866,20 +1855,6 @@ files = [
 
 [package.dependencies]
 pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_version >= \"3.8\""}
-
-[[package]]
-name = "humanize"
-version = "4.10.0"
-description = "Python humanize utilities"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "humanize-4.10.0-py3-none-any.whl", hash = "sha256:39e7ccb96923e732b5c2e27aeaa3b10a8dfeeba3eb965ba7b74a3eb0e30040a6"},
-    {file = "humanize-4.10.0.tar.gz", hash = "sha256:06b6eb0293e4b85e8d385397c5868926820db32b9b654b932f57fa41c23c9978"},
-]
-
-[package.extras]
-tests = ["freezegun", "pytest", "pytest-cov"]
 
 [[package]]
 name = "identify"
@@ -2822,13 +2797,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.33"
+version = "0.2.32"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.33-py3-none-any.whl", hash = "sha256:c8de411336c13fa440b7a52895bfd1c064f04d315344855962988483902cc532"},
-    {file = "langchain_core-0.2.33.tar.gz", hash = "sha256:dd2659e0a560fc987b210107bf989aa14a6f4b67dd214c13a2c9669036cda975"},
+    {file = "langchain_core-0.2.32-py3-none-any.whl", hash = "sha256:1f5584cf0034909e35ea17010a847d4079417e0ddcb5a9eb3fbb2bd55f3268c0"},
+    {file = "langchain_core-0.2.32.tar.gz", hash = "sha256:d82cdc350bbbe74261330d87056b7d9f1fb567828e9e03f708d23a48b941819e"},
 ]
 
 [package.dependencies]
@@ -2845,17 +2820,17 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-openai"
-version = "0.1.22"
+version = "0.1.21"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_openai-0.1.22-py3-none-any.whl", hash = "sha256:e184ab867a30f803dc210a388537186b1b670a33d910a7e0fa4e0329d3b6c654"},
-    {file = "langchain_openai-0.1.22.tar.gz", hash = "sha256:0cf93133f230a893e3b0cc2a792bbf2580950e879b577f6e8d4ff9963a7de44b"},
+    {file = "langchain_openai-0.1.21-py3-none-any.whl", hash = "sha256:44420f0c84859ae236a80c8ac8754a16d5b660c24377c27ba98308145d346352"},
+    {file = "langchain_openai-0.1.21.tar.gz", hash = "sha256:2c65feaf12bb284eccf7bce35725fd06f3035fa751babad6aa84af2f99867f88"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.33,<0.3.0"
+langchain-core = ">=0.2.29,<0.3.0"
 openai = ">=1.40.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -2911,13 +2886,13 @@ regex = ["regex"]
 
 [[package]]
 name = "litellm"
-version = "1.43.15"
+version = "1.43.13"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.43.15-py3-none-any.whl", hash = "sha256:99a91680e4a421b28fa5124c5d2500d32708c0c18b7a9e6f0d8472b3ff9a8beb"},
-    {file = "litellm-1.43.15.tar.gz", hash = "sha256:4137e04a5837d997dd09588d9cd70de0e9833566d7c57c58b4f609fea636b5de"},
+    {file = "litellm-1.43.13-py3-none-any.whl", hash = "sha256:47c27c1c1b394d6098c68eec637008b07a254dadc4b82206b1a9f960621a8776"},
+    {file = "litellm-1.43.13.tar.gz", hash = "sha256:b0273cbed3f7a35f197c98d92b1a13038b430e5e78d30db7d94d8237a3b98641"},
 ]
 
 [package.dependencies]
@@ -3717,27 +3692,6 @@ files = [
 ]
 
 [[package]]
-name = "merkle-json"
-version = "1.0.0"
-description = "Generates an MD5 unique hash of an Json object"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "merkle-json-1.0.0.tar.gz", hash = "sha256:2deb0e78beeb5cd9b515853bdc82bad341fa92538efe460f0142318dc4c6919d"},
-    {file = "merkle_json-1.0.0-py3-none-any.whl", hash = "sha256:832a626f0049e8de22b3096d6183100887e83bfabf238a64e1107ac1efa8499e"},
-]
-
-[[package]]
-name = "millify"
-version = "0.1.1"
-description = "Convert long numbers into a human-readable format in Python"
-optional = false
-python-versions = "*"
-files = [
-    {file = "millify-0.1.1.tar.gz", hash = "sha256:619defdc98b6d23f941b5ce4aaf4bf87a0e0f64cd0446ffa299be94486597f1a"},
-]
-
-[[package]]
 name = "minijinja"
 version = "2.0.1"
 description = "An experimental Python binding of the Rust MiniJinja template engine."
@@ -4231,20 +4185,20 @@ files = [
 
 [[package]]
 name = "munch"
-version = "3.0.0"
+version = "2.5.0"
 description = "A dot-accessible dictionary (a la JavaScript objects)"
 optional = false
-python-versions = ">=3.6"
+python-versions = "*"
 files = [
-    {file = "munch-3.0.0-py2.py3-none-any.whl", hash = "sha256:0e4108418cfea898dcad01ff9569c30ff58f01d6f699331d04364f51623627c0"},
-    {file = "munch-3.0.0.tar.gz", hash = "sha256:5284603030c00906d9d64d8108728c004fbeb91fc1c1e4caca342bc48f2a6dfd"},
+    {file = "munch-2.5.0-py2.py3-none-any.whl", hash = "sha256:6f44af89a2ce4ed04ff8de41f70b226b984db10a91dcc7b9ac2efc1c77022fdd"},
+    {file = "munch-2.5.0.tar.gz", hash = "sha256:2d735f6f24d4dba3417fa448cae40c6e896ec1fdab6cdb5e6510999758a4dbd2"},
 ]
 
 [package.dependencies]
 six = "*"
 
 [package.extras]
-testing = ["astroid (>=2.0)", "coverage", "pylint (>=2.3.1,<2.4.0)", "pytest"]
+testing = ["astroid (>=1.5.3,<1.6.0)", "astroid (>=2.0)", "coverage", "pylint (>=1.7.2,<1.8.0)", "pylint (>=2.3.1,<2.4.0)", "pytest"]
 yaml = ["PyYAML (>=5.1.0)"]
 
 [[package]]
@@ -4745,7 +4699,6 @@ description = "Nvidia JIT LTO Library"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-manylinux2014_aarch64.whl", hash = "sha256:84fb38465a5bc7c70cbc320cfd0963eb302ee25a5e939e9f512bbba55b6072fb"},
     {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-manylinux2014_x86_64.whl", hash = "sha256:562ab97ea2c23164823b2a89cb328d01d45cb99634b8c65fe7cd60d14562bd79"},
     {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-win_amd64.whl", hash = "sha256:ed3c43a17f37b0c922a919203d2d36cbef24d41cc3e6b625182f8b58203644f6"},
 ]
@@ -4847,13 +4800,13 @@ sympy = "*"
 
 [[package]]
 name = "openai"
-version = "1.41.0"
+version = "1.40.6"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.41.0-py3-none-any.whl", hash = "sha256:3b6cca4571667f3e0800442ef8f2bfa6a6f3301c51776bc7626159a4d81c242c"},
-    {file = "openai-1.41.0.tar.gz", hash = "sha256:26b81f39b49dce92ff5d30c373625ddb212c2f1050e1574e456d18423730cdd0"},
+    {file = "openai-1.40.6-py3-none-any.whl", hash = "sha256:b36372124a779381a420a34dd96f762baa748b6bdfaf83a6b9f2745f72ccc1c5"},
+    {file = "openai-1.40.6.tar.gz", hash = "sha256:2239232bcb7f4bd4ce8e02544b5769618582411cf399816d96686d1b6c1e5c8d"},
 ]
 
 [package.dependencies]
@@ -5008,8 +4961,8 @@ files = [
 [package.dependencies]
 numpy = [
     {version = ">=1.22.4", markers = "python_version < \"3.11\""},
-    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
     {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
+    {version = ">=1.23.2", markers = "python_version == \"3.11\""},
 ]
 python-dateutil = ">=2.8.2"
 pytz = ">=2020.1"
@@ -7037,25 +6990,6 @@ pandas = ["pandas (>=1.0.0,<3.0.0)", "pyarrow"]
 secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
-name = "snowflake-core"
-version = "0.9.0"
-description = "Snowflake Python API for Resource Management"
-optional = false
-python-versions = "<3.12,>=3.8"
-files = [
-    {file = "snowflake_core-0.9.0-py3-none-any.whl", hash = "sha256:19adcf3662364c15c2d25367479fe3a6361015d64d05146e20c35fdecfae0fb2"},
-    {file = "snowflake_core-0.9.0.tar.gz", hash = "sha256:027ba663ca5b797acebd8baaed17b9f885649037d61d40ad3342ad6b2f3d9571"},
-]
-
-[package.dependencies]
-atpublic = ">=4"
-pydantic = ">=2"
-python-dateutil = ">=2.8.2"
-requests = "*"
-snowflake-snowpark-python = ">=1.5.0,<2.0.0"
-urllib3 = "*"
-
-[[package]]
 name = "snowflake-snowpark-python"
 version = "1.20.0"
 description = "Snowflake Snowpark for Python"
@@ -7993,7 +7927,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8009,7 +7943,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a0"
+version = "1.0.1a2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8017,24 +7951,23 @@ files = []
 develop = true
 
 [package.dependencies]
-alembic = "^1.11"
-dill = "^0.3"
-merkle-json = "^1.0"
-munch = "^3.0"
+alembic = "^1.8.1"
+dill = "^0.3.8"
+munch = "^2.5"
 nest-asyncio = "^1.5"
-numpy = "^1.23"
+numpy = ">=1.23"
+pandas = "^2.1"
 pydantic = "^2"
-python-dotenv = "^1.0"
-snowflake-connector-python = {version = "^3.11.0", optional = true, markers = "python_version < \"3.12\""}
-snowflake-core = {version = "^0.9.0", optional = true, markers = "python_version < \"3.12\""}
-snowflake-snowpark-python = {version = "^1.20.0", optional = true, markers = "python_version < \"3.12\""}
+python-dotenv = ">=0.21,<2.0"
+rich = "^13.6"
+snowflake-connector-python = {version = "^3.11", optional = true, markers = "python_version < \"3.12\""}
+snowflake-snowpark-python = {version = "^1.18", optional = true, markers = "python_version < \"3.12\""}
 snowflake-sqlalchemy = {version = "^1.6", optional = true, markers = "python_version < \"3.12\""}
 sqlalchemy = "^2.0"
-tqdm = "^4.66"
 typing_extensions = "^4.9"
 
 [package.extras]
-snowflake = ["snowflake-connector-python (>=3.11.0,<4.0.0)", "snowflake-core (>=0.9.0,<0.10.0)", "snowflake-snowpark-python (>=1.20.0,<2.0.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
+snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-python (>=1.18,<2.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]
 type = "directory"
@@ -8042,7 +7975,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "!=3.9.7,<4.0,>=3.9"
@@ -8050,10 +7983,9 @@ files = []
 develop = true
 
 [package.dependencies]
-humanize = ">=4.6"
 ipywidgets = ">=8.1.3"
 jupyter = ">=1"
-millify = ">=0.1.1"
+pandas = ">=2.1,<3"
 psutil = ">=5.9"
 rich = ">=13.6"
 streamlit = ">=1.33"
@@ -8088,7 +8020,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -8097,7 +8029,7 @@ develop = true
 
 [package.dependencies]
 nltk = "^3.8"
-numpy = "^1.23"
+numpy = ">=1.23"
 pydantic = "^2"
 scikit-learn = "^1.3.0"
 scipy = "^1.10.1"
@@ -8109,7 +8041,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-instrument-langchain"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -8129,7 +8061,7 @@ url = "src/instrument/langchain"
 
 [[package]]
 name = "trulens-instrument-llamaindex"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8148,7 +8080,7 @@ url = "src/instrument/llamaindex"
 
 [[package]]
 name = "trulens-instrument-nemo"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -8167,7 +8099,7 @@ url = "src/instrument/nemo"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8186,7 +8118,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -8205,7 +8137,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8214,10 +8146,9 @@ develop = true
 
 [package.dependencies]
 nltk = "^3.8"
-numpy = "^1.23"
+numpy = ">=1.23"
 requests = "^2.31"
 torch = "^2.1.2"
-tqdm = "^4.66"
 transformers = "^4.38.1"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"
@@ -8228,7 +8159,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8246,7 +8177,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8264,7 +8195,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "1.0.1a0"
+version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
