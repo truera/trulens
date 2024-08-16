@@ -1,6 +1,7 @@
 import asyncio
 import json
 import math
+from typing import TYPE_CHECKING
 
 from millify import millify
 import streamlit as st
@@ -13,12 +14,11 @@ from trulens.dashboard.ux.components import draw_metadata
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
 
+if TYPE_CHECKING:
+    import pandas as pd
+
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
-
-if __name__ == "__main__":
-    # If not imported, gets args from command line and creates Tru singleton
-    init_from_args()
 
 
 def leaderboard():
@@ -26,7 +26,7 @@ def leaderboard():
 
     set_page_config(page_title="Leaderboard")
 
-    tru = Tru()  # get singletone whether this file was imported or executed from command line.
+    tru = Tru()  # get singleton whether this file was imported or executed from command line.
 
     lms = tru.db
 
@@ -58,7 +58,7 @@ def leaderboard():
     st.markdown("""---""")
 
     for app in apps:
-        app_df = df.loc[df.app_id == app]
+        app_df: pd.DataFrame = df.loc[df.app_id == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
@@ -93,7 +93,7 @@ def leaderboard():
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",
@@ -150,4 +150,6 @@ def leaderboard():
 
 
 if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
     leaderboard()
