@@ -41,7 +41,7 @@ from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import python
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.containers import dict_merge_with
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.json import jsonify
@@ -418,7 +418,7 @@ class Instrument:
                     key="contexts",
                     func=find_instrumented,
                     offset=1,
-                    skip=python.caller_frame(),
+                    skip=python_utils.caller_frame(),
                 )
             )
             # Note: are empty sets false?
@@ -736,6 +736,10 @@ class Instrument:
         # Recursively instrument inner components
         if hasattr(obj, "__dict__"):
             for attr_name, attr_value in obj.__dict__.items():
+                if isinstance(
+                    attr_value, python_utils.OpaqueWrapper
+                ):  # never look past opaque wrapper
+                    continue
                 if any(
                     isinstance(attr_value, cls) for cls in self.include_classes
                 ):
@@ -758,7 +762,7 @@ class Instrument:
                 # subclass check may raise exception
                 logger.debug(
                     "\t\tWarning: checking whether %s should be instrumented resulted in an error: %s",
-                    python.module_name(base),
+                    python_utils.module_name(base),
                     e,
                 )
                 # NOTE: Proceeding to instrument here as we don't want to miss
@@ -1052,7 +1056,7 @@ def label_value(
         key="contexts",
         func=_find_contexts_frame,
         offset=1,
-        skip=python.caller_frame(),
+        skip=caller_frame(),
     )
     if contexts is None:
         return

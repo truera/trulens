@@ -1,6 +1,4 @@
-"""
-Utilities for dealing with LLM-generated text.
-"""
+"""Utilities for dealing with LLM-generated text."""
 
 import logging
 import re
@@ -46,16 +44,21 @@ def re_configured_rating(
     max_score_val: int = 3,
     allow_decimal: bool = False,
 ) -> int:
-    """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable to the ranges like 4-point Likert scale or binary (0 or 1).
+    """Extract a {min_score_val}-{max_score_val} rating from a string. Configurable
+    to the ranges like 4-point Likert scale or binary (0 or 1).
 
-    If the string does not match an integer/a float or matches an integer/a float outside the
-    {min_score_val} - {max_score_val} range, raises an error instead. If multiple numbers are found within
-    the expected 0-10 range, the smallest is returned.
+    If the string does not match an integer/a float or matches an integer/a
+    float outside the {min_score_val} - {max_score_val} range, raises an error
+    instead. If multiple numbers are found within the expected 0-10 range, the
+    smallest is returned.
 
     Args:
         s: String to extract rating from.
+
         min_score_val: Minimum value of the rating scale.
+
         max_score_val: Maximum value of the rating scale.
+
         allow_decimal: Whether to allow and capture decimal numbers (floats).
 
     Returns:
@@ -70,12 +73,12 @@ def re_configured_rating(
 
     vals = set()
     for match in matches:
-        rating = float(match) if allow_decimal else int(match)
+        rating = float(match) if allow_decimal else int(float(match))
         if min_score_val <= rating <= max_score_val:
             vals.add(rating)
         else:
             logger.warning(
-                f"Rating must be in [{min_score_val}, {max_score_val}]."
+                "Rating must be in [%s, %s].", min_score_val, max_score_val
             )
 
     if not vals:
@@ -93,9 +96,9 @@ def re_configured_rating(
 def re_0_10_rating(s: str) -> int:
     """Extract a 0-10 rating from a string.
 
-    If the string does not match an integer/a float or matches an integer/a float outside the
-    0-10 range, raises an error instead. If multiple numbers are found within
-    the expected 0-10 range, the smallest is returned.
+    If the string does not match an integer/a float or matches an integer/a
+    float outside the 0-10 range, raises an error instead. If multiple numbers
+    are found within the expected 0-10 range, the smallest is returned.
 
     Args:
         s: String to extract rating from.
@@ -104,7 +107,8 @@ def re_0_10_rating(s: str) -> int:
         int: Extracted rating.
 
     Raises:
-        ParseError: If no integers/floats between 0 and 10 are found in the string.
+        ParseError: If no integers/floats between 0 and 10 are found in the
+            string.
     """
 
     return re_configured_rating(
