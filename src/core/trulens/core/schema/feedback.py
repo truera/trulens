@@ -34,7 +34,13 @@ logger = logging.getLogger(__name__)
 class FeedbackMode(str, Enum):
     """Mode of feedback evaluation.
 
-    Specify this using the `feedback_mode` to [App][trulens.core.app.App] constructors.
+    Specify this using the `feedback_mode` to [App][trulens.core.app.App]
+    constructors.
+
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if mode == "none": ...`. Internal
+        uses should use the enum instances.
     """
 
     NONE = "none"
@@ -53,8 +59,15 @@ class FeedbackMode(str, Enum):
     `tru.start_deferred_feedback_evaluator`."""
 
 
-class FeedbackResultStatus(Enum):
-    """For deferred feedback evaluation, these values indicate status of evaluation."""
+class FeedbackResultStatus(str, Enum):
+    """For deferred feedback evaluation, these values indicate status of
+    evaluation.
+
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if status == "done": ...`. Internal
+        uses should use the enum instances.
+    """
 
     NONE = "none"
     """Initial value is none."""
@@ -82,6 +95,11 @@ class FeedbackOnMissingParameters(str, Enum):
 
     This is specifically for the case were a feedback function has a selector
     that selects something that does not exist in a record/app.
+
+    !!! Note
+        This class extends [str][str] to allow users to compare its values with
+        their string representations, i.e. in `if onmissing == "error": ...`.
+        Internal uses should use the enum instances.
     """
 
     ERROR = "error"
