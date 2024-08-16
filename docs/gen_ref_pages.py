@@ -88,7 +88,12 @@ provider_packages = [
 instrument_packages = [
     f"instrument/{pkg_dir}" for pkg_dir in next(os.walk("src/instrument"))[1]
 ]
-packages = core_packages + provider_packages + instrument_packages
+workspace_packages = [
+    f"workspaces/{pkg_dir}" for pkg_dir in next(os.walk("src/workspaces"))[1]
+]
+packages = (
+    core_packages + provider_packages + instrument_packages + workspace_packages
+)
 print("Collecting from packages:", packages)
 
 # Write Index Page

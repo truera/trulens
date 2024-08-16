@@ -70,3 +70,6 @@ repos:
       - id: poetry-check
         name: trulens-providers-openai-poetry-check
         args: [-C src/providers/openai]
+      - id: poetry-check
+        name: trulens-workspaces-snowflake-poetry-check
+        args: [-C src/workspaces/snowflake]
