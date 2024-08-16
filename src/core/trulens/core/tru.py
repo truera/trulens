@@ -231,17 +231,16 @@ class Tru(python.SingletonPerName):
                 snowflake_connection_parameters, schema_name
             )
         database_args.update({
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_engine": database_engine,
-                    "database_file": database_file,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+            k: v
+            for k, v in {
+                "database_url": database_url,
+                "database_engine": database_engine,
+                "database_file": database_file,
+                "database_redact_keys": database_redact_keys,
+                "database_prefix": database_prefix,
+            }.items()
+            if v is not None
+        })
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
