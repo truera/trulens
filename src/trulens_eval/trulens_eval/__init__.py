@@ -68,7 +68,8 @@ with imports_utils.OptionalImports(
     from trulens.instrument.nemo.tru_rails import TruRails
 
 __all__ = [
-    "Tru",  # main interface
+    # main interface
+    "Tru",
     # app types
     "TruBasicApp",
     "TruCustomApp",

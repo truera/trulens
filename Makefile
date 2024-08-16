@@ -1,7 +1,7 @@
 # Make targets useful for developing TruLens. How to use Makefiles:
 # https://opensource.com/article/18/8/what-how-makefile . Please make sure this
 # file runs on gmake:
-# - Compunt shell syntax cannot span more than 1 line, see "lock" for example on
+# - Shell statements cannot span more than 1 line, see "lock" for example on
 #   how newline is escaped to put the for loop on the same logical line.
 
 SHELL := /bin/bash
