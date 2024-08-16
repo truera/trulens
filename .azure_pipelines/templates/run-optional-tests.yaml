@@ -25,4 +25,4 @@ steps:
       SNOWFLAKE_DATABASE: $(SNOWFLAKE_DATABASE)
       SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
       SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
-    displayName: Run Optional Test Suite
+    displayName: Run Optional ${{ parameters.testSuite }} Test Suite

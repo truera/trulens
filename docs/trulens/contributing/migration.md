@@ -1,36 +1,30 @@
 # ✨ Database Migration
 
-These notes only apply to _trulens_ developments that change the database
+These notes only apply to _TruLens_ developments that change the database
 schema.
-
-Warning:
-   Some of these instructions may be outdated and are in progress if being updated.
 
 ## Creating a new schema revision
 
 If upgrading DB, You must do this step!!
 
-1. `cd src/core/trulens/core/database/migrations`
-1. Make sure you have an existing database at the latest schema
-    * `mv
-      release_dbs/sql_alchemy_<LATEST_VERSION>/default.sqlite`
-      ./
-1. Edit the SQLAlchemy orm models in `src/core/trulens/core/database/orm.py`.
-1. Run `export SQLALCHEMY_URL="<url>" && alembic revision --autogenerate -m
-   "<short_description>" --rev-id "<next_integer_version>"`
-1. Look at the migration script generated at `src/core/trulens/core/database/migration/versions` and edit if
-   necessary
-1. Add the version to `database/migration/data.py` in variable:
-   `sql_alchemy_migration_versions`
-1. Make any `data_migrate` updates in `database/migration/data.py` if python changes
-   were made
-1. `git add src/core/trulens/core/database/migrations/versions`
+1. Make desired changes to SQLAlchemy orm models in `src/core/trulens/core/database/orm.py`.
+1. Get a database with the new changes:
+   1. `rm default.sqlite`
+   1. Run `Tru()` to create a fresh database that uses the new ORM.
+1. Run automatic alembic revision script generator. This will generate a new python script in `src/core/trulens/core/database/migrations`.
+   1. `cd src/core/trulens/core/database/migrations`
+   1. `SQLALCHEMY_URL="sqlite:///../../../../../../default.sqlite" alembic revision --autogenerate -m "<short_description>" --rev-id "<next_integer_version>"`
+1. Check over the automatically generated script in `src/core/trulens/core/database/migration/versions` to make sure it looks correct.
+1. Add the version to `src/core/trulens/core/database/migrations/data.py` in the variable `sql_alchemy_migration_versions`
+1. Make any `sqlalchemy_upgrade_paths` updates in `src/core/trulens/core/database/migrations/data.py` if a backfill is necessary.
 
 ## Creating a DB at the latest schema
 
 If upgrading DB, You must do this step!!
 
 Note: You must create a new schema revision before doing this
+
+Note: Some of these instructions may be outdated and are in progress if being updated.
 
 1. Create a sacrificial OpenAI Key (this will be added to the DB and put into
    github; which will invalidate it upon commit)

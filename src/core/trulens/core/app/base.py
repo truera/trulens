@@ -104,7 +104,13 @@ class ComponentViewMeta(ABCMeta):
         dict_: Dict[str, Any],
     ):
         newtype = type.__init__(cls, classname, bases, dict_)
-        _component_impls[classname] = cls  # type: ignore[assignment]
+
+        if hasattr(cls, "component_of_json"):
+            # Only register the higher-level classes that can enumerate this
+            # subclasses. Otherwise an infinite loop will result in the of_json
+            # logic below.
+
+            _component_impls[classname] = cls  # type: ignore[assignment]
         return newtype
 
 
@@ -119,14 +125,15 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
         self.json = json
         self.cls = Class.of_class_info(json)
 
-    @staticmethod
-    def of_json(json: JSON) -> "ComponentView":
+    @classmethod
+    def of_json(cls, json: JSON) -> "ComponentView":
         """
         Sort the given json into the appropriate component view type.
         """
 
         cls_obj = Class.of_class_info(json)
-        for name, view in _component_impls.items():
+
+        for _, view in _component_impls.items():
             # NOTE: includes prompt, llm, tool, agent, memory, other which may be overridden
             if view.class_is(cls_obj):
                 return view.of_json(json)
@@ -288,8 +295,8 @@ class CustomComponent(ComponentView):
         # Assumes this is the last check done.
         return True
 
-    @staticmethod
-    def of_json(json: JSON) -> "CustomComponent":
+    @classmethod
+    def of_json(cls, json: JSON) -> "CustomComponent":
         return CustomComponent.component_of_json(json)
 
 
@@ -815,7 +822,22 @@ class App(
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
         `bindings`.
+
+        Args:
+            func: The main function we are targetting in this determination.
+
+            sig: The signature of the above.
+
+            bindings: The arguments to be passed to the function.
+
+        Returns:
+            The main input string.
         """
+
+        if bindings is None:
+            raise RuntimeError(
+                f"Cannot determine main input of unbound call to {func}: {sig}."
+            )
 
         # ignore self
         all_args = list(v for k, v in bindings.arguments.items() if k != "self")
@@ -1095,8 +1117,16 @@ class App(
 
             assert len(calls) > 0, "No information recorded in call."
 
-            main_in = self.main_input(func, sig, bindings)
-            main_out = self.main_output(func, sig, bindings, ret)
+            if bindings is not None:
+                main_in = self.main_input(func, sig, bindings)
+            else:
+                main_in = None
+
+            if error is None:
+                assert bindings is not None, "No bindings despite no error."
+                main_out = self.main_output(func, sig, bindings, ret)
+            else:
+                main_out = None
 
             updates = dict(
                 main_input=jsonify(main_in),
@@ -1359,8 +1389,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self.tru: mod_tru.Tru
         self.db: mod_db.DB
 
-        # For server side feedback mode, we write records async
-        if feedback_mode == mod_feedback_schema.FeedbackMode.SERVER:
+        # If in buffered mode, call add record nowait.
+        if self.record_ingest_mode == mod_app_schema.RecordIngestMode.BUFFERED:
             self.tru.add_record_nowait(record=record)
             return
 

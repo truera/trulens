@@ -32,7 +32,6 @@ from typing import (
     Union,
 )
 
-from merkle_json import MerkleJson
 from munch import Munch as Bunch
 import pydantic
 from pydantic import GetCoreSchemaHandler
@@ -44,7 +43,6 @@ from trulens.core.utils.containers import iterable_peek
 from trulens.core.utils.python import class_name
 
 logger = logging.getLogger(__name__)
-mj = MerkleJson()
 
 T = TypeVar("T")
 
@@ -409,12 +407,10 @@ class GetSlice(Step):
         return obj
 
     def __repr__(self) -> str:
-        pieces = ":".join(
-            [
-                "" if p is None else str(p)
-                for p in (self.start, self.stop, self.step)
-            ]
-        )
+        pieces = ":".join([
+            "" if p is None else str(p)
+            for p in (self.start, self.stop, self.step)
+        ])
         if pieces == "::":
             pieces = ":"
 
