@@ -134,9 +134,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color="normal",
                 )
             else:
-                cat = CATEGORY.of_score(
-                    mean, higher_is_better=higher_is_better
-                )
+                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
