@@ -484,7 +484,7 @@ class TruCustomApp(App):
                             f"Creating a placeholder there for now."
                         )
 
-                        path.set(
+                        full_path.set(
                             self.app_extra_json,
                             {
                                 PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",

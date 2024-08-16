@@ -29,7 +29,6 @@ from trulens.core.schema.base import Cost
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
 from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import Thunk
 from trulens.core.utils.python import callable_name
@@ -37,11 +36,12 @@ from trulens.core.utils.python import class_name
 from trulens.core.utils.python import get_first_local_in_call_stack
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
+from trulens.core.utils.python import safe_getattr
 from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.python import wrap_awaitable
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils.wrap import old_wrap_awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -754,7 +754,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         )
 
             if isinstance(response, Awaitable):
-                return wrap_awaitable(response, on_done=response_callback)
+                return old_wrap_awaitable(response, on_done=response_callback)
 
             response_callback(response)
             return response

@@ -19,7 +19,6 @@ import os
 import threading as th
 import traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -36,32 +35,31 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
+from trulens.core import trace as mod_trace
+from trulens.core import tru as mod_tru
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import wrap as wrap_utils
 from trulens.core.utils.containers import dict_merge_with
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Method
 from trulens.core.utils.pyschema import clean_attributes
-from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import caller_frame
 from trulens.core.utils.python import class_name
 from trulens.core.utils.python import get_first_local_in_call_stack
 from trulens.core.utils.python import id_str
 from trulens.core.utils.python import is_really_coroutinefunction
+from trulens.core.utils.python import safe_getattr
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_signature
-from trulens.core.utils.python import wrap_awaitable
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
-
-if TYPE_CHECKING:
-    from trulens.core.app.base import RecordingContext
 
 logger = logging.getLogger(__name__)
 
@@ -137,15 +135,15 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: "RecordingContext",
+        ctx: mod_trace.RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
+        existing_record: Optional[record_schema.Record] = None,
     ):
         """
         Called by instrumented methods if they are root calls (first instrumented
@@ -345,7 +343,48 @@ class Instrument:
 
         self.app = app
 
-    def tracked_method_wrapper(
+    def tracked_method_wrapper(self, *args, **kwargs):
+        """Dispatch either the otel-based or original record-based method
+        wrapper method."""
+
+        return (
+            self._otel_tracked_method_wrapper
+            if mod_tru.Tru()._experimental_use_tracing
+            else self._record_tracked_method_wrapper
+        )(*args, **kwargs)
+
+    def _otel_tracked_method_wrapper(
+        self,
+        query: Lens,
+        func: Callable,
+        method_name: str,
+        cls: type,
+        obj: object,
+    ):
+        """Wrap a method to capture its inputs/outputs/errors."""
+
+        if self.app is None:
+            raise ValueError("Instrumentation requires an app but is None.")
+
+        if safe_hasattr(func, "__func__"):
+            raise ValueError("Function expected but method received.")
+
+        if safe_hasattr(func, Instrument.INSTRUMENT):
+            logger.debug("\t\t\t%s: %s is already instrumented", query, func)
+
+        # Notify the app instrumenting this method where it is located:
+        self.app.on_method_instrumented(obj, func, path=query)
+
+        logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
+
+        return wrap_utils.wrap_callable(
+            func=func,
+            callback_class=mod_trace.AppTracingCallbacks,
+            func_name=method_name,
+            app=self.app,
+        )
+
+    def _record_tracked_method_wrapper(
         self,
         query: Lens,
         func: Callable,
@@ -467,7 +506,7 @@ class Instrument:
             start_time = None
 
             bindings = None
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -506,7 +545,7 @@ class Instrument:
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = mod_record_schema.RecordAppCallMethod(
+                frame_ident = record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -566,7 +605,7 @@ class Instrument:
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -582,7 +621,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
+                    call = record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -598,7 +637,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
@@ -620,7 +659,7 @@ class Instrument:
                 # TODO(piotrm): need to track costs of awaiting the ret in the
                 # below.
 
-                return wrap_awaitable(rets, on_done=handle_done)
+                return wrap_utils.old_wrap_awaitable(rets, on_done=handle_done)
 
             handle_done(rets=rets)
             return rets
@@ -738,7 +777,7 @@ class Instrument:
         if hasattr(obj, "__dict__"):
             for attr_name, attr_value in obj.__dict__.items():
                 if isinstance(
-                    attr_value, python_utils.OpaqueWrapper
+                    attr_value, wrap_utils.OpaqueWrapper
                 ):  # never look past opaque wrapper
                     continue
                 if any(

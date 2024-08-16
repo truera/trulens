@@ -814,6 +814,7 @@ tqdm = "^4.66"
 typing_extensions = "^4.9"
 
 [package.extras]
+otel = ["opentelemetry-api (>=1.24,<2.0)", "opentelemetry-exporter-otlp (>=1.24,<2.0)", "opentelemetry-sdk (>=1.24,<2.0)", "opentelemetry-semantic-conventions-ai (>=0.0.2,<0.0.3)"]
 snowflake = ["snowflake-connector-python (>=3.11.0,<4.0.0)", "snowflake-core (>=0.9.0,<0.10.0)", "snowflake-snowpark-python (>=1.20.0,<2.0.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]

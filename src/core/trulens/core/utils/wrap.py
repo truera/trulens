@@ -12,6 +12,7 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
+    Generator,
     Generic,
     Iterable,
     Iterator,
@@ -27,6 +28,82 @@ from trulens.core.utils import python as python_utils
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+
+
+def old_wrap_awaitable(
+    awaitable: Awaitable[T],
+    on_await: Optional[Callable[[], Any]] = None,
+    on_done: Optional[Callable[[T], Any]] = None,
+) -> Awaitable[T]:
+    """DEPRECATED
+
+    Wrap an awaitable in another awaitable that will call callbacks before
+    and after the given awaitable finishes.
+
+    Note that the resulting awaitable needs to be awaited for the callback to
+    eventually trigger.
+
+    Args:
+        awaitable: The awaitable to wrap.
+
+        on_await: The callback to call when the wrapper awaitable is awaited but
+            before the wrapped awaitable is awaited.
+
+        on_done: The callback to call with the result of the wrapped awaitable
+            once it is ready.
+    """
+
+    async def wrapper(awaitable):
+        if on_await is not None:
+            on_await()
+
+        val = await awaitable
+
+        if on_done is not None:
+            on_done(val)
+
+        return val
+
+    return wrapper(awaitable)
+
+
+def old_wrap_generator(
+    gen: Generator[T, None, None],
+    on_iter: Optional[Callable[[], Any]] = None,
+    on_next: Optional[Callable[[T], Any]] = None,
+    on_done: Optional[Callable[[], Any]] = None,
+) -> Generator[T, None, None]:
+    """
+    DEPRECATED
+
+    Wrap a generator in another generator that will call callbacks at various
+    points in the generation process.
+
+    Args:
+        gen: The generator to wrap.
+
+        on_iter: The callback to call when the wrapper generator is created but
+            before a first iteration is produced.
+
+        on_next: The callback to call with the result of each iteration of the
+            wrapped generator.
+
+        on_done: The callback to call when the wrapped generator is exhausted.
+    """
+
+    def wrapper(gen):
+        if on_iter is not None:
+            on_iter()
+
+        for val in gen:
+            if on_next is not None:
+                on_next(val)
+            yield val
+
+        if on_done is not None:
+            on_done()
+
+    return wrapper(gen)
 
 
 class OpaqueWrapper(Generic[T]):

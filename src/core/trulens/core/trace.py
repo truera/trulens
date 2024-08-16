@@ -37,6 +37,7 @@ from opentelemetry.trace import status as trace_status
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pydantic
+from trulens.core import instruments as mod_instruments
 from trulens.core.otel import flatten_lensed_attributes
 
 # import trulens_eval.app as mod_app # circular import issues
@@ -1029,13 +1030,6 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-INSTRUMENT = "__tru_instrumented"
-"""Attribute name to be used to flag instrumented objects/methods/others."""
-
-APPS = "__tru_apps"
-"""Attribute name for storing apps that expect to be notified of calls."""
-
-
 class AppTracingCallbacks(TracingCallbacks[T]):
     """Extension to TracingCallbacks that keep track of apps that are
     instrumenting their constituent calls."""
@@ -1047,11 +1041,15 @@ class AppTracingCallbacks(TracingCallbacks[T]):
         app: WithInstrumentCallbacks,
         **kwargs: Dict[str, Any],
     ):
-        if not python_utils.safe_hasattr(wrapper, APPS):
+        if not python_utils.safe_hasattr(
+            wrapper, mod_instruments.Instrument.APPS
+        ):
             apps = set()
-            setattr(wrapper, APPS, apps)
+            setattr(wrapper, mod_instruments.Instrument.APPS, apps)
         else:
-            apps = getattr(wrapper, APPS)
+            apps = python_utils.safe_getattr(
+                wrapper, mod_instruments.Instrument.APPS
+            )
 
         apps.add(app)
 
@@ -1066,4 +1064,6 @@ class AppTracingCallbacks(TracingCallbacks[T]):
         super().__init__(span_type=span_type, **kwargs)
 
         self.app = app
-        self.apps = pyschema_utils.getattr_serial(self.wrapper, APPS)
+        self.apps = python_utils.safe_getattr(
+            self.wrapper, mod_instruments.Instrument.APPS
+        )

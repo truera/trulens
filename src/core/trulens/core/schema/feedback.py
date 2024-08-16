@@ -19,7 +19,7 @@ from typing import (
 )
 
 import pydantic
-from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import base as base_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
@@ -213,9 +213,7 @@ class FeedbackResult(serial.SerialModel):
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(
-        default_factory=mod_base_schema.Cost
-    )
+    cost: base_schema.Cost = pydantic.Field(default_factory=base_schema.Cost)
 
     # Given name of the feedback.
     name: str
