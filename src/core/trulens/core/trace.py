@@ -907,7 +907,7 @@ class RecordingContext:
     @property
     def spans(self) -> Dict[Context, Span]:
         """Get the spans of the tracer in this context."""
-        # EXPERIMENTAL: otel-tracing.
+        # EXPERIMENTAL: otel-tracing
 
         if self.tracer is None:
             return {}
@@ -1047,10 +1047,13 @@ class WithInstrumentCallbacks:
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they are root calls (first instrumned
         methods in a call stack).
+
         Args:
             ctx: The context of the recording.
+
             root_span: The root span that was recorded.
         """
+        # EXPERIMENTAL: otel-tracing
 
         raise NotImplementedError
 

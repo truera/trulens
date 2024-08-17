@@ -914,7 +914,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def get_active_contexts(self) -> Iterable[mod_trace.RecordingContext]:
         """Get all active recording contexts."""
-        # EXPERIMENTAL: OTEL
+        # EXPERIMENTAL: otel-tracing
 
         recording = self.recording_contexts.get(contextvars.Token.MISSING)
 
@@ -927,7 +927,7 @@ class App(
         self,
         recording_span: mod_trace.Span,
     ):
-        # EXPERIMENTAL: OTEL
+        # EXPERIMENTAL: otel-tracing
 
         if self.tru._experimental_otel_exporter is not None:
             # Export to otel exporter if exporter was set in workspace.
@@ -948,6 +948,8 @@ class App(
         recording: mod_trace.RecordingContext,
         root_span: mod_trace.Span,
     ) -> mod_record_schema.Record:
+        # EXPERIMENTAL: otel-tracing
+
         tracer = root_span.context.tracer
 
         record = tracer.record_of_root_span(
@@ -1371,7 +1373,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     # For use as an async context manager.
     async def __aenter__(self):
-        # EXPERIMENTAL: OTEL
+        # EXPERIMENTAL: otel-tracing
 
         self.tru._assert_feature(
             mod_preview.Feature.OTEL_TRACING,
@@ -1402,7 +1404,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        # EXPERIMENTAL: OTEL
+        # EXPERIMENTAL: otel-tracing
 
         self.tru._assert_feature(
             mod_preview.Feature.OTEL_TRACING,

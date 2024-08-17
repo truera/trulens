@@ -123,7 +123,7 @@ class EndpointCallback(SerialModel):
     like token usage.
     """
 
-    # TODEP after EXPERIMENTAL: otel-tracing
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
 
     endpoint: Endpoint = Field(exclude=True)
     """The endpoint owning this callback."""
@@ -555,7 +555,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
-        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
 
         endpoints = []
 
@@ -602,7 +602,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
-        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
 
         result, cbs = Endpoint.track_all_costs(
             __func,
@@ -634,7 +634,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
         """
-        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
 
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[
@@ -700,7 +700,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
-        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
 
         result, callbacks = Endpoint._track_costs(
             __func, *args, with_endpoints=[self], **kwargs
@@ -758,7 +758,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     def _record_wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
-        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
 
         if safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
