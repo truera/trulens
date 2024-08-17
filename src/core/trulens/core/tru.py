@@ -897,6 +897,9 @@ class Tru(python.SingletonPerName):
             )
             self.add_ground_truth_nowait(ground_truth)
 
+    def retrieve_ground_truth_dataset(self):
+        pass  # TODO: can be used to retrieve ground truth data and pass to GT-based feedback functions and aggregators
+
     def start_evaluator(
         self,
         restart: bool = False,
