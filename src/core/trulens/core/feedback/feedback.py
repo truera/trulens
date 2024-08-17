@@ -32,8 +32,8 @@ from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 import trulens.core.feedback.endpoint as mod_base_endpoint
 from trulens.core.schema import Select
-from trulens.core.schema import app as app_schema
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
@@ -596,7 +596,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     def check_selectors(
         self,
-        app: Union[app_schema.AppDefinition, mod_serial_utils.JSON],
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON],
         record: mod_record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False,
@@ -643,7 +643,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 redact_keys=True,
             )
 
-        elif isinstance(app, app_schema.AppDefinition):
+        elif isinstance(app, mod_app_schema.AppDefinition):
             app = mod_json_utils.jsonify(
                 app, skip_specials=True, redact_keys=True
             )
@@ -760,7 +760,7 @@ Feedback function signature:
     def run(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -787,7 +787,7 @@ Feedback function signature:
             A FeedbackResult object with the result of the feedback function.
         """
 
-        if isinstance(app, app_schema.AppDefinition):
+        if isinstance(app, mod_app_schema.AppDefinition):
             app_json = mod_json_utils.jsonify(app)
         else:
             app_json = app
@@ -877,7 +877,7 @@ Feedback function signature:
 
         try:
             # Total cost, will accumulate.
-            cost = base_schema.Cost()
+            cost = mod_base_schema.Cost()
             multi_result = None
 
             # Keep track of evaluations that were skipped due to raising SkipEval.
@@ -1020,7 +1020,7 @@ Feedback function signature:
         self,
         record: mod_record_schema.Record,
         tru: "Tru",
-        app: Union[app_schema.AppDefinition, mod_serial_utils.JSON] = None,
+        app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
         record_id = record.record_id
@@ -1156,7 +1156,7 @@ Feedback function signature:
     def _construct_source_data(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -1197,7 +1197,7 @@ Feedback function signature:
     def extract_selection(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON]
         ] = None,
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,

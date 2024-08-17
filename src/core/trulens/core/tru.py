@@ -39,7 +39,7 @@ from trulens.core.database import sqlalchemy as mod_sqlalchemy
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.feedback import feedback as base_feedback
-from trulens.core.schema import app as app_schema
+from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
@@ -592,7 +592,7 @@ tru.enable_feature_flag({flag})
         self,
         record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
-        app: Optional[app_schema.AppDefinition] = None,
+        app: Optional[mod_app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
                 [
@@ -634,7 +634,7 @@ tru.enable_feature_flag({flag})
         self.db: DB
 
         if app is None:
-            app = app_schema.AppDefinition.model_validate(
+            app = mod_app_schema.AppDefinition.model_validate(
                 self.db.get_app(app_id=app_id)
             )
             if app is None:
@@ -686,7 +686,7 @@ tru.enable_feature_flag({flag})
         self,
         record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
-        app: Optional[app_schema.AppDefinition] = None,
+        app: Optional[mod_app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
         Iterable[mod_feedback_schema.FeedbackResult],
@@ -731,7 +731,7 @@ tru.enable_feature_flag({flag})
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
             )
 
-        if not (app is None or isinstance(app, app_schema.AppDefinition)):
+        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
             raise ValueError(
                 "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
             )
@@ -767,7 +767,9 @@ tru.enable_feature_flag({flag})
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def add_app(
+        self, app: mod_app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -883,7 +885,7 @@ tru.enable_feature_flag({flag})
 
     def get_app(
         self, app_id: mod_types_schema.AppID
-    ) -> serial.JSONized[app_schema.AppDefinition]:
+    ) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -908,7 +910,7 @@ tru.enable_feature_flag({flag})
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:

@@ -41,8 +41,8 @@ from trulens.core.database.utils import (
 )
 from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
-from trulens.core.schema import app as app_schema
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
@@ -370,7 +370,7 @@ class SQLAlchemyDB(DB):
                 yield json.loads(_app.app_json)
 
     def insert_app(
-        self, app: app_schema.AppDefinition
+        self, app: mod_app_schema.AppDefinition
     ) -> mod_types_schema.AppID:
         """See [DB.insert_app][trulens.core.database.base.DB.insert_app]."""
 
@@ -694,8 +694,8 @@ class SQLAlchemyDB(DB):
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
 @property
-def no_perf() -> base_schema.Perf:
-    return base_schema.Perf().min().model_dump()
+def no_perf() -> mod_base_schema.Perf:
+    return mod_base_schema.Perf().min().model_dump()
 
 
 def _extract_feedback_results(
@@ -703,7 +703,7 @@ def _extract_feedback_results(
 ) -> pd.DataFrame:
     def _extract(_result: "mod_orm.FeedbackResult"):
         app_json = json.loads(_result.record.app.app_json)
-        _type = app_schema.AppDefinition.model_validate(app_json).root_class
+        _type = mod_app_schema.AppDefinition.model_validate(app_json).root_class
 
         return (
             _result.record_id,
@@ -755,9 +755,9 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, base_schema.Perf]],
+    series: Iterable[Union[str, dict, mod_base_schema.Perf]],
 ) -> pd.Series:
-    def _extract(perf_json: Union[str, dict, base_schema.Perf]) -> int:
+    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
 
@@ -765,9 +765,9 @@ def _extract_latency(
             perf_json = json.loads(perf_json)
 
         if isinstance(perf_json, dict):
-            perf_json = base_schema.Perf.model_validate(perf_json)
+            perf_json = mod_base_schema.Perf.model_validate(perf_json)
 
-        if isinstance(perf_json, base_schema.Perf):
+        if isinstance(perf_json, mod_base_schema.Perf):
             return perf_json.latency.seconds
 
         if perf_json is None:
@@ -783,9 +783,9 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
-            cost = base_schema.Cost(**_cost_json)
+            cost = mod_base_schema.Cost(**_cost_json)
         else:
-            cost = base_schema.Cost()
+            cost = mod_base_schema.Cost()
         return cost.n_tokens, cost.cost
 
     return pd.DataFrame(

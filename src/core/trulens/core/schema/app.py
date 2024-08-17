@@ -7,7 +7,7 @@ from typing import Any, Callable, ClassVar, Optional, Sequence
 
 import dill
 import humanize
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.schema import types as mod_types_schema
@@ -117,12 +117,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             try:
                 dump = dill.dumps(kwargs["initial_app_loader"], recurse=True)
 
-                if len(dump) > base_schema.MAX_DILL_SIZE:
+                if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
                         "`initial_app_loader` dump is too big (%s) > %s bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                         humanize.naturalsize(len(dump)),
-                        humanize.naturalsize(base_schema.MAX_DILL_SIZE),
+                        humanize.naturalsize(mod_base_schema.MAX_DILL_SIZE),
                     )
                 else:
                     self.initial_app_loader_dump = serial.SerialBytes(data=dump)

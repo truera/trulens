@@ -209,7 +209,7 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as mod_select_schema
@@ -339,8 +339,8 @@ class VirtualRecord(mod_record_schema.Record):
     def __init__(
         self,
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
-        cost: Optional[base_schema.Cost] = None,
-        perf: Optional[base_schema.Perf] = None,
+        cost: Optional[mod_base_schema.Cost] = None,
+        perf: Optional[mod_base_schema.Perf] = None,
         **kwargs: Dict[str, Any],
     ):
         root_call = mod_record_schema.RecordAppCallMethod(
@@ -393,7 +393,7 @@ class VirtualRecord(mod_record_schema.Record):
                     subend_time += datetime.timedelta(microseconds=1)
 
                 if "perf" not in call:
-                    call["perf"] = base_schema.Perf(
+                    call["perf"] = mod_base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
 
@@ -408,8 +408,8 @@ class VirtualRecord(mod_record_schema.Record):
         if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
-        kwargs["cost"] = cost or base_schema.Cost()
-        kwargs["perf"] = perf or base_schema.Perf(
+        kwargs["cost"] = cost or mod_base_schema.Cost()
+        kwargs["perf"] = perf or mod_base_schema.Perf(
             start_time=start_time, end_time=end_time
         )
 

@@ -40,7 +40,7 @@ from trulens.core import trace as mod_trace
 from trulens.core import tru as mod_tru
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.feedback import feedback as base_feedback
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python as python_utils
@@ -146,8 +146,8 @@ class WithInstrumentCallbacks:
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: base_schema.Perf,
-        cost: base_schema.Cost,
+        perf: mod_base_schema.Perf,
+        cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ):
         """
@@ -512,7 +512,7 @@ class Instrument:
             start_time = None
 
             bindings = None
-            cost = base_schema.Cost()
+            cost = mod_base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -611,7 +611,7 @@ class Instrument:
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=base_schema.Perf(
+                    perf=mod_base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -643,7 +643,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=base_schema.Perf(
+                            perf=mod_base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,

@@ -2,7 +2,7 @@ import asyncio
 from typing import Optional
 
 import streamlit as st
-from trulens.core.schema import app as app_schema
+from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.tru import Tru
 from trulens.core.utils.json import jsonify_for_ui
@@ -239,7 +239,9 @@ def select_app(app_json: JSON):
     Select the app to start a session with by its JSON.
     """
 
-    tru_app = app_schema.AppDefinition.new_session(app_definition_json=app_json)
+    tru_app = mod_app_schema.AppDefinition.new_session(
+        app_definition_json=app_json
+    )
 
     st.session_state.records = [ChatRecord(app_json=app_json, app=tru_app)]
 
@@ -302,7 +304,7 @@ if "records" not in st.session_state:
 
     st.title("App Runner")
 
-    loadable_apps = app_schema.AppDefinition.get_loadable_apps()
+    loadable_apps = mod_app_schema.AppDefinition.get_loadable_apps()
 
     st.divider()
 

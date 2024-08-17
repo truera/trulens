@@ -12,8 +12,8 @@ import uuid
 
 import pydantic
 from tqdm import tqdm
-from trulens.core.schema import app as app_schema
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -330,9 +330,9 @@ def _serialization_asserts(db) -> None:
                         if col_name == "record_json":
                             mod_record_schema.Record.model_validate(test_json)
                         elif col_name == "cost_json":
-                            base_schema.Cost.model_validate(test_json)
+                            mod_base_schema.Cost.model_validate(test_json)
                         elif col_name == "perf_json":
-                            base_schema.Perf.model_validate(test_json)
+                            mod_base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json["calls"]:
                                 mod_feedback_schema.FeedbackCall.model_validate(
@@ -343,7 +343,9 @@ def _serialization_asserts(db) -> None:
                                 test_json
                             )
                         elif col_name == "app_json":
-                            app_schema.AppDefinition.model_validate(test_json)
+                            mod_app_schema.AppDefinition.model_validate(
+                                test_json
+                            )
                         else:
                             # If this happens, trulens needs to add a migration
 

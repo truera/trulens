@@ -8,7 +8,7 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
@@ -65,7 +65,7 @@ class RecordAppCall(serial.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[base_schema.Perf] = None
+    perf: Optional[mod_base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -105,10 +105,10 @@ class Record(serial.SerialModel, Hashable):
     app_id: mod_types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[base_schema.Cost] = None
+    cost: Optional[mod_base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[base_schema.Perf] = None
+    perf: Optional[mod_base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(

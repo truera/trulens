@@ -37,8 +37,8 @@ from trulens.core import tru as mod_tru
 from trulens.core.database import base as mod_db
 from trulens.core.feedback import feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
-from trulens.core.schema import app as app_schema
-from trulens.core.schema import base as base_schema
+from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as select_schema
@@ -317,7 +317,7 @@ def instrumented_component_views(
 
 
 class App(
-    app_schema.AppDefinition,
+    mod_app_schema.AppDefinition,
     mod_instruments.WithInstrumentCallbacks,
     Hashable,
 ):
@@ -1104,8 +1104,8 @@ class App(
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: base_schema.Perf,
-        cost: base_schema.Cost,
+        perf: mod_base_schema.Perf,
+        cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
@@ -1505,8 +1505,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def dummy_record(
         self,
-        cost: base_schema.Cost = base_schema.Cost(),
-        perf: base_schema.Perf = base_schema.Perf.now(),
+        cost: mod_base_schema.Cost = mod_base_schema.Cost(),
+        perf: mod_base_schema.Perf = mod_base_schema.Perf.now(),
         ts: datetime.datetime = datetime.datetime.now(),
         main_input: str = "main_input are strings.",
         main_output: str = "main_output are strings.",
