@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI
 import streamlit as st
 from trulens.core import Feedback
-from trulens.core import Tru
+from trulens.core.tru import Tru
 import trulens.dashboard.streamlit as trulens_st
 from trulens.instrument.langchain import TruChain
 from trulens.providers.openai import OpenAI as fOpenAI

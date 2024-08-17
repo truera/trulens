@@ -22,11 +22,10 @@ import torch
 from tqdm.auto import tqdm
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import Provider
 from trulens.core.feedback.dummy.endpoint import DummyEndpoint
+from trulens.core.feedback.endpoint import Endpoint
+from trulens.core.feedback.provider import Provider
 from trulens.core.utils.python import Future
-from trulens.core.utils.python import locals_except
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import prompts
 from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
@@ -748,25 +747,16 @@ class HuggingfaceLocal(HuggingfaceBase):
         )
 
 
-class Dummy(Huggingface):
-    """A version of a Huggingface provider that uses a dummy endpoint and thus
-    produces fake results without making any networked calls to huggingface."""
+class DummyHuggingface(Huggingface):
+    """Fake request.post-based provider.
+
+    Does not make any networked requests but pretends to.
+    """
 
     def __init__(
-        self,
-        name: str = "dummyhugs",
-        error_prob: float = 1 / 100,
-        loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
-        overloaded_prob: float = 1 / 100,
-        alloc: int = 1024 * 1024,
-        rpm: float = 600,
-        delay: float = 1.0,
-        **kwargs,
+        self, endpoint_args: Optional[Dict[str, Any]] = None, **kwargs
     ):
-        kwargs["name"] = name or "dummyhugs"
-        kwargs["endpoint"] = DummyEndpoint(
-            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
-        )
-
+        if endpoint_args is None:
+            endpoint_args = {}
+        kwargs["endpoint"] = DummyEndpoint(**endpoint_args)
         super().__init__(**kwargs)

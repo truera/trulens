@@ -25,9 +25,13 @@ from typing import (
 
 from pydantic import Field
 import requests
-from trulens.core.schema.base import Cost
+from trulens.core import preview as mod_preview
+from trulens.core import trace as mod_trace
+from trulens.core.schema import base as base_schema
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import wrap as wrap_utils
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import Thunk
@@ -57,16 +61,74 @@ DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
 
-class EndpointCallback(SerialModel):
+class WrapperEndpointCallback(mod_trace.TracingCallbacks[T]):
+    """EXPERIMENTAL: otel-tracing
+
+    Extension to TracingCallbacks that tracks costs.
     """
-    Callbacks to be invoked after various API requests and track various metrics
+
+    # overriding CallableCallbacks
+    def __init__(self, endpoint: Endpoint, **kwargs):
+        super().__init__(**kwargs, span_type=mod_trace.LiveSpanCallWithCost)
+
+        self.endpoint: Endpoint = endpoint
+        self.span.endpoint = endpoint
+
+        self.cost: base_schema.Cost = self.span.cost
+        self.cost.n_requests += 1
+
+    # overriding CallableCallbacks
+    def on_callable_return(self, ret: T, **kwargs) -> T:
+        """Called after a request returns."""
+
+        self.cost.n_responses += 1
+
+        ret = super().on_callable_return(ret=ret, **kwargs)
+        # Fills in some general attributes from kwargs before the next callback
+        # is called.
+
+        self.on_endpoint_response(response=ret)
+
+        return ret
+
+    # our optional
+    def on_endpoint_response(self, response: Any) -> None:
+        """Called after each non-error response."""
+
+        logger.warning("No on_response method defined for %s.", self)
+
+    # our optional
+    def on_endpoint_generation(self, response: Any) -> None:
+        """Called after each completion request."""
+
+        self.cost.n_successful_requests += 1
+        self.cost.n_generations += 1
+
+    # our optional
+    def on_endpoint_generation_chunk(self, response: Any) -> None:
+        """Called after receiving a chunk from a completion request."""
+
+        self.cost.n_stream_chunks += 1
+
+    # our optional
+    def on_endpoint_classification(self, response: Any) -> None:
+        """Called after each classification response."""
+
+        self.cost.n_successful_requests += 1
+        self.cost.n_classifications += 1
+
+
+class EndpointCallback(SerialModel):
+    """Callbacks to be invoked after various API requests and track various metrics
     like token usage.
     """
+
+    # TODEP after EXPERIMENTAL: otel-tracing
 
     endpoint: Endpoint = Field(exclude=True)
     """The endpoint owning this callback."""
 
-    cost: Cost = Field(default_factory=Cost)
+    cost: base_schema.Cost = Field(default_factory=base_schema.Cost)
     """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
@@ -103,11 +165,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         for usage.
         """
 
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
+
         arg_flag: str
         module_name: str
         class_name: str
 
-    # TODO: factor this out
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag="with_openai",
@@ -134,7 +197,14 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             module_name="trulens.providers.cortex.endpoint",
             class_name="CortexEndpoint",
         ),
+        EndpointSetup(
+            arg_flag="with_dummy",
+            module_name="trulens.core.feedback.dummy.endpoint",
+            class_name="DummyEndpoint",
+        ),
     ]
+    """List of supported endpoints for tracking costs."""
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
 
     instrumented_methods: ClassVar[
         Dict[Any, List[Tuple[Callable, Callable, Type[Endpoint]]]]
@@ -183,9 +253,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     hence this global callback will track all requests for the named api even if
     you try to create multiple endpoints (with the same name).
     """
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
 
     callback_class: Type[EndpointCallback] = Field(exclude=True)
     """Callback class to use for usage tracking."""
+
+    wrapper_callback_class: Type[WrapperEndpointCallback] = Field(exclude=True)
+    """EXPERIMENTAL: otel-tracing
+
+    Callback class to use for usage tracking.
+    """
 
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
@@ -208,6 +285,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         name: str,
         rpm: Optional[float] = None,
         callback_class: Optional[Any] = None,
+        wrapper_callback_class: Type[WrapperEndpointCallback] = None,
         **kwargs,
     ):
         if safe_hasattr(self, "rpm"):
@@ -218,17 +296,16 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # Some old databases do not have this serialized so lets set it to
             # the parent of callbacks and hope it never gets used.
             callback_class = EndpointCallback
-            # raise ValueError(
-            #    "Endpoint has to be extended by class that can set `callback_class`."
-            # )
 
         if rpm is None:
             rpm = DEFAULT_RPM
 
         kwargs["name"] = name
         kwargs["callback_class"] = callback_class
+        kwargs["wrapper_callback_class"] = wrapper_callback_class
         kwargs["global_callback"] = callback_class(endpoint=self)
         kwargs["callback_name"] = f"callback_{name}"
+
         kwargs["pace"] = mod_pace.Pace(
             seconds_per_period=60.0,  # 1 minute
             marks_per_second=rpm / 60.0,
@@ -472,12 +549,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        """
-        Track costs of all of the apis we can currently track, over the
+        """Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
+        # TODEP: remove after EXPERIMENTAL: otel-tracing.
 
         endpoints = []
 
@@ -518,12 +596,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
-    ) -> Tuple[T, Cost]:
-        """
-        Track costs of all of the apis we can currently track, over the
+    ) -> Tuple[T, base_schema.Cost]:
+        """Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
+        # TODEP: remove after EXPERIMENTAL: otel-tracing.
 
         result, cbs = Endpoint.track_all_costs(
             __func,
@@ -533,12 +612,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
             with_cortex=with_cortex,
+            with_dummy=with_dummy,
             **kwargs,
         )
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            costs = Cost()
+            costs = base_schema.Cost()
         else:
             costs = sum(cb.cost for cb in cbs)
 
@@ -551,10 +631,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        """
-        Root of all cost tracking methods. Runs the given `thunk`, tracking
+        """Root of all cost tracking methods. Runs the given `thunk`, tracking
         costs using each of the provided endpoints' callbacks.
         """
+        # TODEP: remove after EXPERIMENTAL: otel-tracing.
+
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[
             Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]
@@ -614,11 +695,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         *args,
         **kwargs,
     ) -> Tuple[T, EndpointCallback]:
-        """
-        Tally only the usage performed within the execution of the given thunk.
+        """Tally only the usage performed within the execution of the given thunk.
+
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
+        # TODEP: remove after EXPERIMENTAL: otel-tracing.
 
         result, callbacks = Endpoint._track_costs(
             __func, *args, with_endpoints=[self], **kwargs
@@ -637,9 +719,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         response: Any,
         callback: Optional[EndpointCallback],
     ) -> None:
-        """
-        This gets called with the results of every instrumented method. This
-        should be implemented by each subclass.
+        """This gets called with the results of every instrumented method.
+
+        This should be implemented by each subclass.
 
         Args:
             func: the wrapped method.
@@ -652,12 +734,31 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 `track_cost` if the wrapped method was called and returned within an
                  invocation of `track_cost`.
         """
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
+
         raise NotImplementedError(
             "Subclasses of Endpoint must implement handle_wrapped_call."
         )
 
-    def wrap_function(self, func):
+    def _otel_wrap_function(self, func: Callable):
+        """EXPERIMENTAL: otel-tracing
+
+        Create a wrapper of the given function to perform cost tracking.
+
+        Args:
+            func: The function to wrap.
+        """
+
+        return wrap_utils.wrap_callable(
+            func=func,
+            func_name=python_utils.callable_name(func),
+            callback_class=self.wrapper_callback_class,
+            endpoint=self,
+        )
+
+    def _record_wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
+        # TODEP: remove after EXPERIMENTAL: otel-tracing.
 
         if safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
@@ -767,6 +868,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 
         return tru_wrapper
+
+    wrap_function = mod_preview.preview_method(
+        mod_preview.Feature.OTEL_TRACING,
+        enabled=_otel_wrap_function,
+        disabled=_record_wrap_function,
+    )
 
 
 EndpointCallback.model_rebuild()

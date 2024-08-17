@@ -11,7 +11,6 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
 from trulens.core.app.base import LLM
 from trulens.core.app.base import Agent
 from trulens.core.app.base import ComponentView
@@ -20,6 +19,7 @@ from trulens.core.app.base import Prompt
 from trulens.core.app.base import Tool
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.core.schema.select import Select
+from trulens.core.tru import Tru
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import Lens
 from trulens.dashboard.components.record_viewer import record_viewer

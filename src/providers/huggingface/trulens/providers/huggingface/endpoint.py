@@ -3,8 +3,8 @@ import json
 from typing import Callable, Optional
 
 import requests
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback.endpoint import Endpoint
+from trulens.core.feedback.endpoint import EndpointCallback
 from trulens.core.utils.keys import _check_key
 from trulens.core.utils.keys import get_huggingface_headers
 from trulens.core.utils.python import safe_hasattr

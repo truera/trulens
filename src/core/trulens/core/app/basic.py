@@ -74,7 +74,7 @@ class TruBasicApp(App):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        from trulens.core import TruBasicApp
+        from trulens.core.tru import TruBasicApp
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruBasicApp(custom_application,
             app_id="Custom Application v1",

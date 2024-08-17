@@ -17,9 +17,11 @@ from time import sleep
 from typing import (
     Any,
     Callable,
+    ClassVar,
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -28,12 +30,15 @@ from typing import (
 
 import humanize
 from opentelemetry import sdk as otel_sdk
+from opentelemetry.sdk.trace import export as otel_export_sdk
 import pandas
+import pydantic
 from tqdm.auto import tqdm
-from trulens.core import feedback
+from trulens.core import preview as mod_preview
 from trulens.core.database import sqlalchemy as mod_sqlalchemy
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
+from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -63,7 +68,7 @@ def humanize_seconds(seconds: float):
     return humanize.naturaldelta(timedelta(seconds=seconds))
 
 
-class Tru(python.SingletonPerName):
+class Tru(pydantic.BaseModel, python.SingletonPerName):
     """Tru is the main class that provides an entry points to trulens.
 
     Tru lets you:
@@ -126,6 +131,8 @@ class Tru(python.SingletonPerName):
         name: Name of the app.
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
 
@@ -153,15 +160,17 @@ class Tru(python.SingletonPerName):
     Will be an opqaue wrapper if it is not ready to use due to migration requirements.
     """
 
-    _dashboard_urls: Optional[str] = None
+    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
 
-    _evaluator_proc: Optional[Union[Process, Thread]] = None
+    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
+        default=None
+    )
     """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
 
         Is set to `None` if evaluator is not running.
     """
 
-    _dashboard_proc: Optional[Process] = None
+    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
     """[Process][multiprocessing.Process] executing the dashboard streamlit app.
 
     Is set to `None` if not executing.
@@ -170,20 +179,142 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    batch_record_queue = queue.Queue()
+    batch_record_queue: queue.Queue = queue.Queue()
+    # TODO: make private
+    """Queue for records to be inserted in the next batch if batching mode is used."""
 
-    batch_thread = None
+    batch_thread: Optional[threading.Thread] = None
+    # TODO: make private
+    """Thread for batch insertion of records if batching mode is used."""
 
-    _experimental_otel_exporter: Optional[
-        otel_sdk.trace.export.SpanExporter
-    ] = None
+    _global_feature_flags: ClassVar[Dict[mod_preview.Feature, bool]] = {}
+    """Global feature flags for all instances of Tru.
+
+    These flags are set by the user and are used to enable or disable
+    experimental features."""
+
+    _feature_flags: Dict[mod_preview.Feature, bool] = pydantic.PrivateAttr(
+        default_factory=dict
+    )
+    """Feature flags for this instance of Tru."""
+
+    _experimental_otel_exporter: Optional[otel_export_sdk.SpanExporter] = (
+        pydantic.PrivateAttr(None)
+    )
     """OpenTelemetry SpanExporter to send spans to.
 
-    Only works if the _experimental_use_tracing flag is set.
+    Only works if the FeatureFlag.OTEL_TRACING flag is set.
     """
 
-    _experimental_use_tracing: bool = False
-    """Experimental otel-like tracing enable flag."""
+    @classmethod
+    def enable_feature(cls, flag: mod_preview.Feature):
+        """Enable the given feature flag for all Tru instances if called with
+        Tru class or for this instance if called with an instance of Tru."""
+
+        flag = mod_preview.Feature(flag)
+
+        if isinstance(cls, Tru):
+            cls._feature_flags[flag] = True
+            print(
+                f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for {cls.db} workspace."
+            )
+
+        else:
+            cls._global_feature_flags[flag] = True
+            print(
+                f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for all workspaces."
+            )
+
+    @classmethod
+    def disable_feature(cls, flag: mod_preview.Feature):
+        """Disable the given feature flag for all Tru instances if called with
+        Tru class or for this instance if called with an instance of Tru."""
+
+        flag = mod_preview.Feature(flag)
+
+        if isinstance(cls, Tru):
+            cls._feature_flags[flag] = False
+        else:
+            cls._global_feature_flags[flag] = False
+
+    @classmethod
+    def feature(cls, flag: Union[str, mod_preview.Feature]):
+        """Determine the value of the given feature flag by checking both global
+        and instance flags.
+
+        Instance value takes precedence over the global value.
+        """
+
+        flag = mod_preview.Feature(flag)
+
+        if isinstance(cls, Tru):
+            # cls is actually self, called on instance
+            if flag in cls._feature_flags:
+                return cls._feature_flags[flag]
+
+        if flag in Tru._global_feature_flags:
+            return Tru._global_feature_flags[flag]
+
+        return False
+
+    def set_features(
+        self,
+        flags: Union[
+            Iterable[Union[str, mod_preview.Feature]],
+            Mapping[Union[str, mod_preview.Feature], bool],
+        ],
+    ):
+        """Set feature flags for this instance of Tru."""
+
+        if isinstance(flags, dict):
+            for flag, val in flags.items():
+                flag = mod_preview.Feature(flag)
+                self._feature_flags[flag] = val
+                if val:
+                    # Make sure they user knows they are using a preview feature
+                    # by printing this out:
+                    print(
+                        f"{text_utils.UNICODE_CHECK} Preview Feature {flag} enabled."
+                    )
+        else:
+            for flag in flags:
+                flag = mod_preview.Feature(flag)
+                self._feature_flags[flag] = True
+                # Notify user:
+                print(
+                    f"{text_utils.UNICODE_CHECK} Preview Feature {flag} enabled."
+                )
+
+    def _assert_feature(
+        self, flag: mod_preview.Feature, purpose: Optional[str] = None
+    ):
+        """Raise a ValueError if the given feature flag is not enabled.
+
+        Gives instructions on how to enable the feature flag if error gets
+        raised."""
+
+        if purpose is None:
+            purpose = "."
+        else:
+            purpose = f" for {purpose}."
+
+        if not self.feature(flag):
+            raise ValueError(
+                f"""Feature flag {flag} is not enabled{purpose} You can enable it in three ways:
+```python
+from trulens.core.preview import Feature
+
+# Enable for all Tru instances before you make this one:
+Tru.enable_feature_flag({flag})
+
+# Enable for this instance when creating it:
+tru = Tru(feature_flags=[{flag}]
+
+# Enable for this instance after it has been crated (for features that allows this):
+tru.enable_feature_flag({flag})
+```
+"""
+            )
 
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
@@ -199,9 +330,14 @@ class Tru(python.SingletonPerName):
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
         name: Optional[str] = None,
-        _experimental_use_tracing: Optional[bool] = False,
+        feature_flags: Optional[
+            Union[
+                Iterable[mod_preview.Feature],
+                Mapping[mod_preview.Feature, bool],
+            ]
+        ] = None,
         _experimental_otel_exporter: Optional[
-            otel_sdk.trace.export.SpanExporter
+            otel_export_sdk.SpanExporter
         ] = None,
     ):
         """
@@ -248,7 +384,7 @@ class Tru(python.SingletonPerName):
             }
         )
 
-        if python.safe_hasattr(self, "db"):
+        if hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             for v in database_args.values():
@@ -261,27 +397,32 @@ class Tru(python.SingletonPerName):
 
             return
 
-        if _experimental_otel_exporter is not None:
-            assert isinstance(
-                _experimental_otel_exporter, otel_sdk.trace.export.SpanExporter
-            ), "otel_exporter must be an OpenTelemetry SpanExporter."
-            print(
-                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {_experimental_otel_exporter.__class__.__name__}"
-            )
-            _experimental_use_tracing = True
-
-        self._experimental_otel_exporter = _experimental_otel_exporter
-        self._experimental_use_tracing = _experimental_use_tracing or False
-
         if database is not None:
             if not isinstance(database, DB):
                 raise ValueError(
                     "`database` must be a `trulens.core.database.base.DB` instance."
                 )
 
-            self.db = database
+            db = database
         else:
-            self.db = mod_sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+            db = mod_sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+
+        super().__init__(db=db)  # pydantic.BaseModel.__init__
+
+        # Set any feature flags explicitly provided to Tru.
+        if feature_flags is not None:
+            self.set_features(feature_flags)
+
+        if _experimental_otel_exporter is not None:
+            self._assert_feature(mod_preview.Feature.OTEL_TRACING)
+
+            assert isinstance(
+                _experimental_otel_exporter, otel_sdk.trace.export.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+            print(
+                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {_experimental_otel_exporter.__class__.__name__}"
+            )
+        self._experimental_otel_exporter = _experimental_otel_exporter
 
         if database_check_revision:
             try:
@@ -450,7 +591,7 @@ class Tru(python.SingletonPerName):
     def _submit_feedback_functions(
         self,
         record: record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
+        feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
@@ -463,7 +604,9 @@ class Tru(python.SingletonPerName):
                 ]
             ]
         ] = None,
-    ) -> List[Tuple[feedback.Feedback, Future[feedback_schema.FeedbackResult]]]:
+    ) -> List[
+        Tuple[base_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
+    ]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -478,7 +621,7 @@ class Tru(python.SingletonPerName):
 
         Returns:
 
-            List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]
+            List[Tuple[base_feedback.Feedback, Future[schema.FeedbackResult]]]
 
             Produces a list of tuples where the first item in each tuple is the
             feedback function and the second is the future of the feedback result.
@@ -540,7 +683,7 @@ class Tru(python.SingletonPerName):
     def run_feedback_functions(
         self,
         record: record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
+        feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
@@ -579,7 +722,8 @@ class Tru(python.SingletonPerName):
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
+            isinstance(ffunc, base_feedback.Feedback)
+            for ffunc in feedback_functions
         ):
             raise ValueError(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
@@ -594,7 +738,7 @@ class Tru(python.SingletonPerName):
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[feedback_schema.FeedbackResult], feedback.Feedback
+            Future[feedback_schema.FeedbackResult], base_feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in self._submit_feedback_functions(
@@ -968,7 +1112,7 @@ class Tru(python.SingletonPerName):
                             pandas.Series,
                             Future[feedback_schema.FeedbackResult],
                         ]
-                    ] = feedback.Feedback.evaluate_deferred(
+                    ] = base_feedback.Feedback.evaluate_deferred(
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,

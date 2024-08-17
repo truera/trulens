@@ -237,7 +237,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         rets = []
 
-        from trulens.core import Tru
+        from trulens.core.tru import Tru
 
         tru = Tru()
 

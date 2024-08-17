@@ -5,8 +5,8 @@ import math
 from millify import millify
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from trulens.core import Tru
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.tru import Tru
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata
@@ -93,7 +93,7 @@ def leaderboard():
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision = 2)}",
+            f"${millify(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",

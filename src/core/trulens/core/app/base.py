@@ -31,10 +31,11 @@ from typing import (
 )
 
 import pydantic
+from trulens.core import preview as mod_preview
 from trulens.core import trace as mod_trace
 from trulens.core import tru as mod_tru
 from trulens.core.database import base as mod_db
-import trulens.core.feedback as mod_feedback
+from trulens.core.feedback import feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
@@ -934,7 +935,7 @@ class App(
                 # print(e_span.name, "->", e_span.__class__.__name__)
 
             print(
-                f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {self.tru.otel_exporter.__class__.__name__}."
+                f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {python_utils.class_name(self.tru._experimental_otel_exporter)}."
             )
             self.tru._experimental_otel_exporter.export(to_export)
 
@@ -1003,36 +1004,6 @@ class App(
         )
 
     # For use as a context manager.
-    def __enter__(self):
-        """Dispatch to new otel or legacy enter."""
-
-        if self.tru._experimental_use_tracing:
-            # EXPERIMENTAL: OTEL
-            return self._otel__enter__()
-        else:
-            return self._record__enter__()
-
-    # For use as a context manager.
-    def __exit__(self, *args, **kwargs):
-        """Dispatch to new otel or legacy exit."""
-
-        if self.tru._experimental_use_tracing:
-            # EXPERIMENTAL: OTEL
-            return self._otel__exit__(*args, **kwargs)
-        else:
-            return self._record__exit__(*args, **kwargs)
-
-    # For use as a context manager.
-    def _record_exit(self, exc_type, exc_value, exc_tb):
-        ctx = self.recording_contexts.get()
-        self.recording_contexts.reset(ctx.token)
-
-        if exc_type is not None:
-            raise exc_value
-
-        return
-
-    # For use as a context manager.
     def _record__enter__(self):
         ctx = mod_trace.RecordingContext(app=self)
 
@@ -1040,6 +1011,39 @@ class App(
         ctx.token = token
 
         return ctx
+
+    # For use as a context manager.
+    def _otel__enter__(self):
+        # EXPERIMENTAL otel replacement to recording context manager.
+
+        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+
+        recording_span_ctx = tracer.recording()
+        recording_span: mod_trace.PhantomSpanRecordingContext = (
+            recording_span_ctx.__enter__()
+        )
+        recording: mod_trace.RecordingContext = mod_trace.RecordingContext(
+            app=self,
+            tracer=tracer,
+            span=recording_span,
+            span_ctx=recording_span_ctx,
+        )
+        recording_span.recording = recording
+        recording_span.start_timestamp = time.time_ns()
+
+        # recording.ctx = ctx
+
+        token = self.recording_contexts.set(recording)
+        recording.token = token
+
+        return recording
+
+    # For use as a context manager.
+    __enter__ = mod_preview.preview_method(
+        mod_preview.Feature.OTEL_TRACING,
+        enabled=_otel__enter__,
+        disabled=_record__enter__,
+    )
 
     # For use as a context manager.
     def _record__exit__(self, exc_type, exc_value, exc_tb):
@@ -1050,6 +1054,27 @@ class App(
             raise exc_value
 
         return
+
+    # For use as a context manager.
+    def _otel__exit__(self, exc_type, exc_value, exc_tb):
+        # EXPERIMENTAL otel replacement to recording context manager.
+
+        recording: mod_trace.RecordingContext = self.recording_contexts.get()
+
+        assert recording is not None, "Not in a tracing context."
+        assert recording.tracer is not None, "Not in a tracing context."
+
+        recording.span.end_timestamp = time.time_ns()
+
+        self.recording_contexts.reset(recording.token)
+        return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
+
+    # For use as a context manager.
+    __exit__ = mod_preview.preview_method(
+        mod_preview.Feature.OTEL_TRACING,
+        enabled=_otel__exit__,
+        disabled=_record__exit__,
+    )
 
     # WithInstrumentCallbacks requirement
     def on_new_record(self, func) -> Iterable[mod_trace.RecordingContext]:
@@ -1335,57 +1360,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         self.tru.add_feedback(res)
 
-    # For use as a context manager.
-    def _otel__enter__(self):
-        # EXPERIMENTAL otel replacement to recording context manager.
-
-        tracer: mod_trace.Tracer = mod_trace.get_tracer()
-
-        recording_span_ctx = tracer.recording()
-        recording_span: mod_trace.PhantomSpanRecordingContext = (
-            recording_span_ctx.__enter__()
-        )
-        recording: mod_trace.RecordingContext = mod_trace.RecordingContext(
-            app=self,
-            tracer=tracer,
-            span=recording_span,
-            span_ctx=recording_span_ctx,
-        )
-        recording_span.recording = recording
-        recording_span.start_timestamp = time.time_ns()
-
-        # recording.ctx = ctx
-
-        token = self.recording_contexts.set(recording)
-        recording.token = token
-
-        return recording
-
-    # For use as a context manager.
-    def _otel__exit__(self, exc_type, exc_value, exc_tb):
-        # EXPERIMENTAL otel replacement to recording context manager.
-
-        recording: mod_trace.RecordingContext = self.recording_contexts.get()
-
-        assert recording is not None, "Not in a tracing context."
-        assert recording.tracer is not None, "Not in a tracing context."
-
-        recording.span.end_timestamp = time.time_ns()
-
-        self.recording_contexts.reset(recording.token)
-        return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
-
     # For use as an async context manager.
     async def __aenter__(self):
         # EXPERIMENTAL: OTEL
 
-        if not self.tru._experimental_use_tracing:
-            raise RuntimeError(
-                "Async context manager is not available in legacy tracing."
-            )
+        self.tru._assert_feature(
+            mod_preview.Feature.OTEL_TRACING,
+            purpose="async recording context managers",
+        )
 
         tracer: mod_trace.Tracer = mod_trace.get_tracer()
-        # recording = tracer.__enter__()
 
         recording_span_ctx = await tracer.arecording()
         recording_span: mod_trace.PhantomSpanRecordingContext = (
@@ -1411,10 +1395,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         # EXPERIMENTAL: OTEL
 
-        if not self.tru._experimental_use_tracing:
-            raise RuntimeError(
-                "Async context manager is not available in legacy tracing."
-            )
+        self.tru._assert_feature(
+            mod_preview.Feature.OTEL_TRACING,
+            purpose="async recording context managers",
+        )
 
         recording: mod_trace.RecordingContext = self.recording_contexts.get()
 
@@ -1438,10 +1422,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             ]
         ]
     ]:
-        """
-        Write out record-related info to database if set and schedule feedback
-        functions to be evaluated. If feedback_mode is provided, will use that
-        mode instead of the one provided to constructor.
+        """Write out record-related info to database if set and schedule
+        feedback functions to be evaluated.
+
+        If feedback_mode is provided, will use that mode instead of the one
+        provided to constructor.
         """
 
         if feedback_mode is None:

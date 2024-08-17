@@ -147,7 +147,7 @@ apps.
 Example: "Integrating Feedback Functions into TruVirtual"
 
     ```python
-    from trulens.core import TruVirtual
+    from trulens.core.tru import TruVirtual
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(

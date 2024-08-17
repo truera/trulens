@@ -11,7 +11,7 @@ module][trulens.core.database.migrations.data].
 ## Upgrading to the latest schema revision
 
 ```python
-from trulens.core import Tru
+from trulens.core.tru import Tru
 
 tru = Tru(
    database_url="<sqlalchemy_url>",

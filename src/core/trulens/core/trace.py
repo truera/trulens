@@ -37,7 +37,6 @@ from opentelemetry.trace import status as trace_status
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pydantic
-from trulens.core import instruments as mod_instruments
 from trulens.core.otel import flatten_lensed_attributes
 
 # import trulens_eval.app as mod_app # circular import issues
@@ -51,6 +50,12 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import wrap as wrap_utils
 
 logger = logging.getLogger(__name__)
+
+INSTRUMENT: str = "__tru_instrumented"
+"""Attribute name to be used to flag instrumented objects/methods/others."""
+
+APPS: str = "__tru_apps"
+"""Attribute name for storing apps that expect to be notified of calls."""
 
 
 class Context(pydantic.BaseModel):
@@ -854,13 +859,18 @@ class RecordingContext:
         span: Optional[PhantomSpanRecordingContext] = None,
         span_ctx: Optional[Context] = None,
     ):
-        self.records: List[record_schema.Record] = []
-        """Completed records.
+        self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
 
-        !!! NOTE
-            Since migration to span-based tracing, these records are produced by
-            converting spans.
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
         """
+        # TODEP: To deprecated after migration to span-based tracing.
+
+        self.records: List[record_schema.Record] = []
+        """Completed records."""
 
         self.lock: Lock = Lock()
         """Lock blocking access to `records` when adding calls or
@@ -876,20 +886,26 @@ class RecordingContext:
         """Metadata to attach to all records produced in this context."""
 
         self.tracer: Optional[Tracer] = tracer
-        """OTEL-like tracer for recording.
+        """EXPERIMENTAL: otel-tracing
 
-        !!! Warning
-            This is transitional alternate recording mechanism to aid in the
-            otel-compatibility work.
+        OTEL-like tracer for recording.
         """
 
         self.span: Optional[PhantomSpanRecordingContext] = span
+        """EXPERIMENTAL: otel-tracing
+
+        Span that represents a recording context (the with block)."""
 
         self.span_ctx = span_ctx
+        """EXPERIMENTAL: otel-tracing
+
+        The context manager for the above span.
+        """
 
     @property
     def spans(self) -> Dict[Context, Span]:
         """Get the spans of the tracer in this context."""
+        # EXPERIMENTAL: otel-tracing.
 
         if self.tracer is None:
             return {}
@@ -900,9 +916,8 @@ class RecordingContext:
         return iter(self.records)
 
     def get(self) -> record_schema.Record:
-        """
-        Get the single record only if there was exactly one. Otherwise throw an error.
-        """
+        """Get the single record only if there was exactly one or throw
+        an error otherwise."""
 
         if len(self.records) == 0:
             raise RuntimeError("Recording context did not record any records.")
@@ -929,6 +944,15 @@ class RecordingContext:
         return hash(self) == hash(other)
         # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
 
+    def add_call(self, call: record_schema.RecordAppCall):
+        """Add the given call to the currently tracked call list."""
+        # TODEP: To deprecated after migration to span-based tracing.
+
+        with self.lock:
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
+
     def finish_record(
         self,
         calls_to_record: Callable[
@@ -941,10 +965,9 @@ class RecordingContext:
         ],
         existing_record: Optional[record_schema.Record] = None,
     ):
-        """
-        Run the given function to build a record from the tracked calls and any
-        pre-specified metadata.
-        """
+        """Run the given function to build a record from the tracked calls and any
+        pre-specified metadata."""
+        # TODEP: To deprecated after migration to span-based tracing.
 
         with self.lock:
             record = calls_to_record(
@@ -1041,15 +1064,11 @@ class AppTracingCallbacks(TracingCallbacks[T]):
         app: WithInstrumentCallbacks,
         **kwargs: Dict[str, Any],
     ):
-        if not python_utils.safe_hasattr(
-            wrapper, mod_instruments.Instrument.APPS
-        ):
+        if not python_utils.safe_hasattr(wrapper, APPS):
             apps = set()
-            setattr(wrapper, mod_instruments.Instrument.APPS, apps)
+            setattr(wrapper, APPS, apps)
         else:
-            apps = python_utils.safe_getattr(
-                wrapper, mod_instruments.Instrument.APPS
-            )
+            apps = python_utils.safe_getattr(wrapper, APPS)
 
         apps.add(app)
 
@@ -1064,6 +1083,4 @@ class AppTracingCallbacks(TracingCallbacks[T]):
         super().__init__(span_type=span_type, **kwargs)
 
         self.app = app
-        self.apps = python_utils.safe_getattr(
-            self.wrapper, mod_instruments.Instrument.APPS
-        )
+        self.apps = python_utils.safe_getattr(self.wrapper, APPS)

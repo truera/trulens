@@ -7,10 +7,10 @@ from millify import millify
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
+from trulens.core.tru import Tru
 from trulens.core.utils.json import json_str_of_obj
 from trulens.dashboard import display
 from trulens.dashboard.components.record_viewer import record_viewer

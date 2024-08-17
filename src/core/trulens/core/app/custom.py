@@ -196,7 +196,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-from trulens.core.app import App
+from trulens.core.app import base as base_app
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
 from trulens.core.utils.pyschema import Class
@@ -216,7 +216,7 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(App):
+class TruCustomApp(base_app.App):
     """
     This recorder is the most flexible option for instrumenting an application,
     and can be used to instrument any custom python class.
@@ -309,7 +309,7 @@ class TruCustomApp(App):
     Example: "Using the `TruCustomApp` recorder"
 
         ```python
-        from trulens.core import TruCustomApp
+        from trulens.core.tru import TruCustomApp
 
         tru_recorder = TruCustomApp(custom_app,
             app_id="Custom Application v1",

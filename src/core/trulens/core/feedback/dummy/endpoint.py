@@ -18,10 +18,9 @@ import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
-from trulens.core.feedback.endpoint import DEFAULT_RPM
-from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.core.feedback.endpoint import Endpoint
-from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core import trace as mod_trace
+from trulens.core.feedback import endpoint as base_endpoint
+from trulens.core.utils import text as text_utils
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import JSON
@@ -328,7 +327,38 @@ class DummyAPICreator:
         )
 
 
-class DummyEndpointCallback(EndpointCallback):
+class WrapperDummyEndpointCallback(base_endpoint.WrapperEndpointCallback):
+    """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
+
+    def on_callable_return(self, ret: Any, **kwargs):
+        ret = super().on_callable_return(ret=ret, **kwargs)
+
+        if "usage" in ret:
+            self.cost.n_successful_requests += 1
+
+            # fake completion
+            usage = ret["usage"]
+            self.cost.cost += usage.get("cost", 0.0)
+            self.cost.n_tokens += usage.get("n_tokens", 0)
+            self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
+            self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
+
+        elif "scores" in ret:
+            self.cost.n_successful_requests += 1
+
+            # fake classification
+            self.cost.n_classes += len(ret.get("scores", []))
+
+        else:
+            logger.warning("Could not determine cost from DummyAPI call.")
+
+        return ret
+
+    # def on_iteration(self):
+    #    self.cost.n_stream_chunks += 1
+
+
+class DummyEndpointCallback(base_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def handle_classification(self, response: Sequence) -> None:
@@ -350,7 +380,7 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
 
-class DummyEndpoint(Endpoint):
+class DummyEndpoint(base_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -360,12 +390,14 @@ class DummyEndpoint(Endpoint):
     """Fake API to use for making fake requests."""
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
+        return super(base_endpoint.Endpoint, cls).__new__(
+            cls, name="dummyendpoint"
+        )
 
     def __init__(
         self,
         name: str = "dummyendpoint",
-        rpm: float = DEFAULT_RPM * 10,
+        rpm: float = base_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
         if safe_hasattr(self, "callback_class"):
@@ -376,6 +408,7 @@ class DummyEndpoint(Endpoint):
 
         kwargs["name"] = name
         kwargs["callback_class"] = DummyEndpointCallback
+        kwargs["wrapper_callback_class"] = WrapperDummyEndpointCallback
 
         kwargs["api"] = DummyAPI(**kwargs)
         # Will use fake api for fake feedback evals.
@@ -396,13 +429,17 @@ class DummyEndpoint(Endpoint):
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
-        if not safe_hasattr(DummyAPICreator.create_method, INSTRUMENT):
+        if not safe_hasattr(
+            DummyAPICreator.create_method, mod_trace.INSTRUMENT
+        ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
                 wrapped_method_filter=lambda f: f.__name__
                 in ["completion", "classify"],
             )
+
+        print(f"{text_utils.UNICODE_CHECK} Dummy Endpoint will track usage.")
 
     def post(
         self, url: str, payload: JSON, timeout: Optional[float] = None
@@ -414,8 +451,10 @@ class DummyEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[base_endpoint.EndpointCallback],
     ) -> None:
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
+
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"

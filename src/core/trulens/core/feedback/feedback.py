@@ -45,7 +45,7 @@ from trulens.core.utils import text as mod_text_utils
 from trulens.core.utils import threading as mod_threading_utils
 
 if TYPE_CHECKING:
-    from trulens.core import Tru
+    from trulens.core.tru import Tru
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.

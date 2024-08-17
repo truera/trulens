@@ -35,10 +35,11 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
+from trulens.core import preview as mod_preview
 from trulens.core import trace as mod_trace
 from trulens.core import tru as mod_tru
-from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
@@ -70,6 +71,10 @@ class WithInstrumentCallbacks:
 
     Needs to be mixed into [App][trulens.core.app.App].
     """
+
+    tru: mod_tru.Tru
+    """Assert that what we mix this into has `tru` attribute."""
+    # TODO: Figure out how to enforce this.
 
     # Called during instrumentation.
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
@@ -225,12 +230,6 @@ def class_filter_matches(f: ClassFilter, obj: Union[Type, object]) -> bool:
 class Instrument:
     """Instrumentation tools."""
 
-    INSTRUMENT = "__tru_instrumented"
-    """Attribute name to be used to flag instrumented objects/methods/others."""
-
-    APPS = "__tru_apps"
-    """Attribute name for storing apps that expect to be notified of calls."""
-
     class Default:
         """Default instrumentation configuration.
 
@@ -240,10 +239,10 @@ class Instrument:
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([Feedback])
+        CLASSES = set([base_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": base_feedback.Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
@@ -347,9 +346,16 @@ class Instrument:
         """Dispatch either the otel-based or original record-based method
         wrapper method."""
 
+        assert self.app is not None
+
+        if self.app.tru is None:
+            tru = mod_tru.Tru  # use class for global feature settings
+        else:
+            tru = self.app.tru
+
         return (
             self._otel_tracked_method_wrapper
-            if mod_tru.Tru()._experimental_use_tracing
+            if tru.feature(mod_preview.Feature.OTEL_TRACING)
             else self._record_tracked_method_wrapper
         )(*args, **kwargs)
 
@@ -369,7 +375,7 @@ class Instrument:
         if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, mod_trace.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
         # Notify the app instrumenting this method where it is located:
@@ -400,20 +406,20 @@ class Instrument:
         if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, mod_trace.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
             # Notify the app instrumenting this method where it is located. Note
             # we store the method being instrumented in the attribute
-            # Instrument.INSTRUMENT of the wrapped variant.
-            original_func = getattr(func, Instrument.INSTRUMENT)
+            # mod_trace.INSTRUMENT of the wrapped variant.
+            original_func = getattr(func, mod_trace.INSTRUMENT)
 
             self.app.on_method_instrumented(obj, original_func, path=query)
 
             # Add self.app, the app requesting this method to be
             # instrumented, to the list of apps expecting to be notified of
             # calls.
-            existing_apps = getattr(func, Instrument.APPS)
+            existing_apps = getattr(func, mod_trace.APPS)
             existing_apps.add(self.app)  # weakref set
 
             return func
@@ -445,7 +451,7 @@ class Instrument:
                 inspect.isasyncgenfunction(func),
             )
 
-            apps = getattr(tru_wrapper, Instrument.APPS)
+            apps = getattr(tru_wrapper, mod_trace.APPS)
 
             # If not within a root method, call the wrapped function without
             # any recording.
@@ -652,8 +658,8 @@ class Instrument:
             if isinstance(rets, Awaitable):
                 # If method produced an awaitable
                 logger.info(
-                    f"""This app produced an asynchronous response of type `{class_name(type(rets))}`.
-                            This record will be updated once the response is available"""
+                    """This app produced an asynchronous response of type `%s`. This record will be updated once the response is available""",
+                    class_name(rets),
                 )
 
                 # TODO(piotrm): need to track costs of awaiting the ret in the
@@ -671,8 +677,8 @@ class Instrument:
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
-        setattr(tru_wrapper, Instrument.INSTRUMENT, func)
-        setattr(tru_wrapper, Instrument.APPS, apps)
+        setattr(tru_wrapper, mod_trace.INSTRUMENT, func)
+        setattr(tru_wrapper, mod_trace.APPS, apps)
 
         return tru_wrapper
 
@@ -720,7 +726,7 @@ class Instrument:
 
         func = cls.__new__
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if safe_hasattr(func, mod_trace.INSTRUMENT):
             logger.debug(
                 "Class %s __new__ is already instrumented.", class_name(cls)
             )
@@ -988,7 +994,7 @@ class Instrument:
                         f"\t\t{query}: Looking at bound method {method_name} with func {func}"
                     )
 
-                    if safe_hasattr(func, Instrument.INSTRUMENT):
+                    if safe_hasattr(func, mod_trace.INSTRUMENT):
                         print(
                             f"\t\t\t{query} Bound method {func} is instrumented."
                         )
@@ -1023,7 +1029,7 @@ class Instrument:
                             )
 
                 else:
-                    if safe_hasattr(method, Instrument.INSTRUMENT):
+                    if safe_hasattr(method, mod_trace.INSTRUMENT):
                         print(
                             f"\t\t{query} Bound method {method} is instrumented."
                         )
