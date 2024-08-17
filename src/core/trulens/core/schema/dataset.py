@@ -37,9 +37,9 @@ class Dataset(serial.SerialModel, Hashable):
     ):
         kwargs["name"] = name
         kwargs["meta"] = meta if meta is not None else {}
-        super().__init__(dataset_id="temporary", **kwargs)
-
-        # kwargs["dataset_id"] = "temporary"  # will be updated below
+        super().__init__(
+            dataset_id="temporary", **kwargs
+        )  # dataset_id will be updated below
 
         if dataset_id is None:
             dataset_id = obj_id_of_obj(jsonify(self), prefix="dataset")

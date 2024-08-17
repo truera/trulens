@@ -51,7 +51,6 @@ class GroundTruth(serial.SerialModel, Hashable):
         ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
         **kwargs,
     ):
-        kwargs["ground_truth_id"] = "temporary"  # will be updated below
         kwargs["query"] = query
         kwargs["query_id"] = query_id
         kwargs["dataset_id"] = dataset_id
@@ -59,7 +58,9 @@ class GroundTruth(serial.SerialModel, Hashable):
         kwargs["expected_chunks"] = expected_chunks
         kwargs["meta"] = meta if meta is not None else {}
 
-        super().__init__(**kwargs)
+        super().__init__(
+            ground_truth_id="temporary", **kwargs
+        )  # will be updated below
 
         if ground_truth_id is None:
             ground_truth_id = obj_id_of_obj(
