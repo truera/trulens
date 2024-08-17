@@ -25,7 +25,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Get `sqlalchemy.url` from the environment.
-if config.get_main_option("sqlalchemy.url", None) is None:
+if config.get_main_option("sqlalchemy.url", None) is (None or ""):
     config.set_main_option(
         "sqlalchemy.url", os.environ.get("SQLALCHEMY_URL", "")
     )
