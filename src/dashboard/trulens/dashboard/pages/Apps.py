@@ -3,7 +3,7 @@ from typing import Optional
 
 import streamlit as st
 from trulens.core.schema import app as app_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.tru import Tru
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import JSON
@@ -140,7 +140,7 @@ def draw_selector(
     # Get the relevant JSON to path into.
     obj = rec.app_json
     if type == "record":
-        obj = record_schema.Record.model_validate(
+        obj = mod_record_schema.Record.model_validate(
             rec.record_json
         ).layout_calls_as_app()
 
@@ -272,7 +272,7 @@ def run_record(col):
     # Run the app and collect the record.
     with tru_app as rec:
         comp_response = tru_app.main_call(human_input)
-    record: record_schema.Record = rec.get()
+    record: mod_record_schema.Record = rec.get()
 
     # Update ChatRecord.
     current_record.computer = comp_response

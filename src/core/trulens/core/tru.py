@@ -40,8 +40,8 @@ from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import app as app_schema
-from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
 from trulens.core.utils import serial
@@ -510,7 +510,7 @@ tru.enable_feature_flag({flag})
         self.db = db
 
     def add_record(
-        self, record: Optional[record_schema.Record] = None, **kwargs: dict
+        self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
     ) -> mod_types_schema.RecordID:
         """Add a record to the database.
 
@@ -526,7 +526,7 @@ tru.enable_feature_flag({flag})
         """
 
         if record is None:
-            record = record_schema.Record(**kwargs)
+            record = mod_record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
         return self.db.insert_record(record=record)
@@ -535,7 +535,7 @@ tru.enable_feature_flag({flag})
 
     def add_record_nowait(
         self,
-        record: record_schema.Record,
+        record: mod_record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
         if self.batch_thread is None:
@@ -575,7 +575,7 @@ tru.enable_feature_flag({flag})
                     # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:
                         feedback_results.append(
-                            feedback_schema.FeedbackResult(
+                            mod_feedback_schema.FeedbackResult(
                                 feedback_definition_id=feedback_definition_id,
                                 record_id=record.record_id,
                                 name="feedback_name",  # this will be updated later by deferred evaluator
@@ -590,22 +590,24 @@ tru.enable_feature_flag({flag})
     # organization.
     def _submit_feedback_functions(
         self,
-        record: record_schema.Record,
+        record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
                 [
                     Union[
-                        feedback_schema.FeedbackResult,
-                        Future[feedback_schema.FeedbackResult],
+                        mod_feedback_schema.FeedbackResult,
+                        Future[mod_feedback_schema.FeedbackResult],
                     ],
                     None,
                 ]
             ]
         ] = None,
     ) -> List[
-        Tuple[base_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
+        Tuple[
+            base_feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]
+        ]
     ]:
         """Schedules to run the given feedback functions.
 
@@ -668,7 +670,7 @@ tru.enable_feature_flag({flag})
                         return temp
                 return temp
 
-            fut: Future[feedback_schema.FeedbackResult] = tp.submit(
+            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback, ffunc=ffunc, app=app, record=record
             )
 
@@ -682,13 +684,13 @@ tru.enable_feature_flag({flag})
 
     def run_feedback_functions(
         self,
-        record: record_schema.Record,
+        record: mod_record_schema.Record,
         feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
-        Iterable[feedback_schema.FeedbackResult],
-        Iterable[Future[feedback_schema.FeedbackResult]],
+        Iterable[mod_feedback_schema.FeedbackResult],
+        Iterable[Future[mod_feedback_schema.FeedbackResult]],
     ]:
         """Run a collection of feedback functions and report their result.
 
@@ -713,7 +715,7 @@ tru.enable_feature_flag({flag})
                 is disabled.
         """
 
-        if not isinstance(record, record_schema.Record):
+        if not isinstance(record, mod_record_schema.Record):
             raise ValueError(
                 "`record` must be a `trulens.core.schema.record.Record` instance."
             )
@@ -738,7 +740,7 @@ tru.enable_feature_flag({flag})
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[feedback_schema.FeedbackResult], base_feedback.Feedback
+            Future[mod_feedback_schema.FeedbackResult], base_feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in self._submit_feedback_functions(
@@ -793,8 +795,8 @@ tru.enable_feature_flag({flag})
         self,
         feedback_result_or_future: Optional[
             Union[
-                feedback_schema.FeedbackResult,
-                Future[feedback_schema.FeedbackResult],
+                mod_feedback_schema.FeedbackResult,
+                Future[mod_feedback_schema.FeedbackResult],
             ]
         ] = None,
         **kwargs: dict,
@@ -822,19 +824,19 @@ tru.enable_feature_flag({flag})
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
-                kwargs["status"] = feedback_schema.FeedbackResultStatus.DONE
+                kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = feedback_schema.FeedbackResult(**kwargs)
+            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
+                **kwargs
+            )
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: feedback_schema.FeedbackResult = (
-                    feedback_result_or_future.result()
-                )
+                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result()
 
             elif isinstance(
-                feedback_result_or_future, feedback_schema.FeedbackResult
+                feedback_result_or_future, mod_feedback_schema.FeedbackResult
             ):
                 pass
             else:
@@ -852,8 +854,8 @@ tru.enable_feature_flag({flag})
         self,
         feedback_results: Iterable[
             Union[
-                feedback_schema.FeedbackResult,
-                Future[feedback_schema.FeedbackResult],
+                mod_feedback_schema.FeedbackResult,
+                Future[mod_feedback_schema.FeedbackResult],
             ]
         ],
     ) -> List[mod_types_schema.FeedbackResultID]:
@@ -1068,7 +1070,8 @@ tru.enable_feature_flag({flag})
             # predictions initially after restarting the process.
             queue_stats = self.db.get_feedback_count_by_status()
             queue_done = (
-                queue_stats.get(feedback_schema.FeedbackResultStatus.DONE) or 0
+                queue_stats.get(mod_feedback_schema.FeedbackResultStatus.DONE)
+                or 0
             )
             queue_total = sum(queue_stats.values())
 
@@ -1101,7 +1104,7 @@ tru.enable_feature_flag({flag})
             runs_stats = defaultdict(int)
 
             futures_map: Dict[
-                Future[feedback_schema.FeedbackResult], pandas.Series
+                Future[mod_feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
@@ -1110,7 +1113,7 @@ tru.enable_feature_flag({flag})
                     new_futures: List[
                         Tuple[
                             pandas.Series,
-                            Future[feedback_schema.FeedbackResult],
+                            Future[mod_feedback_schema.FeedbackResult],
                         ]
                     ] = base_feedback.Feedback.evaluate_deferred(
                         tru=self,
@@ -1168,7 +1171,9 @@ tru.enable_feature_flag({flag})
 
                 queue_stats = self.db.get_feedback_count_by_status()
                 queue_done = (
-                    queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
+                    queue_stats.get(
+                        mod_feedback_schema.FeedbackResultStatus.DONE
+                    )
                     or 0
                 )
                 queue_total = sum(queue_stats.values())

@@ -41,7 +41,7 @@ from trulens.core.otel import flatten_lensed_attributes
 
 # import trulens_eval.app as mod_app # circular import issues
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -78,7 +78,7 @@ class Context(pydantic.BaseModel):
     """Reference to the tracer that created this span."""
 
     def __str__(self):
-        return f"{self.trace_id.int % 0xff:02x}/{self.span_id % 0xff:02x}"
+        return f"{self.trace_id.int % 0xFF:02x}/{self.span_id % 0xFF:02x}"
 
     def __repr__(self):
         return str(self)
@@ -325,8 +325,8 @@ class SpanCall(OTELExportable):
     call_id: Optional[uuid.UUID] = pydantic.Field(None, exclude=True)
     """Unique identifier for the call."""
 
-    stack: Optional[List[record_schema.RecordAppCallMethod]] = pydantic.Field(
-        None, exclude=True
+    stack: Optional[List[mod_record_schema.RecordAppCallMethod]] = (
+        pydantic.Field(None, exclude=True)
     )
     """Call stack of instrumented methods only."""
 
@@ -465,13 +465,13 @@ class Tracer(pydantic.BaseModel):
     def _fill_stacks(
         span: LiveSpanCall,
         get_method_path: Callable,
-        stack: List[record_schema.RecordAppCallMethod] = [],
+        stack: List[mod_record_schema.RecordAppCallMethod] = [],
     ):
         # TODO: what if it is not a method call?
 
         path = get_method_path(obj=span.live_obj, func=span.live_func)
 
-        frame_ident = record_schema.RecordAppCallMethod(
+        frame_ident = mod_record_schema.RecordAppCallMethod(
             path=path
             if path is not None
             else serial_utils.Lens().static,  # placeholder path for functions
@@ -493,7 +493,7 @@ class Tracer(pydantic.BaseModel):
 
     def _call_of_spancall(
         self, span: LiveSpanCall
-    ) -> record_schema.RecordAppCall:
+    ) -> mod_record_schema.RecordAppCall:
         """Convert a SpanCall to a RecordAppCall."""
 
         args = (
@@ -508,7 +508,7 @@ class Tracer(pydantic.BaseModel):
         assert span.start_timestamp is not None
         assert span.end_timestamp is not None
 
-        return record_schema.RecordAppCall(
+        return mod_record_schema.RecordAppCall(
             call_id=str(span.call_id),
             stack=span.stack,
             args=args,
@@ -570,7 +570,7 @@ class Tracer(pydantic.BaseModel):
             main_input = None
             main_output = None
 
-        record = record_schema.Record(
+        record = mod_record_schema.Record(
             record_id="placeholder",
             app_id=app.app_id,
             main_input=json_utils.jsonify(main_input),
@@ -588,7 +588,7 @@ class Tracer(pydantic.BaseModel):
 
     def records_of_recording(
         self, recording: PhantomSpanRecordingContext
-    ) -> Iterable[record_schema.Record]:
+    ) -> Iterable[mod_record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
         for root_span in recording.iter_children(transitive=False):
@@ -859,7 +859,9 @@ class RecordingContext:
         span: Optional[PhantomSpanRecordingContext] = None,
         span_ctx: Optional[Context] = None,
     ):
-        self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
+        self.calls: Dict[
+            types_schema.CallID, mod_record_schema.RecordAppCall
+        ] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
         Storing as a map as we want to override calls with the same id which may
@@ -869,7 +871,7 @@ class RecordingContext:
         """
         # TODEP: To deprecated after migration to span-based tracing.
 
-        self.records: List[record_schema.Record] = []
+        self.records: List[mod_record_schema.Record] = []
         """Completed records."""
 
         self.lock: Lock = Lock()
@@ -915,7 +917,7 @@ class RecordingContext:
     def __iter__(self):
         return iter(self.records)
 
-    def get(self) -> record_schema.Record:
+    def get(self) -> mod_record_schema.Record:
         """Get the single record only if there was exactly one or throw
         an error otherwise."""
 
@@ -930,7 +932,7 @@ class RecordingContext:
 
         return self.records[0]
 
-    def __getitem__(self, idx: int) -> record_schema.Record:
+    def __getitem__(self, idx: int) -> mod_record_schema.Record:
         return self.records[idx]
 
     def __len__(self):
@@ -944,7 +946,7 @@ class RecordingContext:
         return hash(self) == hash(other)
         # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
 
-    def add_call(self, call: record_schema.RecordAppCall):
+    def add_call(self, call: mod_record_schema.RecordAppCall):
         """Add the given call to the currently tracked call list."""
         # TODEP: To deprecated after migration to span-based tracing.
 
@@ -957,13 +959,13 @@ class RecordingContext:
         self,
         calls_to_record: Callable[
             [
-                List[record_schema.RecordAppCall],
+                List[mod_record_schema.RecordAppCall],
                 types_schema.Metadata,
-                Optional[record_schema.Record],
+                Optional[mod_record_schema.Record],
             ],
-            record_schema.Record,
+            mod_record_schema.Record,
         ],
-        existing_record: Optional[record_schema.Record] = None,
+        existing_record: Optional[mod_record_schema.Record] = None,
     ):
         """Run the given function to build a record from the tracked calls and any
         pre-specified metadata."""
@@ -1042,7 +1044,7 @@ class WithInstrumentCallbacks:
         self,
         ctx: RecordingContext,
         root_span: Span,
-    ) -> record_schema.Record:
+    ) -> mod_record_schema.Record:
         """Called by instrumented methods if they are root calls (first instrumned
         methods in a call stack).
         Args:

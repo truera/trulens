@@ -39,8 +39,8 @@ from trulens.core.feedback import feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import python as python_utils
@@ -391,9 +391,9 @@ class App(
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: BlockingSet[record_schema.Record] = (
-        pydantic.Field(exclude=True, default_factory=BlockingSet)
-    )
+    records_with_pending_feedback_results: BlockingSet[
+        mod_record_schema.Record
+    ] = pydantic.Field(exclude=True, default_factory=BlockingSet)
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
@@ -448,7 +448,10 @@ class App(
         else:
             pass
 
-        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if (
+            self.feedback_mode
+            == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
             self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
@@ -490,7 +493,7 @@ class App(
 
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
-    ) -> List[record_schema.Record]:
+    ) -> List[mod_record_schema.Record]:
         """Wait for all feedbacks functions to complete.
 
         Args:
@@ -547,14 +550,14 @@ class App(
         """
 
         if self.tru is None:
-            if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
+            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 from trulens.core.tru import Tru
 
                 logger.debug("Creating default tru.")
                 self.tru = Tru()
 
         else:
-            if self.feedback_mode == feedback_schema.FeedbackMode.NONE:
+            if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
                 logger.warning(
                     "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
                     "No feedback evaluation and logging will occur."
@@ -565,7 +568,7 @@ class App(
 
             self.db.insert_app(app=self)
 
-            if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
+            if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
@@ -577,7 +580,7 @@ class App(
                     "Feedback logging requires `tru` to be specified."
                 )
 
-        if self.feedback_mode == feedback_schema.FeedbackMode.DEFERRED:
+        if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
@@ -944,7 +947,7 @@ class App(
         self,
         recording: mod_trace.RecordingContext,
         root_span: mod_trace.Span,
-    ) -> record_schema.Record:
+    ) -> mod_record_schema.Record:
         tracer = root_span.context.tracer
 
         record = tracer.record_of_root_span(
@@ -971,12 +974,15 @@ class App(
         if record.feedback_and_future_results is None:
             return record
 
-        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if (
+            self.feedback_mode
+            == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.add(record)
 
-        elif self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP:
+        elif self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
             # evaluating before returning the record.
 
@@ -1100,18 +1106,18 @@ class App(
         error: Any,
         perf: base_schema.Perf,
         cost: base_schema.Cost,
-        existing_record: Optional[record_schema.Record] = None,
-    ) -> record_schema.Record:
+        existing_record: Optional[mod_record_schema.Record] = None,
+    ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a record call list.
 
         See [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
         def build_record(
-            calls: Iterable[record_schema.RecordAppCall],
+            calls: Iterable[mod_record_schema.RecordAppCall],
             record_metadata: JSON,
-            existing_record: Optional[record_schema.Record] = None,
-        ) -> record_schema.Record:
+            existing_record: Optional[mod_record_schema.Record] = None,
+        ) -> mod_record_schema.Record:
             calls = list(calls)
 
             assert len(calls) > 0, "No information recorded in call."
@@ -1142,7 +1148,7 @@ class App(
             if existing_record is not None:
                 existing_record.update(**updates)
             else:
-                existing_record = record_schema.Record(**updates)
+                existing_record = mod_record_schema.Record(**updates)
 
             return existing_record
 
@@ -1167,12 +1173,15 @@ class App(
         if record.feedback_and_future_results is None:
             return record
 
-        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
+        if (
+            self.feedback_mode
+            == mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+        ):
             # Add the record to ones with pending feedback.
 
             self.records_with_pending_feedback_results.add(record)
 
-        elif self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP:
+        elif self.feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP:
             # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
             # evaluating before returning the record.
 
@@ -1259,7 +1268,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         *args,
         record_metadata: JSON = None,
         **kwargs,
-    ) -> Tuple[T, record_schema.Record]:
+    ) -> Tuple[T, mod_record_schema.Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -1284,7 +1293,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         *args,
         record_metadata: JSON = None,
         **kwargs,
-    ) -> Tuple[T, record_schema.Record]:
+    ) -> Tuple[T, mod_record_schema.Record]:
         """
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
@@ -1342,8 +1351,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def _add_future_feedback(
         self,
         future_or_result: Union[
-            feedback_schema.FeedbackResult,
-            Future[feedback_schema.FeedbackResult],
+            mod_feedback_schema.FeedbackResult,
+            Future[mod_feedback_schema.FeedbackResult],
         ],
     ) -> None:
         """
@@ -1412,13 +1421,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     def _handle_record(
         self,
-        record: record_schema.Record,
-        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
+        record: mod_record_schema.Record,
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
     ) -> Optional[
         List[
             Tuple[
                 mod_feedback.Feedback,
-                Future[feedback_schema.FeedbackResult],
+                Future[mod_feedback_schema.FeedbackResult],
             ]
         ]
     ]:
@@ -1439,7 +1448,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self.db: mod_db.DB
 
         # For server side feedback mode, we write records async
-        if feedback_mode == feedback_schema.FeedbackMode.SERVER:
+        if feedback_mode == mod_feedback_schema.FeedbackMode.SERVER:
             self.tru.add_record_nowait(record=record)
             return
 
@@ -1450,10 +1459,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return []
 
         # Add empty (to run) feedback to db.
-        if feedback_mode == feedback_schema.FeedbackMode.DEFERRED:
+        if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
                 self.db.insert_feedback(
-                    feedback_schema.FeedbackResult(
+                    mod_feedback_schema.FeedbackResult(
                         name=f.name,
                         record_id=record_id,
                         feedback_definition_id=f.feedback_definition_id,
@@ -1463,8 +1472,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return None
 
         elif feedback_mode in [
-            feedback_schema.FeedbackMode.WITH_APP,
-            feedback_schema.FeedbackMode.WITH_APP_THREAD,
+            mod_feedback_schema.FeedbackMode.WITH_APP,
+            mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
         ]:
             return self.tru._submit_feedback_functions(
                 record=record,
@@ -1473,7 +1482,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 on_done=self._add_future_feedback,
             )
 
-    def _handle_error(self, record: record_schema.Record, error: Exception):
+    def _handle_error(self, record: mod_record_schema.Record, error: Exception):
         if self.db is None:
             return
 
@@ -1504,7 +1513,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         main_error: str = "main_error are strings.",
         meta: Dict = {"metakey": "meta are dicts"},
         tags: str = "tags are strings",
-    ) -> record_schema.Record:
+    ) -> mod_record_schema.Record:
         """Create a dummy record with some of the expected structure without
         actually invoking the app.
 
@@ -1539,9 +1548,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     else:
                         sample_args[p.name] = p.default
 
-                sample_call = record_schema.RecordAppCall(
+                sample_call = mod_record_schema.RecordAppCall(
                     stack=[
-                        record_schema.RecordAppCallMethod(
+                        mod_record_schema.RecordAppCallMethod(
                             path=lens, method=method_serial
                         )
                     ],
@@ -1553,7 +1562,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
                 calls.append(sample_call)
 
-        return record_schema.Record(
+        return mod_record_schema.Record(
             app_id=self.app_id,
             calls=calls,
             cost=cost,

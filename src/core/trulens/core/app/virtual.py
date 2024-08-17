@@ -210,8 +210,8 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.utils import serial
 from trulens.core.utils.pyschema import Class
@@ -302,7 +302,7 @@ Method name will be replaced by the last attribute in the selector provided by u
 """
 
 
-class VirtualRecord(record_schema.Record):
+class VirtualRecord(mod_record_schema.Record):
     """Virtual records for virtual apps.
 
     Many arguments are filled in by default values if not provided. See
@@ -343,7 +343,7 @@ class VirtualRecord(record_schema.Record):
         perf: Optional[base_schema.Perf] = None,
         **kwargs: Dict[str, Any],
     ):
-        root_call = record_schema.RecordAppCallMethod(
+        root_call = mod_record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
 
@@ -370,7 +370,7 @@ class VirtualRecord(record_schema.Record):
 
                     call["stack"] = [
                         root_call,
-                        record_schema.RecordAppCallMethod(
+                        mod_record_schema.RecordAppCallMethod(
                             path=path, method=method
                         ),
                     ]
@@ -397,7 +397,7 @@ class VirtualRecord(record_schema.Record):
                         start_time=substart_time, end_time=subend_time
                     )
 
-                rinfo = record_schema.RecordAppCall(**call)
+                rinfo = mod_record_schema.RecordAppCall(**call)
                 record_calls.append(rinfo)
 
         end_time = datetime.datetime.now()
@@ -420,7 +420,7 @@ class VirtualRecord(record_schema.Record):
 
         # append root call
         record_calls.append(
-            record_schema.RecordAppCall(
+            mod_record_schema.RecordAppCall(
                 stack=[root_call],
                 args=[kwargs["main_input"]],
                 rets=[kwargs["main_output"]],
@@ -533,9 +533,9 @@ class TruVirtual(App):
 
     def add_record(
         self,
-        record: record_schema.Record,
-        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
-    ) -> record_schema.Record:
+        record: mod_record_schema.Record,
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
+    ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
 
@@ -560,7 +560,7 @@ class TruVirtual(App):
 
         # Wait for results if mode is WITH_APP.
         if (
-            feedback_mode == feedback_schema.FeedbackMode.WITH_APP
+            feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP
             and record.feedback_results is not None
         ):
             futs = record.feedback_results

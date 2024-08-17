@@ -41,7 +41,7 @@ from trulens.core import tru as mod_tru
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import wrap as wrap_utils
@@ -148,7 +148,7 @@ class WithInstrumentCallbacks:
         error: Any,
         perf: base_schema.Perf,
         cost: base_schema.Cost,
-        existing_record: Optional[record_schema.Record] = None,
+        existing_record: Optional[mod_record_schema.Record] = None,
     ):
         """
         Called by instrumented methods if they are root calls (first instrumented
@@ -551,7 +551,7 @@ class Instrument:
                 else:
                     stack = ctx_stacks[ctx]
 
-                frame_ident = record_schema.RecordAppCallMethod(
+                frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
                 )
 
@@ -627,7 +627,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = record_schema.RecordAppCall(**record_app_args)
+                    call = mod_record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root

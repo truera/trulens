@@ -43,8 +43,8 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as record_schema
+from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import text
 from trulens.core.utils.pyschema import Class
@@ -317,7 +317,7 @@ class SQLAlchemyDB(DB):
         self.migrate_database()
 
     def insert_record(
-        self, record: record_schema.Record
+        self, record: mod_record_schema.Record
     ) -> mod_types_schema.RecordID:
         """See [DB.insert_record][trulens.core.database.base.DB.insert_record]."""
         # TODO: thread safety
@@ -338,7 +338,7 @@ class SQLAlchemyDB(DB):
             return _rec.record_id
 
     def batch_insert_record(
-        self, records: List[record_schema.Record]
+        self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
         """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
         with self.session.begin() as session:
@@ -413,7 +413,7 @@ class SQLAlchemyDB(DB):
                 logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
-        self, feedback_definition: feedback_schema.FeedbackDefinition
+        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
 
@@ -464,7 +464,7 @@ class SQLAlchemyDB(DB):
             )
 
     def insert_feedback(
-        self, feedback_result: feedback_schema.FeedbackResult
+        self, feedback_result: mod_feedback_schema.FeedbackResult
     ) -> mod_types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
 
@@ -487,17 +487,17 @@ class SQLAlchemyDB(DB):
                     _feedback_result
                 )  # insert new result # .add was not thread safe
 
-            status = feedback_schema.FeedbackResultStatus(
+            status = mod_feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
             )
 
-            if status == feedback_schema.FeedbackResultStatus.DONE:
+            if status == mod_feedback_schema.FeedbackResultStatus.DONE:
                 icon = UNICODE_CHECK
-            elif status == feedback_schema.FeedbackResultStatus.RUNNING:
+            elif status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
                 icon = UNICODE_HOURGLASS
-            elif status == feedback_schema.FeedbackResultStatus.NONE:
+            elif status == mod_feedback_schema.FeedbackResultStatus.NONE:
                 icon = UNICODE_CLOCK
-            elif status == feedback_schema.FeedbackResultStatus.FAILED:
+            elif status == mod_feedback_schema.FeedbackResultStatus.FAILED:
                 icon = UNICODE_STOP
             else:
                 icon = "???"
@@ -513,7 +513,7 @@ class SQLAlchemyDB(DB):
             return _feedback_result.feedback_result_id
 
     def batch_insert_feedback(
-        self, feedback_results: List[feedback_schema.FeedbackResult]
+        self, feedback_results: List[mod_feedback_schema.FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
@@ -535,8 +535,8 @@ class SQLAlchemyDB(DB):
         ] = None,
         status: Optional[
             Union[
-                feedback_schema.FeedbackResultStatus,
-                Sequence[feedback_schema.FeedbackResultStatus],
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
             ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
@@ -558,7 +558,7 @@ class SQLAlchemyDB(DB):
             q = q.filter_by(feedback_definition_id=feedback_definition_id)
 
         if status:
-            if isinstance(status, feedback_schema.FeedbackResultStatus):
+            if isinstance(status, mod_feedback_schema.FeedbackResultStatus):
                 status = [status.value]
             q = q.filter(
                 self.orm.FeedbackResult.status.in_([s.value for s in status])
@@ -588,15 +588,15 @@ class SQLAlchemyDB(DB):
         ] = None,
         status: Optional[
             Union[
-                feedback_schema.FeedbackResultStatus,
-                Sequence[feedback_schema.FeedbackResultStatus],
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
             ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False,
-    ) -> Dict[feedback_schema.FeedbackResultStatus, int]:
+    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """See [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
 
         with self.session.begin() as session:
@@ -609,7 +609,7 @@ class SQLAlchemyDB(DB):
             )
 
             return {
-                feedback_schema.FeedbackResultStatus(row[0]): row[1]
+                mod_feedback_schema.FeedbackResultStatus(row[0]): row[1]
                 for row in results
             }
 
@@ -622,8 +622,8 @@ class SQLAlchemyDB(DB):
         ] = None,
         status: Optional[
             Union[
-                feedback_schema.FeedbackResultStatus,
-                Sequence[feedback_schema.FeedbackResultStatus],
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
             ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
@@ -710,7 +710,7 @@ def _extract_feedback_results(
             _result.feedback_result_id,
             _result.feedback_definition_id,
             _result.last_ts,
-            feedback_schema.FeedbackResultStatus(_result.status),
+            mod_feedback_schema.FeedbackResultStatus(_result.status),
             _result.error,
             _result.name,
             _result.result,
