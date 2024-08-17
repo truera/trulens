@@ -328,10 +328,10 @@ class DummyAPICreator:
 
 
 class WrapperDummyEndpointCallback(base_endpoint.WrapperEndpointCallback):
-    """Callbacks for instrumented methods in DummyAPI to recover costs from
-    those calls."""
+    """EXPERIMENTAL: otel-tracing
 
-    # EXPERIMENTAL: otel-tracing
+    Callbacks for instrumented methods in DummyAPI to recover costs from
+    those calls."""
 
     def on_callable_return(self, ret: Any, **kwargs):
         ret = super().on_callable_return(ret=ret, **kwargs)

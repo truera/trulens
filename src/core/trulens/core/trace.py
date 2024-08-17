@@ -1,6 +1,9 @@
-"""EXPERIMENTAL
+"""Implementation of recording that resembles the tracing process in OpenTelemetry.
 
-Implementation of recording that resembles the tracing process in OpenTelemetry.
+!!! Note
+    Most of the module is (EXPERIMENTAL: otel-tracing) though it includes some existing
+    non-experimental classes moved here to resolve some circular import issues.
+
 This module is likely temporary and will be replaced by actual OpenTelemetry sdk
 components or implementations that are compatible with its API.
 """
@@ -1002,11 +1005,14 @@ class WithInstrumentCallbacks:
         Given are the object of the class in which `func` belongs
         (i.e. the "self" for that function), the `func` itsels, and the `path`
         of the owner object in the app hierarchy.
+
         Args:
             obj: The object of the class in which `func` belongs (i.e. the
                 "self" for that method).
+
             func: The function that was instrumented. Expects the unbound
                 version (self not yet bound).
+
             path: The path of the owner object in the app hierarchy.
         """
 
@@ -1014,12 +1020,13 @@ class WithInstrumentCallbacks:
 
     # Called during invocation.
     def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
-        """
-        Get the path of the instrumented function `func`, a member of the class
+        """Get the path of the instrumented function `func`, a member of the class
         of `obj` relative to this app.
+
         Args:
             obj: The object of the class in which `func` belongs (i.e. the
                 "self" for that method).
+
             func: The function that was instrumented. Expects the unbound
                 version (self not yet bound).
         """
