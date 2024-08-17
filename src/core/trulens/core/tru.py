@@ -834,11 +834,11 @@ class Tru(python.SingletonPerName):
         ground_truth: mod_groundtruth_schema.GroundTruth,
     ) -> None:
         """Add a ground truth object to the queue to be inserted in the next batch."""
-        if self.batch_ground_truth_thread is None:
-            self.batch_ground_truth_thread = threading.Thread(
+        if self.batch_thread is None:
+            self.batch_thread = threading.Thread(
                 target=self.batch_ground_truth_loop, daemon=True
             )
-            self.batch_ground_truth_thread.start()
+            self.batch_thread.start()
         self.batch_ground_truth_queue.put(ground_truth)
 
     def batch_ground_truth_loop(self):
