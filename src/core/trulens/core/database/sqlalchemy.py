@@ -693,9 +693,7 @@ class SQLAlchemyDB(DB):
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
-@property
-def no_perf() -> mod_base_schema.Perf:
-    return mod_base_schema.Perf().min().model_dump()
+no_perf: mod_base_schema.Perf = mod_base_schema.Perf().min().model_dump()
 
 
 def _extract_feedback_results(
