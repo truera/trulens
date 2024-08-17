@@ -812,17 +812,6 @@ class SQLAlchemyDB(DB):
 
             return _dataset.dataset_id
 
-    def get_dataset_by_name(self, name: str) -> Optional[JSONized]:
-        """See [DB.get_dataset][trulens.core.database.base.DB.get_dataset]."""
-
-        with self.session.begin() as session:
-            if (
-                _dataset := session.query(self.orm.Dataset)
-                .filter_by(name=name)
-                .first()
-            ):
-                return json.loads(_dataset.meta)
-
     def get_datasets(self) -> pd.DataFrame:
         """See [DB.get_datasets][trulens.core.database.base.DB.get_datasets]."""
 
