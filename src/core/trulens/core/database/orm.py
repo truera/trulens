@@ -371,8 +371,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "dataset"
 
             dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            name = Column(Text, nullable=False)
-            meta = Column(TYPE_JSON, nullable=True)
+            dataset_json = Column(TYPE_JSON, nullable=False)
             ts = Column(TYPE_TIMESTAMP, nullable=False)
 
             @classmethod
@@ -383,8 +382,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.Dataset:
                 return cls(
                     dataset_id=obj.dataset_id,
-                    name=obj.name,
-                    meta=json_str_of_obj(obj.meta, redact_keys=redact_keys),
+                    dataset_json=obj.model_dump_json(redact_keys=redact_keys),
                     ts=obj.ts.timestamp(),
                 )
 

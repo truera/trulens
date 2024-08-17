@@ -384,15 +384,6 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_dataset_by_name(self, name: str) -> Optional[JSONized]:
-        """Get the dataset metadata with the given dataset name.
-
-        Returns:
-            The dataset metadata with the datase name .
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def get_datasets(self) -> pd.DataFrame:
         """Get all datasets from the database.
 
