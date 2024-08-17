@@ -8,7 +8,6 @@ from typing import Hashable, Optional, Sequence
 
 import pydantic
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
@@ -16,8 +15,8 @@ from trulens.core.utils.json import obj_id_of_obj
 logger = logging.getLogger(__name__)
 
 
-class GroundTruth(pyschema.WithClassInfo, serial.SerialModel, Hashable):
-    """Serialized fields of a ground truth data entry."""
+class GroundTruth(serial.SerialModel, Hashable):
+    """The class that represents a single ground truth data entry."""
 
     ground_truth_id: mod_types_schema.GroundTruthID  # str
 
