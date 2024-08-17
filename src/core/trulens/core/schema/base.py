@@ -20,16 +20,22 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     """Number of requests."""
 
     n_responses: int = 0
-    """Number of respones, successful or not."""
+    """EXPERIMENTAL: otel-tracing
+
+    Number of respones, successful or not."""
 
     n_successful_requests: int = 0
     """Number of successful requests."""
 
     n_generations: int = 0
-    """Number of successful generations."""
+    """EXPERIMENTAL: otel-tracing
+
+    Number of successful generations."""
 
     n_classifications: int = 0
-    """Number of successful classifications."""
+    """EXPERIMENTAL: otel-tracing
+
+    Number of successful classifications."""
 
     n_classes: int = 0
     """Number of class scores retrieved."""
@@ -110,7 +116,9 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
     def of_ns_timestamps(
         start_ns_timestamp: int, end_ns_timestamp: Optional[int] = None
     ) -> Perf:
-        """Create a `Perf` instance from start and end times in nanoseconds
+        """EXPERIMENTAL: otel-tracing
+
+        Create a `Perf` instance from start and end times in nanoseconds
         since the epoch."""
 
         return Perf(
@@ -124,13 +132,17 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
 
     @property
     def start_ns_timestamp(self) -> int:
-        """Start time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL: otel-tracing
+
+        Start time in number of nanoseconds since the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.start_time)
 
     @property
     def end_ns_timestamp(self) -> int:
-        """End time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL: otel-tracing
+
+        End time in number of nanoseconds since the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.end_time)
 

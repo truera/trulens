@@ -371,13 +371,7 @@ class SpanCall(OTELExportable):
 
 
 class LiveSpanCall(LiveSpan, SpanCall):
-    """Track a function call.
-
-    WARNING:
-        This span contains references to live objects. These may change after
-        this span is created but before it is dumped or exported. Attributes
-        that store live objects begin with `live_`.
-    """
+    """Track a function call."""
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -619,7 +613,6 @@ class Tracer(pydantic.BaseModel):
 
     @contextlib.asynccontextmanager
     async def _aspan(self, cls, **kwargs):
-        print("tracer", cls.__name__)
         context = Context(trace_id=self.trace_id, tracer=self)
         span = cls(
             context=context, tracer=self, parent=self.context.get(), **kwargs
