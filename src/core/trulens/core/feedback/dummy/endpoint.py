@@ -328,7 +328,10 @@ class DummyAPICreator:
 
 
 class WrapperDummyEndpointCallback(base_endpoint.WrapperEndpointCallback):
-    """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
+    """Callbacks for instrumented methods in DummyAPI to recover costs from
+    those calls."""
+
+    # EXPERIMENTAL: otel-tracing
 
     def on_callable_return(self, ret: Any, **kwargs):
         ret = super().on_callable_return(ret=ret, **kwargs)
@@ -353,9 +356,6 @@ class WrapperDummyEndpointCallback(base_endpoint.WrapperEndpointCallback):
             logger.warning("Could not determine cost from DummyAPI call.")
 
         return ret
-
-    # def on_iteration(self):
-    #    self.cost.n_stream_chunks += 1
 
 
 class DummyEndpointCallback(base_endpoint.EndpointCallback):
