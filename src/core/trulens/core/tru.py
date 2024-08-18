@@ -864,7 +864,7 @@ class Tru(python.SingletonPerName):
                     )
                     continue
 
-    def create_or_add_ground_truth_dataset(
+    def add_ground_truth_to_dataset(
         self,
         dataset_name: str,
         ground_truth_df: pd.DataFrame,
@@ -897,9 +897,6 @@ class Tru(python.SingletonPerName):
                 meta=row.get("meta", None),
             )
             self.add_ground_truth_nowait(ground_truth)
-
-    def retrieve_ground_truth_dataset(self):
-        pass  # TODO: can be used to retrieve ground truth data and pass to GT-based feedback functions and aggregators
 
     def start_evaluator(
         self,
