@@ -15,9 +15,11 @@ logger = logging.getLogger(__name__)
 
 BEIR_DATASET_NAMES = [
     "msmarco",
+    "msmarco-v2",
     "trec-covid",
     "nfcorpus",
     "nq",
+    "nq-train",
     "hotpotqa",
     "fiqa",
     "arguana",
@@ -222,24 +224,30 @@ class TruBEIRDataLoader:
 
         dataset_entries = []
 
+        corpus_dict = {}
+        for corpus in list(
+            corpus_gen
+        ):  # TODO: (Daniel) this is still going to be a memory hog for large datasets, but if we don't
+            # load the entire corpus into memory, we'll have to re-read the entire corpus using genrator for each query
+            corpus_dict.update(corpus)
+
         # Iterate over queries generator and process entries
         for i, query in enumerate(queries_gen, 1):
             for query_id, query_text in query.items():
                 doc_to_rel = self.qrels.get(query_id, {})
 
-                # Fetch the relevant documents lazily
                 expected_chunks = []
-                for corpus in corpus_gen:
-                    for corpus_id, corpus_entry in corpus.items():
-                        if corpus_id in doc_to_rel:
-                            expected_chunks.append({
-                                "text": corpus_entry["text"],
-                                "title": corpus_entry.get("title"),
-                                "expected_score": doc_to_rel.get(
-                                    corpus_id, 0
-                                ),  # Default relevance score to 0 if not found
-                            })
-                corpus_gen = self._corpus_generator()  # Reset the generator
+
+                for corpus_id in doc_to_rel.keys():
+                    if corpus_id in corpus_dict:
+                        corpus_entry = corpus_dict[corpus_id]
+                        expected_chunks.append({
+                            "text": corpus_entry["text"],
+                            "title": corpus_entry.get("title"),
+                            "expected_score": doc_to_rel.get(
+                                corpus_id, 0
+                            ),  # Default relevance score to 0 if not found
+                        })
 
                 dataset_entries.append({
                     "query_id": query_id,
@@ -249,12 +257,11 @@ class TruBEIRDataLoader:
                     "meta": {"source": self.dataset_name},
                 })
 
-                # If chunking is enabled and we've accumulated enough entries, yield the chunk
+                # Yield the chunk if chunk_size is specified
                 if chunk_size and i % chunk_size == 0:
                     yield dataset_entries
-                    dataset_entries = []  # Reset the list for the next chunk
+                    dataset_entries = []
 
-        # Yield any remaining entries
         if dataset_entries:
             yield dataset_entries
 
@@ -320,6 +327,9 @@ class TruBEIRDataLoader:
             logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
             os.system(
                 f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
+            )
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}.zip"
             )
 
         logger.info(
