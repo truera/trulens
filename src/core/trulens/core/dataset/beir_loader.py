@@ -86,8 +86,6 @@ class TruBEIRDataLoader:
         qrels_folder: str = "qrels",
         qrels_file: str = "",
     ):
-        self.corpus = {}
-        self.queries = {}
         self.qrels = {}
 
         if dataset_name not in BEIR_DATASET_NAMES:
@@ -127,32 +125,6 @@ class TruBEIRDataLoader:
         if not fIn.endswith(ext):
             raise ValueError(f"File {fIn} must be present with extension {ext}")
 
-    def load_corpus(self) -> Dict[str, Dict[str, str]]:
-        self.check(fIn=self.corpus_file, ext="jsonl")
-
-        if not len(self.corpus):
-            logger.info("Loading Corpus...")
-            self._load_corpus()
-            logger.info("Loaded %d Documents.", len(self.corpus))
-            logger.info("Doc Example: %s", list(self.corpus.values())[0])
-
-        return self.corpus
-
-    def _load_corpus(self):
-        with open(self.corpus_file, encoding="utf8") as fIn:
-            for line in fIn:
-                line = json.loads(line)
-                self.corpus[line.get("_id")] = {
-                    "text": line.get("text"),
-                    "title": line.get("title"),
-                }
-
-    def _load_queries(self):
-        with open(self.query_file, encoding="utf8") as fIn:
-            for line in fIn:
-                line = json.loads(line)
-                self.queries[line.get("_id")] = line.get("text")
-
     def _load_qrels(self):
         reader = csv.reader(
             open(self.qrels_file, encoding="utf-8"),
@@ -168,83 +140,6 @@ class TruBEIRDataLoader:
                 self.qrels[query_id] = {corpus_id: score}
             else:
                 self.qrels[query_id][corpus_id] = score
-
-    def _load(
-        self, split="test"
-    ) -> Tuple[
-        Dict[str, Dict[str, str]], Dict[str, str], Dict[str, Dict[str, int]]
-    ]:
-        self.qrels_file = os.path.join(self.qrels_folder, split + ".tsv")
-        self.check(fIn=self.corpus_file, ext="jsonl")
-        self.check(fIn=self.query_file, ext="jsonl")
-        self.check(fIn=self.qrels_file, ext="tsv")
-
-        if not len(self.corpus):
-            logger.info("Loading Corpus...")
-            self._load_corpus()
-            logger.info(
-                "Loaded %d %s Documents.", len(self.corpus), split.upper()
-            )
-            logger.info("Doc Example: %s", list(self.corpus.values())[0])
-
-        if not len(self.queries):
-            logger.info("Loading Queries...")
-            self._load_queries()
-
-        if os.path.exists(self.qrels_file):
-            self._load_qrels()
-            self.queries = {qid: self.queries[qid] for qid in self.qrels}
-            logger.info(
-                "Loaded %d %s Queries.", len(self.queries), split.upper()
-            )
-            logger.info("Query Example: %s", list(self.queries.values())[0])
-
-        return self.corpus, self.queries, self.qrels
-
-    def load_dataset_to_df(self, split="test") -> pd.DataFrame:
-        """
-        load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
-
-        Args:
-            split (str, optional): Defaults to "test".
-
-        Returns:
-            pd.DataFrame: DataFrame with the BEIR dataset
-        """
-
-        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
-
-        logger.info(f"Downloading {self.dataset_name} dataset from {url}")
-        download_and_unzip(url, self.data_folder)
-
-        corpus, queries, qrels = self._load(split=split)
-
-        dataset_entries = []
-        # Iterate over the queries generator and yield the dataset entries
-        for query_id, query_text in queries.items():
-            doc_to_rel = qrels.get(query_id, {})
-
-            # Fetch the relevant documents lazily
-            expected_chunks = []
-            for corpus_id, corpus_entry in corpus.items():
-                if corpus_id in doc_to_rel:
-                    expected_chunks.append({
-                        "text": corpus_entry["text"],
-                        "title": corpus_entry.get("title"),
-                        "expected_score": doc_to_rel.get(corpus_id),
-                    })
-                    doc_to_rel.pop(corpus_id)
-                    if not doc_to_rel:
-                        break
-
-            dataset_entries.append({
-                "query_id": query_id,
-                "query": query_text,
-                "expected_response": None,  # expected response can be empty for IR datasets
-                "expected_chunks": expected_chunks,
-                "meta": {"source": self.dataset_name},
-            })
-        return pd.DataFrame(dataset_entries)
 
     def _load_generators(
         self, split="test"
@@ -302,6 +197,63 @@ class TruBEIRDataLoader:
                 line = json.loads(line)
                 if line.get("_id") in self.qrels:
                     yield {line.get("_id"): line.get("text")}
+
+    def load_dataset_to_df(
+        self,
+        split="test",
+        no_download=False,
+    ) -> pd.DataFrame:
+        """
+        load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
+
+        Args:
+            split (str, optional): Defaults to "test".
+
+        Returns:
+            pd.DataFrame: DataFrame with the BEIR dataset
+        """
+
+        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
+
+        logger.info(f"Downloading {self.dataset_name} dataset from {url}")
+        download_and_unzip(url, self.data_folder)
+
+        corpus_gen, queries_gen = self._load_generators(split=split)
+
+        if no_download:
+            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
+            )
+        dataset_entries = []
+        # Iterate over the queries generator and yield the dataset entries
+        for query in queries_gen:
+            for query_id, query_text in query.items():
+                doc_to_rel = self.qrels.get(query_id, {})
+
+                # Fetch the relevant documents lazily
+                expected_chunks = []
+                for corpus in corpus_gen:
+                    for corpus_id, corpus_entry in corpus.items():
+                        if corpus_id in doc_to_rel:
+                            expected_chunks.append({
+                                "text": corpus_entry["text"],
+                                "title": corpus_entry.get("title"),
+                                "expected_score": doc_to_rel.get(
+                                    corpus_id, 0
+                                ),  # Default score to 0 if not found
+                            })
+                corpus_gen = self._corpus_generator()  # Reset the generator
+
+                dataset_entries.append({
+                    "query_id": query_id,
+                    "query": query_text,
+                    "expected_response": None,  # expected response can be empty for IR datasets
+                    "expected_chunks": expected_chunks,
+                    "meta": {"source": self.dataset_name},
+                })
+
+        return pd.DataFrame(dataset_entries)
 
     def persist_dataset(
         self,
