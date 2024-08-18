@@ -334,14 +334,12 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             dataset_id = Column(Text, nullable=False)
             ground_truth_json = Column(TYPE_JSON, nullable=False)
 
-            ts = Column(TYPE_TIMESTAMP, nullable=False)
-
             dataset = relationship(
                 "Dataset",
                 backref=backref("ground_truths", cascade="all,delete"),
                 primaryjoin="Dataset.dataset_id == GroundTruth.dataset_id",
                 foreign_keys=dataset_id,
-                order_by="(GroundTruth.ts,GroundTruth.ground_truth_id)",
+                order_by="(GroundTruth.ground_truth_id)",
             )
 
             @classmethod
@@ -356,7 +354,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                         redact_keys=redact_keys
                     ),
                     dataset_id=obj.dataset_id,
-                    ts=obj.ts.timestamp(),
                 )
 
         class Dataset(base):
@@ -372,7 +369,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
             dataset_json = Column(TYPE_JSON, nullable=False)
-            ts = Column(TYPE_TIMESTAMP, nullable=False)
 
             @classmethod
             def parse(
@@ -383,7 +379,6 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
-                    ts=obj.ts.timestamp(),
                 )
 
     configure_mappers()  # IMPORTANT
