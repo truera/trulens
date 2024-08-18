@@ -327,7 +327,8 @@ class DB(SerialModel, abc.ABC):
     def insert_ground_truth(
         self, ground_truth: GroundTruth
     ) -> mod_types_schema.GroundTruthID:
-        """Insert a ground truth entry into the database.
+        """Insert a ground truth entry into the database. The ground truth id is generated
+        based on the ground truth content, so re-inserting is idempotent.
 
         Args:
             ground_truth: The ground truth entry to insert.
@@ -373,7 +374,8 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_dataset(self, dataset: Dataset) -> mod_types_schema.DatasetID:
-        """Insert a dataset into the database.
+        """Insert a dataset into the database. The dataset id is generated based on the
+        dataset content, so re-inserting is idempotent.
 
         Args:
             dataset: The dataset to insert.
