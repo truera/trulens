@@ -20,20 +20,16 @@ class Dataset(serial.SerialModel, Hashable):
 
     name: str
 
-    domain: Optional[str] = None
-
     meta: mod_types_schema.Metadata  # dict
 
     def __init__(
         self,
         name: str,
-        domain: Optional[str] = None,
         dataset_id: Optional[mod_types_schema.DatasetID] = None,
         meta: Optional[mod_types_schema.Metadata] = None,
         **kwargs,
     ):
         kwargs["name"] = name
-        kwargs["domain"] = domain
         kwargs["meta"] = meta if meta is not None else {}
         super().__init__(
             dataset_id="temporary", **kwargs
