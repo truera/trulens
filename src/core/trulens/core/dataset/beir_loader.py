@@ -237,7 +237,7 @@ class TruBEIRDataLoader:
                                 "title": corpus_entry.get("title"),
                                 "expected_score": doc_to_rel.get(
                                     corpus_id, 0
-                                ),  # Default score to 0 if not found
+                                ),  # Default relevance score to 0 if not found
                             })
                 corpus_gen = self._corpus_generator()  # Reset the generator
 
