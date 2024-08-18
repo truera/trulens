@@ -781,13 +781,25 @@ class SQLAlchemyDB(DB):
             ):
                 return json.loads(_ground_truth)
 
-    def get_ground_truths_by_dataset(self, dataset_name: str) -> pd.DataFrame:
+    def get_ground_truths_by_dataset(
+        self, dataset_name: str
+    ) -> pd.DataFrame | None:
         """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
         with self.session.begin() as session:
-            q = sa.select(self.orm.GroundTruth).filter_by(name=dataset_name)
-            results = (row[0] for row in session.execute(q))
+            q = sa.select(self.orm.Dataset).filter_by(name=dataset_name)
+            dataset_results = (row[0] for row in session.execute(q))
+            df = None
+            for dataset in dataset_results:
+                q = sa.select(self.orm.GroundTruth).filter_by(
+                    dataset_id=dataset.dataset_id
+                )
+                results = (row[0] for row in session.execute(q))
 
-            return _extract_ground_truths(results)
+                if df is None:
+                    df = _extract_ground_truths(results)
+                else:
+                    df = pd.concat([df, _extract_ground_truths(results)])
+            return df
             # TODO: use a generator instead of a list? (for large datasets)
 
     def insert_dataset(
