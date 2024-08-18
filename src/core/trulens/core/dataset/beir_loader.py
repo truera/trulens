@@ -2,12 +2,13 @@ import csv
 import json
 import logging
 import os
-from typing import Dict, Tuple
+from typing import Any, Dict, Generator, Optional, Tuple
 import zipfile
 
 import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
+from trulens.core.tru import Tru
 
 logger = logging.getLogger(__name__)
 
@@ -138,9 +139,8 @@ class TruBEIRDataLoader:
         return self.corpus
 
     def _load_corpus(self):
-        num_lines = sum(1 for i in open(self.corpus_file, "rb"))
         with open(self.corpus_file, encoding="utf8") as fIn:
-            for line in tqdm(fIn, total=num_lines):
+            for line in fIn:
                 line = json.loads(line)
                 self.corpus[line.get("_id")] = {
                     "text": line.get("text"),
@@ -245,3 +245,146 @@ class TruBEIRDataLoader:
                 "meta": {"source": self.dataset_name},
             })
         return pd.DataFrame(dataset_entries)
+
+    def _load_generators(
+        self, split="test"
+    ) -> Tuple[
+        Generator[Dict[str, Dict[str, str]], None, None],
+        Generator[Dict[str, str], None, None],
+    ]:
+        """
+        Load corpus, queries, and qrels as generators.
+
+        Args:
+            split (str, optional): Dataset split to load. Defaults to "test".
+
+        Returns:
+            Tuple of generators for corpus, queries, and qrels.
+        """
+        self.qrels_file = os.path.join(self.qrels_folder, split + ".tsv")
+        self.check(fIn=self.corpus_file, ext="jsonl")
+        self.check(fIn=self.query_file, ext="jsonl")
+        self.check(fIn=self.qrels_file, ext="tsv")
+
+        corpus_gen = self._corpus_generator()
+
+        self._load_qrels()
+        queries_gen = self._queries_generator()
+
+        return corpus_gen, queries_gen
+
+    def _corpus_generator(
+        self,
+    ) -> Generator[Dict[str, Dict[str, str]], None, None]:
+        """
+        Generator to load corpus data incrementally.
+        """
+        self.check(fIn=self.corpus_file, ext="jsonl")
+
+        with open(self.corpus_file, encoding="utf8") as fIn:
+            for line in fIn:
+                line = json.loads(line)
+                yield {
+                    line.get("_id"): {
+                        "text": line.get("text"),
+                        "title": line.get("title"),
+                    }
+                }
+
+    def _queries_generator(self) -> Generator[Dict[str, str], None, None]:
+        """
+        Generator to load queries incrementally.
+        """
+        self.check(fIn=self.query_file, ext="jsonl")
+
+        with open(self.query_file, encoding="utf8") as fIn:
+            for line in fIn:
+                line = json.loads(line)
+                if line.get("_id") in self.qrels:
+                    yield {line.get("_id"): line.get("text")}
+
+    def persist_dataset(
+        self,
+        tru: Tru,
+        dataset_name: str,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+        split="test",
+        no_download=False,
+        chunk_size=1000,
+    ):
+        """
+        Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+        Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
+        Args:
+            split (str, optional): Defaults to "test".
+            tru (Tru): Tru workspace instance to persist the dataset.
+            dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset. Defaults to None.
+            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
+        Returns:
+            pd.DataFrame: DataFrame with the BEIR dataset
+        """
+
+        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
+
+        logger.info(f"Downloading {self.dataset_name} dataset from {url}")
+        download_and_unzip(url=url, out_dir=self.data_folder)
+
+        corpus_gen, queries_gen = self._load_generators(split=split)
+
+        if no_download:
+            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
+            )
+
+        dataset_entries = []
+
+        # Iterate over queries generator and process in chunks
+        for i, query in enumerate(queries_gen, 1):
+            for query_id, query_text in query.items():
+                doc_to_rel = self.qrels.get(query_id, {})
+
+                # Fetch the relevant documents lazily
+                expected_chunks = []
+                for corpus in corpus_gen:
+                    for corpus_id, corpus_entry in corpus.items():
+                        if corpus_id in doc_to_rel:
+                            expected_chunks.append({
+                                "text": corpus_entry["text"],
+                                "title": corpus_entry.get("title"),
+                                "expected_score": doc_to_rel.get(
+                                    corpus_id, 0
+                                ),  # Default score to 0 if not found
+                            })
+                corpus_gen = self._corpus_generator()  # Reset the generator
+
+                dataset_entries.append({
+                    "query_id": query_id,
+                    "query": query_text,
+                    "expected_response": None,  # expected response can be empty for IR datasets
+                    "expected_chunks": expected_chunks,
+                    "meta": {"source": self.dataset_name},
+                })
+
+                # If we've accumulated enough entries, save to the database
+                if i % chunk_size == 0:
+                    df_chunk = pd.DataFrame(dataset_entries)
+                    tru.add_ground_truth_to_dataset(
+                        dataset_name=dataset_name,
+                        ground_truth_df=df_chunk,
+                        dataset_metadata=dataset_metadata,
+                    )
+                    dataset_entries = []  # Reset the list for the next chunk
+
+        # Process any remaining entries
+        if dataset_entries:
+            df_chunk = pd.DataFrame(dataset_entries)
+            tru.add_ground_truth_to_dataset(
+                dataset_name=dataset_name,
+                ground_truth_df=df_chunk,
+                dataset_metadata=dataset_metadata,
+            )
+
+        logger.info(
+            f"Finished processing dataset {self.dataset_name} in chunks."
+        )
