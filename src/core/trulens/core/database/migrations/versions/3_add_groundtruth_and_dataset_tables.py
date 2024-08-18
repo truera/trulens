@@ -32,7 +32,6 @@ def upgrade(config) -> None:
         "trulens_dataset",
         sa.Column("dataset_id", sa.VARCHAR(length=256), nullable=False),
         sa.Column("dataset_json", sa.Text(), nullable=False),
-        sa.Column("ts", sa.Float(), nullable=False),
         sa.PrimaryKeyConstraint("dataset_id"),
     )
     op.create_table(
@@ -40,7 +39,6 @@ def upgrade(config) -> None:
         sa.Column("ground_truth_id", sa.VARCHAR(length=256), nullable=False),
         sa.Column("dataset_id", sa.Text(), nullable=False),
         sa.Column("ground_truth_json", sa.Text(), nullable=False),
-        sa.Column("ts", sa.Float(), nullable=False),
         sa.PrimaryKeyConstraint("ground_truth_id"),
     )
 
