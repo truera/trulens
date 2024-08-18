@@ -12,7 +12,7 @@ from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
-from trulens.feedback.generated import re_configured_rating
+from trulens.feedback.generated import re_0_10_rating
 from trulens.feedback.llm_provider import LLMProvider
 
 with OptionalImports(
@@ -106,6 +106,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             for _, row in ground_truth_df.iterrows():
                 entry = row.to_dict()
                 ground_truth.append(entry)
+            ground_truth_imp = None
         elif isinstance(ground_truth, Dict):
             # Serialized FunctionOrMethod?
             ground_truth = FunctionOrMethod.model_validate(ground_truth)
@@ -195,10 +196,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_configured_rating(
-                    agreement_txt, min_score_val=0, max_score_val=3
-                )
-                / 3,
+                re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:
