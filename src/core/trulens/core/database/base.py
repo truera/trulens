@@ -361,9 +361,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_ground_truths_by_dataset(
-        self, dataset_id: mod_types_schema.DatasetID
-    ) -> pd.DataFrame:
+    def get_ground_truths_by_dataset(self, dataset_name: str) -> pd.DataFrame:
         """Get all ground truths from the database from a particular dataset.
 
         Returns:

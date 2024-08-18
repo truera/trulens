@@ -781,10 +781,10 @@ class SQLAlchemyDB(DB):
             ):
                 return json.loads(_ground_truth)
 
-    def get_ground_truths_by_dataset(self, dataset_id: str) -> pd.DataFrame:
+    def get_ground_truths_by_dataset(self, dataset_name: str) -> pd.DataFrame:
         """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
         with self.session.begin() as session:
-            q = sa.select(self.orm.GroundTruth).filter_by(dataset_id=dataset_id)
+            q = sa.select(self.orm.GroundTruth).filter_by(name=dataset_name)
             results = (row[0] for row in session.execute(q))
 
             return _extract_ground_truths(results)
