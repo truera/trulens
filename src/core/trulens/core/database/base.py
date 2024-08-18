@@ -362,7 +362,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def get_ground_truths_by_dataset(self, dataset_name: str) -> pd.DataFrame:
-        """Get all ground truths from the database from a particular dataset.
+        """Get all ground truths from the database from a particular dataset's name.
 
         Returns:
             A dataframe with the ground truths.

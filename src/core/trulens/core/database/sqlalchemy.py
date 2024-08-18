@@ -786,19 +786,24 @@ class SQLAlchemyDB(DB):
     ) -> pd.DataFrame | None:
         """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
         with self.session.begin() as session:
-            q = sa.select(self.orm.Dataset).filter_by(name=dataset_name)
-            dataset_results = (row[0] for row in session.execute(q))
+            q = sa.select(self.orm.Dataset)
+            all_datasets = (row[0] for row in session.execute(q))
             df = None
-            for dataset in dataset_results:
-                q = sa.select(self.orm.GroundTruth).filter_by(
-                    dataset_id=dataset.dataset_id
-                )
-                results = (row[0] for row in session.execute(q))
+            for dataset in all_datasets:
+                dataset_json = json.loads(dataset.dataset_json)
+                if (
+                    "name" in dataset_json
+                    and dataset_json["name"] == dataset_name
+                ):
+                    q = sa.select(self.orm.GroundTruth).filter_by(
+                        dataset_id=dataset.dataset_id
+                    )
+                    results = (row[0] for row in session.execute(q))
 
-                if df is None:
-                    df = _extract_ground_truths(results)
-                else:
-                    df = pd.concat([df, _extract_ground_truths(results)])
+                    if df is None:
+                        df = _extract_ground_truths(results)
+                    else:
+                        df = pd.concat([df, _extract_ground_truths(results)])
             return df
             # TODO: use a generator instead of a list? (for large datasets)
 
