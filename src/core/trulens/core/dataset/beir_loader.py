@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import os
-from typing import Any, Dict, Generator, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 import zipfile
 
 import pandas as pd
@@ -198,19 +198,19 @@ class TruBEIRDataLoader:
                 if line.get("_id") in self.qrels:
                     yield {line.get("_id"): line.get("text")}
 
-    def load_dataset_to_df(
-        self,
-        split="test",
-        no_download=False,
-    ) -> pd.DataFrame:
+    def _process_dataset(
+        self, split="test", chunk_size=None
+    ) -> Generator[List[Dict[str, Any]], None, None]:
         """
-        load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
+        Common method to process the BEIR dataset into entries.
+        This method handles downloading, loading, and processing the dataset.
 
         Args:
-            split (str, optional): Defaults to "test".
+            split (str, optional): Dataset split to load. Defaults to "test".
+            chunk_size (int, optional): Number of records to process in each chunk. Defaults to None.
 
-        Returns:
-            pd.DataFrame: DataFrame with the BEIR dataset
+        Yields:
+            List[Dict[str, Any]]: List of dataset entries (a chunk if chunk_size is specified).
         """
 
         url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
@@ -220,78 +220,9 @@ class TruBEIRDataLoader:
 
         corpus_gen, queries_gen = self._load_generators(split=split)
 
-        if no_download:
-            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
-            os.system(
-                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
-            )
-        dataset_entries = []
-        # Iterate over the queries generator and yield the dataset entries
-        for query in queries_gen:
-            for query_id, query_text in query.items():
-                doc_to_rel = self.qrels.get(query_id, {})
-
-                # Fetch the relevant documents lazily
-                expected_chunks = []
-                for corpus in corpus_gen:
-                    for corpus_id, corpus_entry in corpus.items():
-                        if corpus_id in doc_to_rel:
-                            expected_chunks.append({
-                                "text": corpus_entry["text"],
-                                "title": corpus_entry.get("title"),
-                                "expected_score": doc_to_rel.get(
-                                    corpus_id, 0
-                                ),  # Default score to 0 if not found
-                            })
-                corpus_gen = self._corpus_generator()  # Reset the generator
-
-                dataset_entries.append({
-                    "query_id": query_id,
-                    "query": query_text,
-                    "expected_response": None,  # expected response can be empty for IR datasets
-                    "expected_chunks": expected_chunks,
-                    "meta": {"source": self.dataset_name},
-                })
-
-        return pd.DataFrame(dataset_entries)
-
-    def persist_dataset(
-        self,
-        tru: Tru,
-        dataset_name: str,
-        dataset_metadata: Optional[Dict[str, Any]] = None,
-        split="test",
-        no_download=False,
-        chunk_size=1000,
-    ):
-        """
-        Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
-        Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
-        Args:
-            split (str, optional): Defaults to "test".
-            tru (Tru): Tru workspace instance to persist the dataset.
-            dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset. Defaults to None.
-            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
-        Returns:
-            pd.DataFrame: DataFrame with the BEIR dataset
-        """
-
-        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
-
-        logger.info(f"Downloading {self.dataset_name} dataset from {url}")
-        download_and_unzip(url=url, out_dir=self.data_folder)
-
-        corpus_gen, queries_gen = self._load_generators(split=split)
-
-        if no_download:
-            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
-            os.system(
-                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
-            )
-
         dataset_entries = []
 
-        # Iterate over queries generator and process in chunks
+        # Iterate over queries generator and process entries
         for i, query in enumerate(queries_gen, 1):
             for query_id, query_text in query.items():
                 doc_to_rel = self.qrels.get(query_id, {})
@@ -318,23 +249,77 @@ class TruBEIRDataLoader:
                     "meta": {"source": self.dataset_name},
                 })
 
-                # If we've accumulated enough entries, save to the database
-                if i % chunk_size == 0:
-                    df_chunk = pd.DataFrame(dataset_entries)
-                    tru.add_ground_truth_to_dataset(
-                        dataset_name=dataset_name,
-                        ground_truth_df=df_chunk,
-                        dataset_metadata=dataset_metadata,
-                    )
+                # If chunking is enabled and we've accumulated enough entries, yield the chunk
+                if chunk_size and i % chunk_size == 0:
+                    yield dataset_entries
                     dataset_entries = []  # Reset the list for the next chunk
 
-        # Process any remaining entries
+        # Yield any remaining entries
         if dataset_entries:
-            df_chunk = pd.DataFrame(dataset_entries)
+            yield dataset_entries
+
+    def load_dataset_to_df(
+        self,
+        split="test",
+        no_download=False,
+    ) -> pd.DataFrame:
+        """
+        load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
+        Note this method loads the entire dataset into memory at once.
+        Args:
+            split (str, optional): Defaults to "test".
+            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
+        Returns:
+            pd.DataFrame: DataFrame with the BEIR dataset
+        """
+        dataset_entries = []
+        for chunk in self._process_dataset(split=split):
+            dataset_entries.extend(chunk)
+
+        if no_download:
+            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
+            )
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}.zip"
+            )
+
+        return pd.DataFrame(dataset_entries)
+
+    def persist_dataset(
+        self,
+        tru: Tru,
+        dataset_name: str,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+        split="test",
+        no_download=False,
+        chunk_size=1000,
+    ):
+        """
+        Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+        Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
+        Args:
+            split (str, optional): Defaults to "test".
+            tru (Tru): Tru workspace instance to persist the dataset.
+            dataset_name (str): Name of the dataset to be persisted - Note this can be different from the standardized BEIR dataset names.
+            dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset.
+            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
+        Returns:
+            pd.DataFrame: DataFrame with the BEIR dataset
+        """
+        for chunk in self._process_dataset(split=split, chunk_size=chunk_size):
+            df_chunk = pd.DataFrame(chunk)
             tru.add_ground_truth_to_dataset(
                 dataset_name=dataset_name,
                 ground_truth_df=df_chunk,
                 dataset_metadata=dataset_metadata,
+            )
+
+        if no_download:
+            logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
+            os.system(
+                f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
             )
 
         logger.info(
