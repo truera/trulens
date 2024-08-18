@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import os
-from typing import Generator, Tuple
+from typing import Dict, Tuple
 import zipfile
 
 import pandas as pd
@@ -77,22 +77,37 @@ def download_and_unzip(url: str, out_dir: str, chunk_size: int = 1024) -> str:
 class TruBEIRDataLoader:
     def __init__(
         self,
-        data_folder: str = "",
+        dataset_name: str,
+        data_folder: str,
         prefix: str = "",
         corpus_file: str = "corpus.jsonl",
         query_file: str = "queries.jsonl",
         qrels_folder: str = "qrels",
         qrels_file: str = "",
     ):
+        if dataset_name not in BEIR_DATASET_NAMES:
+            raise ValueError(
+                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
+            )
+
+        self.corpus = {}
+        self.queries = {}
+        self.qrels = {}
+
+        self.dataset_name = dataset_name
+        self.data_folder = os.path.join(data_folder, dataset_name)
         self.corpus_file = (
-            os.path.join(data_folder, corpus_file)
-            if data_folder
+            os.path.join(self.data_folder, corpus_file)
+            if self.data_folder
             else corpus_file
         )
         self.query_file = (
-            os.path.join(data_folder, query_file) if data_folder else query_file
+            os.path.join(self.data_folder, query_file)
+            if self.data_folder
+            else query_file
         )
-        self.qrels_folder = os.path.join(data_folder, qrels_folder)
+        self.qrels_folder = os.path.join(self.data_folder, qrels_folder)
+
         self.qrels_file = qrels_file
 
         if prefix:
@@ -109,134 +124,124 @@ class TruBEIRDataLoader:
         if not fIn.endswith(ext):
             raise ValueError(f"File {fIn} must be present with extension {ext}")
 
-    def _load_generators(
-        self, split="test"
-    ) -> Tuple[Generator, Generator, Generator]:
-        """
-        Lazily loads the corpus, queries, and qrels in a memory-efficient way.
-        Returns generators instead of loading everything into memory.
-        """
-
-        self.qrels_file = os.path.join(self.qrels_folder, split + ".tsv")
+    def load_corpus(self) -> Dict[str, Dict[str, str]]:
         self.check(fIn=self.corpus_file, ext="jsonl")
-        self.check(fIn=self.query_file, ext="jsonl")
-        self.check(fIn=self.qrels_file, ext="tsv")
 
-        corpus_generator = self._load_corpus_gen()
-        queries_generator = self._load_queries_gen()
-        qrels_generator = self._load_qrels_gen()
+        if not len(self.corpus):
+            logger.info("Loading Corpus...")
+            self._load_corpus()
+            logger.info("Loaded %d Documents.", len(self.corpus))
+            logger.info("Doc Example: %s", list(self.corpus.values())[0])
 
-        return corpus_generator, queries_generator, qrels_generator
+        return self.corpus
 
-    def _load_corpus_gen(self) -> Generator:
+    def _load_corpus(self):
         num_lines = sum(1 for i in open(self.corpus_file, "rb"))
         with open(self.corpus_file, encoding="utf8") as fIn:
             for line in tqdm(fIn, total=num_lines):
                 line = json.loads(line)
-                yield {
-                    "_id": line.get("_id"),
+                self.corpus[line.get("_id")] = {
                     "text": line.get("text"),
                     "title": line.get("title"),
                 }
 
-    def _load_queries_gen(self) -> Generator:
+    def _load_queries(self):
         with open(self.query_file, encoding="utf8") as fIn:
             for line in fIn:
                 line = json.loads(line)
-                yield {
-                    "_id": line.get("_id"),
-                    "text": line.get("text"),
-                }
+                self.queries[line.get("_id")] = line.get("text")
 
-    def _load_qrels_gen(self) -> Generator:
+    def _load_qrels(self):
         reader = csv.reader(
             open(self.qrels_file, encoding="utf-8"),
             delimiter="\t",
             quoting=csv.QUOTE_MINIMAL,
         )
-        next(reader)  # Skip header if present
-        for row in reader:
-            query_id, corpus_id, score = row[0], row[1], int(row[2])
-            yield {
-                "query_id": query_id,
-                "corpus_id": corpus_id,
-                "score": score,
-            }
+        next(reader)
 
-    def _get_beir_dataset_gen(
-        self, dataset_name, data_path, split="test"
-    ) -> Generator:
+        for id, row in enumerate(reader):
+            query_id, corpus_id, score = row[0], row[1], int(row[2])
+
+            if query_id not in self.qrels:
+                self.qrels[query_id] = {corpus_id: score}
+            else:
+                self.qrels[query_id][corpus_id] = score
+
+    def _load(
+        self, split="test"
+    ) -> Tuple[
+        Dict[str, Dict[str, str]], Dict[str, str], Dict[str, Dict[str, int]]
+    ]:
+        self.qrels_file = os.path.join(self.qrels_folder, split + ".tsv")
+        self.check(fIn=self.corpus_file, ext="jsonl")
+        self.check(fIn=self.query_file, ext="jsonl")
+        self.check(fIn=self.qrels_file, ext="tsv")
+
+        if not len(self.corpus):
+            logger.info("Loading Corpus...")
+            self._load_corpus()
+            logger.info(
+                "Loaded %d %s Documents.", len(self.corpus), split.upper()
+            )
+            logger.info("Doc Example: %s", list(self.corpus.values())[0])
+
+        if not len(self.queries):
+            logger.info("Loading Queries...")
+            self._load_queries()
+
+        if os.path.exists(self.qrels_file):
+            self._load_qrels()
+            self.queries = {qid: self.queries[qid] for qid in self.qrels}
+            logger.info(
+                "Loaded %d %s Queries.", len(self.queries), split.upper()
+            )
+            logger.info("Query Example: %s", list(self.queries.values())[0])
+
+        return self.corpus, self.queries, self.qrels
+
+    def load_dataset_to_df(self, split="test") -> pd.DataFrame:
         """
-        Get generators for BEIR dataset entries with pre-processed fields to match expected TruLens schemas.
+        load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
 
         Args:
-            dataset_name: Name of the BEIR dataset to load.
-            data_path: Path where the dataset should be downloaded or is stored.
+            split (str, optional): Defaults to "test".
 
         Returns:
-            Iterator over dataset entries.
+            pd.DataFrame: DataFrame with the BEIR dataset
         """
-        if dataset_name not in BEIR_DATASET_NAMES:
-            raise ValueError(
-                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
-            )
 
-        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{dataset_name}.zip"
-        out_dir = os.path.join(data_path, dataset_name)
+        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
 
-        if not os.path.exists(out_dir):
-            logger.info(f"Downloading {dataset_name} dataset to {out_dir}")
-            download_and_unzip(url, data_path)
+        logger.info(
+            f"Downloading {self.dataset_name} dataset to {self.data_folder}"
+        )
+        download_and_unzip(url, self.data_folder)
 
-        corpus_gen, queries_gen, qrels_gen = TruBEIRDataLoader(
-            data_folder=out_dir
-        )._load_generators(split=split)
-        # Convert the qrels generator to a dictionary to allow lookups
-        qrels = {qrel["query_id"]: {} for qrel in qrels_gen}
-        for qrel in qrels_gen:
-            qrels[qrel["query_id"]][qrel["corpus_id"]] = qrel["score"]
+        corpus, queries, qrels = self._load(split=split)
 
+        dataset_entries = []
         # Iterate over the queries generator and yield the dataset entries
-        for query in queries_gen:
-            query_id = query["_id"]
-            query_text = query["text"]
+        for query_id, query_text in queries.items():
             doc_to_rel = qrels.get(query_id, {})
 
             # Fetch the relevant documents lazily
             expected_chunks = []
-            for corpus_entry in corpus_gen:
-                if corpus_entry["_id"] in doc_to_rel:
+            for corpus_id, corpus_entry in corpus.items():
+                if corpus_id in doc_to_rel:
                     expected_chunks.append({
                         "text": corpus_entry["text"],
                         "title": corpus_entry.get("title"),
+                        "expected_score": doc_to_rel.get(corpus_id),
                     })
+                    doc_to_rel.pop(corpus_id)
+                    if not doc_to_rel:
+                        break
 
-            yield {
+            dataset_entries.append({
                 "query_id": query_id,
                 "query": query_text,
-                "expected_response": qrels.get(query_id, None),
+                "expected_response": None,  # expected response can be empty for IR datasets
                 "expected_chunks": expected_chunks,
-                "dataset_id": dataset_name,
-                "meta": {"source": "BEIR", "dataset": dataset_name},
-            }
-
-    def load_dataset_to_df(
-        self, dataset_name, data_path, split="test"
-    ) -> pd.DataFrame:
-        """
-        loads a specified BEIR dataset into a pandas DataFrame.
-
-        Args:
-            dataset_name (_type_): _description_
-            data_path (_type_): _description_
-            split (str, optional): _description_. Defaults to "test".
-
-        Returns:
-            pd.DataFrame: _description_
-        """
-        dataset_gen = self._get_beir_dataset_gen(
-            dataset_name, data_path, split=split
-        )
-        dataset_list = list(dataset_gen)
-        df = pd.DataFrame(dataset_list)
-        return df
+                "meta": {"source": "BEIR", "domain": "IR"},
+            })
+        return pd.DataFrame(dataset_entries)
