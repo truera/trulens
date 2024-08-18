@@ -242,6 +242,6 @@ class TruBEIRDataLoader:
                 "query": query_text,
                 "expected_response": None,  # expected response can be empty for IR datasets
                 "expected_chunks": expected_chunks,
-                "meta": {"source": "BEIR", "domain": "IR"},
+                "meta": {"source": self.dataset_name},
             })
         return pd.DataFrame(dataset_entries)
