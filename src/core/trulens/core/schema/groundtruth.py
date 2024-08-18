@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import datetime
 import logging
 from typing import Hashable, Optional, Sequence
 
-import pydantic
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
@@ -35,10 +33,6 @@ class GroundTruth(serial.SerialModel, Hashable):
     )
 
     dataset_id: mod_types_schema.DatasetID  # str
-
-    ts: datetime.datetime = pydantic.Field(
-        default_factory=datetime.datetime.now
-    )
 
     def __init__(
         self,
