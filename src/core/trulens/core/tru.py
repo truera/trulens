@@ -886,7 +886,6 @@ class Tru(python.SingletonPerName):
         )
         dataset_id = self.db.insert_dataset(dataset=dataset)
 
-        # Iterate over the DataFrame and queue each ground truth object
         for _, row in ground_truth_df.iterrows():
             ground_truth = mod_groundtruth_schema.GroundTruth(
                 dataset_id=dataset_id,
