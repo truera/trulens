@@ -864,13 +864,14 @@ class Tru(python.SingletonPerName):
                     )
                     continue
 
-    def persist_ground_truth_dataset(
+    def create_or_add_ground_truth_dataset(
         self,
         dataset_name: str,
         ground_truth_df: pd.DataFrame,
         dataset_metadata: Optional[Dict[str, Any]] = None,
     ):
-        """Persist a ground truth dataset to the database in a batched manner.
+        """Create a new dataset, if not existing, and add ground truth data to it. If
+        the dataset with the same name already exists, the ground truth data will be added to it.
 
         Args:
             dataset_name: Name of the dataset.
