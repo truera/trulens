@@ -216,7 +216,7 @@ def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
             "expected_response": qrels.get(query_id, None),
             "expected_chunks": expected_chunks,
             "dataset_id": dataset_name,
-            "metadata": {"source": "BEIR", "dataset": dataset_name},
+            "meta": {"source": "BEIR", "dataset": dataset_name},
         }
 
 
