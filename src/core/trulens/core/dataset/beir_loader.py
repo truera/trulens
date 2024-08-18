@@ -163,65 +163,80 @@ class TruBEIRDataLoader:
                 "score": score,
             }
 
+    def _get_beir_dataset_gen(
+        self, dataset_name, data_path, split="test"
+    ) -> Generator:
+        """
+        Get generators for BEIR dataset entries with pre-processed fields to match expected TruLens schemas.
 
-def _get_beir_dataset_gen(dataset_name, data_path, split="test") -> Generator:
-    """
-    Get generators for BEIR dataset entries with pre-processed fields to match expected TruLens schemas.
+        Args:
+            dataset_name: Name of the BEIR dataset to load.
+            data_path: Path where the dataset should be downloaded or is stored.
 
-    Args:
-        dataset_name: Name of the BEIR dataset to load.
-        data_path: Path where the dataset should be downloaded or is stored.
+        Returns:
+            Iterator over dataset entries.
+        """
+        if dataset_name not in BEIR_DATASET_NAMES:
+            raise ValueError(
+                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
+            )
 
-    Returns:
-        Iterator over dataset entries.
-    """
-    if dataset_name not in BEIR_DATASET_NAMES:
-        raise ValueError(
-            f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
+        url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{dataset_name}.zip"
+        out_dir = os.path.join(data_path, dataset_name)
+
+        if not os.path.exists(out_dir):
+            logger.info(f"Downloading {dataset_name} dataset to {out_dir}")
+            download_and_unzip(url, data_path)
+
+        corpus_gen, queries_gen, qrels_gen = TruBEIRDataLoader(
+            data_folder=out_dir
+        )._load_generators(split=split)
+        # Convert the qrels generator to a dictionary to allow lookups
+        qrels = {qrel["query_id"]: {} for qrel in qrels_gen}
+        for qrel in qrels_gen:
+            qrels[qrel["query_id"]][qrel["corpus_id"]] = qrel["score"]
+
+        # Iterate over the queries generator and yield the dataset entries
+        for query in queries_gen:
+            query_id = query["_id"]
+            query_text = query["text"]
+            doc_to_rel = qrels.get(query_id, {})
+
+            # Fetch the relevant documents lazily
+            expected_chunks = []
+            for corpus_entry in corpus_gen:
+                if corpus_entry["_id"] in doc_to_rel:
+                    expected_chunks.append({
+                        "text": corpus_entry["text"],
+                        "title": corpus_entry.get("title"),
+                    })
+
+            yield {
+                "query_id": query_id,
+                "query": query_text,
+                "expected_response": qrels.get(query_id, None),
+                "expected_chunks": expected_chunks,
+                "dataset_id": dataset_name,
+                "meta": {"source": "BEIR", "dataset": dataset_name},
+            }
+
+    def load_dataset_to_df(
+        self, dataset_name, data_path, split="test"
+    ) -> pd.DataFrame:
+        """
+        loads a specified BEIR dataset into a pandas DataFrame.
+
+        Args:
+            dataset_name (_type_): _description_
+            data_path (_type_): _description_
+            split (str, optional): _description_. Defaults to "test".
+
+        Returns:
+            pd.DataFrame: _description_
+        """
+        dataset_gen = self._get_beir_dataset_gen(
+            dataset_name, data_path, split=split
         )
-
-    url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{dataset_name}.zip"
-    out_dir = os.path.join(data_path, dataset_name)
-
-    if not os.path.exists(out_dir):
-        logger.info(f"Downloading {dataset_name} dataset to {out_dir}")
-        download_and_unzip(url, data_path)
-
-    corpus_gen, queries_gen, qrels_gen = TruBEIRDataLoader(
-        data_folder=out_dir
-    )._load_generators(split=split)
-    # Convert the qrels generator to a dictionary to allow lookups
-    qrels = {qrel["query_id"]: {} for qrel in qrels_gen}
-    for qrel in qrels_gen:
-        qrels[qrel["query_id"]][qrel["corpus_id"]] = qrel["score"]
-
-    # Iterate over the queries generator and yield the dataset entries
-    for query in queries_gen:
-        query_id = query["_id"]
-        query_text = query["text"]
-        doc_to_rel = qrels.get(query_id, {})
-
-        # Fetch the relevant documents lazily
-        expected_chunks = []
-        for corpus_entry in corpus_gen:
-            if corpus_entry["_id"] in doc_to_rel:
-                expected_chunks.append({
-                    "text": corpus_entry["text"],
-                    "title": corpus_entry.get("title"),
-                })
-
-        yield {
-            "query_id": query_id,
-            "query": query_text,
-            "expected_response": qrels.get(query_id, None),
-            "expected_chunks": expected_chunks,
-            "dataset_id": dataset_name,
-            "meta": {"source": "BEIR", "dataset": dataset_name},
-        }
-
-
-def load_beir_dataset_df(dataset_name, data_path, split="test") -> pd.DataFrame:
-    dataset_gen = _get_beir_dataset_gen(dataset_name, data_path, split=split)
-    dataset_list = list(dataset_gen)
-    df = pd.DataFrame(dataset_list)
-    return df
+        dataset_list = list(dataset_gen)
+        df = pd.DataFrame(dataset_list)
+        return df
