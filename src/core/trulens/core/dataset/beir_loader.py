@@ -77,36 +77,38 @@ def download_and_unzip(url: str, out_dir: str, chunk_size: int = 1024) -> str:
 class TruBEIRDataLoader:
     def __init__(
         self,
-        dataset_name: str,
         data_folder: str,
+        dataset_name: str,
         prefix: str = "",
         corpus_file: str = "corpus.jsonl",
         query_file: str = "queries.jsonl",
         qrels_folder: str = "qrels",
         qrels_file: str = "",
     ):
-        if dataset_name not in BEIR_DATASET_NAMES:
-            raise ValueError(
-                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
-            )
-
         self.corpus = {}
         self.queries = {}
         self.qrels = {}
 
+        if dataset_name not in BEIR_DATASET_NAMES:
+            raise ValueError(
+                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
+            )
         self.dataset_name = dataset_name
-        self.data_folder = os.path.join(data_folder, dataset_name)
+        self.data_folder = data_folder
+
         self.corpus_file = (
-            os.path.join(self.data_folder, corpus_file)
+            os.path.join(self.data_folder, dataset_name, corpus_file)
             if self.data_folder
             else corpus_file
         )
         self.query_file = (
-            os.path.join(self.data_folder, query_file)
+            os.path.join(self.data_folder, dataset_name, query_file)
             if self.data_folder
             else query_file
         )
-        self.qrels_folder = os.path.join(self.data_folder, qrels_folder)
+        self.qrels_folder = os.path.join(
+            self.data_folder, dataset_name, qrels_folder
+        )
 
         self.qrels_file = qrels_file
 
@@ -212,9 +214,7 @@ class TruBEIRDataLoader:
 
         url = f"https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/{self.dataset_name}.zip"
 
-        logger.info(
-            f"Downloading {self.dataset_name} dataset to {self.data_folder}"
-        )
+        logger.info(f"Downloading {self.dataset_name} dataset from {url}")
         download_and_unzip(url, self.data_folder)
 
         corpus, queries, qrels = self._load(split=split)
