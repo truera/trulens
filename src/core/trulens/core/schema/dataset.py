@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import datetime
 import logging
 from typing import Hashable, Optional
 
-import pydantic
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
@@ -22,20 +20,20 @@ class Dataset(serial.SerialModel, Hashable):
 
     name: str
 
-    meta: mod_types_schema.Metadata  # dict
+    domain: Optional[str] = None
 
-    ts: datetime.datetime = pydantic.Field(
-        default_factory=datetime.datetime.now
-    )
+    meta: mod_types_schema.Metadata  # dict
 
     def __init__(
         self,
         name: str,
+        domain: Optional[str] = None,
         dataset_id: Optional[mod_types_schema.DatasetID] = None,
         meta: Optional[mod_types_schema.Metadata] = None,
         **kwargs,
     ):
         kwargs["name"] = name
+        kwargs["domain"] = domain
         kwargs["meta"] = meta if meta is not None else {}
         super().__init__(
             dataset_id="temporary", **kwargs
