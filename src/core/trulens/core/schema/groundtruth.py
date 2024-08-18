@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Hashable, Optional, Sequence
+from typing import Dict, Hashable, Optional, Sequence
 
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
@@ -26,7 +26,7 @@ class GroundTruth(serial.SerialModel, Hashable):
         None  # expected response can be empty in GT datasets
     )
 
-    expected_chunks: Optional[Sequence[str]] = None
+    expected_chunks: Optional[Sequence[Dict]] = None
 
     meta: Optional[mod_types_schema.Metadata] = (
         None  # TODO: which naming are we exactly going with - meta vs metadata?
@@ -40,7 +40,7 @@ class GroundTruth(serial.SerialModel, Hashable):
         query: str,
         query_id: Optional[str] = None,
         expected_response: Optional[str] = None,
-        expected_chunks: Optional[Sequence[str]] = None,
+        expected_chunks: Optional[Sequence[Dict]] = None,
         meta: Optional[mod_types_schema.Metadata] = None,
         ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
         **kwargs,
