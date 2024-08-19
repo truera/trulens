@@ -25,8 +25,10 @@ from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import serial
-from trulens.core.utils.python import Future  # code style exception
+from trulens.core.utils.python import Future
+from trulens.core.workspace import default as default_workspace
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,33 @@ class BaseWorkspace(ABC):
     batch_record_queue = queue.Queue()
 
     batch_thread = None
+
+    @staticmethod
+    def from_tru_args(**kwargs) -> BaseWorkspace:
+        """Create a workspace from trulens arguments.
+
+        Args:
+            **kwargs: Keyword arguments to pass to the workspace constructor.
+
+        Returns:
+            A workspace instance.
+        """
+        if any(k.startswith("snowflake") for k in kwargs):
+            if not import_utils.is_module_installed(
+                "trulens-workspace-snowflake"
+            ):
+                raise ModuleNotFoundError(
+                    "Snowflake workspaces require `trulens-workspace-snowflake` to be installed."
+                )
+
+            from trulens.workspaces.snowflake import (
+                workspace as snowflake_workspace,
+            )
+
+            return snowflake_workspace.SnowflakeWorkspace(**kwargs)
+
+        # otherwise default to DefaultWorkspace
+        return default_workspace.DefaultWorkspace(**kwargs)
 
     @property
     @abstractmethod

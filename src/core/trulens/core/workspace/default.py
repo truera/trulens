@@ -28,7 +28,7 @@ class DefaultWorkspace(BaseWorkspace):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
     ):
-        """Create a workspace backed by a database."""
+        """Create a workspace backed by a databxase."""
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 

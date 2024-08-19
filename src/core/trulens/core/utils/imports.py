@@ -24,6 +24,15 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
+def is_module_installed(modname: str) -> bool:
+    try:
+        __import__(modname)
+        return True
+
+    except ImportError:
+        return False
+
+
 def safe_importlib_package_name(package_name: str) -> str:
     return (
         package_name

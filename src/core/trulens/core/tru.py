@@ -34,7 +34,6 @@ from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
 from trulens.core.workspace import BaseWorkspace
-from trulens.core.workspace import DefaultWorkspace
 
 tqdm = None
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
@@ -85,10 +84,11 @@ class Tru(python.SingletonPerName):
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
-    """How long to wait (in seconds) before restarting a feedback function that has already started
+    """How long to wait (in seconds) before restarting a feedback function that
+    has already started.
 
-    A feedback function execution that has started may have stalled or failed in a bad way that did not record the
-    failure.
+    A feedback function execution that has started may have stalled or failed in
+    a bad way that did not record the failure.
 
     See also:
         [start_evaluator][trulens.core.tru.Tru.start_evaluator]
@@ -108,7 +108,8 @@ class Tru(python.SingletonPerName):
     _dashboard_urls: Optional[str] = None
 
     _evaluator_proc: Optional[Union[Process, Thread]] = None
-    """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
+    """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the
+    deferred feedback evaluator if started.
 
         Is set to `None` if evaluator is not running.
     """
@@ -126,16 +127,21 @@ class Tru(python.SingletonPerName):
 
     batch_thread = None
 
+    workspace: Optional[BaseWorkspace] = None
+
     def __new__(cls, *args, **kwargs) -> Tru:
         inst = super().__new__(cls, *args, **kwargs)
         assert isinstance(inst, Tru)
         return inst
 
-    def __init__(
-        self,
-        workspace: Optional[BaseWorkspace] = None,
-    ):
-        self.workspace = workspace or DefaultWorkspace()
+    def __init__(self, workspace: Optional[BaseWorkspace] = None, **kwargs):
+        """Create a new Tru instance with the given workspace.
+
+        If workspace is not given, a workspace is selected based on the other
+        arguments.
+        """
+
+        self.workspace = workspace or BaseWorkspace.from_tru_args(**kwargs)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
