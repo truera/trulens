@@ -268,14 +268,14 @@ class TruBEIRDataLoader:
     def load_dataset_to_df(
         self,
         split="test",
-        no_download=False,
+        download=True,
     ) -> pd.DataFrame:
         """
         load BEIR dataset into dataframe with pre-processed fields to match expected TruLens schemas.
         Note this method loads the entire dataset into memory at once.
         Args:
             split (str, optional): Defaults to "test".
-            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
+            download (bool, optional): If False, remove the downloaded dataset file after processing. Defaults to True.
         Returns:
             pd.DataFrame: DataFrame with the BEIR dataset
         """
@@ -283,7 +283,7 @@ class TruBEIRDataLoader:
         for chunk in self._process_dataset(split=split):
             dataset_entries.extend(chunk)
 
-        if no_download:
+        if not download:
             logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
             os.system(
                 f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
@@ -300,7 +300,7 @@ class TruBEIRDataLoader:
         dataset_name: str,
         dataset_metadata: Optional[Dict[str, Any]] = None,
         split="test",
-        no_download=False,
+        download=True,
         chunk_size=1000,
     ):
         """
@@ -311,7 +311,7 @@ class TruBEIRDataLoader:
             tru (Tru): Tru workspace instance to persist the dataset.
             dataset_name (str): Name of the dataset to be persisted - Note this can be different from the standardized BEIR dataset names.
             dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset.
-            no_download (bool, optional): whether to clean up the downloaded dataset. Defaults to False.
+            download (bool, optional): If False, remove the downloaded dataset file after processing. Defaults to True.
         Returns:
             pd.DataFrame: DataFrame with the BEIR dataset
         """
@@ -323,7 +323,7 @@ class TruBEIRDataLoader:
                 dataset_metadata=dataset_metadata,
             )
 
-        if no_download:
+        if not download:
             logger.info(f"Cleaning up downloaded {self.dataset_name} dataset")
             os.system(
                 f"rm -rf {os.path.join(self.data_folder, self.dataset_name)}"
