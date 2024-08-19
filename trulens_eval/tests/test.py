@@ -344,7 +344,7 @@ class JSONTestCase(TestCase):
                 j2 = str_sorted(j2, skips=skips)
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
-                with self.subtest(i, path=ps):
+                with self.subTest(i, path=ps):
                     recur(v1, v2, path=path[i])
 
         elif isinstance(j1, datetime):
