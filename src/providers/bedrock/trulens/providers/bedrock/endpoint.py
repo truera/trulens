@@ -6,8 +6,7 @@ from typing import Any, Callable, ClassVar, Iterable, Optional
 import boto3
 from botocore.client import ClientCreator
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as base_endpoint
 from trulens.core.feedback.endpoint import INSTRUMENT
 from trulens.core.utils.python import safe_hasattr
 
@@ -16,14 +15,16 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-class BedrockCallback(EndpointCallback):
+class WrapperBedrockCallback(base_endpoint.WrapperEndpointCallback):
+    """EXPERIMENTAL: otel-tracing"""
+
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
-        super().handle_generation_chunk(response)
+        """Handle stream chunk.
 
-        # Example chunk:
-        """
+        Example chunk:
+        ```json
         {'chunk': {
             'bytes': b'''{"outputText":"\\nHello! I am a computer program designed to assist you. How can I help you today?",
                  "index":0,
@@ -36,7 +37,9 @@ class BedrockCallback(EndpointCallback):
                      "invocationLatency":1574,
                      "firstByteLatency":1574
                 }}'''}}
+        ```
         """
+        super().on_endpoint_generation_chunk(response)
 
         chunk = response.get("chunk")
         if chunk is None:
@@ -67,22 +70,25 @@ class BedrockCallback(EndpointCallback):
             self.cost.n_tokens += int(input_tokens)
 
     def handle_generation(self, response: Any) -> None:
-        super().handle_generation(response)
+        """Handle completion generation.
 
-        # Example response for completion:
+        Example response for completion:
+        ```json
+            {'ResponseMetadata': {'HTTPHeaders': {'connection': 'keep-alive',
+                                                'content-length': '181',
+                                                'content-type': 'application/json',
+                                                'date': 'Mon, 04 Dec 2023 23:25:27 GMT',
+                                                'x-amzn-bedrock-input-token-count': '3',
+                                                'x-amzn-bedrock-invocation-latency': '984',
+                                                'x-amzn-bedrock-output-token-count': '20',
+                                'HTTPStatusCode': 200,
+                                'RetryAttempts': 0},
+            'body': <botocore.response.StreamingBody object at 0x2bb6ae250>,
+                 'contentType': 'application/json'}
+        ```
         """
-{'ResponseMetadata': {'HTTPHeaders': {'connection': 'keep-alive',
-                                      'content-length': '181',
-                                      'content-type': 'application/json',
-                                      'date': 'Mon, 04 Dec 2023 23:25:27 GMT',
-                                      'x-amzn-bedrock-input-token-count': '3',
-                                      'x-amzn-bedrock-invocation-latency': '984',
-                                      'x-amzn-bedrock-output-token-count': '20',
-                      'HTTPStatusCode': 200,
-                      'RetryAttempts': 0},
- 'body': <botocore.response.StreamingBody object at 0x2bb6ae250>,
- 'contentType': 'application/json'}
- """
+
+        super().on_endpoint_generation(response)
 
         # NOTE(piotrm) LangChain does not currently support cost tracking for
         # Bedrock. We can at least count successes and tokens visible in the
@@ -118,14 +124,128 @@ class BedrockCallback(EndpointCallback):
 
         else:
             logger.warning(
-                f"Could not parse bedrock response outcome to track usage.\n"
-                f"{pp.pformat(response)}"
+                "Could not parse bedrock response outcome to track usage.\n%s",
+                pp.pformat(response),
             )
 
 
-class BedrockEndpoint(Endpoint):
-    """
-    Bedrock endpoint.
+class BedrockCallback(base_endpoint.EndpointCallback):
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
+
+    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+
+    def handle_generation_chunk(self, response: Any) -> None:
+        """Handle stream chunk.
+
+        Example chunk:
+        ```json
+        {'chunk': {
+            'bytes': b'''{"outputText":"\\nHello! I am a computer program designed to assist you. How can I help you today?",
+                 "index":0,
+                 "totalOutputTextTokenCount":21,
+                 "completionReason":"FINISH",
+                 "inputTextTokenCount":3,
+                 "amazon-bedrock-invocationMetrics":{
+                     "inputTokenCount":3,
+                     "outputTokenCount":21,
+                     "invocationLatency":1574,
+                     "firstByteLatency":1574
+                }}'''}}
+        ```
+        """
+        super().handle_generation_chunk(response)
+
+        chunk = response.get("chunk")
+        if chunk is None:
+            return
+
+        data = chunk.get("bytes")
+        if data is None:
+            return
+
+        import json
+
+        data = json.loads(data.decode())
+
+        metrics = data.get("amazon-bedrock-invocationMetrics")
+        # Hopefully metrics are given only once at the last chunk so the below
+        # adds are correct.
+        if metrics is None:
+            return
+
+        output_tokens = metrics.get("outputTokenCount")
+        if output_tokens is not None:
+            self.cost.n_completion_tokens += int(output_tokens)
+            self.cost.n_tokens += int(output_tokens)
+
+        input_tokens = metrics.get("inputTokenCount")
+        if input_tokens is not None:
+            self.cost.n_prompt_tokens += int(input_tokens)
+            self.cost.n_tokens += int(input_tokens)
+
+    def handle_generation(self, response: Any) -> None:
+        """Process a generation.
+
+        Example response for completion:
+
+        ```json
+            {'ResponseMetadata': {'HTTPHeaders': {'connection': 'keep-alive',
+                                                'content-length': '181',
+                                                'content-type': 'application/json',
+                                                'date': 'Mon, 04 Dec 2023 23:25:27 GMT',
+                                                'x-amzn-bedrock-input-token-count': '3',
+                                                'x-amzn-bedrock-invocation-latency': '984',
+                                                'x-amzn-bedrock-output-token-count': '20',
+                                'HTTPStatusCode': 200,
+                                'RetryAttempts': 0},
+            'body': <botocore.response.StreamingBody object at 0x2bb6ae250>,
+            'contentType': 'application/json'}
+         ```
+        """
+
+        super().handle_generation(response)
+
+        # NOTE(piotrm) LangChain does not currently support cost tracking for
+        # Bedrock. We can at least count successes and tokens visible in the
+        # example output above.
+
+        was_success = False
+
+        if response is not None:
+            metadata = response.get("ResponseMetadata")
+            if metadata is not None:
+                status = metadata.get("HTTPStatusCode")
+                if status is not None and status == 200:
+                    was_success = True
+
+                    headers = metadata.get("HTTPHeaders")
+                    if headers is not None:
+                        output_tokens = headers.get(
+                            "x-amzn-bedrock-output-token-count"
+                        )
+                        if output_tokens is not None:
+                            self.cost.n_completion_tokens += int(output_tokens)
+                            self.cost.n_tokens += int(output_tokens)
+
+                        input_tokens = headers.get(
+                            "x-amzn-bedrock-input-token-count"
+                        )
+                        if input_tokens is not None:
+                            self.cost.n_prompt_tokens += int(input_tokens)
+                            self.cost.n_tokens += int(input_tokens)
+
+        if was_success:
+            self.cost.n_successful_requests += 1
+
+        else:
+            logger.warning(
+                "Could not parse bedrock response outcome to track usage.\n%s",
+                pp.pformat(response),
+            )
+
+
+class BedrockEndpoint(base_endpoint.Endpoint):
+    """Bedrock endpoint.
 
     Instruments `invoke_model` and `invoke_model_with_response_stream` methods
     created by `boto3.ClientCreator._create_api_method`.
@@ -207,8 +327,10 @@ class BedrockEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[base_endpoint.EndpointCallback],
     ) -> None:
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
+
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:

@@ -361,6 +361,8 @@ class WrapperDummyEndpointCallback(base_endpoint.WrapperEndpointCallback):
 class DummyEndpointCallback(base_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
+
     def handle_classification(self, response: Sequence) -> None:
         super().handle_classification(response)
 
