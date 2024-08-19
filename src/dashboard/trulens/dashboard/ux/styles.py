@@ -123,7 +123,7 @@ cellstyle_jscode = {
         """
     + "\n".join(
         f"""
-        if (v {'>=' if k == "HIGHER_IS_BETTER" else '<='} {cat.threshold}) {{
+        if (v {">=" if k == "HIGHER_IS_BETTER" else "<="} {cat.threshold}) {{
             return {{
                 'color': 'black',
                 'backgroundColor': '{cat.color}'

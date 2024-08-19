@@ -328,7 +328,10 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: Tru, limit: Optional[int] = None, shuffle: bool = False
+        tru: Tru,
+        limit: Optional[int] = None,
+        shuffle: bool = False,
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
     ) -> List[
         Tuple[
             pandas.Series,
@@ -345,6 +348,8 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             limit: The maximum number of evals to start.
 
             shuffle: Shuffle the order of the feedbacks to evaluate.
+
+            run_location: Only run feedback functions with this run_location.
 
         Constants that govern behaviour:
 
@@ -391,6 +396,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ],
             limit=limit,
             shuffle=shuffle,
+            run_location=run_location,
         )
 
         tp = mod_threading_utils.TP()
@@ -1217,6 +1223,12 @@ Feedback function signature:
                 app=app, record=record, source_data=source_data
             )
         )
+
+
+class SnowflakeFeedback(Feedback):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.run_location = mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
 
 
 Feedback.model_rebuild()

@@ -67,76 +67,62 @@ class Bedrock(LLMProvider):
         import json
 
         if messages:
-            messages_str = " ".join(
-                [
-                    f"{message['role']}: {message['content']}"
-                    for message in messages
-                ]
-            )
+            messages_str = " ".join([
+                f"{message['role']}: {message['content']}"
+                for message in messages
+            ])
         elif prompt:
             messages_str = prompt
         else:
             raise ValueError("Either 'messages' or 'prompt' must be supplied.")
 
         if self.model_id.startswith("amazon"):
-            body = json.dumps(
-                {
-                    "inputText": messages_str,
-                    "textGenerationConfig": {
-                        "maxTokenCount": 4095,
-                        "stopSequences": [],
-                        "temperature": 0,
-                        "topP": 1,
-                    },
-                }
-            )
-        elif self.model_id.startswith("anthropic"):
-            body = json.dumps(
-                {
-                    "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
-                    "temperature": 0,
-                    "top_p": 1,
-                    "max_tokens_to_sample": 4095,
-                }
-            )
-        elif self.model_id.startswith("cohere"):
-            body = json.dumps(
-                {
-                    "prompt": messages_str,
-                    "temperature": 0,
-                    "p": 1,
-                    "max_tokens": 4095,
-                }
-            )
-        elif self.model_id.startswith("ai21"):
-            body = json.dumps(
-                {
-                    "prompt": messages_str,
+            body = json.dumps({
+                "inputText": messages_str,
+                "textGenerationConfig": {
+                    "maxTokenCount": 4095,
+                    "stopSequences": [],
                     "temperature": 0,
                     "topP": 1,
-                    "maxTokens": 8191,
-                }
-            )
+                },
+            })
+        elif self.model_id.startswith("anthropic"):
+            body = json.dumps({
+                "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
+                "temperature": 0,
+                "top_p": 1,
+                "max_tokens_to_sample": 4095,
+            })
+        elif self.model_id.startswith("cohere"):
+            body = json.dumps({
+                "prompt": messages_str,
+                "temperature": 0,
+                "p": 1,
+                "max_tokens": 4095,
+            })
+        elif self.model_id.startswith("ai21"):
+            body = json.dumps({
+                "prompt": messages_str,
+                "temperature": 0,
+                "topP": 1,
+                "maxTokens": 8191,
+            })
 
         elif self.model_id.startswith("mistral"):
-            body = json.dumps(
-                {
-                    "prompt": messages_str,
-                    "temperature": 0,
-                    "top_p": 1,
-                    "max_tokens": 4095,
-                }
-            )
+            body = json.dumps({
+                "prompt": messages_str,
+                "temperature": 0,
+                "top_p": 1,
+                "max_tokens": 4095,
+            })
 
         elif self.model_id.startswith("meta"):
-            body = json.dumps(
-                {
-                    "prompt": messages_str,
-                    "temperature": 0,
-                    "top_p": 1,
-                    "max_gen_len": 2047,
-                }
-            )
+            body = json.dumps({
+                "prompt": messages_str,
+                "temperature": 0,
+                "top_p": 1,
+                "max_gen_len": 2047,
+            })
         else:
             raise NotImplementedError(
                 f"The model selected, {self.model_id}, is not yet implemented as a feedback provider"

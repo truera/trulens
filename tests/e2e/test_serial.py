@@ -87,18 +87,16 @@ class TestSerial(JSONTestCase):
             self.assertGoldenJSONEqual(
                 actual=record.model_dump(),
                 golden_filename="customapp_record.json",
-                skips=set(
-                    [
-                        "end_time",
-                        "start_time",
-                        "record_id",
-                        "pid",
-                        "tid",
-                        "id",
-                        "ts",
-                        "call_id",
-                    ]
-                ),
+                skips=set([
+                    "end_time",
+                    "start_time",
+                    "record_id",
+                    "pid",
+                    "tid",
+                    "id",
+                    "ts",
+                    "call_id",
+                ]),
             )
 
         feedbacks = record.wait_for_feedback_results()
@@ -114,21 +112,19 @@ class TestSerial(JSONTestCase):
                 self.assertGoldenJSONEqual(
                     actual=fres.model_dump(),
                     golden_filename=f"customapp_{name}.result.json",
-                    skips=set(
-                        [
-                            "feedback_definition_id",
-                            "id",
-                            "last_ts",
-                            "record_id",
-                            "feedback_result_id",
-                            # Skip these if non-determinism becomes a problem:
-                            "result",
-                            "LABEL_0",
-                            "LABEL_1",
-                            "LABEL_2",
-                            "ret",
-                        ]
-                    ),
+                    skips=set([
+                        "feedback_definition_id",
+                        "id",
+                        "last_ts",
+                        "record_id",
+                        "feedback_result_id",
+                        # Skip these if non-determinism becomes a problem:
+                        "result",
+                        "LABEL_0",
+                        "LABEL_1",
+                        "LABEL_2",
+                        "ret",
+                    ]),
                 )
 
 
