@@ -1,8 +1,8 @@
 {
-  "feedback_result_id": "feedback_result_hash_5ecab43501a0e2e88db2bde3a456f7bc",
-  "record_id": "record_hash_2b94501522f41136287301685661234d",
-  "feedback_definition_id": "feedback_definition_hash_7f50d489184a6d8280e533abd3924737",
-  "last_ts": "2024-08-06T12:27:34.132321",
+  "feedback_result_id": "feedback_result_hash_42b668faaeef54ded7c91faeeb26175f",
+  "record_id": "record_hash_78a9a90ee94a8c0f8679391003330756",
+  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
+  "last_ts": "2024-08-09T15:20:30.596928",
   "status": "done",
   "cost": {
     "n_requests": 0,
@@ -19,13 +19,13 @@
     {
       "args": {
         "question": "hello",
-        "context": "This is my response to a prompt of length 167 with a model derp with temperature 0.5."
+        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
       },
-      "ret": 0.0,
+      "ret": 0.6666666666666666,
       "meta": {}
     }
   ],
-  "result": 0.0,
+  "result": 0.6666666666666666,
   "error": null,
   "multi_result": "null"
 }

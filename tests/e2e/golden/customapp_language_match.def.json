@@ -2,39 +2,39 @@
   "tru_class_info": {
     "name": "Feedback",
     "module": {
-      "package_name": "trulens_eval.feedback",
-      "module_name": "trulens_eval.feedback.feedback"
+      "package_name": "trulens.core.feedback",
+      "module_name": "trulens.core.feedback.feedback"
     },
     "bases": [
       {
         "name": "Feedback",
         "module": {
-          "package_name": "trulens_eval.feedback",
-          "module_name": "trulens_eval.feedback.feedback"
+          "package_name": "trulens.core.feedback",
+          "module_name": "trulens.core.feedback.feedback"
         },
         "bases": null
       },
       {
         "name": "FeedbackDefinition",
         "module": {
-          "package_name": "trulens_eval.schema",
-          "module_name": "trulens_eval.schema.feedback"
+          "package_name": "trulens.core.schema",
+          "module_name": "trulens.core.schema.feedback"
         },
         "bases": null
       },
       {
         "name": "WithClassInfo",
         "module": {
-          "package_name": "trulens_eval.utils",
-          "module_name": "trulens_eval.utils.pyschema"
+          "package_name": "trulens.core.utils",
+          "module_name": "trulens.core.utils.pyschema"
         },
         "bases": null
       },
       {
         "name": "SerialModel",
         "module": {
-          "package_name": "trulens_eval.utils",
-          "module_name": "trulens_eval.utils.serial"
+          "package_name": "trulens.core.utils",
+          "module_name": "trulens.core.utils.serial"
         },
         "bases": null
       },
@@ -77,67 +77,67 @@
       "cls": {
         "name": "Dummy",
         "module": {
-          "package_name": "trulens_eval.feedback.provider",
-          "module_name": "trulens_eval.feedback.provider.hugs"
+          "package_name": "trulens.providers.huggingface",
+          "module_name": "trulens.providers.huggingface.provider"
         },
         "bases": null
       },
-      "id": 12919598336,
+      "id": 13687379984,
       "init_bindings": {
         "args": [],
         "kwargs": {
           "tru_class_info": {
             "name": "Dummy",
             "module": {
-              "package_name": "trulens_eval.feedback.provider",
-              "module_name": "trulens_eval.feedback.provider.hugs"
+              "package_name": "trulens.providers.huggingface",
+              "module_name": "trulens.providers.huggingface.provider"
             },
             "bases": [
               {
                 "name": "Dummy",
                 "module": {
-                  "package_name": "trulens_eval.feedback.provider",
-                  "module_name": "trulens_eval.feedback.provider.hugs"
+                  "package_name": "trulens.providers.huggingface",
+                  "module_name": "trulens.providers.huggingface.provider"
                 },
                 "bases": null
               },
               {
                 "name": "Huggingface",
                 "module": {
-                  "package_name": "trulens_eval.feedback.provider",
-                  "module_name": "trulens_eval.feedback.provider.hugs"
+                  "package_name": "trulens.providers.huggingface",
+                  "module_name": "trulens.providers.huggingface.provider"
                 },
                 "bases": null
               },
               {
                 "name": "HuggingfaceBase",
                 "module": {
-                  "package_name": "trulens_eval.feedback.provider",
-                  "module_name": "trulens_eval.feedback.provider.hugs"
+                  "package_name": "trulens.providers.huggingface",
+                  "module_name": "trulens.providers.huggingface.provider"
                 },
                 "bases": null
               },
               {
                 "name": "Provider",
                 "module": {
-                  "package_name": "trulens_eval.feedback.provider",
-                  "module_name": "trulens_eval.feedback.provider.base"
+                  "package_name": "trulens.core.feedback",
+                  "module_name": "trulens.core.feedback.provider"
                 },
                 "bases": null
               },
               {
                 "name": "WithClassInfo",
                 "module": {
-                  "package_name": "trulens_eval.utils",
-                  "module_name": "trulens_eval.utils.pyschema"
+                  "package_name": "trulens.core.utils",
+                  "module_name": "trulens.core.utils.pyschema"
                 },
                 "bases": null
               },
               {
                 "name": "SerialModel",
                 "module": {
-                  "package_name": "trulens_eval.utils",
-                  "module_name": "trulens_eval.utils.serial"
+                  "package_name": "trulens.core.utils",
+                  "module_name": "trulens.core.utils.serial"
                 },
                 "bases": null
               },
@@ -163,39 +163,39 @@
             "tru_class_info": {
               "name": "DummyEndpoint",
               "module": {
-                "package_name": "trulens_eval.feedback.provider.endpoint",
-                "module_name": "trulens_eval.feedback.provider.endpoint.dummy"
+                "package_name": "trulens.core.feedback.dummy",
+                "module_name": "trulens.core.feedback.dummy.endpoint"
               },
               "bases": [
                 {
                   "name": "DummyEndpoint",
                   "module": {
-                    "package_name": "trulens_eval.feedback.provider.endpoint",
-                    "module_name": "trulens_eval.feedback.provider.endpoint.dummy"
+                    "package_name": "trulens.core.feedback.dummy",
+                    "module_name": "trulens.core.feedback.dummy.endpoint"
                   },
                   "bases": null
                 },
                 {
                   "name": "Endpoint",
                   "module": {
-                    "package_name": "trulens_eval.feedback.provider.endpoint",
-                    "module_name": "trulens_eval.feedback.provider.endpoint.base"
+                    "package_name": "trulens.core.feedback",
+                    "module_name": "trulens.core.feedback.endpoint"
                   },
                   "bases": null
                 },
                 {
                   "name": "WithClassInfo",
                   "module": {
-                    "package_name": "trulens_eval.utils",
-                    "module_name": "trulens_eval.utils.pyschema"
+                    "package_name": "trulens.core.utils",
+                    "module_name": "trulens.core.utils.pyschema"
                   },
                   "bases": null
                 },
                 {
                   "name": "SerialModel",
                   "module": {
-                    "package_name": "trulens_eval.utils",
-                    "module_name": "trulens_eval.utils.serial"
+                    "package_name": "trulens.core.utils",
+                    "module_name": "trulens.core.utils.serial"
                   },
                   "bases": null
                 },
@@ -210,16 +210,8 @@
                 {
                   "name": "SingletonPerName",
                   "module": {
-                    "package_name": "trulens_eval.utils",
-                    "module_name": "trulens_eval.utils.python"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "Generic",
-                  "module": {
-                    "package_name": "",
-                    "module_name": "typing"
+                    "package_name": "trulens.core.utils",
+                    "module_name": "trulens.core.utils.python"
                   },
                   "bases": null
                 },
@@ -258,7 +250,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13958684704,
+                    "id": 13715532832,
                     "init_bindings": null
                   }
                 },
@@ -272,7 +264,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13903497024,
+                    "id": 13687236672,
                     "init_bindings": null
                   }
                 },
@@ -287,7 +279,7 @@
   },
   "aggregator": null,
   "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_8e36e4c5a12e5ef2eeab7816bc7eeae8",
+  "feedback_definition_id": "feedback_definition_hash_384b6684542d80bc527324e86cf65c7a",
   "if_exists": null,
   "if_missing": "error",
   "selectors": {
