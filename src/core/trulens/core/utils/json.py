@@ -4,13 +4,22 @@ from __future__ import annotations
 
 import dataclasses
 from enum import Enum
+import hashlib
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Set, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Optional,
+    Sequence,
+    Set,
+    TypeVar,
+    Union,
+)
 
-from merkle_json import MerkleJson
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
@@ -41,10 +50,38 @@ with import_utils.OptionalImports(messages=import_utils.REQUIREMENT_OPENAI):
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
-
 T = TypeVar("T")
 
-mj = MerkleJson()
+
+def _recursive_hash(
+    value: Union[dict, list, str, int, bool, float, complex, None],
+    ignore_none=False,
+) -> str:
+    """Hash a json-like structure. Implementation is simplified from merkle_json.
+
+    Args:
+        value (Union[dict, list, str, int, bool, float, complex, None]): The value or object to hash.
+        ignore_none (bool, optional): If provided, ignore None values in the hash. Defaults to False.
+
+    Returns:
+        str: The hash of the value.
+    """
+    if isinstance(value, list):
+        h_acc = [_recursive_hash(v, ignore_none) for v in value]
+        return _recursive_hash("".join(sorted(h_acc)), ignore_none)
+    elif isinstance(value, dict):
+        keys = sorted(value.keys())
+        acc = ""
+        for k in keys:
+            key_val = value[k]
+            if ignore_none and key_val is None:
+                continue
+
+            acc += f"{k}:{_recursive_hash(key_val, ignore_none=ignore_none)},"
+        return _recursive_hash(acc, ignore_none=ignore_none)
+    else:
+        return hashlib.md5(str(value).encode("utf-8")).hexdigest()
+
 
 # Add encoders for some types that pydantic cannot handle but we need.
 
@@ -55,7 +92,7 @@ def obj_id_of_obj(obj: dict, prefix="obj"):
     name if definition stays the same.
     """
 
-    return f"{prefix}_hash_{mj.hash(obj)}"
+    return f"{prefix}_hash_{_recursive_hash(obj)}"
 
 
 def json_str_of_obj(
@@ -242,9 +279,9 @@ def jsonify(
     elif isinstance(obj, Dict):
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {k: recur(v) for k, v in obj.items() if recur_key(k)}
-        )
+        forward_value.update({
+            k: recur(v) for k, v in obj.items() if recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -277,13 +314,11 @@ def jsonify(
 
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {
-                k: recur(pyschema_utils.getattr_serial(obj, k))
-                for k, v in obj.model_fields.items()
-                if (not skip_excluded or not v.exclude) and recur_key(k)
-            }
-        )
+        forward_value.update({
+            k: recur(pyschema_utils.getattr_serial(obj, k))
+            for k, v in obj.model_fields.items()
+            if (not skip_excluded or not v.exclude) and recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -299,14 +334,11 @@ def jsonify(
 
         forward_value = {}
         new_dicted[id(obj)] = forward_value
-        forward_value.update(
-            {
-                k: recur(pyschema_utils.getattr_serial(obj, k))
-                for k, v in obj.__fields__.items()
-                if (not skip_excluded or not v.field_info.exclude)
-                and recur_key(k)
-            }
-        )
+        forward_value.update({
+            k: recur(pyschema_utils.getattr_serial(obj, k))
+            for k, v in obj.__fields__.items()
+            if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -322,13 +354,11 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
-        forward_value.update(
-            {
-                f.name: recur(pyschema_utils.getattr_serial(obj, f.name))
-                for f in dataclasses.fields(obj)
-                if recur_key(f.name)
-            }
-        )
+        forward_value.update({
+            f.name: recur(pyschema_utils.getattr_serial(obj, f.name))
+            for f in dataclasses.fields(obj)
+            if recur_key(f.name)
+        })
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
@@ -344,19 +374,17 @@ def jsonify(
         kvs = pyschema_utils.clean_attributes(obj, include_props=True)
 
         # TODO(piotrm): object walks redo
-        forward_value.update(
-            {
-                k: recur(v)
-                for k, v in kvs.items()
-                if recur_key(k)
-                and (
-                    isinstance(v, serial_utils.JSON_BASES)
-                    or isinstance(v, Dict)
-                    or isinstance(v, Sequence)
-                    or instrument.to_instrument_object(v)
-                )
-            }
-        )
+        forward_value.update({
+            k: recur(v)
+            for k, v in kvs.items()
+            if recur_key(k)
+            and (
+                isinstance(v, serial_utils.JSON_BASES)
+                or isinstance(v, Dict)
+                or isinstance(v, Sequence)
+                or instrument.to_instrument_object(v)
+            )
+        })
 
         content = forward_value
 

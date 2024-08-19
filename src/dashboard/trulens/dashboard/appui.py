@@ -295,21 +295,19 @@ class AppUI(traitlets.HasTraits):
 
         self.display_top.children += (self.current_record.d,)
 
-        self.widget = widgets.VBox(
-            [
-                widgets.HBox(
-                    [
-                        widgets.VBox(
-                            [self.display_top, self.display_bottom],
-                            layout={**debug_style, "width": "50%"},
-                        ),
-                        self.display_side,
-                    ],
-                    layout=debug_style,
-                ),
-                outputs_widget,
-            ]
-        )
+        self.widget = widgets.VBox([
+            widgets.HBox(
+                [
+                    widgets.VBox(
+                        [self.display_top, self.display_bottom],
+                        layout={**debug_style, "width": "50%"},
+                    ),
+                    self.display_side,
+                ],
+                layout=debug_style,
+            ),
+            outputs_widget,
+        ])
 
         if app_selectors is not None:
             for selector in app_selectors:

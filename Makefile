@@ -172,10 +172,12 @@ upload-%:
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-all: build
-	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
 upload-testpypi-%: build
 	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-testpypi-all: build
-	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz

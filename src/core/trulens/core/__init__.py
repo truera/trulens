@@ -16,6 +16,7 @@ from importlib.metadata import version
 from trulens.core.app.basic import TruBasicApp
 from trulens.core.app.custom import TruCustomApp
 from trulens.core.app.virtual import TruVirtual
+from trulens.core.feedback import SnowflakeFeedback
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
 from trulens.core.schema import FeedbackMode
@@ -36,6 +37,7 @@ __all__ = [
     "FeedbackMode",
     # feedback setup
     "Feedback",
+    "SnowflakeFeedback",
     "Select",
     "Provider",
 ]

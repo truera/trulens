@@ -1451,8 +1451,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self.tru: mod_tru.Tru
         self.db: mod_db.DB
 
-        # For server side feedback mode, we write records async
-        if feedback_mode == mod_feedback_schema.FeedbackMode.SERVER:
+        # If in buffered mode, call add record nowait.
+        if self.record_ingest_mode == mod_app_schema.RecordIngestMode.BUFFERED:
             self.tru.add_record_nowait(record=record)
             return
 

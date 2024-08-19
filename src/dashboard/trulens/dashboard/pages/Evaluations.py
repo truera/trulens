@@ -376,17 +376,15 @@ else:
 
                         df = pd.DataFrame.from_records(c["args"] for c in call)
 
-                        df["result"] = pd.DataFrame(
-                            [
-                                float(call[i]["ret"])
-                                if call[i]["ret"] is not None
-                                else -1
-                                for i in range(len(call))
-                            ]
-                        )
-                        df["meta"] = pd.Series(
-                            [call[i]["meta"] for i in range(len(call))]
-                        )
+                        df["result"] = pd.DataFrame([
+                            float(call[i]["ret"])
+                            if call[i]["ret"] is not None
+                            else -1
+                            for i in range(len(call))
+                        ])
+                        df["meta"] = pd.Series([
+                            call[i]["meta"] for i in range(len(call))
+                        ])
                         df = df.join(
                             df.meta.apply(lambda m: pd.Series(m))
                         ).drop(columns="meta")

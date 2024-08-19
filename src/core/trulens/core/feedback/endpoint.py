@@ -494,24 +494,20 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                     instrumented_produced_func = self.wrap_function(
                         produced_func
                     )
-                    Endpoint.instrumented_methods[object].append(
-                        (
-                            produced_func,
-                            instrumented_produced_func,
-                            type(self),
-                        )
-                    )
+                    Endpoint.instrumented_methods[object].append((
+                        produced_func,
+                        instrumented_produced_func,
+                        type(self),
+                    ))
                     return instrumented_produced_func
                 else:
                     return produced_func
 
-            Endpoint.instrumented_methods[cls].append(
-                (
-                    func,
-                    metawrap,
-                    type(self),
-                )
-            )
+            Endpoint.instrumented_methods[cls].append((
+                func,
+                metawrap,
+                type(self),
+            ))
 
             setattr(cls, wrapper_method_name, metawrap)
 

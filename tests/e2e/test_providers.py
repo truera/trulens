@@ -731,17 +731,17 @@ class TestProviders(TestCase):
                             self.assertAlmostEqual(actual, expected, delta=0.2)
                         except AssertionError:
                             failed_tests += 1
-                            failed_subtests.append(
-                                (subtest_name, actual, expected)
-                            )
+                            failed_subtests.append((
+                                subtest_name,
+                                actual,
+                                expected,
+                            ))
 
             if failed_tests > 0:
-                failed_subtests_str = ", ".join(
-                    [
-                        f"{name} (actual: {act}, expected: {exp})"
-                        for name, act, exp in failed_subtests
-                    ]
-                )
+                failed_subtests_str = ", ".join([
+                    f"{name} (actual: {act}, expected: {exp})"
+                    for name, act, exp in failed_subtests
+                ])
                 self.fail(
                     f"{provider_name}-{model}: {failed_tests}/{total_tests} tests failed ({failed_subtests_str})"
                 )
@@ -849,12 +849,10 @@ class TestProviders(TestCase):
                     failed_subtests.append((subtest_name, actual, expected))
 
         if failed_tests > 0:
-            failed_subtests_str = ", ".join(
-                [
-                    f"{name} (actual: {act}, expected: {exp})"
-                    for name, act, exp in failed_subtests
-                ]
-            )
+            failed_subtests_str = ", ".join([
+                f"{name} (actual: {act}, expected: {exp})"
+                for name, act, exp in failed_subtests
+            ])
             self.fail(
                 f"{h}: {failed_tests}/{total_tests} tests failed ({failed_subtests_str})"
             )
@@ -888,12 +886,10 @@ class TestProviders(TestCase):
                     failed_subtests.append((subtest_name, actual, expected))
 
         if failed_tests() > 0:
-            failed_subtests_str = ", ".join(
-                [
-                    f"{name} (actual: {act}, expected: {exp})"
-                    for name, act, exp in failed_subtests
-                ]
-            )
+            failed_subtests_str = ", ".join([
+                f"{name} (actual: {act}, expected: {exp})"
+                for name, act, exp in failed_subtests
+            ])
             self.fail(
                 f"{lc}: {failed_tests()}/{total_tests} tests failed ({failed_subtests_str})"
             )
