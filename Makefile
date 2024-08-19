@@ -4,6 +4,7 @@
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
+PYTEST := poetry run pytest --rootdir=.
 
 # Global setting: execute all commands of a target in a single shell session.
 .ONESHELL:
@@ -83,37 +84,32 @@ coverage:
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
 # the latest (supported) python version.
+
+
 test-static:
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/unit/static/test_static.py
+	$(PYTEST) tests/unit/static/test_static.py
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
 # API tests.
 test-api:
-	$(CONDA_ACTIVATE) .conda/py-opt-3.12
-	TEST_OPTIONAL=1 python -m unittest tests.unit.static.test_api
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
 test-write-api:
-	$(CONDA_ACTIVATE) .conda/py-opt-3.12
-	TEST_OPTIONAL=1 WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
 test-deprecation:
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
+	$(PYTEST) tests/unit/static/test_deprecation.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
+	$(PYTEST) tests/e2e/test_dummy.py
 test-serial: # has golden file
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/e2e/test_serial.py
+	$(PYTEST) tests/e2e/test_serial.py
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
 test-write-golden-%:
-	$(CONDA)
-	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
+	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 
 # Runs required tests
 test-%-required: env-required
