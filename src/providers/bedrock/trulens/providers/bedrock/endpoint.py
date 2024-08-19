@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Iterable, Optional
+from typing import Any, Callable, ClassVar, Iterable, Optional, Sequence
 
 import boto3
 from botocore.client import ClientCreator
@@ -20,7 +20,38 @@ class WrapperBedrockCallback(base_endpoint.WrapperEndpointCallback):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    def handle_generation_chunk(self, response: Any) -> None:
+    def on_endpoint_response(self, response: Any) -> None:
+        func = self.func
+
+        if func.__name__ == "invoke_model":
+            self.on_endpoint_generation(response=response)
+
+        elif func.__name__ == "invoke_model_with_response_stream":
+            self.on_endpoint_generation(response=response)
+
+            body = response.get("body")
+            if body is not None:
+                if isinstance(body, Sequence):
+                    # NOTE(piotrm): Intentionally checking for Sequence instead
+                    # of Iterable to be sure that iterating over it will not
+                    # steal it from the downstream users.
+
+                    for chunk in body:
+                        self.on_endpoint_generation_chunk(response=chunk)
+                else:
+                    # TODO: Wrap iterable here.
+                    logger.warning(
+                        "Cannot safely iterate body in `invoke_model_with_response_stream` response."
+                    )
+            else:
+                logger.warning(
+                    "No stream body found in `invoke_model_with_response_stream` response."
+                )
+
+        else:
+            logger.warning("Unhandled wrapped call to %s.", func.__name__)
+
+    def on_endpoint_generation_chunk(self, response: Any) -> None:
         """Handle stream chunk.
 
         Example chunk:
@@ -69,7 +100,7 @@ class WrapperBedrockCallback(base_endpoint.WrapperEndpointCallback):
             self.cost.n_prompt_tokens += int(input_tokens)
             self.cost.n_tokens += int(input_tokens)
 
-    def handle_generation(self, response: Any) -> None:
+    def on_endpoint_generation(self, response: Any) -> None:
         """Handle completion generation.
 
         Example response for completion:
@@ -290,6 +321,7 @@ class BedrockEndpoint(base_endpoint.Endpoint):
         # for Endpoint, SingletonPerName:
         kwargs["name"] = name
         kwargs["callback_class"] = BedrockCallback
+        kwargs["wrapper_callback_class"] = WrapperBedrockCallback
 
         super().__init__(*args, **kwargs)
 
@@ -307,7 +339,7 @@ class BedrockEndpoint(base_endpoint.Endpoint):
             # `self.client` should be already set by super().__init__.
 
             if not safe_hasattr(self.client.invoke_model, INSTRUMENT):
-                # If they user instantiated the client before creating our
+                # If the user instantiated the client before creating our
                 # endpoint, the above instrumentation will not have attached our
                 # instruments. Do it here instead:
                 self._instrument_class(type(self.client), "invoke_model")

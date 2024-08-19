@@ -95,7 +95,7 @@ class WrapperEndpointCallback(mod_trace.TracingCallbacks[T]):
     def on_endpoint_response(self, response: Any) -> None:
         """Called after each non-error response."""
 
-        logger.warning("No on_response method defined for %s.", self)
+        logger.warning("No on_endpoint_response method defined for %s.", self)
 
     # our optional
     def on_endpoint_generation(self, response: Any) -> None:
