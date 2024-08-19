@@ -58,6 +58,8 @@ class WrapperCortexCallback(base_endpoint.WrappedEndpointCallback):
 
 
 class CortexCallback(base_endpoint.EndpointCallback):
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
+
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation(self, response: dict) -> None:
