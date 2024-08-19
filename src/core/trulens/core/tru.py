@@ -897,12 +897,9 @@ class Tru(python.SingletonPerName):
             )
             self.add_ground_truth_nowait(ground_truth)
 
-    def get_ground_truth_from_dataset(
-        self, dataset_name: str, size: Optional[int] = None
-    ) -> pd.DataFrame:
+    def get_ground_truth_from_dataset(self, dataset_name: str) -> pd.DataFrame:
         """Get ground truth data from the dataset.
         dataset_name: Name of the dataset.
-        size: Number of rows to fetch. If None, all rows will be fetched.
         """
 
         return self.db.get_ground_truths_by_dataset(dataset_name)
