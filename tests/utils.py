@@ -18,7 +18,7 @@ from typing import (
     Union,
 )
 
-from trulens_eval.utils import python as python_utils
+from trulens.core.utils import python as python_utils
 
 
 def get_module_names(

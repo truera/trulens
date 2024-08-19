@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Dict
 from unittest import main
 
+import trulens
+
 from tests.test import JSONTestCase
 from tests.test import optional_test
 from tests.utils import Member
@@ -15,7 +17,6 @@ from tests.utils import get_class_members
 from tests.utils import get_module_members
 from tests.utils import get_module_names
 from tests.utils import type_str
-import trulens_eval
 
 
 class TestAPI(JSONTestCase):
@@ -34,7 +35,7 @@ class TestAPI(JSONTestCase):
 
         # Enumerate all trulens_eval modules:
         for modname in get_module_names(
-            Path(trulens_eval.__file__).parent.parent, matching="trulens_eval"
+            Path(trulens.__file__).parent.parent, matching="trulens_eval"
         ):
             mod = get_module_members(modname)
             if mod is None:
