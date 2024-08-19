@@ -257,6 +257,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     callback_class: Type[EndpointCallback] = Field(exclude=True)
     """Callback class to use for usage tracking."""
+    # TODEP: remove after EXPERIMENTAL: otel-tracing
 
     wrapper_callback_class: Type[WrapperEndpointCallback] = Field(exclude=True)
     """EXPERIMENTAL: otel-tracing
@@ -319,10 +320,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # modules and methods names.
 
     def pace_me(self) -> float:
-        """
-        Block until we can make a request to this endpoint to keep pace with
-        maximum rpm. Returns time in seconds since last call to this method
-        returned.
+        """Block until we can make a request to this endpoint to keep pace with
+        maximum rpm.
+
+        Returns time in seconds since last call to this method returned.
         """
 
         return self.pace.mark()
@@ -367,9 +368,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             return j
 
     def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
-        """
-        Run the given `func` on the given `args` and `kwargs` at pace with the
-        endpoint-specified rpm. Failures will be retried `self.retries` times.
+        """Run the given `func` on the given `args` and `kwargs` at pace with the
+        endpoint-specified rpm.
+
+        Failures will be retried `self.retries` times.
         """
 
         retries = self.retries + 1
@@ -403,12 +405,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
     def run_me(self, thunk: Thunk[T]) -> T:
-        """
-        DEPRECATED: Run the given thunk, returning itse output, on pace with the api.
-        Retries request multiple times if self.retries > 0.
-
-        DEPRECATED: Use `run_in_pace` instead.
-        """
+        """DEPRECATED: Use `run_in_pace` instead."""
 
         raise NotImplementedError(
             "This method is deprecated. Use `run_in_pace` instead."
@@ -446,9 +443,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @classmethod
     def print_instrumented(cls):
-        """
-        Print out all of the methods that have been instrumented for cost
-        tracking. This is organized by the classes/modules containing them.
+        """Print out all of the methods that have been instrumented for cost
+        tracking
+
+        This is organized by the classes/modules containing them.
         """
 
         for wrapped_thing, wrappers in cls.instrumented_methods.items():
@@ -469,10 +467,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         wrapper_method_name: str,
         wrapped_method_filter: Callable[[Callable], bool],
     ) -> None:
-        """
-        Instrument a method `wrapper_method_name` which produces a method so
-        that the produced method gets instrumented. Only instruments the
-        produced methods if they are matched by named `wrapped_method_filter`.
+        """Instrument a method `wrapper_method_name` which produces a method so
+        that the produced method gets instrumented.
+
+        Only instruments the produced methods if they are matched by named
+        `wrapped_method_filter`.
         """
         if safe_hasattr(cls, wrapper_method_name):
             logger.debug(
@@ -706,6 +705,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     @staticmethod
     def __find_tracker(f):
+        # TODEP: remove after EXPERIMENTAL: otel-tracing
+
         return id(f) == id(Endpoint._track_costs.__code__)
 
     def handle_wrapped_call(
