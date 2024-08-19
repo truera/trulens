@@ -713,7 +713,11 @@ class App(
                 )
 
         for f in self.feedbacks:
-            if self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
+            if (
+                self.feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED
+                or f.run_location
+                == mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
+            ):
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
@@ -1401,12 +1405,15 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return []
 
         if feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
+            # Do not run any feedbacks in this case (now or deferred).
             return None
 
         if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
+            # Run all feedbacks as deferred.
             deferred_feedbacks = self.feedbacks
             undeferred_feedbacks = []
         else:
+            # Run only the feedbacks to be run in Snowflake as deferred.
             deferred_feedbacks = []
             undeferred_feedbacks = []
             for f in self.feedbacks:
@@ -1418,6 +1425,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 else:
                     undeferred_feedbacks.append(f)
 
+        # Insert into the feedback table the deferred feedbacks.
         for f in deferred_feedbacks:
             self.db.insert_feedback(
                 mod_feedback_schema.FeedbackResult(
@@ -1426,6 +1434,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                     feedback_definition_id=f.feedback_definition_id,
                 )
             )
+        # Compute the undeferred feedbacks.
         return self.tru._submit_feedback_functions(
             record=record,
             feedback_functions=undeferred_feedbacks,
