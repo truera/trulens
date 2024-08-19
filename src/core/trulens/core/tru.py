@@ -17,7 +17,6 @@ from time import sleep
 from typing import (
     Any,
     Callable,
-    ClassVar,
     Dict,
     Iterable,
     List,
@@ -187,14 +186,8 @@ class Tru(pydantic.BaseModel, python.SingletonPerName):
     # TODO: make private
     """Thread for batch insertion of records if batching mode is used."""
 
-    _global_feature_flags: ClassVar[Dict[mod_preview.Feature, bool]] = {}
-    """Global feature flags for all instances of Tru.
-
-    These flags are set by the user and are used to enable or disable
-    experimental features."""
-
-    _feature_flags: Dict[mod_preview.Feature, bool] = pydantic.PrivateAttr(
-        default_factory=dict
+    _feature_flags: mod_preview.Preview = pydantic.PrivateAttr(
+        default_factory=mod_preview.Preview
     )
     """Feature flags for this instance of Tru."""
 
@@ -206,56 +199,77 @@ class Tru(pydantic.BaseModel, python.SingletonPerName):
     Only works if the FeatureFlag.OTEL_TRACING flag is set.
     """
 
-    @classmethod
-    def enable_feature(cls, flag: mod_preview.Feature):
-        """Enable the given feature flag for all Tru instances if called with
-        Tru class or for this instance if called with an instance of Tru."""
+    def _feature(
+        self,
+        flag: Union[str, mod_preview.Feature],
+        *,
+        value: Optional[bool] = None,
+        lock: bool = False,
+    ) -> bool:
+        """Get and/or set the value of the given feature flag.
 
-        flag = mod_preview.Feature(flag)
+        Set it first if value is given. Lock it if lock is set.
 
-        if isinstance(cls, Tru):
-            cls._feature_flags[flag] = True
-            print(
-                f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for {cls.db} workspace."
-            )
-
-        else:
-            cls._global_feature_flags[flag] = True
-            print(
-                f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for all workspaces."
-            )
-
-    @classmethod
-    def disable_feature(cls, flag: mod_preview.Feature):
-        """Disable the given feature flag for all Tru instances if called with
-        Tru class or for this instance if called with an instance of Tru."""
-
-        flag = mod_preview.Feature(flag)
-
-        if isinstance(cls, Tru):
-            cls._feature_flags[flag] = False
-        else:
-            cls._global_feature_flags[flag] = False
-
-    @classmethod
-    def feature(cls, flag: Union[str, mod_preview.Feature]):
-        """Determine the value of the given feature flag by checking both global
-        and instance flags.
-
-        Instance value takes precedence over the global value.
+        Raises:
+            ValueError: If the flag is locked to a different value.
         """
 
-        flag = mod_preview.Feature(flag)
+        # NOTE(piotrm): The printouts are important as we want to make sure the
+        # user is aware that they are using a preview feature.
 
-        if isinstance(cls, Tru):
-            # cls is actually self, called on instance
-            if flag in cls._feature_flags:
-                return cls._feature_flags[flag]
+        was_locked = self._feature_flags.is_locked(flag)
 
-        if flag in Tru._global_feature_flags:
-            return Tru._global_feature_flags[flag]
+        val = self._feature_flags.set(flag, value=value, lock=lock)
 
-        return False
+        if value is not None:
+            if val:
+                print(
+                    f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for {self.db} workspace."
+                )
+            else:
+                print(
+                    f"{text_utils.UNICODE_STOP} Preview {flag} disabled for {self.db} workspace."
+                )
+
+        if val and lock and not was_locked:
+            print(
+                f"{text_utils.UNICODE_LOCK} Preview {flag} is enabled and cannot be changed."
+            )
+
+        return val
+
+    def lock_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Get and lock the given feature flag."""
+
+        return self._feature(flag, lock=True)
+
+    def enable_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Enable the given feature flag.
+
+        Raises:
+            ValueError: If the flag is already locked to disabled.
+        """
+
+        return self._feature(flag, value=True)
+
+    def disable_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Disable the given feature flag.
+
+        Raises:
+            ValueError: If the flag is already locked to enabled.
+        """
+
+        return self._feature(flag, value=False)
+
+    def feature(
+        self, flag: Union[str, mod_preview.Feature], *, lock: bool = False
+    ) -> bool:
+        """Determine the value of the given feature flag.
+
+        If lock is set, the flag will be locked to the value returned.
+        """
+
+        return self._feature(flag, lock=lock)
 
     def set_features(
         self,
@@ -263,27 +277,23 @@ class Tru(pydantic.BaseModel, python.SingletonPerName):
             Iterable[Union[str, mod_preview.Feature]],
             Mapping[Union[str, mod_preview.Feature], bool],
         ],
+        lock: bool = False,
     ):
-        """Set feature flags for this instance of Tru."""
+        """Set multiple feature flags.
+
+        If lock is set, the flags will be locked to the values given.
+
+        Raises:
+            ValueError: If any flag is already locked to a different value than
+            provided.
+        """
 
         if isinstance(flags, dict):
             for flag, val in flags.items():
-                flag = mod_preview.Feature(flag)
-                self._feature_flags[flag] = val
-                if val:
-                    # Make sure they user knows they are using a preview feature
-                    # by printing this out:
-                    print(
-                        f"{text_utils.UNICODE_CHECK} Preview Feature {flag} enabled."
-                    )
+                self._feature(flag, value=val, lock=lock)
         else:
             for flag in flags:
-                flag = mod_preview.Feature(flag)
-                self._feature_flags[flag] = True
-                # Notify user:
-                print(
-                    f"{text_utils.UNICODE_CHECK} Preview Feature {flag} enabled."
-                )
+                self._feature(flag, value=True, lock=lock)
 
     def _assert_feature(
         self, flag: mod_preview.Feature, purpose: Optional[str] = None
@@ -304,14 +314,11 @@ class Tru(pydantic.BaseModel, python.SingletonPerName):
 ```python
 from trulens.core.preview import Feature
 
-# Enable for all Tru instances before you make this one:
-Tru.enable_feature_flag({flag})
-
 # Enable for this instance when creating it:
 tru = Tru(feature_flags=[{flag}]
 
 # Enable for this instance after it has been crated (for features that allows this):
-tru.enable_feature_flag({flag})
+tru.enable_feature({flag})
 ```
 """
             )

@@ -1051,6 +1051,7 @@ class App(
         mod_preview.Feature.OTEL_TRACING,
         enabled=_otel__enter__,
         disabled=_record__enter__,
+        lock=True,
     )
 
     # For use as a context manager.
@@ -1082,6 +1083,7 @@ class App(
         mod_preview.Feature.OTEL_TRACING,
         enabled=_otel__exit__,
         disabled=_record__exit__,
+        lock=True,
     )
 
     # WithInstrumentCallbacks requirement

@@ -415,6 +415,21 @@ def caller_frame(offset=0) -> FrameType:
     return inspect.stack()[offset + 1].frame
 
 
+def external_caller_frame(offset=0) -> FrameType:
+    """
+    Get the caller's (of this function) frame that is not in the trulens namespace.
+
+    Raises:
+        RuntimeError: If no such frame is found.
+    """
+
+    for finfo in inspect.stack()[offset + 1 :]:
+        if not finfo.frame.f_globals["__name__"].startswith("trulens"):
+            return finfo.frame
+
+    raise RuntimeError("No external caller frame found.")
+
+
 def caller_frameinfo(
     offset: int = 0, skip_module: Optional[str] = "trulens"
 ) -> Optional[inspect.FrameInfo]:

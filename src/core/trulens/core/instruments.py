@@ -349,13 +349,13 @@ class Instrument:
         assert self.app is not None
 
         if self.app.tru is None:
-            tru = mod_tru.Tru  # use class for global feature settings
+            tru = mod_tru.Tru()
         else:
             tru = self.app.tru
 
         return (
             self._otel_tracked_method_wrapper
-            if tru.feature(mod_preview.Feature.OTEL_TRACING)
+            if tru.feature(mod_preview.Feature.OTEL_TRACING, lock=True)
             else self._record_tracked_method_wrapper
         )(*args, **kwargs)
 
