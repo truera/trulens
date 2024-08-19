@@ -2,58 +2,190 @@
 # How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
 
 SHELL := /bin/bash
-CONDA := source $$(conda info --base)/etc/profile.d/conda.sh ; conda activate ; conda activate
+REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
 
-# Makes all commands for each target to execute in a single shell. If this is
-# not set, conda env setup must be executed with each command that needs to be
-# run in a conda env.
+# Global setting: execute all commands of a target in a single shell session.
 .ONESHELL:
 
-# Create the conda env for building website, docs, formatting, etc.
-.conda/docs:
-	conda create python=3.12 --yes --prefix=.conda/docs
-	$(CONDA) .conda/docs
-	pip install -r trulens_eval/trulens_eval/requirements.txt
-	pip install -r trulens_eval/trulens_eval/requirements.optional.txt
-	pip install -r requirements.docs.txt
-	pip install -r requirements.dev.txt
+# Create the poetry env for building website, docs, formatting, etc.
+env:
+	poetry install
 
-# Run the code formatter.
-format: .conda/docs
-	$(CONDA) .conda/docs
-	bash format.sh --eval
+env-%:
+	poetry install --with $*
 
-# Start a jupyer lab instance.
-lab:
-	$(CONDA) .conda/docs
-	jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+env-required:
+	poetry install --only required,tests --sync
+
+env-optional:
+	poetry install --with tests,tests-optional --sync --verbose
+
+
+# Lock the poetry dependencies for all the subprojects.
+lock: $(POETRY_DIRS) clean-dashboard
+	for dir in $(POETRY_DIRS); do \
+		echo "Creating lockfile for $$dir/pyproject.toml"; \
+		poetry lock -C $$dir; \
+	done
+
+# Run the ruff linter.
+lint: env
+	poetry run ruff check --fix
+
+# Run the ruff formatter.
+format: env
+	poetry run ruff format
+
+precommit-hooks:
+	poetry run pre-commit install
+
+run-precommit:
+	poetry run pre-commit run --all-files --show-diff-on-failure
+
+# Start a jupyter lab instance.
+lab: env
+	poetry run jupyter lab --ip=0.0.0.0 --no-browser --ServerApp.token=deadbeef
+
+# Build the documentation website.
+docs: env-docs $(shell find docs -type f) mkdocs.yml
+	poetry run mkdocs build --clean
+	rm -Rf site/overrides
 
 # Serve the documentation website.
-serve: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000
+docs-serve: env-docs
+	poetry run mkdocs serve -a 127.0.0.1:8000
 
 # Serve the documentation website.
-serve-debug: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve -a 127.0.0.1:8000 --verbose
+docs-serve-debug: env-docs
+	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
 # The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
 # break references.
-serve-dirty: .conda/docs
-	$(CONDA) .conda/docs
-	mkdocs serve --dirty -a 127.0.0.1:8000
+docs-serve-dirty: env-docs
+	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
-# Build the documentation website.
-site: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs build --clean
-	rm -Rf site/overrides
-
-upload: .conda/docs $(shell find docs -type f) mkdocs.yml
-	$(CONDA) .conda/docs
-	mkdocs gh-deploy
+docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
+	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.
-linkcheck: site
+docs-linkcheck: site
 	lychee "site/**/*.html"
+
+# Start the trubot slack app.
+trubot:
+	poetry run python -u examples/trubot/trubot.py
+
+# Generates a coverage report.
+coverage:
+	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+
+# Run the static unit tests only, those in the static subfolder. They are run
+# for every tested python version while those outside of static are run only for
+# the latest (supported) python version.
+test-static:
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/unit/static/test_static.py
+
+# Tests in the e2e folder make use of possibly costly endpoints. They
+# are part of only the less frequently run release tests.
+
+# API tests.
+test-api:
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
+	TEST_OPTIONAL=1 python -m unittest tests.unit.static.test_api
+test-write-api:
+	$(CONDA_ACTIVATE) .conda/py-opt-3.12
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 python -m unittest tests.unit.static.test_api || true
+
+test-deprecation:
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
+
+# Dummy and serial e2e tests do not involve any costly requests.
+test-dummy: # has golden file
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
+test-serial: # has golden file
+	$(CONDA)
+	poetry run pytest --rootdir=. tests/e2e/test_serial.py
+test-golden: test-dummy test-serial
+test-write-golden: test-write-golden-dummy test-write-golden-serial
+test-write-golden-%:
+	$(CONDA)
+	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
+
+# Runs required tests
+test-%-required: env-required
+	make test-$*
+
+# Runs required tests, but allows optional dependencies to be installed.
+test-%-allow-optional: env
+	ALLOW_OPTIONALS=true make test-$*
+
+# Requires the full optional environment to be set up.
+test-%-optional: env-optional
+	TEST_OPTIONAL=true make test-$*
+
+# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
+test-unit:
+	poetry run pytest --rootdir=. tests/unit/*
+
+# Tests in the e2e folder make use of possibly costly endpoints. They
+# are part of only the less frequently run release tests.
+test-e2e:
+	poetry run pytest --rootdir=. tests/e2e/*
+
+# Runs the notebook test
+test-notebook:
+	poetry run pytest --rootdir=. tests/docs_notebooks/*
+
+# Release Steps:
+## Step: Clean repo:
+clean-dashboard:
+	rm -rf src/dashboard/*.egg-info
+
+clean: clean-dashboard
+	git clean --dry-run -fxd
+	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
+	echo
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then
+		git clean -fxd;
+	fi;
+
+## Step: Build wheels
+build-dashboard: env clean-dashboard
+	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
+
+build: $(POETRY_DIRS)
+	for dir in $(POETRY_DIRS); do \
+		echo "Building $$dir"; \
+		pushd $$dir; \
+		if [[ "$$dir" == "." ]]; then \
+			pkg_name=trulens; \
+		else \
+			pkg_path=$${dir#./src/}; \
+			pkg_name=trulens-$${pkg_path//\//-}; \
+		fi; \
+		echo $$pkg_name; \
+		poetry build -o $(REPO_ROOT)/dist/$$pkg_name/; \
+		rm -rf .venv; \
+		popd; \
+	done
+	make build-dashboard
+
+## Step: Upload wheels to pypi
+# Usage: TOKEN=... make upload-trulnes-instrument-langchain
+upload-%:
+	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
+
+upload-all: build
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+
+upload-testpypi-%: build
+	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
+
+upload-testpypi-all: build
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
+	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
