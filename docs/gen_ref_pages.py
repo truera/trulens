@@ -110,6 +110,10 @@ for package in packages:
     # create a nav entry for package/index.md
     package_path = src / package
     for path in sorted(package_path.rglob("*.py")):
+        # ignore .venv under package_path
+        if package_path / ".venv" in path.parents:
+            continue
+
         module_path = path.relative_to(package_path).with_suffix("")
         doc_path = path.relative_to(package_path).with_suffix(".md")
         parts = tuple(module_path.parts)
@@ -123,7 +127,7 @@ for package in packages:
                 continue
         if not os.path.exists(path.parent / "__init__.py"):
             print(
-                "Skipping due to missing python package: ",
+                "Skipping due to missing __init__.py: ",
                 path.parent / "__init__.py",
             )
             continue
