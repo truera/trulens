@@ -55,10 +55,10 @@ class BaseWorkspace(ABC):
         """
         if any(k.startswith("snowflake") for k in kwargs):
             if not import_utils.is_module_installed(
-                "trulens-workspace-snowflake"
+                "trulens.workspaces.snowflake"
             ):
                 raise ModuleNotFoundError(
-                    "Snowflake workspaces require `trulens-workspace-snowflake` to be installed."
+                    "Snowflake workspaces require the `trulens-workspace-snowflake` package to be installed."
                 )
 
             from trulens.workspaces.snowflake import (
