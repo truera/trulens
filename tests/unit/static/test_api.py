@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Dict
 from unittest import main
 
-import trulens
-
 from tests.test import JSONTestCase
 from tests.test import optional_test
 from tests.utils import Member
@@ -25,8 +23,11 @@ class TestAPI(JSONTestCase):
     def setUp(self):
         pass
 
-    def get_current_members(self) -> Dict[str, Dict[str, Member]]:
-        """Get the API members of the current trulens_eval module."""
+    def get_current_members_trulens_eval(self) -> Dict[str, Dict[str, Member]]:
+        """Get the API members of the trulens_eval module."""
+        # TODEP: Deprecate after trulens_eval is removed.
+
+        import trulens_eval
 
         objects = {}
 
@@ -35,7 +36,7 @@ class TestAPI(JSONTestCase):
 
         # Enumerate all trulens_eval modules:
         for modname in get_module_names(
-            Path(trulens.__file__).parent.parent, matching="trulens_eval"
+            Path(trulens_eval.__file__).parent.parent, matching="trulens_eval"
         ):
             mod = get_module_members(modname)
             if mod is None:
@@ -79,14 +80,15 @@ class TestAPI(JSONTestCase):
         return objects
 
     @optional_test
-    def test_apis(self):
-        """Check that all high and low level API members are present."""
+    def test_api_trulens_eval_compat(self):
+        """Check that the trulens_eval API members are still present."""
+        # TODEP: Deprecate after trulens_eval is removed.
 
-        members = self.get_current_members()
+        members = self.get_current_members_trulens_eval()
 
         self.assertGoldenJSONEqual(
             actual=members,
-            golden_filename="api.yaml",
+            golden_filename="api.trulens_eval.yaml",
         )
 
 
