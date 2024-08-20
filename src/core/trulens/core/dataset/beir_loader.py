@@ -13,27 +13,6 @@ from trulens.core.tru import Tru
 logger = logging.getLogger(__name__)
 
 
-BEIR_DATASET_NAMES = [
-    "msmarco",
-    "msmarco-v2",
-    "trec-covid",
-    "nfcorpus",
-    "nq",
-    "nq-train",
-    "hotpotqa",
-    "fiqa",
-    "arguana",
-    "webis-touche2020",
-    "cqadupstack",
-    "quora",
-    "dbpedia-entity",
-    "scidocs",
-    "fever",
-    "climate-fever",
-    "scifact",
-]
-
-
 def download_and_unzip(url: str, out_dir: str, chunk_size: int = 1024) -> str:
     def download_url(url: str, save_path: str, chunk_size: int = 1024):
         """Download url with progress bar using tqdm
@@ -82,18 +61,25 @@ class TruBEIRDataLoader:
         self,
         data_folder: str,
         dataset_name: str,
-        prefix: str = "",
         corpus_file: str = "corpus.jsonl",
         query_file: str = "queries.jsonl",
         qrels_folder: str = "qrels",
         qrels_file: str = "",
     ):
+        """
+        A utility class to load BEIR datasets into TruLens. Similar to https://github.com/beir-cellar/beir but with slightly
+        more efficient implementation of processing and loading of the datasets using generators.
+
+        Args:
+            data_folder (str): local / remote path to store the downloaded dataset.
+            dataset_name (str): Name of the dataset to be loaded. Must be one of https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/
+            corpus_file (str, optional): file name of the corpus. Defaults to "corpus.jsonl".
+            query_file (str, optional): file name of all the queries. Defaults to "queries.jsonl".
+            qrels_folder (str, optional): folder name of qrels (relevance annotation). Defaults to "qrels".
+            qrels_file (str, optional): file name of qrels (relevance annotation). Defaults to "".
+        """
         self.qrels = {}
 
-        if dataset_name not in BEIR_DATASET_NAMES:
-            raise ValueError(
-                f"Unknown dataset name: {dataset_name}. Must be one of {BEIR_DATASET_NAMES}"
-            )
         self.dataset_name = dataset_name
         self.data_folder = data_folder
 
@@ -112,10 +98,6 @@ class TruBEIRDataLoader:
         )
 
         self.qrels_file = qrels_file
-
-        if prefix:
-            self.query_file = prefix + "-" + self.query_file
-            self.qrels_folder = prefix + "-" + self.qrels_folder
 
     @staticmethod
     def check(fIn: str, ext: str):
