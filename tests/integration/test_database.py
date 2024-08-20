@@ -469,7 +469,7 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
 def _populate_data(db: DB):
     tru = TruSession()
-    tru.db = (
+    tru.connector.db = (
         db  # because of the singleton behavior, db must be changed manually
     )
 

@@ -1,8 +1,8 @@
 import argparse
 import sys
 
+from trulens.core import TruSession
 from trulens.core.database import base as mod_db
-from trulens.core.tru import TruSession
 
 
 def init_from_args():

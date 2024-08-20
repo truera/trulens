@@ -44,7 +44,7 @@ if __name__ == "__main__":
     init_from_args()
 
 tru = TruSession()
-lms = tru.db
+lms = tru.connector.db
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {

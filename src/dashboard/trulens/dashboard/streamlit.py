@@ -46,7 +46,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
     """
     tru = TruSession()
 
-    lms = tru.db
+    lms = tru.connector.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {

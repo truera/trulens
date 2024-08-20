@@ -20,7 +20,7 @@ from trulens.core.feedback import Provider
 from trulens.core.feedback import SnowflakeFeedback
 from trulens.core.schema import FeedbackMode
 from trulens.core.schema import Select
-from trulens.core.tru import TruSession
+from trulens.core.session import TruSession
 from trulens.core.utils.imports import safe_importlib_package_name
 
 __version__ = version(safe_importlib_package_name(__package__ or __name__))

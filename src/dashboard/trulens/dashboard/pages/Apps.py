@@ -2,9 +2,9 @@ import asyncio
 from typing import Optional
 
 import streamlit as st
+from trulens.core import TruSession
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.tru import TruSession
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import Lens
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     init_from_args()
 
 tru = TruSession()
-lms = tru.db
+lms = tru.connector.db
 
 set_page_config(page_title="App Runner")
 
