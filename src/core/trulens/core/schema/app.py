@@ -387,9 +387,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         rets = []
 
-        from trulens.core import Tru
+        from trulens.core import TruSession
 
-        tru = Tru()
+        tru = TruSession()
 
         apps = tru.get_apps()
         for app in apps:

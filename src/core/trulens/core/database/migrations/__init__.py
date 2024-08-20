@@ -11,9 +11,9 @@ module][trulens.core.database.migrations.data].
 ## Upgrading to the latest schema revision
 
 ```python
-from trulens.core import Tru
+from trulens.core import TruSession
 
-tru = Tru(
+tru = TruSession(
    database_url="<sqlalchemy_url>",
    database_prefix="trulens_" # default, may be omitted
 )
@@ -33,7 +33,7 @@ old prefix when invoking
 [migrate_database][trulens.core.tru.Tru.migrate_database]:
 
 ```python
-tru = Tru(
+tru = TruSession(
    database_url="<sqlalchemy_url>",
    database_prefix="new_prefix"
 )

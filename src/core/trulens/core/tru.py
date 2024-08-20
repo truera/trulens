@@ -43,7 +43,7 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
 logger = logging.getLogger(__name__)
 
 
-class Tru(python.SingletonPerName):
+class TruSession(python.SingletonPerName):
     """Tru is the main class that provides an entry points to trulens.
 
     Tru lets you:
@@ -126,9 +126,9 @@ class Tru(python.SingletonPerName):
 
     batch_thread = None
 
-    def __new__(cls, *args, **kwargs) -> Tru:
+    def __new__(cls, *args, **kwargs) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
-        assert isinstance(inst, Tru)
+        assert isinstance(inst, TruSession)
         return inst
 
     def __init__(

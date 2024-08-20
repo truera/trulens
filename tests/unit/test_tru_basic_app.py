@@ -4,8 +4,8 @@ Tests for TruBasicApp.
 
 from unittest import main
 
-from trulens.core import Tru
 from trulens.core import TruBasicApp
+from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys
 
@@ -19,7 +19,7 @@ class TestTruBasicApp(JSONTestCase):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        self.tru = Tru()
+        self.tru = TruSession()
 
         # Temporary before db migration gets fixed.
         self.tru.migrate_database()

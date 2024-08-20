@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
@@ -32,7 +32,7 @@ class TestTruChain(JSONTestCase):
     @classmethod
     def setUpClass(cls):
         # Cannot reset on each test as they might be done in parallel.
-        Tru().reset_database()
+        TruSession().reset_database()
 
     def setUp(self):
         check_keys(
@@ -66,7 +66,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tru = Tru()
+        tru = TruSession()
         tc = self._create_basic_chain(app_name="metaplain")
 
         message = "What is 1+2?"
@@ -127,7 +127,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = TruSession().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -135,9 +135,9 @@ class TestTruChain(JSONTestCase):
         # Check updating the record metadata in the db.
         new_meta = dict(hello="this is new meta")
         rec.meta = new_meta
-        Tru().update_record(rec)
+        TruSession().update_record(rec)
 
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = TruSession().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)

@@ -10,7 +10,7 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.utils.imports import static_resource
 from trulens.dashboard.notebook_utils import is_notebook
 from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
@@ -31,7 +31,7 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    tru: Optional[Tru] = None,
+    session: Optional[TruSession] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
@@ -55,8 +55,7 @@ def run_dashboard(
             is set.
 
     """
-    if not tru:
-        tru = Tru()
+    session = session or TruSession()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
@@ -100,9 +99,9 @@ def run_dashboard(
     # run leaderboard with subprocess
     leaderboard_path = static_resource("dashboard", "Leaderboard.py")
 
-    if Tru._dashboard_proc is not None:
-        print("Dashboard already running at path:", Tru._dashboard_urls)
-        return Tru._dashboard_proc
+    if session._dashboard_proc is not None:
+        print("Dashboard already running at path:", session._dashboard_urls)
+        return session._dashboard_proc
 
     env_opts = {}
     if _dev is not None:
@@ -122,9 +121,9 @@ def run_dashboard(
         leaderboard_path,
         "--",
         "--database-url",
-        tru.db.engine.url.render_as_string(hide_password=False),
+        session.db.engine.url.render_as_string(hide_password=False),
         "--database-prefix",
-        tru.db.table_prefix,
+        session.db.table_prefix,
     ]
 
     proc = subprocess.Popen(
@@ -167,18 +166,18 @@ def run_dashboard(
                 else:
                     print(line)
 
-        Tru.tunnel_listener_stdout = Thread(
+        session.tunnel_listener_stdout = Thread(
             target=listen_to_tunnel,
             args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started),
         )
-        Tru.tunnel_listener_stderr = Thread(
+        session.tunnel_listener_stderr = Thread(
             target=listen_to_tunnel,
             args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started),
         )
-        Tru.tunnel_listener_stdout.daemon = True
-        Tru.tunnel_listener_stderr.daemon = True
-        Tru.tunnel_listener_stdout.start()
-        Tru.tunnel_listener_stderr.start()
+        session.tunnel_listener_stdout.daemon = True
+        session.tunnel_listener_stderr.daemon = True
+        session.tunnel_listener_stdout.start()
+        session.tunnel_listener_stderr.start()
         if not tunnel_started.wait(
             timeout=DASHBOARD_START_TIMEOUT
         ):  # This might not work on windows.
@@ -198,7 +197,7 @@ def run_dashboard(
                         out.append_stdout(line)
                     else:
                         print(line)
-                    Tru._dashboard_urls = (
+                    session._dashboard_urls = (
                         line  # store the url when dashboard is started
                     )
             else:
@@ -207,7 +206,7 @@ def run_dashboard(
                     url = url.rstrip()
                     print(f"Dashboard started at {url} .")
                     started.set()
-                    Tru._dashboard_urls = (
+                    session._dashboard_urls = (
                         line  # store the url when dashboard is started
                     )
                 if out is not None:
@@ -219,23 +218,23 @@ def run_dashboard(
         else:
             print("Dashboard closed.")
 
-    Tru.dashboard_listener_stdout = Thread(
+    session.dashboard_listener_stdout = Thread(
         target=listen_to_dashboard,
         args=(proc, proc.stdout, out_stdout, started),
     )
-    Tru.dashboard_listener_stderr = Thread(
+    session.dashboard_listener_stderr = Thread(
         target=listen_to_dashboard,
         args=(proc, proc.stderr, out_stderr, started),
     )
 
     # Purposely block main process from ending and wait for dashboard.
-    Tru.dashboard_listener_stdout.daemon = False
-    Tru.dashboard_listener_stderr.daemon = False
+    session.dashboard_listener_stdout.daemon = False
+    session.dashboard_listener_stderr.daemon = False
 
-    Tru.dashboard_listener_stdout.start()
-    Tru.dashboard_listener_stderr.start()
+    session.dashboard_listener_stdout.start()
+    session.dashboard_listener_stderr.start()
 
-    Tru._dashboard_proc = proc
+    session._dashboard_proc = proc
 
     wait_period = DASHBOARD_START_TIMEOUT
     if IN_COLAB:
@@ -244,7 +243,7 @@ def run_dashboard(
 
     # This might not work on windows.
     if not started.wait(timeout=wait_period):
-        Tru._dashboard_proc = None
+        session._dashboard_proc = None
         raise RuntimeError(
             "Dashboard failed to start in time. "
             "Please inspect dashboard logs for additional information."
@@ -266,7 +265,7 @@ def stop_dashboard(force: bool = False) -> None:
     Raises:
             RuntimeError: Dashboard is not running in the current process. Can be avoided with `force`.
     """
-    if Tru._dashboard_proc is None:
+    if TruSession._dashboard_proc is None:
         if not force:
             raise RuntimeError(
                 "Dashboard not running in this workspace. "
@@ -300,5 +299,5 @@ def stop_dashboard(force: bool = False) -> None:
                     continue
 
     else:
-        Tru._dashboard_proc.kill()
-        Tru._dashboard_proc = None
+        TruSession._dashboard_proc.kill()
+        TruSession._dashboard_proc = None

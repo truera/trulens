@@ -7,7 +7,7 @@ DummyAPI for its requests.
 
 from unittest import main
 
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.app.custom import TruCustomApp
 
 from examples.dev.dummy_app.app import DummyApp
@@ -18,7 +18,7 @@ class TestDummy(JSONTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
-        self.tru = Tru()
+        self.tru = TruSession()
         self.tru.reset_database()
 
     def test_dummy(self):

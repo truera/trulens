@@ -15,7 +15,7 @@ import pinecone
 import streamlit as st
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
 from trulens.providers.huggingface import Huggingface
@@ -149,7 +149,7 @@ if user_input:
     # Display response
     st.write(answer)
 
-    tru = Tru()
+    tru = TruSession()
     record_id = tru.add_data(
         app_name=app_name,
         prompt=prompt_input,

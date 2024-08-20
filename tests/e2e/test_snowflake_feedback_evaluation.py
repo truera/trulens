@@ -7,8 +7,8 @@ from unittest import main
 
 from trulens.core import Feedback
 from trulens.core import SnowflakeFeedback
-from trulens.core import Tru
 from trulens.core import TruBasicApp
+from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
 
@@ -27,7 +27,7 @@ def silly_feedback_function_2(q: str) -> float:
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @optional_test
     def test_local_deferred_mode(self) -> None:
-        tru = Tru()
+        tru = TruSession()
         tru.reset_database()
         f = Feedback(silly_feedback_function_1).on_default()
         tru_app = TruBasicApp(
@@ -56,7 +56,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @optional_test
     def test_snowflake_deferred_mode(self) -> None:
-        tru = self.get_tru("test_snowflake_deferred_mode")
+        tru = self.get_session("test_snowflake_deferred_mode")
         f_local = Feedback(silly_feedback_function_1).on_default()
         f_snowflake = SnowflakeFeedback(silly_feedback_function_2).on_default()
         tru_app = TruBasicApp(

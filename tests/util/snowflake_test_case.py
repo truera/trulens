@@ -10,7 +10,7 @@ import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from trulens.core import Tru
+from trulens.core import TruSession
 
 
 class SnowflakeTestCase(TestCase):
@@ -32,8 +32,8 @@ class SnowflakeTestCase(TestCase):
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
-        for key in [curr for curr in Tru._instances if curr[0] == "Tru"]:
-            del Tru._instances[key]
+        for key in [curr for curr in TruSession._instances if curr[0] == "Tru"]:
+            del TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -57,19 +57,19 @@ class SnowflakeTestCase(TestCase):
         ].schemas.iter()
         return [curr.name for curr in schemas]
 
-    def get_tru(self, app_base_name: str) -> Tru:
+    def get_session(self, app_base_name: str) -> TruSession:
         app_name = app_base_name
         app_name += "__"
         app_name += str(uuid.uuid4()).replace("-", "_")
-        schema_name = Tru._validate_and_compute_schema_name(app_name)
+        schema_name = TruSession._validate_and_compute_schema_name(app_name)
         self.assertNotIn(schema_name, self.list_schemas())
         self._snowflake_schemas_to_delete.append(schema_name)
-        tru = Tru(
+        session = TruSession(
             snowflake_connection_parameters=self._snowflake_connection_parameters,
             app_name=app_name,
         )
         self.assertIn(schema_name, self.list_schemas())
-        return tru
+        return session
 
 
 if __name__ == "__main__":

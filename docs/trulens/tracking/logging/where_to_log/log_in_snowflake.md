@@ -27,8 +27,8 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 !!! example "Connect TruLens to your Snowflake database"
 
     ```python
-    from trulens.core import Tru
-    tru = Tru(
+    from trulens.core import TruSession
+    tru = TruSession(
         name="MyApp",
         snowflake_connection_parameters={
             account: "<account>",

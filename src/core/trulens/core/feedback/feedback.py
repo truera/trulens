@@ -45,7 +45,7 @@ from trulens.core.utils import text as mod_text_utils
 from trulens.core.utils import threading as mod_threading_utils
 
 if TYPE_CHECKING:
-    from trulens.core import Tru
+    from trulens.core import TruSession
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -328,7 +328,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: Tru,
+        session: TruSession,
         limit: Optional[int] = None,
         shuffle: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
@@ -360,7 +360,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         - Tru.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
         """
 
-        db = tru.db
+        db = session.db
 
         def prepare_feedback(
             row,
@@ -383,7 +383,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             return feedback.run_and_log(
                 record=record,
                 app=app_json,
-                tru=tru,
+                session=session,
                 feedback_result_id=row.feedback_result_id,
             )
 
@@ -422,14 +422,14 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 futures.append((row, tp.submit(prepare_feedback, row)))
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
-                if elapsed > tru.RETRY_RUNNING_SECONDS:
+                if elapsed > session.RETRY_RUNNING_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
                     pass
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.FAILED:
-                if elapsed > tru.RETRY_FAILED_SECONDS:
+                if elapsed > session.RETRY_FAILED_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
@@ -1025,13 +1025,13 @@ Feedback function signature:
     def run_and_log(
         self,
         record: mod_record_schema.Record,
-        tru: "Tru",
+        session: TruSession,
         app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
         record_id = record.record_id
 
-        db = tru.db
+        db = session.db
 
         # Placeholder result to indicate a run.
         feedback_result = mod_feedback_schema.FeedbackResult(

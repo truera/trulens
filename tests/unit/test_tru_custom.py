@@ -4,8 +4,8 @@ Tests for TruCustomApp.
 
 from unittest import main
 
-from trulens.core import Tru
 from trulens.core import TruCustomApp
+from trulens.core import TruSession
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import JSONTestCase
@@ -14,10 +14,10 @@ from tests.test import JSONTestCase
 class TestTruCustomApp(JSONTestCase):
     @staticmethod
     def setUpClass():
-        Tru().reset_database()
+        TruSession().reset_database()
 
     def setUp(self):
-        self.tru = Tru()
+        self.tru = TruSession()
 
         self.ca = DummyApp()
         self.ta_recorder = TruCustomApp(

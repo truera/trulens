@@ -15,7 +15,7 @@ from slack_bolt import App
 from slack_sdk import WebClient
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
@@ -51,7 +51,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = Tru()
+tru = TruSession()
 
 ident = lambda h: h
 

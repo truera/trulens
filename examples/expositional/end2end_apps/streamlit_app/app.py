@@ -2,14 +2,14 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI
 import streamlit as st
 from trulens.core import Feedback
-from trulens.core import Tru
+from trulens.core import TruSession
 import trulens.dashboard.streamlit as trulens_st
 from trulens.instrument.langchain import TruChain
 from trulens.providers.openai import OpenAI as fOpenAI
 
 load_dotenv()
 
-tru = Tru()
+tru = TruSession()
 
 st.title("🦑 Using TruLens Components in Streamlit")
 

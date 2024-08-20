@@ -6,7 +6,7 @@ from typing import List
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
@@ -44,7 +44,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         trulens_st.trulens_leaderboard()
         ```
     """
-    tru = Tru()
+    tru = TruSession()
 
     lms = tru.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
@@ -232,6 +232,6 @@ def trulens_trace(record: Record):
         ```
     """
 
-    tru = Tru()
+    tru = TruSession()
     app = tru.get_app(app_id=record.app_id)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)
