@@ -162,7 +162,6 @@ if user_input:
 
     # Run feedback function and get value
     feedbacks = tru.run_feedback_functions(
-        app=app,
         record=record,
         feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance],
     )
