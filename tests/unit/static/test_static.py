@@ -4,7 +4,6 @@ issues that occur from merely importing trulens.
 """
 
 import importlib
-import pkgutil
 import sys
 from unittest import TestCase
 from unittest import main
@@ -17,6 +16,7 @@ from trulens.core.utils.imports import Dummy
 from tests.test import module_installed
 from tests.test import optional_test
 from tests.test import requiredonly_test
+from tests.utils import get_submodule_names
 
 # Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -63,12 +63,8 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 # packages.
 
 # Get all modules inside trulens_eval:
-all_trulens_mods = [
-    modinfo.name
-    for modinfo in pkgutil.walk_packages(
-        trulens.__path__, prefix="trulens_eval."
-    )
-]
+all_trulens_mods = list(get_submodule_names(trulens))
+
 # Things which should not be imported at all.
 not_mods = [
     "trulens.core.database.migrations.env"  # can only be executed by alembic
