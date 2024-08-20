@@ -1,0 +1,5 @@
+# DEPRECATED; to remove when trulens_eval is removed.
+
+trulens-feedback >= 1.0.0
+trulens-core >= 1.0.0
+trulens-dashboard >= 1.0.0
