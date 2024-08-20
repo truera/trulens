@@ -124,6 +124,7 @@ class TestAPI(JSONTestCase):
         self.assertGoldenJSONEqual(
             actual=members,
             golden_filename=f"api.trulens_eval.{self.pyversion}.yaml",
+            skips=set(["__version__"]),
         )
 
     @optional_test
@@ -135,6 +136,7 @@ class TestAPI(JSONTestCase):
         self.assertGoldenJSONEqual(
             actual=members,
             golden_filename=f"api.trulens.{self.pyversion}.yaml",
+            skips=set(["__version__"]),
         )
 
 
