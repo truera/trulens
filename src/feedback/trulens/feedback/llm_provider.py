@@ -155,7 +155,6 @@ class LLMProvider(Provider):
             messages=llm_messages,
             temperature=temperature,
         )
-        # print(f'Relevance score and Confidence score: {response}')
         relevance_score = re.search(r"\d+", response)
 
         confidence_score = re.search(
@@ -1313,7 +1312,7 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
-    
+
     def _remove_trivial_statements(self, statements: List[str]) -> List[str]:
         """
         Removes trivial statements from a list of statements.
@@ -1324,11 +1323,21 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of statements with trivial statements removed.
         """
-        return [
-            statement
-            for statement in statements
-            if statement not in prompts.TRIVIAL_STATEMENTS
-        ]
+
+        system_prompt = prompts.LLM_TRIVIAL_SYSTEM
+
+        user_prompt = prompts.LLM_TRIVIAL_USER.format(
+            statements=str(statements)
+        )
+
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        llm_messages.append({"role": "user", "content": user_prompt})
+
+        return eval(
+            self.endpoint.run_in_pace(
+                func=self._create_chat_completion, messages=llm_messages
+            )
+        )
 
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
@@ -1336,8 +1345,11 @@ class LLMProvider(Provider):
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons.
+        The statement will first be split by a tokenizer into its compoenent sentences.
+
+        Then, trivial statements are eliminated so as to not delute the evaluation.
+
+        The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
         Abstentions will be considered as grounded.
 
@@ -1355,6 +1367,29 @@ class LLMProvider(Provider):
                 .on_output()
                 )
             ```
+
+        To further explain how the function works under the hood, consider the statement:
+
+        "Hi. I'm here to help. The university of Washington is a public research university. UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        The function will split the statement into its component sentences:
+
+        1. "Hi."
+        2. "I'm here to help."
+        3. "The university of Washington is a public research university."
+        4. "UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        Next, trivial statements are removed, leaving only:
+
+        3. "The university of Washington is a public research university."
+        4. "UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        The LLM will then process the statement, to assess the groundedness of the statement.
+
+        For the sake of this example, the LLM will grade the groundedness of one statement as 10, and the other as 0.
+
+        Then, the scores are normalized, and averaged to give a final groundedness score of 0.5.
+
         Args:
             source: The source that should support the statement.
             statement: The statement to check groundedness.
@@ -1367,6 +1402,7 @@ class LLMProvider(Provider):
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
+        hypotheses = self._remove_trivial_statements(hypotheses)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
@@ -1414,10 +1450,13 @@ class LLMProvider(Provider):
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons.
+        The statement will first be split by a tokenizer into its compoenent sentences.
 
-        In the case of abstentions, the LLM will be asked to consider the answerability of the question given the source material.
+        Then, trivial statements are eliminated so as to not delute the evaluation.
+
+        The LLM will process each statement, using chain of thought methodology to emit the reasons.
+
+        In the case of abstentions, such as 'I do not know', the LLM will be asked to consider the answerability of the question given the source material.
 
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
@@ -1467,6 +1506,8 @@ class LLMProvider(Provider):
             return score
 
         hypotheses = sent_tokenize(statement)
+
+        hypotheses = self._remove_trivial_statements(hypotheses)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 

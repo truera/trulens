@@ -253,6 +253,7 @@ class Abstention(Semantics, WithPrompt):
         ABSTENTION:"""
     )
 
+
 class Trivial(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
         """Consider the following list of statements. Remove any statements that are trivial, irrelevant, or unimportant. Respond with a list of the remaining statements."""
