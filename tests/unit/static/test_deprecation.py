@@ -6,7 +6,6 @@ import inspect
 import sys
 from unittest import TestCase
 from unittest import main
-from unittest import skip
 
 from tests.test import optional_test
 
@@ -87,7 +86,6 @@ class TestDeprecation(TestCase):
             "trulens_eval.react_components.record_viewer": ["record_viewer"],
         }
 
-    @skip("Backwards compatibility not yet done")
     @optional_test
     def test_init_aliases(self):
         """Check that all trulens_eval.*.__init__ aliases are still usable
