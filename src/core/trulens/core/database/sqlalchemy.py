@@ -729,6 +729,7 @@ class SQLAlchemyDB(DB):
                 .filter_by(ground_truth_id=ground_truth.ground_truth_id)
                 .first()
             ):
+                # Update the existing record for idempotency
                 _ground_truth.ground_truth_json = ground_truth.model_dump_json()
             else:
                 _ground_truth = self.orm.GroundTruth.parse(
@@ -748,25 +749,39 @@ class SQLAlchemyDB(DB):
     ) -> List[mod_types_schema.GroundTruthID]:
         """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
         with self.session.begin() as session:
-            ground_truths_list = []
+            ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
 
+            # Fetch existing GroundTruth records that match these ids in one query
+            existing_ground_truths = (
+                session.query(self.orm.GroundTruth)
+                .filter(
+                    self.orm.GroundTruth.ground_truth_id.in_(ground_truth_ids)
+                )
+                .all()
+            )
+
+            existing_ground_truth_dict = {
+                gt.ground_truth_id: gt for gt in existing_ground_truths
+            }
+
+            ground_truths_to_insert = []
             for ground_truth in ground_truths:
-                if (
-                    _ground_truth := session.query(self.orm.GroundTruth)
-                    .filter_by(ground_truth_id=ground_truth.ground_truth_id)
-                    .first()
-                ):
-                    _ground_truth.ground_truth_json = (
+                if ground_truth.ground_truth_id in existing_ground_truth_dict:
+                    existing_record = existing_ground_truth_dict[
+                        ground_truth.ground_truth_id
+                    ]
+                    # Update the existing record for idempotency
+                    existing_record.ground_truth_json = (
                         ground_truth.model_dump_json()
                     )
                 else:
-                    _ground_truth = self.orm.GroundTruth.parse(
+                    new_ground_truth = self.orm.GroundTruth.parse(
                         ground_truth, redact_keys=self.redact_keys
                     )
-                    ground_truths_list.append(_ground_truth)
+                    ground_truths_to_insert.append(new_ground_truth)
 
-            session.bulk_save_objects(ground_truths_list)
-            return [gt.ground_truth_id for gt in ground_truths_list]
+            session.bulk_save_objects(ground_truths_to_insert)
+            return [gt.ground_truth_id for gt in ground_truths]
 
     def get_ground_truth(
         self, ground_truth_id: str | None = None
@@ -818,6 +833,7 @@ class SQLAlchemyDB(DB):
                 .filter_by(dataset_id=dataset.dataset_id)
                 .first()
             ):
+                # Update the existing record for idempotency
                 _dataset.dataset_json = dataset.model_dump_json()
             else:
                 _dataset = self.orm.Dataset.parse(
