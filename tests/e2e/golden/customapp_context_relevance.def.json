@@ -156,14 +156,14 @@
               "name": "DummyEndpoint",
               "module": {
                 "package_name": "trulens.core.feedback.dummy",
-                "module_name": "trulens.core.feedback.dummy.endpoint"
+                "module_name": "trulens.feedback.dummy.endpoint"
               },
               "bases": [
                 {
                   "name": "DummyEndpoint",
                   "module": {
                     "package_name": "trulens.core.feedback.dummy",
-                    "module_name": "trulens.core.feedback.dummy.endpoint"
+                    "module_name": "trulens.feedback.dummy.endpoint"
                   },
                   "bases": null
                 },
