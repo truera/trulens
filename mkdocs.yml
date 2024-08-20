@@ -89,6 +89,7 @@ plugins:
             - src/providers/langchain
             - src/providers/litellm
             - src/providers/openai
+            - examples/
           options:
 
             heading_level: 2

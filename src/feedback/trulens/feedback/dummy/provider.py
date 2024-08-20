@@ -1,8 +1,8 @@
 import json
 from typing import Dict, Optional, Sequence
 
-from trulens.core.feedback.dummy.endpoint import DummyEndpoint
 from trulens.core.utils.python import locals_except
+from trulens.feedback.dummy.endpoint import DummyEndpoint
 from trulens.feedback.llm_provider import LLMProvider
 
 
