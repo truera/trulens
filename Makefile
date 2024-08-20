@@ -14,7 +14,7 @@ POETRY_DIRS := $(shell find . \
 	-exec dirname {} \;)
 
 # Global setting: execute all commands of a target in a single shell session.
-# Note for MAC OS, the default make is too old to support this. Brew "install
+# Note for MAC OS, the default make is too old to support this. "brew install
 # make" to get a newer version though it is called "gmake".
 .ONESHELL:
 
