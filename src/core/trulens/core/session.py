@@ -19,6 +19,7 @@ from typing import (
     Tuple,
     Union,
 )
+import warnings
 
 import pandas
 from trulens.core import feedback
@@ -649,3 +650,12 @@ class TruSession(python.SingletonPerName):
             self._evaluator_stop = None
 
         self._evaluator_proc = None
+
+
+def Tru(*args, **kwargs) -> TruSession:
+    warnings.warn(
+        "Tru is deprecated, use TruSession instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return TruSession(*args, **kwargs)
