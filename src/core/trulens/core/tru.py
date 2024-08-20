@@ -145,7 +145,7 @@ class Tru(python.SingletonPerName):
     """Time to wait before inserting a batch of records into the database."""
 
     GROUND_TRUTHS_BATCH_TIMEOUT_IN_SEC: int = 10
-    """Time interval to wait before inserting a batch of ground truths into the database."""
+    """Time to wait before inserting a batch of ground truths into the database."""
 
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
