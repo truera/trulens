@@ -9,9 +9,9 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn("trulens_eval.feedback.provider.endpoint")
 
-from trulens.core.feedback.dummy.endpoint import DummyEndpoint
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.utils import imports as imports_utils
+from trulens.feedback.dummy.endpoint import DummyEndpoint
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
