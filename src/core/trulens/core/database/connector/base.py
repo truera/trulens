@@ -31,7 +31,7 @@ from trulens.core.utils.python import Future  # code style exception
 logger = logging.getLogger(__name__)
 
 
-class BaseWorkspace(ABC):
+class DBConnector(ABC):
     """Base class for workspace implementations."""
 
     RECORDS_BATCH_TIMEOUT: int = 10

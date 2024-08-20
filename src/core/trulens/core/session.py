@@ -22,6 +22,8 @@ from typing import (
 
 import pandas
 from trulens.core import feedback
+from trulens.core.database.connector import DBConnector
+from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
@@ -33,8 +35,6 @@ from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
-from trulens.core.workspace import BaseWorkspace
-from trulens.core.workspace import DefaultWorkspace
 
 tqdm = None
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
@@ -79,8 +79,8 @@ class TruSession(python.SingletonPerName):
             records.
 
     Args:
-        workspace: Workspace to use. If not provided, a default
-            [DefaultWorkspace][trulens.core.workspace.default.DefaultWorkspace]
+        connector: Database Connector to use. If not provided, a default
+            [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector]
             is created.
     """
 
@@ -133,16 +133,16 @@ class TruSession(python.SingletonPerName):
 
     def __init__(
         self,
-        workspace: Optional[BaseWorkspace] = None,
+        connector: Optional[DBConnector] = None,
     ):
-        self.workspace = workspace or DefaultWorkspace()
+        self.connector = connector or DefaultDBConnector()
 
     def reset_database(self):
         """Reset the database. Clears all tables.
 
         See [DB.reset_database][trulens.core.database.base.DB.reset_database].
         """
-        self.workspace.reset_database()
+        self.connector.reset_database()
 
     def migrate_database(self, **kwargs: Dict[str, Any]):
         """Migrates the database.
@@ -157,7 +157,7 @@ class TruSession(python.SingletonPerName):
 
         See [DB.migrate_database][trulens.core.database.base.DB.migrate_database].
         """
-        self.workspace.migrate_database(**kwargs)
+        self.connector.migrate_database(**kwargs)
 
     def add_record(
         self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
@@ -174,14 +174,14 @@ class TruSession(python.SingletonPerName):
             Unique record identifier [str][] .
 
         """
-        return self.workspace.add_record(record=record, **kwargs)
+        return self.connector.add_record(record=record, **kwargs)
 
     def add_record_nowait(
         self,
         record: mod_record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
-        return self.workspace.add_record_nowait(record)
+        return self.connector.add_record_nowait(record)
 
     def run_feedback_functions(
         self,
@@ -215,7 +215,7 @@ class TruSession(python.SingletonPerName):
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
-        return self.workspace.run_feedback_functions(
+        return self.connector.run_feedback_functions(
             record=record,
             feedback_functions=feedback_functions,
             app=app,
@@ -235,7 +235,7 @@ class TruSession(python.SingletonPerName):
             A unique app identifier [str][].
 
         """
-        return self.workspace.add_app(app=app)
+        return self.connector.add_app(app=app)
 
     def delete_app(self, app_id: mod_types_schema.AppID) -> None:
         """
@@ -244,7 +244,7 @@ class TruSession(python.SingletonPerName):
         Args:
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
-        return self.workspace.delete_app(app_id=app_id)
+        return self.connector.delete_app(app_id=app_id)
 
     def add_feedback(
         self,
@@ -275,7 +275,7 @@ class TruSession(python.SingletonPerName):
             A unique result identifier [str][].
 
         """
-        return self.workspace.add_feedback(
+        return self.connector.add_feedback(
             feedback_result_or_future=feedback_result_or_future, **kwargs
         )
 
@@ -298,7 +298,7 @@ class TruSession(python.SingletonPerName):
             List of unique result identifiers [str][] in the same order as input
                 `feedback_results`.
         """
-        return self.workspace.add_feedbacks(feedback_results=feedback_results)
+        return self.connector.add_feedbacks(feedback_results=feedback_results)
 
     def get_app(
         self, app_id: mod_types_schema.AppID
@@ -325,7 +325,7 @@ class TruSession(python.SingletonPerName):
             JSON-ized version of the app.
         """
 
-        return self.workspace.get_app(app_id)
+        return self.connector.get_app(app_id)
 
     def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up all apps from the database.
@@ -337,7 +337,7 @@ class TruSession(python.SingletonPerName):
             Same Deserialization caveats as [get_app][trulens.core.tru.Tru.get_app].
         """
 
-        return self.workspace.get_apps()
+        return self.connector.get_apps()
 
     def get_records_and_feedback(
         self,
@@ -360,7 +360,7 @@ class TruSession(python.SingletonPerName):
 
             List of feedback names that are columns in the DataFrame.
         """
-        return self.workspace.get_records_and_feedback(
+        return self.connector.get_records_and_feedback(
             app_ids=app_ids, offset=offset, limit=limit
         )
 
@@ -380,7 +380,7 @@ class TruSession(python.SingletonPerName):
             Dataframe of apps with their feedback results aggregated.
             If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
         """
-        return self.workspace.get_leaderboard(
+        return self.connector.get_leaderboard(
             app_ids=app_ids, group_by_metadata_key=group_by_metadata_key
         )
 
@@ -458,7 +458,7 @@ class TruSession(python.SingletonPerName):
                 # Getting total counts from the database to start off the tqdm
                 # progress bar initial values so that they offer accurate
                 # predictions initially after restarting the process.
-                queue_stats = self.workspace.db.get_feedback_count_by_status()
+                queue_stats = self.connector.db.get_feedback_count_by_status()
                 queue_done = (
                     queue_stats.get(
                         mod_feedback_schema.FeedbackResultStatus.DONE
@@ -571,7 +571,7 @@ class TruSession(python.SingletonPerName):
                     })
 
                     queue_stats = (
-                        self.workspace.db.get_feedback_count_by_status()
+                        self.connector.db.get_feedback_count_by_status()
                     )
                     queue_done = (
                         queue_stats.get(

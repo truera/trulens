@@ -30,7 +30,8 @@ from typing import (
 )
 
 import pydantic
-from trulens.core.database import base as mod_db
+from trulens.core.database.connector import DBConnector
+from trulens.core.database.connector import DefaultDBConnector
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import Select
@@ -62,8 +63,6 @@ from trulens.core.utils.serial import JSON_BASES_T
 from trulens.core.utils.serial import GetItemOrAttribute
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_objects
-from trulens.core.workspace.base import BaseWorkspace
-from trulens.core.workspace.default import DefaultWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -479,19 +478,11 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    workspace: BaseWorkspace = pydantic.Field(default=None, exclude=True)
-    """Workspace manager.
+    connector: DBConnector = pydantic.Field(default=None, exclude=True)
+    """Database connector.
 
-    If this is not provided, a singleton [Tru][trulens.core.tru.Tru] will be made
+    If this is not provided, a [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector] will be made
     (if not already) and used.
-    """
-
-    db: Optional[mod_db.DB] = pydantic.Field(default=None, exclude=True)
-    """Database interface.
-
-    If this is not provided, a singleton
-    [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] will be
-    made (if not already) and used.
     """
 
     app: Any = pydantic.Field(exclude=True)
@@ -550,7 +541,7 @@ class App(
 
     def __init__(
         self,
-        workspace: Optional[BaseWorkspace] = None,
+        connector: Optional[DBConnector] = None,
         feedbacks: Optional[Iterable[mod_feedback.Feedback]] = None,
         **kwargs,
     ):
@@ -560,7 +551,7 @@ class App(
             feedbacks = []
 
         # for us:
-        kwargs["workspace"] = workspace
+        kwargs["connector"] = connector
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts"
@@ -611,7 +602,7 @@ class App(
     def _manage_pending_feedback_results(self) -> None:
         """Manage the queue of records with pending feedback results.
 
-        This is meant to be run permentantly in a separate thread. It will
+        This is meant to be run permanently in a separate thread. It will
         remove records from the set records_with_pending_feedback_results as
         their feedback results are computed.
         """
@@ -634,7 +625,7 @@ class App(
         Returns:
             A list of records that have been waited on. Note a record will be
                 included even if a feedback computation for it failed or
-                timedout.
+                timed out.
 
         This applies to all feedbacks on all records produced by this app. This
         call will block until finished and if new records are produced while
@@ -679,10 +670,10 @@ class App(
 
         """
 
-        if self.workspace is None:
+        if self.connector is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Creating default Workspace.")
-                self.workspace = DefaultWorkspace()
+                self.connector = DefaultDBConnector()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
@@ -691,14 +682,14 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        if self.workspace is not None:
-            self.workspace.add_app(app=self)
+        if self.connector is not None:
+            self.connector.add_app(app=self)
 
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
-                    self.workspace.add_feedback_definition(f)
+                    self.connector.add_feedback_definition(f)
 
         else:
             if len(self.feedbacks) > 0:
@@ -1354,7 +1345,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         else:
             res = future_or_result
 
-        self.workspace.add_feedback(res)
+        self.connector.add_feedback(res)
 
     def _handle_record(
         self,
@@ -1382,11 +1373,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         # If in buffered mode, call add record nowait.
         if self.record_ingest_mode == mod_app_schema.RecordIngestMode.BUFFERED:
-            self.workspace.add_record_nowait(record=record)
+            self.connector.add_record_nowait(record=record)
             return
 
         # Need to add record to db before evaluating feedback functions.
-        record_id = self.workspace.add_record(record=record)
+        record_id = self.connector.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return []
@@ -1394,7 +1385,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # Add empty (to run) feedback to db.
         if feedback_mode == mod_feedback_schema.FeedbackMode.DEFERRED:
             for f in self.feedbacks:
-                self.workspace.add_feedback(
+                self.connector.add_feedback(
                     mod_feedback_schema.FeedbackResult(
                         name=f.name,
                         record_id=record_id,
@@ -1411,13 +1402,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             return self._submit_feedback_functions(
                 record=record,
                 feedback_functions=self.feedbacks,
-                workspace=self.workspace,
+                workspace=self.connector,
                 app=self,
                 on_done=self._add_future_feedback,
             )
 
     def _handle_error(self, record: mod_record_schema.Record, error: Exception):
-        if self.workspace is None:
+        if self.connector is None:
             return
 
     def __getattr__(self, __name: str) -> Any:

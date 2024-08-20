@@ -9,11 +9,11 @@ from typing import (
     Union,
 )
 
+from trulens.core.connector.base import DBConnector
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.utils.python import OpaqueWrapper
-from trulens.core.workspace import BaseWorkspace
 
 from snowflake.core import CreateMode
 from snowflake.core import Root
@@ -24,7 +24,7 @@ from snowflake.sqlalchemy import URL
 logger = logging.getLogger(__name__)
 
 
-class SnowflakeWorkspace(BaseWorkspace):
+class SnowflakeConnector(DBConnector):
     def __init__(
         self,
         account: str,

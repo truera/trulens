@@ -30,10 +30,10 @@ from trulens.core.utils.text import format_quantity
 from trulens.core.utils.threading import TP
 
 if TYPE_CHECKING:
+    from trulens.core.database.connector import DBConnector
     from trulens.core.feedback import Feedback
     from trulens.core.schema.record import Record
     from trulens.core.utils.python import Future
-    from trulens.core.workspace import BaseWorkspace
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     def _submit_feedback_functions(
         record: Record,
         feedback_functions: Sequence[Feedback],
-        workspace: BaseWorkspace,
+        connector: DBConnector,
         app: Optional[AppDefinition] = None,
         on_done: Optional[
             Callable[
@@ -322,7 +322,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_id = record.app_id
 
         if app is None:
-            app = AppDefinition.model_validate(workspace.get_app(app_id=app_id))
+            app = AppDefinition.model_validate(connector.get_app(app_id=app_id))
             if app is None:
                 raise RuntimeError(
                     f"App {app_id} not present in db. "
@@ -334,11 +334,11 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                 app_id == app.app_id
             ), "Record was produced by a different app."
 
-            if workspace.get_app(app_id=app.app_id) is None:
+            if connector.get_app(app_id=app.app_id) is None:
                 logger.warning(
                     f"App {app_id} was not present in database. Adding it."
                 )
-                workspace.add_app(app=app)
+                connector.add_app(app=app)
 
         feedbacks_and_futures = []
 

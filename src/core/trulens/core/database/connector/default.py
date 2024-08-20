@@ -9,16 +9,16 @@ from typing import (
     Union,
 )
 
+from trulens.core.connector.base import DBConnector
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.utils.python import OpaqueWrapper
-from trulens.core.workspace.base import BaseWorkspace
 
 logger = logging.getLogger(__name__)
 
 
-class DefaultWorkspace(BaseWorkspace):
+class DefaultDBConnector(DBConnector):
     def __init__(
         self,
         database: Optional[DB] = None,
