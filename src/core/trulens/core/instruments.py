@@ -42,16 +42,14 @@ from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 from trulens.core.utils import wrap as wrap_utils
-from trulens.core.utils.containers import dict_merge_with
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Method
-from trulens.core.utils.pyschema import clean_attributes
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +67,9 @@ class WithInstrumentCallbacks(pydantic.BaseModel):
     # pydantic.BaseModel might require a lot of other fixes.
 
     # Called during instrumentation.
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
         """Callback to be called by instrumentation system for every function
         requested to be instrumented.
 
@@ -90,7 +90,7 @@ class WithInstrumentCallbacks(pydantic.BaseModel):
         raise NotImplementedError
 
     # Called during invocation.
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
         """
         Get the path of the instrumented function `func`, a member of the class
         of `obj` relative to this app.
@@ -108,7 +108,7 @@ class WithInstrumentCallbacks(pydantic.BaseModel):
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -256,12 +256,14 @@ class Instrument:
                 if not cls.__module__.startswith(mod):
                     continue
 
-                if isinstance(cls, Dummy):
+                if isinstance(cls, import_utils.Dummy):
                     print(
                         f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
                     print(
-                        retab(tab=f"{t * 3}> ", s=str(cls.original_exception))
+                        text_utils.retab(
+                            tab=f"{t * 3}> ", s=str(cls.original_exception)
+                        )
                     )
                     continue
 
@@ -326,7 +328,7 @@ class Instrument:
             set(include_classes)
         )
 
-        self.include_methods = dict_merge_with(
+        self.include_methods = container_utils.dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
             merge=class_filter_disjunction,
@@ -353,7 +355,7 @@ class Instrument:
 
     def _otel_tracked_method_wrapper(
         self,
-        query: Lens,
+        query: serial_utils.Lens,
         func: Callable,
         method_name: str,
         cls: type,
@@ -384,7 +386,7 @@ class Instrument:
 
     def _record_tracked_method_wrapper(
         self,
-        query: Lens,
+        query: serial_utils.Lens,
         func: Callable,
         method_name: str,
         cls: type,
@@ -544,7 +546,10 @@ class Instrument:
                     stack = ctx_stacks[ctx]
 
                 frame_ident = mod_record_schema.RecordAppCallMethod(
-                    path=path, method=Method.of_method(func, obj=obj, cls=cls)
+                    path=path,
+                    method=pyschema_utils.Method.of_method(
+                        func, obj=obj, cls=cls
+                    ),
                 )
 
                 stack = stack + (frame_ident,)
@@ -587,7 +592,7 @@ class Instrument:
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: jsonify(v)
+                k: json_utils.jsonify(v)
                 for k, v in (
                     bindings.arguments.items() if bindings is not None else {}
                 )
@@ -609,7 +614,7 @@ class Instrument:
                     ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
-                    rets=jsonify(rets),
+                    rets=json_utils.jsonify(rets),
                     error=error_str if error is not None else None,
                 )
                 # End of run wrapped block.
@@ -675,7 +680,9 @@ class Instrument:
 
         return tru_wrapper
 
-    def instrument_method(self, method_name: str, obj: Any, query: Lens):
+    def instrument_method(
+        self, method_name: str, obj: Any, query: serial_utils.Lens
+    ):
         """Instrument a method."""
 
         cls = type(obj)
@@ -747,7 +754,7 @@ class Instrument:
         cls.__new__ = wrapped_new
 
     def instrument_object(
-        self, obj, query: Lens, done: Optional[Set[int]] = None
+        self, obj, query: serial_utils.Lens, done: Optional[Set[int]] = None
     ):
         """Instrument the given object `obj` and its components."""
 
@@ -880,7 +887,9 @@ class Instrument:
                 # is meant to be instrumented and if so, we  walk over it manually.
                 # NOTE: some llama_index objects are using dataclasses_json but most do
                 # not so this section applies.
-                attrs = clean_attributes(obj, include_props=True).keys()
+                attrs = pyschema_utils.clean_attributes(
+                    obj, include_props=True
+                ).keys()
 
             if vals is None:
                 vals = [
@@ -972,7 +981,7 @@ class Instrument:
 
         # Check whether bound methods are instrumented properly.
 
-    def instrument_bound_methods(self, obj: object, query: Lens):
+    def instrument_bound_methods(self, obj: object, query: serial_utils.Lens):
         """Instrument functions that may be bound methods.
 
         Some apps include either anonymous functions or manipulates methods that
