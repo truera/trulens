@@ -1,0 +1,31 @@
+{
+  "feedback_result_id": "feedback_result_hash_42b668faaeef54ded7c91faeeb26175f",
+  "record_id": "record_hash_78a9a90ee94a8c0f8679391003330756",
+  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
+  "last_ts": "2024-08-09T15:20:30.596928",
+  "status": "done",
+  "cost": {
+    "n_requests": 0,
+    "n_successful_requests": 0,
+    "n_classes": 0,
+    "n_tokens": 0,
+    "n_stream_chunks": 0,
+    "n_prompt_tokens": 0,
+    "n_completion_tokens": 0,
+    "cost": 0.0
+  },
+  "name": "context_relevance",
+  "calls": [
+    {
+      "args": {
+        "question": "hello",
+        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
+      },
+      "ret": 0.6666666666666666,
+      "meta": {}
+    }
+  ],
+  "result": 0.6666666666666666,
+  "error": null,
+  "multi_result": "null"
+}

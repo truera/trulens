@@ -176,6 +176,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             feedback_definition_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
             )
+            run_location = Column(TYPE_ENUM, nullable=True)
             feedback_json = Column(TYPE_JSON, nullable=False)
 
             # feedback_results via one-to-many on FeedbackResult.feedback_definition_id
@@ -188,6 +189,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             ) -> ORM.FeedbackDefinition:
                 return cls(
                     feedback_definition_id=obj.feedback_definition_id,
+                    run_location=None
+                    if obj.run_location is None
+                    else obj.run_location.value,
                     feedback_json=json_str_of_obj(obj, redact_keys=redact_keys),
                 )
 

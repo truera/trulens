@@ -112,26 +112,24 @@ values_to_redact: Set[str] = set()
 
 # Regex of keys (into dict/json) that should be redacted.
 RE_KEY_TO_REDACT: re.Pattern = re.compile(
-    "|".join(
-        [
-            r"api_key",
-            # Covers OpenAI, Cohere, Anthropic class key 'api_key'
-            r".+_api_key",
-            # Covers langchain llm attributes for keys such as 'openai_api_key'.
-            # r'token',
-            # Would cover bard unofficial api field "token" but this is a
-            # bit too general of a key; TODO: need another solution to redact.
-            r".+_API_KEY",
-            r".+_API_TOKEN",
-            # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
-            # bard
-            r"KAGGLE_KEY",
-            r"SLACK_(TOKEN|SIGNING_SECRET)",
-            # Covers slack-related keys.
-            r".*PASSWORD.*",
-            # Cover user credentials for i.e. Snowflake connection session
-        ]
-    )
+    "|".join([
+        r"api_key",
+        # Covers OpenAI, Cohere, Anthropic class key 'api_key'
+        r".+_api_key",
+        # Covers langchain llm attributes for keys such as 'openai_api_key'.
+        # r'token',
+        # Would cover bard unofficial api field "token" but this is a
+        # bit too general of a key; TODO: need another solution to redact.
+        r".+_API_KEY",
+        r".+_API_TOKEN",
+        # Covers env vars ending in "_API_KEY", including openai, cohere, anthropic,
+        # bard
+        r"KAGGLE_KEY",
+        r"SLACK_(TOKEN|SIGNING_SECRET)",
+        # Covers slack-related keys.
+        r".*PASSWORD.*",
+        # Cover user credentials for i.e. Snowflake connection session
+    ])
 )
 
 # Env vars not covered as they are assumed non-sensitive:
@@ -180,7 +178,7 @@ def redact_value(
         return v
 
 
-def get_config_file() -> Path:
+def get_config_file() -> Optional[Path]:
     """
     Looks for a .env file in current folder or its parents. Returns Path of
     found .env or None if not found.
@@ -193,7 +191,7 @@ def get_config_file() -> Path:
     return None
 
 
-def get_config() -> Tuple[Path, dict]:
+def get_config() -> Tuple[Optional[Path], Optional[dict]]:
     config_file = get_config_file()
     if config_file is None:
         logger.warning(
@@ -354,7 +352,7 @@ def _collect_keys(*args: str, **kwargs: Dict[str, str]) -> Dict[str, str]:
                 f"More than one different value for key {k} has been found:\n\t"
             )
             warning += "\n\t".join(
-                f"""value ending in {v[-1]} in {' and '.join(valid_sources[v])}"""
+                f"""value ending in {v[-1]} in {" and ".join(valid_sources[v])}"""
                 for v in valid_values
             )
             warning += "\nUsing one arbitrarily."
