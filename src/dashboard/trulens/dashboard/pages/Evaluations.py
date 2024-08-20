@@ -358,7 +358,7 @@ else:
                             == default_direction,
                         )
                         return [f"background-color: {cat.color}"] * len(s)
-                    
+
                     def highlight_groundedness(s):
                         if "distance" in feedback_name:
                             return [
@@ -419,7 +419,13 @@ else:
                                     "Score": score,
                                 })
                             reasons_df = pd.DataFrame(data)
-                            df_expanded = pd.concat([df.reset_index(drop=True), reasons_df.reset_index(drop=True)], axis=1)
+                            df_expanded = pd.concat(
+                                [
+                                    df.reset_index(drop=True),
+                                    reasons_df.reset_index(drop=True),
+                                ],
+                                axis=1,
+                            )
                             st.dataframe(
                                 df_expanded.style.apply(
                                     highlight_groundedness, axis=1
