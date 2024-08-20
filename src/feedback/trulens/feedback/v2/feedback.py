@@ -253,6 +253,16 @@ class Abstention(Semantics, WithPrompt):
         ABSTENTION:"""
     )
 
+class Trivial(Semantics, WithPrompt):
+    system_prompt: ClassVar[str] = cleandoc(
+        """Consider the following list of statements. Remove any statements that are trivial, irrelevant, or unimportant. Respond with a list of the remaining statements."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """ALL STATEMENTS: {statements}
+
+        IMPORTANT STATEMENTS:"""
+    )
+
 
 LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
 BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"

@@ -1313,6 +1313,22 @@ class LLMProvider(Provider):
         )
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
+    
+    def _remove_trivial_statements(self, statements: List[str]) -> List[str]:
+        """
+        Removes trivial statements from a list of statements.
+
+        Args:
+            statements (List[str]): A list of statements.
+
+        Returns:
+            List[str]: A list of statements with trivial statements removed.
+        """
+        return [
+            statement
+            for statement in statements
+            if statement not in prompts.TRIVIAL_STATEMENTS
+        ]
 
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
