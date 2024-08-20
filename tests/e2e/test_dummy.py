@@ -31,7 +31,7 @@ class TestDummy(JSONTestCase):
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = TruCustomApp(ca, app_id="customapp")
+        ta = TruCustomApp(ca, app_name="customapp", app_version="base")
 
         with ta as recorder:
             ca.respond_to_query("hello")

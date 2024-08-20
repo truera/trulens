@@ -50,7 +50,7 @@ def setup_chain():
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
     chain = chat_prompt_template | chat | StrOutputParser()
 
-    tc = TruChain(chain, app_id="Streamlit App")
+    tc = TruChain(chain, app_name="Streamlit App")
     tru.add_app(app=tc)
     run_dashboard(tru, _dev=dev_path)
     return tc

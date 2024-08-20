@@ -55,7 +55,7 @@ tru = Tru()
 
 ident = lambda h: h
 
-app_ids = {
+app_versions = {
     0: "0/default",
     1: "1/lang_prompt",
     2: "2/relevance_prompt",
@@ -105,12 +105,12 @@ def get_or_make_app(
     if cid in convos:
         return convos[cid]
 
-    if selector not in app_ids:
+    if selector not in app_versions:
         selector = 0
 
-    app_id = app_ids[selector]
+    app_version = app_versions[selector]
 
-    pp.pprint(f"Starting a new conversation with {app_id}.")
+    pp.pprint(f"Starting a new conversation with {app_version}.")
 
     # Embedding needed for Pinecone vector db.
     embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
@@ -120,7 +120,7 @@ def get_or_make_app(
 
     retriever = docsearch.as_retriever()
 
-    if "filtered" in app_id:
+    if "filtered" in app_version:
         # Better contexts fix, filter contexts with relevance:
         retriever = WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever, feedback=f_context_relevance, threshold=0.5
@@ -157,7 +157,7 @@ def get_or_make_app(
         app.combine_docs_chain.document_prompt.copy()
     )
 
-    if "lang" in app_id:
+    if "lang" in app_version:
         # Language mismatch fix:
         app.combine_docs_chain.llm_chain.prompt.template = (
             "Use the following pieces of context to answer the question at the end "
@@ -170,7 +170,7 @@ def get_or_make_app(
             "Helpful Answer: "
         )
 
-    elif "relevance" in app_id:
+    elif "relevance" in app_version:
         # Contexts fix
 
         # whitespace important in "Contexts! "
@@ -194,7 +194,7 @@ def get_or_make_app(
     # Trulens instrumentation.
     tc = TruChain(
         app=app,
-        app_id=app_id,
+        app_version=app_version,
         feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
         feedback_mode=feedback_mode,
     )
@@ -275,7 +275,7 @@ def answer_message(client, body: dict, logger):
             client.chat_postMessage(
                 channel=channel,
                 thread_ts=ts,
-                text=f"I will use app {app.app_id} for this conversation.",
+                text=f"I will use app {app.app_version} for this conversation.",
             )
 
             if len(message) == 2:

@@ -187,7 +187,8 @@ class TruChain(mod_app.App):
         # Wrap application
         tru_recorder = TruChain(
             chain,
-            app_id='Chain1_ChatApplication',
+            app_name="ChatApplication",
+            app_version="chain_v1",
             feedbacks=[f_context_relevance]
         )
 

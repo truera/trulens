@@ -50,17 +50,15 @@ class SnowflakeWorkspace(BaseWorkspace):
             warehouse=warehouse,
             role=role,
         )
-        database_args.update(
-            {
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+        database_args.update({
+            k: v
+            for k, v in {
+                "database_url": database_url,
+                "database_redact_keys": database_redact_keys,
+                "database_prefix": database_prefix,
+            }.items()
+            if v is not None
+        })
         self._db: Union[SQLAlchemyDB, OpaqueWrapper] = (
             SQLAlchemyDB.from_tru_args(**database_args)
         )

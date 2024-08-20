@@ -410,10 +410,10 @@ class TestTru(TestCase):
         pass
 
     # def test_add_app(self):
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     app_name = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
+    #     app_id = app_definition.app_id
     #     tru = Tru()
-
     #     # Action: Add the app to the database
     #     added_app_id = tru.add_app(app_definition)
 
@@ -425,8 +425,9 @@ class TestTru(TestCase):
 
     # def test_delete_app(self):
     #     # Setup: Add an app to the database
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
+    #     app_name = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
+    #     app_id = app_definition.app_id
     #     tru = Tru()
     #     tru.add_app(app_definition)
 

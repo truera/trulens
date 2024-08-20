@@ -138,12 +138,7 @@ class DB(SerialModel, abc.ABC):
         Delete an `app` from the database.
 
         Args:
-            app: The app to delete. Note that only the
-                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are serialized
-                hence the type hint.
-
-        Returns:
-            The id of the given app.
+            app_id: The id of the app to delete.
         """
 
         raise NotImplementedError()

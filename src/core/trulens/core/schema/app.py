@@ -153,7 +153,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                 raise ValueError(
                     "Cannot provide both `app_id` and `app_name`. "
                     "Use only `app_name` as `app_id` is deprecated."
-                    "If `app_id` is provided, `app_name` is set to `app_id`."
                 )
 
         self.app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")

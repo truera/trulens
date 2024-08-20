@@ -20,7 +20,9 @@ class TestTruCustomApp(JSONTestCase):
         self.tru = Tru()
 
         self.ca = DummyApp()
-        self.ta_recorder = TruCustomApp(self.ca, app_id="custom_app")
+        self.ta_recorder = TruCustomApp(
+            self.ca, app_name="custom_app", app_version="v1"
+        )
 
     def test_with_record(self):
         question = "What is the capital of Indonesia?"

@@ -310,7 +310,7 @@ class Tru(python.SingletonPerName):
         Example:
             ```python
             from trulens.core.schema import app
-            app_json = tru.get_app(app_id="Custom Application v1")
+            app_json = tru.get_app(app_id="app_hash_85ebbf172d02e733c8183ac035d0cbb2")
             app = app.AppDefinition.model_validate(app_json)
             ```
 

@@ -64,7 +64,7 @@ class TestSerial(JSONTestCase):
 
         ta = TruCustomApp(
             ca,
-            app_id="customapp",
+            app_name="customapp",
             feedbacks=[feedback_language_match, feedback_context_relevance],
         )
 

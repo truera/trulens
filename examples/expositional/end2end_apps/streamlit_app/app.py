@@ -22,7 +22,7 @@ feedbacks = [f_coherence]
 
 def generate_response(input_text):
     llm = OpenAI(temperature=0.7)
-    tru_llm = TruChain(llm, app_id="LLM v1", feedbacks=feedbacks)
+    tru_llm = TruChain(llm, app_name="LLM v1", feedbacks=feedbacks)
     with tru_llm as recording:
         response = llm.invoke(input_text)
     record = recording.get()

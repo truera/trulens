@@ -400,7 +400,7 @@ class SQLAlchemyDB(DB):
         Args:
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             _app = (
                 session.query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
