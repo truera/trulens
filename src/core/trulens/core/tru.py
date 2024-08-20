@@ -287,7 +287,7 @@ class Tru(python.SingletonPerName):
                 "snowflake_sqlalchemy.zip", "@TRULENS_PACKAGES_STAGE"
             )
             session.file.put("trulens_core.zip", "@TRULENS_PACKAGES_STAGE")
-            # session.file.put("trulens_feedback.zip", "@TRULENS_PACKAGES_STAGE") # TODO(this_pr)
+            session.file.put("trulens_feedback.zip", "@TRULENS_PACKAGES_STAGE")
             # initialize stream for feedback eval table.
             session.sql(f"""
                 CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
@@ -317,6 +317,7 @@ class Tru(python.SingletonPerName):
                     VALUE_LIST = ('snowflake.com')
                     COMMENT = 'This is a dummy network rule created entirely because secrets cannot be used without one.'
             """).collect()
+            # TODO(this_pr): delete this EAI.
             session.sql(f"""
                 CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION
                     ALLOWED_NETWORK_RULES = (TRULENS_DUMMY_NETWORK_RULE)
@@ -332,10 +333,21 @@ class Tru(python.SingletonPerName):
                     LANGUAGE PYTHON
                     RUNTIME_VERSION = '3.11'
                     PACKAGES = (
+                        'alembic',
+                        'dill',
+                        'munch',
+                        'nest-asyncio',
+                        'numpy',
+                        'packaging',
+                        'pandas',
+                        'pip',
+                        'pydantic',
+                        'python-dotenv',
+                        'requests',
+                        'rich',
                         'snowflake-snowpark-python',
-                        'snowflake-sqlalchemy',
-                        'trulens-core',
-                        'trulens-feedback'
+                        'sqlalchemy',
+                        'typing_extensions'
                     )
                     IMPORTS = (
                         '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/snowflake_sqlalchemy.zip',
@@ -357,6 +369,7 @@ def run():
     tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, wait_till_done=True)
                     $$;
             """).collect()
+            print("DONE")  # TODO(this_pr): get rid of this!
 
     @staticmethod
     def _validate_and_compute_schema_name(name):
