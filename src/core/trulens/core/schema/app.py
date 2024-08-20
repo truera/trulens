@@ -155,9 +155,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     "Use only `app_name` as `app_id` is deprecated."
                 )
 
-        self.app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
         self.app_name = str(app_name or app_id)
         self.app_version = app_version or "default"
+        self.app_id = obj_id_of_obj(
+            obj={"app_name": app_name, "app_version": app_version},
+            prefix="app",
+        )
         self.record_ingest_mode = record_ingest_mode
 
         if tags is None:
