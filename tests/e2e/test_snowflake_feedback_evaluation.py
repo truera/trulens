@@ -136,6 +136,25 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.2,
         )
 
+    @optional_test
+    def test_snowflake_feedback_setup(self) -> None:
+        self.get_tru("test_snowflake_feedback_setup")
+        TruBasicApp(
+            text_to_text=lambda t: f"returning {t}",
+        )
+        # Test stream exists.
+        self._snowflake_session.sql(
+            f"SHOW TERSE STREAMS IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
+        )
+        # Test task exists.
+        self._snowflake_session.sql(
+            f"SHOW TERSE TASKS IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
+        )
+        # Test stored procedure exists.
+        self._snowflake_session.sql(
+            f"SHOW TERSE PROCEDURES IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
+        )
+
 
 if __name__ == "__main__":
     main()

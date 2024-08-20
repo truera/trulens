@@ -258,9 +258,105 @@ class Tru(python.SingletonPerName):
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
 
-        # TODO: if snowflake_connection_parameters is not None:
-        #    # initialize stream for feedback eval table.
-        #    # initialize task for stream that will import trulens and try to run the Tru.
+        if snowflake_connection_parameters is not None:
+            self._initialize_snowflake_server_side_feedback_evaluations(
+                snowflake_connection_parameters,
+                schema_name,
+                database_url,
+            )
+
+    def _initialize_snowflake_server_side_feedback_evaluations(
+        self,
+        snowflake_connection_parameters: Dict[str, str],
+        schema_name: str,
+        database_url: str,
+    ):
+        database_name = snowflake_connection_parameters["database"]
+        warehouse_name = snowflake_connection_parameters["warehouse"]
+        snowflake_connection_parameters = snowflake_connection_parameters.copy()
+        snowflake_connection_parameters["schema"] = schema_name
+        with Session.builder.configs(
+            snowflake_connection_parameters
+        ).create() as session:
+            # TODO(this_pr): don't use parameters directly in sql code.
+            # Upload trulens and snowflake-sqlalchemy to staging.
+            session.sql(
+                "CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE"
+            ).collect()
+            session.file.put(
+                "snowflake_sqlalchemy.zip", "@TRULENS_PACKAGES_STAGE"
+            )
+            session.file.put("trulens_core.zip", "@TRULENS_PACKAGES_STAGE")
+            # session.file.put("trulens_feedback.zip", "@TRULENS_PACKAGES_STAGE") # TODO(this_pr)
+            # initialize stream for feedback eval table.
+            session.sql(f"""
+                CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
+                    ON TABLE {database_name}.{schema_name}.TRULENS_FEEDBACKS
+            """).collect()
+            # initialize task for stream that will import trulens and try to run the Tru.
+            session.sql(f"""
+                CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVAL_TASK
+                    WAREHOUSE = {warehouse_name}
+                    SCHEDULE = '1 MINUTE'
+                    ALLOW_OVERLAPPING_EXECUTION = FALSE
+                    WHEN SYSTEM$STREAM_HAS_DATA('TRULENS_FEEDBACK_EVALS_STREAM')
+                    AS
+                        CALL TRULENS_RUN_DEFERRED_FEEDBACKS()
+            """).collect()
+            # initialize secret.
+            session.sql(f"""
+                CREATE SECRET IF NOT EXISTS TRULENS_DB_URL
+                    TYPE = GENERIC_STRING
+                    SECRET_STRING = '{database_url}'
+            """).collect()
+            # initialize external access integration rule.
+            session.sql("""
+                CREATE NETWORK RULE IF NOT EXISTS TRULENS_DUMMY_NETWORK_RULE
+                    TYPE = HOST_PORT
+                    MODE = EGRESS
+                    VALUE_LIST = ('snowflake.com')
+                    COMMENT = 'This is a dummy network rule created entirely because secrets cannot be used without one.'
+            """).collect()
+            session.sql(f"""
+                CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION
+                    ALLOWED_NETWORK_RULES = (TRULENS_DUMMY_NETWORK_RULE)
+                    ALLOWED_AUTHENTICATION_SECRETS = (TRULENS_DB_URL)
+                    ENABLED = TRUE
+                    COMMENT = 'This is a dummy EAI created entirely because secrets cannot be used without one.'
+            """).collect()
+            # initialize stored procedure.
+            # TODO(this_pr): get this indentation stuff better.
+            session.sql(f"""
+                CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS()
+                    RETURNS STRING
+                    LANGUAGE PYTHON
+                    RUNTIME_VERSION = '3.11'
+                    PACKAGES = (
+                        'snowflake-snowpark-python',
+                        'snowflake-sqlalchemy',
+                        'trulens-core',
+                        'trulens-feedback'
+                    )
+                    IMPORTS = (
+                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/snowflake_sqlalchemy.zip',
+                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_core.zip',
+                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_feedback.zip'
+                    )
+                    HANDLER = 'run'
+                    SECRETS = ('trulens_db_url' = TRULENS_DB_URL)
+                    EXTERNAL_ACCESS_INTEGRATIONS = (TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION)
+                AS
+                    $$
+import _snowflake
+from trulens.core import Tru
+from trulens.core.schema.feedback import FeedbackRunLocation
+
+def run():
+    db_url = _snowflake.get_generic_secret_string("trulens_db_url")
+    tru = Tru(database_url=db_url)
+    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, wait_till_done=True)
+                    $$;
+            """).collect()
 
     @staticmethod
     def _validate_and_compute_schema_name(name):
@@ -291,14 +387,14 @@ class Tru(python.SingletonPerName):
     def _create_snowflake_schema_if_not_exists(
         snowflake_connection_parameters: Dict[str, str], schema_name: str
     ):
-        session = Session.builder.configs(
+        with Session.builder.configs(
             snowflake_connection_parameters
-        ).create()
-        root = Root(session)
-        schema = Schema(name=schema_name)
-        root.databases[
-            snowflake_connection_parameters["database"]
-        ].schemas.create(schema, mode=CreateMode.if_not_exists)
+        ).create() as session:
+            root = Root(session)
+            schema = Schema(name=schema_name)
+            root.databases[
+                snowflake_connection_parameters["database"]
+            ].schemas.create(schema, mode=CreateMode.if_not_exists)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
@@ -394,7 +490,8 @@ class Tru(python.SingletonPerName):
                     for record in records:
                         self.batch_record_queue.put(record)
                     logger.error(
-                        "Re-queued records due to insertion error {}", e
+                        "Re-queued records due to insertion error {}",
+                        e,
                     )
                     continue
                 feedback_results = []

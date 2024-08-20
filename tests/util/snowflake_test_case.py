@@ -16,11 +16,12 @@ from trulens.core import Tru
 class SnowflakeTestCase(TestCase):
     def setUp(self):
         self._logger = logging.getLogger(__name__)
+        self._database_name = os.environ["SNOWFLAKE_DATABASE"]
         self._snowflake_connection_parameters = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
             "user": os.environ["SNOWFLAKE_USER"],
             "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "database": self._database_name,
             "role": os.environ["SNOWFLAKE_ROLE"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
@@ -61,14 +62,14 @@ class SnowflakeTestCase(TestCase):
         app_name = app_base_name
         app_name += "__"
         app_name += str(uuid.uuid4()).replace("-", "_")
-        schema_name = Tru._validate_and_compute_schema_name(app_name)
-        self.assertNotIn(schema_name, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(schema_name)
+        self._schema_name = Tru._validate_and_compute_schema_name(app_name)
+        self.assertNotIn(self._schema_name, self.list_schemas())
+        self._snowflake_schemas_to_delete.append(self._schema_name)
         tru = Tru(
             snowflake_connection_parameters=self._snowflake_connection_parameters,
             app_name=app_name,
         )
-        self.assertIn(schema_name, self.list_schemas())
+        self.assertIn(self._schema_name, self.list_schemas())
         return tru
 
 
