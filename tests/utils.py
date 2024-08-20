@@ -468,7 +468,7 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
             is_public = True
             group = publics
 
-        elif name.startswith("__"):  # and not ends with
+        elif name.startswith("__") and not name.endswith("__"):
             group = privates
 
         elif name.startswith("_"):
