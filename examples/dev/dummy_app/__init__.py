@@ -1,7 +1,7 @@
 """Dummy App and Dummy components
 
 The files in this folder code a custom app that resembles an LLM app with
-seperate classes for common app components. None of these components make
+separate classes for common app components. None of these components make
 network calls but pretend to otherwise operate like real components.
 
 !!! Warning
@@ -11,7 +11,7 @@ network calls but pretend to otherwise operate like real components.
 # DummyApp options
 
 The custom dummy app has configuration options or call variants for simulating
-various behaviours:
+various behaviors:
 
 - Number of agents and number of tools is configurable via
   [DummyApp][examples.dev.dummy_app.app.DummyApp] class params/attributes

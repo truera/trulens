@@ -117,7 +117,7 @@ class Tru(python.SingletonPerName):
 
         snowflake_connection_parameters: Connection arguments to Snowflake database to use.
 
-        name: Name of the app.
+        app_name: Name of the app.
     """
 
     RETRY_RUNNING_SECONDS: float = 60.0
@@ -181,7 +181,7 @@ class Tru(python.SingletonPerName):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
-        name: Optional[str] = None,
+        app_name: Optional[str] = None,
     ):
         """
         Args:
@@ -201,27 +201,25 @@ class Tru(python.SingletonPerName):
                 raise ValueError(
                     "`database_url` must be `None` if `snowflake_connection_parameters` is set!"
                 )
-            if not name:
+            if not app_name:
                 raise ValueError(
-                    "`name` must be set if `snowflake_connection_parameters` is set!"
+                    "`app_name` must be set if `snowflake_connection_parameters` is set!"
                 )
-            schema_name = self._validate_and_compute_schema_name(name)
+            schema_name = self._validate_and_compute_schema_name(app_name)
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
 
-        database_args.update(
-            {
-                k: v
-                for k, v in {
-                    "database_url": database_url,
-                    "database_file": database_file,
-                    "database_redact_keys": database_redact_keys,
-                    "database_prefix": database_prefix,
-                }.items()
-                if v is not None
-            }
-        )
+        database_args.update({
+            k: v
+            for k, v in {
+                "database_url": database_url,
+                "database_file": database_file,
+                "database_redact_keys": database_redact_keys,
+                "database_prefix": database_prefix,
+            }.items()
+            if v is not None
+        })
 
         if python.safe_hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
@@ -252,6 +250,10 @@ class Tru(python.SingletonPerName):
             except DatabaseVersionException as e:
                 print(e)
                 self.db = OpaqueWrapper(obj=self.db, e=e)
+
+        # TODO: if snowflake_connection_parameters is not None:
+        #    # initialize stream for feedback eval table.
+        #    # initialize task for stream that will import trulens and try to run the Tru.
 
     @staticmethod
     def _validate_and_compute_schema_name(name):
@@ -824,7 +826,9 @@ class Tru(python.SingletonPerName):
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
-    ) -> Union[Process, Thread]:
+        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
+        return_when_done: bool = False,
+    ) -> Optional[Union[Process, Thread]]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -837,9 +841,13 @@ class Tru(python.SingletonPerName):
 
             disable_tqdm: If set, will disable progress bar logging from the evaluator.
 
+            run_location: Run only the evaluations corresponding to run_location.
+
+            return_when_done: Instead of running asynchronously, will block until no feedbacks remain.
+
         Returns:
-            The started process or thread that is executing the deferred feedback
-                evaluator.
+            If return_when_done is True, then returns None. Otherwise, the started process or thread
+                that is executing the deferred feedback evaluator.
 
         Relevant constants:
             [RETRY_RUNNING_SECONDS][trulens.core.tru.Tru.RETRY_RUNNING_SECONDS]
@@ -852,6 +860,9 @@ class Tru(python.SingletonPerName):
         """
 
         assert not fork, "Fork mode not yet implemented."
+        assert (
+            (not fork) or (not return_when_done)
+        ), "fork=True implies running asynchronously but return_when_done=True does not!"
 
         if self._evaluator_proc is not None:
             if restart:
@@ -864,7 +875,7 @@ class Tru(python.SingletonPerName):
         if not fork:
             self._evaluator_stop = threading.Event()
 
-        def runloop():
+        def runloop(stop_when_none_left: bool = False):
             assert self._evaluator_stop is not None
 
             print(
@@ -890,7 +901,9 @@ class Tru(python.SingletonPerName):
                 # Getting total counts from the database to start off the tqdm
                 # progress bar initial values so that they offer accurate
                 # predictions initially after restarting the process.
-                queue_stats = self.db.get_feedback_count_by_status()
+                queue_stats = self.db.get_feedback_count_by_status(
+                    run_location=run_location
+                )
                 queue_done = (
                     queue_stats.get(
                         mod_feedback_schema.FeedbackResultStatus.DONE
@@ -947,6 +960,7 @@ class Tru(python.SingletonPerName):
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
+                        run_location=run_location,
                     )
 
                     # Will likely get some of the same ones that already have running.
@@ -997,11 +1011,13 @@ class Tru(python.SingletonPerName):
                         pass
 
                 if tqdm:
-                    tqdm_total.set_postfix(
-                        {name: count for name, count in runs_stats.items()}
-                    )
+                    tqdm_total.set_postfix({
+                        name: count for name, count in runs_stats.items()
+                    })
 
-                    queue_stats = self.db.get_feedback_count_by_status()
+                    queue_stats = self.db.get_feedback_count_by_status(
+                        run_location=run_location
+                    )
                     queue_done = (
                         queue_stats.get(
                             mod_feedback_schema.FeedbackResultStatus.DONE
@@ -1012,12 +1028,10 @@ class Tru(python.SingletonPerName):
 
                     tqdm_status.n = queue_done
                     tqdm_status.total = queue_total
-                    tqdm_status.set_postfix(
-                        {
-                            status.name: count
-                            for status, count in queue_stats.items()
-                        }
-                    )
+                    tqdm_status.set_postfix({
+                        status.name: count
+                        for status, count in queue_stats.items()
+                    })
 
                 # Check if any of the running futures should be stopped.
                 futures_copy = list(futures_map.keys())
@@ -1040,6 +1054,8 @@ class Tru(python.SingletonPerName):
                             del futures_map[fut]
 
                 if not did_wait:
+                    if stop_when_none_left:
+                        break
                     # Nothing to run/is running, wait a bit.
                     if fork:
                         sleep(10)
@@ -1048,18 +1064,19 @@ class Tru(python.SingletonPerName):
 
             print("Evaluator stopped.")
 
-        if fork:
-            proc = Process(target=runloop)
+        if return_when_done:
+            runloop(stop_when_none_left=True)
+            return None
         else:
-            proc = Thread(target=runloop)
-            proc.daemon = True
-
-        # Start a persistent thread or process that evaluates feedback functions.
-
-        self._evaluator_proc = proc
-        proc.start()
-
-        return proc
+            if fork:
+                proc = Process(target=runloop)
+            else:
+                proc = Thread(target=runloop)
+                proc.daemon = True
+            # Start a persistent thread or process that evaluates feedback functions.
+            self._evaluator_proc = proc
+            proc.start()
+            return proc
 
     run_evaluator = start_evaluator
 
