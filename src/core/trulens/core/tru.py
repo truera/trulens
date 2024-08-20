@@ -26,7 +26,6 @@ from typing import (
 )
 
 import pandas
-import pandas as pd
 from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -832,7 +831,7 @@ class Tru(python.SingletonPerName):
     def add_ground_truth_to_dataset(
         self,
         dataset_name: str,
-        ground_truth_df: pd.DataFrame,
+        ground_truth_df: pandas.DataFrame,
         dataset_metadata: Optional[Dict[str, Any]] = None,
     ):
         """Create a new dataset, if not existing, and add ground truth data to it. If
@@ -872,7 +871,7 @@ class Tru(python.SingletonPerName):
         if buffer:
             self.db.batch_insert_ground_truth(buffer)
 
-    def get_ground_truth(self, dataset_name: str) -> pd.DataFrame:
+    def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
         """Get ground truth data from the dataset.
         dataset_name: Name of the dataset.
         """
