@@ -389,12 +389,37 @@ else:
                             df.meta.apply(lambda m: pd.Series(m))
                         ).drop(columns="meta")
 
-                        st.dataframe(
-                            df.style.apply(highlight, axis=1).format(
-                                "{:.2f}", subset=["result"]
-                            )
-                        )
+                        if "groundedness" in feedback_name.lower():
+                            # Split the reasons value into separate rows and columns
+                            reasons = df["reasons"].iloc[0]
+                            statements = reasons.split("STATEMENT ")
+                            data = []
+                            for statement in statements[1:]:
+                                parts = statement.split("\n")
+                                criteria = parts[1].split(": ", 1)[1]
+                                supporting_evidence = parts[2].split(": ", 1)[1]
+                                score = int(parts[3].split(": ", 1)[1])
+                                data.append({
+                                    "Statement": criteria,
+                                    "Supporting Evidence": supporting_evidence,
+                                    "Score": score
+                                })
+                            reasons_df = pd.DataFrame(data)
+                            # Add the new columns to the DataFrame without duplicating original rows
+                            df_expanded = df.join(reasons_df)
+                            df_expanded.rename(columns={"source": "Full Source"}, inplace=True)
 
+                            st.dataframe(
+                                df_expanded.style.apply(highlight, axis=1).format(
+                                    "{:.2f}", subset=["Score"]
+                                ),
+                                hide_index=True,
+                                column_order=["Full Source", "Statement", "Supporting Evidence", "Score"]
+                            )
+                        else:
+                            st.dataframe(
+                                    df.style.apply(highlight, axis=1), hide_index=True
+                                )
                     else:
                         st.text("No feedback details.")
 
