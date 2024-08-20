@@ -4,9 +4,7 @@ import builtins
 from collections import namedtuple
 import importlib
 import inspect
-from pathlib import Path
 import pkgutil
-import re
 from types import ModuleType
 from typing import (
     ForwardRef,
@@ -16,62 +14,19 @@ from typing import (
     Set,
     TypeVar,
     Union,
+    get_args,
 )
 
 from trulens.core.utils import python as python_utils
 
-
-def get_module_names(
-    path: Path, matching: Optional[Union[re.Pattern, str]] = None
-) -> Iterable[str]:
-    """Get all module names in the given path that start with the given
-    prefix.
-
-    Args:
-        path: The path to search for modules.
-
-        matching: If given, only modules that match this regular expression are
-            returned. Note that if the pattern necessitates that some submodule
-            must be returned, the ancestors must also match for it to be found
-            and returned. That is, if r`trulens\\.feedback\\..+` is desired, you
-            need to match the ancestor `trulens` as well with e.g.
-            r`trulens\\.(feedback\\.)?+`. If a string is given, it is interpreted
-            as a literal non-strict prefix.
-
-    Returns:
-        Iterable of module names. These are fully qualified.
-    """
-
-    if isinstance(matching, str):
-        matching = re.compile(re.escape(matching) + r".*")
-
-    for modinfo in pkgutil.iter_modules([str(path)]):
-        if matching is not None and not matching.fullmatch(modinfo.name):
-            continue
-
-        yield modinfo.name
-
-        if modinfo.ispkg:
-            for submod in get_module_names(
-                path / modinfo.name,
-                matching=None,  # Intentionally not passing matching here as we want to only use matching on the qualified module name, which we do below.
-            ):
-                submodqualname = modinfo.name + "." + submod
-
-                if matching is not None and not matching.fullmatch(
-                    submodqualname
-                ):
-                    continue
-
-                yield submodqualname
-
-
-Member = namedtuple("Member", ["obj", "qualname", "val", "typ"])
+Member = namedtuple("Member", ["obj", "name", "qualname", "val", "typ"])
 """Class/module member information.
 
 Contents:
 
     - obj: object or class owning the member
+
+    - name: name of the member
 
     - qualname: fully qualified name of the member
 
@@ -103,12 +58,56 @@ def type_str(typ: Union[type, ForwardRef, TypeVar]) -> str:
     if typ is ...:
         return "..."
 
-    ret = typ.__module__ + "." + typ.__qualname__
+    parts = []
+
+    if hasattr(typ, "__module__"):
+        parts.append(typ.__module__)
+
+    if hasattr(typ, "__qualname__"):
+        parts.append(typ.__qualname__)
+    else:
+        if hasattr(typ, "__name__"):
+            parts.append(typ.__name__)
+        else:
+            parts.append(str(typ))
+
+    ret = ".".join(parts)
 
     if hasattr(typ, "__args__"):
-        ret += "[" + ", ".join(type_str(arg) for arg in typ.__args__) + "]"
+        ret += "[" + ", ".join(type_str(arg) for arg in get_args(typ)) + "]"
 
     return ret
+
+
+def get_module_names_of_path(path: str, prefix: str = "") -> Iterable[str]:
+    """Get all modules in the given path.
+
+    Args:
+        mod: The base module over which to look.
+    """
+
+    for modinfo in pkgutil.walk_packages(path, prefix=prefix):
+        yield modinfo.name
+
+
+def get_submodule_names(mod: ModuleType) -> Iterable[str]:
+    """Get all modules in the given path.
+
+    Args:
+        mod: The base module over which to look.
+    """
+    if isinstance(mod, str):
+        try:
+            mod = importlib.import_module(mod)
+        except Exception:
+            return
+
+    path = mod.__path__
+
+    yield mod.__name__
+
+    for modname in get_module_names_of_path(path, prefix=mod.__name__ + "."):
+        yield modname
 
 
 def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
@@ -134,7 +133,7 @@ def get_module_exports(mod: Union[str, ModuleType]) -> Iterable[Member]:
     for name in mod.__all__:
         val = inspect.getattr_static(mod, name)
         qualname = mod.__name__ + "." + name
-        yield Member(mod, qualname, val, type(val))
+        yield Member(mod, name=name, qualname=qualname, val=val, typ=type(val))
 
 
 def _isdefinedin(val, mod: Union[ModuleType, None]):
@@ -184,24 +183,19 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
             continue
 
         qualname = mod.__name__ + "." + item
-        yield Member(mod, qualname, val, type(val))
+        yield Member(mod, name=item, qualname=qualname, val=val, typ=type(val))
 
 
-def get_definitions(
-    path: Path, matching: Optional[Union[re.Pattern, str]] = None
-) -> Iterable[Member]:
-    """Get all definitions in the given path.
+def get_definitions(mod: Union[ModuleType, str]) -> Iterable[Member]:
+    """Get all definitions in the module.
 
     Definitions are members that are not aliases with definitions somewhere
     else. A limitation is that basic types like int, str, etc. are not produced
     as their location of definition cannot be easily checked.
 
     Args:
-        path: The path to search for definitions.
+        mod: Module whose definitions we want to get. Includes submodules.
 
-        matching: If given, only definitions from modules that match this
-            regular expression are returned. If a string is given, it is
-            interpreted as a literal non-strict prefix.
 
     Returns:
         Iterable of namedtuples (modname, qualname, val) where modname is the
@@ -209,27 +203,28 @@ def get_definitions(
             val is the value of the member.
     """
 
-    if isinstance(matching, str):
-        matching = re.compile(re.escape(matching) + r".*")
+    if isinstance(mod, str):
+        try:
+            mod = importlib.import_module(mod)
+        except Exception:
+            return
 
-    for modname in get_module_names(path, matching=matching):
+    for modname in get_submodule_names(mod):
         yield from get_module_definitions(modname)
 
 
-def get_exports(
-    path: Path, matching: Optional[Union[re.Pattern, str]] = None
-) -> Iterable[Member]:
+def get_exports(mod: Union[ModuleType, str]) -> Iterable[Member]:
     """Get all exports in the given path.
 
     Exports are values whose names are in the `__all__` special variable of
     their owning module.
 
     Args:
-        path: The path to search for exports.
+        path: The path to search for exports. Can be iterable of paths in case
+            of namespace package paths.
 
-        matching: If given, only exports from modules that match this
-            regular expression are returned. If a string is given, it is
-            interpreted as a literal non-strict prefix.
+        prefix: If given, only exports from modules that match this
+            prefix are returned.
 
     Returns:
         Iterable of namedtuples (modname, qualname, val) where modname is the
@@ -237,28 +232,29 @@ def get_exports(
             val is the value of the member.
     """
 
-    if isinstance(matching, str):
-        matching = re.compile(re.escape(matching) + r".*")
-
-    for modname in get_module_names(path, matching=matching):
+    if isinstance(mod, str):
         try:
-            mod = importlib.import_module(modname)
+            mod = importlib.import_module(mod)
         except Exception:
-            continue
+            return
 
+    for modname in get_submodule_names(mod):
         if inspect.getattr_static(mod, "__all__", None) is None:
             continue
 
         for name in mod.__all__:
             val = getattr(mod, name)
             qualname = modname + "." + name
-            yield Member(modname, qualname, val, type(val))
+            yield Member(
+                mod, name=name, qualname=qualname, val=val, typ=type(val)
+            )
 
 
 Members = namedtuple(
     "Members",
     [
         "obj",
+        "version",
         "exports",
         "definitions",
         "access_publics",
@@ -338,16 +334,15 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
 
     for name, val, typ in static_members + slot_members + fields_members:
         qualname = class_.__module__ + "." + class_.__qualname__ + "." + name
-        member = Member(class_.__module__, qualname, val, typ)
+        member = Member(
+            class_.__module__, name=name, qualname=qualname, val=val, typ=typ
+        )
 
         is_def = False
         is_public = False
 
         if any(
-            (
-                (not base.__name__.startswith("trulens_eval"))
-                and hasattr(base, name)
-            )
+            ((not base.__name__.startswith("trulens")) and hasattr(base, name))
             for base in class_.__bases__
         ):
             # Skip anything that is a member of non trulens_eval bases.
@@ -364,7 +359,7 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
             group = publics
 
         if not any(
-            (base.__name__.startswith("trulens_eval")) and hasattr(base, name)
+            (base.__name__.startswith("trulens")) and hasattr(base, name)
             for base in class_.__bases__
         ):
             # View the class-equivalent of a definitions as members of a class
@@ -382,7 +377,8 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
                 lows.append(member)
 
     return Members(
-        class_,
+        obj=class_,
+        version=None,
         exports=exports,
         definitions=definitions,
         access_publics=publics,
@@ -430,7 +426,9 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
 
     for name, val in python_utils.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
-        member = Member(mod, qualname, val, type(val))
+        member = Member(
+            mod, name=name, qualname=qualname, val=val, typ=type(val)
+        )
 
         is_def = False
         is_public = False
@@ -494,7 +492,8 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
                 lows.append(member)
 
     return Members(
-        mod,
+        obj=mod,
+        version=None if not hasattr(mod, "__version__") else mod.__version__,
         exports=exports,
         definitions=definitions,
         access_publics=publics,

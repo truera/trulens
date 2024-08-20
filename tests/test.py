@@ -220,10 +220,10 @@ class JSONTestCase(TestCase):
         golden_path = (caller_path / "golden" / golden_filename).resolve()
 
         if golden_path.suffix == ".json":
-            writer = functools.partial(json.dump, indent=2)
+            writer = functools.partial(json.dump, indent=2, sort_keys=True)
             loader = json.load
         elif golden_path.suffix == ".yaml":
-            writer = yaml.dump
+            writer = functools.partial(yaml.dump, sort_keys=True)
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         else:
             raise ValueError(f"Unknown file extension {golden_path.suffix}.")

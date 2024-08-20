@@ -4,16 +4,18 @@ These make sure components considered high or low level API are accessible.
 """
 
 import inspect
-from pathlib import Path
+import sys
 from typing import Dict
 from unittest import main
+
+from trulens.core.utils.imports import is_dummy
 
 from tests.test import JSONTestCase
 from tests.test import optional_test
 from tests.utils import Member
 from tests.utils import get_class_members
 from tests.utils import get_module_members
-from tests.utils import get_module_names
+from tests.utils import get_submodule_names
 from tests.utils import type_str
 
 
@@ -21,23 +23,18 @@ class TestAPI(JSONTestCase):
     """API Tests."""
 
     def setUp(self):
-        pass
+        self.pyversion = ".".join(map(str, sys.version_info[0:2]))
 
-    def get_current_members_trulens_eval(self) -> Dict[str, Dict[str, Member]]:
+    def get_members(self, mod) -> Dict[str, Dict[str, Member]]:
         """Get the API members of the trulens_eval module."""
         # TODEP: Deprecate after trulens_eval is removed.
 
-        import trulens_eval
-
         objects = {}
 
-        high_classes = set()
-        low_classes = set()
+        classes = set()
 
-        # Enumerate all trulens_eval modules:
-        for modname in get_module_names(
-            Path(trulens_eval.__file__).parent.parent, matching="trulens_eval"
-        ):
+        # Enumerate mod and all submodules.
+        for modname in get_submodule_names(mod):
             mod = get_module_members(modname)
             if mod is None:
                 continue
@@ -46,49 +43,98 @@ class TestAPI(JSONTestCase):
             lows = {}
 
             for mem in mod.api_highs:
-                highs[mem.qualname] = type_str(mem.typ)
                 if inspect.isclass(mem.val):
-                    high_classes.add(mem.val)
+                    classes.add(mem.val)
+
+                highs[mem.name] = type_str(mem.typ)
 
             for mem in mod.api_lows:
-                lows[mem.qualname] = type_str(mem.typ)
                 if inspect.isclass(mem.val):
-                    low_classes.add(mem.val)
+                    classes.add(mem.val)
 
-            objects["module " + modname] = {"highs": highs, "lows": lows}
+                lows[mem.name] = type_str(mem.typ)
+
+            k = modname  # + "(" + type_str(type(mod.obj)) + ")"
+
+            objects[k] = {
+                "highs": highs,
+                "lows": lows,
+                "__class__": type_str(type(mod.obj)),
+            }
+            if mod.version is not None:
+                objects[k]["__version__"] = mod.version
 
         # Enumerate all public classes found in the prior step.
-        for classes, api_level in zip(
-            [high_classes, low_classes], ["high", "low"]
-        ):
-            for class_ in classes:
-                members = get_class_members(class_, class_api_level=api_level)
+        for class_ in classes:
+            if is_dummy(class_):
+                with self.subTest(class_=class_.__name__):
+                    self.fail(
+                        f"Dummy class found in classes: {str(class_)}. Make sure all optional modules are installed before running this test."
+                    )
+                # Record this as a test issue but continue to the next class.
+                continue
 
-                highs = {}
-                lows = {}
+            members = get_class_members(
+                class_, class_api_level="low"
+            )  # api level is arbitrary
 
-                for mem in members.api_highs:
-                    highs[mem.qualname] = type_str(mem.typ)
-                for mem in members.api_lows:
-                    lows[mem.qualname] = type_str(mem.typ)
+            attrs = {}
 
-                objects["class " + type_str(class_)] = {
-                    "highs": highs,
-                    "lows": lows,
-                }
+            for mem in members.api_lows:  # because of "low" above
+                attrs[mem.name] = type_str(mem.typ)
+
+            k = type_str(class_)  # + "(" + type_str(type(class_)) + ")"
+
+            info = {
+                "__class__": type_str(type(members.obj)),
+                "__bases__": [type_str(base) for base in members.obj.__bases__],
+                "attributes": attrs,
+            }
+
+            # if k in objects:
+            #    self.assertJSONEqual(info, objects[k], path=Lens()[k])
+            print(f"duplicate {k}")
+
+            objects[k] = info
 
         return objects
+
+    def get_members_trulens_eval(self) -> Dict[str, Dict[str, Member]]:
+        """Get the API members of the trulens_eval module."""
+        # TODEP: Deprecate after trulens_eval is removed.
+
+        import trulens_eval
+
+        return self.get_members(trulens_eval)
+
+    def get_members_trulens(self) -> Dict[str, Dict[str, Member]]:
+        """Get the API members of the trulens_eval module."""
+
+        import trulens
+
+        return self.get_members(trulens)
 
     @optional_test
     def test_api_trulens_eval_compat(self):
         """Check that the trulens_eval API members are still present."""
         # TODEP: Deprecate after trulens_eval is removed.
 
-        members = self.get_current_members_trulens_eval()
+        members = self.get_members_trulens_eval()
 
         self.assertGoldenJSONEqual(
             actual=members,
-            golden_filename="api.trulens_eval.yaml",
+            golden_filename=f"api.trulens_eval.{self.pyversion}.yaml",
+        )
+
+    @optional_test
+    def test_api_trulens(self):
+        """Check that the trulens API members are still present."""
+
+        members = self.get_members_trulens()
+
+        self.assertGoldenJSONEqual(
+            actual=members,
+            golden_filename=f"api.trulens.{self.pyversion}.yaml",
         )
 
 
