@@ -132,11 +132,15 @@ class TruSession(python.SingletonPerName):
         assert isinstance(inst, TruSession)
         return inst
 
-    def __init__(
-        self,
-        connector: Optional[DBConnector] = None,
-    ):
+    def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
         self.connector = connector or DefaultDBConnector()
+        if kwargs:
+            warnings.warn(
+                f"Session arguments {', '.join(kwargs.keys())} have been deprecated. Use a DBConnector instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.connector = DefaultDBConnector(**kwargs)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
