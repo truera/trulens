@@ -71,9 +71,6 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
-    def load_beir_dataset(self, *args, **kwargs):
-        pass  # TODO
-
     @instrument
     def run_score_generation_on_single_row(
         self, row, feedback_fn: Callable
