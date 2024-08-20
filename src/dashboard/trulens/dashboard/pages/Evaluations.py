@@ -358,6 +358,20 @@ else:
                             == default_direction,
                         )
                         return [f"background-color: {cat.color}"] * len(s)
+                    
+                    def highlight_groundedness(s):
+                        if "distance" in feedback_name:
+                            return [
+                                f"background-color: {CATEGORY.UNKNOWN.color}"
+                            ] * len(s)
+                        cat = CATEGORY.of_score(
+                            s.Score,
+                            higher_is_better=feedback_directions.get(
+                                feedback_name, default_direction
+                            )
+                            == default_direction,
+                        )
+                        return [f"background-color: {cat.color}"] * len(s)
 
                     if call is not None and len(call) > 0:
                         # NOTE(piotrm for garett): converting feedback
@@ -401,25 +415,27 @@ else:
                                 score = int(parts[3].split(": ", 1)[1])
                                 data.append({
                                     "Statement": criteria,
-                                    "Supporting Evidence": supporting_evidence,
-                                    "Score": score
+                                    "Supporting Evidence from Source": supporting_evidence,
+                                    "Score": score,
                                 })
                             reasons_df = pd.DataFrame(data)
-                            # Add the new columns to the DataFrame without duplicating original rows
-                            df_expanded = df.join(reasons_df)
-                            df_expanded.rename(columns={"source": "Full Source"}, inplace=True)
-
+                            df_expanded = pd.concat([df.reset_index(drop=True), reasons_df.reset_index(drop=True)], axis=1)
                             st.dataframe(
-                                df_expanded.style.apply(highlight, axis=1).format(
-                                    "{:.2f}", subset=["Score"]
-                                ),
+                                df_expanded.style.apply(
+                                    highlight_groundedness, axis=1
+                                ).format("{:.2f}", subset=["Score"]),
                                 hide_index=True,
-                                column_order=["Full Source", "Statement", "Supporting Evidence", "Score"]
+                                column_order=[
+                                    "Statement",
+                                    "Supporting Evidence from Source",
+                                    "Score",
+                                ],
                             )
                         else:
                             st.dataframe(
-                                    df.style.apply(highlight, axis=1), hide_index=True
-                                )
+                                df.style.apply(highlight, axis=1),
+                                hide_index=True,
+                            )
                     else:
                         st.text("No feedback details.")
 
