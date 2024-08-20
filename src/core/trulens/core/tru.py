@@ -31,7 +31,9 @@ from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
@@ -138,8 +140,11 @@ class Tru(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    RECORDS_BATCH_TIMEOUT: int = 10
+    RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
     """Time to wait before inserting a batch of records into the database."""
+
+    GROUND_TRUTHS_BATCH_SIZE: int = 100
+    """Time to wait before inserting a batch of ground truths into the database."""
 
     db: Union[DB, OpaqueWrapper[DB]]
     """Database supporting this workspace.
@@ -165,6 +170,8 @@ class Tru(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     batch_record_queue = queue.Queue()
+
+    batch_ground_truth_queue = queue.Queue()
 
     batch_thread = None
 
@@ -371,7 +378,7 @@ class Tru(python.SingletonPerName):
 
     def batch_loop(self):
         while True:
-            time.sleep(self.RECORDS_BATCH_TIMEOUT)
+            time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
             records = []
             while True:
                 try:
@@ -820,6 +827,56 @@ class Tru(python.SingletonPerName):
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
+
+    def add_ground_truth_to_dataset(
+        self,
+        dataset_name: str,
+        ground_truth_df: pandas.DataFrame,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+    ):
+        """Create a new dataset, if not existing, and add ground truth data to it. If
+        the dataset with the same name already exists, the ground truth data will be added to it.
+
+        Args:
+            dataset_name: Name of the dataset.
+            ground_truth_df: DataFrame containing the ground truth data.
+            dataset_metadata: Additional metadata to add to the dataset.
+        """
+
+        # Create and insert the dataset record
+        dataset = mod_dataset_schema.Dataset(
+            name=dataset_name,
+            meta=dataset_metadata,
+        )
+        dataset_id = self.db.insert_dataset(dataset=dataset)
+
+        buffer = []
+
+        for _, row in ground_truth_df.iterrows():
+            ground_truth = mod_groundtruth_schema.GroundTruth(
+                dataset_id=dataset_id,
+                query=row["query"],
+                query_id=row.get("query_id", None),
+                expected_response=row.get("expected_response", None),
+                expected_chunks=row.get("expected_chunks", None),
+                meta=row.get("meta", None),
+            )
+            buffer.append(ground_truth)
+
+            if len(buffer) >= self.GROUND_TRUTHS_BATCH_SIZE:
+                self.db.batch_insert_ground_truth(buffer)
+                buffer.clear()
+
+        # remaining ground truths in the buffer
+        if buffer:
+            self.db.batch_insert_ground_truth(buffer)
+
+    def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
+        """Get ground truth data from the dataset.
+        dataset_name: Name of the dataset.
+        """
+
+        return self.db.get_ground_truths_by_dataset(dataset_name)
 
     def start_evaluator(
         self,
