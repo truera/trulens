@@ -145,22 +145,23 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         super().__init__(**kwargs)
 
         if app_id is not None:
-            warnings.warn(
-                "The `app_id` parameter is deprecated. Use `app_name` instead.",
-                DeprecationWarning,
-            )
-            if app_name is not None:
+            if app_name:
                 raise ValueError(
                     "Cannot provide both `app_id` and `app_name`. "
                     "Use only `app_name` as `app_id` is deprecated."
                 )
+            else:
+                warnings.warn(
+                    "The `app_id` parameter is deprecated. Use `app_name` instead.",
+                    DeprecationWarning,
+                )
 
         self.app_name = str(app_name or app_id)
-        self.app_version = app_version or "default"
-        self.app_id = obj_id_of_obj(
-            obj={"app_name": app_name, "app_version": app_version},
-            prefix="app",
-        )
+        if self.app_name is None:
+            raise ValueError("`app_name` is required.")
+        self.app_version = app_version or "latest"
+        self.app_id = self.get_app_id(self.app_name, self.app_version)
+
         self.record_ingest_mode = record_ingest_mode
 
         if tags is None:
@@ -232,6 +233,23 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         cls = pyschema.WithClassInfo.get_class(app_definition_json)
 
         return cls(**app_definition_json)
+
+    @staticmethod
+    def get_app_id(app_name: str, app_version: str) -> str:
+        """Get the app id for the given app name and version.
+
+        Args:
+            app_name: The name of the app.
+
+            app_version: The version of the app.
+
+        Returns:
+            The app id.
+        """
+
+        return obj_id_of_obj(
+            obj={"app_name": app_name, "app_version": app_version}, prefix="app"
+        )
 
     @staticmethod
     def new_session(
