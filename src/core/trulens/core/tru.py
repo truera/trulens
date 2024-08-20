@@ -144,7 +144,7 @@ class Tru(python.SingletonPerName):
     RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
     """Time to wait before inserting a batch of records into the database."""
 
-    GROUND_TRUTHS_BATCH_TIMEOUT_IN_SEC: int = 10
+    GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
     db: Union[DB, OpaqueWrapper[DB]]
@@ -852,8 +852,6 @@ class Tru(python.SingletonPerName):
         dataset_id = self.db.insert_dataset(dataset=dataset)
 
         buffer = []
-        batch_interval = self.GROUND_TRUTHS_BATCH_TIMEOUT_IN_SEC
-        last_batch_time = time.time()
 
         for _, row in ground_truth_df.iterrows():
             ground_truth = mod_groundtruth_schema.GroundTruth(
@@ -866,10 +864,9 @@ class Tru(python.SingletonPerName):
             )
             buffer.append(ground_truth)
 
-            if time.time() - last_batch_time >= batch_interval:
+            if len(buffer) >= self.GROUND_TRUTHS_BATCH_SIZE:
                 self.db.batch_insert_ground_truth(buffer)
                 buffer.clear()
-                last_batch_time = time.time()
 
         # remaining ground truths in the buffer
         if buffer:
