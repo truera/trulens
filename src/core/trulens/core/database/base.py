@@ -7,9 +7,11 @@ import pandas as pd
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.dataset import Dataset
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.feedback import FeedbackResultStatus
+from trulens.core.schema.groundtruth import GroundTruth
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.serial import JSONized
@@ -328,5 +330,74 @@ class DB(SerialModel, abc.ABC):
             A DataFrame with the records.
 
             A list of column names that contain feedback results.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def insert_ground_truth(
+        self, ground_truth: GroundTruth
+    ) -> mod_types_schema.GroundTruthID:
+        """Insert a ground truth entry into the database. The ground truth id is generated
+        based on the ground truth content, so re-inserting is idempotent.
+
+        Args:
+            ground_truth: The ground truth entry to insert.
+
+        Returns:
+            The id of the given ground truth entry.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def batch_insert_ground_truth(
+        self, ground_truths: List[GroundTruth]
+    ) -> List[mod_types_schema.GroundTruthID]:
+        """Insert a batch of ground truth entries into the database.
+
+        Args:
+            ground_truths: The ground truth entries to insert.
+
+        Returns:
+            The ids of the given ground truth entries.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_ground_truth(
+        self,
+        ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
+    ) -> Optional[JSONized]:
+        """Get the ground truth with the given id from the database."""
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_ground_truths_by_dataset(self, dataset_name: str) -> pd.DataFrame:
+        """Get all ground truths from the database from a particular dataset's name.
+
+        Returns:
+            A dataframe with the ground truths.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def insert_dataset(self, dataset: Dataset) -> mod_types_schema.DatasetID:
+        """Insert a dataset into the database. The dataset id is generated based on the
+        dataset content, so re-inserting is idempotent.
+
+        Args:
+            dataset: The dataset to insert.
+
+        Returns:
+            The id of the given dataset.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_datasets(self) -> pd.DataFrame:
+        """Get all datasets from the database.
+
+        Returns:
+            A dataframe with the datasets.
         """
         raise NotImplementedError()

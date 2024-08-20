@@ -26,7 +26,9 @@ from trulens.core import feedback
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python
@@ -103,8 +105,11 @@ class TruSession(python.SingletonPerName):
     DEFERRED_NUM_RUNS: int = 32
     """Number of futures to wait for when evaluating deferred feedback functions."""
 
-    RECORDS_BATCH_TIMEOUT: int = 10
+    RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
     """Time to wait before inserting a batch of records into the database."""
+
+    GROUND_TRUTHS_BATCH_SIZE: int = 100
+    """Time to wait before inserting a batch of ground truths into the database."""
 
     _dashboard_urls: Optional[str] = None
 
@@ -124,6 +129,8 @@ class TruSession(python.SingletonPerName):
     """Event for stopping the deferred evaluator which runs in another thread."""
 
     batch_record_queue = queue.Queue()
+
+    batch_ground_truth_queue = queue.Queue()
 
     batch_thread = None
 
@@ -389,13 +396,64 @@ class TruSession(python.SingletonPerName):
             app_ids=app_ids, group_by_metadata_key=group_by_metadata_key
         )
 
+    def add_ground_truth_to_dataset(
+        self,
+        dataset_name: str,
+        ground_truth_df: pandas.DataFrame,
+        dataset_metadata: Optional[Dict[str, Any]] = None,
+    ):
+        """Create a new dataset, if not existing, and add ground truth data to it. If
+        the dataset with the same name already exists, the ground truth data will be added to it.
+
+        Args:
+            dataset_name: Name of the dataset.
+            ground_truth_df: DataFrame containing the ground truth data.
+            dataset_metadata: Additional metadata to add to the dataset.
+        """
+
+        # Create and insert the dataset record
+        dataset = mod_dataset_schema.Dataset(
+            name=dataset_name,
+            meta=dataset_metadata,
+        )
+        dataset_id = self.db.insert_dataset(dataset=dataset)
+
+        buffer = []
+
+        for _, row in ground_truth_df.iterrows():
+            ground_truth = mod_groundtruth_schema.GroundTruth(
+                dataset_id=dataset_id,
+                query=row["query"],
+                query_id=row.get("query_id", None),
+                expected_response=row.get("expected_response", None),
+                expected_chunks=row.get("expected_chunks", None),
+                meta=row.get("meta", None),
+            )
+            buffer.append(ground_truth)
+
+            if len(buffer) >= self.GROUND_TRUTHS_BATCH_SIZE:
+                self.db.batch_insert_ground_truth(buffer)
+                buffer.clear()
+
+        # remaining ground truths in the buffer
+        if buffer:
+            self.db.batch_insert_ground_truth(buffer)
+
+    def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
+        """Get ground truth data from the dataset.
+        dataset_name: Name of the dataset.
+        """
+
+        return self.db.get_ground_truths_by_dataset(dataset_name)
+
     def start_evaluator(
         self,
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
-    ) -> Union[Process, Thread]:
+        return_when_done: bool = False,
+    ) -> Optional[Union[Process, Thread]]:
         """
         Start a deferred feedback function evaluation thread or process.
 
@@ -410,9 +468,11 @@ class TruSession(python.SingletonPerName):
 
             run_location: Run only the evaluations corresponding to run_location.
 
+            return_when_done: Instead of running asynchronously, will block until no feedbacks remain.
+
         Returns:
-            The started process or thread that is executing the deferred feedback
-                evaluator.
+            If return_when_done is True, then returns None. Otherwise, the started process or thread
+                that is executing the deferred feedback evaluator.
 
         Relevant constants:
             [RETRY_RUNNING_SECONDS][trulens.core.tru.Tru.RETRY_RUNNING_SECONDS]
@@ -425,6 +485,9 @@ class TruSession(python.SingletonPerName):
         """
 
         assert not fork, "Fork mode not yet implemented."
+        assert (
+            (not fork) or (not return_when_done)
+        ), "fork=True implies running asynchronously but return_when_done=True does not!"
 
         if self._evaluator_proc is not None:
             if restart:
@@ -437,7 +500,7 @@ class TruSession(python.SingletonPerName):
         if not fork:
             self._evaluator_stop = threading.Event()
 
-        def runloop():
+        def runloop(stop_when_none_left: bool = False):
             assert self._evaluator_stop is not None
 
             print(
@@ -614,6 +677,8 @@ class TruSession(python.SingletonPerName):
                             del futures_map[fut]
 
                 if not did_wait:
+                    if stop_when_none_left:
+                        break
                     # Nothing to run/is running, wait a bit.
                     if fork:
                         sleep(10)
@@ -622,18 +687,19 @@ class TruSession(python.SingletonPerName):
 
             print("Evaluator stopped.")
 
-        if fork:
-            proc = Process(target=runloop)
+        if return_when_done:
+            runloop(stop_when_none_left=True)
+            return None
         else:
-            proc = Thread(target=runloop)
-            proc.daemon = True
-
-        # Start a persistent thread or process that evaluates feedback functions.
-
-        self._evaluator_proc = proc
-        proc.start()
-
-        return proc
+            if fork:
+                proc = Process(target=runloop)
+            else:
+                proc = Thread(target=runloop)
+                proc.daemon = True
+            # Start a persistent thread or process that evaluates feedback functions.
+            self._evaluator_proc = proc
+            proc.start()
+            return proc
 
     run_evaluator = start_evaluator
 

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class DBConnector(ABC):
     """Base class for workspace implementations."""
 
-    RECORDS_BATCH_TIMEOUT: int = 10
+    RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
     """Time to wait before inserting a batch of records into the database."""
 
     batch_record_queue = queue.Queue()
@@ -103,8 +103,8 @@ class DBConnector(ABC):
 
     def batch_loop(self):
         while True:
-            time.sleep(self.RECORDS_BATCH_TIMEOUT)
-            records: List[mod_record_schema.Record] = []
+            time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
+            records = []
             while True:
                 try:
                     record = self.batch_record_queue.get_nowait()
