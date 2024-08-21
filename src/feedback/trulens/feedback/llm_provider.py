@@ -1347,7 +1347,7 @@ class LLMProvider(Provider):
 
         The statement will first be split by a tokenizer into its compoenent sentences.
 
-        Then, trivial statements are eliminated so as to not delute the evaluation.
+        Then, trivial statements are eliminated so as to not dilute the evaluation.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
