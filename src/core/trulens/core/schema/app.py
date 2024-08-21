@@ -225,6 +225,12 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         return cls(**app_definition_json)
 
+    @staticmethod
+    def _get_app_id(app_name, app_version):
+        return obj_id_of_obj(
+            obj={"app_name": app_name, "app_version": app_version}, prefix="app"
+        )
+
     @computed_field
     @property
     def app_id(self) -> str:
@@ -239,10 +245,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             The app id.
         """
 
-        return obj_id_of_obj(
-            obj={"app_name": self.app_name, "app_version": self.app_version},
-            prefix="app",
-        )
+        return self._get_app_id(self.app_name, self.app_version)
 
     @staticmethod
     def new_session(

@@ -35,7 +35,7 @@ def upgrade(config) -> None:
     apps = session.query(orm.AppDefinition).all()
     for app in apps:
         app.app_version = "latest"
-        app.app_id = AppDefinition.get_app_id(app.app_name, app.app_version)
+        app.app_id = AppDefinition._get_app_id(app.app_name, app.app_version)
     session.commit()
 
     # ### end Alembic commands ###
