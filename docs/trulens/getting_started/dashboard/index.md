@@ -4,7 +4,7 @@ TruLens provides a broad set of capabilities for evaluating and tracking applica
 
 ## TruLens Dashboard
 
-To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [run_dashboard][trulens.dashboard.run_dashboard], and will run from a database url you specify with  [TruSession()][trulens.core.Tru].
+To view and examine application logs and feedback results, TruLens provides a built-in Streamlit dashboard. That app has two pages, the Leaderboard which displays aggregate feedback results and metadata for each application version, and the Evaluations page where you can more closely examine individual traces and feedback results. This dashboard is launched by [run_dashboard][trulens.dashboard.run_dashboard], and will run from a database url you specify with  [TruSession()][trulens.core.TruSession].
 
 !!! example "Launch the TruLens dashboard"
 

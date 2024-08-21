@@ -30,7 +30,7 @@ blank.
 
 If you need to change this prefix after migration, you may need to specify the
 old prefix when invoking
-[migrate_database][trulens.core.tru.Tru.migrate_database]:
+[migrate_database][trulens.core.session.TruSession.migrate_database]:
 
 ```python
 tru = TruSession(

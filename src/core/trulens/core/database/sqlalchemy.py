@@ -135,7 +135,7 @@ class SQLAlchemyDB(DB):
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
-        """Process database-related configuration provided to the [Tru][trulens.core.tru.Tru] class to
+        """Process database-related configuration provided to the [Tru][trulens.core.session.TruSession] class to
         create a database.
 
         Emits warnings if appropriate.

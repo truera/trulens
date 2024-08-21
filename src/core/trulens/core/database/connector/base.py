@@ -299,7 +299,7 @@ class DBConnector(ABC):
             A list of JSON-ized version of all apps in the database.
 
         Warning:
-            Same Deserialization caveats as [get_app][trulens.core.tru.Tru.get_app].
+            Same Deserialization caveats as [get_app][trulens.core.session.TruSession.get_app].
         """
 
         return list(self.db.get_apps())

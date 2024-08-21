@@ -34,7 +34,7 @@ As a result of these changes, the package structure for the TruLens varies from 
 
 | TruLens Eval | TruLens | Additional Dependencies |
 |------------|-------------|------------------|
-| `trulens_eval.Tru` | [`trulens.core.Tru`][trulens.core.Tru] | |
+| `trulens_eval.Tru` | [`trulens.core.TruSession`][trulens.core.TruSession] | |
 | `trulens_eval.Feedback` | [`trulens.core.Feedback`][trulens.core.Feedback] | |
 | `trulens_eval.Select` | [`trulens.core.Select`][trulens.core.Select] | |
 | `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.core.TruCustomApp`][trulens.core.TruCustomApp] | |
