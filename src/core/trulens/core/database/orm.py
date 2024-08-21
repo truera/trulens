@@ -19,9 +19,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
 from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.utils.json import json_str_of_obj
+from trulens.core.utils import json as json_utils
 
 TYPE_JSON = Text
 """Database type for JSON fields."""
@@ -110,6 +112,8 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackDefinition: Type[T]
     Record: Type[T]
     FeedbackResult: Type[T]
+    GroundTruth: Type[T]
+    Dataset: Type[T]
 
 
 def new_orm(base: Type[T]) -> Type[ORM[T]]:
@@ -192,7 +196,9 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     run_location=None
                     if obj.run_location is None
                     else obj.run_location.value,
-                    feedback_json=json_str_of_obj(obj, redact_keys=redact_keys),
+                    feedback_json=json_utils.json_str_of_obj(
+                        obj, redact_keys=redact_keys
+                    ),
                 )
 
         class Record(base):
@@ -231,19 +237,21 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                 return cls(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
-                    input=json_str_of_obj(
+                    input=json_utils.json_str_of_obj(
                         obj.main_input, redact_keys=redact_keys
                     ),
-                    output=json_str_of_obj(
+                    output=json_utils.json_str_of_obj(
                         obj.main_output, redact_keys=redact_keys
                     ),
-                    record_json=json_str_of_obj(obj, redact_keys=redact_keys),
+                    record_json=json_utils.json_str_of_obj(
+                        obj, redact_keys=redact_keys
+                    ),
                     tags=obj.tags,
                     ts=obj.ts.timestamp(),
-                    cost_json=json_str_of_obj(
+                    cost_json=json_utils.json_str_of_obj(
                         obj.cost, redact_keys=redact_keys
                     ),
-                    perf_json=json_str_of_obj(
+                    perf_json=json_utils.json_str_of_obj(
                         obj.perf, redact_keys=redact_keys
                     ),
                 )
@@ -304,15 +312,77 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                     last_ts=obj.last_ts.timestamp(),
                     status=obj.status.value,
                     error=obj.error,
-                    calls_json=json_str_of_obj(
+                    calls_json=json_utils.json_str_of_obj(
                         dict(calls=obj.calls), redact_keys=redact_keys
                     ),
                     result=obj.result,
                     name=obj.name,
-                    cost_json=json_str_of_obj(
+                    cost_json=json_utils.json_str_of_obj(
                         obj.cost, redact_keys=redact_keys
                     ),
                     multi_result=obj.multi_result,
+                )
+
+        class GroundTruth(base):
+            """
+            ORM class for [GroundTruth][trulens.core.schema.groundtruth.GroundTruth].
+
+            Warning:
+                We don't use any of the typical ORM features and this class is only
+                used as a schema to interact with database through SQLAlchemy.
+            """
+
+            _table_base_name = "ground_truth"
+
+            ground_truth_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            dataset_id = Column(Text, nullable=False)
+            ground_truth_json = Column(TYPE_JSON, nullable=False)
+
+            dataset = relationship(
+                "Dataset",
+                backref=backref("ground_truths", cascade="all,delete"),
+                primaryjoin="Dataset.dataset_id == GroundTruth.dataset_id",
+                foreign_keys=dataset_id,
+                order_by="(GroundTruth.ground_truth_id)",
+            )
+
+            @classmethod
+            def parse(
+                cls,
+                obj: mod_groundtruth_schema.GroundTruth,
+                redact_keys: bool = False,
+            ) -> ORM.GroundTruth:
+                return cls(
+                    ground_truth_id=obj.ground_truth_id,
+                    ground_truth_json=obj.model_dump_json(
+                        redact_keys=redact_keys
+                    ),
+                    dataset_id=obj.dataset_id,
+                )
+
+        class Dataset(base):
+            """
+            ORM class for [Dataset][trulens.core.schema.dataset.Dataset].
+
+            Warning:
+                We don't use any of the typical ORM features and this class is only
+                used as a schema to interact with database through SQLAlchemy.
+            """
+
+            _table_base_name = "dataset"
+
+            dataset_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            dataset_json = Column(TYPE_JSON, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: mod_dataset_schema.Dataset,
+                redact_keys: bool = False,
+            ) -> ORM.Dataset:
+                return cls(
+                    dataset_id=obj.dataset_id,
+                    dataset_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
     configure_mappers()  # IMPORTANT

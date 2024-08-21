@@ -2,13 +2,13 @@
 
 [[package]]
 name = "aiohappyeyeballs"
-version = "2.4.0"
+version = "2.3.6"
 description = "Happy Eyeballs for asyncio"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "aiohappyeyeballs-2.4.0-py3-none-any.whl", hash = "sha256:7ce92076e249169a13c2f49320d1967425eaf1f407522d707d59cac7628d62bd"},
-    {file = "aiohappyeyeballs-2.4.0.tar.gz", hash = "sha256:55a1714f084e63d49639800f95716da97a1f173d46a16dfcfda0016abb93b6b2"},
+    {file = "aiohappyeyeballs-2.3.6-py3-none-any.whl", hash = "sha256:15dca2611fa78442f1cb54cf07ffb998573f2b4fbeab45ca8554c045665c896b"},
+    {file = "aiohappyeyeballs-2.3.6.tar.gz", hash = "sha256:88211068d2a40e0436033956d7de3926ff36d54776f8b1022d6b21320cadae79"},
 ]
 
 [[package]]
@@ -1739,13 +1739,13 @@ test = ["objgraph", "psutil"]
 
 [[package]]
 name = "griffe"
-version = "1.1.0"
+version = "1.0.0"
 description = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "griffe-1.1.0-py3-none-any.whl", hash = "sha256:38ccc5721571c95ae427123074cf0dc0d36bce7c9701ab2ada9fe0566ff50c10"},
-    {file = "griffe-1.1.0.tar.gz", hash = "sha256:c6328cbdec0d449549c1cc332f59227cd5603f903479d73e4425d828b782ffc3"},
+    {file = "griffe-1.0.0-py3-none-any.whl", hash = "sha256:7e113220efc489c2e8189656b1f01c1184417ba5395573ff05cdc7d07a1b0a5e"},
+    {file = "griffe-1.0.0.tar.gz", hash = "sha256:a9df647e5602fc0f826fca1cda5d9a0e554cdea67eb7948f6629dca7336e6afd"},
 ]
 
 [package.dependencies]
@@ -2901,13 +2901,13 @@ regex = ["regex"]
 
 [[package]]
 name = "litellm"
-version = "1.43.18"
+version = "1.43.15"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.43.18-py3-none-any.whl", hash = "sha256:68d853b4a0198a16e2260e4406a20f8d2e59bd903e019b7f3ba5a9f35ecc3e62"},
-    {file = "litellm-1.43.18.tar.gz", hash = "sha256:e22b20065b62663dd060be9da1e84ca05903931c41c49d35a98649ed09e79d29"},
+    {file = "litellm-1.43.15-py3-none-any.whl", hash = "sha256:99a91680e4a421b28fa5124c5d2500d32708c0c18b7a9e6f0d8472b3ff9a8beb"},
+    {file = "litellm-1.43.15.tar.gz", hash = "sha256:4137e04a5837d997dd09588d9cd70de0e9833566d7c57c58b4f609fea636b5de"},
 ]
 
 [package.dependencies]
@@ -8020,6 +8020,22 @@ type = "directory"
 url = "src/dashboard"
 
 [[package]]
+name = "trulens-eval"
+version = "1.0.1a0"
+description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
+optional = false
+python-versions = "^3.9,!=3.9.7"
+files = []
+develop = true
+
+[package.dependencies]
+trulens = "^1.0"
+
+[package.source]
+type = "directory"
+url = "src/trulens_eval"
+
+[[package]]
 name = "trulens-feedback"
 version = "1.0.1a1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
@@ -8737,4 +8753,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "84d3a865eeeee225d25d00660e3a933949aacf9d67868fdaa10eb2c382f5be42"
+content-hash = "5c905ee848aba618d3c9ec9e25df536a46dcfc41d31a91df088fc8730ca024d9"
