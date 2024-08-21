@@ -144,7 +144,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         super().__init__(**kwargs)
 
-        if app_id is not None:
+        if app_id:
             if app_name:
                 raise ValueError(
                     "Cannot provide both `app_id` and `app_name`. "

@@ -126,6 +126,7 @@ class TP(SingletonPerName):  # "thread processing"
     """How long to wait (seconds) for any task before restarting it."""
 
     def __new__(cls) -> TP:
+        """Override __new__ of SingletonPerName to ensure valid typing of the TP object."""
         inst = super().__new__(cls)
         assert isinstance(inst, TP)
         return inst

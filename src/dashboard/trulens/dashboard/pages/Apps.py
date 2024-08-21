@@ -20,7 +20,6 @@ if __name__ == "__main__":
     init_from_args()
 
 tru = TruSession()
-lms = tru.connector.db
 
 set_page_config(page_title="App Runner")
 

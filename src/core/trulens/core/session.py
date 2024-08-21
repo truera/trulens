@@ -227,12 +227,60 @@ class TruSession(python.SingletonPerName):
                 [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
                 is disabled.
         """
-        return self.connector.run_feedback_functions(
-            record=record,
-            feedback_functions=feedback_functions,
-            app=app,
-            wait=wait,
-        )
+
+        if not isinstance(record, mod_record_schema.Record):
+            raise ValueError(
+                "`record` must be a `trulens.core.schema.record.Record` instance."
+            )
+
+        if not isinstance(feedback_functions, Sequence):
+            raise ValueError("`feedback_functions` must be a sequence.")
+
+        if not all(
+            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
+        ):
+            raise ValueError(
+                "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
+            )
+
+        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
+            raise ValueError(
+                "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
+            )
+
+        if not isinstance(wait, bool):
+            raise ValueError("`wait` must be a bool.")
+
+        future_feedback_map: Dict[
+            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
+        ] = {
+            p[1]: p[0]
+            for p in mod_app_schema.AppDefinition._submit_feedback_functions(
+                record=record,
+                feedback_functions=feedback_functions,
+                connector=self,
+                app=app,
+            )
+        }
+
+        if wait:
+            # In blocking mode, wait for futures to complete.
+            for fut_result in futures.as_completed(future_feedback_map.keys()):
+                # TODO: Do we want a version that gives the feedback for which
+                # the result is being produced too? This is more useful in the
+                # Future case as we cannot check associate a Future result to
+                # its feedback before result is ready.
+
+                # yield (future_feedback_map[fut_result], fut_result.result())
+                yield fut_result.result()
+
+        else:
+            # In non-blocking, return the futures instead.
+            for fut_result, _ in future_feedback_map.items():
+                # TODO: see prior.
+
+                # yield (feedback, fut_result)
+                yield fut_result
 
     def add_app(
         self, app: mod_app_schema.AppDefinition

@@ -9,17 +9,14 @@ import queue
 from threading import Thread
 import time
 from typing import (
-    Dict,
     Iterable,
     List,
     Optional,
-    Sequence,
     Tuple,
     Union,
 )
 
 import pandas
-from trulens.core import feedback
 from trulens.core.database.base import DB
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -97,11 +94,11 @@ class DBConnector(ABC):
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
         if self.batch_thread is None:
-            self.batch_thread = Thread(target=self.batch_loop, daemon=True)
+            self.batch_thread = Thread(target=self._batch_loop, daemon=True)
             self.batch_thread.start()
         self.batch_record_queue.put(record)
 
-    def batch_loop(self):
+    def _batch_loop(self):
         while True:
             time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
             records = []
@@ -141,93 +138,6 @@ class DBConnector(ABC):
                     self.db.batch_insert_feedback(feedback_results)
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
-
-    def run_feedback_functions(
-        self,
-        record: mod_record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[mod_app_schema.AppDefinition] = None,
-        wait: bool = True,
-    ) -> Union[
-        Iterable[mod_feedback_schema.FeedbackResult],
-        Iterable[Future[mod_feedback_schema.FeedbackResult]],
-    ]:
-        """Run a collection of feedback functions and report their result.
-
-        Args:
-            record: The record on which to evaluate the feedback
-                functions.
-
-            app: The app that produced the given record.
-                If not provided, it is looked up from the given database `db`.
-
-            feedback_functions: A collection of feedback
-                functions to evaluate.
-
-            wait: If set (default), will wait for results
-                before returning.
-
-        Yields:
-            One result for each element of `feedback_functions` of
-                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
-                is enabled (default) or [Future][concurrent.futures.Future] of
-                [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] if `wait`
-                is disabled.
-        """
-
-        if not isinstance(record, mod_record_schema.Record):
-            raise ValueError(
-                "`record` must be a `trulens.core.schema.record.Record` instance."
-            )
-
-        if not isinstance(feedback_functions, Sequence):
-            raise ValueError("`feedback_functions` must be a sequence.")
-
-        if not all(
-            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
-        ):
-            raise ValueError(
-                "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
-            )
-
-        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
-            raise ValueError(
-                "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
-            )
-
-        if not isinstance(wait, bool):
-            raise ValueError("`wait` must be a bool.")
-
-        future_feedback_map: Dict[
-            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
-        ] = {
-            p[1]: p[0]
-            for p in mod_app_schema.AppDefinition._submit_feedback_functions(
-                record=record,
-                feedback_functions=feedback_functions,
-                connector=self,
-                app=app,
-            )
-        }
-
-        if wait:
-            # In blocking mode, wait for futures to complete.
-            for fut_result in futures.as_completed(future_feedback_map.keys()):
-                # TODO: Do we want a version that gives the feedback for which
-                # the result is being produced too? This is more useful in the
-                # Future case as we cannot check associate a Future result to
-                # its feedback before result is ready.
-
-                # yield (future_feedback_map[fut_result], fut_result.result())
-                yield fut_result.result()
-
-        else:
-            # In non-blocking, return the futures instead.
-            for fut_result, _ in future_feedback_map.items():
-                # TODO: see prior.
-
-                # yield (feedback, fut_result)
-                yield fut_result
 
     def add_app(
         self, app: mod_app_schema.AppDefinition
