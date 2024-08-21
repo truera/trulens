@@ -37,11 +37,11 @@ from trulens.core.utils.pyschema import Class
 from trulens.core.utils.python import safe_getattr
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import SerialModel
-from trulens_eval.schema import base as base_schema
 
 import openai as oai
 from openai import resources
 from openai.resources import chat
+from trulens_eval.schema import base as base_schema
 
 T = TypeVar("T")
 
@@ -287,18 +287,16 @@ class WrapperOpenAICallback(base_endpoint.WrapperEndpointCallback[T]):
 
         assert self.cost is not None
 
-        self.cost += base_schema.Cost(
-            **{
-                cost_field: getattr(self.langchain_handler, langchain_field, 0)
-                for cost_field, langchain_field in [
-                    ("cost", "total_cost"),
-                    ("n_tokens", "total_tokens"),
-                    ("n_successful_requests", "successful_requests"),
-                    ("n_prompt_tokens", "prompt_tokens"),
-                    ("n_completion_tokens", "completion_tokens"),
-                ]
-            }
-        )
+        self.cost += base_schema.Cost(**{
+            cost_field: getattr(self.langchain_handler, langchain_field, 0)
+            for cost_field, langchain_field in [
+                ("cost", "total_cost"),
+                ("n_tokens", "total_tokens"),
+                ("n_successful_requests", "successful_requests"),
+                ("n_prompt_tokens", "prompt_tokens"),
+                ("n_completion_tokens", "completion_tokens"),
+            ]
+        })
 
 
 class OpenAICallback(base_endpoint.EndpointCallback):

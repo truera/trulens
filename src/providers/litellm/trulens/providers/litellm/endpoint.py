@@ -5,10 +5,10 @@ from typing import Any, Callable, ClassVar, Optional, TypeVar
 
 import pydantic
 from trulens.core.feedback import endpoint as base_endpoint
-from trulens_eval.schema import base as base_schema
 
 import litellm
 from litellm import completion_cost
+from trulens_eval.schema import base as base_schema
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
@@ -69,16 +69,14 @@ class WrapperLiteLLMCallback(base_endpoint.WrapperEndpointCallback[T]):
 
         assert self.cost is not None
 
-        self.cost += base_schema.Cost(
-            **{
-                cost_field: response.get(litellm_field, 0)
-                for cost_field, litellm_field in [
-                    ("n_tokens", "total_tokens"),
-                    ("n_prompt_tokens", "prompt_tokens"),
-                    ("n_completion_tokens", "completion_tokens"),
-                ]
-            }
-        )
+        self.cost += base_schema.Cost(**{
+            cost_field: response.get(litellm_field, 0)
+            for cost_field, litellm_field in [
+                ("n_tokens", "total_tokens"),
+                ("n_prompt_tokens", "prompt_tokens"),
+                ("n_completion_tokens", "completion_tokens"),
+            ]
+        })
 
 
 class LiteLLMCallback(base_endpoint.EndpointCallback):
