@@ -29,27 +29,6 @@ from trulens.core.schema import (
 )
 from trulens.core.schema import types as types_schema  # noqa: F401 same
 
-"""
-from trulens.core.schema.app import AppDefinition
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.feedback import FeedbackResult, FeedbackCall
-from trulens.core.schema.record import Record, RecordAppCall, RecordAppCallMethod
-from trulens.core.schema.select import Select
-from trulens.core.schema.base import Cost, Perf
-"""
-
-"""
-__all__ = [
-    "AppDefinition",
-    "Select",
-    "FeedbackDefinition",
-    "FeedbackResult",
-    "FeedbackMode",
-    "Record",
-]
-"""
-
 # HACK013: Need these if using __future__.annotations .
 
 # Moved all the `model_rebuild` here to make sure they are executed after all of
