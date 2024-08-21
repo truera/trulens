@@ -258,7 +258,7 @@ class TruSession(python.SingletonPerName):
             for p in mod_app_schema.AppDefinition._submit_feedback_functions(
                 record=record,
                 feedback_functions=feedback_functions,
-                connector=self,
+                connector=self.connector,
                 app=app,
             )
         }

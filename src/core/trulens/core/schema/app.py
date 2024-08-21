@@ -18,6 +18,7 @@ from typing import (
 import warnings
 
 import dill
+from pydantic import computed_field
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import select as mod_select_schema
@@ -55,8 +56,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID  # str
-    """Unique identifier for this app."""
+    # app_id: mod_types_schema.AppID  # str
+    # """Unique identifier for this app."""
 
     app_name: mod_types_schema.AppName  # str
     """Name for this app."""
@@ -131,19 +132,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):
-        # for us:
-        kwargs["app_id"] = "temporary"  # will be adjusted below
-        kwargs["feedback_mode"] = feedback_mode
-        kwargs["tags"] = ""
-        kwargs["metadata"] = {}
-        kwargs["app_extra_json"] = app_extra_json or dict()
-        kwargs["feedback_definitions"] = [
-            f.feedback_definition_id for f in kwargs.get("feedbacks", [])
-        ]
-        kwargs["record_ingest_mode"] = record_ingest_mode
-
-        super().__init__(**kwargs)
-
         if app_id:
             if app_name:
                 raise ValueError(
@@ -155,12 +143,18 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                     "The `app_id` parameter is deprecated. Use `app_name` instead.",
                     DeprecationWarning,
                 )
+        kwargs["app_name"] = str(app_name or app_id)
+        kwargs["app_version"] = app_version or "latest"
+        kwargs["feedback_mode"] = feedback_mode
+        kwargs["tags"] = ""
+        kwargs["metadata"] = {}
+        kwargs["app_extra_json"] = app_extra_json or dict()
+        kwargs["feedback_definitions"] = [
+            f.feedback_definition_id for f in kwargs.get("feedbacks", [])
+        ]
+        kwargs["record_ingest_mode"] = record_ingest_mode
 
-        self.app_name = str(app_name or app_id)
-        if self.app_name is None:
-            raise ValueError("`app_name` is required.")
-        self.app_version = app_version or "latest"
-        self.app_id = self.get_app_id(self.app_name, self.app_version)
+        super().__init__(**kwargs)
 
         self.record_ingest_mode = record_ingest_mode
 
@@ -234,8 +228,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         return cls(**app_definition_json)
 
-    @staticmethod
-    def get_app_id(app_name: str, app_version: str) -> str:
+    @computed_field
+    @property
+    def app_id(self) -> str:
         """Get the app id for the given app name and version.
 
         Args:
@@ -248,7 +243,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         """
 
         return obj_id_of_obj(
-            obj={"app_name": app_name, "app_version": app_version}, prefix="app"
+            obj={"app_name": self.app_name, "app_version": self.app_version},
+            prefix="app",
         )
 
     @staticmethod

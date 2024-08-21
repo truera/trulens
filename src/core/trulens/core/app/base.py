@@ -478,7 +478,9 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    connector: DBConnector = pydantic.Field(default=None, exclude=True)
+    connector: DBConnector = pydantic.Field(
+        default_factory=lambda: DefaultDBConnector(), exclude=True
+    )
     """Database connector.
 
     If this is not provided, a [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector] will be made
@@ -551,7 +553,8 @@ class App(
             feedbacks = []
 
         # for us:
-        kwargs["connector"] = connector
+        if connector:
+            kwargs["connector"] = connector
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts"
