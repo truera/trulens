@@ -187,7 +187,9 @@ class Tru(pydantic.BaseModel, python.SingletonPerName):
     # TODO: make private
     """Thread for batch insertion of records if batching mode is used."""
 
-    batch_ground_truth_queue = queue.Queue()
+    batch_ground_truth_queue: queue.Queue = pydantic.Field(
+        default_factory=queue.Queue
+    )
     # TODO: make private
 
     _feature_flags: mod_preview.Preview = pydantic.PrivateAttr(
