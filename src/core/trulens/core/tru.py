@@ -363,10 +363,10 @@ import _snowflake
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackRunLocation
 
-def run():
+def run(session):
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
-    tru = Tru(database_url=db_url)
-    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, wait_till_done=True)
+    tru = Tru(database_url=db_url, database_check_revision=False)  # TODO(this_pr): Remove database_check_revision.
+    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True)
                     $$;
             """).collect()
             print("DONE")  # TODO(this_pr): get rid of this!
