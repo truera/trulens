@@ -5,6 +5,7 @@ import pprint as pp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import re
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
@@ -404,42 +405,54 @@ else:
                         ).drop(columns="meta")
 
                         if "groundedness" in feedback_name.lower():
-                            # Split the reasons value into separate rows and columns
-                            reasons = df["reasons"].iloc[0]
-                            # Split the reasons into separate statements
-                            statements = reasons.split("STATEMENT ")
-                            data = []
-                            # Each reason has three components: statement, supporting evidence, and score
-                            # Parse each reason into these components and add them to the data list
-                            for statement in statements[1:]:
-                                parts = statement.split("\n")
-                                criteria = parts[1].split(": ", 1)[1]
-                                supporting_evidence = parts[2].split(": ", 1)[1]
-                                score = int(parts[3].split(": ", 1)[1])
-                                data.append({
-                                    "Statement": criteria,
-                                    "Supporting Evidence from Source": supporting_evidence,
-                                    "Score": score/10,
-                                })
-                            reasons_df = pd.DataFrame(data)
-                            # Combine the original feedback data with the expanded reasons
-                            df_expanded = pd.concat(
-                                [
-                                    df.reset_index(drop=True),
-                                    reasons_df.reset_index(drop=True),
-                                ],
-                                axis=1,
-                            )
-                            st.dataframe(
-                                df_expanded.style.apply(
-                                    highlight_groundedness, axis=1
-                                ).format("{:.2f}", subset=["Score"]),
+                            try:
+                                # Split the reasons value into separate rows and columns
+                                reasons = df["reasons"].iloc[0]
+                                # Split the reasons into separate statements
+                                statements = reasons.split("STATEMENT")
+                                data = []
+                                # Each reason has three components: statement, supporting evidence, and score
+                                # Parse each reason into these components and add them to the data list
+                                for statement in statements[1:]:
+                                    try:
+                                        criteria = statement.split("Criteria: ")[1].split("Supporting Evidence: ")[0]
+                                        supporting_evidence = statement.split("Supporting Evidence: ")[1].split("Score: ")[0]
+                                        score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
+                                        score_split = statement.split("Score: ")[1]
+                                        score_match = score_pattern.search(score_split)
+                                        if score_match:
+                                            score = float(score_match.group(1)) / 10
+                                    except:
+                                        pass
+                                    data.append({
+                                        "Statement": criteria,
+                                        "Supporting Evidence from Source": supporting_evidence,
+                                        "Score": score,
+                                    })
+                                reasons_df = pd.DataFrame(data)
+                                # Combine the original feedback data with the expanded reasons
+                                df_expanded = pd.concat(
+                                    [
+                                        df.reset_index(drop=True),
+                                        reasons_df.reset_index(drop=True),
+                                    ],
+                                    axis=1,
+                                )
+                                st.dataframe(
+                                    df_expanded.style.apply(
+                                        highlight_groundedness, axis=1
+                                    ).format("{:.2f}", subset=["Score"]),
+                                    hide_index=True,
+                                    column_order=[
+                                        "Statement",
+                                        "Supporting Evidence from Source",
+                                        "Score",
+                                    ],
+                                )
+                            except:
+                                st.dataframe(
+                                df.style.apply(highlight, axis=1),
                                 hide_index=True,
-                                column_order=[
-                                    "Statement",
-                                    "Supporting Evidence from Source",
-                                    "Score",
-                                ],
                             )
                         else:
                             st.dataframe(
