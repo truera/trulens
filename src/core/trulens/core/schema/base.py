@@ -36,8 +36,14 @@ class Cost(SerialModel, pydantic.BaseModel):
     n_completion_tokens: int = 0
     """Number of completion tokens generated."""
 
+    n_guardrails_tokens: int = 0
+    """Number of guardrails tokens generated. i.e. available in Cortex endpoint."""
+
     cost: float = 0.0
     """Cost in USD."""
+
+    snowflake_credits_consumed: float = 0.0
+    """Credits consumed in Snowflake account."""
 
     def __add__(self, other: "Cost") -> "Cost":
         kwargs = {}

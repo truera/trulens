@@ -76,6 +76,8 @@ class TestEndpoints(TestCase):
         if with_cost:
             self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
 
+        # TODO: add tests for credit consumption and guardrails tokens from Cortex provider
+
     @optional_test
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
