@@ -190,21 +190,20 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
+from __future__ import annotations
+
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
+from trulens.core import instruments as base_instruments
 from trulens.core.app import base as base_app
-from trulens.core.instruments import Instrument
-from trulens.core.instruments import instrument as base_instrument
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import Function
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import UNICODE_CHECK
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +333,7 @@ class TruCustomApp(base_app.App):
 
     app: Any
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     functions_to_instrument: ClassVar[Set[Callable]] = set()
     """Methods marked as needing instrumentation.
@@ -347,14 +346,14 @@ class TruCustomApp(base_app.App):
     main_method_loaded: Optional[Callable] = Field(None, exclude=True)
     """Main method of the custom app."""
 
-    main_method: Optional[Function] = None
+    main_method: Optional[pyschema_utils.Function] = None
     """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        instrument = Instrument(
+        instrument = base_instruments.Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
         )
         kwargs["instrument"] = instrument
@@ -364,9 +363,11 @@ class TruCustomApp(base_app.App):
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
-                main_method = Function.model_validate(main_method)
+                main_method = pyschema_utils.Function.model_validate(
+                    main_method
+                )
 
-            if isinstance(main_method, Function):
+            if isinstance(main_method, pyschema_utils.Function):
                 main_method_loaded = main_method.load()
                 main_name = main_method.name
 
@@ -376,9 +377,13 @@ class TruCustomApp(base_app.App):
             else:
                 main_name = main_method.__name__
                 main_method_loaded = main_method
-                main_method = Function.of_function(main_method_loaded)
+                main_method = pyschema_utils.Function.of_function(
+                    main_method_loaded
+                )
 
-                if not safe_hasattr(main_method_loaded, "__self__"):
+                if not python_utils.safe_hasattr(
+                    main_method_loaded, "__self__"
+                ):
                     raise ValueError(
                         "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
                     )
@@ -410,7 +415,9 @@ class TruCustomApp(base_app.App):
             main_method_loaded = getattr(cls, main_name)
 
             # This will be serialized as part of this TruCustomApp. Importantly, it is unbound.
-            main_method = Function.of_function(main_method_loaded, cls=cls)
+            main_method = pyschema_utils.Function.of_function(
+                main_method_loaded, cls=cls
+            )
 
             self.main_method = main_method
             self.main_method_loaded = main_method_loaded
@@ -428,7 +435,7 @@ class TruCustomApp(base_app.App):
         for m, path in methods_to_instrument.items():
             method_name = m.__name__
 
-            full_path = Lens().app + path
+            full_path = serial_utils.Lens().app + path
 
             self.instrument.instrument_method(
                 method_name=method_name, obj=m.__self__, query=full_path
@@ -442,7 +449,7 @@ class TruCustomApp(base_app.App):
                 next(full_path(json))
 
                 print(
-                    f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
+                    f"{text_utils.UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
                 )
 
             except Exception:
@@ -524,7 +531,7 @@ class TruCustomApp(base_app.App):
     """
 
 
-class instrument(base_instrument):
+class instrument(base_instruments.Instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.
@@ -532,7 +539,7 @@ class instrument(base_instrument):
 
     @classmethod
     def method(self_class, cls: type, name: str) -> None:
-        base_instrument.method(cls, name)
+        base_instruments.instrument.method(cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.

@@ -31,37 +31,28 @@ from typing import (
 )
 
 import pydantic
+from trulens.core import instruments as mod_instruments
 from trulens.core import preview as mod_preview
 from trulens.core import trace as mod_trace
 from trulens.core import tru as mod_tru
 from trulens.core.database import base as mod_db
 from trulens.core.feedback import feedback as mod_feedback
-import trulens.core.instruments as mod_instruments
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as select_schema
-from trulens.core.utils import pyschema
+from trulens.core.utils import asynchro as asynchro_utils
+from trulens.core.utils import constants as constants_utils
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.asynchro import CallableMaybeAwaitable
-from trulens.core.utils.asynchro import desync
-from trulens.core.utils.asynchro import sync
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.containers import BlockingSet
-from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Class
 from trulens.core.utils.python import (
     Future,  # Standards exception: standin for common type
 )
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import JSON_BASES
-from trulens.core.utils.serial import JSON_BASES_T
-from trulens.core.utils.serial import GetItemOrAttribute
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.serial import all_objects
 
 logger = logging.getLogger(__name__)
 
@@ -120,17 +111,17 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
     dicts representing various components, not the components themselves.
     """
 
-    def __init__(self, json: JSON):
+    def __init__(self, json: serial_utils.JSON):
         self.json = json
-        self.cls = Class.of_class_info(json)
+        self.cls = pyschema_utils.Class.of_class_info(json)
 
     @classmethod
-    def of_json(cls, json: JSON) -> "ComponentView":
+    def of_json(cls, json: serial_utils.JSON) -> "ComponentView":
         """
         Sort the given json into the appropriate component view type.
         """
 
-        cls_obj = Class.of_class_info(json)
+        cls_obj = pyschema_utils.Class.of_class_info(json)
 
         for _, view in _component_impls.items():
             # NOTE: includes prompt, llm, tool, agent, memory, other which may be overridden
@@ -141,14 +132,16 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
 
     @staticmethod
     @abstractmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         """
         Determine whether the given class representation `cls` is of the type to
         be viewed as this component type.
         """
         pass
 
-    def unsorted_parameters(self, skip: Set[str]) -> Dict[str, JSON_BASES_T]:
+    def unsorted_parameters(
+        self, skip: Set[str]
+    ) -> Dict[str, serial_utils.JSON_BASES_T]:
         """
         All basic parameters not organized by other accessors.
         """
@@ -156,14 +149,14 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
         ret = {}
 
         for k, v in self.json.items():
-            if k not in skip and isinstance(v, JSON_BASES):
+            if k not in skip and isinstance(v, serial_utils.JSON_BASES):
                 ret[k] = v
 
         return ret
 
     @staticmethod
     def innermost_base(
-        bases: Optional[Sequence[Class]] = None,
+        bases: Optional[Sequence[pyschema_utils.Class]] = None,
         among_modules=set(["langchain", "llama_index", "trulens"]),
     ) -> Optional[str]:
         """
@@ -194,7 +187,7 @@ class TrulensComponent(ComponentView):
     """
 
     @staticmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         if ComponentView.innermost_base(cls_obj.bases) == "trulens":
             return True
 
@@ -204,7 +197,7 @@ class TrulensComponent(ComponentView):
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> "TrulensComponent":
+    def of_json(json: serial_utils.JSON) -> "TrulensComponent":
         # NOTE: This import is here to avoid circular imports.
         from trulens.core.utils.trulens import component_of_json
 
@@ -268,13 +261,15 @@ class CustomComponent(ComponentView):
         # "Custom" catch-all.
 
         @staticmethod
-        def class_is(cls_obj: Class) -> bool:
+        def class_is(cls_obj: pyschema_utils.Class) -> bool:
             return True
 
     COMPONENT_VIEWS = [Custom]
 
     @staticmethod
-    def constructor_of_class(cls_obj: Class) -> Type["CustomComponent"]:
+    def constructor_of_class(
+        cls_obj: pyschema_utils.Class,
+    ) -> Type["CustomComponent"]:
         for view in CustomComponent.COMPONENT_VIEWS:
             if view.class_is(cls_obj):
                 return view
@@ -282,37 +277,40 @@ class CustomComponent(ComponentView):
         raise TypeError(f"Unknown custom component type with class {cls_obj}")
 
     @staticmethod
-    def component_of_json(json: JSON) -> "CustomComponent":
-        cls = Class.of_class_info(json)
+    def component_of_json(json: serial_utils.JSON) -> "CustomComponent":
+        cls = pyschema_utils.Class.of_class_info(json)
 
         view = CustomComponent.constructor_of_class(cls)
 
         return view(json)
 
     @staticmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         # Assumes this is the last check done.
         return True
 
     @classmethod
-    def of_json(cls, json: JSON) -> "CustomComponent":
+    def of_json(cls, json: serial_utils.JSON) -> "CustomComponent":
         return CustomComponent.component_of_json(json)
 
 
 def instrumented_component_views(
     obj: object,
-) -> Iterable[Tuple[Lens, ComponentView]]:
+) -> Iterable[Tuple[serial_utils.Lens, ComponentView]]:
     """
-    Iterate over contents of `obj` that are annotated with the CLASS_INFO
+    Iterate over contents of `obj` that are annotated with the constants_utils.CLASS_INFO
     attribute/key. Returns triples with the accessor/selector, the Class object
-    instantiated from CLASS_INFO, and the annotated object itself.
+    instantiated from constants_utils.CLASS_INFO, and the annotated object itself.
     """
 
-    for q, o in all_objects(obj):
-        if isinstance(o, pydantic.BaseModel) and CLASS_INFO in o.model_fields:
+    for q, o in serial_utils.all_objects(obj):
+        if (
+            isinstance(o, pydantic.BaseModel)
+            and constants_utils.CLASS_INFO in o.model_fields
+        ):
             yield q, ComponentView.of_json(json=o)
 
-        if isinstance(o, Dict) and CLASS_INFO in o:
+        if isinstance(o, Dict) and constants_utils.CLASS_INFO in o:
             yield q, ComponentView.of_json(json=o)
 
 
@@ -385,15 +383,17 @@ class App(
     Using a context var so that context managers can be nested.
     """
 
-    instrumented_methods: Dict[int, Dict[Callable, Lens]] = pydantic.Field(
-        exclude=True, default_factory=dict
+    instrumented_methods: Dict[int, Dict[Callable, serial_utils.Lens]] = (
+        pydantic.Field(exclude=True, default_factory=dict)
     )
     """Mapping of instrumented methods (by id(.) of owner object and the
     function) to their path in this app."""
 
-    records_with_pending_feedback_results: BlockingSet[
+    records_with_pending_feedback_results: container_utils.BlockingSet[
         mod_record_schema.Record
-    ] = pydantic.Field(exclude=True, default_factory=BlockingSet)
+    ] = pydantic.Field(
+        exclude=True, default_factory=container_utils.BlockingSet
+    )
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
@@ -521,7 +521,7 @@ class App(
         return records
 
     @classmethod
-    def select_context(cls, app: Optional[Any] = None) -> Lens:
+    def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:
         """
         Try to find retriever components in the given `app` and return a lens to
         access the retrieved contexts that would appear in a record were these
@@ -608,7 +608,7 @@ class App(
 
         if self.__class__.main_acall is not App.main_acall:
             # Use the async version if available.
-            return sync(self.main_acall, human)
+            return asynchro_utils.sync(self.main_acall, human)
 
         raise NotImplementedError()
 
@@ -618,7 +618,7 @@ class App(
         if self.__class__.main_call is not App.main_call:
             logger.warning("Using synchronous version of main call.")
             # Use the sync version if available.
-            return await desync(self.main_call, human)
+            return await asynchro_utils.desync(self.main_call, human)
 
         raise NotImplementedError()
 
@@ -685,7 +685,7 @@ class App(
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` if it is to be called with the given bindings
@@ -716,7 +716,9 @@ class App(
         # if have only containers of length 1, find the innermost non-container
         focus = all_args
 
-        while not isinstance(focus, JSON_BASES) and len(focus) == 1:
+        while (
+            not isinstance(focus, serial_utils.JSON_BASES) and len(focus) == 1
+        ):
             focus = focus[0]
             focus = self._extract_content(
                 focus, content_keys=["content", "input"]
@@ -726,7 +728,7 @@ class App(
                 logger.warning("Focus %s is not a sequence.", focus)
                 break
 
-        if isinstance(focus, JSON_BASES):
+        if isinstance(focus, serial_utils.JSON_BASES):
             return str(focus)
 
         # Otherwise we are not sure.
@@ -739,7 +741,9 @@ class App(
         # After warning, just take the first item in each container until a
         # non-container is reached.
         focus = all_args
-        while not isinstance(focus, JSON_BASES) and len(focus) >= 1:
+        while (
+            not isinstance(focus, serial_utils.JSON_BASES) and len(focus) >= 1
+        ):
             focus = focus[0]
             focus = self._extract_content(focus)
 
@@ -747,7 +751,7 @@ class App(
                 logger.warning("Focus %s is not a sequence.", focus)
                 break
 
-        if isinstance(focus, JSON_BASES):
+        if isinstance(focus, serial_utils.JSON_BASES):
             return str(focus)
 
         logger.warning(
@@ -758,7 +762,7 @@ class App(
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -792,7 +796,9 @@ class App(
             )
 
     # WithInstrumentCallbacks requirement
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
         """
         Called by instrumentation system for every function requested to be
         instrumented by this app.
@@ -826,7 +832,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -840,7 +846,7 @@ class App(
                     yield (_id, f, path)
 
     # WithInstrumentCallbacks requirement
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
         """
         Get the path of the instrumented function `method` relative to this app.
         """
@@ -997,13 +1003,13 @@ class App(
         # Need custom jsonification here because it is likely the model
         # structure contains loops.
 
-        return json_str_of_obj(
+        return json_utils.json_str_of_obj(
             self, *args, instrument=self.instrument, **kwargs
         )
 
     def model_dump(self, *args, redact_keys: bool = False, **kwargs):
         # Same problem as in json.
-        return jsonify(
+        return json_utils.jsonify(
             self,
             instrument=self.instrument,
             redact_keys=redact_keys,
@@ -1119,7 +1125,7 @@ class App(
 
         def build_record(
             calls: Iterable[mod_record_schema.RecordAppCall],
-            record_metadata: JSON,
+            record_metadata: serial_utils.JSON,
             existing_record: Optional[mod_record_schema.Record] = None,
         ) -> mod_record_schema.Record:
             calls = list(calls)
@@ -1138,15 +1144,15 @@ class App(
                 main_out = None
 
             updates = dict(
-                main_input=jsonify(main_in),
-                main_output=jsonify(main_out),
-                main_error=jsonify(error),
+                main_input=json_utils.jsonify(main_in),
+                main_output=json_utils.jsonify(main_out),
+                main_error=json_utils.jsonify(error),
                 calls=calls,
                 cost=cost,
                 perf=perf,
                 app_id=self.app_id,
                 tags=self.tags,
-                meta=jsonify(record_metadata),
+                meta=json_utils.jsonify(record_metadata),
             )
 
             if existing_record is not None:
@@ -1234,7 +1240,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
     async def awith_(
-        self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
+        self, func: asynchro_utils.CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
         """
         Call the given async `func` with the given `*args` and `**kwargs` while
@@ -1270,7 +1276,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], T],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: serial_utils.JSON = None,
         **kwargs,
     ) -> Tuple[T, mod_record_schema.Record]:
         """
@@ -1295,7 +1301,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self,
         func: Callable[[A], Awaitable[T]],
         *args,
-        record_metadata: JSON = None,
+        record_metadata: serial_utils.JSON = None,
         **kwargs,
     ) -> Tuple[T, mod_record_schema.Record]:
         """
@@ -1543,7 +1549,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
                 sig = inspect.signature(method)
 
-                method_serial = pyschema.FunctionOrMethod.of_callable(method)
+                method_serial = pyschema_utils.FunctionOrMethod.of_callable(
+                    method
+                )
 
                 sample_args = {}
                 for p in sig.parameters.values():
@@ -1579,7 +1587,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             tags=tags,
         )
 
-    def instrumented(self) -> Iterable[Tuple[Lens, ComponentView]]:
+    def instrumented(self) -> Iterable[Tuple[serial_utils.Lens, ComponentView]]:
         """
         Iteration over instrumented components and their categories.
         """
@@ -1587,8 +1595,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         for q, c in instrumented_component_views(self.model_dump()):
             # Add the chain indicator so the resulting paths can be specified
             # for feedback selectors.
-            q = Lens(
-                path=(GetItemOrAttribute(item_or_attribute="__app__"),) + q.path
+            q = serial_utils.Lens(
+                path=(
+                    serial_utils.GetItemOrAttribute(
+                        item_or_attribute="__app__"
+                    ),
+                )
+                + q.path
             )
             yield q, c
 
@@ -1623,7 +1636,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         object_strings = []
 
         for t in self.instrumented():
-            path = Lens(t[0].path[1:])
+            path = serial_utils.Lens(t[0].path[1:])
             obj = next(iter(path.get(self)))
             object_strings.append(
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
