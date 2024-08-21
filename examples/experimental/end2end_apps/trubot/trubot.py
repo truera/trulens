@@ -29,6 +29,9 @@ check_keys(
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
+SLACK_TOKEN = os.environ["SLACK_TOKEN"]
+SLACK_SIGNING_SECRET = os.environ["SLACK_SIGNING_SECRET"]
+
 pp = PrettyPrinter()
 
 PORT = 3000
