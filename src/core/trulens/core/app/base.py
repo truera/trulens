@@ -672,13 +672,13 @@ class App(
 
         if self.connector is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
-                logger.debug("Creating default Workspace.")
+                logger.debug("Using default database connector.")
                 self.connector = DefaultDBConnector()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
                 logger.warning(
-                    "`workspace` is specified but `feedback_mode` is `FeedbackMode.NONE`. "
+                    "`connector` is specified but `feedback_mode` is `FeedbackMode.NONE`. "
                     "No feedback evaluation and logging will occur."
                 )
 

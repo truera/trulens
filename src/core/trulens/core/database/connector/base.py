@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class DBConnector(ABC):
-    """Base class for workspace implementations."""
+    """Base class for DB connector implementations."""
 
     RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
     """Time to wait before inserting a batch of records into the database."""
@@ -205,7 +205,7 @@ class DBConnector(ABC):
             for p in mod_app_schema.AppDefinition._submit_feedback_functions(
                 record=record,
                 feedback_functions=feedback_functions,
-                workspace=self,
+                connector=self,
                 app=app,
             )
         }

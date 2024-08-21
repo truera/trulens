@@ -28,7 +28,7 @@ class DefaultDBConnector(DBConnector):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
     ):
-        """Create a workspace backed by a database."""
+        """Create a default DB connector backed by a database."""
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 

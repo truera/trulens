@@ -268,7 +268,7 @@ def stop_dashboard(force: bool = False) -> None:
     if TruSession._dashboard_proc is None:
         if not force:
             raise RuntimeError(
-                "Dashboard not running in this workspace. "
+                "Dashboard not running in this session. "
                 "You may be able to shut other instances by setting the `force` flag."
             )
 

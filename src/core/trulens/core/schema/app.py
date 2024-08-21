@@ -325,7 +325,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
             feedback_functions: A collection of feedback functions to evaluate.
 
-            workspace: The workspace to use.
+            connector: The database connector to use.
 
             app: The app that produced the given record. If not provided, it is
                 looked up from the database of this `Tru` instance
