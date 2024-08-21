@@ -419,7 +419,7 @@ else:
                                 data.append({
                                     "Statement": criteria,
                                     "Supporting Evidence from Source": supporting_evidence,
-                                    "Score": score,
+                                    "Score": score/10,
                                 })
                             reasons_df = pd.DataFrame(data)
                             # Combine the original feedback data with the expanded reasons
