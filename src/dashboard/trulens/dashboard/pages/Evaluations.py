@@ -406,8 +406,11 @@ else:
                         if "groundedness" in feedback_name.lower():
                             # Split the reasons value into separate rows and columns
                             reasons = df["reasons"].iloc[0]
+                            # Split the reasons into separate statements
                             statements = reasons.split("STATEMENT ")
                             data = []
+                            # Each reason has three components: statement, supporting evidence, and score
+                            # Parse each reason into these components and add them to the data list
                             for statement in statements[1:]:
                                 parts = statement.split("\n")
                                 criteria = parts[1].split(": ", 1)[1]
@@ -419,6 +422,7 @@ else:
                                     "Score": score,
                                 })
                             reasons_df = pd.DataFrame(data)
+                            # Combine the original feedback data with the expanded reasons
                             df_expanded = pd.concat(
                                 [
                                     df.reset_index(drop=True),
