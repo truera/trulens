@@ -7,7 +7,7 @@ import boto3
 from botocore.client import ClientCreator
 import pydantic
 from trulens.core.feedback import endpoint as base_endpoint
-from trulens.core.feedback.endpoint import INSTRUMENT
+from trulens.core.trace import INSTRUMENT
 from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
