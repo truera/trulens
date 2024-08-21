@@ -1,7 +1,6 @@
 import asyncio
 import json
 import pprint as pp
-import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -360,20 +359,6 @@ else:
                         )
                         return [f"background-color: {cat.color}"] * len(s)
 
-                    def highlight_groundedness(s):
-                        if "distance" in feedback_name:
-                            return [
-                                f"background-color: {CATEGORY.UNKNOWN.color}"
-                            ] * len(s)
-                        cat = CATEGORY.of_score(
-                            s.Score,
-                            higher_is_better=feedback_directions.get(
-                                feedback_name, default_direction
-                            )
-                            == default_direction,
-                        )
-                        return [f"background-color: {cat.color}"] * len(s)
-
                     if call is not None and len(call) > 0:
                         # NOTE(piotrm for garett): converting feedback
                         # function inputs to strings here as other
@@ -404,73 +389,12 @@ else:
                             df.meta.apply(lambda m: pd.Series(m))
                         ).drop(columns="meta")
 
-                        if "groundedness" in feedback_name.lower():
-                            try:
-                                # Split the reasons value into separate rows and columns
-                                reasons = df["reasons"].iloc[0]
-                                # Split the reasons into separate statements
-                                statements = reasons.split("STATEMENT")
-                                data = []
-                                # Each reason has three components: statement, supporting evidence, and score
-                                # Parse each reason into these components and add them to the data list
-                                for statement in statements[1:]:
-                                    try:
-                                        criteria = statement.split(
-                                            "Criteria: "
-                                        )[1].split("Supporting Evidence: ")[0]
-                                        supporting_evidence = statement.split(
-                                            "Supporting Evidence: "
-                                        )[1].split("Score: ")[0]
-                                        score_pattern = re.compile(
-                                            r"([0-9]+)(?=\D*$)"
-                                        )
-                                        score_split = statement.split(
-                                            "Score: "
-                                        )[1]
-                                        score_match = score_pattern.search(
-                                            score_split
-                                        )
-                                        if score_match:
-                                            score = (
-                                                float(score_match.group(1)) / 10
-                                            )
-                                    except:
-                                        pass
-                                    data.append({
-                                        "Statement": criteria,
-                                        "Supporting Evidence from Source": supporting_evidence,
-                                        "Score": score,
-                                    })
-                                reasons_df = pd.DataFrame(data)
-                                # Combine the original feedback data with the expanded reasons
-                                df_expanded = pd.concat(
-                                    [
-                                        df.reset_index(drop=True),
-                                        reasons_df.reset_index(drop=True),
-                                    ],
-                                    axis=1,
-                                )
-                                st.dataframe(
-                                    df_expanded.style.apply(
-                                        highlight_groundedness, axis=1
-                                    ).format("{:.2f}", subset=["Score"]),
-                                    hide_index=True,
-                                    column_order=[
-                                        "Statement",
-                                        "Supporting Evidence from Source",
-                                        "Score",
-                                    ],
-                                )
-                            except:
-                                st.dataframe(
-                                    df.style.apply(highlight, axis=1),
-                                    hide_index=True,
-                                )
-                        else:
-                            st.dataframe(
-                                df.style.apply(highlight, axis=1),
-                                hide_index=True,
+                        st.dataframe(
+                            df.style.apply(highlight, axis=1).format(
+                                "{:.2f}", subset=["result"]
                             )
+                        )
+
                     else:
                         st.text("No feedback details.")
 
