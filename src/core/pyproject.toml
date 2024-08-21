@@ -42,7 +42,6 @@ python-dotenv = ">=0.21,<2.0"
 
 opentelemetry-api = { version = "^1.24", optional = true }
 opentelemetry-sdk = { version = "^1.24", optional = true }
-opentelemetry-semantic-conventions-ai = { version = "^0.0.2", python = ">=3.9,<3.12", optional = true }
 opentelemetry-exporter-otlp = { version = "^1.24", optional = true }
 snowflake-connector-python = { version = "^3.11", python = "<3.12", optional = true }
 snowflake-snowpark-python = { version = "^1.18", python = "<3.12", optional = true }
@@ -65,6 +64,5 @@ snowflake = [
 otel = [
   "opentelemetry-api",
   "opentelemetry-sdk",
-  "opentelemetry-semantic-conventions-ai",
   "opentelemetry-exporter-otlp",
 ]

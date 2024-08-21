@@ -1775,13 +1775,13 @@ telegram = ["requests"]
 
 [[package]]
 name = "transformers"
-version = "4.44.0"
+version = "4.44.1"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "transformers-4.44.0-py3-none-any.whl", hash = "sha256:ea0ff72def71e9f4812d9414d4803b22681b1617aa6f511bd51cfff2b44a6fca"},
-    {file = "transformers-4.44.0.tar.gz", hash = "sha256:75699495e30b7635ca444d8d372e138c687ab51a875b387e33f1fb759c37f196"},
+    {file = "transformers-4.44.1-py3-none-any.whl", hash = "sha256:bd2642da18b4e6d29b135c17650cd7ca8e874f2d092d2eddd3ed6b71a93a155c"},
+    {file = "transformers-4.44.1.tar.gz", hash = "sha256:3b9a1a07ca65c665c7bf6109b7da76182184d10bb58d9ab14e6892e7b9e073a2"},
 ]
 
 [package.dependencies]
@@ -1891,7 +1891,7 @@ sqlalchemy = "^2.0"
 typing_extensions = "^4.9"
 
 [package.extras]
-otel = ["opentelemetry-api (>=1.24,<2.0)", "opentelemetry-exporter-otlp (>=1.24,<2.0)", "opentelemetry-sdk (>=1.24,<2.0)", "opentelemetry-semantic-conventions-ai (>=0.0.2,<0.0.3)"]
+otel = ["opentelemetry-api (>=1.24,<2.0)", "opentelemetry-exporter-otlp (>=1.24,<2.0)", "opentelemetry-sdk (>=1.24,<2.0)"]
 snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-python (>=1.18,<2.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]
