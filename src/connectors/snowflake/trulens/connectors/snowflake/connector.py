@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import cached_property
 import logging
+import re
 from typing import (
     Any,
     Dict,
@@ -9,8 +10,8 @@ from typing import (
     Union,
 )
 
-from trulens.core.connector.base import DBConnector
 from trulens.core.database.base import DB
+from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.utils.python import OpaqueWrapper
@@ -41,6 +42,7 @@ class SnowflakeConnector(DBConnector):
     ):
         database_args = database_args or {}
 
+        self._validate_schema_name(schema_name)
         database_url = self._create_snowflake_database_url(
             account=account,
             user=user,
@@ -69,6 +71,13 @@ class SnowflakeConnector(DBConnector):
             except DatabaseVersionException as e:
                 print(e)
                 self._db = OpaqueWrapper(obj=self._db, e=e)
+
+    @classmethod
+    def _validate_schema_name(cls, name: str) -> None:
+        if not re.match(r"^[A-Za-z0-9_]+$", name):
+            raise ValueError(
+                "`name` must contain only alphanumeric and underscore characters!"
+            )
 
     @classmethod
     def _create_snowflake_database_url(cls, **kwargs) -> str:
