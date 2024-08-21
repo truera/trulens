@@ -173,8 +173,8 @@ build: $(POETRY_DIRS)
 	make build-dashboard
 
 ## Step: Upload wheels to pypi
-# Usage: TOKEN=... make upload-trulnes-instrument-langchain
-upload-%:
+# Usage: TOKEN=... make upload-trulens-instrument-langchain
+upload-%: build
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-all: build
