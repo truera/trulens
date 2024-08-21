@@ -4,17 +4,13 @@ import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.schema.app import AppDefinition
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.feedback import FeedbackResultStatus
-from trulens.core.schema.record import Record
-from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import JSONized
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import serial as serial_utils
 
 NoneType = type(None)
 
@@ -38,7 +34,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 """Default value for option to redact secrets before writing out data to database."""
 
 
-class DB(SerialModel, abc.ABC):
+class DB(serial_utils.SerialModel, abc.ABC):
     """Abstract definition of databases used by trulens.
 
     [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
@@ -55,7 +51,7 @@ class DB(SerialModel, abc.ABC):
     """
 
     def _json_str_of_obj(self, obj: Any) -> str:
-        return json_str_of_obj(obj, redact_keys=self.redact_keys)
+        return json_utils.json_str_of_obj(obj, redact_keys=self.redact_keys)
 
     @abc.abstractmethod
     def reset_database(self):
@@ -88,7 +84,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: Record,
+        record: mod_record_schema.Record,
     ) -> mod_types_schema.RecordID:
         """
         Upsert a `record` into the database.
@@ -104,7 +100,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def batch_insert_record(
-        self, records: List[Record]
+        self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
         """
         Upsert a batch of records into the database.
@@ -118,7 +114,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
+    def insert_app(
+        self, app: app_schema.AppDefinition
+    ) -> mod_types_schema.AppID:
         """
         Upsert an `app` into the database.
 
@@ -135,7 +133,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def insert_feedback_definition(
-        self, feedback_definition: FeedbackDefinition
+        self, feedback_definition: feedback_schema.FeedbackDefinition
     ) -> mod_types_schema.FeedbackDefinitionID:
         """
         Upsert a `feedback_definition` into the database.
@@ -175,7 +173,7 @@ class DB(SerialModel, abc.ABC):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        feedback_result: FeedbackResult,
+        feedback_result: feedback_schema.FeedbackResult,
     ) -> mod_types_schema.FeedbackResultID:
         """Upsert a `feedback_result` into the the database.
 
@@ -190,7 +188,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def batch_insert_feedback(
-        self, feedback_results: List[FeedbackResult]
+        self, feedback_results: List[feedback_schema.FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
         """Upsert a batch of feedback results into the database.
 
@@ -212,7 +210,10 @@ class DB(SerialModel, abc.ABC):
             mod_types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
-            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+            Union[
+                feedback_schema.FeedbackResultStatus,
+                Sequence[feedback_schema.FeedbackResultStatus],
+            ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
@@ -258,14 +259,17 @@ class DB(SerialModel, abc.ABC):
             mod_types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
-            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+            Union[
+                mod_feedback_schema.FeedbackResultStatus,
+                Sequence[mod_feedback_schema.FeedbackResultStatus],
+            ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
-    ) -> Dict[FeedbackResultStatus, int]:
+    ) -> Dict[mod_feedback_schema.FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
 
@@ -280,7 +284,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
+    def get_app(
+        self, app_id: mod_types_schema.AppID
+    ) -> Optional[serial_utils.JSONized]:
         """Get the app with the given id from the database.
 
         Returns:
@@ -292,7 +298,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[json_utils.JSON]:
         """Get all apps."""
 
         raise NotImplementedError()

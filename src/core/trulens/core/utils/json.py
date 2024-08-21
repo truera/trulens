@@ -10,7 +10,6 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     Optional,
@@ -24,15 +23,13 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
 from pydantic.v1.json import pydantic_encoder
+from trulens.core import instruments as mod_instruments
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import keys as key_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-
-if TYPE_CHECKING:
-    from trulens.core.instruments import Instrument
 
 with import_utils.OptionalImports(messages=import_utils.REQUIREMENT_OPENAI):
     # httpx.URL and Timeout needed for openai client.
@@ -135,7 +132,7 @@ def jsonify_for_ui(*args, **kwargs):
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, serial_utils.JSON]] = None,
-    instrument: Optional[Instrument] = None,
+    instrument: Optional[mod_instruments.Instrument] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
@@ -214,10 +211,8 @@ def jsonify(
     if isinstance(obj, serial_utils.SerialModel):
         skip_excluded = True
 
-    from trulens.core.instruments import Instrument
-
     if instrument is None:
-        instrument = Instrument()
+        instrument = mod_instruments.Instrument()
 
     dicted = dicted or {}
 

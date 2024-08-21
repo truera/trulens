@@ -30,22 +30,11 @@ from trulens.core import trace as mod_trace
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import wrap as wrap_utils
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.python import SingletonPerName
-from trulens.core.utils.python import Thunk
-from trulens.core.utils.python import callable_name
-from trulens.core.utils.python import class_name
-from trulens.core.utils.python import get_first_local_in_call_stack
-from trulens.core.utils.python import is_really_coroutinefunction
-from trulens.core.utils.python import module_name
-from trulens.core.utils.python import safe_getattr
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import SerialModel
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
-from trulens.core.utils.wrap import old_wrap_awaitable
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +43,6 @@ pp = PrettyPrinter()
 A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
-
-INSTRUMENT = "__tru_instrument"
 
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
@@ -118,7 +105,7 @@ class WrapperEndpointCallback(mod_trace.TracingCallbacks[T]):
         self.cost.n_classifications += 1
 
 
-class EndpointCallback(SerialModel):
+class EndpointCallback(serial_utils.SerialModel):
     """Callbacks to be invoked after various API requests and track various metrics
     like token usage.
     """
@@ -152,7 +139,11 @@ class EndpointCallback(SerialModel):
         self.handle(response)
 
 
-class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
+class Endpoint(
+    pyschema_utils.WithClassInfo,
+    serial_utils.SerialModel,
+    python_utils.SingletonPerName,
+):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -289,8 +280,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         wrapper_callback_class: Type[WrapperEndpointCallback] = None,
         **kwargs,
     ):
-        if safe_hasattr(self, "rpm"):
-            # already initialized via the SingletonPerName mechanism
+        if python_utils.safe_hasattr(self, "rpm"):
+            # already initialized via the python_utils.SingletonPerName mechanism
             return
 
         if callback_class is None:
@@ -329,7 +320,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         return self.pace.mark()
 
     def post(
-        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
     ) -> Any:
         self.pace_me()
         ret = requests.post(
@@ -404,7 +398,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             + ("\n\t".join(map(str, errors)))
         )
 
-    def run_me(self, thunk: Thunk[T]) -> T:
+    def run_me(self, thunk: python_utils.Thunk[T]) -> T:
         """DEPRECATED: Use `run_in_pace` instead."""
 
         raise NotImplementedError(
@@ -412,10 +406,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
-        if safe_hasattr(mod, method_name):
+        if python_utils.safe_hasattr(mod, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
-                module_name(mod),
+                python_utils.module_name(mod),
                 method_name,
                 self.name,
             )
@@ -427,10 +421,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
     def _instrument_class(self, cls, method_name: str) -> None:
-        if safe_hasattr(cls, method_name):
+        if python_utils.safe_hasattr(cls, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
-                class_name(cls),
+                python_utils.class_name(cls),
                 method_name,
                 self.name,
             )
@@ -473,7 +467,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         Only instruments the produced methods if they are matched by named
         `wrapped_method_filter`.
         """
-        if safe_hasattr(cls, wrapper_method_name):
+        if python_utils.safe_hasattr(cls, wrapper_method_name):
             logger.debug(
                 "Instrumenting method creator %s.%s for %s",
                 cls.__name__,
@@ -487,7 +481,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                 if wrapped_method_filter(produced_func):
                     logger.debug(
-                        "Instrumenting %s", callable_name(produced_func)
+                        "Instrumenting %s",
+                        python_utils.callable_name(produced_func),
                     )
 
                     instrumented_produced_func = self.wrap_function(
@@ -511,10 +506,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
-        if not safe_hasattr(mod, INSTRUMENT):
-            setattr(mod, INSTRUMENT, set())
+        if not python_utils.safe_hasattr(mod, mod_trace.INSTRUMENT):
+            setattr(mod, mod_trace.INSTRUMENT, set())
 
-        already_instrumented = safe_getattr(mod, INSTRUMENT)
+        already_instrumented = python_utils.safe_getattr(
+            mod, mod_trace.INSTRUMENT
+        )
 
         if method_name in already_instrumented:
             logger.debug(
@@ -529,8 +526,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 m,
                 method_name,
             )
-            if safe_hasattr(mod, m):
-                obj = safe_getattr(mod, m)
+            if python_utils.safe_hasattr(mod, m):
+                obj = python_utils.safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)
 
         already_instrumented.add(method_name)
@@ -558,7 +555,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             if locals().get(endpoint.arg_flag):
                 try:
                     mod = importlib.import_module(endpoint.module_name)
-                    cls = safe_getattr(mod, endpoint.class_name)
+                    cls = python_utils.safe_getattr(mod, endpoint.class_name)
                 except Exception:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
@@ -634,7 +631,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # Check to see if this call is within another _track_costs call:
         endpoints: Dict[
             Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]
-        ] = get_first_local_in_call_stack(
+        ] = python_utils.get_first_local_in_call_stack(
             key="endpoints", func=Endpoint.__find_tracker, offset=1
         )
 
@@ -757,17 +754,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """Create a wrapper of the given function to perform cost tracking."""
         # TODEP: remove after EXPERIMENTAL: otel-tracing
 
-        if safe_hasattr(func, INSTRUMENT):
+        if python_utils.safe_hasattr(func, mod_trace.INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
-            # wrapped function in the INSTRUMENT attribute. This will be used to
+            # wrapped function in the mod_trace.INSTRUMENT attribute. This will be used to
             # invoke appropriate callbacks when the wrapped function gets
             # called.
 
-            # If INSTRUMENT is set, we don't need to instrument the method again
+            # If mod_trace.INSTRUMENT is set, we don't need to instrument the method again
             # but we may need to add the additional callback class to expected
             # handlers stored at the attribute.
 
-            registered_callback_classes = getattr(func, INSTRUMENT)
+            registered_callback_classes = getattr(func, mod_trace.INSTRUMENT)
 
             if self.callback_class in registered_callback_classes:
                 # If our callback class is already in the list, dont bother
@@ -785,11 +782,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 # Otherwise add our callback class but don't instrument again.
 
                 registered_callback_classes += [self.callback_class]
-                setattr(func, INSTRUMENT, registered_callback_classes)
+                setattr(func, mod_trace.INSTRUMENT, registered_callback_classes)
 
                 return func
 
-        # If INSTRUMENT is not set, create a wrapper method and return it.
+        # If mod_trace.INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
             logger.debug(
@@ -798,7 +795,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 "isasyncgeneratorfunction=%s",
                 func,
                 type(func),
-                is_really_coroutinefunction(func),
+                python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
 
@@ -809,9 +806,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
             # Get all of the callback classes suitable for handling this
-            # call. Note that we stored this in the INSTRUMENT attribute of
+            # call. Note that we stored this in the mod_trace.INSTRUMENT attribute of
             # the wrapper method.
-            registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
+            registered_callback_classes = getattr(
+                tru_wrapper, mod_trace.INSTRUMENT
+            )
 
             # Look up the endpoints that are expecting to be notified and the
             # callback tracking the tally. See Endpoint._track_costs for
@@ -819,7 +818,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             endpoints: Dict[
                 Type[EndpointCallback],
                 Sequence[Tuple[Endpoint, EndpointCallback]],
-            ] = get_first_local_in_call_stack(
+            ] = python_utils.get_first_local_in_call_stack(
                 key="endpoints", func=self.__find_tracker, offset=0
             )
 
@@ -852,7 +851,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         )
 
             if isinstance(response, Awaitable):
-                return old_wrap_awaitable(response, on_done=response_callback)
+                return wrap_utils.old_wrap_awaitable(
+                    response, on_done=response_callback
+                )
 
             response_callback(response)
             return response
@@ -860,7 +861,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # Set our tracking attribute to tell whether something is already
         # instrumented onto both the sync and async version since either one
         # could be returned from this method.
-        setattr(tru_wrapper, INSTRUMENT, [self.callback_class])
+        setattr(tru_wrapper, mod_trace.INSTRUMENT, [self.callback_class])
 
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 

@@ -15,10 +15,10 @@ are expected.
 
 from unittest import main
 
-from trulens.core import Feedback
 from trulens.core.app.custom import TruCustomApp
-from trulens.core.feedback.dummy.provider import DummyProvider
-from trulens.providers.huggingface.provider import Dummy
+from trulens.core.feedback.feedback import Feedback
+from trulens.feedback.dummy.provider import DummyProvider
+from trulens.providers.huggingface.provider import DummyHuggingface
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import JSONTestCase
@@ -45,7 +45,7 @@ class TestSerial(JSONTestCase):
             delay=0.0,
         )
 
-        d_hugs = Dummy(
+        d_hugs = DummyHuggingface(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,

@@ -11,11 +11,10 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.text import format_quantity
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +118,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         super().__init__(**kwargs)
 
         if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+            app_id = json_utils.obj_id_of_obj(
+                obj=self.model_dump(), prefix="app"
+            )
 
         self.app_id = app_id
         self.record_ingest_mode = record_ingest_mode
@@ -139,7 +140,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
                 if len(dump) > mod_base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
+                        f"`initial_app_loader` dump is too big ({text_utils.format_quantity(len(dump))}) > {text_utils.format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                     )
                 else:
@@ -236,7 +237,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         return cls.model_validate_json(app_definition_json)
 
     def jsonify_extra(self, content):
-        # Called by jsonify for us to add any data we might want to add to the
+        # Called by json_utils.jsonify for us to add any data we might want to add to the
         # serialization of `app`.
         if self.app_extra_json is not None:
             content["app"].update(self.app_extra_json)
@@ -274,9 +275,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         from trulens.core.app import App
 
         if isinstance(self, App):
-            return jsonify(self, instrument=self.instrument)
+            return json_utils.jsonify(self, instrument=self.instrument)
         else:
-            return jsonify(self)
+            return json_utils.jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> serial.Lens:
