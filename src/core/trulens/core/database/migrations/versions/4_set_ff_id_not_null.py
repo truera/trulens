@@ -1,15 +1,15 @@
 """set feedback function id to not nullable.
 
-Revision ID: 3
-Revises: 2
+Revision ID: 4
+Revises: 3
 Create Date: 2024-08-16 12:44:05.560492
 """
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "3"
-down_revision = "2"
+revision = "4"
+down_revision = "3"
 branch_labels = None
 depends_on = "1"
 

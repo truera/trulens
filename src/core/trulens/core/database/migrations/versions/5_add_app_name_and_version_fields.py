@@ -1,7 +1,7 @@
 """add app name and version fields
 
-Revision ID: 4
-Revises: 3
+Revision ID: 5
+Revises: 4
 Create Date: 2024-08-16 12:46:49.510690
 """
 
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = "4"
-down_revision = "3"
+revision = "5"
+down_revision = "4"
 branch_labels = None
 depends_on = "1"
 
