@@ -209,8 +209,8 @@ from typing import Any, ClassVar, Dict, Optional, Sequence, Union
 from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.utils import serial
@@ -339,8 +339,8 @@ class VirtualRecord(mod_record_schema.Record):
     def __init__(
         self,
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
-        cost: Optional[mod_base_schema.Cost] = None,
-        perf: Optional[mod_base_schema.Perf] = None,
+        cost: Optional[base_schema.Cost] = None,
+        perf: Optional[base_schema.Perf] = None,
         **kwargs: Dict[str, Any],
     ):
         root_call = mod_record_schema.RecordAppCallMethod(
@@ -393,7 +393,7 @@ class VirtualRecord(mod_record_schema.Record):
                     subend_time += datetime.timedelta(microseconds=1)
 
                 if "perf" not in call:
-                    call["perf"] = mod_base_schema.Perf(
+                    call["perf"] = base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
 
@@ -408,8 +408,8 @@ class VirtualRecord(mod_record_schema.Record):
         if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
-        kwargs["cost"] = cost or mod_base_schema.Cost()
-        kwargs["perf"] = perf or mod_base_schema.Perf(
+        kwargs["cost"] = cost or base_schema.Cost()
+        kwargs["perf"] = perf or base_schema.Perf(
             start_time=start_time, end_time=end_time
         )
 
@@ -534,7 +534,7 @@ class TruVirtual(App):
     def add_record(
         self,
         record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
+        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
     ) -> mod_record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
@@ -560,7 +560,7 @@ class TruVirtual(App):
 
         # Wait for results if mode is WITH_APP.
         if (
-            feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP
+            feedback_mode == feedback_schema.FeedbackMode.WITH_APP
             and record.feedback_results is not None
         ):
             futs = record.feedback_results

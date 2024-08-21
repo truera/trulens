@@ -39,9 +39,9 @@ from trulens.core import trace as mod_trace
 from trulens.core import tru as mod_tru
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.feedback import feedback as base_feedback
-from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
@@ -54,7 +54,7 @@ from trulens.core.utils import wrap as wrap_utils
 logger = logging.getLogger(__name__)
 
 
-class WithInstrumentCallbacks(pydantic.BaseModel):
+class WithInstrumentCallbacks:
     """Abstract definition of callbacks invoked by Instrument during
     instrumentation or when instrumented methods are called.
 
@@ -138,8 +138,8 @@ class WithInstrumentCallbacks(pydantic.BaseModel):
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ):
         """
@@ -506,7 +506,7 @@ class Instrument:
             start_time = None
 
             bindings = None
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -564,7 +564,7 @@ class Instrument:
             # Create a unique call_id for this method call. This will be the
             # same across everyone Record or RecordAppCall that refers to this
             # method invocation.
-            call_id = mod_types_schema.new_call_id()
+            call_id = types_schema.new_call_id()
 
             error_str = None
 
@@ -609,7 +609,7 @@ class Instrument:
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -641,7 +641,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,

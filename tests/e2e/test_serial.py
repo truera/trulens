@@ -70,7 +70,11 @@ class TestSerial(JSONTestCase):
 
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
-                actual=ta.model_dump(), golden_filename="customapp.json"
+                actual=ta.model_dump(),
+                golden_filename="customapp.json",
+                skips=set([
+                    "feedback_definitions"  # contains feedback definition ids
+                ]),
             )
 
         with ta as recorder:

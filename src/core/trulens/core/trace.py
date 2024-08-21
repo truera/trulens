@@ -20,6 +20,7 @@ import threading as th
 from threading import Lock
 import time
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -40,17 +41,18 @@ from opentelemetry.trace import status as trace_status
 import opentelemetry.trace.span as ot_span
 from opentelemetry.util import types as ot_types
 import pydantic
-from trulens.core.otel import flatten_lensed_attributes
-
-# import trulens_eval.app as mod_app # circular import issues
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as types_schema
-from trulens.core.utils import json as json_utils
-from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils import python as python_utils
-from trulens.core.utils import serial as serial_utils
+from trulens.core.schema import base as base_schema
 from trulens.core.utils import wrap as wrap_utils
+
+if TYPE_CHECKING:
+    from trulens.core import otel as mod_otel
+    from trulens.core.schema import record as mod_record_schema
+    from trulens.core.schema import types as types_schema
+    from trulens.core.utils import json as json_utils
+    from trulens.core.utils import pyschema as pyschema_utils
+    from trulens.core.utils import python as python_utils
+    from trulens.core.utils import serial as serial_utils
+
 
 logger = logging.getLogger(__name__)
 
@@ -168,10 +170,10 @@ class Span(pydantic.BaseModel):
             include_phantom=include_phantom, transitive=True
         )
 
-    def total_cost(self) -> mod_base_schema.Cost:
+    def total_cost(self) -> base_schema.Cost:
         """Total costs of this span and all its transitive children."""
 
-        total = mod_base_schema.Cost()
+        total = base_schema.Cost()
 
         for span in self.iter_family(include_phantom=True):
             if isinstance(span, WithCost) and span.cost is not None:
@@ -210,7 +212,7 @@ class OTELExportable(Span):
         return self.model_dump()
 
     def otel_attributes(self) -> ot_types.Attributes:
-        return flatten_lensed_attributes(self.attributes())
+        return mod_otel.flatten_lensed_attributes(self.attributes())
 
     def otel_kind(self) -> ot_types.SpanKind:
         return ot_trace.SpanKind.INTERNAL
@@ -356,7 +358,7 @@ class SpanCall(OTELExportable):
 
     def otel_attributes(self) -> ot_types.Attributes:
         # temp = {f"trulens_eval@{k}": v for k, v in self.attributes().items()}
-        return flatten_lensed_attributes(self.attributes())
+        return mod_otel.flatten_lensed_attributes(self.attributes())
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
         ret = super().otel_resource_attributes()
@@ -412,8 +414,8 @@ class LiveSpanCall(LiveSpan, SpanCall):
 class WithCost(LiveSpan):
     """Mixin to indicate the span has costs tracked."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(
-        default_factory=mod_base_schema.Cost, exclude=True
+    cost: base_schema.Cost = pydantic.Field(
+        default_factory=base_schema.Cost, exclude=True
     )
     """Cost of the computation spanned."""
 
@@ -427,9 +429,9 @@ class WithCost(LiveSpan):
 
         return ret
 
-    def __init__(self, cost: Optional[mod_base_schema.Cost] = None, **kwargs):
+    def __init__(self, cost: Optional[base_schema.Cost] = None, **kwargs):
         if cost is None:
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
 
         super().__init__(cost=cost, **kwargs)
 
@@ -511,7 +513,7 @@ class Tracer(pydantic.BaseModel):
             args=args,
             rets=span.live_ret,
             error=str(span.live_error),
-            perf=mod_base_schema.Perf.of_ns_timestamps(
+            perf=base_schema.Perf.of_ns_timestamps(
                 start_ns_timestamp=span.start_timestamp,
                 end_ns_timestamp=span.end_timestamp,
             ),
@@ -529,7 +531,7 @@ class Tracer(pydantic.BaseModel):
         self._fill_stacks(root_span, get_method_path=app.get_method_path)
 
         root_perf = (
-            mod_base_schema.Perf.of_ns_timestamps(
+            base_schema.Perf.of_ns_timestamps(
                 start_ns_timestamp=root_span.start_timestamp,
                 end_ns_timestamp=root_span.end_timestamp,
             )
@@ -637,7 +639,7 @@ class Tracer(pydantic.BaseModel):
     def method(self):
         return self._span(LiveSpanCall)
 
-    def cost(self, cost: Optional[mod_base_schema.Cost] = None):
+    def cost(self, cost: Optional[base_schema.Cost] = None):
         return self._span(LiveSpanCallWithCost, cost=cost)
 
     def phantom(self):
@@ -649,7 +651,7 @@ class Tracer(pydantic.BaseModel):
     async def amethod(self):
         return self._aspan(LiveSpanCall)
 
-    async def acost(self, cost: Optional[mod_base_schema.Cost] = None):
+    async def acost(self, cost: Optional[base_schema.Cost] = None):
         return self._aspan(LiveSpanCallWithCost, cost=cost)
 
     async def aphantom(self):

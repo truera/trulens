@@ -19,12 +19,12 @@ from typing import (
 )
 
 import pydantic
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.text import retab
+from trulens.core.utils import text as text_utils
 
 T = TypeVar("T")
 
@@ -156,7 +156,7 @@ class FeedbackCall(serial.SerialModel):
             out += f"{tab}{k} = {v}\n"
         out += f"{tab}ret = {self.ret}\n"
         if self.meta:
-            out += f"{tab}meta = \n{retab(tab=tab * 2, s=pformat(self.meta))}\n"
+            out += f"{tab}meta = \n{text_utils.retab(tab=tab * 2, s=pformat(self.meta))}\n"
 
         return out
 
@@ -198,16 +198,14 @@ class FeedbackResult(serial.SerialModel):
         multi_result (str): TODO: doc
     """
 
-    feedback_result_id: mod_types_schema.FeedbackResultID
+    feedback_result_id: types_schema.FeedbackResultID
 
     # Record over which the feedback was evaluated.
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = (
-        None
-    )
+    feedback_definition_id: Optional[types_schema.FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
     last_ts: datetime.datetime = pydantic.Field(
@@ -217,9 +215,7 @@ class FeedbackResult(serial.SerialModel):
     status: FeedbackResultStatus = FeedbackResultStatus.NONE
     """For deferred feedback evaluation, the status of the evaluation."""
 
-    cost: mod_base_schema.Cost = pydantic.Field(
-        default_factory=mod_base_schema.Cost
-    )
+    cost: base_schema.Cost = pydantic.Field(default_factory=base_schema.Cost)
 
     # Given name of the feedback.
     name: str
@@ -238,13 +234,13 @@ class FeedbackResult(serial.SerialModel):
 
     def __init__(
         self,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         **kwargs,
     ):
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
-            feedback_result_id = obj_id_of_obj(
+            feedback_result_id = json_utils.obj_id_of_obj(
                 self.model_dump(), prefix="feedback_result"
             )
 
@@ -333,7 +329,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     """Mode of combining selected values to produce arguments to each feedback
     function call."""
 
-    feedback_definition_id: mod_types_schema.FeedbackDefinitionID
+    feedback_definition_id: types_schema.FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""
 
     if_exists: Optional[serial.Lens] = None
@@ -364,7 +360,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
     def __init__(
         self,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         implementation: Optional[
             Union[pyschema.Function, pyschema.Method]
@@ -402,7 +398,7 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
         if feedback_definition_id is None:
             if implementation is not None:
-                feedback_definition_id = obj_id_of_obj(
+                feedback_definition_id = json_utils.obj_id_of_obj(
                     self.model_dump(), prefix="feedback_definition"
                 )
             else:
@@ -434,9 +430,3 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             raise RuntimeError("This feedback function has no implementation.")
 
         return self.implementation.name
-
-
-# HACK013: Need these if using __future__.annotations .
-FeedbackResult.model_rebuild()
-FeedbackCall.model_rebuild()
-FeedbackDefinition.model_rebuild()

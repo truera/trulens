@@ -531,7 +531,7 @@ class TruCustomApp(base_app.App):
     """
 
 
-class instrument(base_instruments.Instrument):
+class instrument(base_instruments.instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.

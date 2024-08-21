@@ -32,17 +32,17 @@ from rich.pretty import pretty_repr
 from trulens.core import tru as mod_tru
 from trulens.core.feedback import endpoint as mod_base_endpoint
 from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import select as mod_select_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as mod_json_utils
 from trulens.core.utils import pyschema as mod_pyschema
 from trulens.core.utils import python as mod_python_utils
 from trulens.core.utils import serial as mod_serial_utils
 from trulens.core.utils import text as mod_text_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import threading as threading_utils
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -113,7 +113,7 @@ class InvalidSelector(Exception):
         return f"InvalidSelector({self.selector})"
 
 
-class Feedback(mod_feedback_schema.FeedbackDefinition):
+class Feedback(feedback_schema.FeedbackDefinition):
     """Feedback function container.
 
     Typical usage is to specify a feedback implementation function from a
@@ -334,11 +334,11 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         tru: mod_tru.Tru,
         limit: Optional[int] = None,
         shuffle: bool = False,
-        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
     ) -> List[
         Tuple[
             pandas.Series,
-            mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+            mod_python_utils.Future[feedback_schema.FeedbackResult],
         ]
     ]:
         """Evaluates feedback functions that were specified to be deferred.
@@ -367,7 +367,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         def prepare_feedback(
             row,
-        ) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
+        ) -> Optional[feedback_schema.FeedbackResultStatus]:
             record_json = row.record_json
             record = mod_record_schema.Record.model_validate(record_json)
 
@@ -393,21 +393,21 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         # Get the different status feedbacks except those marked DONE.
         feedbacks_not_done = db.get_feedback(
             status=[
-                mod_feedback_schema.FeedbackResultStatus.NONE,
-                mod_feedback_schema.FeedbackResultStatus.FAILED,
-                mod_feedback_schema.FeedbackResultStatus.RUNNING,
+                feedback_schema.FeedbackResultStatus.NONE,
+                feedback_schema.FeedbackResultStatus.FAILED,
+                feedback_schema.FeedbackResultStatus.RUNNING,
             ],
             limit=limit,
             shuffle=shuffle,
             run_location=run_location,
         )
 
-        tp = mod_threading_utils.TP()
+        tp = threading_utils.TP()
 
         futures: List[
             Tuple[
                 pandas.Series,
-                mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+                mod_python_utils.Future[feedback_schema.FeedbackResult],
             ]
         ] = []
 
@@ -421,17 +421,17 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             #    f"{row.fname} for app {row.app_json['app_id']}"
             # )
 
-            if row.status == mod_feedback_schema.FeedbackResultStatus.NONE:
+            if row.status == feedback_schema.FeedbackResultStatus.NONE:
                 futures.append((row, tp.submit(prepare_feedback, row)))
 
-            elif row.status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
+            elif row.status == feedback_schema.FeedbackResultStatus.RUNNING:
                 if elapsed > tru.RETRY_RUNNING_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
                     pass
 
-            elif row.status == mod_feedback_schema.FeedbackResultStatus.FAILED:
+            elif row.status == feedback_schema.FeedbackResultStatus.FAILED:
                 if elapsed > tru.RETRY_FAILED_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
@@ -449,7 +449,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     def aggregate(
         self,
         func: Optional[AggCallable] = None,
-        combinations: Optional[mod_feedback_schema.FeedbackCombinations] = None,
+        combinations: Optional[feedback_schema.FeedbackCombinations] = None,
     ) -> Feedback:
         """
         Specify the aggregation function in case the selectors for this feedback
@@ -474,7 +474,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         return Feedback.model_copy(self, update=updates)
 
     @staticmethod
-    def of_feedback_definition(f: mod_feedback_schema.FeedbackDefinition):
+    def of_feedback_definition(f: feedback_schema.FeedbackDefinition):
         implementation = f.implementation
         aggregator = f.aggregator
         supplied_name = f.supplied_name
@@ -778,7 +778,7 @@ Feedback function signature:
         record: Optional[mod_record_schema.Record] = None,
         source_data: Optional[Dict] = None,
         **kwargs: Dict[str, Any],
-    ) -> mod_feedback_schema.FeedbackResult:
+    ) -> feedback_schema.FeedbackResult:
         """
         Run the feedback function on the given `record`. The `app` that
         produced the record is also required to determine input/output argument
@@ -809,7 +809,7 @@ Feedback function signature:
 
         feedback_calls = []
 
-        feedback_result = mod_feedback_schema.FeedbackResult(
+        feedback_result = feedback_schema.FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             record_id=record.record_id if record is not None else "no record",
             name=self.supplied_name
@@ -829,7 +829,7 @@ Feedback function signature:
                     self.if_exists,
                 )
                 feedback_result.status = (
-                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                    feedback_schema.FeedbackResultStatus.SKIPPED
                 )
                 return feedback_result
 
@@ -851,19 +851,19 @@ Feedback function signature:
 
             if (
                 self.if_missing
-                == mod_feedback_schema.FeedbackOnMissingParameters.ERROR
+                == feedback_schema.FeedbackOnMissingParameters.ERROR
             ):
                 feedback_result.status = (
-                    mod_feedback_schema.FeedbackResultStatus.FAILED
+                    feedback_schema.FeedbackResultStatus.FAILED
                 )
                 raise e
 
             if (
                 self.if_missing
-                == mod_feedback_schema.FeedbackOnMissingParameters.WARN
+                == feedback_schema.FeedbackOnMissingParameters.WARN
             ):
                 feedback_result.status = (
-                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                    feedback_schema.FeedbackResultStatus.SKIPPED
                 )
                 logger.warning(
                     "Feedback %s cannot run as %s does not exist in record or app.",
@@ -874,23 +874,21 @@ Feedback function signature:
 
             if (
                 self.if_missing
-                == mod_feedback_schema.FeedbackOnMissingParameters.IGNORE
+                == feedback_schema.FeedbackOnMissingParameters.IGNORE
             ):
                 feedback_result.status = (
-                    mod_feedback_schema.FeedbackResultStatus.SKIPPED
+                    feedback_schema.FeedbackResultStatus.SKIPPED
                 )
                 return feedback_result
 
-            feedback_result.status = (
-                mod_feedback_schema.FeedbackResultStatus.FAILED
-            )
+            feedback_result.status = feedback_schema.FeedbackResultStatus.FAILED
             raise ValueError(
                 f"Unknown value for `if_missing` {self.if_missing}."
             ) from e
 
         try:
             # Total cost, will accumulate.
-            cost = mod_base_schema.Cost()
+            cost = base_schema.Cost()
             multi_result = None
 
             # Keep track of evaluations that were skipped due to raising SkipEval.
@@ -940,7 +938,7 @@ Feedback function signature:
                             f"Feedback function output with multivalue must be "
                             f"a dict with float values but encountered {type(val)}."
                         )
-                    feedback_call = mod_feedback_schema.FeedbackCall(
+                    feedback_call = feedback_schema.FeedbackCall(
                         args=ins,
                         ret=np.mean(list(result_val.values())),
                         meta=meta,
@@ -950,7 +948,7 @@ Feedback function signature:
                     assert isinstance(
                         result_val, (float, list)
                     ), f"Feedback function output must be a float, a list of floats, or dict but was {type(result_val)}."
-                    feedback_call = mod_feedback_schema.FeedbackCall(
+                    feedback_call = feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )
 
@@ -1007,7 +1005,7 @@ Feedback function signature:
 
             feedback_result.update(
                 result=result,
-                status=mod_feedback_schema.FeedbackResultStatus.DONE,
+                status=feedback_schema.FeedbackResultStatus.DONE,
                 cost=cost,
                 calls=feedback_calls,
                 multi_result=json.dumps(multi_result),
@@ -1025,7 +1023,7 @@ Feedback function signature:
             logger.warning("Feedback Function exception caught: %s", exc_tb)
             feedback_result.update(
                 error=exc_tb,
-                status=mod_feedback_schema.FeedbackResultStatus.FAILED,
+                status=feedback_schema.FeedbackResultStatus.FAILED,
             )
             return feedback_result
 
@@ -1034,14 +1032,14 @@ Feedback function signature:
         record: mod_record_schema.Record,
         tru: mod_tru.Tru,
         app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-    ) -> Optional[mod_feedback_schema.FeedbackResult]:
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
+    ) -> Optional[feedback_schema.FeedbackResult]:
         record_id = record.record_id
 
         db = tru.db
 
         # Placeholder result to indicate a run.
-        feedback_result = mod_feedback_schema.FeedbackResult(
+        feedback_result = feedback_schema.FeedbackResult(
             feedback_definition_id=self.feedback_definition_id,
             feedback_result_id=feedback_result_id,
             record_id=record_id,
@@ -1056,7 +1054,7 @@ Feedback function signature:
         try:
             db.insert_feedback(
                 feedback_result.update(
-                    status=mod_feedback_schema.FeedbackResultStatus.RUNNING  # in progress
+                    status=feedback_schema.FeedbackResultStatus.RUNNING  # in progress
                 )
             )
 
@@ -1074,7 +1072,7 @@ Feedback function signature:
             db.insert_feedback(
                 feedback_result.update(
                     error=exc_tb,
-                    status=mod_feedback_schema.FeedbackResultStatus.FAILED,
+                    status=feedback_schema.FeedbackResultStatus.FAILED,
                 )
             )
             return
@@ -1104,7 +1102,7 @@ Feedback function signature:
     def _extract_selection(
         self,
         source_data: Dict,
-        combinations: mod_feedback_schema.FeedbackCombinations = mod_feedback_schema.FeedbackCombinations.PRODUCT,
+        combinations: feedback_schema.FeedbackCombinations = feedback_schema.FeedbackCombinations.PRODUCT,
         **kwargs: Dict[str, Any],
     ) -> Iterable[Dict[str, Any]]:
         """
@@ -1153,9 +1151,9 @@ Feedback function signature:
         keys = arg_vals.keys()
         vals = arg_vals.values()
 
-        if combinations == mod_feedback_schema.FeedbackCombinations.PRODUCT:
+        if combinations == feedback_schema.FeedbackCombinations.PRODUCT:
             assignments = itertools.product(*vals)
-        elif combinations == mod_feedback_schema.FeedbackCombinations.ZIP:
+        elif combinations == feedback_schema.FeedbackCombinations.ZIP:
             assignments = zip(*vals)
         else:
             raise ValueError(
@@ -1235,7 +1233,7 @@ Feedback function signature:
 class SnowflakeFeedback(Feedback):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.run_location = mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
+        self.run_location = feedback_schema.FeedbackRunLocation.SNOWFLAKE
 
 
 Feedback.model_rebuild()

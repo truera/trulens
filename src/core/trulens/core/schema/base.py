@@ -145,8 +145,3 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
         End time in number of nanoseconds since the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.end_time)
-
-
-# HACK013: Need these if using __future__.annotations .
-Cost.model_rebuild()
-Perf.model_rebuild()

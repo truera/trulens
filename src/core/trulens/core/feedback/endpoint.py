@@ -27,7 +27,7 @@ from pydantic import Field
 import requests
 from trulens.core import preview as mod_preview
 from trulens.core import trace as mod_trace
-from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import base as base_schema
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
 from trulens.core.utils import pyschema as pyschema_utils
@@ -61,7 +61,7 @@ class WrapperEndpointCallback(mod_trace.TracingCallbacks[T]):
         self.endpoint: Endpoint = endpoint
         self.span.endpoint = endpoint
 
-        self.cost: mod_base_schema.Cost = self.span.cost
+        self.cost: base_schema.Cost = self.span.cost
         self.cost.n_requests += 1
 
     # overriding CallableCallbacks
@@ -115,7 +115,7 @@ class EndpointCallback(serial_utils.SerialModel):
     endpoint: Endpoint = Field(exclude=True)
     """The endpoint owning this callback."""
 
-    cost: mod_base_schema.Cost = Field(default_factory=mod_base_schema.Cost)
+    cost: base_schema.Cost = Field(default_factory=base_schema.Cost)
     """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
@@ -190,7 +190,7 @@ class Endpoint(
         ),
         EndpointSetup(
             arg_flag="with_dummy",
-            module_name="trulens.core.feedback.dummy.endpoint",
+            module_name="trulens.feedback.dummy.endpoint",
             class_name="DummyEndpoint",
         ),
     ]
@@ -590,7 +590,7 @@ class Endpoint(
         with_cortex: bool = True,
         with_dummy: bool = True,
         **kwargs,
-    ) -> Tuple[T, mod_base_schema.Cost]:
+    ) -> Tuple[T, base_schema.Cost]:
         """Track costs of all of the apis we can currently track, over the
         execution of thunk.
         """
@@ -610,7 +610,7 @@ class Endpoint(
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            costs = mod_base_schema.Cost()
+            costs = base_schema.Cost()
         else:
             costs = sum(cb.cost for cb in cbs)
 

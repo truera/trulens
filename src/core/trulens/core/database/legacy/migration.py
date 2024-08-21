@@ -12,8 +12,8 @@ import uuid
 
 import pydantic
 from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
@@ -326,16 +326,16 @@ def _serialization_asserts(db) -> None:
                         if col_name == "record_json":
                             mod_record_schema.Record.model_validate(test_json)
                         elif col_name == "cost_json":
-                            mod_base_schema.Cost.model_validate(test_json)
+                            base_schema.Cost.model_validate(test_json)
                         elif col_name == "perf_json":
-                            mod_base_schema.Perf.model_validate(test_json)
+                            base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json["calls"]:
-                                mod_feedback_schema.FeedbackCall.model_validate(
+                                feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
                         elif col_name == "feedback_json":
-                            mod_feedback_schema.FeedbackDefinition.model_validate(
+                            feedback_schema.FeedbackDefinition.model_validate(
                                 test_json
                             )
                         elif col_name == "app_json":

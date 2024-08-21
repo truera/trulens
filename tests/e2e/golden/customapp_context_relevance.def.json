@@ -77,27 +77,27 @@
       "cls": {
         "name": "DummyProvider",
         "module": {
-          "package_name": "trulens.core.feedback.dummy",
-          "module_name": "trulens.core.feedback.dummy.provider"
+          "package_name": "trulens.feedback.dummy",
+          "module_name": "trulens.feedback.dummy.provider"
         },
         "bases": null
       },
-      "id": 13687379664,
+      "id": 14062448512,
       "init_bindings": {
         "args": [],
         "kwargs": {
           "tru_class_info": {
             "name": "DummyProvider",
             "module": {
-              "package_name": "trulens.core.feedback.dummy",
-              "module_name": "trulens.core.feedback.dummy.provider"
+              "package_name": "trulens.feedback.dummy",
+              "module_name": "trulens.feedback.dummy.provider"
             },
             "bases": [
               {
                 "name": "DummyProvider",
                 "module": {
-                  "package_name": "trulens.core.feedback.dummy",
-                  "module_name": "trulens.core.feedback.dummy.provider"
+                  "package_name": "trulens.feedback.dummy",
+                  "module_name": "trulens.feedback.dummy.provider"
                 },
                 "bases": null
               },
@@ -155,15 +155,15 @@
             "tru_class_info": {
               "name": "DummyEndpoint",
               "module": {
-                "package_name": "trulens.core.feedback.dummy",
-                "module_name": "trulens.core.feedback.dummy.endpoint"
+                "package_name": "trulens.feedback.dummy",
+                "module_name": "trulens.feedback.dummy.endpoint"
               },
               "bases": [
                 {
                   "name": "DummyEndpoint",
                   "module": {
-                    "package_name": "trulens.core.feedback.dummy",
-                    "module_name": "trulens.core.feedback.dummy.endpoint"
+                    "package_name": "trulens.feedback.dummy",
+                    "module_name": "trulens.feedback.dummy.endpoint"
                   },
                   "bases": null
                 },
@@ -242,7 +242,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13715532832,
+                    "id": 13061582368,
                     "init_bindings": null
                   }
                 },
@@ -256,7 +256,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13687236672,
+                    "id": 14076651584,
                     "init_bindings": null
                   }
                 },
@@ -272,9 +272,10 @@
   },
   "aggregator": null,
   "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
+  "feedback_definition_id": "feedback_definition_hash_a9668ef9a7534be3be4fb0df928b3a7e",
   "if_exists": null,
   "if_missing": "error",
+  "run_location": null,
   "selectors": {
     "question": "__record__.main_input",
     "context": "__record__.main_output"

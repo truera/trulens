@@ -35,7 +35,7 @@ from typing import Awaitable, Callable, TypeVar, Union
 
 import nest_asyncio
 from trulens.core.utils import python as mod_python_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import threading as threading_utils
 
 nest_asyncio.apply()
 
@@ -129,7 +129,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         # new thread to run the awaitable until completion.
 
         def run_in_new_loop():
-            th: mod_threading_utils.Thread = current_thread()
+            th: threading_utils.Thread = current_thread()
             # Attach return value and possibly exception to thread object so we
             # can retrieve from the starter of the thread.
             th.ret = None
@@ -142,7 +142,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             except Exception as e:
                 th.error = e
 
-        thread = mod_threading_utils.Thread(target=run_in_new_loop)
+        thread = threading_utils.Thread(target=run_in_new_loop)
 
         # Start thread and wait for it to finish.
         thread.start()

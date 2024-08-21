@@ -47,18 +47,18 @@
         "bases": null
       },
       {
-        "name": "BaseModel",
-        "module": {
-          "package_name": "pydantic",
-          "module_name": "pydantic.main"
-        },
-        "bases": null
-      },
-      {
         "name": "WithInstrumentCallbacks",
         "module": {
           "package_name": "trulens.core",
           "module_name": "trulens.core.instruments"
+        },
+        "bases": null
+      },
+      {
+        "name": "BaseModel",
+        "module": {
+          "package_name": "pydantic",
+          "module_name": "pydantic.main"
         },
         "bases": null
       },
@@ -91,8 +91,12 @@
   "app_id": "customapp",
   "tags": "-",
   "metadata": {},
-  "feedback_definitions": [],
+  "feedback_definitions": [
+    "feedback_definition_hash_4fc8a7187766dc979bf5e110ac29492c",
+    "feedback_definition_hash_a9668ef9a7534be3be4fb0df928b3a7e"
+  ],
   "feedback_mode": "with_app_thread",
+  "record_ingest_mode": "immediate",
   "root_class": {
     "name": "DummyApp",
     "module": {
