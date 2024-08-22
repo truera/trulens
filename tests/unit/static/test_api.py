@@ -144,21 +144,39 @@ class TestAPI(JSONTestCase):
         """Check that the trulens_eval API members are still present."""
         # TODEP: Deprecate after trulens_eval is removed.
 
+        golden_file = f"api.trulens_eval.{self.pyversion}.yaml"
+
         members = self.get_members_trulens_eval()
 
-        self.assertGoldenJSONEqual(
-            actual=members,
-            golden_filename=f"api.trulens_eval.{self.pyversion}.yaml",
-            skips=set(["__version__"]),
-        )
+        self.write_golden(
+            path=golden_file, data=members
+        )  # will raise exception if golden file is written
+
+        expected = self.load_golden(golden_file)
+
+        jdiff = diff(expected, members, syntax=SymmetricJsonDiffSyntax())
+        flat_diffs = self._flatten_api_diff(jdiff)
+
+        if flat_diffs:
+            for diff_type, diff_lens, diff_value in flat_diffs:
+                with self.subTest(api=str(diff_lens)):
+                    self.fail(
+                        f"trulens_eval compatibility API mismatch: {diff_type} at {diff_lens} value {diff_value}"
+                    )
 
     @optional_test
     def test_api_trulens(self):
         """Check that the trulens API members are still present."""
 
+        golden_file = f"api.trulens.{self.pyversion}.yaml"
+
         members = self.get_members_trulens()
 
-        expected = self.load_golden(f"api.trulens.{self.pyversion}.yaml")
+        self.write_golden(
+            path=golden_file, data=members
+        )  # will raise exception if golden file is written
+
+        expected = self.load_golden(golden_file)
 
         jdiff = diff(expected, members, syntax=SymmetricJsonDiffSyntax())
         flat_diffs = self._flatten_api_diff(jdiff)
@@ -169,12 +187,6 @@ class TestAPI(JSONTestCase):
                     self.fail(
                         f"API mismatch: {diff_type} at {diff_lens} value {diff_value}"
                     )
-
-        # self.assertGoldenJSONEqual(
-        #    actual=members,
-        #    golden_filename=f"api.trulens.{self.pyversion}.yaml",
-        #    skips=set(["__version__"]),
-        # )
 
 
 if __name__ == "__main__":

@@ -163,8 +163,8 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
 class JSONTestCase(TestCase):
     """TestCase class that adds JSON comparisons and golden expectation handling."""
 
-    def load_golden(self, golden_filename: Union[str, Path]) -> JSON:
-        """Load the golden file `golden_filename` and return its contents.
+    def load_golden(self, path: Union[str, Path]) -> JSON:
+        """Load the golden file `path` and return its contents.
 
         Args:
             golden_filename: The name of the golden file to load. The file must
@@ -173,20 +173,55 @@ class JSONTestCase(TestCase):
 
         """
         caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
-        golden_path = (caller_path / "golden" / golden_filename).resolve()
+        golden_path = (caller_path / "golden" / path).resolve()
 
         if ".json" in golden_path.suffixes:
             loader = functools.partial(json.load)
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         else:
-            raise ValueError(f"Unknown file extension {golden_filename}.")
+            raise ValueError(f"Unknown file extension {path}.")
 
         if not golden_path.exists():
             raise FileNotFoundError(f"Golden file {golden_path} not found.")
 
         with golden_path.open() as f:
             return loader(f)
+
+    def write_golden(self, path: Union[str, Path], data: JSON) -> None:
+        """If writing golden file is enabled, write the golden file `path` with
+        `data` and raise exception indicating so.
+
+        If not writing golden file, does nothing.
+
+        Args:
+            path: The path to the golden file to write. Format is determined by
+                suffix.
+
+            data: The data to write to the golden file.
+        """
+        if not self.writing_golden():
+            return
+
+        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
+        golden_path = (caller_path / "golden" / path).resolve()
+
+        if golden_path.suffix == ".json":
+            writer = functools.partial(json.dump, indent=2, sort_keys=True)
+        elif golden_path.suffix == ".yaml":
+            writer = functools.partial(yaml.dump, sort_keys=True)
+        else:
+            raise ValueError(f"Unknown file extension {golden_path.suffix}.")
+
+        with golden_path.open("w") as f:
+            writer(data, f)
+
+        self.fail(f"Golden file {path} written.")
+
+    def writing_golden(self) -> bool:
+        """Return whether the golden files are to be written."""
+
+        return bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
 
     def assertGoldenJSONEqual(
         self,
@@ -239,41 +274,20 @@ class JSONTestCase(TestCase):
             AssertionError: If the golden file is written.
         """
 
-        write_golden: bool = bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
+        # Write golden and raise exception if writing golden is enabled.
+        self.write_golden(path=golden_filename, data=actual)
 
-        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
-        golden_path = (caller_path / "golden" / golden_filename).resolve()
+        # Otherwise load the golden file and compare.
+        expected = self.load_golden(golden_filename)
 
-        if golden_path.suffix == ".json":
-            writer = functools.partial(json.dump, indent=2, sort_keys=True)
-            loader = json.load
-        elif golden_path.suffix == ".yaml":
-            writer = functools.partial(yaml.dump, sort_keys=True)
-            loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
-        else:
-            raise ValueError(f"Unknown file extension {golden_path.suffix}.")
-
-        if write_golden:
-            with golden_path.open("w") as f:
-                writer(actual, f)
-
-            self.fail("Golden file written.")
-
-        else:
-            if not golden_path.exists():
-                raise FileNotFoundError(f"Golden file {golden_path} not found.")
-
-            with golden_path.open("r") as f:
-                expected = loader(f)
-
-            self.assertJSONEqual(
-                actual,
-                expected,
-                skips=skips,
-                numeric_places=numeric_places,
-                unordereds=unordereds,
-                unordered=unordered,
-            )
+        self.assertJSONEqual(
+            actual,
+            expected,
+            skips=skips,
+            numeric_places=numeric_places,
+            unordereds=unordereds,
+            unordered=unordered,
+        )
 
     def assertJSONEqual(
         self,
