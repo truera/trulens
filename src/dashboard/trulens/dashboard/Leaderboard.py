@@ -9,7 +9,7 @@ from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata
+from trulens.dashboard.ux.components import draw_metadata_and_tags
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
 
@@ -35,6 +35,8 @@ def leaderboard():
     st.write(
         "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
     )
+
+    st.markdown("## test")
     df, feedback_col_names = lms.get_records_and_feedback([])
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
@@ -64,8 +66,9 @@ def leaderboard():
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
         metadata = app_json.get("metadata")
+        tags = app_json.get("tags")
         # st.text('Metadata' + str(metadata))
-        st.header(app, help=draw_metadata(metadata))
+        st.header(app, help=draw_metadata_and_tags(metadata, tags))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
