@@ -434,7 +434,7 @@ else:
                                             score = (
                                                 float(score_match.group(1)) / 10
                                             )
-                                    except:
+                                    except Exception as e:
                                         pass
                                     data.append({
                                         "Statement": criteria,
@@ -461,7 +461,7 @@ else:
                                         "Score",
                                     ],
                                 )
-                            except:
+                            except Exception as e:
                                 st.dataframe(
                                     df.style.apply(highlight, axis=1),
                                     hide_index=True,
@@ -482,7 +482,7 @@ else:
                             )[0]
                         feedback_calls = row[f"{selected_fcol}_calls"]
                         display_feedback_call(feedback_calls, selected_fcol)
-                    except Exception:
+                    except Exception as e:
                         pass
 
             st.subheader("Trace details")
