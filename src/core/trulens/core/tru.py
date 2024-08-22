@@ -213,7 +213,8 @@ class Tru(python.SingletonPerName):
                 raise ValueError(
                     "`app_name` must be set if `snowflake_connection_parameters` is set!"
                 )
-            schema_name = self._validate_and_compute_schema_name(app_name)
+            schema_name = Tru._compute_schema_name(app_name)
+            Tru._validate_alphanumeric_and_underscore(schema_name, "app_name")
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
@@ -273,14 +274,29 @@ class Tru(python.SingletonPerName):
         schema_name: str,
         database_url: str,
     ):
+        # Get convenience variables.
         database_name = snowflake_connection_parameters["database"]
         warehouse_name = snowflake_connection_parameters["warehouse"]
         snowflake_connection_parameters = snowflake_connection_parameters.copy()
         snowflake_connection_parameters["schema"] = schema_name
+        external_access_integration_name = (
+            Tru._compute_external_access_integration_name(schema_name)
+        )
+        # Verify convenience variables can be used for Snowflake SQL object names.
+        Tru._validate_alphanumeric_and_underscore(
+            database_name, "database_name"
+        )
+        Tru._validate_alphanumeric_and_underscore(schema_name, "schema_name")
+        Tru._validate_alphanumeric_and_underscore(
+            warehouse_name, "warehouse_name"
+        )
+        Tru._validate_alphanumeric_and_underscore(
+            external_access_integration_name, "external_access_integration_name"
+        )
+        # Upload all needed artifacts and SQL objects.
         with Session.builder.configs(
             snowflake_connection_parameters
         ).create() as session:
-            # TODO(this_pr): don't use parameters directly in sql code.
             # Upload trulens and snowflake-sqlalchemy to staging.
             session.sql(
                 "CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE"
@@ -294,12 +310,15 @@ class Tru(python.SingletonPerName):
                 "trulens_providers_cortex.zip", "@TRULENS_PACKAGES_STAGE"
             )
             # Initialize stream for feedback eval table.
-            session.sql(f"""
+            session.sql(
+                f"""
                 CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
                     ON TABLE {database_name}.{schema_name}.TRULENS_FEEDBACKS
-            """).collect()
+                """
+            ).collect()
             # Initialize task for stream that will import trulens and try to run the Tru.
-            session.sql(f"""
+            session.sql(
+                f"""
                 CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVAL_TASK
                     WAREHOUSE = {warehouse_name}
                     SCHEDULE = '1 MINUTE'
@@ -307,34 +326,42 @@ class Tru(python.SingletonPerName):
                     WHEN SYSTEM$STREAM_HAS_DATA('TRULENS_FEEDBACK_EVALS_STREAM')
                     AS
                         CALL TRULENS_RUN_DEFERRED_FEEDBACKS()
-            """).collect()
+                """
+            ).collect()
             # Initialize secret.
-            session.sql(f"""
+            session.sql(
+                """
                 CREATE SECRET IF NOT EXISTS TRULENS_DB_URL
                     TYPE = GENERIC_STRING
-                    SECRET_STRING = '{database_url}'
-            """).collect()
+                    SECRET_STRING = ?
+                """,
+                params=[database_url],
+            ).collect()
             # Initialize external access integration rule.
-            session.sql("""
+            session.sql(
+                """
                 CREATE NETWORK RULE IF NOT EXISTS TRULENS_DUMMY_NETWORK_RULE
                     TYPE = HOST_PORT
                     MODE = EGRESS
                     VALUE_LIST = ('snowflake.com')
                     COMMENT = 'This is a dummy network rule created entirely because secrets cannot be used without one.'
-            """).collect()
-            # TODO(this_pr): delete this EAI.
-            session.sql(f"""
-                CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION
+                """
+            ).collect()
+            session.sql(
+                f"""
+                CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS {external_access_integration_name}
                     ALLOWED_NETWORK_RULES = (TRULENS_DUMMY_NETWORK_RULE)
                     ALLOWED_AUTHENTICATION_SECRETS = (TRULENS_DB_URL)
                     ENABLED = TRUE
                     COMMENT = 'This is a dummy EAI created entirely because secrets cannot be used without one.'
-            """).collect()
+                """
+            ).collect()
             # Initialize stored procedure.
             # TODO(this_pr): Ensure we use the right trulens version.
             # TODO(this_pr): Make sure we upload the zips and build them.
             # TODO(this_pr): get this indentation stuff better.
-            session.sql(f"""
+            session.sql(
+                f"""
                 CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS()
                     RETURNS STRING
                     LANGUAGE PYTHON
@@ -368,7 +395,7 @@ class Tru(python.SingletonPerName):
                     )
                     HANDLER = 'run'
                     SECRETS = ('trulens_db_url' = TRULENS_DB_URL)
-                    EXTERNAL_ACCESS_INTEGRATIONS = (TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION)
+                    EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integration_name})
                 AS
                     $$
 import _snowflake
@@ -388,19 +415,29 @@ def run(session):
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
     tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
     tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
-            """).collect()
+                """
+            ).collect()
             # Start task.
             session.sql(
                 "ALTER TASK TRULENS_FEEDBACK_EVAL_TASK RESUME"
             ).collect()
 
     @staticmethod
-    def _validate_and_compute_schema_name(name):
+    def _validate_alphanumeric_and_underscore(
+        name: str, error_message_variable_name: str
+    ):
         if not re.match(r"^[A-Za-z0-9_]+$", name):
             raise ValueError(
-                "`name` must contain only alphanumeric and underscore characters!"
+                f"`{error_message_variable_name}` must contain only alphanumeric and underscore characters!"
             )
-        return f"TRULENS_APP__{name.upper()}"
+
+    @staticmethod
+    def _compute_schema_name(app_name: str) -> str:
+        return f"TRULENS_APP__{app_name.upper()}"
+
+    @staticmethod
+    def _compute_external_access_integration_name(schema_name: str) -> str:
+        return f"{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION"
 
     @staticmethod
     def _create_snowflake_database_url(
