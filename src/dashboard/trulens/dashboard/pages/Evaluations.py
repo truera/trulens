@@ -1,11 +1,11 @@
 import asyncio
 import json
 import pprint as pp
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import re
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import GridUpdateMode
@@ -415,13 +415,25 @@ else:
                                 # Parse each reason into these components and add them to the data list
                                 for statement in statements[1:]:
                                     try:
-                                        criteria = statement.split("Criteria: ")[1].split("Supporting Evidence: ")[0]
-                                        supporting_evidence = statement.split("Supporting Evidence: ")[1].split("Score: ")[0]
-                                        score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
-                                        score_split = statement.split("Score: ")[1]
-                                        score_match = score_pattern.search(score_split)
+                                        criteria = statement.split(
+                                            "Criteria: "
+                                        )[1].split("Supporting Evidence: ")[0]
+                                        supporting_evidence = statement.split(
+                                            "Supporting Evidence: "
+                                        )[1].split("Score: ")[0]
+                                        score_pattern = re.compile(
+                                            r"([0-9]+)(?=\D*$)"
+                                        )
+                                        score_split = statement.split(
+                                            "Score: "
+                                        )[1]
+                                        score_match = score_pattern.search(
+                                            score_split
+                                        )
                                         if score_match:
-                                            score = float(score_match.group(1)) / 10
+                                            score = (
+                                                float(score_match.group(1)) / 10
+                                            )
                                     except:
                                         pass
                                     data.append({
@@ -451,9 +463,9 @@ else:
                                 )
                             except:
                                 st.dataframe(
-                                df.style.apply(highlight, axis=1),
-                                hide_index=True,
-                            )
+                                    df.style.apply(highlight, axis=1),
+                                    hide_index=True,
+                                )
                         else:
                             st.dataframe(
                                 df.style.apply(highlight, axis=1),
