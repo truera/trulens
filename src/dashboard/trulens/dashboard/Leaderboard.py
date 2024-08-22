@@ -37,18 +37,18 @@ def leaderboard():
     @st.cache_data
     def get_data():
         return lms.get_records_and_feedback([])
-    
+
     @st.cache_data
     def get_apps():
         return list(lms.get_apps())
-    
+
     records, feedback_col_names = get_data()
     records = records.sort_values(by="app_id")
 
     apps = get_apps()
     app_ids = []
     for i in range(len(apps)):
-        app_ids.append(apps[i]['app_id'])
+        app_ids.append(apps[i]["app_id"])
 
     selected_apps = st.multiselect("Filter apps:", app_ids, app_ids)
 
@@ -56,36 +56,43 @@ def leaderboard():
         # get tag options
         tags = []
         for i in range(len(apps)):
-            tags.append(apps[i]['tags'])
+            tags.append(apps[i]["tags"])
         unique_tags = list(set(tags))
         # select tags
         selected_tags = st.multiselect("Filter tags:", unique_tags, unique_tags)
 
         # filter to apps with selected tags
-        tag_selected_apps = [app['app_id'] for app in apps if any(tag in app['tags'] for tag in selected_tags)]
+        tag_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if any(tag in app["tags"] for tag in selected_tags)
+        ]
         selected_apps = list(set(selected_apps) & set(tag_selected_apps))
 
         # get metadata options
         metadata_keys_unique = set()
         for app in apps:
-            metadata_keys_unique.update(app['metadata'].keys())
+            metadata_keys_unique.update(app["metadata"].keys())
         metadata_keys_unique = list(metadata_keys_unique)
         # select metadata
         metadata_options = {}
         for metadata_key in metadata_keys_unique:
             unique_values = set()
             for i in range(len(apps)):
-                unique_values.add(apps[i]['metadata'][metadata_key])
+                unique_values.add(apps[i]["metadata"][metadata_key])
             metadata_options[metadata_key] = list(unique_values)
 
         # select metadata
         metadata_selections = metadata_options.copy()
         for metadata_key in metadata_options.keys():
-            metadata_selections[metadata_key] = st.multiselect("Filter " + metadata_key + ":", metadata_options[metadata_key], metadata_options[metadata_key])
-        
+            metadata_selections[metadata_key] = st.multiselect(
+                "Filter " + metadata_key + ":",
+                metadata_options[metadata_key],
+                metadata_options[metadata_key],
+            )
+
         # sort apps by name
         selected_apps = sorted(selected_apps)
-
 
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
