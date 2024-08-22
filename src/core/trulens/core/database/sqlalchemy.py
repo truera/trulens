@@ -43,7 +43,9 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import text
@@ -420,7 +422,7 @@ class SQLAlchemyDB(DB):
         Args:
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             _app = (
                 session.query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
@@ -735,6 +737,145 @@ class SQLAlchemyDB(DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def insert_ground_truth(
+        self, ground_truth: mod_groundtruth_schema.GroundTruth
+    ) -> mod_types_schema.GroundTruthID:
+        """See [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
+
+        # TODO: thread safety
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth.ground_truth_id)
+                .first()
+            ):
+                # Update the existing record for idempotency
+                _ground_truth.ground_truth_json = ground_truth.model_dump_json()
+            else:
+                _ground_truth = self.orm.GroundTruth.parse(
+                    ground_truth, redact_keys=self.redact_keys
+                )
+
+                session.merge(_ground_truth)
+
+            logger.info(
+                f"{UNICODE_CHECK} added ground truth {_ground_truth.ground_truth_id}"
+            )
+
+            return _ground_truth.ground_truth_id
+
+    def batch_insert_ground_truth(
+        self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
+    ) -> List[mod_types_schema.GroundTruthID]:
+        """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
+        with self.session.begin() as session:
+            ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
+
+            # Fetch existing GroundTruth records that match these ids in one query
+            existing_ground_truths = (
+                session.query(self.orm.GroundTruth)
+                .filter(
+                    self.orm.GroundTruth.ground_truth_id.in_(ground_truth_ids)
+                )
+                .all()
+            )
+
+            existing_ground_truth_dict = {
+                gt.ground_truth_id: gt for gt in existing_ground_truths
+            }
+
+            ground_truths_to_insert = []
+            for ground_truth in ground_truths:
+                if ground_truth.ground_truth_id in existing_ground_truth_dict:
+                    existing_record = existing_ground_truth_dict[
+                        ground_truth.ground_truth_id
+                    ]
+                    # Update the existing record for idempotency
+                    existing_record.ground_truth_json = (
+                        ground_truth.model_dump_json()
+                    )
+                else:
+                    new_ground_truth = self.orm.GroundTruth.parse(
+                        ground_truth, redact_keys=self.redact_keys
+                    )
+                    ground_truths_to_insert.append(new_ground_truth)
+
+            session.bulk_save_objects(ground_truths_to_insert)
+            return [gt.ground_truth_id for gt in ground_truths]
+
+    def get_ground_truth(
+        self, ground_truth_id: str | None = None
+    ) -> Optional[JSONized]:
+        """See [DB.get_ground_truth][trulens.core.database.base.DB.get_ground_truth]."""
+
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth_id)
+                .first()
+            ):
+                return json.loads(_ground_truth)
+
+    def get_ground_truths_by_dataset(
+        self, dataset_name: str
+    ) -> pd.DataFrame | None:
+        """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
+        with self.session.begin() as session:
+            q = sa.select(self.orm.Dataset)
+            all_datasets = (row[0] for row in session.execute(q))
+            df = None
+            for dataset in all_datasets:
+                dataset_json = json.loads(dataset.dataset_json)
+                if (
+                    "name" in dataset_json
+                    and dataset_json["name"] == dataset_name
+                ):
+                    q = sa.select(self.orm.GroundTruth).filter_by(
+                        dataset_id=dataset.dataset_id
+                    )
+                    results = (row[0] for row in session.execute(q))
+
+                    if df is None:
+                        df = _extract_ground_truths(results)
+                    else:
+                        df = pd.concat([df, _extract_ground_truths(results)])
+            return df
+            # TODO: use a generator instead of a list? (for large datasets)
+
+    def insert_dataset(
+        self, dataset: mod_dataset_schema.Dataset
+    ) -> mod_types_schema.DatasetID:
+        """See [DB.insert_dataset][trulens.core.database.base.DB.insert_dataset]."""
+
+        with self.session.begin() as session:
+            if (
+                _dataset := session.query(self.orm.Dataset)
+                .filter_by(dataset_id=dataset.dataset_id)
+                .first()
+            ):
+                # Update the existing record for idempotency
+                _dataset.dataset_json = dataset.model_dump_json()
+            else:
+                _dataset = self.orm.Dataset.parse(
+                    dataset, redact_keys=self.redact_keys
+                )
+                session.merge(_dataset)
+
+            logger.info(f"{UNICODE_CHECK} added dataset {_dataset.dataset_id}")
+
+            return _dataset.dataset_id
+
+    def get_datasets(self) -> pd.DataFrame:
+        """See [DB.get_datasets][trulens.core.database.base.DB.get_datasets]."""
+
+        with self.session.begin() as session:
+            results = session.query(self.orm.Dataset)
+
+            return pd.DataFrame(
+                data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
+                columns=["dataset_id", "name", "meta"],
+            )
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
@@ -834,6 +975,36 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost"],
+    )
+
+
+def _extract_ground_truths(
+    results: Iterable["mod_orm.GroundTruth"],
+) -> pd.DataFrame:
+    def _extract(_result: "mod_orm.GroundTruth"):
+        ground_truth_json = json.loads(_result.ground_truth_json)
+
+        return (
+            _result.ground_truth_id,
+            _result.dataset_id,
+            ground_truth_json["query"],
+            ground_truth_json["query_id"],
+            ground_truth_json["expected_response"],
+            ground_truth_json["expected_chunks"],
+            ground_truth_json["meta"],
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "ground_truth_id",
+            "dataset_id",
+            "query",
+            "query_id",
+            "expected_response",
+            "expected_chunks",
+            "meta",
+        ],
     )
 
 

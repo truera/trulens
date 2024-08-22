@@ -23,11 +23,11 @@ from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
-from trulens.core.feedback.dummy.endpoint import DummyEndpoint
 from trulens.core.utils.python import Future
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import prompts
+from trulens.feedback.dummy.endpoint import DummyEndpoint
 from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
 
 logger = logging.getLogger(__name__)
