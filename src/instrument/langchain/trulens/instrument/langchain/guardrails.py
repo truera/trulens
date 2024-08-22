@@ -37,7 +37,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         rag_chain = {"context": filtered_retriever | format_docs, "question": RunnablePassthrough()} | prompt | llm | StrOutputParser()
 
         tru_recorder = TruChain(rag_chain,
-            app_id='Chain1_ChatApplication_Filtered')
+            app_name='ChatApplication',
+            app_version='filtered_retriever',
+        )
 
         with tru_recorder as recording:
             llm_response = rag_chain.invoke("What is Task Decomposition?")

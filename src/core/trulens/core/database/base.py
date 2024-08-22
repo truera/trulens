@@ -14,7 +14,6 @@ from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.groundtruth import GroundTruth
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSONized
 from trulens.core.utils.serial import SerialModel
 
@@ -67,7 +66,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def migrate_database(self, prior_prefix: Optional[str] = None):
-        """Migrade the stored data to the current configuration of the database.
+        """Migrate the stored data to the current configuration of the database.
 
         Args:
             prior_prefix: If given, the database is assumed to have been
@@ -131,6 +130,17 @@ class DB(SerialModel, abc.ABC):
 
         Returns:
             The id of the given app.
+        """
+
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+        """
+        Delete an `app` from the database.
+
+        Args:
+            app_id: The id of the app to delete.
         """
 
         raise NotImplementedError()
@@ -294,7 +304,7 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(self) -> Iterable[JSONized[AppDefinition]]:
         """Get all apps."""
 
         raise NotImplementedError()
@@ -317,7 +327,7 @@ class DB(SerialModel, abc.ABC):
             limit: Limit on rows (records) returned.
 
         Returns:
-            A dataframe with the records.
+            A DataFrame with the records.
 
             A list of column names that contain feedback results.
         """
