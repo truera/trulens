@@ -10,7 +10,7 @@ If upgrading DB, You must do this step!!
 1. Make desired changes to SQLAlchemy orm models in `src/core/trulens/core/database/orm.py`.
 1. Get a database with the new changes:
    1. `rm default.sqlite`
-   1. Run `Tru()` to create a fresh database that uses the new ORM.
+   1. Run `TruSession()` to create a fresh database that uses the new ORM.
 1. Run automatic alembic revision script generator. This will generate a new python script in `src/core/trulens/core/database/migrations`.
    1. `cd src/core/trulens/core/database/migrations`
    1. `SQLALCHEMY_URL="sqlite:///../../../../../../default.sqlite" alembic revision --autogenerate -m "<short_description>" --rev-id "<next_integer_version>"`

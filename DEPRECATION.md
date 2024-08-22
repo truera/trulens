@@ -20,7 +20,7 @@
 - Database interfaces changed from sqlite to sqlalchemy. Sqlite databases are
   supported under the sqlaclchemy interface and other databases such as mysql
   and postgresql are also now usable. Running the migration scripts via
-  `Tru().migrate_database()` may be necessary.
+  `TruSession().migrate_database()` may be necessary.
 
 ## Changes in 0.7.0
 

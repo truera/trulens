@@ -264,7 +264,8 @@ class TruLlama(mod_app.App):
         from trulens.instrument.llamaindex import TruLlama
         # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
         tru_recorder = TruLlama(query_engine,
-            app_id='LlamaIndex_App1',
+            app_name='LlamaIndex",
+            app_version="base',
             feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
 
         with tru_recorder as recording:
