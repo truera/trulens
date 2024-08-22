@@ -4,18 +4,19 @@ from __future__ import annotations
 
 from enum import Enum
 import logging
-from typing import Any, Callable, ClassVar, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Optional, Sequence
 
 import dill
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as mod_select_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.text import format_quantity
+from trulens.core.utils import text as text_utils
+
+if TYPE_CHECKING:
+    from trulens.core.schema import base as base_schema
+    from trulens.core.schema import types as types_schema
 
 logger = logging.getLogger(__name__)
 
@@ -37,22 +38,22 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID  # str
+    app_id: types_schema.AppID  # str
     """Unique identifier for this app."""
 
-    tags: mod_types_schema.Tags  # str
+    tags: types_schema.Tags  # str
     """Tags for the app."""
 
     metadata: (
-        mod_types_schema.Metadata
+        types_schema.Metadata
     )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[mod_types_schema.FeedbackDefinitionID] = []
+    feedback_definitions: Sequence[types_schema.FeedbackDefinitionID] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: mod_feedback_schema.FeedbackMode = (
-        mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    feedback_mode: feedback_schema.FeedbackMode = (
+        feedback_schema.FeedbackMode.WITH_APP_THREAD
     )
     """How to evaluate feedback functions upon producing a record."""
 
@@ -97,10 +98,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[mod_types_schema.AppID] = None,
-        tags: Optional[mod_types_schema.Tags] = None,
-        metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
+        app_id: Optional[types_schema.AppID] = None,
+        tags: Optional[types_schema.Tags] = None,
+        metadata: Optional[types_schema.Metadata] = None,
+        feedback_mode: feedback_schema.FeedbackMode = feedback_schema.FeedbackMode.WITH_APP_THREAD,
         record_ingest_mode: RecordIngestMode = RecordIngestMode.IMMEDIATE,
         app_extra_json: serial.JSON = None,
         **kwargs,
@@ -119,7 +120,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         super().__init__(**kwargs)
 
         if app_id is None:
-            app_id = obj_id_of_obj(obj=self.model_dump(), prefix="app")
+            app_id = json_utils.obj_id_of_obj(
+                obj=self.model_dump(), prefix="app"
+            )
 
         self.app_id = app_id
         self.record_ingest_mode = record_ingest_mode
@@ -137,9 +140,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             try:
                 dump = dill.dumps(kwargs["initial_app_loader"], recurse=True)
 
-                if len(dump) > mod_base_schema.MAX_DILL_SIZE:
+                if len(dump) > base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
+                        f"`initial_app_loader` dump is too big ({text_utils.format_quantity(len(dump))}) > {text_utils.format_quantity(base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                     )
                 else:
@@ -236,7 +239,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         return cls.model_validate_json(app_definition_json)
 
     def jsonify_extra(self, content):
-        # Called by jsonify for us to add any data we might want to add to the
+        # Called by json_utils.jsonify for us to add any data we might want to add to the
         # serialization of `app`.
         if self.app_extra_json is not None:
             content["app"].update(self.app_extra_json)
@@ -255,7 +258,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         rets = []
 
-        from trulens.core import Tru
+        from trulens.core.tru import Tru
 
         tru = Tru()
 
@@ -274,9 +277,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         from trulens.core.app import App
 
         if isinstance(self, App):
-            return jsonify(self, instrument=self.instrument)
+            return json_utils.jsonify(self, instrument=self.instrument)
         else:
-            return jsonify(self)
+            return json_utils.jsonify(self)
 
     @classmethod
     def select_inputs(cls) -> serial.Lens:
@@ -295,7 +298,3 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             mod_select_schema.Select.RecordCalls,
             cls.root_callable.default_factory().name,
         ).rets
-
-
-# HACK013: Need these if using __future__.annotations .
-AppDefinition.model_rebuild()

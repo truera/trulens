@@ -77,27 +77,27 @@
       "cls": {
         "name": "DummyProvider",
         "module": {
-          "package_name": "trulens.core.feedback.dummy",
-          "module_name": "trulens.core.feedback.dummy.provider"
+          "package_name": "trulens.feedback.dummy",
+          "module_name": "trulens.feedback.dummy.provider"
         },
         "bases": null
       },
-      "id": 13687379664,
+      "id": 13806585968,
       "init_bindings": {
         "args": [],
         "kwargs": {
           "tru_class_info": {
             "name": "DummyProvider",
             "module": {
-              "package_name": "trulens.core.feedback.dummy",
-              "module_name": "trulens.core.feedback.dummy.provider"
+              "package_name": "trulens.feedback.dummy",
+              "module_name": "trulens.feedback.dummy.provider"
             },
             "bases": [
               {
                 "name": "DummyProvider",
                 "module": {
-                  "package_name": "trulens.core.feedback.dummy",
-                  "module_name": "trulens.core.feedback.dummy.provider"
+                  "package_name": "trulens.feedback.dummy",
+                  "module_name": "trulens.feedback.dummy.provider"
                 },
                 "bases": null
               },
@@ -155,14 +155,14 @@
             "tru_class_info": {
               "name": "DummyEndpoint",
               "module": {
-                "package_name": "trulens.core.feedback.dummy",
+                "package_name": "trulens.feedback.dummy",
                 "module_name": "trulens.feedback.dummy.endpoint"
               },
               "bases": [
                 {
                   "name": "DummyEndpoint",
                   "module": {
-                    "package_name": "trulens.core.feedback.dummy",
+                    "package_name": "trulens.feedback.dummy",
                     "module_name": "trulens.feedback.dummy.endpoint"
                   },
                   "bases": null
@@ -242,7 +242,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13715532832,
+                    "id": 5244377120,
                     "init_bindings": null
                   }
                 },
@@ -256,7 +256,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13687236672,
+                    "id": 13805517632,
                     "init_bindings": null
                   }
                 },
@@ -272,9 +272,10 @@
   },
   "aggregator": null,
   "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
+  "feedback_definition_id": "feedback_definition_hash_b83dcf912a21158942c97d5fb3aea513",
   "if_exists": null,
   "if_missing": "error",
+  "run_location": null,
   "selectors": {
     "question": "__record__.main_input",
     "context": "__record__.main_output"

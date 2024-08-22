@@ -15,7 +15,7 @@ from trulens.core import Tru
 from trulens.core import TruBasicApp
 from trulens.core import TruCustomApp
 from trulens.core import TruVirtual
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils.keys import check_keys
 from trulens.providers.huggingface.provider import Dummy
 
@@ -320,7 +320,7 @@ class TestTru(TestCase):
 
         # Check that the structure of returned tuples is correct.
         for result in feedback_results:
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
         # TODO: move tests to test_add_feedbacks.
@@ -387,7 +387,7 @@ class TestTru(TestCase):
             wait([future_result])
 
             result = future_result.result()
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
             feedback_results.append(result)
@@ -470,7 +470,7 @@ class TestTru(TestCase):
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
-            feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,
+            feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
             app_id=app_id,
         )
         with tru_app:

@@ -19,31 +19,37 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
     Union,
 )
 
+from opentelemetry import sdk as otel_sdk
+from opentelemetry.sdk.trace import export as otel_export_sdk
 import pandas
-from trulens.core import feedback
+import pydantic
+from trulens.core import preview as mod_preview
+from trulens.core.database import sqlalchemy as mod_sqlalchemy
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
-from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.feedback import feedback as base_feedback
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import dataset as mod_dataset_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import python
 from trulens.core.utils import serial
+from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
-from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.text import format_seconds
+from trulens.core.utils.wrap import OpaqueWrapper
 
 tqdm = None
 with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
@@ -59,7 +65,7 @@ pp = PrettyPrinter()
 logger = logging.getLogger(__name__)
 
 
-class Tru(python.SingletonPerName):
+class Tru(pydantic.BaseModel, python.SingletonPerName):
     """Tru is the main class that provides an entry points to trulens.
 
     Tru lets you:
@@ -122,6 +128,8 @@ class Tru(python.SingletonPerName):
         app_name: Name of the app.
     """
 
+    model_config = {"arbitrary_types_allowed": True}
+
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
 
@@ -152,15 +160,17 @@ class Tru(python.SingletonPerName):
     Will be an opqaue wrapper if it is not ready to use due to migration requirements.
     """
 
-    _dashboard_urls: Optional[str] = None
+    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
 
-    _evaluator_proc: Optional[Union[Process, Thread]] = None
+    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
+        default=None
+    )
     """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
 
         Is set to `None` if evaluator is not running.
     """
 
-    _dashboard_proc: Optional[Process] = None
+    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
     """[Process][multiprocessing.Process] executing the dashboard streamlit app.
 
     Is set to `None` if not executing.
@@ -169,11 +179,155 @@ class Tru(python.SingletonPerName):
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    batch_record_queue = queue.Queue()
+    batch_record_queue: queue.Queue = queue.Queue()
+    # TODO: make private
+    """Queue for records to be inserted in the next batch if batching mode is used."""
 
-    batch_ground_truth_queue = queue.Queue()
+    batch_thread: Optional[threading.Thread] = None
+    # TODO: make private
+    """Thread for batch insertion of records if batching mode is used."""
 
-    batch_thread = None
+    batch_ground_truth_queue: queue.Queue = pydantic.Field(
+        default_factory=queue.Queue
+    )
+    # TODO: make private
+
+    _feature_flags: mod_preview.Preview = pydantic.PrivateAttr(
+        default_factory=mod_preview.Preview
+    )
+    """Feature flags for this instance of Tru."""
+
+    _experimental_otel_exporter: Optional[otel_export_sdk.SpanExporter] = (
+        pydantic.PrivateAttr(None)
+    )
+    """OpenTelemetry SpanExporter to send spans to.
+
+    Only works if the FeatureFlag.OTEL_TRACING flag is set.
+    """
+
+    def _feature(
+        self,
+        flag: Union[str, mod_preview.Feature],
+        *,
+        value: Optional[bool] = None,
+        lock: bool = False,
+    ) -> bool:
+        """Get and/or set the value of the given feature flag.
+
+        Set it first if value is given. Lock it if lock is set.
+
+        Raises:
+            ValueError: If the flag is locked to a different value.
+        """
+
+        # NOTE(piotrm): The printouts are important as we want to make sure the
+        # user is aware that they are using a preview feature.
+
+        was_locked = self._feature_flags.is_locked(flag)
+
+        val = self._feature_flags.set(flag, value=value, lock=lock)
+
+        if value is not None:
+            if val:
+                print(
+                    f"{text_utils.UNICODE_CHECK} Preview {flag} enabled for {self.db} workspace."
+                )
+            else:
+                print(
+                    f"{text_utils.UNICODE_STOP} Preview {flag} disabled for {self.db} workspace."
+                )
+
+        if val and lock and not was_locked:
+            print(
+                f"{text_utils.UNICODE_LOCK} Preview {flag} is enabled and cannot be changed."
+            )
+
+        return val
+
+    def lock_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Get and lock the given feature flag."""
+
+        return self._feature(flag, lock=True)
+
+    def enable_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Enable the given feature flag.
+
+        Raises:
+            ValueError: If the flag is already locked to disabled.
+        """
+
+        return self._feature(flag, value=True)
+
+    def disable_feature(self, flag: Union[str, mod_preview.Feature]) -> bool:
+        """Disable the given feature flag.
+
+        Raises:
+            ValueError: If the flag is already locked to enabled.
+        """
+
+        return self._feature(flag, value=False)
+
+    def feature(
+        self, flag: Union[str, mod_preview.Feature], *, lock: bool = False
+    ) -> bool:
+        """Determine the value of the given feature flag.
+
+        If lock is set, the flag will be locked to the value returned.
+        """
+
+        return self._feature(flag, lock=lock)
+
+    def set_features(
+        self,
+        flags: Union[
+            Iterable[Union[str, mod_preview.Feature]],
+            Mapping[Union[str, mod_preview.Feature], bool],
+        ],
+        lock: bool = False,
+    ):
+        """Set multiple feature flags.
+
+        If lock is set, the flags will be locked to the values given.
+
+        Raises:
+            ValueError: If any flag is already locked to a different value than
+            provided.
+        """
+
+        if isinstance(flags, dict):
+            for flag, val in flags.items():
+                self._feature(flag, value=val, lock=lock)
+        else:
+            for flag in flags:
+                self._feature(flag, value=True, lock=lock)
+
+    def _assert_feature(
+        self, flag: mod_preview.Feature, purpose: Optional[str] = None
+    ):
+        """Raise a ValueError if the given feature flag is not enabled.
+
+        Gives instructions on how to enable the feature flag if error gets
+        raised."""
+
+        if purpose is None:
+            purpose = "."
+        else:
+            purpose = f" for {purpose}."
+
+        if not self.feature(flag):
+            raise ValueError(
+                f"""Feature flag {flag} is not enabled{purpose} You can enable it in three ways:
+```python
+from trulens.core.preview import Feature
+
+# Enable for this instance when creating it:
+tru = Tru(feature_flags=[{flag}]
+
+# Enable for this instance after it has been crated (for features that allows this):
+tru.enable_feature({flag})
+```
+"""
+            )
 
     def __new__(cls, *args, **kwargs) -> Tru:
         return super().__new__(cls, *args, **kwargs)
@@ -188,12 +342,25 @@ class Tru(python.SingletonPerName):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
+        feature_flags: Optional[
+            Union[
+                Iterable[mod_preview.Feature],
+                Mapping[mod_preview.Feature, bool],
+            ]
+        ] = None,
+        _experimental_otel_exporter: Optional[
+            otel_export_sdk.SpanExporter
+        ] = None,
         app_name: Optional[str] = None,
     ):
         """
         Args:
             database_check_revision: Whether to check the database revision on
-                init. This prompt determine whether database migration is required.
+                init. This prompt determine whether database migration is
+                required.
+
+            _otel_exporter: OpenTelemetry SpanExporter to use for tracing. If
+                this is enabled, tracing will be done in otel style.
         """
 
         if database_args is None:
@@ -228,7 +395,7 @@ class Tru(python.SingletonPerName):
             if v is not None
         })
 
-        if python.safe_hasattr(self, "db"):
+        if hasattr(self, "db"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             for v in database_args.values():
@@ -247,9 +414,26 @@ class Tru(python.SingletonPerName):
                     "`database` must be a `trulens.core.database.base.DB` instance."
                 )
 
-            self.db = database
+            db = database
         else:
-            self.db = SQLAlchemyDB.from_tru_args(**database_args)
+            db = mod_sqlalchemy.SQLAlchemyDB.from_tru_args(**database_args)
+
+        super().__init__(db=db)  # pydantic.BaseModel.__init__
+
+        # Set any feature flags explicitly provided to Tru.
+        if feature_flags is not None:
+            self.set_features(feature_flags)
+
+        if _experimental_otel_exporter is not None:
+            self._assert_feature(mod_preview.Feature.OTEL_TRACING)
+
+            assert isinstance(
+                _experimental_otel_exporter, otel_sdk.trace.export.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+            print(
+                f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {_experimental_otel_exporter.__class__.__name__}"
+            )
+        self._experimental_otel_exporter = _experimental_otel_exporter
 
         if database_check_revision:
             try:
@@ -342,7 +526,7 @@ class Tru(python.SingletonPerName):
 
     def add_record(
         self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
-    ) -> mod_types_schema.RecordID:
+    ) -> types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -406,7 +590,7 @@ class Tru(python.SingletonPerName):
                     # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:
                         feedback_results.append(
-                            mod_feedback_schema.FeedbackResult(
+                            feedback_schema.FeedbackResult(
                                 feedback_definition_id=feedback_definition_id,
                                 record_id=record.record_id,
                                 name="feedback_name",  # this will be updated later by deferred evaluator
@@ -422,21 +606,21 @@ class Tru(python.SingletonPerName):
     def _submit_feedback_functions(
         self,
         record: mod_record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
+        feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
         on_done: Optional[
             Callable[
                 [
                     Union[
-                        mod_feedback_schema.FeedbackResult,
-                        Future[mod_feedback_schema.FeedbackResult],
+                        feedback_schema.FeedbackResult,
+                        Future[feedback_schema.FeedbackResult],
                     ],
                     None,
                 ]
             ]
         ] = None,
     ) -> List[
-        Tuple[feedback.Feedback, Future[mod_feedback_schema.FeedbackResult]]
+        Tuple[base_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
     ]:
         """Schedules to run the given feedback functions.
 
@@ -452,7 +636,7 @@ class Tru(python.SingletonPerName):
 
         Returns:
 
-            List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]
+            List[Tuple[base_feedback.Feedback, Future[schema.FeedbackResult]]]
 
             Produces a list of tuples where the first item in each tuple is the
             feedback function and the second is the future of the feedback result.
@@ -499,7 +683,7 @@ class Tru(python.SingletonPerName):
                         return temp
                 return temp
 
-            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
+            fut: Future[feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback, ffunc=ffunc, app=app, record=record
             )
 
@@ -514,12 +698,12 @@ class Tru(python.SingletonPerName):
     def run_feedback_functions(
         self,
         record: mod_record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
+        feedback_functions: Sequence[base_feedback.Feedback],
         app: Optional[mod_app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
-        Iterable[mod_feedback_schema.FeedbackResult],
-        Iterable[Future[mod_feedback_schema.FeedbackResult]],
+        Iterable[feedback_schema.FeedbackResult],
+        Iterable[Future[feedback_schema.FeedbackResult]],
     ]:
         """Run a collection of feedback functions and report their result.
 
@@ -553,7 +737,8 @@ class Tru(python.SingletonPerName):
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
+            isinstance(ffunc, base_feedback.Feedback)
+            for ffunc in feedback_functions
         ):
             raise ValueError(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
@@ -568,7 +753,7 @@ class Tru(python.SingletonPerName):
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
+            Future[feedback_schema.FeedbackResult], base_feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in self._submit_feedback_functions(
@@ -595,9 +780,7 @@ class Tru(python.SingletonPerName):
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_app(self, app: mod_app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -611,7 +794,7 @@ class Tru(python.SingletonPerName):
 
         return self.db.insert_app(app=app)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -625,12 +808,12 @@ class Tru(python.SingletonPerName):
         self,
         feedback_result_or_future: Optional[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ] = None,
         **kwargs: dict,
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
@@ -654,19 +837,19 @@ class Tru(python.SingletonPerName):
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
-                kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
+                kwargs["status"] = feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result_or_future = mod_feedback_schema.FeedbackResult(
-                **kwargs
-            )
+            feedback_result_or_future = feedback_schema.FeedbackResult(**kwargs)
 
         else:
             if isinstance(feedback_result_or_future, Future):
                 futures.wait([feedback_result_or_future])
-                feedback_result_or_future: mod_feedback_schema.FeedbackResult = feedback_result_or_future.result()
+                feedback_result_or_future: feedback_schema.FeedbackResult = (
+                    feedback_result_or_future.result()
+                )
 
             elif isinstance(
-                feedback_result_or_future, mod_feedback_schema.FeedbackResult
+                feedback_result_or_future, feedback_schema.FeedbackResult
             ):
                 pass
             else:
@@ -684,11 +867,11 @@ class Tru(python.SingletonPerName):
         self,
         feedback_results: Iterable[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -712,7 +895,7 @@ class Tru(python.SingletonPerName):
         return ids
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
+        self, app_id: types_schema.AppID
     ) -> serial.JSONized[mod_app_schema.AppDefinition]:
         """Look up an app from the database.
 
@@ -752,7 +935,7 @@ class Tru(python.SingletonPerName):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -783,7 +966,7 @@ class Tru(python.SingletonPerName):
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
@@ -883,7 +1066,7 @@ class Tru(python.SingletonPerName):
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
-        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
         return_when_done: bool = False,
     ) -> Optional[Union[Process, Thread]]:
         """
@@ -962,9 +1145,7 @@ class Tru(python.SingletonPerName):
                     run_location=run_location
                 )
                 queue_done = (
-                    queue_stats.get(
-                        mod_feedback_schema.FeedbackResultStatus.DONE
-                    )
+                    queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
                     or 0
                 )
                 queue_total = sum(queue_stats.values())
@@ -1002,7 +1183,7 @@ class Tru(python.SingletonPerName):
             runs_stats = defaultdict(int)
 
             futures_map: Dict[
-                Future[mod_feedback_schema.FeedbackResult], pandas.Series
+                Future[feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
@@ -1011,9 +1192,9 @@ class Tru(python.SingletonPerName):
                     new_futures: List[
                         Tuple[
                             pandas.Series,
-                            Future[mod_feedback_schema.FeedbackResult],
+                            Future[feedback_schema.FeedbackResult],
                         ]
-                    ] = feedback.Feedback.evaluate_deferred(
+                    ] = base_feedback.Feedback.evaluate_deferred(
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
@@ -1077,7 +1258,7 @@ class Tru(python.SingletonPerName):
                     )
                     queue_done = (
                         queue_stats.get(
-                            mod_feedback_schema.FeedbackResultStatus.DONE
+                            feedback_schema.FeedbackResultStatus.DONE
                         )
                         or 0
                     )

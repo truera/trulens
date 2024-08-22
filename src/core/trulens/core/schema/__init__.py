@@ -1,5 +1,4 @@
-"""
-# Serializable Classes
+"""Serializable Classes
 
 Note: Only put classes which can be serialized in this module.
 
@@ -21,18 +20,29 @@ feature information about the encoded object types in the dictionary under the
 
 """
 
-from trulens.core.schema.app import AppDefinition
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.record import Record
-from trulens.core.schema.select import Select
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import (
+    select as select_schema,  # noqa: F401 needed for model_update below
+)
+from trulens.core.schema import types as types_schema  # noqa: F401 same
 
-__all__ = [
-    "AppDefinition",
-    "Select",
-    "FeedbackDefinition",
-    "FeedbackResult",
-    "FeedbackMode",
-    "Record",
-]
+# HACK013: Need these if using __future__.annotations .
+
+# Moved all the `model_rebuild` here to make sure they are executed after all of
+# the types mentioned inside them are defined.
+
+record_schema.RecordAppCallMethod.model_rebuild()
+record_schema.Record.model_rebuild()
+record_schema.RecordAppCall.model_rebuild()
+
+feedback_schema.FeedbackResult.model_rebuild()
+feedback_schema.FeedbackCall.model_rebuild()
+feedback_schema.FeedbackDefinition.model_rebuild()
+
+app_schema.AppDefinition.model_rebuild()
+
+base_schema.Cost.model_rebuild()
+base_schema.Perf.model_rebuild()

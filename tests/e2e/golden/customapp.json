@@ -91,8 +91,12 @@
   "app_id": "customapp",
   "tags": "-",
   "metadata": {},
-  "feedback_definitions": [],
+  "feedback_definitions": [
+    "feedback_definition_hash_735dd254b693122e8f674e60a695abf9",
+    "feedback_definition_hash_b83dcf912a21158942c97d5fb3aea513"
+  ],
   "feedback_mode": "with_app_thread",
+  "record_ingest_mode": "immediate",
   "root_class": {
     "name": "DummyApp",
     "module": {

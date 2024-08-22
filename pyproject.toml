@@ -30,10 +30,11 @@ classifiers = [
 python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
   "snowflake",
+  "otel",
 ], allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
-# Remove after deprecation period:
+# TODEP: Remove after deprecation period:
 trulens_eval = { version = "^1.0.0", allow-prereleases = true }
 
 [tool.poetry.group.benchmark.dependencies]
@@ -89,6 +90,7 @@ trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 python = "^3.9,!=3.9.7"
 trulens-core = { path = "src/core", extras = [
   "snowflake",
+  "otel",
 ], develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }

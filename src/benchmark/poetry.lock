@@ -710,6 +710,7 @@ sqlalchemy = "^2.0"
 typing_extensions = "^4.9"
 
 [package.extras]
+otel = ["opentelemetry-api (>=1.24,<2.0)", "opentelemetry-exporter-otlp (>=1.24,<2.0)", "opentelemetry-sdk (>=1.24,<2.0)"]
 snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-python (>=1.18,<2.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]

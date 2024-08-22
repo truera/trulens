@@ -2,7 +2,7 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-from trulens.core.feedback import Endpoint
+from trulens.core.feedback.endpoint import Endpoint
 from trulens.feedback import LLMProvider
 from trulens.providers.litellm.endpoint import LiteLLMEndpoint
 

@@ -26,14 +26,15 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 import warnings
 
 import pydantic
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.constants import ERROR
 from trulens.core.utils.constants import NOSERIO
-from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_issubclass
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
+from trulens.core.utils.wrap import OpaqueWrapper
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -63,38 +64,18 @@ def noserio(obj: Any, **extra: Dict) -> Dict:
 
 
 # TODO: rename as functionality optionally produces JSONLike .
-def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
-    """
-    Try to get the attribute `k` of the given object. This may evaluate some
-    code if the attribute is a property and may fail. In that case, an dict
-    indicating so is returned.
+def getattr_serial(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
 
-    If `get_prop` is False, will not return contents of properties (will raise
-    `ValueException`).
+    This may evaluate some code if the attribute is a property and may fail. In
+    that case, an dict indicating so is returned.  If `get_prop` is False, will
+    not return contents of properties (will raise `ValueException`).
     """
 
-    v = inspect.getattr_static(obj, k)
-
-    is_prop = False
     try:
-        # OpenAI version 1 classes may cause this isinstance test to raise an
-        # exception.
-        is_prop = isinstance(v, property)
-    except Exception as e:
+        return python_utils.safe_getattr(obj=obj, k=k, get_prop=get_prop)
+    except RuntimeError as e:
         return {ERROR: Obj.of_object(e)}
-
-    if is_prop:
-        if not get_prop:
-            raise ValueError(f"{k} is a property")
-
-        try:
-            v = v.fget(obj)
-            return v
-
-        except Exception as e:
-            return {ERROR: Obj.of_object(e)}
-    else:
-        return v
 
 
 def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
@@ -128,7 +109,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
             continue
 
         try:
-            v = safe_getattr(obj, k, get_prop=include_props)
+            v = python_utils.safe_getattr(obj, k, get_prop=include_props)
 
             if isinstance(v, OpaqueWrapper):
                 # Don't expose the contents of opaque wrappers.

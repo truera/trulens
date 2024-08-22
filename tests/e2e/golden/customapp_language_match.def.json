@@ -75,26 +75,26 @@
   "implementation": {
     "obj": {
       "cls": {
-        "name": "Dummy",
+        "name": "DummyHuggingface",
         "module": {
           "package_name": "trulens.providers.huggingface",
           "module_name": "trulens.providers.huggingface.provider"
         },
         "bases": null
       },
-      "id": 13687379984,
+      "id": 13806586208,
       "init_bindings": {
         "args": [],
         "kwargs": {
           "tru_class_info": {
-            "name": "Dummy",
+            "name": "DummyHuggingface",
             "module": {
               "package_name": "trulens.providers.huggingface",
               "module_name": "trulens.providers.huggingface.provider"
             },
             "bases": [
               {
-                "name": "Dummy",
+                "name": "DummyHuggingface",
                 "module": {
                   "package_name": "trulens.providers.huggingface",
                   "module_name": "trulens.providers.huggingface.provider"
@@ -163,14 +163,14 @@
             "tru_class_info": {
               "name": "DummyEndpoint",
               "module": {
-                "package_name": "trulens.core.feedback.dummy",
+                "package_name": "trulens.feedback.dummy",
                 "module_name": "trulens.feedback.dummy.endpoint"
               },
               "bases": [
                 {
                   "name": "DummyEndpoint",
                   "module": {
-                    "package_name": "trulens.core.feedback.dummy",
+                    "package_name": "trulens.feedback.dummy",
                     "module_name": "trulens.feedback.dummy.endpoint"
                   },
                   "bases": null
@@ -250,7 +250,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13715532832,
+                    "id": 5244377120,
                     "init_bindings": null
                   }
                 },
@@ -264,7 +264,7 @@
                       },
                       "bases": null
                     },
-                    "id": 13687236672,
+                    "id": 13805517632,
                     "init_bindings": null
                   }
                 },
@@ -279,9 +279,10 @@
   },
   "aggregator": null,
   "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_384b6684542d80bc527324e86cf65c7a",
+  "feedback_definition_id": "feedback_definition_hash_735dd254b693122e8f674e60a695abf9",
   "if_exists": null,
   "if_missing": "error",
+  "run_location": null,
   "selectors": {
     "text1": "__record__.main_input",
     "text2": "__record__.main_output"

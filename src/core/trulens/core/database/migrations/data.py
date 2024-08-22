@@ -11,8 +11,8 @@ from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.database.legacy.migration import VersionException
 from trulens.core.database.migrations import DbRevisions
 from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
@@ -107,22 +107,18 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         test_json
                                     )
                                 elif attr_name == "cost_json":
-                                    mod_base_schema.Cost.model_validate(
-                                        test_json
-                                    )
+                                    base_schema.Cost.model_validate(test_json)
                                 elif attr_name == "perf_json":
-                                    mod_base_schema.Perf.model_validate(
-                                        test_json
-                                    )
+                                    base_schema.Perf.model_validate(test_json)
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
                                         "calls"
                                     ]:
-                                        mod_feedback_schema.FeedbackCall.model_validate(
+                                        feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )
                                 elif attr_name == "feedback_json":
-                                    mod_feedback_schema.FeedbackDefinition.model_validate(
+                                    feedback_schema.FeedbackDefinition.model_validate(
                                         test_json
                                     )
                                 elif attr_name == "app_json":

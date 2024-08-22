@@ -3,7 +3,7 @@ import random
 import time
 from typing import Optional
 
-from trulens.core.utils.python import OpaqueWrapper
+from trulens.core.utils.wrap import OpaqueWrapper
 
 
 class Dummy:

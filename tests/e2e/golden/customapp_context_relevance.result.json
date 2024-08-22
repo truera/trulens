@@ -1,18 +1,21 @@
 {
-  "feedback_result_id": "feedback_result_hash_42b668faaeef54ded7c91faeeb26175f",
-  "record_id": "record_hash_78a9a90ee94a8c0f8679391003330756",
-  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
-  "last_ts": "2024-08-09T15:20:30.596928",
+  "feedback_result_id": "feedback_result_hash_b3d43a766fe683e963e48de649a9dd0c",
+  "record_id": "record_hash_0777cdbc30499838c3c8f919387fb89b",
+  "feedback_definition_id": "feedback_definition_hash_b83dcf912a21158942c97d5fb3aea513",
+  "last_ts": "2024-08-20T20:35:37.706205",
   "status": "done",
   "cost": {
-    "n_requests": 0,
+    "n_requests": 1,
+    "n_responses": 0,
     "n_successful_requests": 0,
+    "n_generations": 0,
+    "n_classifications": 0,
     "n_classes": 0,
-    "n_tokens": 0,
+    "n_tokens": 247,
     "n_stream_chunks": 0,
-    "n_prompt_tokens": 0,
-    "n_completion_tokens": 0,
-    "cost": 0.0
+    "n_prompt_tokens": 209,
+    "n_completion_tokens": 38,
+    "cost": 0.0585
   },
   "name": "context_relevance",
   "calls": [
@@ -21,11 +24,11 @@
         "question": "hello",
         "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
       },
-      "ret": 0.6666666666666666,
+      "ret": 0.0,
       "meta": {}
     }
   ],
-  "result": 0.6666666666666666,
+  "result": 0.0,
   "error": null,
   "multi_result": "null"
 }

@@ -17,10 +17,8 @@ from types import ModuleType
 import typing
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Dict,
-    Generator,
     Generic,
     Hashable,
     Iterator,
@@ -210,6 +208,39 @@ def safe_signature(func_or_obj: Any):
             raise e
 
 
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
+
+
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
 
@@ -382,6 +413,21 @@ def caller_frame(offset=0) -> FrameType:
     """
 
     return inspect.stack()[offset + 1].frame
+
+
+def external_caller_frame(offset=0) -> FrameType:
+    """
+    Get the caller's (of this function) frame that is not in the trulens namespace.
+
+    Raises:
+        RuntimeError: If no such frame is found.
+    """
+
+    for finfo in inspect.stack()[offset + 1 :]:
+        if not finfo.frame.f_globals["__name__"].startswith("trulens"):
+            return finfo.frame
+
+    raise RuntimeError("No external caller frame found.")
 
 
 def caller_frameinfo(
@@ -631,113 +677,6 @@ def get_first_local_in_call_stack(
     except StopIteration:
         logger.debug("no frames found")
         return None
-
-
-# Wrapping utilities
-
-
-class OpaqueWrapper(Generic[T]):
-    """Wrap an object preventing all access.
-
-    Any access except to
-    [unwrap][trulens.core.utils.python.OpaqueWrapper.unwrap] will result in an
-    exception with the given message.
-
-    Args:
-        obj: The object to wrap.
-
-        e: The exception to raise when an attribute is accessed.
-    """
-
-    def __init__(self, obj: T, e: Exception):
-        self._obj = obj
-        self._e = e
-
-    def unwrap(self) -> T:
-        """Get the wrapped object back."""
-        return self._obj
-
-    def __getattr__(self, name):
-        raise self._e
-
-    def __setattr__(self, name, value):
-        if name in ["_obj", "_e"]:
-            return super().__setattr__(name, value)
-        raise self._e
-
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        raise self._e
-
-
-def wrap_awaitable(
-    awaitable: Awaitable[T],
-    on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None,
-) -> Awaitable[T]:
-    """Wrap an awaitable in another awaitable that will call callbacks before
-    and after the given awaitable finishes.
-
-    Note that the resulting awaitable needs to be awaited for the callback to
-    eventually trigger.
-
-    Args:
-        awaitable: The awaitable to wrap.
-
-        on_await: The callback to call when the wrapper awaitable is awaited but
-            before the wrapped awaitable is awaited.
-
-        on_done: The callback to call with the result of the wrapped awaitable
-            once it is ready.
-    """
-
-    async def wrapper(awaitable):
-        if on_await is not None:
-            on_await()
-
-        val = await awaitable
-
-        if on_done is not None:
-            on_done(val)
-
-        return val
-
-    return wrapper(awaitable)
-
-
-def wrap_generator(
-    gen: Generator[T, None, None],
-    on_iter: Optional[Callable[[], Any]] = None,
-    on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None,
-) -> Generator[T, None, None]:
-    """Wrap a generator in another generator that will call callbacks at various
-    points in the generation process.
-
-    Args:
-        gen: The generator to wrap.
-
-        on_iter: The callback to call when the wrapper generator is created but
-            before a first iteration is produced.
-
-        on_next: The callback to call with the result of each iteration of the
-            wrapped generator.
-
-        on_done: The callback to call when the wrapped generator is exhausted.
-    """
-
-    def wrapper(gen):
-        if on_iter is not None:
-            on_iter()
-
-        for val in gen:
-            if on_next is not None:
-                on_next(val)
-            yield val
-
-        if on_done is not None:
-            on_done()
-
-    return wrapper(gen)
 
 
 # Class utilities

@@ -1,3 +1,5 @@
+# TODO: No aliases in production API.
+
 """
 Apps in trulens derive from two classes,
 [AppDefinition][trulens.core.schema.AppDefinition] and
