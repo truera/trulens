@@ -8,7 +8,8 @@ from trulens.core.app.base import ComponentView
 from trulens.core.schema.record import Record
 from trulens.core.schema.record import RecordAppCall
 from trulens.core.schema.select import Select
-from trulens.core.schema.types import Metadata, Tags
+from trulens.core.schema.types import Metadata
+from trulens.core.schema.types import Tags
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.containers import is_empty
 from trulens.core.utils.json import jsonify

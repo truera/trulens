@@ -30,14 +30,63 @@ def leaderboard():
 
     lms = tru.db
 
-    # Set the title and subtitle of the app
+    # Set the title
     st.title("App Leaderboard")
-    st.write(
-        "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
-    )
 
-    st.markdown("## test")
-    df, feedback_col_names = lms.get_records_and_feedback([])
+    # wrapper so we can cache the records and feedback
+    @st.cache_data
+    def get_data():
+        return lms.get_records_and_feedback([])
+    
+    @st.cache_data
+    def get_apps():
+        return list(lms.get_apps())
+    
+    records, feedback_col_names = get_data()
+    records = records.sort_values(by="app_id")
+
+    apps = get_apps()
+    app_ids = []
+    for i in range(len(apps)):
+        app_ids.append(apps[i]['app_id'])
+
+    selected_apps = st.multiselect("Filter apps:", app_ids, app_ids)
+
+    with st.expander("Advanced Filters"):
+        # get tag options
+        tags = []
+        for i in range(len(apps)):
+            tags.append(apps[i]['tags'])
+        unique_tags = list(set(tags))
+        # select tags
+        selected_tags = st.multiselect("Filter tags:", unique_tags, unique_tags)
+
+        # filter to apps with selected tags
+        tag_selected_apps = [app['app_id'] for app in apps if any(tag in app['tags'] for tag in selected_tags)]
+        selected_apps = list(set(selected_apps) & set(tag_selected_apps))
+
+        # get metadata options
+        metadata_keys_unique = set()
+        for app in apps:
+            metadata_keys_unique.update(app['metadata'].keys())
+        metadata_keys_unique = list(metadata_keys_unique)
+        # select metadata
+        metadata_options = {}
+        for metadata_key in metadata_keys_unique:
+            unique_values = set()
+            for i in range(len(apps)):
+                unique_values.add(apps[i]['metadata'][metadata_key])
+            metadata_options[metadata_key] = list(unique_values)
+
+        # select metadata
+        metadata_selections = metadata_options.copy()
+        for metadata_key in metadata_options.keys():
+            metadata_selections[metadata_key] = st.multiselect("Filter " + metadata_key + ":", metadata_options[metadata_key], metadata_options[metadata_key])
+        
+        # sort apps by name
+        selected_apps = sorted(selected_apps)
+
+
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
@@ -47,20 +96,17 @@ def leaderboard():
         for _, row in feedback_defs.iterrows()
     }
 
-    if df.empty:
+    if records.empty:
         st.write("No records yet...")
         return
 
-    df = df.sort_values(by="app_id")
-
-    if df.empty:
+    if records.empty:
         st.write("No records yet...")
 
-    apps = list(df.app_id.unique())
     st.markdown("""---""")
 
-    for app in apps:
-        app_df = df.loc[df.app_id == app]
+    for app in selected_apps:
+        app_df = records.loc[records.app_id == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
@@ -82,8 +128,6 @@ def leaderboard():
             .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
             .mean()
         )
-
-        # app_df_feedback = df.loc[df.app_id == app]
 
         col1.metric("Records", len(app_df))
         col2.metric(
