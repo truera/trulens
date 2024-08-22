@@ -1,8 +1,11 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
+from functools import reduce
 import logging
-from typing import Callable, List, Optional, Tuple, Union
+import operator
+from typing import Any, Callable, List, Optional, Tuple, Union
 
+import pandas as pd
 from pydantic import BaseModel
 from trulens.core import Feedback
 from trulens.core import Select
@@ -71,23 +74,70 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
+    # @instrument
+    # def run_score_generation_on_single_row(
+    #     self, row, feedback_fn: Callable
+    # ) -> Union[float, Tuple[float, float]]:
+    #     """Generate a score with the feedback_fn
+
+    #     Returns:
+    #         Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
+    #     """
+
+    #     benchmark_params_dict: dict = self.benchmark_params.model_dump()
+
+    #     ret = feedback_fn(
+    #         row["query"], row["expected_response"], benchmark_params_dict
+    #     )
+
+    #     if not isinstance(ret, tuple) and not isinstance(ret, float):
+    #         raise ValueError(
+    #             f"Output must be a float or a tuple, got {type(ret)}"
+    #         )
+
+    #     if isinstance(ret, tuple) and isinstance(ret[1], dict):
+    #         ret = (
+    #             ret[0],
+    #             list(ret[1].values())[-1],
+    #         )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
+    #     return ret
+
     @instrument
     def run_score_generation_on_single_row(
-        self, row, feedback_fn: Callable
+        self,
+        row,
+        feedback_fn: Callable,
+        required_columns: List[str],
     ) -> Union[float, Tuple[float, float]]:
         """Generate a score with the feedback_fn
 
+        Args:
+            row: A single row from the dataset.
+            feedback_fn: The function used to generate feedback scores.
+            required_columns: List of columns or nested fields (dot notation) in the row that should be passed to the feedback_fn.
+            additional_params: Any additional parameters to be passed to the feedback_fn.
+
         Returns:
-            Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
+            Union[float, Tuple[float, float]]: Feedback score (with metadata) after running the benchmark on a single entry in ground truth data.
         """
 
         benchmark_params_dict: dict = self.benchmark_params.model_dump()
 
-        # TODO: better define the shape of arguments of feedback_fn after GT database schema is finalized
+        # Helper function to extract nested fields using dot notation with error handling
+        def get_nested_value(row: dict, key: str, default=None) -> Any:
+            keys = key.split(".")
+            try:
+                return reduce(operator.getitem, keys, row)
+            except (KeyError, TypeError):
+                return default
 
-        ret = feedback_fn(
-            row["query"], row["expected_response"], benchmark_params_dict
-        )
+        # Extract required values from the row based on the specified columns
+        feedback_args = [get_nested_value(row, col) for col in required_columns]
+
+        # Append the benchmark parameters dictionary
+        feedback_args.append(benchmark_params_dict)
+
+        ret = feedback_fn(*feedback_args)
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
@@ -101,17 +151,20 @@ class TruBenchmarkExperiment:
             )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
         return ret
 
+        return ret
+
     @instrument
     def __call__(
         self,
-        ground_truth: Union[List, Callable, FunctionOrMethod],
+        ground_truth: Union[List, Callable, pd.DataFrame, FunctionOrMethod],
+        required_columns: List[str] = ["query", "expected_chunks.score"],
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
 
-        ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
-
+        ground_truth (Union[List, Callable, pd.DataFrame, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
+        required_columns (List[str]): list of columns or nested fields (dot notation) in the row that should be passed to the feedback_fn.
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
@@ -126,6 +179,7 @@ class TruBenchmarkExperiment:
                     self.run_score_generation_on_single_row,
                     row,
                     self.feedback_fn,
+                    required_columns,
                 ): row
                 for row in ground_truth
             }
