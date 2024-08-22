@@ -29,7 +29,7 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     ```python
     from trulens.core import Tru
     tru = Tru(
-        name="MyApp",
+        app_name="MyApp",
         snowflake_connection_parameters={
             account: "<account>",
             user: "<user>",
