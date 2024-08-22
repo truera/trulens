@@ -140,7 +140,7 @@ class TestAPI(JSONTestCase):
         return flat_diffs
 
     @skip("Compat not ready.")
-    @skipIf(sys.version_info != (3, 11), "Only run on Python 3.11")
+    @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens_eval_compat(self):
         """Check that the trulens_eval API members are still present.
@@ -169,7 +169,7 @@ class TestAPI(JSONTestCase):
                         f"trulens_eval compatibility API mismatch: {diff_type} at {diff_lens} value {diff_value}"
                     )
 
-    @skipIf(sys.version_info != (3, 11), "Only run on Python 3.11")
+    @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens(self):
         """Check that the trulens API members are still present.

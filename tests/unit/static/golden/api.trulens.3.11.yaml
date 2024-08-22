@@ -54,9 +54,10 @@ trulens.core:
     Provider: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
-    Tru: builtins.type
+    Tru: builtins.function
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
+    TruSession: builtins.type
     TruVirtual: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
@@ -112,10 +113,11 @@ trulens.core.app.base.App:
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    db: typing.Optional[trulens.core.database.base.DB, builtins.NoneType]
+    connector: trulens.core.database.connector.base.DBConnector
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
@@ -144,7 +146,6 @@ trulens.core.app.base.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     tags: builtins.str
-    tru: typing.Optional[trulens.core.tru.Tru, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
     wait_for_feedback_results: builtins.function
     with_: builtins.function
@@ -228,9 +229,10 @@ trulens.core.app.basic.TruBasicApp:
     app: trulens.core.app.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
     call_with_record: builtins.function
-    db: typing.Optional[trulens.core.database.base.DB, builtins.NoneType]
+    connector: trulens.core.database.connector.base.DBConnector
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
     feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
@@ -249,7 +251,6 @@ trulens.core.app.basic.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     tags: builtins.str
-    tru: typing.Optional[trulens.core.tru.Tru, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.core.app.basic.TruBasicCallableInstrument:
   __bases__:
@@ -277,8 +278,9 @@ trulens.core.app.custom.TruCustomApp:
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.str
-    db: typing.Optional[trulens.core.database.base.DB, builtins.NoneType]
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
     feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
@@ -300,7 +302,6 @@ trulens.core.app.custom.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     tags: builtins.str
-    tru: typing.Optional[trulens.core.tru.Tru, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.core.app.custom.instrument:
   __bases__:
@@ -323,8 +324,9 @@ trulens.core.app.virtual.TruVirtual:
     app: trulens.core.app.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.str
-    db: typing.Optional[trulens.core.database.base.DB, builtins.NoneType]
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
     feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
@@ -343,7 +345,6 @@ trulens.core.app.virtual.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     tags: builtins.str
-    tru: typing.Optional[trulens.core.tru.Tru, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.core.app.virtual.VirtualApp:
   __bases__:
@@ -400,6 +401,7 @@ trulens.core.database.base.DB:
     batch_insert_ground_truth: builtins.function
     batch_insert_record: builtins.function
     check_db_revision: builtins.function
+    delete_app: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
@@ -419,6 +421,51 @@ trulens.core.database.base.DB:
     redact_keys: builtins.bool
     reset_database: builtins.function
     table_prefix: builtins.str
+trulens.core.database.connector:
+  __class__: builtins.module
+  highs:
+    DBConnector: abc.ABCMeta
+    DefaultDBConnector: abc.ABCMeta
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+trulens.core.database.connector.base:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DBConnector: abc.ABCMeta
+trulens.core.database.connector.base.DBConnector:
+  __bases__:
+  - abc.ABC
+  __class__: abc.ABCMeta
+  attributes:
+    RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
+    add_app: builtins.function
+    add_feedback: builtins.function
+    add_feedback_definition: builtins.function
+    add_feedbacks: builtins.function
+    add_record: builtins.function
+    add_record_nowait: builtins.function
+    batch_record_queue: queue.Queue
+    batch_thread: builtins.NoneType
+    db: builtins.property
+    delete_app: builtins.function
+    get_app: builtins.function
+    get_apps: builtins.function
+    get_leaderboard: builtins.function
+    get_records_and_feedback: builtins.function
+    migrate_database: builtins.function
+    reset_database: builtins.function
+trulens.core.database.connector.default:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DefaultDBConnector: abc.ABCMeta
+trulens.core.database.connector.default.DefaultDBConnector:
+  __bases__:
+  - trulens.core.database.connector.base.DBConnector
+  __class__: abc.ABCMeta
+  attributes: {}
 trulens.core.database.exceptions:
   __class__: builtins.module
   highs: {}
@@ -549,7 +596,6 @@ trulens.core.database.sqlalchemy.SQLAlchemyDB:
   - trulens.core.database.base.DB
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    delete_app: builtins.function
     engine: typing.Optional[sqlalchemy.engine.base.Engine, builtins.NoneType]
     engine_params: builtins.dict
     from_db_url: builtins.classmethod
@@ -817,6 +863,7 @@ trulens.core.schema.app:
   lows:
     AppDefinition: pydantic._internal._model_construction.ModelMetaclass
     RecordIngestMode: enum.EnumType
+    TYPE_CHECKING: builtins.bool
 trulens.core.schema.app.AppDefinition:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
@@ -826,7 +873,9 @@ trulens.core.schema.app.AppDefinition:
     app: trulens.core.utils.serial.JSONized[trulens.core.schema.app.AppDefinition]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.str
+    app_id: builtins.property
+    app_name: builtins.str
+    app_version: builtins.str
     continue_session: builtins.staticmethod
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
@@ -1129,12 +1178,13 @@ trulens.core.schema.types:
   highs: {}
   lows:
     new_call_id: builtins.function
-trulens.core.tru:
+trulens.core.session:
   __class__: builtins.module
   highs: {}
   lows:
-    Tru: builtins.type
-trulens.core.tru.Tru:
+    Tru: builtins.function
+    TruSession: builtins.type
+trulens.core.session.TruSession:
   __bases__:
   - trulens.core.utils.python.SingletonPerName
   __class__: builtins.type
@@ -1151,7 +1201,6 @@ trulens.core.tru.Tru:
     add_record: builtins.function
     add_record_nowait: builtins.function
     batch_ground_truth_queue: queue.Queue
-    batch_loop: builtins.function
     batch_record_queue: queue.Queue
     batch_thread: builtins.NoneType
     delete_app: builtins.function
@@ -1166,7 +1215,6 @@ trulens.core.tru.Tru:
     run_feedback_functions: builtins.function
     start_evaluator: builtins.function
     stop_evaluator: builtins.function
-    update_record: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
@@ -1807,48 +1855,6 @@ trulens.dashboard.pages:
   highs: {}
   lows:
     __path__: builtins.list
-trulens.dashboard.pages.Apps:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    add_selector: builtins.function
-    draw_rec: builtins.function
-    draw_selector: builtins.function
-    end_session: builtins.function
-    loadable_apps: builtins.list
-    remove_selector: builtins.function
-    run_record: builtins.function
-    select_app: builtins.function
-    set_selector: builtins.function
-    update_selector: builtins.function
-trulens.dashboard.pages.Evaluations:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    MULTI_CALL_NAME_DELIMITER: builtins.str
-    app: builtins.list
-    apps: builtins.list
-    cellstyle_jscode: builtins.dict
-    col_num: builtins.int
-    cols: builtins.int
-    columns: builtins.list
-    decoded_input: numpy.ndarray
-    decoded_output: numpy.ndarray
-    default_direction: builtins.str
-    extract_metadata: builtins.function
-    feedback: builtins.list
-    feedback_cols: builtins.list
-    feedback_directions: builtins.dict
-    gridOptions: collections.defaultdict
-    ind: builtins.int
-    input_array: numpy.ndarray
-    non_feedback_cols: builtins.list
-    options: builtins.list
-    output_array: numpy.ndarray
-    render_component: builtins.function
-    render_record_metrics: builtins.function
-    row_num: builtins.int
-    rows: builtins.int
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
