@@ -143,17 +143,31 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             text_to_text=lambda t: f"returning {t}",
         )
         # Test stream exists.
-        self._snowflake_session.sql(
-            f"SHOW TERSE STREAMS IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
-        )
+        # TODO: parameterize sql better.
+        res = self._snowflake_session.sql(
+            f"SHOW TERSE STREAMS IN SCHEMA {self._database_name}.{self._schema_name}"
+        ).collect()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].name, "TRULENS_FEEDBACK_EVALS_STREAM")
+        self.assertEqual(res[0].database_name, self._database_name.upper())
+        self.assertEqual(res[0].schema_name, self._schema_name.upper())
+        self.assertEqual(res[0].tableOn, "TRULENS_FEEDBACKS")
         # Test task exists.
-        self._snowflake_session.sql(
-            f"SHOW TERSE TASKS IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
-        )
+        res = self._snowflake_session.sql(
+            f"SHOW TERSE TASKS IN SCHEMA {self._database_name}.{self._schema_name}"
+        ).collect()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].name, "TRULENS_FEEDBACK_EVAL_TASK")
+        self.assertEqual(res[0].database_name, self._database_name.upper())
+        self.assertEqual(res[0].schema_name, self._schema_name.upper())
         # Test stored procedure exists.
-        self._snowflake_session.sql(
-            f"SHOW TERSE PROCEDURES IN DATABASE {self._database_name} SCHEMA {self._schema_name}"
-        )
+        res = self._snowflake_session.sql(
+            f"SHOW TERSE PROCEDURES LIKE 'TRULENS_RUN_DEFERRED_FEEDBACKS' IN SCHEMA {self._database_name}.{self._schema_name} "
+        ).collect()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].name, "TRULENS_RUN_DEFERRED_FEEDBACKS")
+        self.assertEqual(res[0].schema_name, self._schema_name.upper())
+        # TODO(this_pr): Also check for stage, secret, EAI, network rule
 
 
 if __name__ == "__main__":

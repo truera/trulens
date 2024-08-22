@@ -375,16 +375,13 @@ from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
 #        return self._connector
 
 def run(session):
-
-    def fake_connect(*args, **kwargs):
-        return session.connection
-    SnowflakeConnector.connect = fake_connect
-    SnowflakeConnector.paramstyle = "qmark"
+    conn = session._conn._conn # TODO(this_pr): Can't I just say session.connection?
+    engine_params = {{}}
+    engine_params["paramstyle"] = "qmark"
+    engine_params["creator"] = lambda: conn
 
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
-    #db_url += "&paramstyle=qmark"
-    #SnowflakeDialect.import_dbapi = lambda: SingleUseConnector(session.connection)
-    tru = Tru(database_url=db_url, database_check_revision=False)  # TODO(this_pr): Remove database_check_revision.
+    tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
     tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
             """).collect()
             print("DONE")  # TODO(this_pr): get rid of this!
