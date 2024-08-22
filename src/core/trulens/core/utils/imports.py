@@ -1,7 +1,6 @@
 """Import utilities for required and optional imports.
 
-Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically.
+Utilities for importing python modules and optional importing.
 """
 
 import builtins
@@ -33,6 +32,9 @@ pp = PrettyPrinter()
 
 
 def safe_importlib_package_name(package_name: str) -> str:
+    """Convert a package name that may have periods in it to one that uses
+    hyphens for periods but only if the python version is old."""
+
     return (
         package_name
         if sys.version_info >= (3, 10)
@@ -154,6 +156,80 @@ dependencies get installed and hopefully corrected:
     ```
 """
 
+required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(namespace="core", filepath="utils/requirements.txt")
+)
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
+
+optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
+    static_resource(
+        namespace="core", filepath="utils/requirements.optional.txt"
+    )
+)
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
+
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages,
+}
+"""Mapping of optional and required package names to the requirement object
+with info about that requirement including version constraints."""
+
+
+class VersionConflict(Exception):
+    """Exception to raise when a version conflict is found in a required package."""
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    Raises:
+        VersionConflict: If a version mismatch is found in a required package
+            and `ignore_version_mismatch` is not set.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            dist = metadata.distribution(req.name)
+
+        except metadata.PackageNotFoundError as e:
+            if is_optional:
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+
+            else:
+                raise ModuleNotFoundError(
+                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
+                ) from e
+
+        if dist.version not in req.specifier:
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
+
+            if is_optional:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
+
+            else:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
+
+            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message)
+
+            logger.debug(message)
+
 
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
     """
@@ -204,6 +280,14 @@ def format_import_errors(
     requirements = []
     requirements_pinned = []
 
+    for pkg in packages:
+        if pkg in all_packages:
+            requirements.append(str(all_packages[pkg]))
+            requirements_pinned.append(str(pin_spec(all_packages[pkg])))
+        else:
+            logger.warning("Package %s not present in requirements.", pkg)
+            requirements.append(pkg)
+
     packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
     is_are = "is" if len(packages) == 1 else "are"
@@ -246,6 +330,59 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
+# To remove after trulens_eval is removed:
+
+# Optional sub-packages:
+REQUIREMENT_FEEDBACK = format_import_errors(
+    "trulens-feedback", purpose="evaluating feedback functions"
+)
+
+# Optional app types:
+REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
+    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
+)
+REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
+    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
+)
+REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
+    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
+)
+
+# Optional provider types:
+
+REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
+    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
+)
+REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
+    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
+)
+REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
+    "trulens-providers-huggingface",
+    purpose="evaluating feedback using Huggingface",
+)
+REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
+    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
+)
+REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
+    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
+)
+REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
+    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
+)
+
+# Other optionals:
+REQUIREMENT_SKLEARN = format_import_errors(
+    "scikit-learn", purpose="using embedding vector distances"
+)
+REQUIREMENT_BERT_SCORE = format_import_errors(
+    "bert-score", purpose="measuring BERT Score"
+)
+REQUIREMENT_EVALUATE = format_import_errors(
+    "evaluate", purpose="using certain metrics"
+)
+REQUIREMENT_NOTEBOOK = format_import_errors(
+    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
+)
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
 )

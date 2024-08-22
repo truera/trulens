@@ -1,0 +1,44 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens_eval"
+version = "1.0.1a0"
+description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens_eval" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9,!=3.9.7"
+# If any of these below has a new release, make a new trulens_eval release with
+# the latest trulens-* versions for users who are still installing
+# "trulens_eval".
+trulens = { version = "^1.0", allow-prereleases = true }
+#trulens-core = { version = "^1.0.0", allow-prereleases = true }
+#trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
+#trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+
+[tool.poetry.group.dev.dependencies]
+# Is this needed?
+trulens = { path = "../..", develop = true }
+#trulens-core = { path = "../core", develop = true }
+#trulens-feedback = { path = "../feedback", develop = true }
+#trulens-dashboard = { path = "../dashboard", develop = true }
