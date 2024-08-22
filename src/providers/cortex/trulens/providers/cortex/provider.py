@@ -15,95 +15,90 @@ from trulens.providers.cortex.endpoint import CortexEndpoint
 load_dotenv()
 
 
-class Cortex(LLMProvider):
-    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+class Cortex(LLMProvider):    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
+    connection_parameters: Dict
     model_engine: str
+    
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
+
+    Args:
+
+        connection_parameters (Dict): Snowflake connection parameters.
+        model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
+
+        Connecting with user/password:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+
+                "account": <account>,
+                "user": <user>,
+                "password": <password>,
+                "role": <role>,
+                "database": <database>,
+                "schema": <schema>,
+                "warehouse": <warehouse>
+            }
+
+            provider = Cortex(connection_parameters)
+            ```
+
+        Connecting with private key:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+
+                "account": <account>,
+                "user": <user>,
+                "private_key": <private_key>,
+                "role": <role>,
+                "database": <database>,
+                "schema": <schema>,
+                "warehouse": <warehouse>
+            }
+
+        Connecting with a private key file:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+                
+                    "account": <account>,
+                    "user": <user>,
+                    "private_key_file": <private_key_file>,
+                    "private_key_file_pwd": <private_key_file_pwd>,
+                    "role": <role>,
+                    "database": <database>,
+                    "schema": <schema>,
+                    "warehouse": <warehouse>
+                }
+            provider = Cortex(connection_parameters)
+            ```
     """
 
     endpoint: CortexEndpoint
     snowflake_conn: SnowflakeConnection
 
     def __init__(
-        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
+        self, connection_parameters: Dict, model_engine: Optional[str] = None, *args, **kwargs: Dict
     ):
         self_kwargs = dict(kwargs)
 
         self_kwargs["model_engine"] = (
             self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         )
+
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
-
-        connection_parameters = {
-            "account": st.secrets.get(
-                "SNOWFLAKE_ACCOUNT", os.environ.get("SNOWFLAKE_ACCOUNT")
-            ),
-            "user": st.secrets.get(
-                "SNOWFLAKE_USER", os.environ.get("SNOWFLAKE_USER")
-            ),
-            "role": st.secrets.get(
-                "SNOWFLAKE_ROLE", os.environ.get("SNOWFLAKE_ROLE")
-            ),
-            "database": st.secrets.get(
-                "SNOWFLAKE_DATABASE", os.environ.get("SNOWFLAKE_DATABASE")
-            ),
-            "schema": st.secrets.get(
-                "SNOWFLAKE_SCHEMA", os.environ.get("SNOWFLAKE_SCHEMA")
-            ),
-            "warehouse": st.secrets.get(
-                "SNOWFLAKE_WAREHOUSE", os.environ.get("SNOWFLAKE_WAREHOUSE")
-            ),
-        }
-
-        if (
-            "SNOWFLAKE_USER_PASSWORD" in st.secrets
-            or "SNOWFLAKE_USER_PASSWORD" in os.environ
-        ):
-            connection_parameters["password"] = st.secrets.get(
-                "SNOWFLAKE_USER_PASSWORD",
-                os.environ.get("SNOWFLAKE_USER_PASSWORD"),
-            )
-
-        if (
-            "SNOWFLAKE_PRIVATE_KEY" in st.secrets
-            or "SNOWFLAKE_PRIVATE_KEY" in os.environ
-        ):
-            # Retrieve the private key as a string from st.secrets or environment
-            private_key_str = st.secrets.get(
-                "SNOWFLAKE_PRIVATE_KEY", os.getenv("SNOWFLAKE_PRIVATE_KEY")
-            )
-
-            # Convert the string to bytes
-            private_key_bytes = private_key_str.encode()
-
-            connection_parameters["private_key"] = (
-                serialization.load_pem_private_key(
-                    private_key_bytes, password=None, backend=default_backend()
-                )
-            )
-
-        if (
-            "SNOWFLAKE_PRIVATE_KEY_FILE" in st.secrets
-            or "SNOWFLAKE_PRIVATE_KEY_FILE" in os.environ
-        ):
-            connection_parameters["private_key_file"] = st.secrets.get(
-                "SNOWFLAKE_PRIVATE_KEY_FILE",
-                os.environ.get("SNOWFLAKE_PRIVATE_KEY_FILE"),
-            )
-
-        if (
-            "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in st.secrets
-            or "SNOWFLAKE_PRIVATE_KEY_FILE_PWD" in os.environ
-        ):
-            connection_parameters["private_key_file_pwd"] = st.secrets.get(
-                "SNOWFLAKE_PRIVATE_KEY_FILE_PWD",
-                os.environ.get("SNOWFLAKE_PRIVATE_KEY_FILE_PWD"),
-            )
 
         # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
