@@ -5,11 +5,15 @@ These make sure components considered high or low level API are accessible.
 
 import inspect
 import sys
-from typing import Dict
+from typing import Dict, Optional
 from unittest import main
 from unittest import skip
 
+from jsondiff import SymmetricJsonDiffSyntax
+from jsondiff import diff
+from jsondiff.symbols import Symbol
 from trulens.core.utils.imports import is_dummy
+from trulens.core.utils.serial import Lens
 
 from tests.test import JSONTestCase
 from tests.test import optional_test
@@ -115,6 +119,25 @@ class TestAPI(JSONTestCase):
 
         return self.get_members(trulens)
 
+    def _flatten_api_diff(self, diff, lens: Optional[Lens] = None):
+        """Flatten the API diff for easier comparison."""
+
+        if lens is None:
+            lens = Lens()
+
+        flat_diffs = []
+
+        if isinstance(diff, dict):
+            for k, v in diff.items():
+                if isinstance(k, Symbol):
+                    flat_diffs.append((k, lens, v))
+                    continue
+
+                for f in self._flatten_api_diff(v, lens[k]):
+                    flat_diffs.append(f)
+
+        return flat_diffs
+
     @skip("Compat not ready.")
     @optional_test
     def test_api_trulens_eval_compat(self):
@@ -135,11 +158,23 @@ class TestAPI(JSONTestCase):
 
         members = self.get_members_trulens()
 
-        self.assertGoldenJSONEqual(
-            actual=members,
-            golden_filename=f"api.trulens.{self.pyversion}.yaml",
-            skips=set(["__version__"]),
-        )
+        expected = self.load_golden(f"api.trulens.{self.pyversion}.yaml")
+
+        jdiff = diff(expected, members, syntax=SymmetricJsonDiffSyntax())
+        flat_diffs = self._flatten_api_diff(jdiff)
+
+        if flat_diffs:
+            for diff_type, diff_lens, diff_value in flat_diffs:
+                with self.subTest(api=str(diff_lens)):
+                    self.fail(
+                        f"API mismatch: {diff_type} at {diff_lens} value {diff_value}"
+                    )
+
+        # self.assertGoldenJSONEqual(
+        #    actual=members,
+        #    golden_filename=f"api.trulens.{self.pyversion}.yaml",
+        #    skips=set(["__version__"]),
+        # )
 
 
 if __name__ == "__main__":

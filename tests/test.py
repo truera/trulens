@@ -9,7 +9,7 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar
+from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar, Union
 import unittest
 from unittest import TestCase
 
@@ -162,6 +162,31 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
 
 class JSONTestCase(TestCase):
     """TestCase class that adds JSON comparisons and golden expectation handling."""
+
+    def load_golden(self, golden_filename: Union[str, Path]) -> JSON:
+        """Load the golden file `golden_filename` and return its contents.
+
+        Args:
+            golden_filename: The name of the golden file to load. The file must
+                have an extension of either `.json` or `.yaml`. The extension
+                determines the input format.
+
+        """
+        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
+        golden_path = (caller_path / "golden" / golden_filename).resolve()
+
+        if ".json" in golden_path.suffixes:
+            loader = functools.partial(json.load)
+        elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
+            loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
+        else:
+            raise ValueError(f"Unknown file extension {golden_filename}.")
+
+        if not golden_path.exists():
+            raise FileNotFoundError(f"Golden file {golden_path} not found.")
+
+        with golden_path.open() as f:
+            return loader(f)
 
     def assertGoldenJSONEqual(
         self,
