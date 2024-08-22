@@ -362,17 +362,9 @@ class Tru(python.SingletonPerName):
                     EXTERNAL_ACCESS_INTEGRATIONS = (TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION)
                 AS
                     $$
-from snowflake import connector as SnowflakeConnector
 import _snowflake
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackRunLocation
-from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
-
-#class SingleUseConnector(SnowflakeConnector):
-#    def __init__(self, connector):
-#        self._connector = connector
-#    def connect(self, *args, **kwargs):
-#        return self._connector
 
 def run(session):
     conn = session._conn._conn # TODO(this_pr): Can't I just say session.connection?
@@ -384,7 +376,6 @@ def run(session):
     tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
     tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
             """).collect()
-            print("DONE")  # TODO(this_pr): get rid of this!
 
     @staticmethod
     def _validate_and_compute_schema_name(name):

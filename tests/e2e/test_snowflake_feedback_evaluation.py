@@ -168,6 +168,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].name, "TRULENS_RUN_DEFERRED_FEEDBACKS")
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         # TODO(this_pr): Also check for stage, secret, EAI, network rule
+        # TODO(this_pr): Check that the feedback is actually answered.
 
 
 if __name__ == "__main__":
