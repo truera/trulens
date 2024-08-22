@@ -47,9 +47,9 @@ logger = logging.getLogger(__name__)
 
 
 class TruSession(python.SingletonPerName):
-    """Tru is the main class that provides an entry points to trulens.
+    """TruSession is the main class that provides an entry points to trulens.
 
-    Tru lets you:
+    TruSession lets you:
 
     - Log app prompts and outputs
     - Log app Metadata
@@ -94,7 +94,7 @@ class TruSession(python.SingletonPerName):
     failure.
 
     See also:
-        [start_evaluator][trulens.core.tru.Tru.start_evaluator]
+        [start_evaluator][trulens.core.session.TruSession.start_evaluator]
 
         [DEFERRED][trulens.core.schema.feedback.FeedbackMode.DEFERRED]
     """
@@ -394,7 +394,7 @@ class TruSession(python.SingletonPerName):
             A list of JSON-ized version of all apps in the database.
 
         Warning:
-            Same Deserialization caveats as [get_app][trulens.core.tru.Tru.get_app].
+            Same Deserialization caveats as [get_app][trulens.core.session.TruSession.get_app].
         """
 
         return self.connector.get_apps()
@@ -523,11 +523,11 @@ class TruSession(python.SingletonPerName):
                 that is executing the deferred feedback evaluator.
 
         Relevant constants:
-            [RETRY_RUNNING_SECONDS][trulens.core.tru.Tru.RETRY_RUNNING_SECONDS]
+            [RETRY_RUNNING_SECONDS][trulens.core.session.TruSession.RETRY_RUNNING_SECONDS]
 
-            [RETRY_FAILED_SECONDS][trulens.core.tru.Tru.RETRY_FAILED_SECONDS]
+            [RETRY_FAILED_SECONDS][trulens.core.session.TruSession.RETRY_FAILED_SECONDS]
 
-            [DEFERRED_NUM_RUNS][trulens.core.tru.Tru.DEFERRED_NUM_RUNS]
+            [DEFERRED_NUM_RUNS][trulens.core.session.TruSession.DEFERRED_NUM_RUNS]
 
             [MAX_THREADS][trulens.core.utils.threading.TP.MAX_THREADS]
         """
