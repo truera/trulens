@@ -1,8 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
-from functools import reduce
 import logging
-import operator
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -74,48 +72,66 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
-    # @instrument
+    @instrument
     # def run_score_generation_on_single_row(
     #     self, row, feedback_fn: Callable
-    # ) -> Union[float, Tuple[float, float]]:
+    # ) -> List[Union[float, Tuple[float, float]]]:
     #     """Generate a score with the feedback_fn
 
     #     Returns:
-    #         Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
+    #         List[Union[float, Tuple[float, Dict[str, float]]]]: feedback scores (with metadata) after running the benchmark on a single entry in ground truth data
     #     """
 
     #     benchmark_params_dict: dict = self.benchmark_params.model_dump()
 
-    #     ret = feedback_fn(
-    #         row["query"], row["expected_response"], benchmark_params_dict
-    #     )
-
-    #     if not isinstance(ret, tuple) and not isinstance(ret, float):
-    #         raise ValueError(
-    #             f"Output must be a float or a tuple, got {type(ret)}"
+    #     ret_lst = []
+    #     if "expected_chunks" in row:
+    #         for expected_chunk in row["expected_chunks"]:
+    #             ret_lst.append(
+    #                 feedback_fn(
+    #                     row["query"],
+    #                     expected_chunk["text"],
+    #                     benchmark_params_dict,
+    #                 )
+    #             )
+    #     elif "expected_response" in row:
+    #         ret_lst.append(
+    #             feedback_fn(
+    #                 row["query"],
+    #                 row["expected_response"],
+    #                 benchmark_params_dict,
+    #             )
     #         )
 
-    #     if isinstance(ret, tuple) and isinstance(ret[1], dict):
-    #         ret = (
-    #             ret[0],
-    #             list(ret[1].values())[-1],
-    #         )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
-    #     return ret
+    #     for i in range(len(ret_lst)):
+    #         if not isinstance(ret_lst[i], tuple) and not isinstance(
+    #             ret_lst[i], float
+    #         ):
+    #             raise ValueError(
+    #                 f"Output must be a float or a tuple, got {type(ret_lst[i])}"
+    #             )
+
+    #         if isinstance(ret_lst[i], tuple) and isinstance(
+    #             ret_lst[i][1], dict
+    #         ):
+    #             ret_lst[i] = (
+    #                 ret_lst[i][0],
+    #                 list(ret_lst[i][1].values())[-1],
+    #             )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
+    #     return ret_lst
 
     @instrument
     def run_score_generation_on_single_row(
         self,
-        row,
+        # row,
         feedback_fn: Callable,
-        required_columns: List[str],
+        feedback_args: List[Any],
     ) -> Union[float, Tuple[float, float]]:
         """Generate a score with the feedback_fn
 
         Args:
             row: A single row from the dataset.
             feedback_fn: The function used to generate feedback scores.
-            required_columns: List of columns or nested fields (dot notation) in the row that should be passed to the feedback_fn.
-            additional_params: Any additional parameters to be passed to the feedback_fn.
 
         Returns:
             Union[float, Tuple[float, float]]: Feedback score (with metadata) after running the benchmark on a single entry in ground truth data.
@@ -123,16 +139,8 @@ class TruBenchmarkExperiment:
 
         benchmark_params_dict: dict = self.benchmark_params.model_dump()
 
-        # Helper function to extract nested fields using dot notation with error handling
-        def get_nested_value(row: dict, key: str, default=None) -> Any:
-            keys = key.split(".")
-            try:
-                return reduce(operator.getitem, keys, row)
-            except (KeyError, TypeError):
-                return default
-
         # Extract required values from the row based on the specified columns
-        feedback_args = [get_nested_value(row, col) for col in required_columns]
+        # feedback_args = [get_nested_value(row, col) for col in required_columns]
 
         # Append the benchmark parameters dictionary
         feedback_args.append(benchmark_params_dict)
@@ -151,20 +159,18 @@ class TruBenchmarkExperiment:
             )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
         return ret
 
-        return ret
-
     @instrument
     def __call__(
         self,
-        ground_truth: Union[List, Callable, pd.DataFrame, FunctionOrMethod],
-        required_columns: List[str] = ["query", "expected_chunks.score"],
+        ground_truth: Union[
+            List, Callable, pd.DataFrame, FunctionOrMethod
+        ],  # TODO lock down type hints
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
 
         ground_truth (Union[List, Callable, pd.DataFrame, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
-        required_columns (List[str]): list of columns or nested fields (dot notation) in the row that should be passed to the feedback_fn.
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
@@ -174,30 +180,49 @@ class TruBenchmarkExperiment:
         scores = []
         meta_scores = []
         with ThreadPoolExecutor() as executor:
-            future_to_row = {
-                executor.submit(
-                    self.run_score_generation_on_single_row,
-                    row,
-                    self.feedback_fn,
-                    required_columns,
-                ): row
-                for row in ground_truth
-            }
-            for future in as_completed(future_to_row):
+            future_to_index = {}  # Map each future to the index of the row
+            index_to_results = {}  # Store results based on the original index
+
+            # Submit tasks to the executor
+            for index, row in ground_truth.iterrows():
+                if "expected_chunks" in row:
+                    for expected_chunk in row["expected_chunks"]:
+                        future = executor.submit(
+                            self.run_score_generation_on_single_row,
+                            self.feedback_fn,
+                            [row["query"], expected_chunk["text"]],
+                        )
+                        future_to_index[future] = index
+                elif "expected_response" in row:
+                    future = executor.submit(
+                        self.run_score_generation_on_single_row,
+                        self.feedback_fn,
+                        [row["query"], row["expected_response"]],
+                    )
+                    future_to_index[future] = index
+
+            # Process futures as they complete
+            for future in as_completed(future_to_index):
+                index = future_to_index[future]
                 try:
-                    ret = future.result()
-
-                    if isinstance(ret, float):
-                        score = ret
-                    else:
-                        score, metadata = ret
-
-                        meta_scores.append(metadata)
-
-                    scores.append(score)
+                    ret_lst = future.result()
+                    index_to_results.setdefault(index, []).extend(ret_lst)
 
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
+
+            # Process results in the original order
+            for index in range(len(ground_truth)):
+                if index in index_to_results:
+                    ret_lst = index_to_results[index]
+                    for ret in ret_lst:
+                        if isinstance(ret, float):
+                            score = ret
+                        else:
+                            score, metadata = ret
+                            meta_scores.append(metadata)
+
+                        scores.append(score)
 
         if meta_scores:
             return scores, meta_scores
