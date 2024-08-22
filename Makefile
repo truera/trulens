@@ -117,7 +117,7 @@ test-serial: # has golden file
 	$(PYTEST) tests/e2e/test_serial.py
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
-test-write-golden-%:
+test-write-golden-%: tests/e2e/test_$*.py
 	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 
 # Runs required tests

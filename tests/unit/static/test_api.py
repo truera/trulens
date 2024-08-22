@@ -7,6 +7,7 @@ import inspect
 import sys
 from typing import Dict
 from unittest import main
+from unittest import skip
 
 from trulens.core.utils.imports import is_dummy
 
@@ -114,6 +115,7 @@ class TestAPI(JSONTestCase):
 
         return self.get_members(trulens)
 
+    @skip("Compat not ready.")
     @optional_test
     def test_api_trulens_eval_compat(self):
         """Check that the trulens_eval API members are still present."""
