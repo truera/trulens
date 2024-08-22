@@ -40,7 +40,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 """Default value for option to redact secrets before writing out data to database."""
 
 
-class DB(SerialModel, abc.ABC):
+class DB(abc.ABC):
     """Abstract definition of databases used by trulens.
 
     [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
