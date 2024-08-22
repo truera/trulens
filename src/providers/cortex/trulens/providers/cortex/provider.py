@@ -1,14 +1,11 @@
 import json
 from typing import ClassVar, Dict, Optional, Sequence
 
-from dotenv import load_dotenv
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
-
-load_dotenv()
 
 
 class Cortex(
