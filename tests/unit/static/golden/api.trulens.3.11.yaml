@@ -1855,6 +1855,35 @@ trulens.dashboard.pages:
   highs: {}
   lows:
     __path__: builtins.list
+trulens.dashboard.pages.Apps:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    add_selector: builtins.function
+    draw_rec: builtins.function
+    draw_selector: builtins.function
+    end_session: builtins.function
+    loadable_apps: builtins.list
+    remove_selector: builtins.function
+    run_record: builtins.function
+    select_app: builtins.function
+    set_selector: builtins.function
+    update_selector: builtins.function
+trulens.dashboard.pages.Evaluations:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    MULTI_CALL_NAME_DELIMITER: builtins.str
+    app: builtins.list
+    apps: builtins.list
+    cellstyle_jscode: builtins.dict
+    default_direction: builtins.str
+    extract_metadata: builtins.function
+    feedback_cols: builtins.list
+    feedback_directions: builtins.dict
+    options: builtins.list
+    render_component: builtins.function
+    render_record_metrics: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
