@@ -290,6 +290,9 @@ class Tru(python.SingletonPerName):
             )
             session.file.put("trulens_core.zip", "@TRULENS_PACKAGES_STAGE")
             session.file.put("trulens_feedback.zip", "@TRULENS_PACKAGES_STAGE")
+            session.file.put(
+                "trulens_providers_cortex.zip", "@TRULENS_PACKAGES_STAGE"
+            )
             # initialize stream for feedback eval table.
             session.sql(f"""
                 CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
@@ -328,6 +331,8 @@ class Tru(python.SingletonPerName):
                     COMMENT = 'This is a dummy EAI created entirely because secrets cannot be used without one.'
             """).collect()
             # initialize stored procedure.
+            # TODO(this_pr): Ensure we use the right trulens version.
+            # TODO(this_pr): Make sure we upload the zips and build them.
             # TODO(this_pr): get this indentation stuff better.
             session.sql(f"""
                 CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS()
@@ -339,6 +344,7 @@ class Tru(python.SingletonPerName):
                         'dill',
                         'munch',
                         'nest-asyncio',
+                        'nltk',
                         'numpy',
                         'packaging',
                         'pandas',
@@ -347,6 +353,8 @@ class Tru(python.SingletonPerName):
                         'python-dotenv',
                         'requests',
                         'rich',
+                        'scikit-learn',
+                        'scipy',
                         'snowflake-snowpark-python',
                         'sqlalchemy',
                         'tqdm',
@@ -355,7 +363,8 @@ class Tru(python.SingletonPerName):
                     IMPORTS = (
                         '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/snowflake_sqlalchemy.zip',
                         '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_core.zip',
-                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_feedback.zip'
+                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_feedback.zip',
+                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_providers_cortex.zip'
                     )
                     HANDLER = 'run'
                     SECRETS = ('trulens_db_url' = TRULENS_DB_URL)
