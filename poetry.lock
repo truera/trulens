@@ -2951,13 +2951,13 @@ proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "backoff", "
 
 [[package]]
 name = "llama-cloud"
-version = "0.0.14"
+version = "0.0.15"
 description = ""
 optional = false
 python-versions = "<4,>=3.8"
 files = [
-    {file = "llama_cloud-0.0.14-py3-none-any.whl", hash = "sha256:356143a9d88d59ed8f0474841fcfba053fe8b56ff8bb3771e570d583869061f8"},
-    {file = "llama_cloud-0.0.14.tar.gz", hash = "sha256:44157bd3fc84099365181fb0254b7b533a502f2a8b97d5f87e86d1cccc1501d8"},
+    {file = "llama_cloud-0.0.15-py3-none-any.whl", hash = "sha256:52f18a3870e23c4a9b5f66827a58dc87d5a1c3034d1ce6ab513ca7eb09ae8b36"},
+    {file = "llama_cloud-0.0.15.tar.gz", hash = "sha256:be06fd888e889623796b9c2aa0fc0d09ef039ed5145ff267d8408ccbea70c048"},
 ]
 
 [package.dependencies]
@@ -7982,6 +7982,25 @@ type = "directory"
 url = "src/benchmark"
 
 [[package]]
+name = "trulens-connectors-snowflake"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+snowflake-connector-python = {version = "^3.11", markers = "python_version < \"3.12\""}
+snowflake-snowpark-python = {version = "^1.18", markers = "python_version < \"3.12\""}
+snowflake-sqlalchemy = {version = "^1.6", markers = "python_version < \"3.12\""}
+trulens-core = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/connectors/snowflake"
+
+[[package]]
 name = "trulens-core"
 version = "1.0.1a2"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -8000,14 +8019,8 @@ pandas = "^2.1"
 pydantic = "^2"
 python-dotenv = ">=0.21,<2.0"
 rich = "^13.6"
-snowflake-connector-python = {version = "^3.11", optional = true, markers = "python_version < \"3.12\""}
-snowflake-snowpark-python = {version = "^1.18", optional = true, markers = "python_version < \"3.12\""}
-snowflake-sqlalchemy = {version = "^1.6", optional = true, markers = "python_version < \"3.12\""}
 sqlalchemy = "^2.0"
 typing_extensions = "^4.9"
-
-[package.extras]
-snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-python (>=1.18,<2.0)", "snowflake-sqlalchemy (>=1.6,<2.0)"]
 
 [package.source]
 type = "directory"
@@ -8776,4 +8789,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "95fb17eb11729a28b58677fbe3981e19e04b9a522205541cd85eef8a4fecfcbd"
+content-hash = "5a99aa379860c4231a9c7aa6b56993a8bb705903ae5d622975f0ea740dea40dd"

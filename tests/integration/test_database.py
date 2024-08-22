@@ -32,8 +32,8 @@ from unittest import main
 import pandas as pd
 from sqlalchemy import Engine
 from trulens.core import Feedback
-from trulens.core import Tru
 from trulens.core import TruBasicApp
+from trulens.core import TruSession
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.migrations import DbRevisions
@@ -468,8 +468,8 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
 
 def _populate_data(db: DB):
-    tru = Tru()
-    tru.db = (
+    session = TruSession()
+    session.connector.db = (
         db  # because of the singleton behavior, db must be changed manually
     )
 
@@ -480,7 +480,7 @@ def _populate_data(db: DB):
     )
     app = TruBasicApp(
         text_to_text=lambda x: x,
-        # app_id="test",
+        # app_name="test",
         db=db,
         feedbacks=[fb],
         feedback_mode=FeedbackMode.WITH_APP_THREAD,

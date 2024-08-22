@@ -2,9 +2,9 @@ import asyncio
 from typing import Optional
 
 import streamlit as st
+from trulens.core import TruSession
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.tru import Tru
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import Lens
@@ -16,11 +16,10 @@ from trulens.dashboard.ux.page_config import set_page_config
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 if __name__ == "__main__":
-    # If not imported, gets args from command line and creates Tru singleton
+    # If not imported, gets args from command line and creates a TruSession
     init_from_args()
 
-tru = Tru()
-lms = tru.db
+session = TruSession()
 
 set_page_config(page_title="App Runner")
 

@@ -85,11 +85,12 @@ trulens-providers-huggingface = { path = "src/providers/huggingface", develop = 
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 
+[tool.poetry.group.connectors.dependencies]
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+
 [tool.poetry.group.required.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { path = "src/core", extras = [
-  "snowflake",
-], develop = true }
+trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
 # Remove after deprecation period.

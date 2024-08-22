@@ -4,8 +4,8 @@ Tests for TruBasicApp.
 
 from unittest import main
 
-from trulens.core import Tru
 from trulens.core import TruBasicApp
+from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys
 
@@ -19,19 +19,20 @@ class TestTruBasicApp(JSONTestCase):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        self.tru = Tru()
+        self.session = TruSession()
 
         # Temporary before db migration gets fixed.
-        self.tru.migrate_database()
+        self.session.migrate_database()
 
         # Reset database here.
-        self.tru.reset_database()
+        self.session.reset_database()
 
         self.basic_app = custom_application
 
         self.tru_basic_app_recorder = TruBasicApp(
             self.basic_app,
-            app_id="Custom Application v1",
+            app_name="Custom Application",
+            app_version="v1",
             feedback_mode=FeedbackMode.WITH_APP,
         )
 
@@ -50,7 +51,7 @@ class TestTruBasicApp(JSONTestCase):
         self.assertIsNotNone(rec2)
 
         # Check the database has the record
-        records = self.tru.get_records_and_feedback(app_ids=[])[0]
+        records = self.session.get_records_and_feedback()[0]
 
         self.assertEqual(len(records), 1)
 

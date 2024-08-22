@@ -97,7 +97,7 @@ def _recursive_hash(
 # Add encoders for some types that pydantic cannot handle but we need.
 
 
-def obj_id_of_obj(obj: dict, prefix="obj"):
+def obj_id_of_obj(obj: Dict[Any, Any], prefix="obj"):
     """
     Create an id from a json-able structure/definition. Should produce the same
     name if definition stays the same.
