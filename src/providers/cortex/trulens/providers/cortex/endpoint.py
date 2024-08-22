@@ -42,6 +42,8 @@ class CortexCallback(EndpointCallback):
                 getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0),
             )
 
+            # TODO: compute credits consumed in Snowflake account based on tokens processed
+
 
 class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
