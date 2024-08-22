@@ -99,9 +99,9 @@ def run_dashboard(
     # run leaderboard with subprocess
     leaderboard_path = static_resource("dashboard", "Leaderboard.py")
 
-    if session._dashboard_proc is not None:
-        print("Dashboard already running at path:", session._dashboard_urls)
-        return session._dashboard_proc
+    if TruSession._dashboard_proc is not None:
+        print("Dashboard already running at path:", TruSession._dashboard_urls)
+        return TruSession._dashboard_proc
 
     env_opts = {}
     if _dev is not None:
@@ -121,9 +121,9 @@ def run_dashboard(
         leaderboard_path,
         "--",
         "--database-url",
-        session.db.engine.url.render_as_string(hide_password=False),
+        session.connector.db.engine.url.render_as_string(hide_password=False),
         "--database-prefix",
-        session.db.table_prefix,
+        session.connector.db.table_prefix,
     ]
 
     proc = subprocess.Popen(
@@ -166,18 +166,18 @@ def run_dashboard(
                 else:
                     print(line)
 
-        session.tunnel_listener_stdout = Thread(
+        TruSession.tunnel_listener_stdout = Thread(
             target=listen_to_tunnel,
             args=(tunnel_proc, tunnel_proc.stdout, out_stdout, tunnel_started),
         )
-        session.tunnel_listener_stderr = Thread(
+        TruSession.tunnel_listener_stderr = Thread(
             target=listen_to_tunnel,
             args=(tunnel_proc, tunnel_proc.stderr, out_stderr, tunnel_started),
         )
-        session.tunnel_listener_stdout.daemon = True
-        session.tunnel_listener_stderr.daemon = True
-        session.tunnel_listener_stdout.start()
-        session.tunnel_listener_stderr.start()
+        TruSession.tunnel_listener_stdout.daemon = True
+        TruSession.tunnel_listener_stderr.daemon = True
+        TruSession.tunnel_listener_stdout.start()
+        TruSession.tunnel_listener_stderr.start()
         if not tunnel_started.wait(
             timeout=DASHBOARD_START_TIMEOUT
         ):  # This might not work on windows.
@@ -197,7 +197,7 @@ def run_dashboard(
                         out.append_stdout(line)
                     else:
                         print(line)
-                    session._dashboard_urls = (
+                    TruSession._dashboard_urls = (
                         line  # store the url when dashboard is started
                     )
             else:
@@ -206,7 +206,7 @@ def run_dashboard(
                     url = url.rstrip()
                     print(f"Dashboard started at {url} .")
                     started.set()
-                    session._dashboard_urls = (
+                    TruSession._dashboard_urls = (
                         line  # store the url when dashboard is started
                     )
                 if out is not None:
@@ -218,23 +218,23 @@ def run_dashboard(
         else:
             print("Dashboard closed.")
 
-    session.dashboard_listener_stdout = Thread(
+    TruSession.dashboard_listener_stdout = Thread(
         target=listen_to_dashboard,
         args=(proc, proc.stdout, out_stdout, started),
     )
-    session.dashboard_listener_stderr = Thread(
+    TruSession.dashboard_listener_stderr = Thread(
         target=listen_to_dashboard,
         args=(proc, proc.stderr, out_stderr, started),
     )
 
     # Purposely block main process from ending and wait for dashboard.
-    session.dashboard_listener_stdout.daemon = False
-    session.dashboard_listener_stderr.daemon = False
+    TruSession.dashboard_listener_stdout.daemon = False
+    TruSession.dashboard_listener_stderr.daemon = False
 
-    session.dashboard_listener_stdout.start()
-    session.dashboard_listener_stderr.start()
+    TruSession.dashboard_listener_stdout.start()
+    TruSession.dashboard_listener_stderr.start()
 
-    session._dashboard_proc = proc
+    TruSession._dashboard_proc = proc
 
     wait_period = DASHBOARD_START_TIMEOUT
     if IN_COLAB:
@@ -243,7 +243,7 @@ def run_dashboard(
 
     # This might not work on windows.
     if not started.wait(timeout=wait_period):
-        session._dashboard_proc = None
+        TruSession._dashboard_proc = None
         raise RuntimeError(
             "Dashboard failed to start in time. "
             "Please inspect dashboard logs for additional information."
