@@ -21,6 +21,7 @@ zip_wheel() {
     rm trulens*-py3-none-any.whl
     zip -r ../$2 *
     cd ../
+    rm -rf ./tmp_build_zip
 }
 
 # Build wheels.

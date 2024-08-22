@@ -11,6 +11,7 @@ from trulens.core import Tru
 from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
+from trulens.providers.cortex.provider import Cortex
 
 from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -168,7 +169,31 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].name, "TRULENS_RUN_DEFERRED_FEEDBACKS")
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         # TODO(this_pr): Also check for stage, secret, EAI, network rule
-        # TODO(this_pr): Check that the feedback is actually answered.
+
+    @optional_test
+    def test_snowflake_feedback_ran(self) -> None:
+        tru = self.get_tru("test_snowflake_feedback_ran")
+        provider = Cortex()
+        f_snowflake = SnowflakeFeedback(provider.relevance).on_input_output()
+        tru_app = TruBasicApp(
+            text_to_text=lambda t: "Tokyo is the capital of Japan.",
+            feedbacks=[f_snowflake],
+        )
+        with tru_app:
+            tru_app.main_call("What is the capital of Japan?")
+        time.sleep(120)
+        records_and_feedback = tru.get_records_and_feedback()
+        self.assertEqual(len(records_and_feedback), 2)
+        self.assertListEqual(
+            records_and_feedback[1],
+            ["relevance"],
+        )
+        self.assertEqual(records_and_feedback[0].shape[0], 1)
+        self.assertGreaterEqual(
+            records_and_feedback[0]["relevance"].iloc[0],
+            0.8,
+        )
+        # TODO(this_pr): Make sure only Cortex provider functions can work.
 
 
 if __name__ == "__main__":

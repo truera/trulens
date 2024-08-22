@@ -293,12 +293,12 @@ class Tru(python.SingletonPerName):
             session.file.put(
                 "trulens_providers_cortex.zip", "@TRULENS_PACKAGES_STAGE"
             )
-            # initialize stream for feedback eval table.
+            # Initialize stream for feedback eval table.
             session.sql(f"""
                 CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
                     ON TABLE {database_name}.{schema_name}.TRULENS_FEEDBACKS
             """).collect()
-            # initialize task for stream that will import trulens and try to run the Tru.
+            # Initialize task for stream that will import trulens and try to run the Tru.
             session.sql(f"""
                 CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVAL_TASK
                     WAREHOUSE = {warehouse_name}
@@ -308,13 +308,13 @@ class Tru(python.SingletonPerName):
                     AS
                         CALL TRULENS_RUN_DEFERRED_FEEDBACKS()
             """).collect()
-            # initialize secret.
+            # Initialize secret.
             session.sql(f"""
                 CREATE SECRET IF NOT EXISTS TRULENS_DB_URL
                     TYPE = GENERIC_STRING
                     SECRET_STRING = '{database_url}'
             """).collect()
-            # initialize external access integration rule.
+            # Initialize external access integration rule.
             session.sql("""
                 CREATE NETWORK RULE IF NOT EXISTS TRULENS_DUMMY_NETWORK_RULE
                     TYPE = HOST_PORT
@@ -330,7 +330,7 @@ class Tru(python.SingletonPerName):
                     ENABLED = TRUE
                     COMMENT = 'This is a dummy EAI created entirely because secrets cannot be used without one.'
             """).collect()
-            # initialize stored procedure.
+            # Initialize stored procedure.
             # TODO(this_pr): Ensure we use the right trulens version.
             # TODO(this_pr): Make sure we upload the zips and build them.
             # TODO(this_pr): get this indentation stuff better.
@@ -372,19 +372,27 @@ class Tru(python.SingletonPerName):
                 AS
                     $$
 import _snowflake
+import trulens.providers.cortex.provider
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackRunLocation
 
 def run(session):
+    # Set up sqlalchemy engine parameters.
     conn = session._conn._conn # TODO(this_pr): Can't I just say session.connection?
     engine_params = {{}}
     engine_params["paramstyle"] = "qmark"
     engine_params["creator"] = lambda: conn
-
+    # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
+    trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = conn
+    # Run deferred feedback evaluator.
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
     tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
     tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
             """).collect()
+            # Start task.
+            session.sql(
+                "ALTER TASK TRULENS_FEEDBACK_EVAL_TASK RESUME"
+            ).collect()
 
     @staticmethod
     def _validate_and_compute_schema_name(name):

@@ -1,12 +1,15 @@
 import json
 import os
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import Any, ClassVar, Dict, Optional, Sequence
 
 import snowflake
 import snowflake.connector
-from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
+
+# If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
+# TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
+_SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
 
 class Cortex(LLMProvider):
@@ -21,7 +24,7 @@ class Cortex(LLMProvider):
     """
 
     endpoint: CortexEndpoint
-    snowflake_conn: SnowflakeConnection
+    snowflake_conn: Any
 
     def __init__(
         self, model_engine: Optional[str] = None, *args, **kwargs: Dict
@@ -34,14 +37,17 @@ class Cortex(LLMProvider):
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-        self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            user=os.environ["SNOWFLAKE_USER"],
-            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
-        )
+        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
+        if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
+            self_kwargs["snowflake_conn"] = snowflake.connector.connect(
+                account=os.environ["SNOWFLAKE_ACCOUNT"],
+                user=os.environ["SNOWFLAKE_USER"],
+                password=os.environ["SNOWFLAKE_USER_PASSWORD"],
+                database=os.environ["SNOWFLAKE_DATABASE"],
+                schema=os.environ["SNOWFLAKE_SCHEMA"],
+                warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+            )
+
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
@@ -58,13 +64,27 @@ class Cortex(LLMProvider):
         options = {"temperature": temperature}
         options_json_str = json.dumps(options)
 
-        completion_input_str = """
-            SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                %s,
-                parse_json(%s),
-                parse_json(%s)
-            )
-        """
+        if (
+            _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is not None
+            or snowflake.connector.paramstyle == "qmark"
+        ):
+            # In this case, the connection will be a StoredProcConnection which can only use qmark bindings.
+            completion_input_str = """
+                SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                    ?,
+                    parse_json(?),
+                    parse_json(?)
+                )
+            """
+        else:
+            # In this case, the default is to use pyformat bindings.
+            completion_input_str = """
+                SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                    %s,
+                    parse_json(%s),
+                    parse_json(%s)
+                )
+            """
 
         # Executing Snow SQL command requires an active snow session
         cursor = self.snowflake_conn.cursor()
