@@ -31,12 +31,12 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     tru = Tru(
         app_name="MyApp",
         snowflake_connection_parameters={
-            account: "<account>",
-            user: "<user>",
-            password: "<password>",
-            database: "<database>",
-            warehouse: "<warehouse>",
-            role: "<role>",
+            "account": "<account>",
+            "user": "<user>",
+            "password": "<password>",
+            "database": "<database>",
+            "warehouse": "<warehouse>",
+            "role": "<role>",
         },
     )
     ```
