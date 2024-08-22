@@ -50,7 +50,8 @@ else:
         return [
             (name, value)
             for name in dir(obj)
-            if predicate(name, value := getattr(obj, name))
+            if hasattr(obj, name)
+            and predicate(name, value := getattr(obj, name))
         ]
 
 
