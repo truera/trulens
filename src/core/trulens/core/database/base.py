@@ -67,7 +67,7 @@ class DB(SerialModel, abc.ABC):
 
     @abc.abstractmethod
     def migrate_database(self, prior_prefix: Optional[str] = None):
-        """Migrade the stored data to the current configuration of the database.
+        """Migrate the stored data to the current configuration of the database.
 
         Args:
             prior_prefix: If given, the database is assumed to have been

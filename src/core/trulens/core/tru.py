@@ -189,6 +189,7 @@ class Tru(python.SingletonPerName):
         database_check_revision: bool = True,
         snowflake_connection_parameters: Optional[Dict[str, str]] = None,
         app_name: Optional[str] = None,
+        sqlalchemy_engine_params: Optional[Dict[Any, Any]] = None,
     ):
         """
         Args:
@@ -224,6 +225,7 @@ class Tru(python.SingletonPerName):
                 "database_file": database_file,
                 "database_redact_keys": database_redact_keys,
                 "database_prefix": database_prefix,
+                "engine_params": sqlalchemy_engine_params,
             }.items()
             if v is not None
         })
@@ -347,6 +349,7 @@ class Tru(python.SingletonPerName):
                         'rich',
                         'snowflake-snowpark-python',
                         'sqlalchemy',
+                        'tqdm',
                         'typing_extensions'
                     )
                     IMPORTS = (
@@ -359,15 +362,30 @@ class Tru(python.SingletonPerName):
                     EXTERNAL_ACCESS_INTEGRATIONS = (TRULENS_{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION)
                 AS
                     $$
+from snowflake import connector as SnowflakeConnector
 import _snowflake
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackRunLocation
+from snowflake.sqlalchemy.snowdialect import SnowflakeDialect
+
+#class SingleUseConnector(SnowflakeConnector):
+#    def __init__(self, connector):
+#        self._connector = connector
+#    def connect(self, *args, **kwargs):
+#        return self._connector
 
 def run(session):
+
+    def fake_connect(*args, **kwargs):
+        return session.connection
+    SnowflakeConnector.connect = fake_connect
+    SnowflakeConnector.paramstyle = "qmark"
+
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
+    #db_url += "&paramstyle=qmark"
+    #SnowflakeDialect.import_dbapi = lambda: SingleUseConnector(session.connection)
     tru = Tru(database_url=db_url, database_check_revision=False)  # TODO(this_pr): Remove database_check_revision.
-    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True)
-                    $$;
+    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
             """).collect()
             print("DONE")  # TODO(this_pr): get rid of this!
 
@@ -1064,6 +1082,7 @@ def run(session):
 
             total = 0
 
+            # TODO(this_pr): a lot of the time we say `if tqdm`, but shouldn't we say `if not disable_tqdm`?
             if tqdm:
                 # Getting total counts from the database to start off the tqdm
                 # progress bar initial values so that they offer accurate
