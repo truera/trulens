@@ -8,6 +8,7 @@ import sys
 from typing import Dict, Optional
 from unittest import main
 from unittest import skip
+from unittest import skipIf
 
 from jsondiff import SymmetricJsonDiffSyntax
 from jsondiff import diff
@@ -139,9 +140,13 @@ class TestAPI(JSONTestCase):
         return flat_diffs
 
     @skip("Compat not ready.")
+    @skipIf(sys.version_info != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens_eval_compat(self):
-        """Check that the trulens_eval API members are still present."""
+        """Check that the trulens_eval API members are still present.
+
+        To regenerate golden file, run `make test-write-api`.
+        """
         # TODEP: Deprecate after trulens_eval is removed.
 
         golden_file = f"api.trulens_eval.{self.pyversion}.yaml"
@@ -164,9 +169,13 @@ class TestAPI(JSONTestCase):
                         f"trulens_eval compatibility API mismatch: {diff_type} at {diff_lens} value {diff_value}"
                     )
 
+    @skipIf(sys.version_info != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens(self):
-        """Check that the trulens API members are still present."""
+        """Check that the trulens API members are still present.
+
+        To regenerate golden file, run `make test-write-api`.
+        """
 
         golden_file = f"api.trulens.{self.pyversion}.yaml"
 
