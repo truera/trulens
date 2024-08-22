@@ -1,28 +1,26 @@
 import json
-import os
 from typing import ClassVar, Dict, Optional, Sequence
 
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
 from dotenv import load_dotenv
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
-import streamlit as st
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
 load_dotenv()
 
 
-class Cortex(LLMProvider):    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+class Cortex(
+    LLMProvider
+):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
     connection_parameters: Dict
     model_engine: str
-    
+
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
@@ -72,7 +70,7 @@ class Cortex(LLMProvider):    # require `pip install snowflake-snowpark-python` 
 
             ```python
             connection_parameters = {
-                
+
                     "account": <account>,
                     "user": <user>,
                     "private_key_file": <private_key_file>,
@@ -90,7 +88,11 @@ class Cortex(LLMProvider):    # require `pip install snowflake-snowpark-python` 
     snowflake_conn: SnowflakeConnection
 
     def __init__(
-        self, connection_parameters: Dict, model_engine: Optional[str] = None, *args, **kwargs: Dict
+        self,
+        connection_parameters: Dict,
+        model_engine: Optional[str] = None,
+        *args,
+        **kwargs: Dict,
     ):
         self_kwargs = dict(kwargs)
 
