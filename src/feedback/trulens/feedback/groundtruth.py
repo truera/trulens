@@ -421,7 +421,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         """
         assert self.k is not None, "k must be set for ndcg_at_k"
 
-        print(f"scores from feedback function: \n\n {scores} \n\n")
         relevance_scores = np.array([scores])
         true_labels = np.array([self.true_labels])
         ndcg_values = [ndcg_score(relevance_scores, true_labels, k=self.k)]

@@ -73,54 +73,6 @@ class TruBenchmarkExperiment:
         ]
 
     @instrument
-    # def run_score_generation_on_single_row(
-    #     self, row, feedback_fn: Callable
-    # ) -> List[Union[float, Tuple[float, float]]]:
-    #     """Generate a score with the feedback_fn
-
-    #     Returns:
-    #         List[Union[float, Tuple[float, Dict[str, float]]]]: feedback scores (with metadata) after running the benchmark on a single entry in ground truth data
-    #     """
-
-    #     benchmark_params_dict: dict = self.benchmark_params.model_dump()
-
-    #     ret_lst = []
-    #     if "expected_chunks" in row:
-    #         for expected_chunk in row["expected_chunks"]:
-    #             ret_lst.append(
-    #                 feedback_fn(
-    #                     row["query"],
-    #                     expected_chunk["text"],
-    #                     benchmark_params_dict,
-    #                 )
-    #             )
-    #     elif "expected_response" in row:
-    #         ret_lst.append(
-    #             feedback_fn(
-    #                 row["query"],
-    #                 row["expected_response"],
-    #                 benchmark_params_dict,
-    #             )
-    #         )
-
-    #     for i in range(len(ret_lst)):
-    #         if not isinstance(ret_lst[i], tuple) and not isinstance(
-    #             ret_lst[i], float
-    #         ):
-    #             raise ValueError(
-    #                 f"Output must be a float or a tuple, got {type(ret_lst[i])}"
-    #             )
-
-    #         if isinstance(ret_lst[i], tuple) and isinstance(
-    #             ret_lst[i][1], dict
-    #         ):
-    #             ret_lst[i] = (
-    #                 ret_lst[i][0],
-    #                 list(ret_lst[i][1].values())[-1],
-    #             )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
-    #     return ret_lst
-
-    @instrument
     def run_score_generation_on_single_row(
         self,
         # row,
@@ -162,9 +114,7 @@ class TruBenchmarkExperiment:
     @instrument
     def __call__(
         self,
-        ground_truth: Union[
-            List, Callable, pd.DataFrame, FunctionOrMethod
-        ],  # TODO lock down type hints
+        ground_truth: Union[List, Callable, pd.DataFrame, FunctionOrMethod],
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
@@ -184,7 +134,13 @@ class TruBenchmarkExperiment:
             index_to_results = {}  # Store results based on the original index
 
             # Submit tasks to the executor
-            for index, row in ground_truth.iterrows():
+            if isinstance(ground_truth, pd.DataFrame):
+                ground_truth_iterable = ground_truth.iterrows()
+
+            elif isinstance(ground_truth, list):
+                ground_truth_iterable = enumerate(ground_truth)
+
+            for index, row in ground_truth_iterable:
                 if "expected_chunks" in row:
                     for expected_chunk in row["expected_chunks"]:
                         future = executor.submit(
@@ -205,8 +161,8 @@ class TruBenchmarkExperiment:
             for future in as_completed(future_to_index):
                 index = future_to_index[future]
                 try:
-                    ret_lst = future.result()
-                    index_to_results.setdefault(index, []).extend(ret_lst)
+                    ret = future.result()
+                    index_to_results.setdefault(index, []).append(ret)
 
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
@@ -214,8 +170,7 @@ class TruBenchmarkExperiment:
             # Process results in the original order
             for index in range(len(ground_truth)):
                 if index in index_to_results:
-                    ret_lst = index_to_results[index]
-                    for ret in ret_lst:
+                    for ret in index_to_results[index]:
                         if isinstance(ret, float):
                             score = ret
                         else:
