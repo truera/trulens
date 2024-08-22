@@ -4,23 +4,25 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
+from typing import Any, Dict
 from unittest import TestCase
 from unittest import main
 import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
+from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import TruSession
 
 
 class SnowflakeTestCase(TestCase):
     def setUp(self):
         self._logger = logging.getLogger(__name__)
-        self._snowflake_connection_parameters = {
+        self._snowflake_connection_parameters: Dict[str, Any] = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
             "user": os.environ["SNOWFLAKE_USER"],
             "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "database_name": os.environ["SNOWFLAKE_DATABASE"],
             "role": os.environ["SNOWFLAKE_ROLE"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
@@ -39,7 +41,7 @@ class SnowflakeTestCase(TestCase):
         for curr in self._snowflake_schemas_to_delete:
             try:
                 schema = self._snowflake_root.databases[
-                    self._snowflake_connection_parameters["database"]
+                    self._snowflake_connection_parameters["database_name"]
                 ].schemas[curr]
                 schema.delete()
             except Exception:
@@ -53,7 +55,7 @@ class SnowflakeTestCase(TestCase):
 
     def list_schemas(self):
         schemas = self._snowflake_root.databases[
-            self._snowflake_connection_parameters["database"]
+            self._snowflake_connection_parameters["database_name"]
         ].schemas.iter()
         return [curr.name for curr in schemas]
 
@@ -61,14 +63,13 @@ class SnowflakeTestCase(TestCase):
         app_name = app_base_name
         app_name += "__"
         app_name += str(uuid.uuid4()).replace("-", "_")
-        schema_name = TruSession._validate_and_compute_schema_name(app_name)
-        self.assertNotIn(schema_name, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(schema_name)
-        session = TruSession(
-            snowflake_connection_parameters=self._snowflake_connection_parameters,
-            app_name=app_name,
+        self.assertNotIn(app_name, self.list_schemas())
+        self._snowflake_schemas_to_delete.append(app_name)
+        connector = SnowflakeConnector(
+            schema_name=app_name, **self._snowflake_connection_parameters
         )
-        self.assertIn(schema_name, self.list_schemas())
+        session = TruSession(connector=connector)
+        self.assertIn(app_name, self.list_schemas())
         return session
 
 

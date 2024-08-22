@@ -343,7 +343,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             if app is None:
                 raise RuntimeError(
                     f"App {app_id} not present in db. "
-                    "Either add it with `tru.add_app` or provide `app_json` to `tru.run_feedback_functions`."
+                    "Either add it with `session.add_app` or provide `app_json` to `session.run_feedback_functions`."
                 )
 
         else:
@@ -406,9 +406,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         from trulens.core import TruSession
 
-        tru = TruSession()
+        session = TruSession()
 
-        apps = tru.get_apps()
+        apps = session.get_apps()
         for app in apps:
             dump = app.get("initial_app_loader_dump")
             if dump is not None:

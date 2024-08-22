@@ -13,11 +13,11 @@ module][trulens.core.database.migrations.data].
 ```python
 from trulens.core import TruSession
 
-tru = TruSession(
+session = TruSession(
    database_url="<sqlalchemy_url>",
    database_prefix="trulens_" # default, may be omitted
 )
-tru.migrate_database()
+session.migrate_database()
 ```
 
 ## Changing database prefix
@@ -33,11 +33,11 @@ old prefix when invoking
 [migrate_database][trulens.core.session.TruSession.migrate_database]:
 
 ```python
-tru = TruSession(
+session = TruSession(
    database_url="<sqlalchemy_url>",
    database_prefix="new_prefix"
 )
-tru.migrate_database(prior_prefix="old_prefix")
+session.migrate_database(prior_prefix="old_prefix")
 ```
 
 ## Copying a database

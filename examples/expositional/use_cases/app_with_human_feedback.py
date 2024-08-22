@@ -33,7 +33,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
-tru = TruSession()
+session = TruSession()
 
 
 # Define function to generate GPT-3 response
@@ -51,8 +51,8 @@ def setup_chain():
     chain = chat_prompt_template | chat | StrOutputParser()
 
     tc = TruChain(chain, app_name="Streamlit App")
-    tru.add_app(app=tc)
-    run_dashboard(tru, _dev=dev_path)
+    session.add_app(app=tc)
+    run_dashboard(session, _dev=dev_path)
     return tc
 
 

@@ -26,9 +26,9 @@ def leaderboard():
 
     set_page_config(page_title="Leaderboard")
 
-    tru = TruSession()  # get singleton whether this file was imported or executed from command line.
+    session = TruSession()  # get singleton whether this file was imported or executed from command line.
 
-    lms = tru.connector.db
+    lms = session.connector.db
 
     # Set the title and subtitle of the app
     st.title("App Leaderboard")

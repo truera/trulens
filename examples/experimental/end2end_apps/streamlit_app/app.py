@@ -9,7 +9,7 @@ from trulens.providers.openai import OpenAI as fOpenAI
 
 load_dotenv()
 
-tru = TruSession()
+session = TruSession()
 
 st.title("🦑 Using TruLens Components in Streamlit")
 

@@ -275,7 +275,7 @@ class DBConnector(ABC):
         Example:
             ```python
             from trulens.core.schema import app
-            app_json = tru.get_app(app_id="Custom Application v1")
+            app_json = session.get_app(app_id="Custom Application v1")
             app = app.AppDefinition.model_validate(app_json)
             ```
 

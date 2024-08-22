@@ -54,7 +54,7 @@ convos: Dict[str, TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-tru = TruSession()
+session = TruSession()
 
 ident = lambda h: h
 
@@ -369,7 +369,7 @@ if __name__ == "__main__":
         answer_message(client, body, logger)
 
     def start_bot():
-        tru.start_evaluator()
+        session.start_evaluator()
         app.start(port=int(PORT))
 
     # Start your app

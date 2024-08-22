@@ -111,20 +111,6 @@ class TruSession(python.SingletonPerName):
     GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
-    _dashboard_urls: Optional[str] = None
-
-    _evaluator_proc: Optional[Union[Process, Thread]] = None
-    """[Process][multiprocessing.Process] or [Thread][threading.Thread] of the deferred feedback evaluator if started.
-
-        Is set to `None` if evaluator is not running.
-    """
-
-    _dashboard_proc: Optional[Process] = None
-    """[Process][multiprocessing.Process] executing the dashboard streamlit app.
-
-    Is set to `None` if not executing.
-    """
-
     _evaluator_stop: Optional[threading.Event] = None
     """Event for stopping the deferred evaluator which runs in another thread."""
 
@@ -148,6 +134,13 @@ class TruSession(python.SingletonPerName):
                 stacklevel=2,
             )
             self.connector = DefaultDBConnector(**kwargs)
+            self._dashboard_urls: Optional[str] = None
+            self._dashboard_proc: Optional[Process] = None
+            self._evaluator_proc: Optional[Union[Process, Thread]] = None
+            self._tunnel_listener_stdout: Optional[Thread] = None
+            self._tunnel_listener_stderr: Optional[Thread] = None
+            self._dashboard_listener_stdout: Optional[Thread] = None
+            self._dashboard_listener_stderr: Optional[Thread] = None
 
     def reset_database(self):
         """Reset the database. Clears all tables.
@@ -362,7 +355,7 @@ class TruSession(python.SingletonPerName):
 
     def get_app(
         self, app_id: mod_types_schema.AppID
-    ) -> serial.JSONized[mod_app_schema.AppDefinition]:
+    ) -> Optional[serial.JSONized[mod_app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -370,7 +363,7 @@ class TruSession(python.SingletonPerName):
         Example:
             ```python
             from trulens.core.schema import app
-            app_json = tru.get_app(app_id="app_hash_85ebbf172d02e733c8183ac035d0cbb2")
+            app_json = session.get_app(app_id="app_hash_85ebbf172d02e733c8183ac035d0cbb2")
             app = app.AppDefinition.model_validate(app_json)
             ```
 
@@ -480,19 +473,19 @@ class TruSession(python.SingletonPerName):
             buffer.append(ground_truth)
 
             if len(buffer) >= self.GROUND_TRUTHS_BATCH_SIZE:
-                self.db.batch_insert_ground_truth(buffer)
+                self.connector.db.batch_insert_ground_truth(buffer)
                 buffer.clear()
 
         # remaining ground truths in the buffer
         if buffer:
-            self.db.batch_insert_ground_truth(buffer)
+            self.connector.db.batch_insert_ground_truth(buffer)
 
     def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
         """Get ground truth data from the dataset.
         dataset_name: Name of the dataset.
         """
 
-        return self.db.get_ground_truths_by_dataset(dataset_name)
+        return self.connector.db.get_ground_truths_by_dataset(dataset_name)
 
     def start_evaluator(
         self,
@@ -631,6 +624,7 @@ class TruSession(python.SingletonPerName):
                         tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
+                        session=self,
                         run_location=run_location,
                     )
 

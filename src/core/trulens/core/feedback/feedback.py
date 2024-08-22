@@ -351,16 +351,16 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
             run_location: Only run feedback functions with this run_location.
 
-        Constants that govern behaviour:
+        Constants that govern behavior:
 
-        - Tru.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
+        - TruSession.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
           that was started but never failed (or failed without recording that
           fact).
 
-        - Tru.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
+        - TruSession.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
         """
 
-        db = session.db
+        db = session.connector.db
 
         def prepare_feedback(
             row,

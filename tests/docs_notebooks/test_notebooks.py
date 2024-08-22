@@ -55,8 +55,8 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
         if "TruSession()" in cell["source"]:
             cell["source"] = (
                 cell["source"]
-                + "\nfrom trulens.core import TruSession\ntru=TruSession()\ntru.migrate_database()\n"
-                + "\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(tru.connector.db)\n"
+                + "\nfrom trulens.core import TruSession\nsession=TruSession()\nsession.migrate_database()\n"
+                + "\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(session.connector.db)\n"
             )
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
 

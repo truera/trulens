@@ -44,9 +44,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
         trulens_st.trulens_leaderboard()
         ```
     """
-    tru = TruSession()
+    session = TruSession()
 
-    lms = tru.connector.db
+    lms = session.connector.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
@@ -232,6 +232,6 @@ def trulens_trace(record: Record):
         ```
     """
 
-    tru = TruSession()
-    app = tru.get_app(app_id=record.app_id)
+    session = TruSession()
+    app = session.get_app(app_id=record.app_id)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)

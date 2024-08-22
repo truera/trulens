@@ -66,7 +66,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tru = TruSession()
+        session = TruSession()
         tc = self._create_basic_chain(app_name="metaplain")
 
         message = "What is 1+2?"
@@ -78,7 +78,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -86,8 +86,8 @@ class TestTruChain(JSONTestCase):
         # Check updating the record metadata in the db.
         new_meta = "this is new meta"
         rec.meta = new_meta
-        tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        session.update_record(rec)
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
@@ -97,15 +97,15 @@ class TestTruChain(JSONTestCase):
         # Record with no meta:
         _, rec = tc.with_record(tc.app, message)
         self.assertEqual(rec.meta, None)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
 
         # Update it to add meta:
         rec.meta = new_meta
-        tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        session.update_record(rec)
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)

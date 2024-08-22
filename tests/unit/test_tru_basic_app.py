@@ -19,13 +19,13 @@ class TestTruBasicApp(JSONTestCase):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        self.tru = TruSession()
+        self.session = TruSession()
 
         # Temporary before db migration gets fixed.
-        self.tru.migrate_database()
+        self.session.migrate_database()
 
         # Reset database here.
-        self.tru.reset_database()
+        self.session.reset_database()
 
         self.basic_app = custom_application
 
@@ -51,7 +51,7 @@ class TestTruBasicApp(JSONTestCase):
         self.assertIsNotNone(rec2)
 
         # Check the database has the record
-        records = self.tru.get_records_and_feedback()[0]
+        records = self.session.get_records_and_feedback()[0]
 
         self.assertEqual(len(records), 1)
 

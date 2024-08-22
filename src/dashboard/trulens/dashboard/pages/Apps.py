@@ -16,10 +16,10 @@ from ux.page_config import set_page_config
 asyncio.set_event_loop(asyncio.new_event_loop())
 
 if __name__ == "__main__":
-    # If not imported, gets args from command line and creates Tru singleton
+    # If not imported, gets args from command line and creates a TruSession
     init_from_args()
 
-tru = TruSession()
+session = TruSession()
 
 set_page_config(page_title="App Runner")
 

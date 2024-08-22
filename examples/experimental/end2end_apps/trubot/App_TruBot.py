@@ -149,8 +149,8 @@ if user_input:
     # Display response
     st.write(answer)
 
-    tru = TruSession()
-    record_id = tru.add_data(
+    session = TruSession()
+    record_id = session.add_data(
         app_name=app_name,
         prompt=prompt_input,
         response=answer,
@@ -161,10 +161,10 @@ if user_input:
     )
 
     # Run feedback function and get value
-    feedbacks = tru.run_feedback_functions(
+    feedbacks = session.run_feedback_functions(
         record=record,
         feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance],
     )
 
     # Add value to database
-    tru.add_feedback(record_id, feedbacks)
+    session.add_feedback(record_id, feedbacks)

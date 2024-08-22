@@ -1412,7 +1412,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         # Insert into the feedback table the deferred feedbacks.
         for f in deferred_feedbacks:
-            self.db.insert_feedback(
+            self.connector.db.insert_feedback(
                 mod_feedback_schema.FeedbackResult(
                     name=f.name,
                     record_id=record_id,
@@ -1420,10 +1420,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 )
             )
         # Compute the undeferred feedbacks.
-        return self.tru._submit_feedback_functions(
+        return self._submit_feedback_functions(
             record=record,
             feedback_functions=undeferred_feedbacks,
             app=self,
+            connector=self.connector,
             on_done=self._add_future_feedback,
         )
 
@@ -1572,5 +1573,5 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         print("\n".join(object_strings))
 
 
-# NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
+# NOTE: Cannot App.model_rebuild here due to circular imports involving TruSession
 # and database.base.DB. Will rebuild each App subclass instead.

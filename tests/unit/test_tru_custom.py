@@ -17,7 +17,7 @@ class TestTruCustomApp(JSONTestCase):
         TruSession().reset_database()
 
     def setUp(self):
-        self.tru = TruSession()
+        self.session = TruSession()
 
         self.ca = DummyApp()
         self.ta_recorder = TruCustomApp(

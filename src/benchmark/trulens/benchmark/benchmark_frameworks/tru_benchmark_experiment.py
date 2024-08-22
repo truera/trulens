@@ -36,7 +36,7 @@ class TruBenchmarkExperiment:
     tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
     mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
 
-    tru_benchmark_artic = tru.BenchmarkExperiment(
+    tru_benchmark_artic = session.BenchmarkExperiment(
         app_name="MAE",
         feedback_fn=context_relevance_ff_to_score,
         agg_funcs=[mae_agg_func],

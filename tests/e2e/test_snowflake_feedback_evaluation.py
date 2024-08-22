@@ -27,8 +27,8 @@ def silly_feedback_function_2(q: str) -> float:
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @optional_test
     def test_local_deferred_mode(self) -> None:
-        tru = TruSession()
-        tru.reset_database()
+        session = TruSession()
+        session.reset_database()
         f = Feedback(silly_feedback_function_1).on_default()
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
@@ -38,14 +38,14 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         with tru_app:
             tru_app.main_call("test_local_deferred_mode")
         time.sleep(2)
-        records_and_feedback = tru.get_records_and_feedback()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(len(records_and_feedback[1]), 0)
         self.assertEqual(records_and_feedback[0].shape[0], 1)
-        tru.start_evaluator()
+        session.start_evaluator()
         time.sleep(2)
-        tru.stop_evaluator()
-        records_and_feedback = tru.get_records_and_feedback()
+        session.stop_evaluator()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
@@ -56,7 +56,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @optional_test
     def test_snowflake_deferred_mode(self) -> None:
-        tru = self.get_session("test_snowflake_deferred_mode")
+        session = self.get_session("test_snowflake_deferred_mode")
         f_local = Feedback(silly_feedback_function_1).on_default()
         f_snowflake = SnowflakeFeedback(silly_feedback_function_2).on_default()
         tru_app = TruBasicApp(
@@ -67,10 +67,10 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         with tru_app:
             tru_app.main_call("test_snowflake_deferred_mode")
         time.sleep(2)
-        tru.start_evaluator()
+        session.start_evaluator()
         time.sleep(2)
-        tru.stop_evaluator()
-        records_and_feedback = tru.get_records_and_feedback()
+        session.stop_evaluator()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
@@ -78,10 +78,10 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
             0.1,
         )
-        tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
+        session.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
         time.sleep(2)
-        tru.stop_evaluator()
-        records_and_feedback = tru.get_records_and_feedback()
+        session.stop_evaluator()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
             sorted(records_and_feedback[1]),
@@ -99,7 +99,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @optional_test
     def test_snowflake_feedback_is_always_deferred(self) -> None:
-        tru = self.get_tru("test_snowflake_feedback_is_always_deferred")
+        session = self.get_session("test_snowflake_feedback_is_always_deferred")
         f_local = Feedback(silly_feedback_function_1).on_default()
         f_snowflake = SnowflakeFeedback(silly_feedback_function_2).on_default()
         tru_app = TruBasicApp(
@@ -109,7 +109,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         with tru_app:
             tru_app.main_call("test_snowflake_feedback_is_always_deferred")
         time.sleep(2)
-        records_and_feedback = tru.get_records_and_feedback()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
@@ -117,10 +117,10 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
             0.1,
         )
-        tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
+        session.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
         time.sleep(2)
-        tru.stop_evaluator()
-        records_and_feedback = tru.get_records_and_feedback()
+        session.stop_evaluator()
+        records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
             sorted(records_and_feedback[1]),

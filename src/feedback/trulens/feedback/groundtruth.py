@@ -71,8 +71,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         from trulens.feedback import GroundTruthAgreement
         from trulens.providers.openai import OpenAI
 
-        tru = Tru()
-        ground_truth_dataset = tru.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
+        session = TruSession()
+        ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
 
         ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
 
