@@ -36,8 +36,8 @@ from trulens.dashboard.ux.styles import cellstyle_jscode
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
-set_page_config(page_title="Evaluations")
-st.title("Evaluations")
+set_page_config(page_title="Records")
+st.title("Records")
 
 if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
@@ -150,14 +150,14 @@ def extract_metadata(row: pd.Series) -> str:
 
 apps = list(app["app_id"] for app in lms.get_apps())
 
-if "app" in st.session_state:
-    app = st.session_state.app
+if "app_ids" in st.session_state:
+    app_ids = sorted(st.session_state["app_ids"])
 else:
-    app = apps
+    app_ids = apps
 
-st.query_params["app"] = app
+st.query_params["app_ids"] = ",".join(app_ids)
 
-options = st.multiselect("Filter Applications", apps, default=app)
+options = st.multiselect("Filter Applications", apps, default=app_ids)
 
 df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
 
@@ -261,11 +261,12 @@ else:
 
         gb.configure_pagination()
         gb.configure_side_bar()
-        gb.configure_selection(selection_mode="single", use_checkbox=False)
+        gb.configure_selection(selection_mode="single", use_checkbox=True)
 
         gridOptions = gb.build()
         data = AgGrid(
             evaluations_df,
+            # theme="quartz",
             gridOptions=gridOptions,
             update_mode=GridUpdateMode.SELECTION_CHANGED,
             allow_unsafe_jscode=True,
