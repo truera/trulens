@@ -136,16 +136,6 @@ test-%-optional: env-optional
 # frequently.
 test-unit:
 	poetry run pytest --rootdir=. tests/unit/*
-
-# Run the static unit tests only, those in the static subfolder. They are run
-# for every tested python version while those outside of static are run only for
-# the latest (supported) python version.
-test-static:
-	poetry run pytest --rootdir=. tests/unit/static/test_static.py
-
-test-deprecation:
-	TEST_OPTIONAL=1 poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
-
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
