@@ -5,7 +5,6 @@ from concurrent import futures
 from datetime import datetime
 import logging
 from multiprocessing import Process
-import queue
 import threading
 from threading import Thread
 from time import sleep
@@ -22,6 +21,7 @@ from typing import (
 import warnings
 
 import pandas
+import pydantic
 from trulens.core import feedback
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
@@ -46,7 +46,7 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
 logger = logging.getLogger(__name__)
 
 
-class TruSession(python.SingletonPerName):
+class TruSession(pydantic.BaseModel, python.SingletonPerName):
     """TruSession is the main class that provides an entry points to trulens.
 
     TruSession lets you:
@@ -87,6 +87,8 @@ class TruSession(python.SingletonPerName):
             is created.
     """
 
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
 
@@ -111,14 +113,26 @@ class TruSession(python.SingletonPerName):
     GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
-    _evaluator_stop: Optional[threading.Event] = None
+    _evaluator_stop: Optional[threading.Event] = pydantic.PrivateAttr(None)
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    batch_record_queue = queue.Queue()
+    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
+        None
+    )
 
-    batch_ground_truth_queue = queue.Queue()
+    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
 
-    batch_thread = None
+    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
+
+    _tunnel_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _tunnel_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
 
     def __new__(cls, *args, **kwargs) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
@@ -126,21 +140,16 @@ class TruSession(python.SingletonPerName):
         return inst
 
     def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
-        self.connector = connector or DefaultDBConnector()
+        super().__init__(
+            connector=connector or DefaultDBConnector(**kwargs), **kwargs
+        )
+
         if kwargs:
             warnings.warn(
                 f"Session arguments {', '.join(kwargs.keys())} have been deprecated. Use a DBConnector instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            self.connector = DefaultDBConnector(**kwargs)
-            self._dashboard_urls: Optional[str] = None
-            self._dashboard_proc: Optional[Process] = None
-            self._evaluator_proc: Optional[Union[Process, Thread]] = None
-            self._tunnel_listener_stdout: Optional[Thread] = None
-            self._tunnel_listener_stderr: Optional[Thread] = None
-            self._dashboard_listener_stdout: Optional[Thread] = None
-            self._dashboard_listener_stderr: Optional[Thread] = None
 
     def reset_database(self):
         """Reset the database. Clears all tables.
