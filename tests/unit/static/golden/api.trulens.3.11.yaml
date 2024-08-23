@@ -2244,6 +2244,8 @@ trulens.feedback.prompts:
     LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
+    LLM_TRIVIAL_SYSTEM: builtins.str
+    LLM_TRIVIAL_USER: builtins.str
     REMOVE_Y_N: builtins.str
     SENTIMENT_SYSTEM: builtins.str
     SENTIMENT_USER: builtins.str
@@ -2311,6 +2313,7 @@ trulens.feedback.v2.feedback:
     Stereotypes: pydantic._internal._model_construction.ModelMetaclass
     Syntax: pydantic._internal._model_construction.ModelMetaclass
     Toxicity: pydantic._internal._model_construction.ModelMetaclass
+    Trivial: pydantic._internal._model_construction.ModelMetaclass
     Violence: pydantic._internal._model_construction.ModelMetaclass
     WithPrompt: pydantic._internal._model_construction.ModelMetaclass
     supported_criteria: builtins.dict
@@ -2696,6 +2699,15 @@ trulens.feedback.v2.feedback.Toxicity:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+trulens.feedback.v2.feedback.Trivial:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    system_prompt: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Violence:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation
