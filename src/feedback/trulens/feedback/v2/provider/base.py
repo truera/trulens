@@ -8,7 +8,8 @@ from trulens.feedback.v2.feedback import ClassificationModel
 from trulens.feedback.v2.feedback import Hate
 from trulens.feedback.v2.feedback import HateThreatening
 from trulens.feedback.v2.feedback import Model
-from trulens.feedback.v2.feedback import WithExamples
+
+# from trulens.feedback.v2.feedback import WithExamples # Not yet written
 from trulens.feedback.v2.feedback import WithPrompt
 
 # Level 4 feedback abstraction
@@ -76,7 +77,7 @@ class OpenAIProvider(Provider):
         self.completion_model = None
         self.classification_model = None
 
-        self.models = set(Hate, HateThreatening)
+        self.models = set([Hate, HateThreatening])
 
     def classify(self, model: ClassificationModel, *args, **kwargs) -> int:
         _prompt = ""
@@ -88,8 +89,8 @@ class OpenAIProvider(Provider):
                 "Cannot classify for model {model} without at least a prompt."
             )
 
-        if isinstance(model, WithExamples):
-            # add few shots
-            pass
+        #        if isinstance(model, WithExamples):
+        #            # add few shots
+        #            pass
 
         return
