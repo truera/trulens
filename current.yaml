@@ -24,17 +24,12 @@ trulens.core.schema.feedback.FeedbackMode:
     value: enum.property
 trulens.core.utils.deprecation.class_moved.<locals>._MovedClass:
   __bases__:
-  - trulens.providers.huggingface.provider.Huggingface
+  - trulens.providers.langchain.provider.Langchain
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    model_engine: builtins.str
     tru_class_info: trulens.core.utils.pyschema.Class
-trulens.core.utils.trulens.Other:
-  __bases__:
-  - trulens.core.app.base.Other
-  - trulens.core.app.base.TrulensComponent
-  __class__: trulens.core.app.base.ComponentViewMeta
-  attributes: {}
 trulens_eval:
   __class__: builtins.module
   __version__: 1.0.0.a
@@ -66,6 +61,11 @@ trulens_eval:
     __version_info__: builtins.tuple
     deprecation_utils: builtins.module
     imports_utils: builtins.module
+trulens_eval.Leaderboard:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    deprecation_utils: builtins.module
 trulens_eval.database:
   __class__: builtins.module
   highs: {}
@@ -174,22 +174,9 @@ trulens_eval.utils.text:
   __class__: builtins.module
   highs: {}
   lows:
-    UNICODE_CHECK: builtins.str
-    UNICODE_CLOCK: builtins.str
-    UNICODE_HOURGLASS: builtins.str
-    UNICODE_LOCK: builtins.str
-    UNICODE_SQUID: builtins.str
-    UNICODE_STOP: builtins.str
-    UNICODE_YIELD: builtins.str
     deprecation_utils: builtins.module
-    make_retab: builtins.function
-    retab: builtins.function
 trulens_eval.utils.trulens:
   __class__: builtins.module
   highs: {}
   lows:
-    COMPONENT_VIEWS: builtins.list
-    Other: trulens.core.app.base.ComponentViewMeta
-    component_of_json: builtins.function
-    constructor_of_class: builtins.function
     deprecation_utils: builtins.module
