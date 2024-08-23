@@ -773,6 +773,7 @@ description = "Nvidia JIT LTO Library"
 optional = false
 python-versions = ">=3"
 files = [
+    {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-manylinux2014_aarch64.whl", hash = "sha256:84fb38465a5bc7c70cbc320cfd0963eb302ee25a5e939e9f512bbba55b6072fb"},
     {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-manylinux2014_x86_64.whl", hash = "sha256:562ab97ea2c23164823b2a89cb328d01d45cb99634b8c65fe7cd60d14562bd79"},
     {file = "nvidia_nvjitlink_cu12-12.6.20-py3-none-win_amd64.whl", hash = "sha256:ed3c43a17f37b0c922a919203d2d36cbef24d41cc3e6b625182f8b58203644f6"},
 ]
@@ -1774,13 +1775,13 @@ telegram = ["requests"]
 
 [[package]]
 name = "transformers"
-version = "4.44.1"
+version = "4.44.2"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "transformers-4.44.1-py3-none-any.whl", hash = "sha256:bd2642da18b4e6d29b135c17650cd7ca8e874f2d092d2eddd3ed6b71a93a155c"},
-    {file = "transformers-4.44.1.tar.gz", hash = "sha256:3b9a1a07ca65c665c7bf6109b7da76182184d10bb58d9ab14e6892e7b9e073a2"},
+    {file = "transformers-4.44.2-py3-none-any.whl", hash = "sha256:1c02c65e7bfa5e52a634aff3da52138b583fc6f263c1f28d547dc144ba3d412d"},
+    {file = "transformers-4.44.2.tar.gz", hash = "sha256:36aa17cc92ee154058e426d951684a2dab48751b35b49437896f898931270826"},
 ]
 
 [package.dependencies]
