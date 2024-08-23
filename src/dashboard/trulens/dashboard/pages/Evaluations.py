@@ -404,6 +404,7 @@ else:
                             df.meta.apply(lambda m: pd.Series(m))
                         ).drop(columns="meta")
 
+                        # note: improve conditional to not rely on the feedback name
                         if "groundedness" in feedback_name.lower():
                             try:
                                 # Split the reasons value into separate rows and columns
