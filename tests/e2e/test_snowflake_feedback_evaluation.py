@@ -229,11 +229,12 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @optional_test
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
+        SnowflakeFeedback(Cortex().relevance)  # no error
         with self.assertRaisesRegex(
             ValueError,
             "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
         ):
-            SnowflakeFeedback(OpenAI().relevance).on_input_output()
+            SnowflakeFeedback(OpenAI().relevance)
 
 
 if __name__ == "__main__":

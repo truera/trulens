@@ -1234,7 +1234,7 @@ class SnowflakeFeedback(Feedback):
     ):
         if (
             not hasattr(imp, "__self__")
-            or str(imp.__self__)
+            or str(type(imp.__self__))
             != "<class 'trulens.providers.cortex.provider.Cortex'>"
         ):
             raise ValueError(
