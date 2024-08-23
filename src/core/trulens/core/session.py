@@ -133,8 +133,6 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     _tunnel_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    # TODO(this_pr): where's sqlalchemy_engine_params?
-
     _tunnel_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
     _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)

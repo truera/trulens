@@ -99,7 +99,7 @@ class SnowflakeServerSideEvaluationArtifacts:
             )
 
     def _set_up_stream(self):
-        # TODO(this_pr): Make sure the stream doesn't keep reading old data
+        # TODO(dkurokawa): Make sure the stream doesn't keep reading old data
         self._session.sql(
             f"""
             CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
