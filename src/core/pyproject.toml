@@ -16,9 +16,6 @@ readme = "README.md"
 packages = [
   { include = "trulens" },
 ]
-include = [
-  { path = "trulens/data/snowflake_stage_zips" },
-]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/trulens/getting_started/"
 repository = "https://github.com/truera/trulens"

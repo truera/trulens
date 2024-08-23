@@ -153,7 +153,7 @@ class SnowflakeServerSideEvaluationArtifacts:
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
                 PACKAGES = (
-                    -- TODO: get these package versions automatically.
+                    -- TODO(dkurokawa): get these package versions automatically.
                     'alembic',
                     'dill',
                     'munch',
