@@ -7,7 +7,7 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.utils.text")
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.text import UNICODE_CHECK
 from trulens.core.utils.text import UNICODE_CLOCK

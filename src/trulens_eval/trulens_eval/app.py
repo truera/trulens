@@ -9,7 +9,7 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.app")
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.app.base import ATTRIBUTE_ERROR_MESSAGE
 from trulens.core.app.base import CLASS_INFO

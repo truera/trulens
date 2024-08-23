@@ -7,7 +7,7 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.appui")
+deprecation_utils.packages_dep_warn()
 
 from trulens.dashboard.appui import JSON_BASES
 from trulens.dashboard.appui import VALUE_MAX_CHARS

@@ -215,6 +215,9 @@ class TestAPI(JSONTestCase):
                     if repr(diff_lens.path[-1]) == ".__class__":
                         # Ignore __class__ differences.
                         continue
+                    if repr(diff_lens.path[-1]) == ".__version__":
+                        # Ignore __version__ differences.
+                        continue
                     if isinstance(diff_value, dict) and len(diff_value) == 0:
                         # Ignore empty dicts in diffs.
                         continue

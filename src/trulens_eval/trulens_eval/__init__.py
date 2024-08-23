@@ -8,7 +8,7 @@
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as imports_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval")
+deprecation_utils.packages_dep_warn()
 
 __version_info__ = (1, 0, 0, "a")
 __version__ = ".".join(map(str, __version_info__))

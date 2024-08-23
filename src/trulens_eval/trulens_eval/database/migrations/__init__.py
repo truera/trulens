@@ -7,7 +7,7 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.database.migrations")
+deprecation_utils.packages_dep_warn()
 
 # NOTE: This file had contents in trulens_eval but none were public or aliases.
 # Because of that, this backwards compatibility module is empty.

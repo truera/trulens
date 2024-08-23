@@ -231,7 +231,6 @@ trulens_eval.database:
     __path__: builtins.list
 trulens_eval.database.base:
   __class__: builtins.module
-  __version__: 0.33.0
   highs: {}
   lows:
     DB: pydantic._internal._model_construction.ModelMetaclass
@@ -239,7 +238,6 @@ trulens_eval.database.base:
     DEFAULT_DATABASE_PREFIX: builtins.str
     DEFAULT_DATABASE_REDACT_KEYS: builtins.bool
     MULTI_CALL_NAME_DELIMITER: builtins.str
-    __version__: builtins.str
 trulens_eval.database.base.DB:
   __bases__:
   - trulens_eval.utils.serial.SerialModel
@@ -359,7 +357,6 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
   - trulens_eval.database.base.DB
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    delete_app: builtins.function
     engine: typing.Optional[sqlalchemy.engine.base.Engine, builtins.NoneType]
     engine_params: builtins.dict
     from_db_url: builtins.classmethod

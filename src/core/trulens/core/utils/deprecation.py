@@ -8,12 +8,21 @@ from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
 import warnings
 
 from trulens.core.utils import imports as imports_utils
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
 PACKAGES_MIGRATION_LINK = (
     "https://trulens.org/docs/migration-guide"  # TODO: update link
 )
+
+
+def deprecated_str(s: str, reason: str):
+    """Decorator for deprecated string literals."""
+
+    return imports_utils.Dummy(
+        s, message=reason, original_exception=DeprecationWarning(reason)
+    )
 
 
 def deprecated_property(message: str):
@@ -35,12 +44,15 @@ def deprecated_property(message: str):
     return wrapper
 
 
-def packages_dep_warn(module: str):
+def packages_dep_warn(module: Optional[str] = None):
     """Issue a deprecation warning for a backwards-compatibility modules.
 
     This is specifically for the trulens_eval -> trulens module renaming and
     reorganization.
     """
+
+    if module is None:
+        module = python_utils.caller_module_name(offset=1)  # skip our own frame
 
     warnings.warn(
         f"The `{module}` module is deprecated. "
@@ -64,6 +76,36 @@ def has_moved(obj: Union[Callable, Type]) -> bool:
         and obj.__doc__ is not None
         and "has moved:\n" in obj.__doc__
     )
+
+
+def method_renamed(new_name: str):
+    """Issue a warning upon method call that has been renamed.
+
+    Issues the warning only once.
+    """
+
+    warned = False
+
+    def wrapper(func):
+        old_name = func.__name__
+
+        message = f"Method `{old_name}` has been renamed to `{new_name}`.\n"
+
+        @functools.wraps(func)
+        def _renamedmethod(self, *args, **kwargs):
+            nonlocal warned, old_name
+
+            if not warned:
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+                warned = True
+
+            return func(self, *args, **kwargs)
+
+        _renamedmethod.__doc__ = message
+
+        return _renamedmethod
+
+    return wrapper
 
 
 def function_moved(func: Callable, old: str, new: str):

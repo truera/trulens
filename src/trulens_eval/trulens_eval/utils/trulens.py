@@ -7,6 +7,6 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.utils.trulens")
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.trulens import *

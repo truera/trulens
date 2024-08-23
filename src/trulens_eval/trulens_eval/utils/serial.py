@@ -7,7 +7,7 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.utils.serial")
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.serial import JSON_BASES
 from trulens.core.utils.serial import Collect
