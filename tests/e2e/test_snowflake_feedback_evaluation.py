@@ -194,6 +194,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.8,
         )
         # TODO(this_pr): Make sure only Cortex provider functions can work.
+        # TODO(this_pr): Run all snowflake tests.
 
 
 if __name__ == "__main__":

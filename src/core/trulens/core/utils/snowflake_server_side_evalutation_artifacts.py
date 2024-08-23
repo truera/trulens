@@ -18,7 +18,7 @@ from trulens.core.schema.feedback import FeedbackRunLocation
 
 def run(session):
     # Set up sqlalchemy engine parameters.
-    conn = session._conn._conn # TODO(this_pr): Can't I just say session.connection?
+    conn = session.connection
     engine_params = {}
     engine_params["paramstyle"] = "qmark"
     engine_params["creator"] = lambda: conn
