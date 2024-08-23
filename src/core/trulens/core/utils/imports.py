@@ -398,6 +398,19 @@ REQUIREMENT_SNOWFLAKE = format_import_errors(
 )
 
 
+def is_dummy(obj: Any) -> bool:
+    """Check if the given object is an instance of Dummy.
+
+    This is necessary is isisintance and issubclass checks might fail if the
+    ones defined in Dummy get used; they always return False by design.
+    """
+
+    return obj.__class__.__name__ == "Dummy" and obj.__module__ in [
+        "trulens.core.utils.imports",
+        "trulens_eval.utils.imports",
+    ]
+
+
 # Try to pretend to be a type as well as an instance.
 class Dummy(type):
     """Class to pretend to be a module or some other imported object.
@@ -462,6 +475,11 @@ class Dummy(type):
                 "original_exception", None
             )
 
+        # For easier checking that an instance is Dummy. If may be hard to check
+        # for dummy if comparing against something that does not come with its
+        # own __isinstance__ as the one we include here always returns False.
+        self.__dummy__ = True
+
         self.name = name
         self.message = message
         self.importer = importer
@@ -509,6 +527,9 @@ class Dummy(type):
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested attribute. Otherwise
         # raise error.
+
+        if name == "__dummy__":
+            return True
 
         # Pretend to be object for generic attributes.
         if hasattr(object, name):

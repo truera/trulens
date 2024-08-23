@@ -18,7 +18,7 @@ from typing import (
 import warnings
 
 import dill
-from pydantic import computed_field
+import pydantic
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import select as mod_select_schema
@@ -55,6 +55,14 @@ class RecordIngestMode(str, Enum):
 class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
+
+    app_id: mod_types_schema.AppID = pydantic.Field(frozen=True)  # str
+    """Unique identifier for this app.
+
+    Computed deterministically from app_name and app_version. Leaving it here
+    for it to be dumped when serializing. Also making it read-only as it should
+    not be changed after creation.
+    """
 
     app_name: mod_types_schema.AppName  # str
     """Name for this app."""
@@ -150,6 +158,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             f.feedback_definition_id for f in kwargs.get("feedbacks", [])
         ]
         kwargs["record_ingest_mode"] = record_ingest_mode
+        kwargs["app_id"] = self._compute_app_id(
+            kwargs["app_name"], kwargs["app_version"]
+        )
 
         super().__init__(**kwargs)
 
@@ -226,26 +237,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         return cls(**app_definition_json)
 
     @staticmethod
-    def _get_app_id(app_name, app_version):
+    def _compute_app_id(app_name, app_version):
         return obj_id_of_obj(
             obj={"app_name": app_name, "app_version": app_version}, prefix="app"
         )
-
-    @computed_field
-    @property
-    def app_id(self) -> str:
-        """Get the app id for the given app name and version.
-
-        Args:
-            app_name: The name of the app.
-
-            app_version: The version of the app.
-
-        Returns:
-            The app id.
-        """
-
-        return self._get_app_id(self.app_name, self.app_version)
 
     @staticmethod
     def new_session(
