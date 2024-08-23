@@ -1,11 +1,22 @@
-# Make targets useful for developing TruLens.
-# How to use Makefiles: https://opensource.com/article/18/8/what-how-makefile .
+# Make targets useful for developing TruLens. How to use Makefiles:
+# https://opensource.com/article/18/8/what-how-makefile . Please make sure this
+# file runs on gmake:
+# - Shell statements cannot span more than 1 line, see "lock" for example on
+#   how newline is escaped to put the for loop on the same logical line.
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-POETRY_DIRS := $(shell find . -not -path "./dist/*" -not -path "./src/dashboard/*" -maxdepth 4 -name "*pyproject.toml" -exec dirname {} \;)
+PYTEST := poetry run pytest --rootdir=.
+POETRY_DIRS := $(shell find . \
+	-not -path "./dist/*" \
+	-not -path "./src/dashboard/*" \
+	-maxdepth 4 \
+	-name "*pyproject.toml" \
+	-exec dirname {} \;)
 
 # Global setting: execute all commands of a target in a single shell session.
+# Note for MAC OS, the default make is too old to support this. "brew install
+# make" to get a newer version though it is called "gmake".
 .ONESHELL:
 
 # Create the poetry env for building website, docs, formatting, etc.
@@ -60,8 +71,8 @@ docs-serve: env-docs
 docs-serve-debug: env-docs
 	poetry run mkdocs serve -a 127.0.0.1:8000 --verbose
 
-# The --dirty flag makes mkdocs not regenerate everything when change is detected but also seems to
-# break references.
+# The --dirty flag makes mkdocs not regenerate everything when change is
+# detected but also seems to break references.
 docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
@@ -83,29 +94,31 @@ coverage:
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
 # the latest (supported) python version.
+
 test-static:
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/unit/static/test_static.py
+	$(PYTEST) tests/unit/static/test_static.py
 
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 
+# API tests.
+test-api:
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
+test-write-api:
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
+
 test-deprecation:
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
+	$(PYTEST) tests/unit/static/test_deprecation.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
+	$(PYTEST) tests/e2e/test_dummy.py
 test-serial: # has golden file
-	$(CONDA)
-	poetry run pytest --rootdir=. tests/e2e/test_serial.py
+	$(PYTEST) tests/e2e/test_serial.py
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
-test-write-golden-%:
-	$(CONDA)
-	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
+test-write-golden-%: tests/e2e/test_$*.py
+	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 
 # Runs required tests
 test-%-required: env-required
@@ -119,10 +132,10 @@ test-%-allow-optional: env
 test-%-optional: env-optional
 	TEST_OPTIONAL=true make test-$*
 
-# Run the unit tests, those in the tests/unit. They are run in the CI pipeline frequently.
+# Run the unit tests, those in the tests/unit. They are run in the CI pipeline
+# frequently.
 test-unit:
 	poetry run pytest --rootdir=. tests/unit/*
-
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
@@ -131,6 +144,9 @@ test-e2e:
 # Runs the notebook test
 test-notebook:
 	poetry run pytest --rootdir=. tests/docs_notebooks/*
+
+install-wheels:
+	pip install dist/*/*.whl
 
 # Release Steps:
 ## Step: Clean repo:
@@ -141,8 +157,8 @@ clean: clean-dashboard
 	git clean --dry-run -fxd
 	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
 	echo
-	if [[ $$REPLY =~ ^[Yy]$$ ]]; then
-		git clean -fxd;
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		git clean -fxd; \
 	fi;
 
 ## Step: Build wheels
@@ -167,8 +183,8 @@ build: $(POETRY_DIRS)
 	make build-dashboard
 
 ## Step: Upload wheels to pypi
-# Usage: TOKEN=... make upload-trulnes-instrument-langchain
-upload-%:
+# Usage: TOKEN=... make upload-trulens-instrument-langchain
+upload-%: build
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
 upload-all: build

@@ -34,15 +34,15 @@ As a result of these changes, the package structure for the TruLens varies from 
 
 | TruLens Eval | TruLens | Additional Dependencies |
 |------------|-------------|------------------|
-| `trulens_eval.Tru` | [`trulens.core.Tru`][trulens.core.Tru] | |
+| `trulens_eval.Tru` | [`trulens.core.TruSession`][trulens.core.TruSession] | |
 | `trulens_eval.Feedback` | [`trulens.core.Feedback`][trulens.core.Feedback] | |
 | `trulens_eval.Select` | [`trulens.core.Select`][trulens.core.Select] | |
-| `trulens_eval.TruCustomApp`, `Tru().Custom(...)` | [`trulens.core.TruCustomApp`][trulens.core.TruCustomApp] | |
-| `trulens_eval.TruChain`, `Tru().Chain(...)` | [`trulens.instrument.langchain.TruChain`][trulens.instrument.langchain.TruChain] | `trulens-instrument-langchain` |
-| `trulens_eval.TruLlama`, `Tru().Llama(...)` | [`trulens.instrument.llamaindex.TruLlama`][trulens.instrument.llamaindex.TruLlama] | `trulens-instrument-llamaindex` |
+| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.core.TruCustomApp`][trulens.core.TruCustomApp] | |
+| `trulens_eval.TruChain`, `TruSession().Chain(...)` | [`trulens.instrument.langchain.TruChain`][trulens.instrument.langchain.TruChain] | `trulens-instrument-langchain` |
+| `trulens_eval.TruLlama`, `TruSession().Llama(...)` | [`trulens.instrument.llamaindex.TruLlama`][trulens.instrument.llamaindex.TruLlama] | `trulens-instrument-llamaindex` |
 | `trulens_eval.OpenAI` | [`trulens.providers.openai.OpenAI`][trulens.providers.openai.OpenAI] | `trulens-providers-openai` |
 | `trulens_eval.Huggingface` | [`trulens.providers.huggingface.Huggingface`][trulens.providers.huggingface.Huggingface] | `trulens-providers-huggingface` |
 | `trulens_eval.guardrails.llama` | [`trulens.instrument.llamaindex.guardrails`][trulens.instrument.llamaindex.guardrails] | `trulens-instrument-llamaindex` |
-| `Tru().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
+| `TruSession().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/trulens/core/index.md).

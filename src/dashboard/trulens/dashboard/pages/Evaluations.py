@@ -12,7 +12,7 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.app.base import LLM
 from trulens.core.app.base import Agent
 from trulens.core.app.base import ComponentView
@@ -44,8 +44,8 @@ if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
-tru = Tru()
-lms = tru.db
+session = TruSession()
+lms = session.connector.db
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {

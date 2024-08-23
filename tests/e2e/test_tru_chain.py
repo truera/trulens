@@ -11,7 +11,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
@@ -32,7 +32,7 @@ class TestTruChain(JSONTestCase):
     @classmethod
     def setUpClass(cls):
         # Cannot reset on each test as they might be done in parallel.
-        Tru().reset_database()
+        TruSession().reset_database()
 
     def setUp(self):
         check_keys(
@@ -42,7 +42,7 @@ class TestTruChain(JSONTestCase):
             "PINECONE_ENV",
         )
 
-    def _create_basic_chain(self, app_id: Optional[str] = None):
+    def _create_basic_chain(self, app_name: Optional[str] = None):
         # Create simple QA chain.
         prompt = PromptTemplate.from_template(
             """Honestly answer this question: {question}."""
@@ -54,7 +54,9 @@ class TestTruChain(JSONTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = TruChain(chain, app_id=app_id, feedback_mode=FeedbackMode.WITH_APP)
+        tc = TruChain(
+            chain, app_name=app_name, feedback_mode=FeedbackMode.WITH_APP
+        )
 
         return tc
 
@@ -64,8 +66,8 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tru = Tru()
-        tc = self._create_basic_chain(app_id="metaplain")
+        session = TruSession()
+        tc = self._create_basic_chain(app_name="metaplain")
 
         message = "What is 1+2?"
         meta = "this is plain metadata"
@@ -76,7 +78,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -84,8 +86,8 @@ class TestTruChain(JSONTestCase):
         # Check updating the record metadata in the db.
         new_meta = "this is new meta"
         rec.meta = new_meta
-        tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        session.update_record(rec)
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
@@ -95,15 +97,15 @@ class TestTruChain(JSONTestCase):
         # Record with no meta:
         _, rec = tc.with_record(tc.app, message)
         self.assertEqual(rec.meta, None)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, None)
 
         # Update it to add meta:
         rec.meta = new_meta
-        tru.update_record(rec)
-        recs, _ = tru.get_records_and_feedback([tc.app_id])
+        session.update_record(rec)
+        recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
@@ -114,7 +116,7 @@ class TestTruChain(JSONTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        tc = self._create_basic_chain(app_id="metajson")
+        tc = self._create_basic_chain(app_name="metajson")
 
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")
@@ -125,7 +127,7 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = TruSession().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
@@ -133,9 +135,9 @@ class TestTruChain(JSONTestCase):
         # Check updating the record metadata in the db.
         new_meta = dict(hello="this is new meta")
         rec.meta = new_meta
-        Tru().update_record(rec)
+        TruSession().update_record(rec)
 
-        recs, _ = Tru().get_records_and_feedback([tc.app_id])
+        recs, _ = TruSession().get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 0)
         rec = Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)

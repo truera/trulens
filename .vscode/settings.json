@@ -12,4 +12,7 @@
     "files.exclude": {
         "**/.venv": true
     },
+    "cSpell.words": [
+        "behaviour"
+    ],
 }
