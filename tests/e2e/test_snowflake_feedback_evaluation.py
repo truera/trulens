@@ -28,6 +28,20 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             f"ALTER TASK {self._database_name}.{self._schema_name}.TRULENS_FEEDBACK_EVAL_TASK SUSPEND"
         ).collect()
 
+    def _wait_till_feedbacks_done(
+        self, num_expected_feedbacks: int, timeout_in_seconds: int = 120
+    ):
+        start_time = time.time()
+        while time.time() - start_time < timeout_in_seconds:
+            res = self._snowflake_session.sql(
+                f"SELECT STATUS FROM {self._database_name}.{self._schema_name}.TRULENS_FEEDBACKS"
+            ).collect()
+            if len(res) == num_expected_feedbacks and all([
+                curr.STATUS == "done" for curr in res
+            ]):
+                break
+            time.sleep(1)
+
     @optional_test
     def test_local_deferred_mode(self) -> None:
         tru = Tru()
@@ -215,7 +229,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         )
         with tru_app:
             tru_app.main_call("What is the capital of Japan?")
-        time.sleep(120)
+        self._wait_till_feedbacks_done(num_expected_feedbacks=1)
         records_and_feedback = tru.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
