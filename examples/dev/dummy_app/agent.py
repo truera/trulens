@@ -47,7 +47,7 @@ class DummyAgent(Dummy):
         self.app = app
 
         if self.use_app:
-            self.tru_app = TruCustomApp(self.app, app_id=description)
+            self.tru_app = TruCustomApp(self.app, app_name=description)
 
         self.dummy_allocate()
 

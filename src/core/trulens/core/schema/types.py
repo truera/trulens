@@ -31,6 +31,18 @@ By default these are hashes of app content as json.
 See [AppDefinition.app_id][trulens.core.schema.app.AppDefinition.app_id].
 """
 
+AppName: typing_extensions.TypeAlias = str
+"""Unique App name.
+
+See [AppDefinition.app_name][trulens.core.schema.app.AppDefinition.app_name].
+"""
+
+AppVersion: typing_extensions.TypeAlias = str
+"""Version identifier for an app.
+
+See [AppDefinition.app_version][trulens.core.schema.app.AppDefinition.app_version].
+"""
+
 Tags: typing_extensions.TypeAlias = str
 """Tags for an app or record.
 

@@ -180,7 +180,7 @@ def copy_database(
         important that the target database is empty.
 
     - Will fail if the databases are not at the latest schema revision. That
-        can be fixed with `Tru(database_url="...", database_prefix="...").migrate_database()`
+        can be fixed with `TruSession(database_url="...", database_prefix="...").migrate_database()`
 
     - Might fail if the target database enforces relationship constraints,
         because then the order of inserting data matters.

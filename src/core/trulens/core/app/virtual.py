@@ -151,7 +151,8 @@ Example: "Integrating Feedback Functions into TruVirtual"
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
-        app_id='a virtual app',
+        app_name='a virtual app',
+        app_version='base',
         app=virtual_app,
         feedbacks=[f_context_relevance]
     )
@@ -480,7 +481,8 @@ class TruVirtual(App):
         )
 
         virtual = TruVirtual(
-            app_id="my_virtual_app",
+            app_name="my_virtual_app",
+            app_version="base",
             app=virtual_app
         )
         ```

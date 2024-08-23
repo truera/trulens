@@ -4,7 +4,7 @@ import math
 
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.streamlit_utils import init_from_args
@@ -26,9 +26,9 @@ def leaderboard():
 
     set_page_config(page_title="Leaderboard")
 
-    tru = Tru()  # get singletone whether this file was imported or executed from command line.
+    session = TruSession()  # get singleton whether this file was imported or executed from command line.
 
-    lms = tru.db
+    lms = session.connector.db
 
     # Set the title
     st.title("App Leaderboard")

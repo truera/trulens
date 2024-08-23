@@ -9,7 +9,6 @@ import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-from pprint import PrettyPrinter
 import threading
 from threading import Lock
 from typing import (
@@ -31,8 +30,8 @@ from typing import (
 )
 
 import pydantic
-from trulens.core import tru as mod_tru
-from trulens.core.database import base as mod_db
+from trulens.core.database.connector import DBConnector
+from trulens.core.database.connector import DefaultDBConnector
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import Select
@@ -66,8 +65,6 @@ from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_objects
 
 logger = logging.getLogger(__name__)
-
-pp = PrettyPrinter()
 
 # App component.
 COMPONENT = Any
@@ -481,19 +478,13 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    tru: Optional[mod_tru.Tru] = pydantic.Field(default=None, exclude=True)
-    """Workspace manager.
+    connector: DBConnector = pydantic.Field(
+        default_factory=lambda: DefaultDBConnector(), exclude=True
+    )
+    """Database connector.
 
-    If this is not povided, a singleton [Tru][trulens.core.tru.Tru] will be made
+    If this is not provided, a [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector] will be made
     (if not already) and used.
-    """
-
-    db: Optional[mod_db.DB] = pydantic.Field(default=None, exclude=True)
-    """Database interface.
-
-    If this is not provided, a singleton
-    [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] will be
-    made (if not already) and used.
     """
 
     app: Any = pydantic.Field(exclude=True)
@@ -511,7 +502,7 @@ class App(
     recording_contexts: contextvars.ContextVar[RecordingContext] = (
         pydantic.Field(None, exclude=True)
     )
-    """Sequnces of records produced by the this class used as a context manager
+    """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
     Using a context var so that context managers can be nested.
@@ -552,7 +543,7 @@ class App(
 
     def __init__(
         self,
-        tru: Optional[mod_tru.Tru] = None,
+        connector: Optional[DBConnector] = None,
         feedbacks: Optional[Iterable[mod_feedback.Feedback]] = None,
         **kwargs,
     ):
@@ -562,7 +553,8 @@ class App(
             feedbacks = []
 
         # for us:
-        kwargs["tru"] = tru
+        if connector:
+            kwargs["connector"] = connector
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts"
@@ -596,7 +588,7 @@ class App(
         """Start the thread that manages the queue of records with
         pending feedback results.
 
-        This is meant to be run permentantly in a separate thread. It will
+        This is meant to be run permanently in a separate thread. It will
         remove records from the set `records_with_pending_feedback_results` as
         their feedback results are computed.
         """
@@ -613,7 +605,7 @@ class App(
     def _manage_pending_feedback_results(self) -> None:
         """Manage the queue of records with pending feedback results.
 
-        This is meant to be run permentantly in a separate thread. It will
+        This is meant to be run permanently in a separate thread. It will
         remove records from the set records_with_pending_feedback_results as
         their feedback results are computed.
         """
@@ -636,7 +628,7 @@ class App(
         Returns:
             A list of records that have been waited on. Note a record will be
                 included even if a feedback computation for it failed or
-                timedout.
+                timed out.
 
         This applies to all feedbacks on all records produced by this app. This
         call will block until finished and if new records are produced while
@@ -681,30 +673,26 @@ class App(
 
         """
 
-        if self.tru is None:
+        if self.connector is None:
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
-                from trulens.core.tru import Tru
-
-                logger.debug("Creating default tru.")
-                self.tru = Tru()
+                logger.debug("Using default database connector.")
+                self.connector = DefaultDBConnector()
 
         else:
             if self.feedback_mode == mod_feedback_schema.FeedbackMode.NONE:
                 logger.warning(
-                    "`tru` is specified but `feedback_mode` is FeedbackMode.NONE. "
+                    "`connector` is specified but `feedback_mode` is `FeedbackMode.NONE`. "
                     "No feedback evaluation and logging will occur."
                 )
 
-        if self.tru is not None:
-            self.db = self.tru.db
-
-            self.db.insert_app(app=self)
+        if self.connector is not None:
+            self.connector.add_app(app=self)
 
             if self.feedback_mode != mod_feedback_schema.FeedbackMode.NONE:
                 logger.debug("Inserting feedback function definitions to db.")
 
                 for f in self.feedbacks:
-                    self.db.insert_feedback_definition(f)
+                    self.connector.add_feedback_definition(f)
 
         else:
             if len(self.feedbacks) > 0:
@@ -1364,7 +1352,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         else:
             res = future_or_result
 
-        self.tru.add_feedback(res)
+        self.connector.add_feedback(res)
 
     def _handle_record(
         self,
@@ -1387,19 +1375,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         if feedback_mode is None:
             feedback_mode = self.feedback_mode
 
-        if self.tru is None or self.feedback_mode is None:
+        if self.feedback_mode is None:
             return None
-
-        self.tru: mod_tru.Tru
-        self.db: mod_db.DB
 
         # If in buffered mode, call add record nowait.
         if self.record_ingest_mode == mod_app_schema.RecordIngestMode.BUFFERED:
-            self.tru.add_record_nowait(record=record)
+            self.connector.add_record_nowait(record=record)
             return
 
         # Need to add record to db before evaluating feedback functions.
-        record_id = self.tru.add_record(record=record)
+        record_id = self.connector.add_record(record=record)
 
         if len(self.feedbacks) == 0:
             return []
@@ -1427,7 +1412,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         # Insert into the feedback table the deferred feedbacks.
         for f in deferred_feedbacks:
-            self.db.insert_feedback(
+            self.connector.db.insert_feedback(
                 mod_feedback_schema.FeedbackResult(
                     name=f.name,
                     record_id=record_id,
@@ -1435,15 +1420,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 )
             )
         # Compute the undeferred feedbacks.
-        return self.tru._submit_feedback_functions(
+        return self._submit_feedback_functions(
             record=record,
             feedback_functions=undeferred_feedbacks,
             app=self,
+            connector=self.connector,
             on_done=self._add_future_feedback,
         )
 
     def _handle_error(self, record: mod_record_schema.Record, error: Exception):
-        if self.db is None:
+        if self.connector is None:
             return
 
     def __getattr__(self, __name: str) -> Any:
@@ -1587,5 +1573,5 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         print("\n".join(object_strings))
 
 
-# NOTE: Cannot App.model_rebuild here due to circular imports involving tru.Tru
+# NOTE: Cannot App.model_rebuild here due to circular imports involving TruSession
 # and database.base.DB. Will rebuild each App subclass instead.
