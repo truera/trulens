@@ -491,7 +491,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             name=dataset_name,
             meta=dataset_metadata,
         )
-        dataset_id = self.db.insert_dataset(dataset=dataset)
+        dataset_id = self.connector.db.insert_dataset(dataset=dataset)
 
         buffer = []
 
