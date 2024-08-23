@@ -1,35 +1,3 @@
-trulens.core.database.migrations.DbRevisions:
-  __bases__:
-  - pydantic.main.BaseModel
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    ahead: builtins.property
-    behind: builtins.property
-    current: typing.Optional[builtins.str, builtins.NoneType]
-    history: typing.List[builtins.str]
-    in_sync: builtins.property
-    latest: builtins.property
-    load: builtins.classmethod
-trulens.core.schema.feedback.FeedbackMode:
-  __bases__:
-  - builtins.str
-  - enum.Enum
-  __class__: enum.EnumType
-  attributes:
-    DEFERRED: trulens.core.schema.feedback.FeedbackMode
-    NONE: trulens.core.schema.feedback.FeedbackMode
-    WITH_APP: trulens.core.schema.feedback.FeedbackMode
-    WITH_APP_THREAD: trulens.core.schema.feedback.FeedbackMode
-    name: enum.property
-    value: enum.property
-trulens.core.utils.deprecation.class_moved.<locals>._MovedClass:
-  __bases__:
-  - trulens.providers.langchain.provider.Langchain
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
-    model_engine: builtins.str
-    tru_class_info: trulens.core.utils.pyschema.Class
 trulens_eval:
   __class__: builtins.module
   __version__: 1.0.0.a
@@ -61,11 +29,523 @@ trulens_eval:
     __version_info__: builtins.tuple
     deprecation_utils: builtins.module
     imports_utils: builtins.module
+trulens_eval.AzureOpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.AzureOpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    deployment_name: builtins.str
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Bedrock:
+  __bases__:
+  - trulens.providers.bedrock.provider.Bedrock
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    model_engine: builtins.str
+    model_id: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Cortex:
+  __bases__:
+  - trulens.providers.cortex.provider.Cortex
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    model_engine: builtins.str
+    snowflake_conn: snowflake.connector.connection.SnowflakeConnection
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Feedback:
+  __bases__:
+  - trulens.core.feedback.feedback.Feedback
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    agg: typing.Optional[typing.Callable[[typing.Union[typing.Iterable[float], typing.Iterable[typing.Tuple[float,
+      float]]]], builtins.float], builtins.NoneType]
+    aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
+      builtins.NoneType]
+    feedback_definition_id: builtins.str
+    higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
+    if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
+    imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
+      typing.Dict[builtins.str, typing.Any]]]], builtins.NoneType]
+    implementation: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    run_location: typing.Optional[trulens.core.schema.feedback.FeedbackRunLocation,
+      builtins.NoneType]
+    selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
+    supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.FeedbackMode:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    DEFERRED: trulens.core.schema.feedback.FeedbackMode
+    NONE: trulens.core.schema.feedback.FeedbackMode
+    WITH_APP: trulens.core.schema.feedback.FeedbackMode
+    WITH_APP_THREAD: trulens.core.schema.feedback.FeedbackMode
+    name: enum.property
+    value: enum.property
+trulens_eval.Huggingface:
+  __bases__:
+  - trulens.providers.huggingface.provider.Huggingface
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.HuggingfaceLocal:
+  __bases__:
+  - trulens.providers.huggingface.provider.HuggingfaceLocal
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Langchain:
+  __bases__:
+  - trulens.providers.langchain.provider.Langchain
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
 trulens_eval.Leaderboard:
   __class__: builtins.module
   highs: {}
   lows:
+    MIGRATION_UNKNOWN_STR: builtins.str
     deprecation_utils: builtins.module
+    leaderboard: builtins.function
+trulens_eval.LiteLLM:
+  __bases__:
+  - trulens.providers.litellm.provider.LiteLLM
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    completion_args: typing.Dict[builtins.str, builtins.str]
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.OpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.OpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Provider:
+  __bases__:
+  - trulens.core.feedback.provider.Provider
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.Select:
+  __bases__:
+  - trulens.core.schema.select.Select
+  __class__: builtins.type
+  attributes: {}
+trulens_eval.TP:
+  __bases__:
+  - trulens.core.utils.threading.TP
+  __class__: builtins.type
+  attributes: {}
+trulens_eval.Tru:
+  __bases__:
+  - trulens.core.session.TruSession
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    DEFERRED_NUM_RUNS: builtins.int
+    GROUND_TRUTHS_BATCH_SIZE: builtins.int
+    RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
+    RETRY_FAILED_SECONDS: builtins.float
+    RETRY_RUNNING_SECONDS: builtins.float
+    connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
+trulens_eval.TruBasicApp:
+  __bases__:
+  - trulens.core.app.basic.TruBasicApp
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: trulens.core.app.basic.TruWrapperApp
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.TruChain:
+  __bases__:
+  - trulens.instrument.langchain.tru_chain.TruChain
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: typing.Any
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.TruCustomApp:
+  __bases__:
+  - trulens.core.app.custom.TruCustomApp
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: typing.Any
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    main_method: typing.Optional[trulens.core.utils.pyschema.Function, builtins.NoneType]
+    main_method_loaded: typing.Optional[typing.Callable, builtins.NoneType]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.TruLlama:
+  __bases__:
+  - trulens.instrument.llamaindex.tru_llama.TruLlama
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.TruRails:
+  __bases__:
+  - trulens.instrument.nemo.tru_rails.TruRails
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: nemoguardrails.rails.llm.llmrails.LLMRails
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.TruVirtual:
+  __bases__:
+  - trulens.core.app.virtual.TruVirtual
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: trulens.core.app.virtual.VirtualApp
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    connector: trulens.core.database.connector.base.DBConnector
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: typing.Any
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.app:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    A: typing.TypeVar
+    ATTRIBUTE_ERROR_MESSAGE: builtins.str
+    Agent: trulens.core.app.base.ComponentViewMeta
+    App: pydantic._internal._model_construction.ModelMetaclass
+    CLASS_INFO: builtins.str
+    ComponentView: trulens.core.app.base.ComponentViewMeta
+    CustomComponent: trulens.core.app.base.ComponentViewMeta
+    JSON_BASES: builtins.tuple
+    LLM: trulens.core.app.base.ComponentViewMeta
+    LangChainComponent: trulens.core.app.base.ComponentViewMeta
+    LlamaIndexComponent: trulens.core.app.base.ComponentViewMeta
+    Memory: trulens.core.app.base.ComponentViewMeta
+    Other: trulens.core.app.base.ComponentViewMeta
+    Prompt: trulens.core.app.base.ComponentViewMeta
+    RecordingContext: builtins.type
+    Tool: trulens.core.app.base.ComponentViewMeta
+    TrulensComponent: trulens.core.app.base.ComponentViewMeta
+    deprecation_utils: builtins.module
+    instrumented_component_views: builtins.function
+trulens_eval.app.Agent:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    agent_name: builtins.property
+trulens_eval.app.App:
+  __bases__:
+  - trulens.core.schema.app.AppDefinition
+  - trulens.core.instruments.WithInstrumentCallbacks
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app: typing.Any
+    app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
+    app_name: builtins.str
+    app_version: builtins.str
+    awith_: builtins.function
+    awith_record: builtins.function
+    connector: trulens.core.database.connector.base.DBConnector
+    db: builtins.property
+    dummy_record: builtins.function
+    feedback_definitions: typing.Sequence[builtins.str]
+    feedback_mode: trulens.core.schema.feedback.FeedbackMode
+    feedbacks: typing.List[trulens.core.feedback.feedback.Feedback]
+    format_instrumented_methods: builtins.function
+    initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
+      builtins.NoneType]
+    instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
+    instrumented: builtins.function
+    instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    main_acall: builtins.function
+    main_call: builtins.function
+    main_input: builtins.function
+    main_output: builtins.function
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
+    metadata: typing.Dict
+    print_instrumented: builtins.function
+    print_instrumented_components: builtins.function
+    print_instrumented_methods: builtins.function
+    record_ingest_mode: trulens.core.schema.app.RecordIngestMode
+    recording_contexts: _contextvars.ContextVar[trulens.core.app.base.RecordingContext]
+    records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    root_class: trulens.core.utils.pyschema.Class
+    select_context: builtins.classmethod
+    selector_check_warning: builtins.bool
+    selector_nocheck: builtins.bool
+    tags: builtins.str
+    tru: builtins.property
+    tru_class_info: trulens.core.utils.pyschema.Class
+    wait_for_feedback_results: builtins.function
+    with_: builtins.function
+    with_record: builtins.function
+trulens_eval.app.ComponentView:
+  __bases__:
+  - abc.ABC
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    class_is: builtins.staticmethod
+    innermost_base: builtins.staticmethod
+    of_json: builtins.classmethod
+    unsorted_parameters: builtins.function
+trulens_eval.app.CustomComponent:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    COMPONENT_VIEWS: builtins.list
+    Custom: trulens.core.app.base.ComponentViewMeta
+    component_of_json: builtins.staticmethod
+    constructor_of_class: builtins.staticmethod
+trulens_eval.app.LLM:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    model_name: builtins.property
+trulens_eval.app.LangChainComponent:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.app.LlamaIndexComponent:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.app.Memory:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.app.Other:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.app.Prompt:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    template: builtins.property
+trulens_eval.app.RecordingContext:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    add_call: builtins.function
+    finish_record: builtins.function
+    get: builtins.function
+trulens_eval.app.Tool:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes:
+    tool_name: builtins.property
+trulens_eval.app.TrulensComponent:
+  __bases__:
+  - trulens.core.app.base.ComponentView
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.appui:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    AppUI: traitlets.traitlets.MetaHasTraits
+    JSON_BASES: builtins.tuple
+    RecordWidget: builtins.type
+    Selector: traitlets.traitlets.MetaHasTraits
+    SelectorValue: traitlets.traitlets.MetaHasTraits
+    VALUE_MAX_CHARS: builtins.int
+    debug_style: builtins.dict
+    deprecation_utils: builtins.module
+trulens_eval.appui.AppUI:
+  __bases__:
+  - traitlets.traitlets.HasTraits
+  __class__: traitlets.traitlets.MetaHasTraits
+  attributes:
+    add_app_selection: builtins.function
+    add_record: builtins.function
+    add_record_selection: builtins.function
+    make_on_delete_app_selector: builtins.function
+    make_on_delete_record_selector: builtins.function
+    update_app_selections: builtins.function
+trulens_eval.appui.RecordWidget:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    remove_selector: builtins.function
+    set_comp: builtins.function
+    set_human: builtins.function
+    update_selections: builtins.function
+trulens_eval.appui.Selector:
+  __bases__:
+  - traitlets.traitlets.HasTraits
+  __class__: traitlets.traitlets.MetaHasTraits
+  attributes:
+    jpath: traitlets.traitlets.Any
+    select: traitlets.traitlets.Unicode
+trulens_eval.appui.SelectorValue:
+  __bases__:
+  - traitlets.traitlets.HasTraits
+  __class__: traitlets.traitlets.MetaHasTraits
+  attributes:
+    obj: traitlets.traitlets.Any
+    selector: traitlets.traitlets.Any
+    update: builtins.function
+    update_obj: builtins.function
+    update_selector: builtins.function
 trulens_eval.database:
   __class__: builtins.module
   highs: {}
@@ -91,6 +571,18 @@ trulens_eval.database.migrations:
     get_current_db_revision: builtins.function
     get_revision_history: builtins.function
     upgrade_db: builtins.function
+trulens_eval.database.migrations.DbRevisions:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    ahead: builtins.property
+    behind: builtins.property
+    current: typing.Optional[builtins.str, builtins.NoneType]
+    history: typing.List[builtins.str]
+    in_sync: builtins.property
+    latest: builtins.property
+    load: builtins.classmethod
 trulens_eval.feedback:
   __class__: builtins.module
   highs:
@@ -110,6 +602,113 @@ trulens_eval.feedback:
     __path__: builtins.list
     deprecation_utils: builtins.module
     imports_utils: builtins.module
+trulens_eval.feedback.AzureOpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.AzureOpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    deployment_name: builtins.str
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Bedrock:
+  __bases__:
+  - trulens.providers.bedrock.provider.Bedrock
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    model_engine: builtins.str
+    model_id: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Cortex:
+  __bases__:
+  - trulens.providers.cortex.provider.Cortex
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    model_engine: builtins.str
+    snowflake_conn: snowflake.connector.connection.SnowflakeConnection
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Embeddings:
+  __bases__:
+  - trulens.feedback.embeddings.Embeddings
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Feedback:
+  __bases__:
+  - trulens.core.feedback.feedback.Feedback
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    agg: typing.Optional[typing.Callable[[typing.Union[typing.Iterable[float], typing.Iterable[typing.Tuple[float,
+      float]]]], builtins.float], builtins.NoneType]
+    aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
+      builtins.NoneType]
+    feedback_definition_id: builtins.str
+    higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
+    if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
+    imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
+      typing.Dict[builtins.str, typing.Any]]]], builtins.NoneType]
+    implementation: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
+      builtins.NoneType]
+    run_location: typing.Optional[trulens.core.schema.feedback.FeedbackRunLocation,
+      builtins.NoneType]
+    selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
+    supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.GroundTruthAgreement:
+  __bases__:
+  - trulens.feedback.groundtruth.GroundTruthAgreement
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    bert_scorer: builtins.object
+    ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
+      trulens.core.utils.pyschema.FunctionOrMethod]
+    ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    provider: trulens.feedback.llm_provider.LLMProvider
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Huggingface:
+  __bases__:
+  - trulens.providers.huggingface.provider.Huggingface
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.HuggingfaceLocal:
+  __bases__:
+  - trulens.providers.huggingface.provider.HuggingfaceLocal
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.Langchain:
+  __bases__:
+  - trulens.providers.langchain.provider.Langchain
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.LiteLLM:
+  __bases__:
+  - trulens.providers.litellm.provider.LiteLLM
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    completion_args: typing.Dict[builtins.str, builtins.str]
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.OpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.OpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
 trulens_eval.feedback.provider:
   __class__: builtins.module
   highs:
@@ -127,6 +726,79 @@ trulens_eval.feedback.provider:
     __path__: builtins.list
     deprecation_utils: builtins.module
     imports_utils: builtins.module
+trulens_eval.feedback.provider.AzureOpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.AzureOpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    deployment_name: builtins.str
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.Bedrock:
+  __bases__:
+  - trulens.providers.bedrock.provider.Bedrock
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.bedrock.endpoint.BedrockEndpoint
+    model_engine: builtins.str
+    model_id: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.Cortex:
+  __bases__:
+  - trulens.providers.cortex.provider.Cortex
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.cortex.endpoint.CortexEndpoint
+    model_engine: builtins.str
+    snowflake_conn: snowflake.connector.connection.SnowflakeConnection
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.Huggingface:
+  __bases__:
+  - trulens.providers.huggingface.provider.Huggingface
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.HuggingfaceLocal:
+  __bases__:
+  - trulens.providers.huggingface.provider.HuggingfaceLocal
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.Langchain:
+  __bases__:
+  - trulens.providers.langchain.provider.Langchain
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.providers.langchain.endpoint.LangchainEndpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.LiteLLM:
+  __bases__:
+  - trulens.providers.litellm.provider.LiteLLM
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    completion_args: typing.Dict[builtins.str, builtins.str]
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.OpenAI:
+  __bases__:
+  - trulens.providers.openai.provider.OpenAI
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    model_engine: builtins.str
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.Provider:
+  __bases__:
+  - trulens.core.feedback.provider.Provider
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
+    tru_class_info: trulens.core.utils.pyschema.Class
 trulens_eval.feedback.provider.endpoint:
   __class__: builtins.module
   highs:
@@ -144,6 +816,132 @@ trulens_eval.feedback.provider.endpoint:
     __path__: builtins.list
     deprecation_utils: builtins.module
     imports_utils: builtins.module
+trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
+  __bases__:
+  - trulens.providers.bedrock.endpoint.BedrockEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    client: typing.Any
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    region_name: builtins.str
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.CortexEndpoint:
+  __bases__:
+  - trulens.providers.cortex.endpoint.CortexEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.DummyEndpoint:
+  __bases__:
+  - trulens.feedback.dummy.endpoint.DummyEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    api: trulens.feedback.dummy.endpoint.DummyAPI
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.Endpoint:
+  __bases__:
+  - trulens.core.feedback.endpoint.Endpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
+  __bases__:
+  - trulens.providers.huggingface.endpoint.HuggingfaceEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
+  __bases__:
+  - trulens.providers.langchain.endpoint.LangchainEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    chain: typing.Any
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
+  __bases__:
+  - trulens.providers.litellm.endpoint.LiteLLMEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    litellm_provider: builtins.str
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens_eval.feedback.provider.endpoint.OpenAIClient:
+  __bases__:
+  - trulens.providers.openai.endpoint.OpenAIClient
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    client: typing.Union[openai.OpenAI, openai.lib.azure.AzureOpenAI]
+    client_cls: trulens.core.utils.pyschema.Class
+    client_kwargs: builtins.dict
+trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
+  __bases__:
+  - trulens.providers.openai.endpoint.OpenAIEndpoint
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
+    callback_name: builtins.str
+    client: trulens.providers.openai.endpoint.OpenAIClient
+    global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    name: builtins.str
+    pace: trulens.core.utils.pace.Pace
+    post_headers: typing.Dict[builtins.str, builtins.str]
+    retries: builtins.int
+    rpm: builtins.float
+    tru_class_info: trulens.core.utils.pyschema.Class
 trulens_eval.react_components:
   __class__: builtins.module
   highs: {}
@@ -170,13 +968,269 @@ trulens_eval.utils:
   lows:
     __path__: builtins.list
     deprecation_utils: builtins.module
+trulens_eval.utils.serial:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Collect: pydantic._internal._model_construction.ModelMetaclass
+    GetAttribute: pydantic._internal._model_construction.ModelMetaclass
+    GetIndex: pydantic._internal._model_construction.ModelMetaclass
+    GetIndices: pydantic._internal._model_construction.ModelMetaclass
+    GetItem: pydantic._internal._model_construction.ModelMetaclass
+    GetItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
+    GetItems: pydantic._internal._model_construction.ModelMetaclass
+    GetSlice: pydantic._internal._model_construction.ModelMetaclass
+    JSONPath: pydantic._internal._model_construction.ModelMetaclass
+    JSON_BASES: builtins.tuple
+    JSONized: builtins.type
+    Lens: pydantic._internal._model_construction.ModelMetaclass
+    ParseException: builtins.type
+    SerialBytes: pydantic._internal._model_construction.ModelMetaclass
+    SerialModel: pydantic._internal._model_construction.ModelMetaclass
+    Step: pydantic._internal._model_construction.ModelMetaclass
+    StepItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
+    T: typing.TypeVar
+    all_objects: builtins.function
+    all_queries: builtins.function
+    deprecation_utils: builtins.module
+    leaf_queries: builtins.function
+    leafs: builtins.function
+    matching_objects: builtins.function
+    matching_queries: builtins.function
+    model_dump: builtins.function
+trulens_eval.utils.serial.Collect:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    collect: builtins.NoneType
+trulens_eval.utils.serial.GetAttribute:
+  __bases__:
+  - trulens.core.utils.serial.StepItemOrAttribute
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    attribute: builtins.str
+trulens_eval.utils.serial.GetIndex:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    index: builtins.int
+trulens_eval.utils.serial.GetIndices:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    indices: typing.Tuple[builtins.int, ...]
+trulens_eval.utils.serial.GetItem:
+  __bases__:
+  - trulens.core.utils.serial.StepItemOrAttribute
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    item: builtins.str
+trulens_eval.utils.serial.GetItemOrAttribute:
+  __bases__:
+  - trulens.core.utils.serial.StepItemOrAttribute
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    item_or_attribute: builtins.str
+trulens_eval.utils.serial.GetItems:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    items: typing.Tuple[builtins.str, ...]
+trulens_eval.utils.serial.GetSlice:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    start: typing.Optional[builtins.int, builtins.NoneType]
+    step: typing.Optional[builtins.int, builtins.NoneType]
+    stop: typing.Optional[builtins.int, builtins.NoneType]
+trulens_eval.utils.serial.JSONPath:
+  __bases__:
+  - pydantic.main.BaseModel
+  - collections.abc.Sized
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    dump_as_string: builtins.function
+    existing_prefix: builtins.function
+    exists: builtins.function
+    get: builtins.function
+    get_sole_item: builtins.function
+    is_immediate_prefix_of: builtins.function
+    is_prefix_of: builtins.function
+    of_string: builtins.staticmethod
+    path: typing.Tuple[trulens.core.utils.serial.Step, ...]
+    set: builtins.function
+    set_or_append: builtins.function
+    validate_from_string: builtins.classmethod
+trulens_eval.utils.serial.JSONized:
+  __bases__:
+  - builtins.dict
+  - typing.Generic
+  __class__: builtins.type
+  attributes: {}
+trulens_eval.utils.serial.Lens:
+  __bases__:
+  - pydantic.main.BaseModel
+  - collections.abc.Sized
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    dump_as_string: builtins.function
+    existing_prefix: builtins.function
+    exists: builtins.function
+    get: builtins.function
+    get_sole_item: builtins.function
+    is_immediate_prefix_of: builtins.function
+    is_prefix_of: builtins.function
+    of_string: builtins.staticmethod
+    path: typing.Tuple[trulens.core.utils.serial.Step, ...]
+    set: builtins.function
+    set_or_append: builtins.function
+    validate_from_string: builtins.classmethod
+trulens_eval.utils.serial.ParseException:
+  __bases__:
+  - builtins.Exception
+  __class__: builtins.type
+  attributes: {}
+trulens_eval.utils.serial.SerialBytes:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    data: builtins.bytes
+trulens_eval.utils.serial.SerialModel:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    formatted_objects: _contextvars.ContextVar
+    replace: builtins.function
+    update: builtins.function
+trulens_eval.utils.serial.Step:
+  __bases__:
+  - pydantic.main.BaseModel
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    get: builtins.function
+    set: builtins.function
+trulens_eval.utils.serial.StepItemOrAttribute:
+  __bases__:
+  - trulens.core.utils.serial.Step
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    get_item_or_attribute: builtins.function
 trulens_eval.utils.text:
   __class__: builtins.module
   highs: {}
   lows:
+    UNICODE_CHECK: builtins.str
+    UNICODE_CLOCK: builtins.str
+    UNICODE_HOURGLASS: builtins.str
+    UNICODE_LOCK: builtins.str
+    UNICODE_SQUID: builtins.str
+    UNICODE_STOP: builtins.str
+    UNICODE_YIELD: builtins.str
     deprecation_utils: builtins.module
+    make_retab: builtins.function
+    retab: builtins.function
+trulens_eval.utils.threading:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DEFAULT_NETWORK_TIMEOUT: builtins.float
+    TP: builtins.type
+    Thread: builtins.type
+    ThreadPoolExecutor: builtins.type
+    deprecation_utils: builtins.module
+trulens_eval.utils.threading.TP:
+  __bases__:
+  - trulens.core.utils.python.SingletonPerName
+  __class__: builtins.type
+  attributes:
+    DEBUG_TIMEOUT: builtins.float
+    MAX_THREADS: builtins.int
+    submit: builtins.function
+trulens_eval.utils.threading.Thread:
+  __bases__:
+  - threading.Thread
+  __class__: builtins.type
+  attributes: {}
+trulens_eval.utils.threading.ThreadPoolExecutor:
+  __bases__:
+  - concurrent.futures.thread.ThreadPoolExecutor
+  __class__: builtins.type
+  attributes: {}
 trulens_eval.utils.trulens:
   __class__: builtins.module
   highs: {}
   lows:
+    COMPONENT_VIEWS: builtins.list
+    Class: pydantic._internal._model_construction.ModelMetaclass
+    Other: trulens.core.app.base.ComponentViewMeta
+    Record: pydantic._internal._model_construction.ModelMetaclass
+    Type: typing._SpecialGenericAlias
+    base: builtins.module
+    component_of_json: builtins.function
+    constructor_of_class: builtins.function
     deprecation_utils: builtins.module
+    get_feedback_result: builtins.function
+    pd: builtins.module
+    time: builtins.module
+trulens_eval.utils.trulens.Class:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    base_class: builtins.function
+    bases: typing.Optional[typing.Sequence[trulens.core.utils.pyschema.Class], builtins.NoneType]
+    load: builtins.function
+    module: trulens.core.utils.pyschema.Module
+    name: builtins.str
+    noserio_issubclass: builtins.function
+    of_class: builtins.staticmethod
+    of_class_info: builtins.staticmethod
+    of_object: builtins.staticmethod
+trulens_eval.utils.trulens.Other:
+  __bases__:
+  - trulens.core.app.base.Other
+  - trulens.core.app.base.TrulensComponent
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval.utils.trulens.Record:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    app_id: builtins.str
+    calls: typing.List[trulens.core.schema.record.RecordAppCall]
+    cost: typing.Optional[trulens.core.schema.base.Cost, builtins.NoneType]
+    feedback_and_future_results: typing.Optional[typing.List[typing.Tuple[trulens.core.schema.feedback.FeedbackDefinition,
+      concurrent.futures._base.Future[trulens.core.schema.feedback.FeedbackResult]]],
+      builtins.NoneType]
+    feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens.core.schema.feedback.FeedbackResult]],
+      builtins.NoneType]
+    layout_calls_as_app: builtins.function
+    main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    main_input: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    main_output: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    meta: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
+      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    perf: typing.Optional[trulens.core.schema.base.Perf, builtins.NoneType]
+    record_id: builtins.str
+    tags: typing.Optional[builtins.str, builtins.NoneType]
+    ts: datetime.datetime
+    wait_for_feedback_results: builtins.function

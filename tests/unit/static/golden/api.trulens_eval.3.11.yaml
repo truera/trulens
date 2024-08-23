@@ -37,7 +37,6 @@ trulens_eval.app:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     ATTRIBUTE_ERROR_MESSAGE: builtins.str
     Agent: abc.ABCMeta
     App: pydantic._internal._model_construction.ModelMetaclass
@@ -55,7 +54,6 @@ trulens_eval.app:
     Tool: abc.ABCMeta
     TrulensComponent: abc.ABCMeta
     instrumented_component_views: builtins.function
-    mod_app: builtins.module
 trulens_eval.app.Agent:
   __bases__:
   - trulens_eval.app.ComponentView
@@ -315,7 +313,6 @@ trulens_eval.database.orm:
     BaseWithTablePrefix: builtins.type
     DEFAULT_DATABASE_PREFIX: builtins.str
     ORM: abc.ABCMeta
-    T: typing.TypeVar
     make_base_for_prefix: functools._lru_cache_wrapper
     make_orm_for_prefix: functools._lru_cache_wrapper
     new_base: functools._lru_cache_wrapper
@@ -422,7 +419,6 @@ trulens_eval.feedback.feedback:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     InvalidSelector: builtins.type
     SkipEval: builtins.type
@@ -659,15 +655,12 @@ trulens_eval.feedback.provider.endpoint.base:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
     DEFAULT_NETWORK_TIMEOUT: builtins.float
     DEFAULT_RPM: builtins.int
     DummyEndpoint: pydantic._internal._model_construction.ModelMetaclass
     Endpoint: pydantic._internal._model_construction.ModelMetaclass
     EndpointCallback: pydantic._internal._model_construction.ModelMetaclass
     INSTRUMENT: builtins.str
-    T: typing.TypeVar
 trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
   __bases__:
   - trulens_eval.feedback.provider.endpoint.base.Endpoint
@@ -1233,7 +1226,6 @@ trulens_eval.schema.feedback:
     FeedbackResult: pydantic._internal._model_construction.ModelMetaclass
     FeedbackResultStatus: enum.EnumType
     Select: builtins.type
-    T: typing.TypeVar
 trulens_eval.schema.feedback.FeedbackCall:
   __bases__:
   - trulens_eval.utils.serial.SerialModel
@@ -1355,7 +1347,6 @@ trulens_eval.schema.record:
     Record: pydantic._internal._model_construction.ModelMetaclass
     RecordAppCall: pydantic._internal._model_construction.ModelMetaclass
     RecordAppCallMethod: pydantic._internal._model_construction.ModelMetaclass
-    T: typing.TypeVar
 trulens_eval.schema.record.Record:
   __bases__:
   - trulens_eval.utils.serial.SerialModel
@@ -1802,9 +1793,6 @@ trulens_eval.utils.asynchro:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
-    T: typing.TypeVar
     desync: builtins.function
     sync: builtins.function
 trulens_eval.utils.command_line:
@@ -1816,10 +1804,7 @@ trulens_eval.utils.containers:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
     BlockingSet: builtins.type
-    T: typing.TypeVar
     dict_merge_with: builtins.function
     dict_set_with: builtins.function
     dict_set_with_multikey: builtins.function
@@ -1924,7 +1909,6 @@ trulens_eval.utils.json:
     ERROR: builtins.str
     JSON_BASES: builtins.tuple
     NOSERIO: builtins.str
-    T: typing.TypeVar
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
     json_default: builtins.function
@@ -2134,7 +2118,6 @@ trulens_eval.utils.python:
     STACK: builtins.str
     SingletonInfo: builtins.type
     SingletonPerName: builtins.type
-    T: typing.TypeVar
     callable_name: builtins.function
     caller_frame: builtins.function
     caller_frameinfo: builtins.function
@@ -2204,7 +2187,6 @@ trulens_eval.utils.serial:
     SerialModel: pydantic._internal._model_construction.ModelMetaclass
     Step: pydantic._internal._model_construction.ModelMetaclass
     StepItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
-    T: typing.TypeVar
     all_objects: builtins.function
     all_queries: builtins.function
     leaf_queries: builtins.function
@@ -2344,7 +2326,6 @@ trulens_eval.utils.threading:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     DEFAULT_NETWORK_TIMEOUT: builtins.float
     TP: builtins.type
     Thread: builtins.type

@@ -16,6 +16,25 @@ PACKAGES_MIGRATION_LINK = (
 )
 
 
+def deprecated_property(message: str):
+    """Decorator for deprecated attributes defined as properties."""
+
+    warned = False
+
+    def wrapper(func):
+        @functools.wraps(func)
+        def _movedattribute(*args, **kwargs):
+            nonlocal warned
+            if not warned:
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+                warned = True
+            return func(*args, **kwargs)
+
+        return property(_movedattribute)
+
+    return wrapper
+
+
 def packages_dep_warn(module: str):
     """Issue a deprecation warning for a backwards-compatibility modules.
 

@@ -303,7 +303,11 @@ The API level of class members is the API level of the class itself.
 """
 
 
-def get_class_members(class_: type, class_api_level: str = "low") -> Members:
+def get_class_members(
+    class_: type,
+    class_api_level: str = "low",
+    class_alias: Optional[str] = None,
+) -> Members:
     """Get all members of a class.
 
     Args:
@@ -347,8 +351,14 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
             for name, field in class_.__fields__.items()
         ]
 
+    qualbase: str = (
+        class_.__module__ + "." + class_.__qualname__
+        if class_alias is None
+        else class_alias
+    )
+
     for name, val, typ in static_members + slot_members + fields_members:
-        qualname = class_.__module__ + "." + class_.__qualname__ + "." + name
+        qualname = qualbase + "." + name
         member = Member(
             class_.__module__, name=name, qualname=qualname, val=val, typ=typ
         )
@@ -482,6 +492,9 @@ def get_module_members(
                 "__builtins__",
                 "__warningregistry__",
             ]
+            and (
+                len(name) > 1 and not isinstance(val, TypeVar)
+            )  # skip generic type vars
         ):
             # Checking if name is in builtins filters out standard module
             # attributes like __package__. A few other standard attributes are

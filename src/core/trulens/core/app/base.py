@@ -30,6 +30,7 @@ from typing import (
 )
 
 import pydantic
+from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 import trulens.core.feedback as mod_feedback
@@ -40,6 +41,7 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
@@ -479,13 +481,27 @@ class App(
     """Feedback functions to evaluate on each record."""
 
     connector: DBConnector = pydantic.Field(
-        default_factory=lambda: DefaultDBConnector(), exclude=True
+        default_factory=DefaultDBConnector, exclude=True
     )
     """Database connector.
 
-    If this is not provided, a [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector] will be made
-    (if not already) and used.
+    If this is not provided, a
+    [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector]
+    will be made (if not already) and used.
     """
+
+    @deprecation_utils.deprecated_property(
+        "The `App.db` property is deprecated. Use `App.connector.db` instead."
+    )
+    def db(self) -> mod_base_db.DB:
+        return self.connector.db
+
+    @deprecation_utils.deprecated_property(
+        "The `App.tru` property for retrieving `Tru` is deprecated. "
+        "Use `App.connector` which contains the replacement `DBConnector` class instead."
+    )
+    def tru(self) -> DBConnector:
+        return self.connector
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
