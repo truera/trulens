@@ -67,6 +67,7 @@ class SnowflakeServerSideEvaluationArtifacts:
         self._set_up_stage()
         self._set_up_stream()
         self._set_up_secret()
+        self._set_up_network_rule()
         self._set_up_external_access_integration()
         self._set_up_stored_procedure()
         self._set_up_task()
@@ -102,7 +103,7 @@ class SnowflakeServerSideEvaluationArtifacts:
             params=[self._database_url],
         ).collect()
 
-    def _set_up_external_access_integration(self):
+    def _set_up_network_rule(self):
         self._session.sql(
             """
             CREATE NETWORK RULE IF NOT EXISTS TRULENS_DUMMY_NETWORK_RULE
@@ -112,6 +113,8 @@ class SnowflakeServerSideEvaluationArtifacts:
                 COMMENT = 'This is a dummy network rule created entirely because secrets cannot be used without one.'
             """
         ).collect()
+
+    def _set_up_external_access_integration(self):
         self._session.sql(
             f"""
             CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS {self._external_access_integration_name}
