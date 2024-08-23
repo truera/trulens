@@ -6,7 +6,6 @@ from datetime import datetime
 import json
 import logging
 from multiprocessing import Process
-import os
 from pprint import PrettyPrinter
 import queue
 import re
@@ -54,17 +53,13 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
     from snowflake.snowpark import Session
     from snowflake.sqlalchemy import URL
     from tqdm import tqdm
+    from trulens.core.utils.snowflake_server_side_evalutation_artifacts import (
+        SnowflakeServerSideEvaluationArtifacts,
+    )
 
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
-
-_ZIPS_TO_UPLOAD = [
-    "snowflake_sqlalchemy.zip",
-    "trulens_core.zip",
-    "trulens_feedback.zip",
-    "trulens_providers_cortex.zip",
-]
 
 
 class Tru(python.SingletonPerName):
@@ -222,7 +217,10 @@ class Tru(python.SingletonPerName):
                     "`app_name` must be set if `snowflake_connection_parameters` is set!"
                 )
             schema_name = Tru._compute_schema_name(app_name)
-            Tru._validate_alphanumeric_and_underscore(schema_name, "app_name")
+            if not re.match(r"^[A-Za-z0-9_]+$", schema_name):
+                raise ValueError(
+                    f"`{app_name}` must contain only alphanumeric and underscore characters!"
+                )
             database_url = self._create_snowflake_database_url(
                 snowflake_connection_parameters, schema_name
             )
@@ -282,7 +280,6 @@ class Tru(python.SingletonPerName):
         schema_name: str,
         database_url: str,
     ):
-        # Get convenience variables.
         database_name = snowflake_connection_parameters["database"]
         warehouse_name = snowflake_connection_parameters["warehouse"]
         snowflake_connection_parameters = snowflake_connection_parameters.copy()
@@ -290,153 +287,18 @@ class Tru(python.SingletonPerName):
         external_access_integration_name = (
             Tru._compute_external_access_integration_name(schema_name)
         )
-        # Verify convenience variables can be used for Snowflake SQL object names.
-        Tru._validate_alphanumeric_and_underscore(
-            database_name, "database_name"
-        )
-        Tru._validate_alphanumeric_and_underscore(schema_name, "schema_name")
-        Tru._validate_alphanumeric_and_underscore(
-            warehouse_name, "warehouse_name"
-        )
-        Tru._validate_alphanumeric_and_underscore(
-            external_access_integration_name, "external_access_integration_name"
-        )
-        # Upload all needed artifacts and SQL objects.
         with Session.builder.configs(
             snowflake_connection_parameters
         ).create() as session:
-            # Upload trulens and snowflake-sqlalchemy to staging.
-            data_directory = os.path.join(
-                os.path.dirname(__file__), "../data/snowflake_stage_zips"
+            ssesea = SnowflakeServerSideEvaluationArtifacts(
+                session,
+                database_name,
+                schema_name,
+                warehouse_name,
+                external_access_integration_name,
+                database_url,
             )
-            session.sql(
-                "CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE"
-            ).collect()
-            for zip_to_upload in _ZIPS_TO_UPLOAD:
-                session.file.put(
-                    os.path.join(data_directory, zip_to_upload),
-                    "@TRULENS_PACKAGES_STAGE",
-                )
-            # Initialize stream for feedback eval table.
-            session.sql(
-                f"""
-                CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
-                    ON TABLE {database_name}.{schema_name}.TRULENS_FEEDBACKS
-                """
-            ).collect()
-            # Initialize task for stream that will import trulens and try to run the Tru.
-            session.sql(
-                f"""
-                CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVAL_TASK
-                    WAREHOUSE = {warehouse_name}
-                    SCHEDULE = '1 MINUTE'
-                    ALLOW_OVERLAPPING_EXECUTION = FALSE
-                    WHEN SYSTEM$STREAM_HAS_DATA('TRULENS_FEEDBACK_EVALS_STREAM')
-                    AS
-                        CALL TRULENS_RUN_DEFERRED_FEEDBACKS()
-                """
-            ).collect()
-            # Initialize secret.
-            session.sql(
-                """
-                CREATE SECRET IF NOT EXISTS TRULENS_DB_URL
-                    TYPE = GENERIC_STRING
-                    SECRET_STRING = ?
-                """,
-                params=[database_url],
-            ).collect()
-            # Initialize external access integration rule.
-            session.sql(
-                """
-                CREATE NETWORK RULE IF NOT EXISTS TRULENS_DUMMY_NETWORK_RULE
-                    TYPE = HOST_PORT
-                    MODE = EGRESS
-                    VALUE_LIST = ('snowflake.com')
-                    COMMENT = 'This is a dummy network rule created entirely because secrets cannot be used without one.'
-                """
-            ).collect()
-            session.sql(
-                f"""
-                CREATE EXTERNAL ACCESS INTEGRATION IF NOT EXISTS {external_access_integration_name}
-                    ALLOWED_NETWORK_RULES = (TRULENS_DUMMY_NETWORK_RULE)
-                    ALLOWED_AUTHENTICATION_SECRETS = (TRULENS_DB_URL)
-                    ENABLED = TRUE
-                    COMMENT = 'This is a dummy EAI created entirely because secrets cannot be used without one.'
-                """
-            ).collect()
-            # Initialize stored procedure.
-            # TODO(this_pr): Ensure we use the right trulens version.
-            # TODO(this_pr): get this indentation stuff better.
-            session.sql(
-                f"""
-                CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS()
-                    RETURNS STRING
-                    LANGUAGE PYTHON
-                    RUNTIME_VERSION = '3.11'
-                    PACKAGES = (
-                        'alembic',
-                        'dill',
-                        'munch',
-                        'nest-asyncio',
-                        'nltk',
-                        'numpy',
-                        'packaging',
-                        'pandas',
-                        'pip',
-                        'pydantic',
-                        'python-dotenv',
-                        'requests',
-                        'rich',
-                        'scikit-learn',
-                        'scipy',
-                        'snowflake-snowpark-python',
-                        'sqlalchemy',
-                        'tqdm',
-                        'typing_extensions'
-                    )
-                    IMPORTS = (
-                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/snowflake_sqlalchemy.zip',
-                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_core.zip',
-                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_feedback.zip',
-                        '@{database_name}.{schema_name}.TRULENS_PACKAGES_STAGE/trulens_providers_cortex.zip'
-                    )
-                    HANDLER = 'run'
-                    SECRETS = ('trulens_db_url' = TRULENS_DB_URL)
-                    EXTERNAL_ACCESS_INTEGRATIONS = ({external_access_integration_name})
-                AS
-                    $$
-import _snowflake
-import trulens.providers.cortex.provider
-from trulens.core import Tru
-from trulens.core.schema.feedback import FeedbackRunLocation
-
-def run(session):
-    # Set up sqlalchemy engine parameters.
-    conn = session._conn._conn # TODO(this_pr): Can't I just say session.connection?
-    engine_params = {{}}
-    engine_params["paramstyle"] = "qmark"
-    engine_params["creator"] = lambda: conn
-    # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
-    trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = conn
-    # Run deferred feedback evaluator.
-    db_url = _snowflake.get_generic_secret_string("trulens_db_url")
-    tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
-    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)                    $$;
-                """
-            ).collect()
-            # Start task.
-            session.sql(
-                "ALTER TASK TRULENS_FEEDBACK_EVAL_TASK RESUME"
-            ).collect()
-
-    @staticmethod
-    def _validate_alphanumeric_and_underscore(
-        name: str, error_message_variable_name: str
-    ):
-        if not re.match(r"^[A-Za-z0-9_]+$", name):
-            raise ValueError(
-                f"`{error_message_variable_name}` must contain only alphanumeric and underscore characters!"
-            )
+            ssesea.set_up_all()
 
     @staticmethod
     def _compute_schema_name(app_name: str) -> str:
