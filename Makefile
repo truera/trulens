@@ -108,7 +108,7 @@ test-write-api:
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
 test-deprecation:
-	$(PYTEST) tests/unit/static/test_deprecation.py
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file

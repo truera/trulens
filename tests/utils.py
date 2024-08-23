@@ -404,13 +404,19 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
     )
 
 
-def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
+def get_module_members(
+    mod: Union[str, ModuleType], aliases_are_defs: bool = False
+) -> Optional[Members]:
     """Get all members of a module organized into exports, definitions;
     three types of access: public, friends, privates; and two levels of API:
     high-level and low-level.
 
     Args:
         mod: The module or its name.
+
+        aliases_are_defs: If True, members that are aliases for definitions in other
+            modules are considered definitions here too. This is to catch
+            deprecation aliases.
 
     Returns:
         A namedtuples (modname, exports, definitions, access_publics,
@@ -450,7 +456,7 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
         is_export = False
         is_base = False
 
-        if _isdefinedin(val, mod):
+        if aliases_are_defs or _isdefinedin(val, mod):
             is_def = True
             definitions.append(member)
 

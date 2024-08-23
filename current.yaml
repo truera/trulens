@@ -1,0 +1,195 @@
+trulens.core.database.migrations.DbRevisions:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    ahead: builtins.property
+    behind: builtins.property
+    current: typing.Optional[builtins.str, builtins.NoneType]
+    history: typing.List[builtins.str]
+    in_sync: builtins.property
+    latest: builtins.property
+    load: builtins.classmethod
+trulens.core.schema.feedback.FeedbackMode:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    DEFERRED: trulens.core.schema.feedback.FeedbackMode
+    NONE: trulens.core.schema.feedback.FeedbackMode
+    WITH_APP: trulens.core.schema.feedback.FeedbackMode
+    WITH_APP_THREAD: trulens.core.schema.feedback.FeedbackMode
+    name: enum.property
+    value: enum.property
+trulens.core.utils.deprecation.class_moved.<locals>._MovedClass:
+  __bases__:
+  - trulens.providers.huggingface.provider.Huggingface
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    endpoint: trulens.core.feedback.endpoint.Endpoint
+    tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.utils.trulens.Other:
+  __bases__:
+  - trulens.core.app.base.Other
+  - trulens.core.app.base.TrulensComponent
+  __class__: trulens.core.app.base.ComponentViewMeta
+  attributes: {}
+trulens_eval:
+  __class__: builtins.module
+  __version__: 1.0.0.a
+  highs:
+    AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
+    Bedrock: pydantic._internal._model_construction.ModelMetaclass
+    Cortex: pydantic._internal._model_construction.ModelMetaclass
+    Feedback: pydantic._internal._model_construction.ModelMetaclass
+    FeedbackMode: enum.EnumType
+    Huggingface: pydantic._internal._model_construction.ModelMetaclass
+    HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
+    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LiteLLM: pydantic._internal._model_construction.ModelMetaclass
+    OpenAI: pydantic._internal._model_construction.ModelMetaclass
+    Provider: pydantic._internal._model_construction.ModelMetaclass
+    Select: builtins.type
+    TP: builtins.type
+    Tru: pydantic._internal._model_construction.ModelMetaclass
+    TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
+    TruChain: pydantic._internal._model_construction.ModelMetaclass
+    TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
+    TruLlama: pydantic._internal._model_construction.ModelMetaclass
+    TruRails: pydantic._internal._model_construction.ModelMetaclass
+    TruVirtual: pydantic._internal._model_construction.ModelMetaclass
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+    __version__: builtins.str
+    __version_info__: builtins.tuple
+    deprecation_utils: builtins.module
+    imports_utils: builtins.module
+trulens_eval.database:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    __path__: builtins.list
+    base: builtins.module
+    deprecation_utils: builtins.module
+    exceptions: builtins.module
+    legacy: builtins.module
+    migrations: builtins.module
+    orm: builtins.module
+    sqlalchemy: builtins.module
+    utils: builtins.module
+trulens_eval.database.migrations:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DbRevisions: pydantic._internal._model_construction.ModelMetaclass
+    __path__: builtins.list
+    alembic_config: builtins.function
+    deprecation_utils: builtins.module
+    downgrade_db: builtins.function
+    get_current_db_revision: builtins.function
+    get_revision_history: builtins.function
+    upgrade_db: builtins.function
+trulens_eval.feedback:
+  __class__: builtins.module
+  highs:
+    AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
+    Bedrock: pydantic._internal._model_construction.ModelMetaclass
+    Cortex: pydantic._internal._model_construction.ModelMetaclass
+    Embeddings: pydantic._internal._model_construction.ModelMetaclass
+    Feedback: pydantic._internal._model_construction.ModelMetaclass
+    GroundTruthAgreement: pydantic._internal._model_construction.ModelMetaclass
+    Huggingface: pydantic._internal._model_construction.ModelMetaclass
+    HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
+    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LiteLLM: pydantic._internal._model_construction.ModelMetaclass
+    OpenAI: pydantic._internal._model_construction.ModelMetaclass
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+    imports_utils: builtins.module
+trulens_eval.feedback.provider:
+  __class__: builtins.module
+  highs:
+    AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
+    Bedrock: pydantic._internal._model_construction.ModelMetaclass
+    Cortex: pydantic._internal._model_construction.ModelMetaclass
+    Huggingface: pydantic._internal._model_construction.ModelMetaclass
+    HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
+    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LiteLLM: pydantic._internal._model_construction.ModelMetaclass
+    OpenAI: pydantic._internal._model_construction.ModelMetaclass
+    Provider: pydantic._internal._model_construction.ModelMetaclass
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+    imports_utils: builtins.module
+trulens_eval.feedback.provider.endpoint:
+  __class__: builtins.module
+  highs:
+    BedrockEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    CortexEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    DummyEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    Endpoint: pydantic._internal._model_construction.ModelMetaclass
+    HuggingfaceEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    LangchainEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    LiteLLMEndpoint: pydantic._internal._model_construction.ModelMetaclass
+    OpenAIClient: pydantic._internal._model_construction.ModelMetaclass
+    OpenAIEndpoint: pydantic._internal._model_construction.ModelMetaclass
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+    imports_utils: builtins.module
+trulens_eval.react_components:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+trulens_eval.react_components.record_viewer:
+  __class__: builtins.module
+  highs:
+    record_viewer: builtins.function
+  lows:
+    __all__: builtins.list
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+trulens_eval.schema:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+trulens_eval.utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    __path__: builtins.list
+    deprecation_utils: builtins.module
+trulens_eval.utils.text:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    UNICODE_CHECK: builtins.str
+    UNICODE_CLOCK: builtins.str
+    UNICODE_HOURGLASS: builtins.str
+    UNICODE_LOCK: builtins.str
+    UNICODE_SQUID: builtins.str
+    UNICODE_STOP: builtins.str
+    UNICODE_YIELD: builtins.str
+    deprecation_utils: builtins.module
+    make_retab: builtins.function
+    retab: builtins.function
+trulens_eval.utils.trulens:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    COMPONENT_VIEWS: builtins.list
+    Other: trulens.core.app.base.ComponentViewMeta
+    component_of_json: builtins.function
+    constructor_of_class: builtins.function
+    deprecation_utils: builtins.module

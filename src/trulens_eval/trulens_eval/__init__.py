@@ -10,6 +10,9 @@ from trulens.core.utils import imports as imports_utils
 
 deprecation_utils.packages_dep_warn("trulens_eval")
 
+__version_info__ = (1, 0, 0, "a")
+__version__ = ".".join(map(str, __version_info__))
+
 from trulens.core.app.basic import TruBasicApp
 from trulens.core.app.custom import TruCustomApp
 from trulens.core.app.virtual import TruVirtual

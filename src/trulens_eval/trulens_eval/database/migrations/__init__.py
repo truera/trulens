@@ -13,3 +13,10 @@ deprecation_utils.packages_dep_warn("trulens_eval.database.migrations")
 # Because of that, this backwards compatibility module is empty.
 
 # TODO: Get the non-exported names here too.
+
+from trulens.core.database.migrations import DbRevisions
+from trulens.core.database.migrations import alembic_config
+from trulens.core.database.migrations import downgrade_db
+from trulens.core.database.migrations import get_current_db_revision
+from trulens.core.database.migrations import get_revision_history
+from trulens.core.database.migrations import upgrade_db
