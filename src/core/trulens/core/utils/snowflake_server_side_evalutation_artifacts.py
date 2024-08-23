@@ -16,6 +16,7 @@ import trulens.providers.cortex.provider
 from trulens.core import Tru
 from trulens.core.schema.feedback import FeedbackRunLocation
 
+
 def run(session):
     # Set up sqlalchemy engine parameters.
     conn = session.connection
@@ -23,11 +24,21 @@ def run(session):
     engine_params["paramstyle"] = "qmark"
     engine_params["creator"] = lambda: conn
     # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
-    trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = conn
+    trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
+        conn
+    )
     # Run deferred feedback evaluator.
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
-    tru = Tru(database_url=db_url, database_check_revision=False, sqlalchemy_engine_params=engine_params)  # TODO(this_pr): Remove database_check_revision.
-    tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE, return_when_done=True, disable_tqdm=True)
+    tru = Tru(
+        database_url=db_url,
+        database_check_revision=False,  # TODO: check revision in the future?
+        sqlalchemy_engine_params=engine_params,
+    )
+    tru.start_evaluator(
+        run_location=FeedbackRunLocation.SNOWFLAKE,
+        return_when_done=True,
+        disable_tqdm=True,
+    )
 """
 
 
