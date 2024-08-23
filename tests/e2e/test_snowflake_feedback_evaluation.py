@@ -12,6 +12,7 @@ from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
 from trulens.providers.cortex.provider import Cortex
+from trulens.providers.openai.provider import OpenAI
 
 from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -224,8 +225,15 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
         )
-        # TODO(this_pr): Make sure only Cortex provider functions can work.
         # TODO(this_pr): Run all snowflake tests.
+
+    @optional_test
+    def test_snowflake_feedback_only_runs_cortex(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
+        ):
+            SnowflakeFeedback(OpenAI().relevance).on_input_output()
 
 
 if __name__ == "__main__":
