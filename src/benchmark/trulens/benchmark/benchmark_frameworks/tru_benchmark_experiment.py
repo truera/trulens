@@ -117,7 +117,7 @@ class TruBenchmarkExperiment:
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
-
+        Note the order of generated scores must be preserved to match the order of the true labels.
         ground_truth pd.DataFrame: ground truth dataset / collection to evaluate the feedback function on
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
@@ -128,10 +128,9 @@ class TruBenchmarkExperiment:
         scores = []
         meta_scores = []
         with ThreadPoolExecutor() as executor:
-            future_to_index = {}  # Map each future to the index of the row
-            index_to_results = {}  # Store results based on the original index
+            future_to_index = {}
+            index_to_results = {}
 
-            # Submit tasks to the executor
             for index, row in ground_truth.iterrows():
                 if "expected_chunks" in row:
                     for expected_chunk in row["expected_chunks"]:
@@ -149,7 +148,6 @@ class TruBenchmarkExperiment:
                     )
                     future_to_index[future] = index
 
-            # Process futures as they complete
             for future in as_completed(future_to_index):
                 index = future_to_index[future]
                 try:
@@ -159,7 +157,6 @@ class TruBenchmarkExperiment:
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
 
-            metadata = None
             # Process results in the original order
             for index in range(len(ground_truth)):
                 if index in index_to_results:
@@ -172,9 +169,6 @@ class TruBenchmarkExperiment:
 
                         scores.append(score)
 
-                        print(
-                            f"index: {index}, score: {score}, metadata: {metadata}"
-                        )
         if meta_scores:
             return scores, meta_scores
         else:

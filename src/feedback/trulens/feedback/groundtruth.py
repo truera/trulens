@@ -420,8 +420,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: NDCG@k
         """
         assert self.k is not None, "k must be set for ndcg_at_k"
-
-        print(f"scores from feedback function: \n\n {scores} \n\n")
         relevance_scores = np.array([scores])
         true_labels = np.array([self.true_labels])
         ndcg_values = [ndcg_score(relevance_scores, true_labels, k=self.k)]
@@ -596,8 +594,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Expected calibration error
         """
 
-        print(f"ECE score_confidence_pairs: \n\n {score_confidence_pairs} \n\n")
-
         assert len(score_confidence_pairs) == len(self.true_labels)
         scores, confidences = zip(*score_confidence_pairs)
 
@@ -646,6 +642,5 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Mean absolute error
         """
-        print(f"scores from feedback function in MAE: \n\n {scores} \n\n")
 
         return np.mean(np.abs(np.array(scores) - np.array(self.true_labels)))
