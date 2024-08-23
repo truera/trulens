@@ -26,7 +26,6 @@ from trulens.core.utils.serial import SerialBytes
 from trulens.core.utils.serial import SerialModel
 from trulens.core.utils.serial import Step
 from trulens.core.utils.serial import StepItemOrAttribute
-from trulens.core.utils.serial import T
 from trulens.core.utils.serial import all_objects
 from trulens.core.utils.serial import all_queries
 from trulens.core.utils.serial import leaf_queries
