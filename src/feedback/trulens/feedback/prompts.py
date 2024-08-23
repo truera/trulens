@@ -35,6 +35,8 @@ LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt
 LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt
 LLM_ABSTENTION_USER = v2.Abstention.user_prompt
 
+LLM_TRIVIAL_SYSTEM = v2.Trivial.system_prompt
+LLM_TRIVIAL_USER = v2.Trivial.user_prompt
 
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt
