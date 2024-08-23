@@ -6,6 +6,7 @@ from datetime import datetime
 import json
 import logging
 from multiprocessing import Process
+import os
 from pprint import PrettyPrinter
 import queue
 import re
@@ -57,6 +58,13 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
 pp = PrettyPrinter()
 
 logger = logging.getLogger(__name__)
+
+_ZIPS_TO_UPLOAD = [
+    "snowflake_sqlalchemy.zip",
+    "trulens_core.zip",
+    "trulens_feedback.zip",
+    "trulens_providers_cortex.zip",
+]
 
 
 class Tru(python.SingletonPerName):
@@ -298,17 +306,17 @@ class Tru(python.SingletonPerName):
             snowflake_connection_parameters
         ).create() as session:
             # Upload trulens and snowflake-sqlalchemy to staging.
+            data_directory = os.path.join(
+                os.path.dirname(__file__), "../data/snowflake_stage_zips"
+            )
             session.sql(
                 "CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE"
             ).collect()
-            session.file.put(
-                "snowflake_sqlalchemy.zip", "@TRULENS_PACKAGES_STAGE"
-            )
-            session.file.put("trulens_core.zip", "@TRULENS_PACKAGES_STAGE")
-            session.file.put("trulens_feedback.zip", "@TRULENS_PACKAGES_STAGE")
-            session.file.put(
-                "trulens_providers_cortex.zip", "@TRULENS_PACKAGES_STAGE"
-            )
+            for zip_to_upload in _ZIPS_TO_UPLOAD:
+                session.file.put(
+                    os.path.join(data_directory, zip_to_upload),
+                    "@TRULENS_PACKAGES_STAGE",
+                )
             # Initialize stream for feedback eval table.
             session.sql(
                 f"""
@@ -358,7 +366,6 @@ class Tru(python.SingletonPerName):
             ).collect()
             # Initialize stored procedure.
             # TODO(this_pr): Ensure we use the right trulens version.
-            # TODO(this_pr): Make sure we upload the zips and build them.
             # TODO(this_pr): get this indentation stuff better.
             session.sql(
                 f"""
