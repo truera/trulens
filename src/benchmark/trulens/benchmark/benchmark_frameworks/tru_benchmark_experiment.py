@@ -10,7 +10,6 @@ from trulens.core import Select
 from trulens.core.app import TruCustomApp
 from trulens.core.app.custom import instrument
 from trulens.core.feedback.feedback import AggCallable
-from trulens.core.utils.pyschema import FunctionOrMethod
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +74,6 @@ class TruBenchmarkExperiment:
     @instrument
     def run_score_generation_on_single_row(
         self,
-        # row,
         feedback_fn: Callable,
         feedback_args: List[Any],
     ) -> Union[float, Tuple[float, float]]:
@@ -114,13 +112,13 @@ class TruBenchmarkExperiment:
     @instrument
     def __call__(
         self,
-        ground_truth: Union[List, Callable, pd.DataFrame, FunctionOrMethod],
+        ground_truth: pd.DataFrame,
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
 
-        ground_truth (Union[List, Callable, pd.DataFrame, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
+        ground_truth pd.DataFrame: ground truth dataset / collection to evaluate the feedback function on
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
@@ -134,13 +132,7 @@ class TruBenchmarkExperiment:
             index_to_results = {}  # Store results based on the original index
 
             # Submit tasks to the executor
-            if isinstance(ground_truth, pd.DataFrame):
-                ground_truth_iterable = ground_truth.iterrows()
-
-            elif isinstance(ground_truth, list):
-                ground_truth_iterable = enumerate(ground_truth)
-
-            for index, row in ground_truth_iterable:
+            for index, row in ground_truth.iterrows():
                 if "expected_chunks" in row:
                     for expected_chunk in row["expected_chunks"]:
                         future = executor.submit(
@@ -167,6 +159,7 @@ class TruBenchmarkExperiment:
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
 
+            metadata = None
             # Process results in the original order
             for index in range(len(ground_truth)):
                 if index in index_to_results:
@@ -179,6 +172,9 @@ class TruBenchmarkExperiment:
 
                         scores.append(score)
 
+                        print(
+                            f"index: {index}, score: {score}, metadata: {metadata}"
+                        )
         if meta_scores:
             return scores, meta_scores
         else:
