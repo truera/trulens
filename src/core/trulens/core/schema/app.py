@@ -151,7 +151,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         )
         if app_id is not None and kwargs["app_id"] != app_id:
             raise ValueError(
-                "`app_id` does not match with `app_name` and `app_version`!"
+                "`app_id` does not match with `app_name` and `app_version`! `app_id` is auto-generated and should not need to be passed in!"
             )
 
         super().__init__(**kwargs)
