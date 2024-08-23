@@ -113,6 +113,7 @@ trulens.core.app.base.App:
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
     app_name: builtins.str
     app_version: builtins.str
     awith_: builtins.function
@@ -229,6 +230,7 @@ trulens.core.app.basic.TruBasicApp:
     app: trulens.core.app.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
     app_name: builtins.str
     app_version: builtins.str
     call_with_record: builtins.function
@@ -278,6 +280,7 @@ trulens.core.app.custom.TruCustomApp:
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
     app_name: builtins.str
     app_version: builtins.str
     connector: trulens.core.database.connector.base.DBConnector
@@ -324,6 +327,7 @@ trulens.core.app.virtual.TruVirtual:
     app: trulens.core.app.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+    app_id: builtins.str
     app_name: builtins.str
     app_version: builtins.str
     connector: trulens.core.database.connector.base.DBConnector
@@ -873,7 +877,7 @@ trulens.core.schema.app.AppDefinition:
     app: trulens.core.utils.serial.JSONized[trulens.core.schema.app.AppDefinition]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    app_id: builtins.property
+    app_id: builtins.str
     app_name: builtins.str
     app_version: builtins.str
     continue_session: builtins.staticmethod
