@@ -15,7 +15,6 @@ from trulens.core.app.base import ATTRIBUTE_ERROR_MESSAGE
 from trulens.core.app.base import CLASS_INFO
 from trulens.core.app.base import JSON_BASES
 from trulens.core.app.base import LLM
-from trulens.core.app.base import A
 from trulens.core.app.base import Agent
 from trulens.core.app.base import App
 from trulens.core.app.base import ComponentView
