@@ -7,7 +7,6 @@ import inspect
 import sys
 from typing import Dict, Optional
 from unittest import main
-from unittest import skip
 from unittest import skipIf
 
 from jsondiff import SymmetricJsonDiffSyntax
@@ -139,7 +138,7 @@ class TestAPI(JSONTestCase):
 
         return flat_diffs
 
-    @skip("Compat not ready.")
+    # @skip("Compat not ready.")
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens_eval_compat(self):
