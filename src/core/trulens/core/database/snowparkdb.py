@@ -1,9 +1,12 @@
 from datetime import datetime
-from typing import Dict, Iterable, Optional, Sequence, Tuple, Type, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
+import pydantic
+from trulens.core.database.sqlalchemy import AppsExtractor
 from snowflake.snowpark import Session
 from snowflake.snowpark.functions import col
+from snowflake.snowpark import functions as F
 from trulens.core.database.base import DB
 import logging
 from trulens.core.utils.python import locals_except
@@ -20,14 +23,11 @@ logger = logging.getLogger(__name__)
 
 class SnowparkDB(DB):
     session: Session = None
-    redact_keys: list = []
     orm: Type[mod_orm.ORM]
     class Config:
         arbitrary_types_allowed = True
-    def __init__(self, session: Session, redact_keys):
-        self.session = session
-        self.redact_keys = redact_keys
-        self.orm = mod_orm.make_orm_for_prefix()
+    def __init__(self, session: Session, **kwargs):
+        super().__init__(session=session, orm = mod_orm.make_orm_for_prefix(), **kwargs)
 
     def get_app(self, app_id: str):
 
@@ -72,14 +72,14 @@ class SnowparkDB(DB):
         )
     
     def _feedback_query(
-    self,
-    count_by_status: bool = False,
-    shuffle: bool = False,
-    record_id: Optional[mod_types_schema.RecordID] = None,
-    feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
-    feedback_definition_id: Optional[
-        mod_types_schema.FeedbackDefinitionID
-    ] = None,
+        self,
+        count_by_status: bool = False,
+        shuffle: bool = False,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_definition_id: Optional[
+            mod_types_schema.FeedbackDefinitionID
+        ] = None,
         status: Optional[
             Union[
                 mod_feedback_schema.FeedbackResultStatus,
@@ -93,8 +93,10 @@ class SnowparkDB(DB):
     ):
         if count_by_status:
             q = self.session.table(self.orm.FeedbackResult.__tablename__).group_by('status').agg(
-                self.session.functions.count('feedback_result_id').alias('count')
+                # F.col('status'),
+                F.count('feedback_result_id')
             )
+            return q
         else:
             q = self.session.table(self.orm.FeedbackResult.__tablename__)
 
@@ -147,6 +149,8 @@ class SnowparkDB(DB):
         if status:
             if isinstance(status, mod_feedback_schema.FeedbackResultStatus):
                 status = [status.value]
+            else:
+                status = [s.value for s in status]
             q = q.filter(q['status'].isin(status))
 
         if last_ts_before:
@@ -159,7 +163,7 @@ class SnowparkDB(DB):
             q = q.limit(limit)
 
         if shuffle:
-            q = q.order_by(self.session.functions.random())
+            q = q.order_by(F.random())
 
         return q
 
@@ -218,7 +222,9 @@ class SnowparkDB(DB):
 
         q = self._feedback_query(**locals_except("self"))
 
-        return q.to_pandas()
+        df = q.to_pandas()
+        df.columns = df.columns.str.lower()
+        return df
 
     def get_records_and_feedback(
         self,
@@ -227,48 +233,82 @@ class SnowparkDB(DB):
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+        stmt = self.session.table(self.orm.Record)
 
-        # TODO: Add pagination to this method. Currently the joinedload in
-        # select below disables lazy loading of records which will be a problem
-        # for large databases without the use of pagination.
+        if app_ids:
+            stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
 
-        with self.session.begin() as session:
-            stmt = sa.select(self.orm.Record)
-            # NOTE: We are selecting records here because offset and limit need
-            # to be with respect to those rows instead of AppDefinition or
-            # FeedbackResult rows.
+        stmt = stmt.options(self.session.joinedload(self.orm.Record.feedback_results))
 
-            if app_ids:
-                stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+        stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
 
-            stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
-            # NOTE(piotrm): The joinedload here makes it so that the
-            # feedback_results get loaded eagerly instead if lazily when
-            # accessed later.
+        stmt = stmt.limit(limit).offset(offset)
 
-            # TODO(piotrm): The subsequent logic in helper methods end up
-            # reading all of the records and feedback_results in order to create
-            # a DataFrame so there is no reason to not eagerly get all of this
-            # data. Ideally, though, we would be making some sort of lazy
-            # DataFrame and then could use the lazy join feature of sqlalchemy.
+        ex = stmt.execute().unique()
+        # unique needed for joinedload above.
 
-            stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
-            # NOTE: feedback_results order is governed by the order_by on the
-            # orm.FeedbackResult.record backref definition. Here, we need to
-            # order Records as we did not use an auto join to retrieve them. If
-            # records were to be retrieved from AppDefinition.records via auto
-            # join, though, the orm backref ordering would be able to take hold.
+        records = [rec[0] for rec in ex]
+        # TODO: Make the iteration of records lazy in some way. See
+        # TODO(piotrm) above.
 
-            stmt = stmt.limit(limit).offset(offset)
+        return AppsExtractor().get_df_and_cols(records=records)
 
-            ex = session.execute(stmt).unique()
-            # unique needed for joinedload above.
+    def _escape_single_quotes(self, value):
+        if isinstance(value, str):
+            return value.replace("'", "''")
+        return value
 
-            records = [rec[0] for rec in ex]
-            # TODO: Make the iteration of records lazy in some way. See
-            # TODO(piotrm) above.
+    def _create_updatesql(self, orm_class: mod_orm.ORM, new_obj, key: str, key_value: str):
+        # Collect the row as a dictionary
+        row_dict = {k: self._escape_single_quotes(v) for k, v in new_obj.__dict__.items() if not k.startswith('_') and v is not None}
 
-            return AppsExtractor().get_df_and_cols(records=records)
+        # Generate the SET clause for the SQL update statement
+        set_clause = ", ".join([f"{k}='{v}'" for k, v in row_dict.items() if k != key])
+        sql_update = f"UPDATE {orm_class.__tablename__} SET {set_clause} WHERE {key}='{key_value}'"
+        return sql_update
+
+    def _insert_sql(self, orm_class: mod_orm.ORM, new_obj):
+        # Collect the row as a dictionary
+        row_dict = {k: self._escape_single_quotes(v) for k, v in new_obj.__dict__.items() if not k.startswith('_') and v is not None}
+        # Generate the INSERT INTO clause for the SQL insert statement
+        columns = ", ".join(row_dict.keys())
+        values = ", ".join([f"'{v}'" for v in row_dict.values()])
+        sql_insert = f"INSERT INTO {orm_class.__tablename__} ({columns}) VALUES ({values})"
+        return sql_insert
+
+    def insert_feedback(
+        self, feedback_result: mod_feedback_schema.FeedbackResult
+    ) -> mod_types_schema.FeedbackResultID:
+        """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
+        _feedback_result = self.orm.FeedbackResult.parse(
+            feedback_result
+        )
+        feedback_results_table = self.session.table(self.orm.FeedbackResult.__tablename__)
+        row_exists = feedback_results_table.filter(
+            col('feedback_result_id') == _feedback_result.feedback_result_id
+        ).first()
+    
+        if row_exists:
+            sql = self._create_updatesql(
+                self.orm.FeedbackResult,
+                _feedback_result,
+                'feedback_result_id',
+                _feedback_result.feedback_result_id)
+            res = self.session.sql(sql).collect()
+        else:
+            res = self.session.sql(self._insert_sql(self.orm.FeedbackResult, _feedback_result)).collect()
+        
+        status = mod_feedback_schema.FeedbackResultStatus(
+            _feedback_result.status
+        )
+        logger.info(
+            "%s feedback result %s %s %s",
+            res,
+            _feedback_result.name,
+            status.name,
+            _feedback_result.feedback_result_id,
+        )
+        return _feedback_result.feedback_result_id
 
     def batch_insert_feedback(self):
         pass
@@ -285,17 +325,15 @@ class SnowparkDB(DB):
         pass
     def get_ground_truths_by_dataset(self):
         pass
-    def insert_app(self):
+    def insert_app(self, app: AppDefinition):
         pass
     def insert_dataset(self):
         pass
-    def insert_feedback(self):
-        pass
-    def insert_feedback_definition(self):
+    def insert_feedback_definition(self, feedback_definition):
         pass
     def insert_ground_truth(self):
         pass
-    def insert_record(self):
+    def insert_record(self, record):
         pass
     def migrate_database(self):
         pass

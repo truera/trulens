@@ -495,6 +495,11 @@ class Tru(python.SingletonPerName):
                 if on_done is not None:
                     try:
                         on_done(temp)
+                    except Exception as e:
+                        logger.error(
+                            "Error in on_done callback for feedback function: {}",
+                            e,
+                        )
                     finally:
                         return temp
                 return temp

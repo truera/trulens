@@ -366,7 +366,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             row,
         ) -> Optional[mod_feedback_schema.FeedbackResultStatus]:
             record_json = row.record_json
-            record = mod_record_schema.Record.model_validate(record_json)
+            record = mod_record_schema.Record.model_validate(json.loads(record_json))
 
             app_json = row.app_json
 
@@ -378,7 +378,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 )
                 return None
 
-            feedback = Feedback.model_validate(row.feedback_json)
+            feedback = Feedback.model_validate(json.loads(row.feedback_json))
 
             return feedback.run_and_log(
                 record=record,
