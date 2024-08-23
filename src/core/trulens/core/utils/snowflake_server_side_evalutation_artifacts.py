@@ -136,6 +136,7 @@ class SnowflakeServerSideEvaluationArtifacts:
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
                 PACKAGES = (
+                    -- TODO: get these package versions automatically.
                     'alembic',
                     'dill',
                     'munch',
@@ -182,6 +183,3 @@ class SnowflakeServerSideEvaluationArtifacts:
         self._session.sql(
             "ALTER TASK TRULENS_FEEDBACK_EVAL_TASK RESUME"
         ).collect()
-
-
-# TODO(this_pr): Ensure we use the right trulens version.
