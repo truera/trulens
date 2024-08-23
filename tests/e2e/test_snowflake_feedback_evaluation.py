@@ -18,20 +18,21 @@ from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
-def silly_feedback_function_1(q: str) -> float:
+def silly_feedback_function(q: str) -> float:
     return 0.1
 
 
-def silly_feedback_function_2(q: str) -> float:
-    return 0.2
-
-
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
+    def _suspend_task(self) -> None:
+        self._snowflake_session.sql(
+            f"ALTER TASK {self._database_name}.{self._schema_name}.TRULENS_FEEDBACK_EVAL_TASK SUSPEND"
+        ).collect()
+
     @optional_test
     def test_local_deferred_mode(self) -> None:
         tru = Tru()
         tru.reset_database()
-        f = Feedback(silly_feedback_function_1).on_default()
+        f = Feedback(silly_feedback_function).on_default()
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
@@ -49,35 +50,36 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         tru.stop_evaluator()
         records_and_feedback = tru.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
-        self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
+        self.assertEqual(records_and_feedback[1], ["silly_feedback_function"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
+            records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
 
     @optional_test
     def test_snowflake_deferred_mode(self) -> None:
         tru = self.get_tru("test_snowflake_deferred_mode")
-        f_local = Feedback(silly_feedback_function_1).on_default()
-        f_snowflake = SnowflakeFeedback(silly_feedback_function_2).on_default()
+        self._suspend_task()
+        f_local = Feedback(silly_feedback_function).on_default()
+        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
         tru_app = TruBasicApp(
-            text_to_text=lambda t: f"returning {t}",
+            text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
             feedback_mode=FeedbackMode.DEFERRED,
         )
         with tru_app:
-            tru_app.main_call("test_snowflake_deferred_mode")
+            tru_app.main_call("What is the capital of Japan?")
         time.sleep(2)
         tru.start_evaluator()
         time.sleep(2)
         tru.stop_evaluator()
         records_and_feedback = tru.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
-        self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
+        self.assertEqual(records_and_feedback[1], ["silly_feedback_function"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
+            records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
         tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
@@ -87,36 +89,37 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
             sorted(records_and_feedback[1]),
-            ["silly_feedback_function_1", "silly_feedback_function_2"],
+            ["relevance", "silly_feedback_function"],
         )
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
+            records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
-        self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_2"].iloc[0],
-            0.2,
+        self.assertGreaterEqual(
+            records_and_feedback[0]["relevance"].iloc[0],
+            0.8,
         )
 
     @optional_test
     def test_snowflake_feedback_is_always_deferred(self) -> None:
         tru = self.get_tru("test_snowflake_feedback_is_always_deferred")
-        f_local = Feedback(silly_feedback_function_1).on_default()
-        f_snowflake = SnowflakeFeedback(silly_feedback_function_2).on_default()
+        self._suspend_task()
+        f_local = Feedback(silly_feedback_function).on_default()
+        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
         tru_app = TruBasicApp(
-            text_to_text=lambda t: f"returning {t}",
+            text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
         )
         with tru_app:
-            tru_app.main_call("test_snowflake_feedback_is_always_deferred")
+            tru_app.main_call("What is the capital of Japan?")
         time.sleep(2)
         records_and_feedback = tru.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
-        self.assertEqual(records_and_feedback[1], ["silly_feedback_function_1"])
+        self.assertEqual(records_and_feedback[1], ["silly_feedback_function"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
+            records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
         tru.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
@@ -126,16 +129,16 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
             sorted(records_and_feedback[1]),
-            ["silly_feedback_function_1", "silly_feedback_function_2"],
+            ["relevance", "silly_feedback_function"],
         )
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_1"].iloc[0],
+            records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
-        self.assertEqual(
-            records_and_feedback[0]["silly_feedback_function_2"].iloc[0],
-            0.2,
+        self.assertGreaterEqual(
+            records_and_feedback[0]["relevance"].iloc[0],
+            0.8,
         )
 
     @optional_test
@@ -205,10 +208,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @optional_test
     def test_snowflake_feedback_ran(self) -> None:
         tru = self.get_tru("test_snowflake_feedback_ran")
-        provider = Cortex()
-        f_snowflake = SnowflakeFeedback(provider.relevance).on_input_output()
+        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
         tru_app = TruBasicApp(
-            text_to_text=lambda t: "Tokyo is the capital of Japan.",
+            text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_snowflake],
         )
         with tru_app:
@@ -225,7 +227,6 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
         )
-        # TODO(this_pr): Run all snowflake tests.
 
     @optional_test
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
