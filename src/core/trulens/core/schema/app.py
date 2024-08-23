@@ -56,7 +56,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID = pydantic.Field(read_only=True)  # str
+    app_id: mod_types_schema.AppID = pydantic.Field(frozen=True)  # str
     """Unique identifier for this app.
 
     Computed deterministically from app_name and app_version. Leaving it here

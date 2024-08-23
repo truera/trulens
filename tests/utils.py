@@ -107,8 +107,13 @@ def get_submodule_names(mod: ModuleType) -> Iterable[str]:
     yield mod.__name__
 
     for modname in get_module_names_of_path(path, prefix=mod.__name__ + "."):
-        if modname.endswith("_bundle"):
-            # Skip this as it is not a real module/package.
+        if modname.endswith("._bundle") or modname.startswith(
+            "trulens.dashboard.pages"
+        ):
+            # Skip _bundle this as it is not a real module/package.
+
+            # Skip trulens.dashboard.pages* because importing them executes a lot of stuff.
+
             # TODO: figure out how to prevent it from being installed to begin with.
             continue
 
