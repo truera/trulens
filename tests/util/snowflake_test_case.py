@@ -36,7 +36,9 @@ class SnowflakeTestCase(TestCase):
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
-        for key in [curr for curr in TruSession._instances if curr[0] == "Tru"]:
+        for key in [
+            curr for curr in TruSession._instances if curr[0] == "TruSession"
+        ]:
             del TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
@@ -83,7 +85,7 @@ class SnowflakeTestCase(TestCase):
         app_name = app_base_name
         app_name += "__"
         app_name += str(uuid.uuid4()).replace("-", "_")
-        self._schema_name = app_name
+        self._schema_name = app_name.upper()
         self.assertNotIn(self._schema_name, self.list_schemas())
         self._snowflake_schemas_to_delete.append(self._schema_name)
         self._snowflake_external_access_integrations_to_delete.append(

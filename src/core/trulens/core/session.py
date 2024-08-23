@@ -149,6 +149,15 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         return inst
 
     def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
+        if python.safe_hasattr(self, "connector"):
+            # Already initialized by SingletonByName mechanism. Give warning if
+            # any option was specified (not None) as it will be ignored.
+            if connector is not None:
+                logger.warning(
+                    "Tru was already initialized. Cannot change database configuration after initialization."
+                )
+                self.warning()
+            return
         connector_args = {
             k: v
             for k, v in kwargs.items()
@@ -649,7 +658,6 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
                             Future[mod_feedback_schema.FeedbackResult],
                         ]
                     ] = feedback.Feedback.evaluate_deferred(
-                        tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
                         session=self,
