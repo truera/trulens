@@ -16,6 +16,8 @@ from trulens.core.schema import types as mod_types_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.database import orm as mod_orm
 from trulens.core.schema import base as mod_base_schema
+from trulens.feedback import feedback
+from trulens.core.schema import record as mod_record_schema
 import json
 import pandas as pd
 
@@ -224,6 +226,9 @@ class SnowparkDB(DB):
 
         df = q.to_pandas()
         df.columns = df.columns.str.lower()
+        # use model_validate to validate the feedback_json
+        df['feedback_json'] = df['feedback_json'].apply(lambda x: feedback.Feedback.model_validate(json.loads(x)))
+        df['record_json'] = df['record_json'].apply(lambda x: mod_record_schema.Record.model_validate(json.loads(x)))
         return df
 
     def get_records_and_feedback(
