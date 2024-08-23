@@ -81,24 +81,26 @@ class SnowflakeConnector(DBConnector):
 
     @classmethod
     def _create_snowflake_database_url(cls, **kwargs) -> str:
-        cls._create_snowflake_schema_if_not_exists(**kwargs)
+        cls._create_snowflake_schema_if_not_exists(kwargs)
         return URL(**kwargs)
 
     @classmethod
-    def _create_snowflake_schema_if_not_exists(cls, **kwargs):
-        session = Session.builder.configs(**kwargs).create()
-        root = Root(session)
-        schema_name = kwargs.get("schema", None)
-        if schema_name is None:
-            raise ValueError("Schema name must be provided.")
+    def _create_snowflake_schema_if_not_exists(
+        cls, connection_parameters: Dict[str, str]
+    ):
+        with Session.builder.configs(connection_parameters).create() as session:
+            root = Root(session)
+            schema_name = connection_parameters.get("schema", None)
+            if schema_name is None:
+                raise ValueError("Schema name must be provided.")
 
-        database_name = kwargs.get("database", None)
-        if database_name is None:
-            raise ValueError("Database name must be provided.")
-        schema = Schema(name=schema_name)
-        root.databases[database_name].schemas.create(
-            schema, mode=CreateMode.if_not_exists
-        )
+            database_name = connection_parameters.get("database", None)
+            if database_name is None:
+                raise ValueError("Database name must be provided.")
+            schema = Schema(name=schema_name)
+            root.databases[database_name].schemas.create(
+                schema, mode=CreateMode.if_not_exists
+            )
 
     @cached_property
     def db(self) -> DB:

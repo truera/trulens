@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
+import inspect
 import logging
 from multiprocessing import Process
-import queue
 import threading
 from threading import Thread
 from time import sleep
@@ -22,6 +22,7 @@ from typing import (
 import warnings
 
 import pandas
+import pydantic
 from trulens.core import feedback
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
@@ -46,7 +47,7 @@ with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
 logger = logging.getLogger(__name__)
 
 
-class TruSession(python.SingletonPerName):
+class TruSession(pydantic.BaseModel, python.SingletonPerName):
     """TruSession is the main class that provides an entry points to trulens.
 
     TruSession lets you:
@@ -73,8 +74,8 @@ class TruSession(python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requires annotation
-            of methods to instrument.
+            Custom apps containing custom structures and methods. Requires
+            annotation of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
             apps that do not have a real app to instrument but have a virtual
@@ -85,7 +86,15 @@ class TruSession(python.SingletonPerName):
         connector: Database Connector to use. If not provided, a default
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector]
             is created.
+
+        **kwargs: All other arguments are used to initialize
+            [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
+            Mutually exclusive with `connector`.
     """
+
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True, extra="forbid"
+    )
 
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
@@ -111,14 +120,26 @@ class TruSession(python.SingletonPerName):
     GROUND_TRUTHS_BATCH_SIZE: int = 100
     """Time to wait before inserting a batch of ground truths into the database."""
 
-    _evaluator_stop: Optional[threading.Event] = None
+    _evaluator_stop: Optional[threading.Event] = pydantic.PrivateAttr(None)
     """Event for stopping the deferred evaluator which runs in another thread."""
 
-    batch_record_queue = queue.Queue()
+    _evaluator_proc: Optional[Union[Process, Thread]] = pydantic.PrivateAttr(
+        None
+    )
 
-    batch_ground_truth_queue = queue.Queue()
+    _dashboard_urls: Optional[str] = pydantic.PrivateAttr(None)
 
-    batch_thread = None
+    _dashboard_proc: Optional[Process] = pydantic.PrivateAttr(None)
+
+    _tunnel_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _tunnel_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _dashboard_listener_stdout: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
+
+    connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
 
     def __new__(cls, *args, **kwargs) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
@@ -126,21 +147,34 @@ class TruSession(python.SingletonPerName):
         return inst
 
     def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
-        self.connector = connector or DefaultDBConnector()
-        if kwargs:
-            warnings.warn(
-                f"Session arguments {', '.join(kwargs.keys())} have been deprecated. Use a DBConnector instead.",
-                DeprecationWarning,
-                stacklevel=2,
+        if python.safe_hasattr(self, "connector"):
+            # Already initialized by SingletonByName mechanism. Give warning if
+            # any option was specified (not None) as it will be ignored.
+            if connector is not None:
+                logger.warning(
+                    "Tru was already initialized. Cannot change database configuration after initialization."
+                )
+                self.warning()
+            return
+        connector_args = {
+            k: v
+            for k, v in kwargs.items()
+            if k in inspect.signature(DefaultDBConnector.__init__).parameters
+        }
+        self_args = {k: v for k, v in kwargs.items() if k not in connector_args}
+
+        if connector_args and connector is not None:
+            extra_keys = ", ".join(
+                map(lambda s: "`" + s + "`", connector_args.keys())
             )
-            self.connector = DefaultDBConnector(**kwargs)
-            self._dashboard_urls: Optional[str] = None
-            self._dashboard_proc: Optional[Process] = None
-            self._evaluator_proc: Optional[Union[Process, Thread]] = None
-            self._tunnel_listener_stdout: Optional[Thread] = None
-            self._tunnel_listener_stderr: Optional[Thread] = None
-            self._dashboard_listener_stdout: Optional[Thread] = None
-            self._dashboard_listener_stderr: Optional[Thread] = None
+            raise ValueError(
+                f"Cannot provide both `connector` and connector argument(s) {extra_keys}."
+            )
+
+        super().__init__(
+            connector=connector or DefaultDBConnector(**connector_args),
+            **self_args,
+        )
 
     def reset_database(self):
         """Reset the database. Clears all tables.
@@ -621,7 +655,6 @@ class TruSession(python.SingletonPerName):
                             Future[mod_feedback_schema.FeedbackResult],
                         ]
                     ] = feedback.Feedback.evaluate_deferred(
-                        tru=self,
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
                         session=self,

@@ -1031,7 +1031,7 @@ Feedback function signature:
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
         record_id = record.record_id
 
-        db = session.db
+        db = session.connector.db
 
         # Placeholder result to indicate a run.
         feedback_result = mod_feedback_schema.FeedbackResult(
