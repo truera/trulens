@@ -312,7 +312,8 @@ class TruCustomApp(App):
         from trulens.core import TruCustomApp
 
         tru_recorder = TruCustomApp(custom_app,
-            app_id="Custom Application v1",
+            app_name="Custom Application",
+            app_version="base",
             feedbacks=[f_context_relevance])
 
         with tru_recorder as recording:

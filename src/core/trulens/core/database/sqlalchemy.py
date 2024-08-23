@@ -135,7 +135,7 @@ class SQLAlchemyDB(DB):
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
-        """Process database-related configuration provided to the [Tru][trulens.core.tru.Tru] class to
+        """Process database-related configuration provided to the [Tru][trulens.core.session.TruSession] class to
         create a database.
 
         Emits warnings if appropriate.
@@ -257,12 +257,12 @@ class SQLAlchemyDB(DB):
                     raise RuntimeError(
                         "Migrating legacy sqlite database is no longer supported. "
                         "A database reset is required. This will delete all existing data: "
-                        "`tru.reset_database()`."
+                        "`session.reset_database()`."
                     ) from e
 
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `session.migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(

@@ -6,6 +6,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+PYTEST := poetry run pytest --rootdir=.
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-not -path "./src/dashboard/*" \
@@ -90,15 +91,34 @@ trubot:
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
+# Run the static unit tests only, those in the static subfolder. They are run
+# for every tested python version while those outside of static are run only for
+# the latest (supported) python version.
+
+test-static:
+	$(PYTEST) tests/unit/static/test_static.py
+
+# Tests in the e2e folder make use of possibly costly endpoints. They
+# are part of only the less frequently run release tests.
+
+# API tests.
+test-api:
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
+test-write-api:
+	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
+
+test-deprecation:
+	$(PYTEST) tests/unit/static/test_deprecation.py
+
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
-	poetry run pytest --rootdir=. tests/e2e/test_dummy.py
+	$(PYTEST) tests/e2e/test_dummy.py
 test-serial: # has golden file
-	poetry run pytest --rootdir=. tests/e2e/test_serial.py
+	$(PYTEST) tests/e2e/test_serial.py
 test-golden: test-dummy test-serial
 test-write-golden: test-write-golden-dummy test-write-golden-serial
-test-write-golden-%:
-	WRITE_GOLDEN=1 poetry run pytest --rootdir=. tests/e2e/test_$*.py || true
+test-write-golden-%: tests/e2e/test_$*.py
+	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 
 # Runs required tests
 test-%-required: env-required
@@ -116,16 +136,6 @@ test-%-optional: env-optional
 # frequently.
 test-unit:
 	poetry run pytest --rootdir=. tests/unit/*
-
-# Run the static unit tests only, those in the static subfolder. They are run
-# for every tested python version while those outside of static are run only for
-# the latest (supported) python version.
-test-static:
-	poetry run pytest --rootdir=. tests/unit/static/test_static.py
-
-test-deprecation:
-	TEST_OPTIONAL=1 poetry run pytest --rootdir=. tests/unit/static/test_deprecation.py
-
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
@@ -177,7 +187,7 @@ zip-wheels:
 	poetry run ./zip_wheels.sh
 
 ## Step: Upload wheels to pypi
-# Usage: TOKEN=... make upload-trulnes-instrument-langchain
+# Usage: TOKEN=... make upload-trulens-instrument-langchain
 upload-%: clean build zip-wheels
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
