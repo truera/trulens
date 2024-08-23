@@ -36,8 +36,8 @@ class TruBenchmarkExperiment:
     tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
     mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
 
-    tru_benchmark_artic = tru.BenchmarkExperiment(
-        app_id="MAE",
+    tru_benchmark_artic = session.BenchmarkExperiment(
+        app_name="MAE",
         feedback_fn=context_relevance_ff_to_score,
         agg_funcs=[mae_agg_func],
         benchmark_params=BenchmarkParams(temperature=0.5),
@@ -177,12 +177,16 @@ class TruBenchmarkExperiment:
 
 @staticmethod
 def create_benchmark_experiment_app(
-    app_id: str, benchmark_experiment: TruBenchmarkExperiment, **kwargs
+    app_name: str,
+    app_version: str,
+    benchmark_experiment: TruBenchmarkExperiment,
+    **kwargs,
 ) -> TruCustomApp:
     """Create a Custom app for special use case: benchmarking feedback functions.
 
     Args:
-        app_id (str): user-defined identifier of the experiment run.
+        app_name (str): user-defined name of the experiment run.
+        app_version (str): user-defined version of the experiment run.
         feedback_fn (Callable): feedback function of interest to perform meta-evaluation on.
         agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
         benchmark_params (Any): parameters for the benchmarking experiment.
@@ -193,7 +197,8 @@ def create_benchmark_experiment_app(
 
     return TruCustomApp(
         benchmark_experiment,
-        app_id=app_id,
+        app_name=app_name,
+        app_version=app_version,
         feedbacks=benchmark_experiment.f_benchmark_metrics,
         **kwargs,
     )

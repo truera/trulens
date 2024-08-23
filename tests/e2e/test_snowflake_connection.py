@@ -14,7 +14,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         """
         Check that we can connect to a Snowflake backend and have created the required schema.
         """
-        self.get_tru("test_basic_snowflake_connection")
+        self.get_session("test_basic_snowflake_connection")
 
 
 if __name__ == "__main__":

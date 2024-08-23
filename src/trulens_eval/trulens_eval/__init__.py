@@ -17,7 +17,7 @@ from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
 from trulens.core.schema import Select
 from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.tru import Tru
+from trulens.core.session import TruSession as Tru
 from trulens.core.utils.threading import TP
 
 with imports_utils.OptionalImports(

@@ -15,7 +15,7 @@ import pinecone
 import streamlit as st
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.utils.keys import check_keys
 from trulens.instrument.langchain import TruChain
 from trulens.providers.huggingface import Huggingface
@@ -26,9 +26,9 @@ check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
 
-app_id = "TruBot"
-# app_id = "TruBot_langprompt"
-# app_id = "TruBot_relevance"
+app_name = "TruBot"
+# app_name = "TruBot_langprompt"
+# app_name = "TruBot_relevance"
 
 # Pinecone configuration.
 pinecone.init(
@@ -92,7 +92,7 @@ def generate_response(prompt):
     )
 
     # Language mismatch fix:
-    if "langprompt" in app_id:
+    if "langprompt" in app_name:
         chain.combine_docs_chain.llm_chain.prompt.template = (
             "Use the following pieces of CONTEXT to answer the question at the end "
             "in the same language as the question. If you don't know the answer, "
@@ -104,7 +104,7 @@ def generate_response(prompt):
             "Helpful Answer: "
         )
 
-    elif "relevance" in app_id:
+    elif "relevance" in app_name:
         # Contexts fix
         chain.combine_docs_chain.llm_chain.prompt.template = (
             "Use only the relevant contexts to answer the question at the end "
@@ -125,7 +125,7 @@ def generate_response(prompt):
         )
 
     # Trulens instrumentation.
-    tc = TruChain(chain, app_id=app_id)
+    tc = TruChain(chain, app_name=app_name)
 
     return tc, tc.with_record(dict(question=prompt))
 
@@ -149,9 +149,9 @@ if user_input:
     # Display response
     st.write(answer)
 
-    tru = Tru()
-    record_id = tru.add_data(
-        app_id=app_id,
+    session = TruSession()
+    record_id = session.add_data(
+        app_name=app_name,
         prompt=prompt_input,
         response=answer,
         record=record,
@@ -161,10 +161,10 @@ if user_input:
     )
 
     # Run feedback function and get value
-    feedbacks = tru.run_feedback_functions(
+    feedbacks = session.run_feedback_functions(
         record=record,
         feedback_functions=[f_lang_match, f_qa_relevance, f_context_relevance],
     )
 
     # Add value to database
-    tru.add_feedback(record_id, feedbacks)
+    session.add_feedback(record_id, feedbacks)
