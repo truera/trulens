@@ -15,7 +15,6 @@ from typing import (
     Tuple,
     Union,
 )
-import warnings
 
 import dill
 import pydantic
@@ -137,17 +136,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):
-        if app_id:
-            if app_name:
-                raise ValueError(
-                    "Cannot provide both `app_id` and `app_name`. "
-                    "Use only `app_name` as `app_id` is deprecated."
-                )
-            else:
-                warnings.warn(
-                    "The `app_id` parameter is deprecated. Use `app_name` instead.",
-                    DeprecationWarning,
-                )
         kwargs["app_name"] = str(app_name or app_id)
         kwargs["app_version"] = app_version or "latest"
         kwargs["feedback_mode"] = feedback_mode
@@ -161,6 +149,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["app_id"] = self._compute_app_id(
             kwargs["app_name"], kwargs["app_version"]
         )
+        if app_id is not None and kwargs["app_id"] != app_id:
+            raise ValueError(
+                "`app_id` does not match with `app_name` and `app_version`!"
+            )
 
         super().__init__(**kwargs)
 
