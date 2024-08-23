@@ -91,6 +91,19 @@ def leaderboard():
                 metadata_options[metadata_key],
             )
 
+        # filter to apps with selected metadata
+        metadata_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if all(
+                app["metadata"][metadata_key]
+                in metadata_selections[metadata_key]
+                for metadata_key in metadata_selections.keys()
+            )
+        ]
+
+        selected_apps = list(set(selected_apps) & set(metadata_selected_apps))
+
         # sort apps by name
         selected_apps = sorted(selected_apps)
 
