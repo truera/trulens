@@ -57,7 +57,7 @@ trulens.core:
     Tru: builtins.function
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
-    TruSession: builtins.type
+    TruSession: pydantic._internal._model_construction.ModelMetaclass
     TruVirtual: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
@@ -1183,11 +1183,12 @@ trulens.core.session:
   highs: {}
   lows:
     Tru: builtins.function
-    TruSession: builtins.type
+    TruSession: pydantic._internal._model_construction.ModelMetaclass
 trulens.core.session.TruSession:
   __bases__:
+  - pydantic.main.BaseModel
   - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFERRED_NUM_RUNS: builtins.int
     GROUND_TRUTHS_BATCH_SIZE: builtins.int
@@ -1200,9 +1201,7 @@ trulens.core.session.TruSession:
     add_ground_truth_to_dataset: builtins.function
     add_record: builtins.function
     add_record_nowait: builtins.function
-    batch_ground_truth_queue: queue.Queue
-    batch_record_queue: queue.Queue
-    batch_thread: builtins.NoneType
+    connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     get_app: builtins.function
     get_apps: builtins.function

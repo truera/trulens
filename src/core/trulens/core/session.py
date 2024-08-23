@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from concurrent import futures
 from datetime import datetime
+import inspect
 import logging
 from multiprocessing import Process
 import threading
@@ -73,8 +74,8 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             Basic apps defined solely using a function from `str` to `str`.
 
         [TruCustomApp][trulens.core.TruCustomApp]:
-            Custom apps containing custom structures and methods. Requires annotation
-            of methods to instrument.
+            Custom apps containing custom structures and methods. Requires
+            annotation of methods to instrument.
 
         [TruVirtual][trulens.core.TruVirtual]: Virtual
             apps that do not have a real app to instrument but have a virtual
@@ -85,9 +86,15 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         connector: Database Connector to use. If not provided, a default
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector]
             is created.
+
+        **kwargs: All other arguments are used to initialize
+            [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
+            Mutually exclusive with `connector`.
     """
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True, extra="forbid"
+    )
 
     RETRY_RUNNING_SECONDS: float = 60.0
     """How long to wait (in seconds) before restarting a feedback function that has already started
@@ -140,16 +147,25 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         return inst
 
     def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
-        super().__init__(
-            connector=connector or DefaultDBConnector(**kwargs), **kwargs
-        )
+        connector_args = {
+            k: v
+            for k, v in kwargs.items()
+            if k in inspect.signature(DefaultDBConnector.__init__).parameters
+        }
+        self_args = {k: v for k, v in kwargs.items() if k not in connector_args}
 
-        if kwargs:
-            warnings.warn(
-                f"Session arguments {', '.join(kwargs.keys())} have been deprecated. Use a DBConnector instead.",
-                DeprecationWarning,
-                stacklevel=2,
+        if connector_args and connector is not None:
+            extra_keys = ", ".join(
+                map(lambda s: "`" + s + "`", connector_args.keys())
             )
+            raise ValueError(
+                f"Cannot provide both `connector` and connector argument(s) {extra_keys}."
+            )
+
+        super().__init__(
+            connector=connector or DefaultDBConnector(**connector_args),
+            **self_args,
+        )
 
     def reset_database(self):
         """Reset the database. Clears all tables.
