@@ -90,7 +90,7 @@ class SnowflakeServerSideEvaluationArtifacts:
             "CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE"
         ).collect()
         data_directory = os.path.join(
-            os.path.dirname(__file__), "../../data/snowflake_stage_zips"
+            os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
         for zip_to_upload in _ZIPS_TO_UPLOAD:
             self._session.file.put(

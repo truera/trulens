@@ -2,7 +2,7 @@
 
 set -e
 
-OUTPUT_DIRECTORY="./src/core/trulens/data/snowflake_stage_zips"
+OUTPUT_DIRECTORY="./src/connectors/snowflake/trulens/data/snowflake_stage_zips"
 
 # Create function to zip wheel.
 zip_wheel() {

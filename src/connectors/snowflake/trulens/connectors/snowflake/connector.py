@@ -10,14 +10,14 @@ from typing import (
     Union,
 )
 
+from trulens.connectors.snowflake.utils.snowflake_server_side_evalutation_artifacts import (
+    SnowflakeServerSideEvaluationArtifacts,
+)
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.utils.python import OpaqueWrapper
-from trulens.core.utils.snowflake_server_side_evalutation_artifacts import (
-    SnowflakeServerSideEvaluationArtifacts,
-)
 
 from snowflake.core import CreateMode
 from snowflake.core import Root
