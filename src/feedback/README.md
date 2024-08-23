@@ -327,8 +327,8 @@ For your app, you can inspect the JSON-like structure by using the `dict`
 method:
 
 ```python
-tru = ... # your app, extending App
-print(tru.dict())
+app = ... # your app, extending App
+print(app.dict())
 ```
 
 The other non-excluded fields accessible outside of the wrapped app are listed

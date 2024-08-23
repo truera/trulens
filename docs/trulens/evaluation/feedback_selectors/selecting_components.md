@@ -87,7 +87,9 @@ response = my_llm_app(query)
 from trulens.instrument.langchain import TruChain
 tru_recorder = TruChain(
     my_llm_app,
-    app_id='Chain1_ChatApplication')
+    app_name='ChatApplication',
+    app_version="Chain1",
+)
 
 response, tru_record = tru_recorder.with_record(my_llm_app, query)
 json_like = tru_record.layout_calls_as_app()
@@ -142,46 +144,13 @@ The top level JSON attributes are defined by the class structures.
 
 For a Record:
 
-```python
-class Record(SerialModel):
-    record_id: RecordID
-    app_id: AppID
+::: trulens.core.schema.Record
 
-    cost: Optional[Cost] = None
-    perf: Optional[Perf] = None
-
-    ts: datetime = pydantic.Field(default_factory=lambda: datetime.now())
-
-    tags: str = ""
-
-    main_input: Optional[JSON] = None
-    main_output: Optional[JSON] = None  # if no error
-    main_error: Optional[JSON] = None  # if error
-
-    # The collection of calls recorded. Note that these can be converted into a
-    # json structure with the same paths as the app that generated this record
-    # via `layout_calls_as_app`.
-    calls: Sequence[RecordAppCall] = []
-```
 
 For an App:
 
-```python
-class AppDefinition(WithClassInfo, SerialModel, ABC):
-    ...
+::: trulens.core.schema.AppDefinition
 
-    app_id: AppID
-
-    feedback_definitions: Sequence[FeedbackDefinition] = []
-
-    feedback_mode: FeedbackMode = FeedbackMode.WITH_APP_THREAD
-
-    root_class: Class
-
-    root_callable: ClassVar[FunctionOrMethod]
-
-    app: JSON
-```
 
 For your app, you can inspect the JSON-like structure by using the `dict`
 method:

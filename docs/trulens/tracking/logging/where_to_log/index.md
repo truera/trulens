@@ -13,8 +13,8 @@ For example, for Postgres database `trulens` running on `localhost` with usernam
 !!! example "Connecting with a Database URL"
 
     ```python
-    from trulens.core import Tru
-    tru = Tru(database_url="postgresql://trulensuser:password@localhost/trulens")
+    from trulens.core import TruSession
+    tru = TruSession(database_url="postgresql://trulensuser:password@localhost/trulens")
     ```
 
 After which you should receive the following message:

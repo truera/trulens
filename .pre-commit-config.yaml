@@ -30,6 +30,15 @@ repos:
     rev: "2.0.4"
     hooks:
       - id: pyproject-fmt
+# To enable after cleanup of imports:
+#- repo: https://github.com/pycqa/flake8
+#  rev: 7.1.1
+#  hooks:
+#    - id: flake8
+#      additional_dependencies:
+#        - flake8-type-checking
+#      exclude: ^tests
+#      args: [--ignore, "E501,W503,E704,E203,E402,E731,E266"]
 -   repo: https://github.com/python-poetry/poetry
     rev: 1.8.3
     hooks:
@@ -71,3 +80,6 @@ repos:
       - id: poetry-check
         name: trulens-providers-openai-poetry-check
         args: [-C src/providers/openai]
+      - id: poetry-check
+        name: trulens-connectors-snowflake-poetry-check
+        args: [-C src/connectors/snowflake]

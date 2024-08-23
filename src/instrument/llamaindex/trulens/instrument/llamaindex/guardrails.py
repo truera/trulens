@@ -35,7 +35,9 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         filtered_query_engine = WithFeedbackFilterNodes(query_engine, feedback=feedback, threshold=0.5)
 
         tru_recorder = TruLlama(filtered_query_engine,
-            app_id='LlamaIndex_App1_Filtered')
+            app_name="LlamaIndex_App",
+            app_version="v1_filtered"
+        )
 
         with tru_recorder as recording:
             llm_response = filtered_query_engine.query("What did the author do growing up?")

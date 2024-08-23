@@ -89,6 +89,7 @@ plugins:
             - src/providers/langchain
             - src/providers/litellm
             - src/providers/openai
+            - src/connectors/snowflake
             - examples/
           options:
 

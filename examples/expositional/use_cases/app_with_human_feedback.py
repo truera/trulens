@@ -23,7 +23,7 @@ from langchain.schema import StrOutputParser
 # from langchain.chat_models import ChatOpenAI # Deprecated
 from langchain_openai import ChatOpenAI
 import streamlit as st
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.dashboard import run_dashboard
 from trulens.instrument.langchain import TruChain
 
@@ -33,7 +33,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
-tru = Tru()
+session = TruSession()
 
 
 # Define function to generate GPT-3 response
@@ -50,9 +50,9 @@ def setup_chain():
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
     chain = chat_prompt_template | chat | StrOutputParser()
 
-    tc = TruChain(chain, app_id="Streamlit App")
-    tru.add_app(app=tc)
-    run_dashboard(tru, _dev=dev_path)
+    tc = TruChain(chain, app_name="Streamlit App")
+    session.add_app(app=tc)
+    run_dashboard(session, _dev=dev_path)
     return tc
 
 

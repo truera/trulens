@@ -8,7 +8,7 @@ import zipfile
 import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
-from trulens.core.tru import Tru
+from trulens.core import TruSession
 
 logger = logging.getLogger(__name__)
 
@@ -278,7 +278,7 @@ class TruBEIRDataLoader:
 
     def persist_dataset(
         self,
-        tru: Tru,
+        session: TruSession,
         dataset_name: str,
         dataset_metadata: Optional[Dict[str, Any]] = None,
         split="test",
@@ -290,7 +290,7 @@ class TruBEIRDataLoader:
         Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
         Args:
             split (str, optional): Defaults to "test".
-            tru (Tru): Tru workspace instance to persist the dataset.
+            session (TruSession): TruSession instance to persist the dataset.
             dataset_name (str): Name of the dataset to be persisted - Note this can be different from the standardized BEIR dataset names.
             dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset.
             download (bool, optional): If False, remove the downloaded dataset file after processing. Defaults to True.
@@ -299,7 +299,7 @@ class TruBEIRDataLoader:
         """
         for chunk in self._process_dataset(split=split, chunk_size=chunk_size):
             df_chunk = pd.DataFrame(chunk)
-            tru.add_ground_truth_to_dataset(
+            session.add_ground_truth_to_dataset(
                 dataset_name=dataset_name,
                 ground_truth_df=df_chunk,
                 dataset_metadata=dataset_metadata,
