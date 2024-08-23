@@ -173,21 +173,21 @@ build: $(POETRY_DIRS)
 	make build-dashboard
 
 ## Step: Build zip files to upload to staging
-build-zips:
+zip-wheels:
 	poetry run ./zip_wheels.sh
 
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulnes-instrument-langchain
-upload-%: clean build build-zips
+upload-%: clean build zip-wheels
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-all: clean build build-zips
+upload-all: clean build zip-wheels
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
-upload-testpypi-%: clean build build-zips
+upload-testpypi-%: clean build zip-wheels
 	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-testpypi-all: clean build build-zips
+upload-testpypi-all: clean build zip-wheels
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
