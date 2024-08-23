@@ -9,6 +9,7 @@ from typing import (
     Union,
 )
 
+import sqlalchemy as sa
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -23,6 +24,7 @@ class DefaultDBConnector(DBConnector):
         self,
         database: Optional[DB] = None,
         database_url: Optional[str] = None,
+        database_engine: Optional[sa.Engine] = None,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -39,6 +41,7 @@ class DefaultDBConnector(DBConnector):
                 k: v
                 for k, v in {
                     "database_url": database_url,
+                    "database_engine": database_engine,
                     "database_redact_keys": database_redact_keys,
                     "database_prefix": database_prefix,
                 }.items()
