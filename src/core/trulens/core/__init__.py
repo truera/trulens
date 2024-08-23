@@ -4,13 +4,8 @@ The `trulens-core` library includes everything to get started.
 
 """
 
-import os
-
-# NOTE: workaround for MKL and multiprocessing
-# https://github.com/pytorch/csprng/issues/115
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-
 from importlib.metadata import version
+import os
 
 from trulens.core.app import TruBasicApp
 from trulens.core.app import TruCustomApp
@@ -23,6 +18,10 @@ from trulens.core.schema import Select
 from trulens.core.session import Tru
 from trulens.core.session import TruSession
 from trulens.core.utils.imports import safe_importlib_package_name
+
+# NOTE: workaround for MKL and multiprocessing
+# https://github.com/pytorch/csprng/issues/115
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 __version__ = version(safe_importlib_package_name(__package__ or __name__))
 

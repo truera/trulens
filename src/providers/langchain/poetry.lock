@@ -392,13 +392,13 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.2.33"
+version = "0.2.34"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.33-py3-none-any.whl", hash = "sha256:c8de411336c13fa440b7a52895bfd1c064f04d315344855962988483902cc532"},
-    {file = "langchain_core-0.2.33.tar.gz", hash = "sha256:dd2659e0a560fc987b210107bf989aa14a6f4b67dd214c13a2c9669036cda975"},
+    {file = "langchain_core-0.2.34-py3-none-any.whl", hash = "sha256:c4fd158273e28cef758b4eccc956b424b76d4bb9117ce6014ae6eb2fb985801d"},
+    {file = "langchain_core-0.2.34.tar.gz", hash = "sha256:50048d90b175c0d5a7e28164628b3c7f8c82b0dc2cd766a663d346a18d5c9eb2"},
 ]
 
 [package.dependencies]
@@ -415,13 +415,13 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langsmith"
-version = "0.1.100"
+version = "0.1.103"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.100-py3-none-any.whl", hash = "sha256:cae44a884a4166c4d8b9cc5ff99f5d520337bd90b9dadfe3706ed31415d559a7"},
-    {file = "langsmith-0.1.100.tar.gz", hash = "sha256:20ff0126253a5a1d621635a3bc44ccacc036e855f52185ae983420f14eb6c605"},
+    {file = "langsmith-0.1.103-py3-none-any.whl", hash = "sha256:ccdc1ed8782bdf930d01f3e3b8596524b7586aec936594d2eb4cbb66f2b9e356"},
+    {file = "langsmith-0.1.103.tar.gz", hash = "sha256:9f16ec3074ae1e16424c44a1ad3f80cd1b1edb30d24da7dc3f6a73d530e3b402"},
 ]
 
 [package.dependencies]
