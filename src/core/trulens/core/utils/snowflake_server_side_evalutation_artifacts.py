@@ -5,6 +5,7 @@ from snowflake.snowpark import Session
 
 _ZIPS_TO_UPLOAD = [
     "snowflake_sqlalchemy.zip",
+    "trulens_connectors_snowflake.zip",
     "trulens_core.zip",
     "trulens_feedback.zip",
     "trulens_providers_cortex.zip",
@@ -13,7 +14,7 @@ _ZIPS_TO_UPLOAD = [
 _STORED_PROCEDURE_PYTHON_CODE = """
 import _snowflake
 import trulens.providers.cortex.provider
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackRunLocation
 
 
@@ -23,18 +24,19 @@ def run(session):
     engine_params = {}
     engine_params["paramstyle"] = "qmark"
     engine_params["creator"] = lambda: conn
+    database_args = {"engine_params": engine_params}
     # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
     trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
         conn
     )
     # Run deferred feedback evaluator.
     db_url = _snowflake.get_generic_secret_string("trulens_db_url")
-    tru = Tru(
+    session = TruSession(
         database_url=db_url,
         database_check_revision=False,  # TODO: check revision in the future?
-        sqlalchemy_engine_params=engine_params,
+        database_args=database_args,
     )
-    tru.start_evaluator(
+    session.start_evaluator(
         run_location=FeedbackRunLocation.SNOWFLAKE,
         return_when_done=True,
         disable_tqdm=True,

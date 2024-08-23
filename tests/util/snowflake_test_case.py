@@ -89,7 +89,7 @@ class SnowflakeTestCase(TestCase):
         self.assertNotIn(self._schema_name, self.list_schemas())
         self._snowflake_schemas_to_delete.append(self._schema_name)
         self._snowflake_external_access_integrations_to_delete.append(
-            TruSession._compute_external_access_integration_name(
+            SnowflakeConnector._compute_external_access_integration_name(
                 self._schema_name
             )
         )
