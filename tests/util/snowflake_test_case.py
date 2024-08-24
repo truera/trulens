@@ -32,7 +32,6 @@ class SnowflakeTestCase(TestCase):
         ).create()
         self._snowflake_root = Root(self._snowflake_session)
         self._snowflake_schemas_to_delete = []
-        self._snowflake_external_access_integrations_to_delete = []
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
@@ -51,26 +50,10 @@ class SnowflakeTestCase(TestCase):
             except Exception:
                 schemas_not_deleted.append(curr)
                 self._logger.error(f"Failed to clean up schema {curr}!")
-        # Clean up any Snowflake external access integrations.
-        external_access_integrations_not_deleted = []
-        for curr in self._snowflake_external_access_integrations_to_delete:
-            try:
-                self._snowflake_session.sql(
-                    f"DROP EXTERNAL ACCESS INTEGRATION IF EXISTS {curr}"
-                ).collect()
-            except Exception:
-                external_access_integrations_not_deleted.append(curr)
-                self._logger.error(
-                    f"Failed to clean up external_access_integrations {curr}!"
-                )
         # Check if any artifacts weren't deleted.
         if schemas_not_deleted:
             error_msg = "Failed to clean up the following schemas:\n"
             error_msg += "\n".join(schemas_not_deleted)
-            raise ValueError(error_msg)
-        if external_access_integrations_not_deleted:
-            error_msg = "Failed to clean up the following external access integrations:\n"
-            error_msg += "\n".join(external_access_integrations_not_deleted)
             raise ValueError(error_msg)
         # Close session.
         self._snowflake_session.close()
@@ -88,11 +71,6 @@ class SnowflakeTestCase(TestCase):
         self._schema_name = app_name.upper()
         self.assertNotIn(self._schema_name, self.list_schemas())
         self._snowflake_schemas_to_delete.append(self._schema_name)
-        self._snowflake_external_access_integrations_to_delete.append(
-            SnowflakeConnector._compute_external_access_integration_name(
-                self._schema_name
-            )
-        )
         connector = SnowflakeConnector(
             schema_name=self._schema_name,
             **self._snowflake_connection_parameters,

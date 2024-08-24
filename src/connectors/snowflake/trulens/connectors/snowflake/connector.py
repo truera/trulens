@@ -106,11 +106,6 @@ class SnowflakeConnector(DBConnector):
             "warehouse": warehouse,
             "role": role,
         }
-        external_access_integration_name = (
-            SnowflakeConnector._compute_external_access_integration_name(
-                schema_name
-            )
-        )
         with Session.builder.configs(connection_parameters).create() as session:
             ServerSideEvaluationArtifacts(
                 session,
@@ -120,13 +115,8 @@ class SnowflakeConnector(DBConnector):
                 schema_name,
                 warehouse,
                 role,
-                external_access_integration_name,
                 database_url,
             ).set_up_all()
-
-    @staticmethod
-    def _compute_external_access_integration_name(schema_name: str) -> str:
-        return f"{schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION"
 
     @classmethod
     def _validate_schema_name(cls, name: str) -> None:

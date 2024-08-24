@@ -22,7 +22,6 @@ class ServerSideEvaluationArtifacts:
         schema_name: str,
         warehouse: str,
         role: str,
-        external_access_integration_name: str,
         database_url: str,
     ) -> None:
         self._session = session
@@ -36,9 +35,6 @@ class ServerSideEvaluationArtifacts:
         self._validate_name(database_name, "database_name")
         self._validate_name(schema_name, "schema_name")
         self._validate_name(warehouse, "warehouse")
-        self._validate_name(
-            external_access_integration_name, "external_access_integration_name"
-        )
 
     @staticmethod
     def _validate_name(name: str, error_message_variable_name: str) -> None:
