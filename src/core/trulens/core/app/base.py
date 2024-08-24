@@ -1453,7 +1453,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
 
-        if safe_hasattr(self.app, __name):
+        app = self.app
+
+        if safe_hasattr(app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,

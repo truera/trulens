@@ -227,7 +227,7 @@ def class_moved(
                 warnings.warn(message, DeprecationWarning, stacklevel=2)
                 warned = True
 
-            return moved_class.__new__(moved_class, *args, **kwargs)
+            return moved_class.__new__(cls, *args, **kwargs)
 
     _MovedClass.__doc__ = message
 

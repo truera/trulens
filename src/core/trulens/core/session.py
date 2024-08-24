@@ -171,27 +171,32 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
     def Basic(self, *args, **kwargs) -> Any:
         from trulens.core.app.basic import TruBasicApp
 
-        return TruBasicApp(*args, **kwargs)
-
-    def Chain(self, *args, **kwargs) -> Any:
-        from trulens.instrument.langchain.tru_chain import TruChain
-
-        return TruChain(*args, **kwargs)
+        return TruBasicApp(*args, connector=self.connector, **kwargs)
 
     def Custom(self, *args, **kwargs) -> Any:
         from trulens.core.app.custom import TruCustomApp
 
-        return TruCustomApp(*args, **kwargs)
-
-    def Llama(self, *args, **kwargs) -> Any:
-        from trulens.instrument.llamaindex.tru_llama import TruLlama
-
-        return TruLlama(*args, **kwargs)
+        return TruCustomApp(*args, connector=self.connector, **kwargs)
 
     def Virtual(self, *args, **kwargs) -> Any:
         from trulens.core.app.virtual import TruVirtual
 
-        return TruVirtual(*args, **kwargs)
+        return TruVirtual(*args, connector=self.connector, **kwargs)
+
+    def Chain(self, *args, **kwargs) -> Any:
+        from trulens.instrument.langchain.tru_chain import TruChain
+
+        return TruChain(*args, connector=self.connector, **kwargs)
+
+    def Llama(self, *args, **kwargs) -> Any:
+        from trulens.instrument.llamaindex.tru_llama import TruLlama
+
+        return TruLlama(*args, connector=self.connector, **kwargs)
+
+    def Rails(self, *args, **kwargs) -> Any:
+        from trulens.instrument.nemo.tru_rails import TruRails
+
+        return TruRails(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("trulens.dashboard.run.find_unused_port")
     def find_unused_port(self, *args, **kwargs):
