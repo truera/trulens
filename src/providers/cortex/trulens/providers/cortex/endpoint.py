@@ -4,8 +4,8 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
+from snowflake.connector import SnowflakeConnection
 from snowflake.snowpark import DataFrame
-from snowflake.snowpark import Session
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 
@@ -64,7 +64,7 @@ class CortexEndpoint(Endpoint):
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
-        self._instrument_class(Session, "sql")
+        self._instrument_class(SnowflakeConnection, "cursor")
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="cortex")
