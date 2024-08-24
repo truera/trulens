@@ -46,6 +46,7 @@ class Cortex(LLMProvider):
                 database=os.environ["SNOWFLAKE_DATABASE"],
                 schema=os.environ["SNOWFLAKE_SCHEMA"],
                 warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+                paramstyle="qmark",
             )
 
         super().__init__(**self_kwargs)
@@ -64,27 +65,13 @@ class Cortex(LLMProvider):
         options = {"temperature": temperature}
         options_json_str = json.dumps(options)
 
-        if (
-            _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is not None
-            or snowflake.connector.paramstyle == "qmark"
-        ):
-            # In this case, the connection will be a StoredProcConnection which can only use qmark bindings.
-            completion_input_str = """
-                SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                    ?,
-                    parse_json(?),
-                    parse_json(?)
-                )
-            """
-        else:
-            # In this case, the default is to use pyformat bindings.
-            completion_input_str = """
-                SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                    %s,
-                    parse_json(%s),
-                    parse_json(%s)
-                )
-            """
+        completion_input_str = """
+            SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                ?,
+                parse_json(?),
+                parse_json(?)
+            )
+        """
 
         # Executing Snow SQL command requires an active snow session
         cursor = self.snowflake_conn.cursor()
