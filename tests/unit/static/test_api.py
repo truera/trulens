@@ -4,6 +4,7 @@ These make sure components considered high or low level API are accessible.
 """
 
 import inspect
+import os
 import sys
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 from unittest import main
@@ -16,7 +17,6 @@ from jsondiff.symbols import Symbol
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.imports import is_dummy
 from trulens.core.utils.serial import Lens
-import yaml
 
 from tests.test import JSONTestCase
 from tests.test import optional_test
@@ -64,7 +64,7 @@ class TestAPI(JSONTestCase):
 
                 lows[mem.name] = type_str(mem.typ)
 
-            k = modname  # + "(" + type_str(type(mod.obj)) + ")"
+            k = modname
 
             objects[k] = {
                 "highs": highs,
@@ -100,17 +100,13 @@ class TestAPI(JSONTestCase):
             if aliases_are_defs:
                 k = class_alias
             else:
-                k = type_str(class_)  # + "(" + type_str(type(class_)) + ")"
+                k = type_str(class_)
 
             info = {
                 "__class__": type_str(type(members.obj)),
                 "__bases__": [type_str(base) for base in members.obj.__bases__],
                 "attributes": attrs,
             }
-
-            # if k in objects:
-            #    self.assertJSONEqual(info, objects[k], path=Lens()[k])
-            print(f"duplicate {k}")
 
             objects[k] = info
 
@@ -184,9 +180,6 @@ class TestAPI(JSONTestCase):
 
         members = self.get_members_trulens_eval(aliases_are_defs=True)
 
-        with open("current.yaml", mode="w") as fh:
-            yaml.dump(members, fh, indent=2)
-
         self.write_golden(
             path=golden_file, data=members
         )  # will raise exception if golden file is written
@@ -197,40 +190,36 @@ class TestAPI(JSONTestCase):
 
         flat_diffs = list(self._flatten_api_diff(jdiff))
 
-        """
-        flat_diffs_dump = list(
-            map(
-                lambda x: {str(x[1]): [str(x[0]), x[2]]},
-                filter(lambda x: x[0].label != "insert", flat_diffs),
-            )
-        )
-        """
+        fh = None
+        if os.environ.get("WRITE_API_DIFF"):
+            fh = open("api.diff", "w")
 
-        with open("api.diff", "w") as fh:
-            # yaml.dump(flat_diffs_dump, fh, indent=2)
-
-            if flat_diffs:
-                for diff_type, diff_lens, diff_value in flat_diffs:
-                    if diff_type.label == "insert":
-                        # ignore additions
-                        continue
-                    if repr(diff_lens.path[-1]) == ".__bases__":
-                        # Ignore __bases__ differences.
-                        continue
-                    if repr(diff_lens.path[-1]) == ".__class__":
-                        # Ignore __class__ differences.
-                        continue
-                    if repr(diff_lens.path[-1]) == ".__version__":
-                        # Ignore __version__ differences.
-                        continue
-                    if isinstance(diff_value, dict) and len(diff_value) == 0:
-                        # Ignore empty dicts in diffs.
-                        continue
-                    with self.subTest(api=str(diff_lens)):
+        if flat_diffs:
+            for diff_type, diff_lens, diff_value in flat_diffs:
+                if diff_type.label == "insert":
+                    # ignore additions
+                    continue
+                if repr(diff_lens.path[-1]) == ".__bases__":
+                    # Ignore __bases__ differences.
+                    continue
+                if repr(diff_lens.path[-1]) == ".__class__":
+                    # Ignore __class__ differences.
+                    continue
+                if repr(diff_lens.path[-1]) == ".__version__":
+                    # Ignore __version__ differences.
+                    continue
+                if isinstance(diff_value, dict) and len(diff_value) == 0:
+                    # Ignore empty dicts in diffs.
+                    continue
+                with self.subTest(api=str(diff_lens)):
+                    if fh:
                         fh.write(f"{diff_type} {diff_lens} {diff_value}\n")
-                        self.fail(
-                            f"trulens_eval compatibility API mismatch: {diff_type} at {diff_lens} value {diff_value}"
-                        )
+                    self.fail(
+                        f"trulens_eval compatibility API mismatch: {diff_type} at {diff_lens} value {diff_value}"
+                    )
+
+        if fh:
+            fh.close()
 
     @skip("skipping for now")
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")

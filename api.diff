@@ -1,2 +1,0 @@
-$delete trulens_eval.generate_test_set.lows {'GenerateTestSet': 'builtins.type'}
-$delete trulens_eval.generate_test_set.GenerateTestSet.attributes {'generate_test_set': 'builtins.function'}
