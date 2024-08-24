@@ -13,6 +13,7 @@ from unittest import skipIf
 from jsondiff import SymmetricJsonDiffSyntax
 from jsondiff import diff
 from jsondiff.symbols import Symbol
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.imports import is_dummy
 from trulens.core.utils.serial import Lens
 import yaml
@@ -76,11 +77,12 @@ class TestAPI(JSONTestCase):
         # Enumerate all public classes found in the prior step.
         for class_alias, class_ in classes:
             if is_dummy(class_):
-                with self.subTest(class_=class_.__name__):
-                    self.fail(
-                        f"Dummy class found in classes: {str(class_)}. Make sure all optional modules are installed before running this test."
-                    )
-                # Record this as a test issue but continue to the next class.
+                if not deprecation_utils.is_deprecated(class_):
+                    with self.subTest(class_=class_.__name__):
+                        self.fail(
+                            f"Dummy class found in classes: {str(class_)}. Make sure all optional modules are installed before running this test."
+                        )
+                # Was dummy, but a deprecation dummy. Skip it.
                 continue
 
             members = get_class_members(

@@ -3,6 +3,7 @@
 import logging
 import re
 from typing import Optional
+import warnings
 
 from trulens.core.utils.text import retab
 
@@ -114,3 +115,16 @@ def re_0_10_rating(s: str) -> int:
     return re_configured_rating(
         s, min_score_val=0, max_score_val=10, allow_decimal=True
     )
+
+
+def validate_rating(rating: str) -> bool:
+    warnings.warn(
+        "This method is deprecated. "
+        "Use try/catch with `trulens.feedback.generated.re_0_10_rating` instead.",
+        DeprecationWarning,
+    )
+    try:
+        re_0_10_rating(rating)
+    except ParseError:
+        return False
+    return True

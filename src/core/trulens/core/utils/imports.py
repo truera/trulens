@@ -371,6 +371,16 @@ REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
 )
 
 # Other optionals:
+REQUIREMENT_GROUNDEDNESS = format_import_errors(
+    "nltk", purpose="using some groundedness feedback functions"
+)
+
+REQUIREMENT_PINECONE = format_import_errors(
+    # package name is "pinecone-client" but module is "pinecone"
+    ["pinecone-client", "langchain_community"],
+    purpose="running TruBot",
+)
+
 REQUIREMENT_SKLEARN = format_import_errors(
     "scikit-learn", purpose="using embedding vector distances"
 )

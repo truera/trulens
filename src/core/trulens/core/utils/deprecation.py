@@ -25,6 +25,20 @@ def deprecated_str(s: str, reason: str):
     )
 
 
+def is_deprecated(obj: Any):
+    """Check if object is deprecated.
+
+    Presently only supports values created by `deprecated_str`.
+    """
+
+    if imports_utils.is_dummy(obj):
+        ex = inspect.getattr_static(obj, "original_exception")
+        if isinstance(ex, DeprecationWarning):
+            return True
+
+    return True
+
+
 def deprecated_property(message: str):
     """Decorator for deprecated attributes defined as properties."""
 

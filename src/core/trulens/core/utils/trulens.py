@@ -44,6 +44,7 @@ def get_feedback_result(
 
     Args:
         tru_record (Record): The record containing feedback and future results.
+
         feedback_name (str): The name of the feedback to retrieve results for.
 
     Returns:
