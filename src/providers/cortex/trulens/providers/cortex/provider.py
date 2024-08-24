@@ -1,6 +1,8 @@
 import json
+import os
 from typing import ClassVar, Dict, Optional, Sequence
 
+import pydantic
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
@@ -15,7 +17,7 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    connection_parameters: Dict
+    # connection_parameters: dict
     model_engine: str
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -23,7 +25,7 @@ class Cortex(
 
     Args:
 
-        connection_parameters (Dict): Snowflake connection parameters.
+        connection_parameters (dict): Snowflake connection parameters.
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -81,15 +83,11 @@ class Cortex(
             ```
     """
 
-    endpoint: CortexEndpoint
+    endpoint: CortexEndpoint = pydantic.Field(exclude=True)
     snowflake_conn: SnowflakeConnection
 
     def __init__(
-        self,
-        connection_parameters: Dict,
-        model_engine: Optional[str] = None,
-        *args,
-        **kwargs: Dict,
+        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
     ):
         self_kwargs = dict(kwargs)
 
@@ -99,11 +97,23 @@ class Cortex(
 
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
-        # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            **connection_parameters
+            account=os.environ["SNOWFLAKE_ACCOUNT"],
+            user=os.environ["SNOWFLAKE_USER"],
+            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
+            database=os.environ["SNOWFLAKE_DATABASE"],
+            schema=os.environ["SNOWFLAKE_SCHEMA"],
+            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
         )
+
         super().__init__(**self_kwargs)
+
+        # Create a Snowflake connector
+
+        # self.snowflake_conn: SnowflakeConnection = snowflake.connector.connect(
+        #     **connection_parameters
+        # )
+        # super().__init__(**self_kwargs
 
     def _exec_snowsql_complete_command(
         self,

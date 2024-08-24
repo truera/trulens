@@ -6,6 +6,7 @@ from typing import Any, Callable, ClassVar, Optional
 
 from snowflake.connector import SnowflakeConnection
 from snowflake.snowpark import DataFrame
+from snowflake.snowpark import Session
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 
@@ -49,21 +50,24 @@ class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, "name"):
-            # singleton already made
-            if len(kwargs) > 0:
-                logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name,
-                    pp.pformat(kwargs),
-                )
-                self.warning()
-            return
+        # if hasattr(self, "name"):
+        #     # singleton already made
+        #     if len(kwargs) > 0:
+        #         logger.warning(
+        #             "Ignoring additional kwargs for singleton endpoint %s: %s",
+        #             self.name,
+        #             pp.pformat(kwargs),
+        #         )
+        #         self.warning()
+        #     return
 
         kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
+
+        # Instrument various methods for usage/cost tracking.
+        self._instrument_class(Session, "sql")
         self._instrument_class(SnowflakeConnection, "cursor")
 
     def __new__(cls, *args, **kwargs):
