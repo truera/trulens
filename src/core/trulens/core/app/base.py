@@ -41,6 +41,7 @@ from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
@@ -481,7 +482,7 @@ class App(
     """Feedback functions to evaluate on each record."""
 
     connector: DBConnector = pydantic.Field(
-        default_factory=DefaultDBConnector, exclude=True
+        default_factory=lambda: TruSession().connector, exclude=True
     )
     """Database connector.
 

@@ -600,6 +600,7 @@ trulens.core.database.sqlalchemy.SQLAlchemyDB:
   attributes:
     engine: typing.Optional[sqlalchemy.engine.base.Engine, builtins.NoneType]
     engine_params: builtins.dict
+    from_db_engine: builtins.classmethod
     from_db_url: builtins.classmethod
     from_tru_args: builtins.classmethod
     orm: typing.Type[trulens.core.database.orm.ORM]
@@ -1739,7 +1740,6 @@ trulens.core.utils.trulens:
     Other: trulens.core.app.base.ComponentViewMeta
     component_of_json: builtins.function
     constructor_of_class: builtins.function
-    get_feedback_result: builtins.function
 trulens.core.utils.trulens.Other:
   __bases__:
   - trulens.core.app.base.Other
@@ -1827,6 +1827,7 @@ trulens.dashboard.display:
   __class__: builtins.module
   highs: {}
   lows:
+    get_feedback_result: builtins.function
     get_icon: builtins.function
 trulens.dashboard.notebook_utils:
   __class__: builtins.module
@@ -1848,6 +1849,7 @@ trulens.dashboard.streamlit:
   lows:
     FeedbackDisplay: pydantic._internal._model_construction.ModelMetaclass
     MIGRATION_UNKNOWN_STR: builtins.str
+    stmetricdelta_hidearrow: builtins.str
     trulens_feedback: builtins.function
     trulens_leaderboard: builtins.function
     trulens_trace: builtins.function
@@ -2222,6 +2224,8 @@ trulens.feedback.prompts:
     LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
+    LLM_TRIVIAL_SYSTEM: builtins.str
+    LLM_TRIVIAL_USER: builtins.str
     REMOVE_Y_N: builtins.str
     SENTIMENT_SYSTEM: builtins.str
     SENTIMENT_USER: builtins.str
@@ -2289,6 +2293,7 @@ trulens.feedback.v2.feedback:
     Stereotypes: pydantic._internal._model_construction.ModelMetaclass
     Syntax: pydantic._internal._model_construction.ModelMetaclass
     Toxicity: pydantic._internal._model_construction.ModelMetaclass
+    Trivial: pydantic._internal._model_construction.ModelMetaclass
     Violence: pydantic._internal._model_construction.ModelMetaclass
     WithPrompt: pydantic._internal._model_construction.ModelMetaclass
     supported_criteria: builtins.dict
@@ -2674,6 +2679,15 @@ trulens.feedback.v2.feedback.Toxicity:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+trulens.feedback.v2.feedback.Trivial:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    system_prompt: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Violence:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation

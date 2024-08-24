@@ -35,5 +35,5 @@ def build_record_viewer():
 
 
 if __name__ == "__main__":
-    build_record_viewer()
+    # build_record_viewer()
     setup()
