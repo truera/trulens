@@ -84,7 +84,10 @@ class TestAPI(JSONTestCase):
                 continue
 
             members = get_class_members(
-                class_, class_api_level="low"
+                class_,
+                class_api_level="low",
+                class_alias=class_alias,
+                overrides_are_defs=aliases_are_defs,
             )  # api level is arbitrary
 
             attrs = {}

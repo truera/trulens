@@ -668,7 +668,8 @@ class App(
         components to execute.
         """
         raise NotImplementedError(
-            "`select_context` not implemented for base App. Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
+            f"`select_context` not implemented for {cls.__name__}. "
+            "Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
         )
 
     def __hash__(self):

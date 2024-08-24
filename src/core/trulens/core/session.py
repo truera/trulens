@@ -32,6 +32,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python
 from trulens.core.utils import serial
 from trulens.core.utils import threading as tru_threading
@@ -166,6 +167,60 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             connector=connector or DefaultDBConnector(**connector_args),
             **self_args,
         )
+
+    def Basic(self, *args, **kwargs) -> Any:
+        from trulens.core.app.basic import TruBasicApp
+
+        return TruBasicApp(*args, **kwargs)
+
+    def Chain(self, *args, **kwargs) -> Any:
+        from trulens.instrument.langchain.tru_chain import TruChain
+
+        return TruChain(*args, **kwargs)
+
+    def Custom(self, *args, **kwargs) -> Any:
+        from trulens.core.app.custom import TruCustomApp
+
+        return TruCustomApp(*args, **kwargs)
+
+    def Llama(self, *args, **kwargs) -> Any:
+        from trulens.instrument.llamaindex.tru_llama import TruLlama
+
+        return TruLlama(*args, **kwargs)
+
+    def Virtual(self, *args, **kwargs) -> Any:
+        from trulens.core.app.virtual import TruVirtual
+
+        return TruVirtual(*args, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.find_unused_port")
+    def find_unused_port(self, *args, **kwargs):
+        from trulens.dashboard.run import find_unused_port
+
+        return find_unused_port(*args, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
+    def run_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import run_dashboard
+
+        return run_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
+    def start_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import run_dashboard
+
+        return run_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.stop_dashboard")
+    def stop_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import stop_dashboard
+
+        return stop_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.connector.db.insert_record")
+    def update_record(self, *args, **kwargs):
+        assert self.connector is not None
+        return self.connector.db.insert_record(*args, **kwargs)
 
     def reset_database(self):
         """Reset the database. Clears all tables.

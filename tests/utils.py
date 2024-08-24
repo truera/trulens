@@ -307,6 +307,7 @@ def get_class_members(
     class_: type,
     class_api_level: str = "low",
     class_alias: Optional[str] = None,
+    overrides_are_defs: bool = False,
 ) -> Members:
     """Get all members of a class.
 
@@ -367,7 +368,10 @@ def get_class_members(
         is_public = False
 
         if any(
-            ((not base.__name__.startswith("trulens")) and hasattr(base, name))
+            (
+                (not base.__module__.startswith("trulens"))
+                and hasattr(base, name)
+            )
             for base in class_.__bases__
         ):
             # Skip anything that is a member of non trulens_eval bases.
@@ -383,12 +387,14 @@ def get_class_members(
             is_public = True
             group = publics
 
-        if not any(
-            (base.__name__.startswith("trulens")) and hasattr(base, name)
+        if overrides_are_defs or not any(
+            (base.__module__.startswith("trulens")) and hasattr(base, name)
             for base in class_.__bases__
         ):
             # View the class-equivalent of a definitions as members of a class
             # that are not members of its bases.
+
+            # If alias provided, we consider everything to be a definition though.
             is_def = True
             definitions.append(member)
 

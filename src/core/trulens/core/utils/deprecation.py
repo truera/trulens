@@ -78,8 +78,8 @@ def has_moved(obj: Union[Callable, Type]) -> bool:
     )
 
 
-def method_renamed(new_name: str):
-    """Issue a warning upon method call that has been renamed.
+def staticmethod_renamed(new_name: str):
+    """Issue a warning upon static method call that has been renamed or moved.
 
     Issues the warning only once.
     """
@@ -89,7 +89,39 @@ def method_renamed(new_name: str):
     def wrapper(func):
         old_name = func.__name__
 
-        message = f"Method `{old_name}` has been renamed to `{new_name}`.\n"
+        message = f"Static method `{old_name}` has been renamed or moved to `{new_name}`.\n"
+
+        @functools.wraps(func)
+        def _renamedmethod(*args, **kwargs):
+            nonlocal warned, old_name
+
+            if not warned:
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+                warned = True
+
+            return func(*args, **kwargs)
+
+        _renamedmethod.__doc__ = message
+
+        return _renamedmethod
+
+    return wrapper
+
+
+def method_renamed(new_name: str):
+    """Issue a warning upon method call that has been renamed or moved.
+
+    Issues the warning only once.
+    """
+
+    warned = False
+
+    def wrapper(func):
+        old_name = func.__name__
+
+        message = (
+            f"Method `{old_name}` has been renamed or moved to `{new_name}`.\n"
+        )
 
         @functools.wraps(func)
         def _renamedmethod(self, *args, **kwargs):
