@@ -178,31 +178,6 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].database_name, self._database_name.upper())
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         self.assertEqual(res[0].tableOn, "TRULENS_FEEDBACKS")
-        # Test secret exists.
-        res = self._snowflake_session.sql(
-            f"SHOW TERSE SECRETS IN SCHEMA {self._database_name}.{self._schema_name}"
-        ).collect()
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_DB_URL")
-        self.assertEqual(res[0].database_name, self._database_name.upper())
-        self.assertEqual(res[0].schema_name, self._schema_name.upper())
-        # Test network rule exists.
-        res = self._snowflake_session.sql(
-            f"SHOW TERSE NETWORK RULES IN SCHEMA {self._database_name}.{self._schema_name}"
-        ).collect()
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_DUMMY_NETWORK_RULE")
-        self.assertEqual(res[0].database_name, self._database_name.upper())
-        self.assertEqual(res[0].schema_name, self._schema_name.upper())
-        # Test external access integration exists.
-        res = self._snowflake_session.sql(
-            f"SHOW TERSE EXTERNAL ACCESS INTEGRATIONS LIKE '{self._schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION'"
-        ).collect()
-        self.assertEqual(len(res), 1)
-        self.assertEqual(
-            res[0].name,
-            f"{self._schema_name}_DUMMY_EXTERNAL_ACCESS_INTEGRATION",
-        )
         # Test stored procedure exists.
         res = self._snowflake_session.sql(
             f"SHOW TERSE PROCEDURES LIKE 'TRULENS_RUN_DEFERRED_FEEDBACKS' IN SCHEMA {self._database_name}.{self._schema_name}"

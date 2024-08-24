@@ -10,8 +10,8 @@ from typing import (
     Union,
 )
 
-from trulens.connectors.snowflake.utils.snowflake_server_side_evalutation_artifacts import (
-    SnowflakeServerSideEvaluationArtifacts,
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    ServerSideEvaluationArtifacts,
 )
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
@@ -112,11 +112,14 @@ class SnowflakeConnector(DBConnector):
             )
         )
         with Session.builder.configs(connection_parameters).create() as session:
-            SnowflakeServerSideEvaluationArtifacts(
+            ServerSideEvaluationArtifacts(
                 session,
+                account,
+                user,
                 database_name,
                 schema_name,
                 warehouse,
+                role,
                 external_access_integration_name,
                 database_url,
             ).set_up_all()
