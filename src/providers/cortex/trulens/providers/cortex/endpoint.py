@@ -67,7 +67,6 @@ class CortexEndpoint(Endpoint):
 
         # Instrument various methods for usage/cost tracking.
         self._instrument_class(Session, "sql")
-        # self._instrument_class(SnowflakeCursor, "execute")
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="cortex")
@@ -81,6 +80,7 @@ class CortexEndpoint(Endpoint):
     ) -> None:
         counted_something = False
 
+        # response is a snowflake dataframe instance
         if isinstance(response, DataFrame):
             response: dict = json.loads(response.collect()[0][0])
             if "usage" in response:
