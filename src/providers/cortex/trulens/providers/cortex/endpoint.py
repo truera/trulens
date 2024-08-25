@@ -4,7 +4,6 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
-from snowflake.connector import SnowflakeConnection
 from snowflake.snowpark import DataFrame
 from snowflake.snowpark import Session
 from trulens.core.feedback import Endpoint
@@ -50,16 +49,16 @@ class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        # if hasattr(self, "name"):
-        #     # singleton already made
-        #     if len(kwargs) > 0:
-        #         logger.warning(
-        #             "Ignoring additional kwargs for singleton endpoint %s: %s",
-        #             self.name,
-        #             pp.pformat(kwargs),
-        #         )
-        #         self.warning()
-        #     return
+        if hasattr(self, "name"):
+            # singleton already made
+            if len(kwargs) > 0:
+                logger.warning(
+                    "Ignoring additional kwargs for singleton endpoint %s: %s",
+                    self.name,
+                    pp.pformat(kwargs),
+                )
+                self.warning()
+            return
 
         kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
@@ -68,7 +67,7 @@ class CortexEndpoint(Endpoint):
 
         # Instrument various methods for usage/cost tracking.
         self._instrument_class(Session, "sql")
-        self._instrument_class(SnowflakeConnection, "cursor")
+        # self._instrument_class(SnowflakeCursor, "execute")
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="cortex")
@@ -82,11 +81,8 @@ class CortexEndpoint(Endpoint):
     ) -> None:
         counted_something = False
 
-        if isinstance(
-            response, DataFrame
-        ):  # response is a snowflake dataframe instance
+        if isinstance(response, DataFrame):
             response: dict = json.loads(response.collect()[0][0])
-
             if "usage" in response:
                 counted_something = True
 
@@ -95,8 +91,8 @@ class CortexEndpoint(Endpoint):
                 if callback is not None:
                     callback.handle_generation(response=response)
 
-            if not counted_something:
-                logger.warning(
-                    "Unrecognized Cortex response format. It did not have usage information:\n%s",
-                    pp.pformat(response),
-                )
+        if not counted_something:
+            logger.warning(
+                "Unrecognized Cortex response format. It did not have usage information:\n%s",
+                pp.pformat(response),
+            )

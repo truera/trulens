@@ -1,11 +1,11 @@
 import json
-import os
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
+from snowflake.snowpark import Session
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
@@ -17,8 +17,10 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    # connection_parameters: dict
+    snowflake_session: Session = pydantic.Field(exclude=True)
     model_engine: str
+    endpoint: CortexEndpoint = pydantic.Field(exclude=True)
+    snowflake_conn: SnowflakeConnection
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
@@ -83,11 +85,12 @@ class Cortex(
             ```
     """
 
-    endpoint: CortexEndpoint = pydantic.Field(exclude=True)
-    snowflake_conn: SnowflakeConnection
-
     def __init__(
-        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
+        self,
+        connection_parameters: dict,
+        model_engine: Optional[str] = None,
+        *args,
+        **kwargs: Dict,
     ):
         self_kwargs = dict(kwargs)
 
@@ -97,23 +100,16 @@ class Cortex(
 
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
+        # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            user=os.environ["SNOWFLAKE_USER"],
-            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+            **connection_parameters
         )
 
+        self_kwargs["snowflake_session"] = Session.builder.configs(
+            connection_parameters
+        ).create()
+
         super().__init__(**self_kwargs)
-
-        # Create a Snowflake connector
-
-        # self.snowflake_conn: SnowflakeConnection = snowflake.connector.connect(
-        #     **connection_parameters
-        # )
-        # super().__init__(**self_kwargs
 
     def _exec_snowsql_complete_command(
         self,
@@ -124,31 +120,24 @@ class Cortex(
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
-        messages_json_str = json.dumps(messages)
+        messages_json_str = (
+            json.dumps(messages).replace("\\", "\\\\").replace("'", "''")
+        )
 
         options = {"temperature": temperature}
-        options_json_str = json.dumps(options)
+        options_json_str = (
+            json.dumps(options).replace("\\", "\\\\").replace("'", "''")
+        )
 
-        completion_input_str = """
+        completion_input_str = f"""
             SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                %s,
-                parse_json(%s),
-                parse_json(%s)
+                '{model}',
+                parse_json('{messages_json_str}'),
+                parse_json('{options_json_str}')
             )
         """
 
-        # Executing Snow SQL command requires an active snow session
-        cursor = self.snowflake_conn.cursor()
-        try:
-            cursor.execute(
-                completion_input_str,
-                (model, messages_json_str, options_json_str),
-            )
-            result = cursor.fetchall()
-        finally:
-            cursor.close()
-
-        return result
+        return self.snowflake_session.sql(completion_input_str).collect()
 
     def _create_chat_completion(
         self,
@@ -170,6 +159,9 @@ class Cortex(
             raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
+
+        if len(res) == 0 or len(res[0]) == 0:
+            raise ValueError("No completion returned from Snowflake Cortex.")
 
         completion = json.loads(res[0][0])["choices"][0]["messages"]
 
