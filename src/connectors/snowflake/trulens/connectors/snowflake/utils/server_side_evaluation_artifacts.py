@@ -47,6 +47,7 @@ class ServerSideEvaluationArtifacts:
         self._set_up_stage()
         self._set_up_stream()
         self._set_up_stored_procedure()
+        self._set_up_wrapper_stored_procedure()
         self._set_up_task()
 
     @staticmethod
@@ -90,11 +91,11 @@ class ServerSideEvaluationArtifacts:
             )
 
     def _set_up_stream(self) -> None:
-        # TODO(dkurokawa): Make sure the stream doesn't keep reading old data
         self._run_query(
             f"""
             CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
                 ON TABLE {self._database_name}.{self._schema_name}.TRULENS_FEEDBACKS
+                SHOW_INITIAL_ROWS = TRUE
             """
         )
 
@@ -179,16 +180,39 @@ class ServerSideEvaluationArtifacts:
             """
         )
 
+    def _set_up_wrapper_stored_procedure(self) -> None:
+        self._run_query(
+            """
+            CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()
+                RETURNS VARCHAR
+                LANGUAGE SQL
+            AS
+                $$
+            BEGIN
+                CALL TRULENS_RUN_DEFERRED_FEEDBACKS();
+                -- The following noop insert is done just so that the stream will clear.
+                -- Currently, the only way for the stream to clear is for the data involved to be in a DML query.
+                INSERT INTO TRULENS_FEEDBACKS (
+                    SELECT *
+                    EXCLUDE (METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID)
+                    FROM TRULENS_FEEDBACK_EVALS_STREAM
+                    WHERE FALSE
+                );
+            END;
+                $$
+            """
+        )
+
     def _set_up_task(self) -> None:
         self._run_query(
             f"""
-            CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVAL_TASK
+            CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVALS_TASK
                 WAREHOUSE = {self._warehouse}
                 SCHEDULE = '1 MINUTE'
                 ALLOW_OVERLAPPING_EXECUTION = FALSE
                 WHEN SYSTEM$STREAM_HAS_DATA('TRULENS_FEEDBACK_EVALS_STREAM')
                 AS
-                    CALL TRULENS_RUN_DEFERRED_FEEDBACKS()
+                    CALL TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()
             """
         )
-        self._run_query("ALTER TASK TRULENS_FEEDBACK_EVAL_TASK RESUME")
+        self._run_query("ALTER TASK TRULENS_FEEDBACK_EVALS_TASK RESUME")

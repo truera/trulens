@@ -30,7 +30,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     def _wait_till_feedbacks_done(
         self, num_expected_feedbacks: int, timeout_in_seconds: int = 120
-    ):
+    ) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout_in_seconds:
             res = self._snowflake_session.sql(
@@ -41,6 +41,11 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             ]):
                 break
             time.sleep(1)
+
+    def _call_stored_procedure(self) -> None:
+        self._snowflake_session.sql(
+            f"CALL {self._database_name}.{self._schema_name}.TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()"
+        ).collect()
 
     @optional_test
     def test_local_deferred_mode(self) -> None:
@@ -216,6 +221,13 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
         )
+        self._call_stored_procedure()  # The stream will have data again due to the computed feedbacks that were deferred but now ran.
+        res = self._snowflake_session.sql(
+            f"SELECT SYSTEM$STREAM_HAS_DATA('{self._database_name}.{self._schema_name}.TRULENS_FEEDBACK_EVALS_STREAM')"
+        ).collect()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(len(res[0]), 1)
+        self.assertFalse(res[0][0])
 
     @optional_test
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
