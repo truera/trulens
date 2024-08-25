@@ -5,6 +5,7 @@ Tests server-side feedback evaluations in Snowflake.
 import time
 from unittest import main
 
+import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 from trulens.core import Feedback
 from trulens.core import SnowflakeFeedback
 from trulens.core import TruBasicApp
@@ -25,7 +26,7 @@ def silly_feedback_function(q: str) -> float:
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def _suspend_task(self) -> None:
         self._snowflake_session.sql(
-            f"ALTER TASK {self._database_name}.{self._schema_name}.TRULENS_FEEDBACK_EVAL_TASK SUSPEND"
+            f"ALTER TASK {self._database_name}.{self._schema_name}.{ssea._TASK_NAME} SUSPEND"
         ).collect()
 
     def _wait_till_feedbacks_done(
@@ -44,7 +45,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     def _call_stored_procedure(self) -> None:
         self._snowflake_session.sql(
-            f"CALL {self._database_name}.{self._schema_name}.TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()"
+            f"CALL {self._database_name}.{self._schema_name}.{ssea._WRAPPER_STORED_PROCEDURE_NAME}()"
         ).collect()
 
     @optional_test
@@ -171,7 +172,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             f"SHOW TERSE STAGES IN SCHEMA {self._database_name}.{self._schema_name}"
         ).collect()
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_PACKAGES_STAGE")
+        self.assertEqual(res[0].name, ssea._STAGE_NAME)
         self.assertEqual(res[0].database_name, self._database_name.upper())
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         # Test stream exists.
@@ -179,23 +180,23 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             f"SHOW TERSE STREAMS IN SCHEMA {self._database_name}.{self._schema_name}"
         ).collect()
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_FEEDBACK_EVALS_STREAM")
+        self.assertEqual(res[0].name, ssea._STREAM_NAME)
         self.assertEqual(res[0].database_name, self._database_name.upper())
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         self.assertEqual(res[0].tableOn, "TRULENS_FEEDBACKS")
         # Test stored procedure exists.
         res = self._snowflake_session.sql(
-            f"SHOW TERSE PROCEDURES LIKE 'TRULENS_RUN_DEFERRED_FEEDBACKS' IN SCHEMA {self._database_name}.{self._schema_name}"
+            f"SHOW TERSE PROCEDURES LIKE '{ssea._STORED_PROCEDURE_NAME}' IN SCHEMA {self._database_name}.{self._schema_name}"
         ).collect()
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_RUN_DEFERRED_FEEDBACKS")
+        self.assertEqual(res[0].name, ssea._STORED_PROCEDURE_NAME)
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
         # Test task exists.
         res = self._snowflake_session.sql(
             f"SHOW TERSE TASKS IN SCHEMA {self._database_name}.{self._schema_name}"
         ).collect()
         self.assertEqual(len(res), 1)
-        self.assertEqual(res[0].name, "TRULENS_FEEDBACK_EVAL_TASK")
+        self.assertEqual(res[0].name, ssea._TASK_NAME)
         self.assertEqual(res[0].database_name, self._database_name.upper())
         self.assertEqual(res[0].schema_name, self._schema_name.upper())
 
@@ -223,7 +224,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         )
         self._call_stored_procedure()  # The stream will have data again due to the computed feedbacks that were deferred but now ran.
         res = self._snowflake_session.sql(
-            f"SELECT SYSTEM$STREAM_HAS_DATA('{self._database_name}.{self._schema_name}.TRULENS_FEEDBACK_EVALS_STREAM')"
+            f"SELECT SYSTEM$STREAM_HAS_DATA('{self._database_name}.{self._schema_name}.{ssea._STREAM_NAME}')"
         ).collect()
         self.assertEqual(len(res), 1)
         self.assertEqual(len(res[0]), 1)

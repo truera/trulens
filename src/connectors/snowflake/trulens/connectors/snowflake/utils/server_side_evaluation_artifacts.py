@@ -3,6 +3,12 @@ import re
 
 from snowflake.snowpark import Session
 
+_STAGE_NAME = "TRULENS_PACKAGES_STAGE"
+_STREAM_NAME = "TRULENS_FEEDBACK_EVALS_STREAM"
+_STORED_PROCEDURE_NAME = "TRULENS_RUN_DEFERRED_FEEDBACKS"
+_WRAPPER_STORED_PROCEDURE_NAME = "TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER"
+_TASK_NAME = "TRULENS_FEEDBACK_EVALS_TASK"
+
 _ZIPS_TO_UPLOAD = [
     "snowflake_sqlalchemy.zip",
     "trulens_connectors_snowflake.zip",
@@ -80,35 +86,32 @@ class ServerSideEvaluationArtifacts:
         self._session.sql(self._remove_leading_spaces(q)).collect()
 
     def _set_up_stage(self) -> None:
-        self._run_query("CREATE STAGE IF NOT EXISTS TRULENS_PACKAGES_STAGE")
+        self._run_query(f"CREATE STAGE IF NOT EXISTS {_STAGE_NAME}")
         data_directory = os.path.join(
             os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
         for zip_to_upload in _ZIPS_TO_UPLOAD:
             self._session.file.put(
                 os.path.join(data_directory, zip_to_upload),
-                "@TRULENS_PACKAGES_STAGE",
+                f"@{_STAGE_NAME}",
             )
 
     def _set_up_stream(self) -> None:
         self._run_query(
             f"""
-            CREATE STREAM IF NOT EXISTS TRULENS_FEEDBACK_EVALS_STREAM
+            CREATE STREAM IF NOT EXISTS {_STREAM_NAME}
                 ON TABLE {self._database_name}.{self._schema_name}.TRULENS_FEEDBACKS
                 SHOW_INITIAL_ROWS = TRUE
             """
         )
 
     def _set_up_stored_procedure(self) -> None:
-        stage_name = (
-            f"{self._database_name}.{self._schema_name}.TRULENS_PACKAGES_STAGE"
-        )
         imports = ",".join([
-            f"'@{stage_name}/{curr}'" for curr in _ZIPS_TO_UPLOAD
+            f"'@{_STAGE_NAME}/{curr}'" for curr in _ZIPS_TO_UPLOAD
         ])
         self._run_query(
             f"""
-            CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS()
+            CREATE PROCEDURE IF NOT EXISTS {_STORED_PROCEDURE_NAME}()
                 RETURNS STRING
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
@@ -182,20 +185,20 @@ class ServerSideEvaluationArtifacts:
 
     def _set_up_wrapper_stored_procedure(self) -> None:
         self._run_query(
-            """
-            CREATE PROCEDURE IF NOT EXISTS TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()
+            f"""
+            CREATE PROCEDURE IF NOT EXISTS {_WRAPPER_STORED_PROCEDURE_NAME}()
                 RETURNS VARCHAR
                 LANGUAGE SQL
             AS
                 $$
             BEGIN
-                CALL TRULENS_RUN_DEFERRED_FEEDBACKS();
+                CALL {_STORED_PROCEDURE_NAME}();
                 -- The following noop insert is done just so that the stream will clear.
                 -- Currently, the only way for the stream to clear is for the data involved to be in a DML query.
                 INSERT INTO TRULENS_FEEDBACKS (
                     SELECT *
                     EXCLUDE (METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID)
-                    FROM TRULENS_FEEDBACK_EVALS_STREAM
+                    FROM {_STREAM_NAME}
                     WHERE FALSE
                 );
             END;
@@ -206,13 +209,13 @@ class ServerSideEvaluationArtifacts:
     def _set_up_task(self) -> None:
         self._run_query(
             f"""
-            CREATE TASK IF NOT EXISTS TRULENS_FEEDBACK_EVALS_TASK
+            CREATE TASK IF NOT EXISTS {_TASK_NAME}
                 WAREHOUSE = {self._warehouse}
                 SCHEDULE = '1 MINUTE'
                 ALLOW_OVERLAPPING_EXECUTION = FALSE
-                WHEN SYSTEM$STREAM_HAS_DATA('TRULENS_FEEDBACK_EVALS_STREAM')
+                WHEN SYSTEM$STREAM_HAS_DATA('{_STREAM_NAME}')
                 AS
-                    CALL TRULENS_RUN_DEFERRED_FEEDBACKS_WRAPPER()
+                    CALL {_WRAPPER_STORED_PROCEDURE_NAME}()
             """
         )
-        self._run_query("ALTER TASK TRULENS_FEEDBACK_EVALS_TASK RESUME")
+        self._run_query(f"ALTER TASK {_TASK_NAME} RESUME")
