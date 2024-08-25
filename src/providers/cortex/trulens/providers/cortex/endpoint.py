@@ -4,6 +4,7 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
+from snowflake.connector.cursor import SnowflakeCursor
 from snowflake.snowpark import DataFrame
 from snowflake.snowpark import Session
 from trulens.core.feedback import Endpoint
@@ -67,6 +68,7 @@ class CortexEndpoint(Endpoint):
 
         # Instrument various methods for usage/cost tracking.
         self._instrument_class(Session, "sql")
+        self._instrument_class(SnowflakeCursor, "execute")
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="cortex")
@@ -80,8 +82,11 @@ class CortexEndpoint(Endpoint):
     ) -> None:
         counted_something = False
 
+        print(f"func.__name__: {func.__name__}")
+        print(f"bindings: {bindings}")
         # response is a snowflake dataframe instance
         if isinstance(response, DataFrame):
+            # if len(response.collect()) > 0 and len(response.collect()[0]) > 0:
             response: dict = json.loads(response.collect()[0][0])
             if "usage" in response:
                 counted_something = True
@@ -90,6 +95,22 @@ class CortexEndpoint(Endpoint):
 
                 if callback is not None:
                     callback.handle_generation(response=response)
+        if isinstance(response, SnowflakeCursor) and response.query.startswith(
+            "SELECT SNOWFLAKE.CORTEX.COMPLETE"
+        ):
+            if (
+                isinstance(response.fetchall(), list)
+                and len(response.fetchall()) > 0
+                and len(response.fetchall()[0]) > 0
+            ):
+                response: dict = json.loads(response.fetchall()[0][0])
+                if "usage" in response:
+                    counted_something = True
+
+                    self.global_callback.handle_generation(response=response)
+
+                    if callback is not None:
+                        callback.handle_generation(response=response)
 
         if not counted_something:
             logger.warning(
