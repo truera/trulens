@@ -98,7 +98,7 @@ def build_grid_options(
         selection_mode="multiple",
         use_checkbox=True,
     )
-    gb.configure_pagination(paginationAutoPageSize=50)
+    gb.configure_pagination(enabled=False)
     # gb.configure_grid_options(
     #     onSelectionChanged=JsCode("""function(params) {
     #             const selectedRows = params.api.getSelectedNodes();
@@ -157,15 +157,17 @@ def leaderboard():
         st.write("No Apps selected")
         return
 
-    st.markdown("""---""")
-    st.header("Selected Versions")
-    st.write(selected_rows[["app_id"]].reset_index(drop=True))
+    # st.markdown("""---""")
+    # st.header("Selected Versions")
+    # st.write(selected_rows[["app_id"]].reset_index(drop=True))
+    col1, col2 = st.columns(2)
+
     apps = list(selected_rows.app_id.unique())
-    if st.button("Examine Records", type="primary", key="examine"):
+    if col1.button("Examine Records", type="primary", key="examine"):
         st.session_state["app_ids"] = apps
         switch_page("Records")
     if len(apps) >= 2:
-        if st.button(
+        if col2.button(
             "Compare",
             key="sxs",
             args=(apps,),
