@@ -2249,7 +2249,7 @@ files = []
 develop = false
 
 [package.dependencies]
-nltk = "^3.8.2"
+nltk = "^3.9.1"
 numpy = ">=1.23"
 pydantic = "^2"
 scikit-learn = "^1.3.0"
