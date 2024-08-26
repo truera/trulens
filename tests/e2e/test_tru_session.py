@@ -11,9 +11,9 @@ from unittest import TestCase
 import uuid
 
 from trulens.core import Feedback
-from trulens.core import Tru
 from trulens.core import TruBasicApp
 from trulens.core import TruCustomApp
+from trulens.core import TruSession
 from trulens.core import TruVirtual
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
@@ -48,8 +48,6 @@ class TestTru(TestCase):
         test_args["database_file"] = [None, "default_file.db"]
         test_args["database_redact_keys"] = [None, True, False]
 
-        tru = None
-
         for url in test_args["database_url"]:
             for file in test_args["database_file"]:
                 for redact in test_args["database_redact_keys"]:
@@ -65,23 +63,23 @@ class TestTru(TestCase):
                         if url is not None and file is not None:
                             # Specifying both url and file should throw exception.
                             with self.assertRaises(Exception):
-                                tru = Tru(**args)
+                                session = TruSession(**args)
 
-                            if tru is not None:
-                                tru.delete_singleton()
+                            if session is not None:
+                                session.delete_singleton()
 
                         else:
                             try:
-                                tru = Tru(**args)
+                                session = TruSession(**args)
                             finally:
-                                if tru is not None:
-                                    tru.delete_singleton()
+                                if session is not None:
+                                    session.delete_singleton()
 
-                            if tru is None:
+                            if session is None:
                                 continue
 
                             # Do some db operations to the expected files get created.
-                            tru.reset_database()
+                            session.reset_database()
 
                             # Check that the expected files were created.
                             if url is not None:
@@ -170,7 +168,7 @@ class TestTru(TestCase):
         app types. This test includes only ones that do not require optional
         packages.
         """
-        Tru()
+        TruSession()
 
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
@@ -290,7 +288,7 @@ class TestTru(TestCase):
 
         expected_feedback_names = {f.name for f in feedbacks}
 
-        tru = Tru()
+        session = TruSession()
 
         tru_app = TruCustomApp(app)
 
@@ -300,7 +298,7 @@ class TestTru(TestCase):
         record = recording.get()
 
         feedback_results = list(
-            tru.run_feedback_functions(
+            session.run_feedback_functions(
                 record=record,
                 feedback_functions=feedbacks,
                 app=tru_app,
@@ -325,10 +323,10 @@ class TestTru(TestCase):
 
         # TODO: move tests to test_add_feedbacks.
         # Add to db.
-        tru.add_feedbacks(feedback_results)
+        session.add_feedbacks(feedback_results)
 
         # Check that results were added to db.
-        _, returned_feedback_names = tru.get_records_and_feedback(
+        _, returned_feedback_names = session.get_records_and_feedback(
             app_ids=[tru_app.app_id]
         )
 
@@ -346,7 +344,7 @@ class TestTru(TestCase):
         feedbacks = self._create_feedback_functions()
         expected_feedback_names = {f.name for f in feedbacks}
 
-        tru = Tru()
+        session = TruSession()
 
         tru_app = TruCustomApp(app)
 
@@ -358,7 +356,7 @@ class TestTru(TestCase):
         start_time = datetime.now()
 
         future_feedback_results = list(
-            tru.run_feedback_functions(
+            session.run_feedback_functions(
                 record=record,
                 feedback_functions=feedbacks,
                 app=tru_app,
@@ -394,10 +392,10 @@ class TestTru(TestCase):
 
         # TODO: move tests to test_add_feedbacks.
         # Add to db.
-        tru.add_feedbacks(feedback_results)
+        session.add_feedbacks(feedback_results)
 
         # Check that results were added to db.
-        _, returned_feedback_names = tru.get_records_and_feedback(
+        _, returned_feedback_names = session.get_records_and_feedback(
             app_ids=[tru_app.app_id]
         )
 
@@ -413,31 +411,32 @@ class TestTru(TestCase):
         pass
 
     # def test_add_app(self):
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
-    #     tru = Tru()
-
+    #     app_name = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
+    #     app_id = app_definition.app_id
+    #     session = TruSession()
     #     # Action: Add the app to the database
-    #     added_app_id = tru.add_app(app_definition)
+    #     added_app_id = session.add_app(app_definition)
 
     #     # Assert: Verify the app was added successfully
     #     self.assertEqual(app_id, added_app_id)
-    #     retrieved_app = tru.get_app(app_id)
+    #     retrieved_app = session.get_app(app_id)
     #     self.assertIsNotNone(retrieved_app)
     #     self.assertEqual(retrieved_app['app_id'], app_id)
 
     # def test_delete_app(self):
     #     # Setup: Add an app to the database
-    #     app_id = "test_app"
-    #     app_definition = mod_app_schema.AppDefinition(app_id=app_id, model_dump_json="{}")
-    #     tru = Tru()
-    #     tru.add_app(app_definition)
+    #     app_name = "test_app"
+    #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
+    #     app_id = app_definition.app_id
+    #     session = TruSession()
+    #     session.add_app(app_definition)
 
     #     # Action: Delete the app
-    #     tru.delete_app(app_id)
+    #     session.delete_app(app_id)
 
     #     # Assert: Verify the app is deleted
-    #     retrieved_app = tru.get_app(app_id)
+    #     retrieved_app = session.get_app(app_id)
     #     self.assertIsNone(retrieved_app)
 
     def test_add_feedback(self):
@@ -464,7 +463,7 @@ class TestTru(TestCase):
         pass
 
     def test_start_evaluator_with_blocking(self):
-        tru = Tru()
+        session = TruSession()
         f = Feedback(custom_feedback_function).on_default()
         app_id = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = TruBasicApp(
@@ -476,11 +475,13 @@ class TestTru(TestCase):
         with tru_app:
             tru_app.main_call("test_deferred_mode")
         time.sleep(2)
-        tru.start_evaluator(return_when_done=True)
-        if tru._evaluator_proc is not None:
+        session.start_evaluator(return_when_done=True)
+        if session._evaluator_proc is not None:
             # We should never get here since the variable isn't supposed to be set.
             raise ValueError("The evaluator is still running!")
-        records_and_feedback = tru.get_records_and_feedback(app_ids=[app_id])
+        records_and_feedback = session.get_records_and_feedback(
+            app_ids=[app_id]
+        )
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["custom_feedback_function"])
         self.assertEqual(records_and_feedback[0].shape[0], 1)

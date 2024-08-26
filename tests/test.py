@@ -1,3 +1,6 @@
+"""TestCase subclass with JSON comparisons and test enable/disable flag
+handling."""
+
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
@@ -6,14 +9,13 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar
+from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar, Union
 import unittest
 from unittest import TestCase
 
 from frozendict import frozendict
 import pydantic
 from pydantic import BaseModel
-from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.utils.python import caller_frame
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSON_BASES
@@ -161,6 +163,66 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
 class JSONTestCase(TestCase):
     """TestCase class that adds JSON comparisons and golden expectation handling."""
 
+    def load_golden(self, path: Union[str, Path]) -> JSON:
+        """Load the golden file `path` and return its contents.
+
+        Args:
+            golden_filename: The name of the golden file to load. The file must
+                have an extension of either `.json` or `.yaml`. The extension
+                determines the input format.
+
+        """
+        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
+        golden_path = (caller_path / "golden" / path).resolve()
+
+        if ".json" in golden_path.suffixes:
+            loader = functools.partial(json.load)
+        elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
+            loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
+        else:
+            raise ValueError(f"Unknown file extension {path}.")
+
+        if not golden_path.exists():
+            raise FileNotFoundError(f"Golden file {golden_path} not found.")
+
+        with golden_path.open() as f:
+            return loader(f)
+
+    def write_golden(self, path: Union[str, Path], data: JSON) -> None:
+        """If writing golden file is enabled, write the golden file `path` with
+        `data` and raise exception indicating so.
+
+        If not writing golden file, does nothing.
+
+        Args:
+            path: The path to the golden file to write. Format is determined by
+                suffix.
+
+            data: The data to write to the golden file.
+        """
+        if not self.writing_golden():
+            return
+
+        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
+        golden_path = (caller_path / "golden" / path).resolve()
+
+        if golden_path.suffix == ".json":
+            writer = functools.partial(json.dump, indent=2, sort_keys=True)
+        elif golden_path.suffix == ".yaml":
+            writer = functools.partial(yaml.dump, sort_keys=True)
+        else:
+            raise ValueError(f"Unknown file extension {golden_path.suffix}.")
+
+        with golden_path.open("w") as f:
+            writer(data, f)
+
+        self.fail(f"Golden file {path} written.")
+
+    def writing_golden(self) -> bool:
+        """Return whether the golden files are to be written."""
+
+        return bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
+
     def assertGoldenJSONEqual(
         self,
         actual: JSON,
@@ -212,41 +274,20 @@ class JSONTestCase(TestCase):
             AssertionError: If the golden file is written.
         """
 
-        write_golden: bool = bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
+        # Write golden and raise exception if writing golden is enabled.
+        self.write_golden(path=golden_filename, data=actual)
 
-        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
-        golden_path = (caller_path / "golden" / golden_filename).resolve()
+        # Otherwise load the golden file and compare.
+        expected = self.load_golden(golden_filename)
 
-        if golden_path.suffix == ".json":
-            writer = functools.partial(json.dump, indent=2)
-            loader = json.load
-        elif golden_path.suffix == ".yaml":
-            writer = yaml.dump
-            loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
-        else:
-            raise ValueError(f"Unknown file extension {golden_path.suffix}.")
-
-        if write_golden:
-            with golden_path.open("w") as f:
-                writer(actual, f)
-
-            self.fail("Golden file written.")
-
-        else:
-            if not golden_path.exists():
-                raise FileNotFoundError(f"Golden file {golden_path} not found.")
-
-            with golden_path.open("r") as f:
-                expected = loader(f)
-
-            self.assertJSONEqual(
-                actual,
-                expected,
-                skips=skips,
-                numeric_places=numeric_places,
-                unordereds=unordereds,
-                unordered=unordered,
-            )
+        self.assertJSONEqual(
+            actual,
+            expected,
+            skips=skips,
+            numeric_places=numeric_places,
+            unordereds=unordereds,
+            unordered=unordered,
+        )
 
     def assertJSONEqual(
         self,
@@ -328,13 +369,15 @@ class JSONTestCase(TestCase):
             ks1 = set(j1.keys())
             ks2 = set(j2.keys())
 
-            self.assertSetEqual(ks1, ks2, ps)
+            with self.subTest("keys", path=ps):
+                self.assertSetEqual(ks1, ks2, ps)
 
             for k in ks1:
-                if k in skips:
+                if k in skips or k not in ks2:
                     continue
 
-                recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
+                with self.subTest(k, path=ps):
+                    recur(j1[k], j2[k], path=path[k], unordered=k in unordereds)
 
         elif isinstance(j1, Sequence):
             self.assertEqual(len(j1), len(j2), ps)
@@ -344,7 +387,8 @@ class JSONTestCase(TestCase):
                 j2 = str_sorted(j2, skips=skips)
 
             for i, (v1, v2) in enumerate(zip(j1, j2)):
-                recur(v1, v2, path=path[i])
+                with self.subTest(i, path=ps):
+                    recur(v1, v2, path=path[i])
 
         elif isinstance(j1, datetime):
             self.assertEqual(j1, j2, ps)
@@ -354,42 +398,45 @@ class JSONTestCase(TestCase):
                 if f.name in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f.name))
+                with self.subTest(f.name, path=ps):
+                    self.assertTrue(hasattr(j2, f.name))
 
-                recur(
-                    getattr(j1, f.name),
-                    getattr(j2, f.name),
-                    path[f.name],
-                    unordered=f.name in unordereds,
-                )
+                    recur(
+                        getattr(j1, f.name),
+                        getattr(j2, f.name),
+                        path[f.name],
+                        unordered=f.name in unordereds,
+                    )
 
         elif isinstance(j1, BaseModel):
             for f in j1.model_fields:
                 if f in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f))
+                with self.subTest(f, path=ps):
+                    self.assertTrue(hasattr(j2, f))
 
-                recur(
-                    getattr(j1, f),
-                    getattr(j2, f),
-                    path[f],
-                    unordered=f in unordereds,
-                )
+                    recur(
+                        getattr(j1, f),
+                        getattr(j2, f),
+                        path[f],
+                        unordered=f in unordereds,
+                    )
 
-        elif isinstance(j1, v1BaseModel):
+        elif isinstance(j1, pydantic.v1.BaseModel):
             for f in j1.__fields__:
                 if f in skips:
                     continue
 
-                self.assertTrue(hasattr(j2, f))
+                with self.subTest(f, path=ps):
+                    self.assertTrue(hasattr(j2, f))
 
-                recur(
-                    getattr(j1, f),
-                    getattr(j2, f),
-                    path[f],
-                    unordered=f in unordereds,
-                )
+                    recur(
+                        getattr(j1, f),
+                        getattr(j2, f),
+                        path[f],
+                        unordered=f in unordereds,
+                    )
 
         else:
             raise RuntimeError(

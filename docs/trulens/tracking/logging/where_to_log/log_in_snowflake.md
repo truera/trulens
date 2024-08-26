@@ -27,8 +27,8 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 !!! example "Connect TruLens to your Snowflake database"
 
     ```python
-    from trulens.core import Tru
-    tru = Tru(
+    from trulens.core import TruSession
+    tru = TruSession(
         name="MyApp",
         snowflake_connection_parameters={
             account: "<account>",
@@ -42,3 +42,50 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     ```
 
 Once you've instantiated the `Tru` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
+
+## Connect TruLens to the Snowflake database using an engine
+
+In some cases such as when using [key-pair authentication](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy#key-pair-authentication-support), the SQL-alchemy URL does not support the credentials required. In this case, you can instead create and pass a database engine.
+
+When the database engine is created, the private key is then passed through the `connection_args`.
+
+!!! example "Connect TruLens to Snowflake with a database engine"
+
+    ```python
+    from trulens.core import Tru
+    from sqlalchemy import create_engine
+    from snowflake.sqlalchemy import URL
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import serialization
+
+    load_dotenv()
+
+    with open("rsa_key.p8", "rb") as key:
+        p_key= serialization.load_pem_private_key(
+            key.read(),
+            password=None,
+            backend=default_backend()
+        )
+
+    pkb = p_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption())
+
+    engine = create_engine(URL(
+    account=os.environ["SNOWFLAKE_ACCOUNT"],
+    warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+    database=os.environ["SNOWFLAKE_DATABASE"],
+    schema=os.environ["SNOWFLAKE_SCHEMA"],
+    user=os.environ["SNOWFLAKE_USER"],),
+    connect_args={
+            'private_key': pkb,
+            },
+    )
+
+    from trulens.core import Tru
+
+    tru = Tru(
+    database_engine = engine
+    )
+    ```
