@@ -120,23 +120,12 @@ class Cortex(
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
-        # messages_json_str = (
-        #     json.dumps(messages).replace("\\", "\\\\").replace("'", "''")
-        # )
+
         messages_json_str = json.dumps(messages)
 
         options = {"temperature": temperature}
-        # options_json_str = (
-        #     json.dumps(options).replace("\\", "\\\\").replace("'", "''")
-        # )
+
         options_json_str = json.dumps(options)
-        # completion_input_str = f"""
-        #     SELECT SNOWFLAKE.CORTEX.COMPLETE(
-        #         '{model}',
-        #         parse_json('{messages_json_str}'),
-        #         parse_json('{options_json_str}')
-        #     )
-        # """
 
         completion_input_str = """
             SELECT SNOWFLAKE.CORTEX.COMPLETE(
@@ -156,8 +145,6 @@ class Cortex(
             cursor.close()
 
         return result
-
-        # return self.snowflake_session.sql(completion_input_str).collect()
 
     def _create_chat_completion(
         self,
