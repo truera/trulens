@@ -46,9 +46,6 @@ def leaderboard():
     records = records.sort_values(by="app_id")
 
     apps = get_apps()
-    app_ids = []
-    for i in range(len(apps)):
-        app_ids.append(apps[i]["app_id"])
     app_names = list(set(app["app_name"] for app in apps))
 
     selected_app_names = st.multiselect("Filter apps:", app_names, app_names)
