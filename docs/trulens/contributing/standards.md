@@ -177,11 +177,24 @@ class SomeModel(pydantic.BaseModel)
   Class details.
   """
 
-  attribute: Type
-  """Attribute summary.
+  attribute: Type = defaultvalue # or pydantic.Field(...)
+  """Summary as first sentence.
 
-  Attribute details.
+  Details as the rest.
   """
+
+  cls_attribute: pydantic.ClassAttr(...)
+  """Summary as first sentence.
+
+  Details as the rest.
+  """
+
+  _private_attribute: Type = pydantic.PrivateAttr(...)
+  """Summary as first sentence.
+
+  Details as the rest.
+  """
+
 ```
 
 #### Example: Functions/Methods
@@ -191,11 +204,10 @@ class SomeModel(pydantic.BaseModel)
 
 More details if necessary.
 
-Examples:
-
-```python
-# example if needed
-```
+Example:
+  ```python
+  # example if needed
+  ```
 
 Args:
     argument_name: Description. Some long description of argument may wrap over to the next line and needs to
@@ -204,19 +216,21 @@ Args:
     argument_name: Description.
 
 Returns:
-
     return_type: Description.
 
     Additional return discussion. Use list above to point out return components if there are multiple relevant components.
 
 Raises:
-
     ExceptionType: Description.
 """
 ````
 
 Note that the types are automatically filled in by docs generator from the
 function signature.
+
+## Typescript
+
+No standards are currently recommended.
 
 ## Markdown
 
@@ -228,13 +242,42 @@ function signature.
     ```
     ````
 
+  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`. Examples below can serve as a test of the markdown renderer you are viewing these instructions with.
+
+  - Python
+    ```python
+    a = 42
+    ```
+
+  - Typescript
+    ```typescript
+    var a = 42;
+    ```
+
+  - JSON
+    ```json
+    {'a': [1,2,3]}
+    ```
+
+  - Shell
+    ```shell
+    > make test-api
+    > pip install trulens
+    ```
+
+  - Markdown
+    ```markdown
+    # Section heading
+    content
+    ```
+
 - Use `markdownlint` to suggest formatting.
 
 - Use 80 columns if possible.
 
 ## Jupyter notebooks
 
-Do not include output unless core goal of given notebook.
+Do not include output. The pre-commit hooks should automatically clear all notebook outputs.
 
 ## Tests
 
@@ -247,7 +290,7 @@ See `tests/unit`.
 See `tests/unit/static`.
 
 Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`, and being a
-subset of unit tests, are also run on latest supported python, `3.12` .
+subset of unit tests, are also run on latest supported python, `3.12` . Some tests that require all optional packages to be installed run only on `3.11` as the latter python version does not support some of those optional packages.
 
 ### Test pipelines
 
