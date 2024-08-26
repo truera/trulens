@@ -1405,7 +1405,7 @@ class LLMProvider(Provider):
         try:
             hypotheses = self._remove_trivial_statements(hypotheses)
         except Exception as e:
-            print(
+            logger.error(
                 "Error removing trivial statements: ",
                 e,
                 "Proceeding with all statements.",
