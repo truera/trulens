@@ -1199,7 +1199,7 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download('punkt', quiet=True)
+        nltk.download('punkt_tab', quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
