@@ -9,7 +9,6 @@ REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=.
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
-	-not -path "./src/dashboard/*" \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
 	-exec dirname {} \;)
@@ -34,7 +33,7 @@ env-optional:
 
 
 # Lock the poetry dependencies for all the subprojects.
-lock: $(POETRY_DIRS) clean-dashboard
+lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
@@ -150,10 +149,7 @@ install-wheels:
 
 # Release Steps:
 ## Step: Clean repo:
-clean-dashboard:
-	rm -rf src/dashboard/*.egg-info
-
-clean: clean-dashboard
+clean:
 	git clean --dry-run -fxd
 	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
 	echo
@@ -162,9 +158,6 @@ clean: clean-dashboard
 	fi;
 
 ## Step: Build wheels
-build-dashboard: env clean-dashboard
-	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
-
 build: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Building $$dir"; \
@@ -180,7 +173,6 @@ build: $(POETRY_DIRS)
 		rm -rf .venv; \
 		popd; \
 	done
-	make build-dashboard
 
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
