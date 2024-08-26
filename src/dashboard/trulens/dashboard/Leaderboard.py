@@ -49,8 +49,42 @@ def leaderboard():
     app_ids = []
     for i in range(len(apps)):
         app_ids.append(apps[i]["app_id"])
+    app_names = list(set(app["app_name"] for app in apps))
 
-    selected_apps = st.multiselect("Filter apps:", app_ids, app_ids)
+    selected_app_names = st.multiselect("Filter apps:", app_names, app_names)
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if any(name in app["app_name"] for name in selected_app_names)
+    ]
+
+    # Filter app versions to only include those from selected apps
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = list(
+        set(
+            f"{app['app_name']} - {app['app_version']}" for app in filtered_apps
+        )
+    )
+
+    selected_app_name_versions = st.multiselect(
+        "Filter by app version:", app_name_versions, app_name_versions
+    )
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if f"{app['app_name']} - {app['app_version']}"
+        in selected_app_name_versions
+    ]
+
+    # Use st.multiselect to allow the user to select app names and versions separately
+
+    # selected_app_versions = st.multiselect("Filter by app version:", app_versions, app_versions)
+
+    # Format the tuples for display
+    # formatted_app_names_versions = [f"{name} v{version}" for name, version in app_names_versions]
+
+    # Use st.multiselect to allow the user to select from the formatted strings
+    # selected_apps = st.multiselect("Filter apps:", formatted_app_names_versions, formatted_app_names_versions)
 
     with st.expander("Advanced Filters"):
         # get tag options
@@ -131,10 +165,13 @@ def leaderboard():
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
+        app_name = app_json["app_name"]
+        app_version = app_json["app_version"]
+        app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
         tags = app_json.get("tags")
         # st.text('Metadata' + str(metadata))
-        st.header(app, help=draw_metadata_and_tags(metadata, tags))
+        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
