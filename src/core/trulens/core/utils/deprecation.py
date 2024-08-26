@@ -101,7 +101,7 @@ def staticmethod_renamed(new_name: str):
     warned = False
 
     def wrapper(func):
-        old_name = func.__name__
+        old_name = python_utils.callable_name(func)
 
         message = f"Static method `{old_name}` has been renamed or moved to `{new_name}`.\n"
 

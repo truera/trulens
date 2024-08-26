@@ -156,6 +156,12 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
 def callable_name(c: Callable):
     """Get the name of the given callable."""
 
+    if isinstance(c, staticmethod):
+        return callable_name(c.__func__)
+
+    if isinstance(c, classmethod):
+        return callable_name(c.__func__)
+
     if not isinstance(c, Callable):
         raise ValueError(
             f"Expected a callable. Got {class_name(type(c))} instead."
