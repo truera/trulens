@@ -34,8 +34,8 @@ class SnowflakeConnector(DBConnector):
         account: str,
         user: str,
         password: str,
-        database_name: str,
-        schema_name: str,
+        database: str,
+        schema: str,
         warehouse: str,
         role: str,
         database_redact_keys: bool = False,
@@ -45,13 +45,13 @@ class SnowflakeConnector(DBConnector):
     ):
         database_args = database_args or {}
 
-        self._validate_schema_name(schema_name)
+        self._validate_schema_name(schema)
         database_url = self._create_snowflake_database_url(
             account=account,
             user=user,
             password=password,
-            database=database_name,
-            schema=schema_name,
+            database=database,
+            schema=schema,
             warehouse=warehouse,
             role=role,
         )
@@ -79,8 +79,8 @@ class SnowflakeConnector(DBConnector):
             account,
             user,
             password,
-            database_name,
-            schema_name,
+            database,
+            schema,
             warehouse,
             role,
             database_url,
@@ -91,8 +91,8 @@ class SnowflakeConnector(DBConnector):
         account: str,
         user: str,
         password: str,
-        database_name: str,
-        schema_name: str,
+        database: str,
+        schema: str,
         warehouse: str,
         role: str,
         database_url: str,
@@ -101,8 +101,8 @@ class SnowflakeConnector(DBConnector):
             "account": account,
             "user": user,
             "password": password,
-            "database": database_name,
-            "schema": schema_name,
+            "database": database,
+            "schema": schema,
             "warehouse": warehouse,
             "role": role,
         }
@@ -111,8 +111,8 @@ class SnowflakeConnector(DBConnector):
                 session,
                 account,
                 user,
-                database_name,
-                schema_name,
+                database,
+                schema,
                 warehouse,
                 role,
                 database_url,
