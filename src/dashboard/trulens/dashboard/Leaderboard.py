@@ -73,16 +73,6 @@ def leaderboard():
         in selected_app_name_versions
     ]
 
-    # Use st.multiselect to allow the user to select app names and versions separately
-
-    # selected_app_versions = st.multiselect("Filter by app version:", app_versions, app_versions)
-
-    # Format the tuples for display
-    # formatted_app_names_versions = [f"{name} v{version}" for name, version in app_names_versions]
-
-    # Use st.multiselect to allow the user to select from the formatted strings
-    # selected_apps = st.multiselect("Filter apps:", formatted_app_names_versions, formatted_app_names_versions)
-
     with st.expander("Advanced Filters"):
         # get tag options
         tags = []
