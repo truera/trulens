@@ -1,5 +1,5 @@
 import json
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import Any, ClassVar, Dict, Optional, Sequence
 
 import snowflake
 import snowflake.connector
@@ -15,7 +15,7 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    connection_parameters: Dict
+    connection_parameters: Any
     model_engine: str
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -23,7 +23,7 @@ class Cortex(
 
     Args:
 
-        connection_parameters (Dict): Snowflake connection parameters.
+        connection_parameters (Any): Snowflake connection parameters.
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -86,7 +86,7 @@ class Cortex(
 
     def __init__(
         self,
-        connection_parameters: Dict,
+        connection_parameters: Any,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
