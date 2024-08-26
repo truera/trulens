@@ -183,7 +183,7 @@ class SomeModel(pydantic.BaseModel)
   Details as the rest.
   """
 
-  cls_attribute: pydantic.ClassAttr(...)
+  cls_attribute: typing.ClassVar[Type] = defaultvalue # or pydantic.Field(...)
   """Summary as first sentence.
 
   Details as the rest.
