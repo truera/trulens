@@ -1883,7 +1883,6 @@ trulens.dashboard.streamlit:
   lows:
     FeedbackDisplay: pydantic._internal._model_construction.ModelMetaclass
     MIGRATION_UNKNOWN_STR: builtins.str
-    stmetricdelta_hidearrow: builtins.str
     trulens_feedback: builtins.function
     trulens_leaderboard: builtins.function
     trulens_trace: builtins.function
@@ -1934,7 +1933,7 @@ trulens.dashboard.ux.components:
     draw_call: builtins.function
     draw_calls: builtins.function
     draw_llm_info: builtins.function
-    draw_metadata: builtins.function
+    draw_metadata_and_tags: builtins.function
     draw_prompt_info: builtins.function
     draw_selector_button: builtins.function
     draw_tool_info: builtins.function
