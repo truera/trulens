@@ -28,10 +28,10 @@ class TestEndpoints(TestCase):
             # for huggingface tests
             "HUGGINGFACE_API_KEY",
             # for bedrock tests
-            # "AWS_REGION_NAME",
+            "AWS_REGION_NAME",
             "AWS_ACCESS_KEY_ID",
             "AWS_SECRET_ACCESS_KEY",
-            # "AWS_SESSION_TOKEN",
+            "AWS_SESSION_TOKEN",
             # for azure openai tests
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
