@@ -35,6 +35,22 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
   __class__: builtins.type
   attributes:
     run_score_generation_on_single_row: builtins.function
+trulens.benchmark.generate:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    __path__: builtins.list
+trulens.benchmark.generate.generate_test_set:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    GenerateTestSet: builtins.type
+trulens.benchmark.generate.generate_test_set.GenerateTestSet:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    generate_test_set: builtins.function
 trulens.benchmark.test_cases:
   __class__: builtins.module
   highs: {}

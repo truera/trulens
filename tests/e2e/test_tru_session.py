@@ -1,5 +1,5 @@
 """
-Tests of various functionalities of the `Tru` class.
+Tests of various functionalities of the `TruSession` class.
 """
 
 from concurrent.futures import Future as FutureClass
