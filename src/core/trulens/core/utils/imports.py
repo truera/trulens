@@ -25,7 +25,7 @@ from typing import (
 
 from packaging import requirements
 from packaging import version
-from pip._internal.req import parse_requirements
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -49,15 +49,15 @@ def _requirements_of_trulens_core_file(
     file in trulens.core."""
     _trulens_resources = resources.files("trulens.core")
     with resources.as_file(_trulens_resources / path) as _path:
-        pip_reqs = parse_requirements(str(_path), session=None)
+        with open(_path) as fh:
+            reqs = pkg_resources.parse_requirements(fh)
 
-        mapping = {}
+            mapping = {}
 
-        for pip_req in pip_reqs:
-            req = requirements.Requirement(pip_req.requirement)
-            mapping[req.name] = req
+            for req in reqs:
+                mapping[req.name] = req
 
-        return mapping
+            return mapping
 
 
 def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
