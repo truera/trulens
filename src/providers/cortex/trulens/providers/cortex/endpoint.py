@@ -15,28 +15,24 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-# the credit consumption table needs to be kept up-to-date with
-# the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
-CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS = {
-    "reka-core": 5.5,
-    "mistral-large": 5.1,
-    "llama3.1-405b": 5,
-    "llama3-70b": 1.21,
-    "llama3.1-70b": 1.21,
-    "snowflake-arctic": 0.84,
-    "jamba-instruct": 0.83,
-    "llama2-chat-70b": 0.45,
-    "reka-flash": 0.45,
-    "mixtral-8x7b": 0.22,
-    "llama3-8b": 0.19,
-    "llama3.1-8b": 0.19,
-    "mistral-7b": 0.12,
-    "gemma-7b": 0.12,
-}
-
-
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    _model_costs = {}
+
+    def __init__(self):
+        # Load the model costs from the JSON file
+        self._load_model_costs()
+
+    def _load_model_costs(self):
+        try:
+            # the credit consumption table needs to be kept up-to-date with
+            # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+            with open("./config/cortex_model_costs.json", "r") as file:
+                self._model_costs = json.load(file)
+            logger.info("Model costs loaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to load model costs: {e}")
+            self._model_costs = {}
 
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 
@@ -44,11 +40,9 @@ class CortexCallback(EndpointCallback):
         self, cortex_model_name: str, n_tokens: int
     ) -> float:
         try:
-            if cortex_model_name in CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS:
+            if cortex_model_name in self._model_costs:
                 return (
-                    CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS[cortex_model_name]
-                    * n_tokens
-                    / 1e6
+                    self._model_costs[cortex_model_name] * n_tokens / 1e6
                 )  # we maintain config per-1M-token cost
             else:
                 raise ValueError(
@@ -133,10 +127,14 @@ class CortexEndpoint(Endpoint):
         counted_something = False
 
         # response is a snowflake dataframe instance or a list if the response is from cursor.fetchall()
-        if isinstance(response, DataFrame):
-            response: dict = json.loads(response.collect()[0][0])
-        elif isinstance(response, list):
-            response: dict = json.loads(response[0][0])
+        try:
+            if isinstance(response, DataFrame):
+                response: dict = json.loads(response.collect()[0][0])
+            elif isinstance(response, list):
+                response: dict = json.loads(response[0][0])
+        except Exception as e:
+            logger.error(f"Error occurred while parsing response: {e}")
+            raise e
 
         if "usage" in response:
             counted_something = True
