@@ -34,8 +34,11 @@ def upgrade(config) -> None:
     orm = make_orm_for_prefix(table_prefix=prefix)
     apps = session.query(orm.AppDefinition).all()
     for app in apps:
-        app.app_name = "default_app"
-        app.app_version = app.app_id
+        assert isinstance(app, AppDefinition)
+        if app.app_name is None:
+            app.app_name = "default_app"
+        if app.app_version is None:
+            app.app_version = app.app_id
         app.app_id = AppDefinition._compute_app_id(
             app.app_name, app.app_version
         )
