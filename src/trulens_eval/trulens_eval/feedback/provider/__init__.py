@@ -9,7 +9,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 from trulens_eval._utils import optional as optional_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.feedback.provider")
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.feedback.provider import Provider
 from trulens.core.utils import imports as imports_utils
