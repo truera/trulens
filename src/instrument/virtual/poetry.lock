@@ -694,7 +694,7 @@ description = "Library to systematically track and evaluate LLM based applicatio
 optional = false
 python-versions = "^3.9"
 files = []
-develop = true
+develop = false
 
 [package.dependencies]
 alembic = "^1.8.1"
@@ -711,7 +711,7 @@ typing_extensions = "^4.9"
 
 [package.source]
 type = "directory"
-url = "../core"
+url = "../../core"
 
 [[package]]
 name = "typing-extensions"
@@ -738,4 +738,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "c3380d7806d169dd2e34224bc07067fe409d4e786258045b116925c32b0acb86"
+content-hash = "8bc02bdb98ae2dc2494db32fcbb74718c93365a65080ab3c74191b15569839ce"
