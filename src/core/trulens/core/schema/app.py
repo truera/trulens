@@ -140,7 +140,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         kwargs["app_version"] = app_version or "base"
         kwargs["feedback_mode"] = feedback_mode
         kwargs["tags"] = ""
-        kwargs["metadata"] = {}
+        kwargs["metadata"] = metadata or {}
         kwargs["app_extra_json"] = app_extra_json or dict()
         kwargs["feedback_definitions"] = [
             f.feedback_definition_id for f in kwargs.get("feedbacks", [])
@@ -161,10 +161,6 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         if tags is None:
             tags = "-"  # Set tags to a "-" if None is provided
         self.tags = tags
-
-        if metadata is None:
-            metadata = {}
-        self.metadata = metadata
 
         # EXPERIMENTAL
         if "initial_app_loader" in kwargs:
