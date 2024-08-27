@@ -2,6 +2,7 @@
 
 from enum import Enum
 import functools
+import importlib
 import inspect
 import logging
 from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
@@ -15,6 +16,59 @@ logger = logging.getLogger(__name__)
 PACKAGES_MIGRATION_LINK = (
     "https://trulens.org/docs/migration-guide"  # TODO: update link
 )
+
+
+def module_getattr_override(
+    module: Optional[str] = None, message: Optional[str] = None
+):
+    """Override module's `__getattr__` to issue a deprecation errors when
+    looking up attributes.
+
+    This expects deprecated names to be prefixed with `DEP_` followed by their
+    original pre-deprecation name. For example:
+
+    - Before deprecation
+        ```python
+        # issue module import warning:
+        package_dep_warn()
+
+        # define temporary implementations of to-be-deprecated attributes
+        something = 42
+        ```
+
+    - After deprecation
+        ```python
+        # define deprecated attribute with None/any value but name with "DEP_" prefix:
+        DEP_something = None
+
+        # issue module deprecation warning and override __getattr__ to issue deprecation errors for the above:
+        module_getattr_override()
+        ```
+
+    Also issues a deprecation warning for the module itself. This will be used
+    in the next deprecation stage for throwing errors after deprecation errors.
+    """
+
+    if module is None:
+        module = python_utils.caller_module_name(offset=1)  # skip our own frame
+
+    mod = importlib.import_module(module)
+
+    # Module deprecation warning.
+    packages_dep_warn(module, message=message)
+
+    def _getattr(name: str):
+        if not hasattr(mod, "DEP_" + name):
+            raise AttributeError(f"module {module} has no attribute {name}")
+
+        # Issue a deprecation warning for the attribute including the
+        # optional custom message as well if given.
+        raise AttributeError(
+            f"Attribute `{name}` has been deprecated in module `{module}`."
+            + (" \n" + message if message else "")
+        )
+
+    mod.__getattr__ = _getattr
 
 
 def deprecated_str(s: str, reason: str):
@@ -58,19 +112,30 @@ def deprecated_property(message: str):
     return wrapper
 
 
-def packages_dep_warn(module: Optional[str] = None):
+def packages_dep_warn(
+    module: Optional[str] = None, message: Optional[str] = None
+):
     """Issue a deprecation warning for a backwards-compatibility modules.
 
     This is specifically for the trulens_eval -> trulens module renaming and
-    reorganization.
+    reorganization. If `message` is given, that is included first in the
+    deprecation warning.
     """
 
     if module is None:
         module = python_utils.caller_module_name(offset=1)  # skip our own frame
 
-    warnings.warn(
+    full_message = (
         f"The `{module}` module is deprecated. "
-        f"See {PACKAGES_MIGRATION_LINK} for instructions on migrating to `trulens.*` modules.",
+        f"See {PACKAGES_MIGRATION_LINK} for instructions on migrating to `trulens.*` modules."
+    )
+
+    if message is not None:
+        # Put the custom message first.
+        full_message += message + "\n\n" + full_message
+
+    warnings.warn(
+        full_message,
         DeprecationWarning,
         stacklevel=3,
     )
