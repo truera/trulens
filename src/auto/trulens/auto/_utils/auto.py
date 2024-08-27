@@ -23,8 +23,14 @@ NO_INSTALL: bool = False
 """If set, will not automatically install any optional trulens modules and fail
 in the typical way if a module is missing."""
 
-DOC_NO_INSTALLS = "You can enable automatic installs by calling `trulens.auto.set_no_install(False)`."
-DOC_INSTALLS = "Importing from this module will install the required package. You can disable this by calling `trulens.auto.set_no_install()`."
+DOC_NO_INSTALLS: str = "You can enable automatic installs by calling `trulens.auto.set_no_install(False)`."
+"""Instructions for enabling automatic installs."""
+
+DOC_INSTALLS = (
+    "Importing from this module will install the required package. "
+    "You can disable this by calling `trulens.auto.set_no_install()`."
+)
+"""Instructions for disabling automatic installs."""
 
 
 def pip(*args) -> subprocess.CompletedProcess:
