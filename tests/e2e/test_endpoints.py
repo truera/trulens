@@ -76,7 +76,21 @@ class TestEndpoints(TestCase):
         if with_cost:
             self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
 
-        # TODO: add tests for credit consumption and guardrails tokens from Cortex provider
+        if (
+            str(type(provider.__self__))
+            == "<class 'trulens.providers.cortex.provider.Cortex'>"
+        ):
+            self.assertGreater(
+                cost.snowflake_credits_consumed,
+                0.0,
+                "Expected non-zero snowflake credits consumed.",
+            )
+
+            self.assertGreater(
+                cost.n_cortext_guardrails_tokens,
+                0.0,
+                "Expected non-zero cortex guardrails tokens.",
+            )
 
     @optional_test
     def test_hugs(self):
