@@ -12,7 +12,7 @@ deprecation_utils.packages_dep_warn()
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
-        "trulens.benchmark.generate_test_set",
+        "trulens-benchmark",
         purpose="generating test sets",
     )
 ):
