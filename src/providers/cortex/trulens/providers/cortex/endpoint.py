@@ -52,7 +52,7 @@ class CortexCallback(EndpointCallback):
                 )  # we maintain config per-1M-token cost
             else:
                 raise ValueError(
-                    f"Model {cortex_model_name} not valid or not supported yet."
+                    f"Model {cortex_model_name} not valid or not supported yet for cost estimation."
                 )
         except Exception as e:
             logger.error(
