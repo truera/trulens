@@ -11,7 +11,7 @@ be made up of `breadth` X `depth` prompts organized by prompt category.
 Example:
 
 ```python
-from trulens.test.generate_test_set import GenerateTestSet
+from trulens.benchmark.generate.generate_test_set import GenerateTestSet
 
 test = GenerateTestSet(app_callable = rag_chain.invoke)
 test_set = test.generate_test_set(
