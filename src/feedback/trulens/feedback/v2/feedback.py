@@ -256,12 +256,12 @@ class Abstention(Semantics, WithPrompt):
 
 class Trivial(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
-        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content."""
+        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content. Respond only with a list of the remaining statements in the format of a python list of strings."""
     )
     user_prompt: ClassVar[str] = cleandoc(
         """ALL STATEMENTS: {statements}
 
-        IMPORTANT STATEMENTS:"""
+        IMPORTANT STATEMENTS: """
     )
 
 
