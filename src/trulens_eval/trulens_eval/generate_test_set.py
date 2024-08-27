@@ -15,6 +15,10 @@ with import_utils.OptionalImports(
         "trulens-benchmark",
         purpose="generating test sets",
     )
-):
-    from trulens.benchmark.generate_Test_set import GenerateTestSet
-    from trulens.benchmark.generate_test_set import generate_test_set
+) as opt:
+    from trulens.benchmark import generate_test_set as mod_generate_test_set
+
+opt.assert_installed(mod_generate_test_set)
+
+GenerateTestSet = mod_generate_test_set.GenerateTestSet
+generate_test_set = mod_generate_test_set.generate_test_set
