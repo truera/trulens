@@ -1,18 +1,17 @@
-"""Add app name and version fields.
+"""Make app name and app version fields not nullable.
 
-Revision ID: 5
-Revises: 4
-Create Date: 2024-08-16 12:46:49.510690
+Revision ID: 7
+Revises: 6
+Create Date: 2024-08-27 11:09:26
 """
 
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = "5"
-down_revision = "4"
+revision = "7"
+down_revision = "6"
 branch_labels = None
-depends_on = "1"
+depends_on = "6"
 
 
 def upgrade(config) -> None:
@@ -22,22 +21,15 @@ def upgrade(config) -> None:
         raise RuntimeError("trulens.table_prefix is not set")
 
     # ### begin Alembic commands ###
-    op.add_column(
-        prefix + "apps",
-        sa.Column(
+    with op.batch_alter_table(prefix + "apps") as batch_op:
+        batch_op.alter_column(
             "app_name",
-            sa.VARCHAR(length=256),
-            default="default_app",
-        ),
-    )
-    op.add_column(
-        prefix + "apps",
-        sa.Column(
+            nullable=False,
+        )
+        batch_op.alter_column(
             "app_version",
-            sa.VARCHAR(length=256),
-            default="base",
-        ),
-    )
+            nullable=False,
+        )
     # ### end Alembic commands ###
 
 
@@ -48,6 +40,13 @@ def downgrade(config) -> None:
         raise RuntimeError("trulens.table_prefix is not set")
 
     # ### begin Alembic commands ###
-    op.drop_column(prefix + "apps", "app_name")
-    op.drop_column(prefix + "apps", "app_version")
+    with op.batch_alter_table(prefix + "apps") as batch_op:
+        batch_op.alter_column(
+            "app_name",
+            nullable=True,
+        )
+        batch_op.alter_column(
+            "app_version",
+            nullable=True,
+        )
     # ### end Alembic commands ###

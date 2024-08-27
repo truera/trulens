@@ -6,18 +6,12 @@ TruLens can write and read from a Snowflake database using a SQLAlchemy connecti
 
 Here is a guide to logging in _Snowflake_.
 
-## Install the [Snowflake SQLAlchemy toolkit](https://docs.snowflake.com/en/developer-guide/python-connector/sqlalchemy) with the Python Connector
+## Install the TruLens Snowflake Connector
 
-!!! note
-
-    Only snowflake-sqlalchemy version 1.6.1 or greater is supported.
-
-Snowflake SQLAlchemy can be installed from [PyPI](https://pypi.org/project/snowflake-sqlalchemy/):
-
-!!! example "Install Snowflake-SQLAlchemy"
+!!! example "Install using pip"
 
     ```bash
-    pip install snowflake-sqlalchemy>=1.6.1
+    pip install trulens-connectors-snowflake
     ```
 
 ## Connect TruLens to the Snowflake database
@@ -28,20 +22,20 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
 
     ```python
     from trulens.core import TruSession
-    tru = TruSession(
-        name="MyApp",
-        snowflake_connection_parameters={
-            account: "<account>",
-            user: "<user>",
-            password: "<password>",
-            database: "<database>",
-            warehouse: "<warehouse>",
-            role: "<role>",
-        },
+    from trulens.connectors.snowflake import SnowflakeConnector
+    conn = SnowflakeConnector(
+        account="<account>",
+        user="<user>",
+        password="<password>",
+        database_name="<database>",
+        schema_name="<schema>",
+        warehouse="<warehouse>",
+        role="<role>",
     )
+    session = TruSession(connector=conn)
     ```
 
-Once you've instantiated the `Tru` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
+Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
 
 ## Connect TruLens to the Snowflake database using an engine
 
@@ -83,9 +77,9 @@ When the database engine is created, the private key is then passed through the 
             },
     )
 
-    from trulens.core import Tru
+    from trulens.core import TruSession
 
-    tru = Tru(
-    database_engine = engine
+    session = TruSession(
+        database_engine = engine
     )
     ```
