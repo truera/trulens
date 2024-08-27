@@ -1,6 +1,6 @@
-from trulens.core.utils.imports import format_import_errors
+"""Optional import messages for the backwards compat trulens_eval package."""
 
-# To remove after trulens_eval is removed:
+from trulens.core.utils.imports import format_import_errors
 
 # Optional sub-packages:
 REQUIREMENT_FEEDBACK = format_import_errors(
@@ -32,27 +32,6 @@ REQUIREMENT_NOTEBOOK = format_import_errors(
 )
 REQUIREMENT_OPENAI = format_import_errors(
     ["openai", "langchain_community"], purpose="using OpenAI models"
-)
-
-REQUIREMENT_SNOWFLAKE = format_import_errors(
-    [
-        "snowflake-core",
-        "snowflake-connector-python",
-        "snowflake-snowpark-python",
-        "snowflake-sqlalchemy",
-    ],
-    purpose="connecting to Snowflake",
-)
-
-# Optional app types:
-REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
-    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
-)
-REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
-    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
-)
-REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
-    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
 )
 
 # Optional provider types:
