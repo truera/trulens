@@ -6,7 +6,12 @@ from trulens.auto._utils import auto as auto_utils
 
 if TYPE_CHECKING:
     # Needed for static tools:
+    from trulens.core.feedback.provider import Provider
     from trulens.feedback.dummy.provider import DummyProvider
+    from trulens.feedback.embeddings import Embeddings
+    from trulens.feedback.groundtruth import GroundTruthAggregator
+    from trulens.feedback.groundtruth import GroundTruthAgreement
+    from trulens.feedback.llm_provider import LLMProvider
     from trulens.providers.bedrock.provider import Bedrock
     from trulens.providers.cortex.provider import Cortex
     from trulens.providers.huggingface.provider import Dymmy as HuggingfaceDummy
@@ -53,14 +58,35 @@ _PROVIDERS = {
     ),
 }
 
-_KINDS = {"provider": _PROVIDERS}
+_CONSTRUCTORS = {
+    "Embeddings": ("trulens-feedback", "trulens.feedback.embeddings"),
+    "GroundTruthAggregator": (
+        "trulens-feedback",
+        "trulens.feedback.groundtruth",
+    ),
+    "GroundTruthAgreement": (
+        "trulens-feedback",
+        "trulens.feedback.llm_provider",
+    ),
+}
 
-help, help_str = auto_utils.make_help_str(_KINDS)
+_INTERFACES = {
+    "Provider": ("trulens-core", "trulens.core.feedback.provider"),
+    "LLMProvider": ("trulens-feedback", "trulens.feedback.llm_provider"),
+}
 
-__getattr__ = auto_utils.make_getattr_override(_KINDS, help_str)
+_KINDS = {
+    "provider": _PROVIDERS,
+    "constructor": _CONSTRUCTORS,
+    "interface": _INTERFACES,
+}
 
-# This has to be statically assigned though we would prefer to use _OPTIONAL_PROVIDERS.keys():
+__getattr__ = auto_utils.make_getattr_override(
+    doc="TruLens providers.", kinds=_KINDS
+)
+
 __all__ = [
+    # providers
     "DummyProvider",
     "Bedrock",
     "Cortex",
@@ -71,4 +97,11 @@ __all__ = [
     "LiteLLM",
     "OpenAI",
     "AzureOpenAI",
+    # constructors
+    "Embeddings",
+    "GroundTruthAggregator",
+    "GroundTruthAgreement",
+    # interfaces
+    "Provider",
+    "LLMProvider",
 ]

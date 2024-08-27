@@ -18,9 +18,9 @@ _KINDS = {
     "function": _FUNCTIONS,
 }
 
-help, help_str = auto_utils.make_help_str(_KINDS)
-
-__getattr__ = auto_utils.make_getattr_override(_KINDS, help_str=help_str)
+__getattr__ = auto_utils.make_getattr_override(
+    doc="TruLens dashboard functions.", kinds=_KINDS
+)
 
 __all__ = [
     "run_dashboard",

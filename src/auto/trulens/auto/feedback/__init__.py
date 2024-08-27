@@ -7,58 +7,24 @@ from trulens.auto._utils import auto as auto_utils
 if TYPE_CHECKING:
     # Needed for static tools:
 
-    # feedback type aliases
     from trulens.core.feedback.feedback import AggCallable
-
-    # feedback classes
     from trulens.core.feedback.feedback import Feedback
     from trulens.core.feedback.feedback import ImpCallable
-    from trulens.core.feedback.feedback import InvalidSelector
     from trulens.core.feedback.feedback import SkipEval
-
-    # selector utilities
+    from trulens.core.feedback.provider import Provider
     from trulens.core.schema import Select
     from trulens.core.schema.feedback import FeedbackCall
     from trulens.core.schema.feedback import FeedbackCombinations
     from trulens.core.schema.feedback import FeedbackDefinition
-
-    # schema enums
     from trulens.core.schema.feedback import FeedbackMode
     from trulens.core.schema.feedback import FeedbackOnMissingParameters
-
-    # schema classes
     from trulens.core.schema.feedback import FeedbackResult
     from trulens.core.schema.feedback import FeedbackResultStatus
-    from trulens.feedback.embeddings import Embeddings
-    from trulens.feedback.groundtruth import GroundTruthAggregator
-    from trulens.feedback.groundtruth import GroundTruthAgreement
     from trulens.feedback.llm_provider import LLMProvider
 
-
-_CLASSES = {
-    "Embeddings": ("trulens-feedback", "trulens.feedback.embeddings"),
-    "GroundTruthAggregator": (
-        "trulens-feedback",
-        "trulens.feedback.groundtruth",
-    ),
-    "GroundTruthAgreement": (
-        "trulens-feedback",
-        "trulens.feedback.llm_provider",
-    ),
-    "LLMProvider": ("trulens-feedback", "trulens.feedback.llm_provider"),
+_SPECS = {
     "Feedback": ("trulens-core", "trulens.feedback.feedback"),
-    "InvalidSelector": ("trulens-core", "trulens.feedback.feedback"),
-    "SkipEval": ("trulens-core", "trulens.feedback.feedback"),
-}
-
-_TYPES = {
-    "ImpCallable": ("trulens-core", "trulens.feedback.feedback"),
-    "AggCallable": ("trulens-core", "trulens.feedback.feedback"),
-}
-
-_ENUMS = {
-    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
-    "FeedbackResultStatus": ("trulens-core", "trulens.core.schema.feedback"),
+    "Select": ("trulens-core", "trulens.core.schema"),
     "FeedbackOnMissingParameters": (
         "trulens-core",
         "trulens.core.schema.feedback",
@@ -66,44 +32,59 @@ _ENUMS = {
     "FeedbackCombinations": ("trulens-core", "trulens.core.schema.feedback"),
 }
 
-_SCHEMAS = {
+_CONFIGS = {
+    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
+}
+
+_IMPS = {
+    "SkipEval": ("trulens-core", "trulens.feedback.feedback"),
+    "ImpCallable": ("trulens-core", "trulens.feedback.feedback"),
+    "AggCallable": ("trulens-core", "trulens.feedback.feedback"),
+}
+
+_RESULTS = {
+    "FeedbackResultStatus": ("trulens-core", "trulens.core.schema.feedback"),
     "FeedbackResult": ("trulens-core", "trulens.core.schema.feedback"),
     "FeedbackCall": ("trulens-core", "trulens.core.schema.feedback"),
+}
+
+_INTERFACES = {
+    "Provider": ("trulens-core", "trulens.core.feedback.provider"),
+    "LLMProvider": ("trulens-core", "trulens.feedback.llm_provider"),
     "FeedbackDefinition": ("trulens-core", "trulens.core.schema.feedback"),
 }
 
-_UTILITIES = {
-    "Select": ("trulens-core", "trulens.core.schema"),
-}
-
 _KINDS = {
-    "class": _CLASSES,
-    "type": _TYPES,
-    "enum": _ENUMS,
-    "schema": _SCHEMAS,
-    "utility": _UTILITIES,
+    "spec": _SPECS,
+    "config": _CONFIGS,
+    "implementation": _IMPS,
+    "result": _RESULTS,
+    "interface": _INTERFACES,
 }
 
-help, help_str = auto_utils.make_help_str(_KINDS)
-
-__getattr__ = auto_utils.make_getattr_override(_KINDS, help_str=help_str)
+__getattr__ = auto_utils.make_getattr_override(
+    doc="TruLens feedback function specification and implementation.",
+    kinds=_KINDS,
+)
 
 __all__ = [
-    "Embeddings",
-    "GroundTruthAgreement",
-    "GroundTruthAggregator",
-    "LLMProvider",
+    # feedback specification
     "Feedback",
+    "Select",
+    "FeedbackOnMissingParameters",
+    "FeedbackCombinations",
+    # feedback configuration
     "FeedbackMode",
+    # feedback implementation
+    "SkipEval",
+    "ImpCallable",
+    "AggCallable",
+    # feedback result enums/schemas
     "FeedbackResult",
     "FeedbackResultStatus",
     "FeedbackCall",
+    # interfaces
     "FeedbackDefinition",
-    "FeedbackOnMissingParameters",
-    "FeedbackCombinations",
-    "InvalidSelector",
-    "SkipEval",
-    "Select",
-    "ImpCallable",
-    "AggCallable",
+    "Provider",
+    "LLMProvider",
 ]

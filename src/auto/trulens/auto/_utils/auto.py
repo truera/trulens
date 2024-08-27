@@ -9,15 +9,10 @@ import logging
 from pprint import PrettyPrinter
 import subprocess
 import sys
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Optional,
-    Tuple,
-    Union,
-)
+from types import ModuleType
+from typing import Any, Dict, Optional
 
+from IPython.lib import pretty
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 
@@ -30,6 +25,9 @@ pp = PrettyPrinter()
 NO_INSTALL: bool = False
 """If set, will not automatically install any optional trulens modules and fail
 in the typical way if a module is missing."""
+
+DOC_NO_INSTALLS = "You can enable automatic installs by calling `trulens.auto.set_no_install(False)`."
+DOC_INSTALLS = "Importing from this module will install the required package. You can disable this by calling `trulens.auto.set_no_install()`."
 
 
 def pip(*args) -> subprocess.CompletedProcess:
@@ -54,67 +52,202 @@ def install(package_name: str):
     return import_utils.get_package_version(package_name)
 
 
-def make_help_str(
-    kinds: Dict[str, Dict],
-) -> Tuple[Callable[[], None], Callable[[], str]]:
+def make_help_ipython(
+    doc: Optional[str] = None,
+    kinds: Optional[Dict[str, Dict]] = None,
+    kinds_docs: Optional[Dict[str, str]] = None,
+    mod: Optional[ModuleType] = None,
+) -> pretty.Printable:
     """Create a help string that lists all available classes and their installation status."""
 
-    mod = sys.modules[python_utils.caller_frame(offset=1).f_locals["__name__"]]
+    if mod is None:
+        mod: ModuleType = sys.modules[
+            python_utils.caller_frame(offset=1).f_locals["__name__"]
+        ]
 
-    def help_str() -> str:
-        ret = f"Module '{mod.__name__}' from '{mod.__file__} contains:\n"
-        for kind, items in kinds.items():
-            ret += f"{kind}: \n"  # TODO: pluralize
-            for class_, temp in items.items():
-                if len(temp) == 2:
-                    package_name, _ = temp
-                else:
-                    package_name, _, _ = temp
-                version = import_utils.get_package_version(package_name)
-                ret += (
-                    f"  {class_}\t[{package_name}]\t["
-                    + (str(version) if version is not None else "not installed")
-                    + "]\n"
-                )
+    if kinds_docs is None:
+        kinds_docs = {}
 
-        if NO_INSTALL:
-            ret += "\nYou can enable automatic installs by calling `trulens.auto.set_no_install(False)`."
-        else:
-            ret += "\nImporting from this module will install the required package. You can disable this by calling `trulens.auto.set_no_install()`."
+    class _PrettyModule(pretty.Printable):
+        def help(self) -> None:
+            print(self.__doc__)
 
-        return ret
+        def __repr__(self) -> str:
+            nonlocal doc, mod, kinds, kinds_docs
 
-    def help() -> None:
-        """Print a help message that lists all available classes and their installation status."""
+            ret = f"Module '{mod.__name__}' from '{mod.__file__}\n"
+            if doc is not None:
+                ret += doc + "\n\n"
+            else:
+                ret += "\n"
 
-        print(help_str())
+            if kinds is None:
+                return ret
 
-    return help, help_str
+            for kind, items in kinds.items():
+                ret += f"{kind.capitalize()}: \n"
+                if kind in kinds_docs:
+                    ret += f"{kinds_docs[kind]}\n\n"
+
+                for class_, temp in items.items():
+                    if len(temp) == 2:
+                        package_name, _ = temp
+                    else:
+                        package_name, _, _ = temp
+                    version = import_utils.get_package_version(package_name)
+                    ret += (
+                        f"  {class_}\t[{package_name}]\t["
+                        + (
+                            str(version)
+                            if version is not None
+                            else "not installed"
+                        )
+                        + "]\n"
+                    )
+
+                ret += "\n"
+
+            if NO_INSTALL:
+                ret += DOC_NO_INSTALLS
+            else:
+                ret += DOC_INSTALLS
+
+            return ret
+
+        def _repr_markdown_(self) -> str:
+            nonlocal doc, mod, kinds, kinds_docs
+
+            ret = f"# Module `{mod.__name__}`\n"
+            ret += f"from `{mod.__file__}`\n\n"
+
+            if doc is not None:
+                ret += f"{doc}\n\n"
+
+            if kinds is None:
+                return ret
+
+            for kind, items in kinds.items():
+                ret += f"## {kind.capitalize()}\n"
+                if kind in kinds_docs:
+                    ret += f"{kinds_docs[kind]}\n\n"
+
+                ret += f"{kind} | package | installed version\n"
+                ret += "--- | --- | ---\n"
+                for class_, temp in items.items():
+                    if len(temp) == 2:
+                        package_name, _ = temp
+                    else:
+                        package_name, _, _ = temp
+                    version = import_utils.get_package_version(package_name)
+                    ret += (
+                        f"`{class_}` | `{package_name}` | "
+                        + (
+                            str(version)
+                            if version is not None
+                            else "not installed"
+                        )
+                        + "\n"
+                    )
+                ret += "\n"
+
+            if NO_INSTALL:
+                ret += "\n" + DOC_INSTALLS
+            else:
+                ret += "\n" + DOC_NO_INSTALLS
+
+            return ret
+
+        def _repr_pretty_(self, p: pretty.PrettyPrinter, cycle: bool) -> None:
+            nonlocal doc, mod, kinds, kinds_docs
+
+            p.text(f"{mod.__name__}")
+            p.break_()
+
+            if doc is not None:
+                p.text(doc)
+                p.break_()
+                p.break_()
+
+            if kinds is None:
+                return
+
+            p.text("Contents:")
+            p.break_()
+            p.break_()
+
+            for kind, items in kinds.items():
+                p.begin_group(indent=2, open=kind.capitalize())
+                p.break_()
+                if kind in kinds_docs:
+                    p.text(kinds_docs[kind])
+                    p.break_()
+                    p.break_()
+
+                p.text(f"{kind} | package | installed version")
+                p.break_()
+                p.text("--- | --- | ---")
+                p.break_()
+                for class_, temp in items.items():
+                    if len(temp) == 2:
+                        package_name, _ = temp
+                    else:
+                        package_name, _, _ = temp
+                    version = import_utils.get_package_version(package_name)
+                    p.text(
+                        f"`{class_}` | `{package_name}` | "
+                        + (
+                            str(version)
+                            if version is not None
+                            else "not installed"
+                        )
+                    )
+                    p.break_()
+
+                p.break_()
+                p.end_group(dedent=2)
+
+            if NO_INSTALL:
+                p.text(DOC_NO_INSTALLS)
+                p.break_()
+            else:
+                p.text(DOC_INSTALLS)
+                p.break_()
+
+    p = _PrettyModule()
+    p.__doc__ = repr(p)
+    p.__name__ = mod.__name__
+
+    return p
 
 
 def make_getattr_override(
-    kinds: Dict[str, Dict],
-    help_str: Union[str, Callable[[], str]],
+    doc: Optional[str] = None,
+    kinds: Optional[Dict[str, Dict]] = None,
+    kinds_docs: Optional[Dict[str, str]] = None,
+    mod: Optional[ModuleType] = None,
 ) -> Any:
     """Make a custom __getattr__ function for a module to allow automatic
     installs of missing modules and better error messages."""
 
-    mod = sys.modules[python_utils.caller_module_name(offset=1)]
+    if mod is None:
+        mod: ModuleType = sys.modules[
+            python_utils.caller_frame(offset=1).f_locals["__name__"]
+        ]
 
-    if not isinstance(help_str, str):
-        help_str: str = help_str()
+    if kinds_docs is None:
+        kinds_docs = {}
+
+    pretties = make_help_ipython(
+        doc=doc, kinds=kinds, kinds_docs=kinds_docs, mod=mod
+    )
 
     if mod.__doc__ is None:
-        mod.__doc__ = help_str
+        mod.__doc__ = pretties.__doc__
     else:
-        mod.__doc__ += "\n\n" + help_str
+        mod.__doc__ += "\n\n" + pretties.__doc__
 
     def getattr_(attr):
-        nonlocal mod
-        nonlocal help_str
-
-        if attr == "_ipython_display_":
-            return lambda: print(help_str)
+        nonlocal mod, pretties
 
         if attr in [
             "_ipython_canary_method_should_not_exist_",
@@ -151,15 +284,19 @@ def make_getattr_override(
 
         # We also need to the case of an import of a sub-module instead of
         # something in __all__ (enumerated in kinds) so we try that here.
-        try:
-            submod = importlib.import_module(mod.__name__ + "." + attr)
-            return submod
-        except Exception:
-            # Use the same error message as the below.
-            pass
+        # try:
+        #    submod = importlib.import_module(mod.__name__ + "." + attr)
+        #    return submod
+        # except Exception:
+        # Use the same error message as the below.
+        #    pass
+
+        if hasattr(pretties, attr):
+            # Use the represtations from the PrettyModule class.
+            return getattr(pretties, attr)
 
         raise AttributeError(
-            f"Module {mod.__name__} has no attribute {attr}.\n" + help_str
+            f"Module {mod.__name__} has no attribute {attr}.\n" + repr(pretties)
         )
 
     return getattr_

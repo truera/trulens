@@ -6,9 +6,12 @@ from trulens.auto._utils import auto as auto_utils
 
 if TYPE_CHECKING:
     # Needed for static tools to resolve submodules:
+    from trulens.core.app.base import App
     from trulens.core.app.basic import TruBasicApp
     from trulens.core.app.custom import TruCustomApp
     from trulens.core.app.virtual import TruVirtual
+    from trulens.core.schema.app import AppDefinition
+    from trulens.core.schema.feedback import FeedbackMode
     from trulens.instrument.langchain.tru_chain import TruChain
     from trulens.instrument.llamaindex.tru_llama import TruLlama
     from trulens.instrument.nemo.tru_rails import TruRails
@@ -31,19 +34,36 @@ _RECORDERS = {
     ),
 }
 
-_KINDS = {
-    "recorder": _RECORDERS,
+_CONFIGS = {
+    "FeedbackMode": ("trulens-core", "trulens.core.schema.feedback"),
 }
 
-help, help_str = auto_utils.make_help_str(_KINDS)
+_INTERFACES = {
+    "App": ("trulens-core", "trulens.core.app.base"),
+    "AppDefinition": ("trulens-core", "trulens.core.schema.app"),
+}
 
-__getattr__ = auto_utils.make_getattr_override(_KINDS, help_str=help_str)
+_KINDS = {
+    "recorder": _RECORDERS,
+    "config": _CONFIGS,
+    "interface": _INTERFACES,
+}
+
+__getattr__ = auto_utils.make_getattr_override(
+    doc="TruLens app recorders.", kinds=_KINDS
+)
 
 __all__ = [
+    # recorders
     "TruBasicApp",
     "TruCustomApp",
     "TruVirtual",
     "TruChain",
     "TruLlama",
     "TruRails",
+    # recorder configuration
+    "FeedbackMode",
+    # interfaces
+    "App",
+    "AppDefinition",
 ]
