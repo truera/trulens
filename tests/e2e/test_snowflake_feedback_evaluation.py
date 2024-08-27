@@ -5,6 +5,7 @@ Tests server-side feedback evaluations in Snowflake.
 import time
 from unittest import main
 
+import snowflake.connector
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
 from trulens.core import Feedback
@@ -13,6 +14,7 @@ from trulens.core import TruBasicApp
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
+import trulens.providers.cortex.provider as cortex_provider
 from trulens.providers.cortex.provider import Cortex
 from trulens.providers.openai.provider import OpenAI
 
@@ -49,6 +51,29 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             f"CALL {self._database}.{self._schema}.{ssea._WRAPPER_STORED_PROCEDURE_NAME}()"
         ).collect()
 
+    def _get_cortex_relevance_feedback_function(
+        self,
+    ) -> SnowflakeFeedback:
+        return SnowflakeFeedback(
+            Cortex(
+                snowflake.connector.connect(
+                    **self._snowflake_connection_parameters
+                )
+            ).relevance
+        ).on_input_output()
+
+    def _start_evaluator_as_snowflake(self, session: TruSession):
+        try:
+            cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
+                self._snowflake_session.connection
+            )
+            session.start_evaluator(
+                run_location=FeedbackRunLocation.SNOWFLAKE,
+                return_when_done=True,
+            )
+        finally:
+            cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = None
+
     @optional_test
     def test_local_deferred_mode(self) -> None:
         session = TruSession()
@@ -83,7 +108,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         session = self.get_session("test_snowflake_deferred_mode")
         self._suspend_task()
         f_local = Feedback(silly_feedback_function).on_default()
-        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
+        f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
@@ -103,9 +128,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
-        session.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
-        time.sleep(2)
-        session.stop_evaluator()
+        self._start_evaluator_as_snowflake(session)
         records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
@@ -127,7 +150,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         session = self.get_session("test_snowflake_feedback_is_always_deferred")
         self._suspend_task()
         f_local = Feedback(silly_feedback_function).on_default()
-        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
+        f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
@@ -143,9 +166,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["silly_feedback_function"].iloc[0],
             0.1,
         )
-        session.start_evaluator(run_location=FeedbackRunLocation.SNOWFLAKE)
-        time.sleep(2)
-        session.stop_evaluator()
+        self._start_evaluator_as_snowflake(session)
         records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
@@ -204,7 +225,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @optional_test
     def test_snowflake_feedback_ran(self) -> None:
         session = self.get_session("test_snowflake_feedback_ran")
-        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
+        f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_snowflake],
@@ -233,7 +254,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @optional_test
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
-        SnowflakeFeedback(Cortex().relevance)  # no error
+        self._get_cortex_relevance_feedback_function()  # no error
         with self.assertRaisesRegex(
             ValueError,
             "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
@@ -244,7 +265,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_stored_procedure(self) -> None:
         session = self.get_session("test_stored_procedure")
         self._suspend_task()
-        f_snowflake = SnowflakeFeedback(Cortex().relevance).on_input_output()
+        f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_snowflake],

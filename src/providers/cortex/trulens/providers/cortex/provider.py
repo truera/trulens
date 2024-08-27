@@ -1,8 +1,6 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
-import snowflake
-import snowflake.connector
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
@@ -18,7 +16,6 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    connection_parameters: Any
     model_engine: str
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -26,7 +23,7 @@ class Cortex(
 
     Args:
 
-        connection_parameters (Any): Snowflake connection parameters.
+        snowflake_conn (Any): Snowflake connection.
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -44,8 +41,9 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-
-            provider = Cortex(connection_parameters)
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
             ```
 
         Connecting with private key:
@@ -63,6 +61,9 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
 
         Connecting with a private key file:
 
@@ -80,7 +81,9 @@ class Cortex(
                     "schema": <schema>,
                     "warehouse": <warehouse>
                 }
-            provider = Cortex(connection_parameters)
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
             ```
     """
 
@@ -89,7 +92,7 @@ class Cortex(
 
     def __init__(
         self,
-        connection_parameters: Any,
+        snowflake_conn: Any,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -103,10 +106,9 @@ class Cortex(
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
+        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
         if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
-            self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-                **connection_parameters
-            )
+            self_kwargs["snowflake_conn"] = snowflake_conn
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
