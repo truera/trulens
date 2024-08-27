@@ -182,18 +182,22 @@ build: $(POETRY_DIRS)
 	done
 	make build-dashboard
 
+## Step: Build zip files to upload to Snowflake staging
+zip-wheels:
+	poetry run ./zip_wheels.sh
+
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
-upload-%: build
+upload-%: clean build zip-wheels
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-all: build
+upload-all: clean build zip-wheels
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
-upload-testpypi-%: build
+upload-testpypi-%: clean build zip-wheels
 	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-testpypi-all: build
+upload-testpypi-all: clean build zip-wheels
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz

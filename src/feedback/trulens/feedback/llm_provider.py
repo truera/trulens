@@ -1398,12 +1398,17 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
-        hypotheses = self._remove_trivial_statements(hypotheses)
+        try:
+            hypotheses = self._remove_trivial_statements(hypotheses)
+        except Exception as e:
+            logger.error(
+                f"Error removing trivial statements: {e}. Proceeding with all statements."
+            )
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
@@ -1499,7 +1504,7 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
