@@ -1,5 +1,5 @@
 import json
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import Any, ClassVar, Dict, Optional, Sequence
 
 import pydantic
 import snowflake
@@ -17,7 +17,8 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    snowflake_session: Session = pydantic.Field(exclude=True)
+    connection_parameters: Any
+
     model_engine: str
     endpoint: CortexEndpoint = pydantic.Field(exclude=True)
     snowflake_conn: SnowflakeConnection
@@ -26,8 +27,8 @@ class Cortex(
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
     Args:
+        connection_parameters (Any): Snowflake connection parameters.
 
-        connection_parameters (dict): Snowflake connection parameters.
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -87,7 +88,7 @@ class Cortex(
 
     def __init__(
         self,
-        connection_parameters: dict,
+        connection_parameters: Any,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
