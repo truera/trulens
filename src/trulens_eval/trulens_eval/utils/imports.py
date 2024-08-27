@@ -31,6 +31,9 @@ from trulens.core.utils.imports import Dummy
 from trulens.core.utils.imports import ImportErrorMessages
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import VersionConflict
+from trulens.core.utils.imports import (
+    _requirements_of_trulens_core_file as requirements_of_file,
+)
 from trulens.core.utils.imports import all_packages
 from trulens.core.utils.imports import check_imports
 from trulens.core.utils.imports import format_import_errors
@@ -39,7 +42,6 @@ from trulens.core.utils.imports import optional_packages
 from trulens.core.utils.imports import parse_version
 from trulens.core.utils.imports import pin_spec
 from trulens.core.utils.imports import required_packages
-from trulens.core.utils.imports import requirements_of_file
 from trulens.core.utils.imports import static_resource
 
 from trulens_eval._utils.optional import REQUIREMENT_BERT_SCORE
