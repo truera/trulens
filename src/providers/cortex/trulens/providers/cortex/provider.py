@@ -1,11 +1,12 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
-import snowflake
-import snowflake.connector
-from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
+
+# If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
+# TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
+_SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
 
 class Cortex(
@@ -15,7 +16,6 @@ class Cortex(
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
-    connection_parameters: Any
     model_engine: str
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -23,7 +23,7 @@ class Cortex(
 
     Args:
 
-        connection_parameters (Any): Snowflake connection parameters.
+        snowflake_conn (Any): Snowflake connection.
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -41,8 +41,9 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-
-            provider = Cortex(connection_parameters)
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
             ```
 
         Connecting with private key:
@@ -60,6 +61,9 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
 
         Connecting with a private key file:
 
@@ -77,16 +81,18 @@ class Cortex(
                     "schema": <schema>,
                     "warehouse": <warehouse>
                 }
-            provider = Cortex(connection_parameters)
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
             ```
     """
 
     endpoint: CortexEndpoint
-    snowflake_conn: SnowflakeConnection
+    snowflake_conn: Any
 
     def __init__(
         self,
-        connection_parameters: Any,
+        snowflake_conn: Any,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -100,9 +106,9 @@ class Cortex(
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-        self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            **connection_parameters
-        )
+        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
+        if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
+            self_kwargs["snowflake_conn"] = snowflake_conn
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
@@ -121,9 +127,9 @@ class Cortex(
 
         completion_input_str = """
             SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                %s,
-                parse_json(%s),
-                parse_json(%s)
+                ?,
+                parse_json(?),
+                parse_json(?)
             )
         """
 

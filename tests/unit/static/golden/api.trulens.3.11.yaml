@@ -1304,7 +1304,6 @@ trulens.core.utils.imports:
     parse_version: builtins.function
     pin_spec: builtins.function
     required_packages: builtins.dict
-    requirements_of_file: builtins.function
     safe_importlib_package_name: builtins.function
     static_resource: builtins.function
 trulens.core.utils.imports.Dummy:

@@ -208,7 +208,7 @@ class SQLAlchemyDB(DB):
         # Params are from
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
 
-        engine_params = {
+        default_engine_params = {
             "url": url,
             "pool_size": 10,
             "pool_recycle": 300,
@@ -217,10 +217,17 @@ class SQLAlchemyDB(DB):
 
         if not is_memory_sqlite(url=url):
             # These params cannot be given to memory-based sqlite engine.
-            engine_params["max_overflow"] = 2
-            engine_params["pool_use_lifo"] = True
+            default_engine_params["max_overflow"] = 2
+            default_engine_params["pool_use_lifo"] = True
 
-        return cls(engine_params=engine_params, **kwargs)
+        if "engine_params" in kwargs:
+            for k, v in default_engine_params.items():
+                if k not in kwargs["engine_params"]:
+                    kwargs["engine_params"][k] = v
+        else:
+            kwargs["engine_params"] = default_engine_params
+
+        return cls(**kwargs)
 
     @classmethod
     def from_db_engine(
