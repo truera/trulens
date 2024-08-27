@@ -130,6 +130,7 @@ class SnowflakeConnector(DBConnector):
 
     @classmethod
     def _create_snowflake_database_url(cls, **kwargs) -> str:
+        kwargs = {k: v for k, v in kwargs.items() if v}
         cls._create_snowflake_schema_if_not_exists(kwargs)
         return URL(**kwargs)
 

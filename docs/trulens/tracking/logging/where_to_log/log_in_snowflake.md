@@ -41,7 +41,7 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     )
     ```
 
-Once you've instantiated the `Tru` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
+Once you've instantiated the `TruSession` object with your Snowflake connection, all _TruLens_ traces and evaluations will logged to Snowflake.
 
 ## Connect TruLens to the Snowflake database using an engine
 

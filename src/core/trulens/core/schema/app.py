@@ -64,10 +64,10 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     """
 
     app_name: mod_types_schema.AppName  # str
-    """Name for this app."""
+    """Name for this app. Default is "default_app"."""
 
     app_version: mod_types_schema.AppVersion  # str
-    """Version tag for this app."""
+    """Version tag for this app. Default is "base"."""
 
     tags: mod_types_schema.Tags  # str
     """Tags for the app."""
@@ -136,8 +136,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_extra_json: serial.JSON = None,
         **kwargs,
     ):
-        kwargs["app_name"] = str(app_name or app_id)
-        kwargs["app_version"] = app_version or "latest"
+        kwargs["app_name"] = str(app_name or app_id or "default_app")
+        kwargs["app_version"] = app_version or "base"
         kwargs["feedback_mode"] = feedback_mode
         kwargs["tags"] = ""
         kwargs["metadata"] = {}
@@ -311,7 +311,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             connector: The database connector to use.
 
             app: The app that produced the given record. If not provided, it is
-                looked up from the database of this `Tru` instance
+                looked up from the database of this `TruSession` instance
 
             on_done: A callback to call when each feedback function is done.
 
