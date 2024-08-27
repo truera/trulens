@@ -120,7 +120,14 @@ def re_0_10_rating(s: str) -> int:
 def validate_rating(rating: str) -> bool:
     warnings.warn(
         "This method is deprecated. "
-        "Use try/catch with `trulens.feedback.generated.re_0_10_rating` instead.",
+        "Use try/catch with `trulens.feedback.generated.re_0_10_rating` instead:\n"
+        "  ```python\n"
+        "  try:\n"
+        "      re_0_10_rating(rating)\n"
+        "  except ParseError:\n"
+        "      # not validated\n"
+        "  # validated\n"
+        "```",
         DeprecationWarning,
     )
     try:

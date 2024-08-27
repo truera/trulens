@@ -205,7 +205,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         # Check for optional app types.
         if app.__module__.startswith("langchain"):
-            with import_utils.optional_import(
+            with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
             ):
                 from trulens.instrument.langchain import tru_chain
@@ -216,7 +216,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             )
 
         elif app.__module__.startswith("llamaindex"):
-            with import_utils.optional_import(
+            with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
             ):
                 from trulens.instrument.llamaindex import tru_llama
@@ -227,7 +227,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             )
 
         elif app.__module__.startswith("nemoguardrails"):
-            with import_utils.optional_import(
+            with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
             ):
                 from trulens.instrument.nemo import tru_rails
@@ -289,7 +289,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Chain(self, *args, **kwargs) -> App:
-        with import_utils.optional_import(
+        with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
         ):
             from trulens.instrument.langchain import tru_chain
@@ -298,7 +298,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Llama(self, *args, **kwargs) -> App:
-        with import_utils.optional_import(
+        with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
         ):
             from trulens.instrument.llamaindex import tru_llama
@@ -307,7 +307,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Rails(self, *args, **kwargs) -> App:
-        with import_utils.optional_import(
+        with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
         ):
             from trulens.instrument.nemo import tru_rails
