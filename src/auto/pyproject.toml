@@ -1,0 +1,39 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-auto"
+version = "1.0.1a0"
+description = "Interactive/notebook interfaces for trulens."
+authors = [
+  "Truera Inc <all@truera.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
+trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
+trulens-dashboard = { version = "^1.0.0", allow-prereleases = true, python = "!=3.9.7" }
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../core", develop = true }
+trulens-feedback = { path = "../feedback", develop = true }
+trulens-dashboard = { path = "../dashboard", develop = true, python = "!=3.9.7" }

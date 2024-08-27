@@ -72,6 +72,9 @@ mkdocs-gen-files = "^0.5"
 mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
+[tool.poetry.group.auto.dependencies]
+trulens-auto = { path = "src/auto", develop = true }
+
 [tool.poetry.group.instrument.dependencies]
 trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
 trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
