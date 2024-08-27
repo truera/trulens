@@ -698,7 +698,7 @@ class App(
         else:
             if len(self.feedbacks) > 0:
                 raise ValueError(
-                    "Feedback logging requires `tru` to be specified."
+                    "Feedback logging requires `App.connector` to be specified."
                 )
 
         for f in self.feedbacks:
