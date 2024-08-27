@@ -226,7 +226,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
                 *args, app=app, connector=self.connector, **kwargs
             )
 
-        elif app.__module__.startswith("nemo"):
+        elif app.__module__.startswith("nemoguardrails"):
             with import_utils.optional_import(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
             ):
