@@ -7,7 +7,7 @@ from ipywidgets import widgets
 import traitlets
 from traitlets import HasTraits
 from traitlets import Unicode
-from trulens.core.app import base as mod_app
+from trulens.core import app as mod_app
 from trulens.core.instruments import Instrument
 from trulens.core.utils.json import JSON_BASES
 from trulens.core.utils.json import jsonify_for_ui

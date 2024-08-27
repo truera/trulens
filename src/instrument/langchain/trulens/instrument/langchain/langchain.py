@@ -5,8 +5,8 @@ various langchain classes and example classes:
 
 from typing import Type
 
-from trulens.core.app import base
-from trulens.core.app.base import ComponentView
+from trulens.core import app
+from trulens.core.app import ComponentView
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.serial import JSON
 
@@ -24,7 +24,7 @@ class LangChainComponent(ComponentView):
         return component_of_json(json)
 
 
-class Prompt(base.Prompt, LangChainComponent):
+class Prompt(app.Prompt, LangChainComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -43,7 +43,7 @@ class Prompt(base.Prompt, LangChainComponent):
         )  # langchain >= 0.230
 
 
-class LLM(base.LLM, LangChainComponent):
+class LLM(app.LLM, LangChainComponent):
     @property
     def model_name(self) -> str:
         return self.json["model_name"]
@@ -58,7 +58,7 @@ class LLM(base.LLM, LangChainComponent):
         )
 
 
-class Other(base.Other, LangChainComponent):
+class Other(app.Other, LangChainComponent):
     pass
 
 

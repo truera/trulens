@@ -7,10 +7,10 @@ from unittest import main
 
 from trulens.core import Feedback
 from trulens.core import SnowflakeFeedback
-from trulens.core import TruBasicApp
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
+from trulens.instrument.basic import TruBasicApp
 
 from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase

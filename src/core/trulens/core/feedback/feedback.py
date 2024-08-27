@@ -633,7 +633,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ValueError: If a selector is invalid and warning is not set.
         """
 
-        from trulens.core.app.base import App
+        from trulens.core.app import App
 
         if source_data is None:
             source_data = {}

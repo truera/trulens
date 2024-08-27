@@ -8,8 +8,8 @@ various llama_index classes and example classes:
 
 from typing import Type
 
-from trulens.core.app import base
-from trulens.core.app.base import ComponentView
+from trulens.core import app
+from trulens.core.app import ComponentView
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.serial import JSON
 
@@ -27,7 +27,7 @@ class LlamaIndexComponent(ComponentView):
         return component_of_json(json)
 
 
-class Prompt(base.Prompt, LlamaIndexComponent):
+class Prompt(app.Prompt, LlamaIndexComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -42,7 +42,7 @@ class Prompt(base.Prompt, LlamaIndexComponent):
         )
 
 
-class Agent(base.Agent, LlamaIndexComponent):
+class Agent(app.Agent, LlamaIndexComponent):
     @property
     def agent_name(self) -> str:
         return "agent name not supported in llama_index"
@@ -57,7 +57,7 @@ class Agent(base.Agent, LlamaIndexComponent):
         )
 
 
-class Tool(base.Tool, LlamaIndexComponent):
+class Tool(app.Tool, LlamaIndexComponent):
     @property
     def tool_name(self) -> str:
         if "metadata" in self.json:
@@ -75,7 +75,7 @@ class Tool(base.Tool, LlamaIndexComponent):
         )
 
 
-class LLM(base.LLM, LlamaIndexComponent):
+class LLM(app.LLM, LlamaIndexComponent):
     @property
     def model_name(self) -> str:
         return self.json["model"]
@@ -90,7 +90,7 @@ class LLM(base.LLM, LlamaIndexComponent):
         )
 
 
-class Other(base.Other, LlamaIndexComponent):
+class Other(app.Other, LlamaIndexComponent):
     pass
 
 

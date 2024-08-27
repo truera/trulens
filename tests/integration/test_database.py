@@ -32,7 +32,6 @@ from unittest import main
 import pandas as pd
 from sqlalchemy import Engine
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
 from trulens.core import TruSession
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -46,6 +45,7 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.feedback import Provider
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.select import Select
+from trulens.instrument.basic import TruBasicApp
 
 
 class TestDBSpecifications(TestCase):

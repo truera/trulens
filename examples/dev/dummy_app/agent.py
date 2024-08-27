@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
-from trulens.core.app.custom import TruCustomApp
-from trulens.core.app.custom import instrument
+from trulens.instrument.custom import TruCustomApp
+from trulens.instrument.custom import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

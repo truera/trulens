@@ -1,8 +1,8 @@
 import inspect
 from typing import Any, Callable, List, Optional
 
-from trulens.core.app.custom import instrument
 from trulens.core.utils.python import superstack
+from trulens.instrument.custom import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

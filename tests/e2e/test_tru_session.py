@@ -11,12 +11,12 @@ from unittest import TestCase
 import uuid
 
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
-from trulens.core import TruCustomApp
 from trulens.core import TruSession
-from trulens.core import TruVirtual
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
+from trulens.instrument.basic import TruBasicApp
+from trulens.instrument.custom import TruCustomApp
+from trulens.instrument.virtual import TruVirtual
 from trulens.providers.huggingface.provider import Dummy
 
 from tests.test import optional_test

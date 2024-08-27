@@ -61,7 +61,7 @@ from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
 if TYPE_CHECKING:
-    from trulens.core.app.base import RecordingContext
+    from trulens.core.app import RecordingContext
 
 logger = logging.getLogger(__name__)
 

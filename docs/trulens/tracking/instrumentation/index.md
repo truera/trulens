@@ -46,7 +46,7 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 !!! example "Using `@instrument`"
 
     ```python
-    from trulens.core.app.custom import instrument
+    from trulens.instrument.custom import instrument
 
     class RAG_from_scratch:
         @instrument
@@ -77,7 +77,7 @@ is via `instrument.method`. See a usage example below:
 !!! example "Using `instrument.method`"
 
     ```python
-    from trulens.core.app.custom import instrument
+    from trulens.instrument.custom import instrument
     from somepackage.from custom_retriever import CustomRetriever
 
     instrument.method(CustomRetriever, "retrieve_chunks")
@@ -97,7 +97,7 @@ Any text-to-text application can be simply wrapped with `TruBasicApp`, and then 
 !!! example "Using `TruBasicApp` to log text to text apps"
 
     ```python
-    from trulens.core import TruBasicApp
+    from trulens.instrument.basic import TruBasicApp
 
     def custom_application(prompt: str) -> str:
         return "a response"

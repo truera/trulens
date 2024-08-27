@@ -3,7 +3,7 @@
 from typing import ClassVar, Optional
 
 import pydantic
-from trulens.core.app import base as mod_app
+from trulens.core import app as mod_app
 from trulens.core.utils.serial import JSON
 
 

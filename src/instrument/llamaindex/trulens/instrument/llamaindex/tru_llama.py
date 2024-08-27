@@ -10,7 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 import llama_index
 from pydantic import Field
-from trulens.core.app import base as mod_app
+from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 

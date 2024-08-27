@@ -10,15 +10,15 @@ from trulens.core.utils import imports as imports_utils
 
 deprecation_utils.packages_dep_warn("trulens_eval")
 
-from trulens.core.app.basic import TruBasicApp
-from trulens.core.app.custom import TruCustomApp
-from trulens.core.app.virtual import TruVirtual
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
 from trulens.core.schema import Select
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.session import TruSession as Tru
 from trulens.core.utils.threading import TP
+from trulens.instrument.basic import TruBasicApp
+from trulens.instrument.custom import TruCustomApp
+from trulens.instrument.virtual import TruVirtual
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM

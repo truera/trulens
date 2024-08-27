@@ -7,10 +7,10 @@ from unittest import main
 
 import numpy as np
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.select import Select
+from trulens.instrument.basic import TruBasicApp
 
 # Get the "globally importable" feedback implementations.
 from tests.unit.feedbacks import CustomClassNoArgs
