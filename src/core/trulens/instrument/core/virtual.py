@@ -21,7 +21,7 @@ Example: "Constructing a Virtual Application"
     }
     # Converting the dictionary to a VirtualApp instance
     from trulens.core import Select
-    from trulens.instrument.virtual import VirtualApp
+    from trulens.instrument.core import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -147,7 +147,7 @@ apps.
 Example: "Integrating Feedback Functions into TruVirtual"
 
     ```python
-    from trulens.instrument.virtual import TruVirtual
+    from trulens.instrument.core import TruVirtual
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
@@ -184,7 +184,7 @@ Example: "Storing metadata in a VirtualApp"
     }
 
     from trulens.core import Select
-    from trulens.instrument.virtual import VirtualApp
+    from trulens.instrument.core import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024

@@ -70,14 +70,14 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         [TruRails][trulens.instrument.nemo.TruRails]: NeMo Guardrails apps.
 
-        [TruBasicApp][trulens.core.TruBasicApp]:
+        [TruBasicApp][trulens.instrument.core.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.core.TruCustomApp]:
+        [TruCustomApp][trulens.instrument.custom.TruCustomApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
-        [TruVirtual][trulens.core.TruVirtual]: Virtual
+        [TruVirtual][trulens.instrument.core.TruVirtual]: Virtual
             apps that do not have a real app to instrument but have a virtual
             structure and can log existing captured data as if they were trulens
             records.

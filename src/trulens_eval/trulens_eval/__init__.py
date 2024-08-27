@@ -16,9 +16,9 @@ from trulens.core.schema import Select
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.session import TruSession as Tru
 from trulens.core.utils.threading import TP
-from trulens.instrument.basic import TruBasicApp
-from trulens.instrument.custom import TruCustomApp
-from trulens.instrument.virtual import TruVirtual
+from trulens.instrument.core import TruBasicApp
+from trulens.instrument.core import TruCustomApp
+from trulens.instrument.core import TruVirtual
 
 with imports_utils.OptionalImports(
     messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM

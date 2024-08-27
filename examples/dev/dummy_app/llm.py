@@ -1,7 +1,7 @@
 from typing import AsyncIterable, Iterable, Optional
 
 from trulens.feedback.dummy.endpoint import DummyAPI
-from trulens.instrument.custom import instrument
+from trulens.instrument.core import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

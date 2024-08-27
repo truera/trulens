@@ -29,8 +29,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { version = "^1.0.0", allow-prereleases = true }
-trulens-instrument-custom = { version = "^1.0.0", allow-prereleases = true }
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../core", develop = true }
-trulens-instrument-custom = { path = "../instrument/custom", develop = true }

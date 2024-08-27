@@ -8,8 +8,8 @@ from trulens.core import Feedback
 from trulens.core import Select
 from trulens.core.feedback.feedback import AggCallable
 from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.instrument.custom import TruCustomApp
-from trulens.instrument.custom import instrument
+from trulens.instrument.core import TruCustomApp
+from trulens.instrument.core import instrument
 
 log = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 import sys
 
-from trulens.instrument.custom import instrument
+from trulens.instrument.core import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

@@ -219,19 +219,22 @@ trulens.core.app.TrulensComponent:
   - trulens.core.app.ComponentView
   __class__: trulens.core.app.ComponentViewMeta
   attributes: {}
-trulens.instrument.basic:
+trulens.instrument.core:
   __class__: builtins.module
   highs: {}
   lows:
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruBasicCallableInstrument: builtins.type
     TruWrapperApp: builtins.type
-trulens.instrument.basic.TruBasicApp:
+    TruVirtual: pydantic._internal._model_construction.ModelMetaclass
+    VirtualApp: builtins.type
+    VirtualRecord: pydantic._internal._model_construction.ModelMetaclass
+trulens.instrument.core.TruBasicApp:
   __bases__:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    app: trulens.instrument.basic.TruWrapperApp
+    app: trulens.instrument.core.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     app_id: builtins.str
@@ -258,12 +261,12 @@ trulens.instrument.basic.TruBasicApp:
     selector_nocheck: builtins.bool
     tags: builtins.str
     tru_class_info: trulens.core.utils.pyschema.Class
-trulens.instrument.basic.TruBasicCallableInstrument:
+trulens.instrument.core.TruBasicCallableInstrument:
   __bases__:
   - trulens.core.instruments.Instrument
   __class__: builtins.type
   attributes: {}
-trulens.instrument.basic.TruWrapperApp:
+trulens.instrument.core.TruWrapperApp:
   __bases__:
   - builtins.object
   __class__: builtins.type
@@ -315,20 +318,13 @@ trulens.instrument.custom.instrument:
   - trulens.core.instruments.instrument
   __class__: builtins.type
   attributes: {}
-trulens.instrument.virtual:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    TruVirtual: pydantic._internal._model_construction.ModelMetaclass
-    VirtualApp: builtins.type
-    VirtualRecord: pydantic._internal._model_construction.ModelMetaclass
-trulens.instrument.virtual.TruVirtual:
+trulens.instrument.core.TruVirtual:
   __bases__:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     add_record: builtins.function
-    app: trulens.instrument.virtual.VirtualApp
+    app: trulens.instrument.core.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     app_id: builtins.str
@@ -354,13 +350,13 @@ trulens.instrument.virtual.TruVirtual:
     selector_nocheck: builtins.bool
     tags: builtins.str
     tru_class_info: trulens.core.utils.pyschema.Class
-trulens.instrument.virtual.VirtualApp:
+trulens.instrument.core.VirtualApp:
   __bases__:
   - builtins.dict
   __class__: builtins.type
   attributes:
     root: builtins.function
-trulens.instrument.virtual.VirtualRecord:
+trulens.instrument.core.VirtualRecord:
   __bases__:
   - trulens.core.schema.record.Record
   __class__: pydantic._internal._model_construction.ModelMetaclass

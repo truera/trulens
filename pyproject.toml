@@ -31,9 +31,6 @@ python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0", allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
-trulens-instrument-basic = { version = "^1.0.0", allow-prereleases = true }
-trulens-instrument-custom = { version = "^1.0.0", allow-prereleases = true }
-trulens-instrument-virtual = { version = "^1.0.0", allow-prereleases = true }
 # Remove after deprecation period:
 trulens_eval = { version = "^1.0.0", allow-prereleases = true }
 
@@ -74,9 +71,6 @@ mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
 [tool.poetry.group.instrument.dependencies]
-trulens-instrument-basic = { path = "src/instrument/basic", develop = true }
-trulens-instrument-custom = { path = "src/instrument/custom", develop = true }
-trulens-instrument-virtual = { path = "src/instrument/virtual", develop = true }
 trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
 trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
 trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
@@ -97,9 +91,6 @@ python = "^3.9,!=3.9.7"
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
-trulens-instrument-basic = { path = "src/instrument/basic", develop = true }
-trulens-instrument-custom = { path = "src/instrument/custom", develop = true }
-trulens-instrument-virtual = { path = "src/instrument/virtual", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true, python = "!=3.9.7" }
 

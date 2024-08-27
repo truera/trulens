@@ -714,22 +714,6 @@ type = "directory"
 url = "../core"
 
 [[package]]
-name = "trulens-instrument-custom"
-version = "1.0.1a0"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9"
-files = []
-develop = true
-
-[package.dependencies]
-trulens-core = "^1.0.0"
-
-[package.source]
-type = "directory"
-url = "../instrument/custom"
-
-[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -754,4 +738,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "3fffb6878d96828a6782d3f27e99c97f8baecee81e13caffe1e0c7fb747ca1a5"
+content-hash = "c3380d7806d169dd2e34224bc07067fe409d4e786258045b116925c32b0acb86"

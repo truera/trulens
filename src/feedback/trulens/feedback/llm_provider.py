@@ -128,7 +128,7 @@ class LLMProvider(Provider):
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
+            verb_confidence_prompt: A pre-formatted system prompt.
 
             user_prompt: An optional user prompt.
 
