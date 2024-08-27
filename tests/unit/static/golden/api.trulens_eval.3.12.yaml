@@ -1210,6 +1210,8 @@ trulens_eval.schema.base.Cost:
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
     n_tokens: builtins.int
+    n_guardrails_tokens: builtins.int
+    snowflake_credits_consumed: builtins.float
 trulens_eval.schema.base.Perf:
   __bases__:
   - trulens_eval.utils.serial.SerialModel
