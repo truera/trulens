@@ -15,8 +15,50 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
+# the credit consumption table needs to be kept up-to-date with
+# the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS = {
+    "reka-core": 5.5,
+    "mistral-large": 5.1,
+    "llama3.1-405b": 5,
+    "llama3-70b": 1.21,
+    "llama3.1-70b": 1.21,
+    "snowflake-arctic": 0.84,
+    "jamba-instruct": 0.83,
+    "llama2-chat-70b": 0.45,
+    "reka-flash": 0.45,
+    "mixtral-8x7b": 0.22,
+    "llama3-8b": 0.19,
+    "llama3.1-8b": 0.19,
+    "mistral-7b": 0.12,
+    "gemma-7b": 0.12,
+}
+
+
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+
+    # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
+
+    def _compute_credits_consumed(
+        self, cortex_model_name: str, n_tokens: int
+    ) -> float:
+        try:
+            if cortex_model_name in CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS:
+                return (
+                    CORTEX_MODEL_TO_CREDITS_PER_1M_TOKENS[cortex_model_name]
+                    * n_tokens
+                    / 1e6
+                )  # we maintain config per-1M-token cost
+            else:
+                raise ValueError(
+                    f"Model {cortex_model_name} not valid or not supported yet."
+                )
+        except Exception as e:
+            logger.error(
+                f"Error occurred while computing credits consumed for model {cortex_model_name}: {e}"
+            )
+            return 0.0
 
     def handle_generation(self, response: dict) -> None:
         """Get the usage information from Cortex LLM function response's usage field."""
@@ -43,7 +85,15 @@ class CortexCallback(EndpointCallback):
                 getattr(self.cost, cost_field, 0) + usage.get(cortex_field, 0),
             )
 
-            # TODO: compute credits consumed in Snowflake account based on tokens processed
+        # compute credits consumed in Snowflake account based on tokens processed
+        setattr(
+            self.cost,
+            "snowflake_credits_consumed",
+            getattr(self.cost, "snowflake_credits_consumed", 0)
+            + self._compute_credits_consumed(
+                response["model"], usage.get("total_tokens", 0)
+            ),
+        )
 
 
 class CortexEndpoint(Endpoint):
