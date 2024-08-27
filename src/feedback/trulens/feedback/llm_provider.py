@@ -1405,7 +1405,9 @@ class LLMProvider(Provider):
         try:
             hypotheses = self._remove_trivial_statements(hypotheses)
         except Exception as e:
-            logger.error(f"Error removing trivial statements: {e}. Proceeding with all statements.")
+            logger.error(
+                f"Error removing trivial statements: {e}. Proceeding with all statements."
+            )
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
