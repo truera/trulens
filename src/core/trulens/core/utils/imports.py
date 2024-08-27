@@ -42,7 +42,7 @@ def safe_importlib_package_name(package_name: str) -> str:
     )
 
 
-def requirements_of_trulens_core_file(
+def _requirements_of_trulens_core_file(
     path: str,
 ) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
@@ -160,13 +160,13 @@ dependencies get installed and hopefully corrected:
 """
 
 required_packages: Dict[str, requirements.Requirement] = (
-    requirements_of_trulens_core_file("utils/requirements.txt")
+    _requirements_of_trulens_core_file("utils/requirements.txt")
 )
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
 optional_packages: Dict[str, requirements.Requirement] = (
-    requirements_of_trulens_core_file("utils/requirements.optional.txt")
+    _requirements_of_trulens_core_file("utils/requirements.optional.txt")
 )
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""
