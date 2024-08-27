@@ -5,7 +5,6 @@ import pydantic
 import snowflake
 import snowflake.connector
 from snowflake.connector import SnowflakeConnection
-from snowflake.snowpark import Session
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
@@ -105,10 +104,6 @@ class Cortex(
         self_kwargs["snowflake_conn"] = snowflake.connector.connect(
             **connection_parameters
         )
-
-        self_kwargs["snowflake_session"] = Session.builder.configs(
-            connection_parameters
-        ).create()
 
         super().__init__(**self_kwargs)
 
