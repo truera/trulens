@@ -597,6 +597,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
             total = 0
 
+            # TODO: a lot of the time we say `if tqdm`, but shouldn't we say `if not disable_tqdm`?
             if tqdm:
                 # Getting total counts from the database to start off the tqdm
                 # progress bar initial values so that they offer accurate
