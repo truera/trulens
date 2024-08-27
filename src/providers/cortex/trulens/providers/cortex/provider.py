@@ -110,10 +110,10 @@ class Cortex(
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-
         self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
         if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
             self_kwargs["snowflake_conn"] = snowflake_conn
+
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
