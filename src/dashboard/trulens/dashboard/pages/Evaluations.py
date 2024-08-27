@@ -152,7 +152,6 @@ def extract_metadata(row: pd.Series) -> str:
 app_ids = list(app["app_id"] for app in lms.get_apps())
 
 
-@st.cache_data
 def get_apps():
     return list(lms.get_apps())
 

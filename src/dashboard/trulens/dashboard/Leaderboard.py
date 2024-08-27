@@ -33,12 +33,9 @@ def leaderboard():
     # Set the title
     st.title("App Leaderboard")
 
-    # wrapper so we can cache the records and feedback
-    @st.cache_data
     def get_data():
         return lms.get_records_and_feedback([])
 
-    @st.cache_data
     def get_apps():
         return list(lms.get_apps())
 

@@ -66,11 +66,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
     if df.empty:
         st.write("No records yet...")
 
-    @st.cache_data
     def get_data():
         return lms.get_records_and_feedback([])
 
-    @st.cache_data
     def get_apps():
         return list(lms.get_apps())
 
