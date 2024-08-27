@@ -16,9 +16,6 @@ from IPython.lib import pretty
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 
-# import caller_frame
-# from trulens.core.utils.python import caller_module
-
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
