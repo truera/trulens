@@ -32,16 +32,18 @@ def module_getattr_override(
         # issue module import warning:
         package_dep_warn()
 
-        # define temporary implementations of to-be-deprecated attributes
-        something = 42
+        # define temporary implementations of to-be-deprecated attributes:
+        something = ... actual working implementation or alias
         ```
 
     - After deprecation
         ```python
-        # define deprecated attribute with None/any value but name with "DEP_" prefix:
+        # define deprecated attribute with None/any value but name with "DEP_"
+        # prefix:
         DEP_something = None
 
-        # issue module deprecation warning and override __getattr__ to issue deprecation errors for the above:
+        # issue module deprecation warning and override __getattr__ to issue
+        # deprecation errors for the above:
         module_getattr_override()
         ```
 
