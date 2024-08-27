@@ -37,7 +37,7 @@ As a result of these changes, the package structure for the TruLens varies from 
 | `trulens_eval.Tru` | [`trulens.core.TruSession`][trulens.core.TruSession] | |
 | `trulens_eval.Feedback` | [`trulens.core.Feedback`][trulens.core.Feedback] | |
 | `trulens_eval.Select` | [`trulens.core.Select`][trulens.core.Select] | |
-| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.core.TruCustomApp`][trulens.core.TruCustomApp] | |
+| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.instrument.custom.TruCustomApp`][trulens.instrument.custom.TruCustomApp] | |
 | `trulens_eval.TruChain`, `TruSession().Chain(...)` | [`trulens.instrument.langchain.TruChain`][trulens.instrument.langchain.TruChain] | `trulens-instrument-langchain` |
 | `trulens_eval.TruLlama`, `TruSession().Llama(...)` | [`trulens.instrument.llamaindex.TruLlama`][trulens.instrument.llamaindex.TruLlama] | `trulens-instrument-llamaindex` |
 | `trulens_eval.OpenAI` | [`trulens.providers.openai.OpenAI`][trulens.providers.openai.OpenAI] | `trulens-providers-openai` |

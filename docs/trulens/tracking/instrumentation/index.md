@@ -86,7 +86,7 @@ is via `instrument.method`. See a usage example below:
     ```
 
 Read more about instrumenting custom class applications in the [API
-Reference][trulens.core.TruCustomApp]
+Reference][trulens.instrument.custom.TruCustomApp]
 
 ## Tracking input-output applications
 
