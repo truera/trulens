@@ -1,12 +1,8 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
-
 import pydantic
-import snowflake
-import snowflake.connector
 from snowflake.connector import SnowflakeConnection
-
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
@@ -97,7 +93,6 @@ class Cortex(
 
     endpoint: CortexEndpoint
     snowflake_conn: Any
-
 
     def __init__(
         self,
