@@ -1,4 +1,5 @@
 # ruff: noqa: E402, F822
+"""TruLens notebook utilities."""
 
 from importlib.metadata import version
 
@@ -91,7 +92,6 @@ _KINDS = {
 }
 
 __getattr__ = auto_utils.make_getattr_override(
-    doc="TruLens notebook utilities.",
     kinds=_KINDS,
     kinds_docs={
         "provider": "Providers are also available in `trulens.auto.providers`.",

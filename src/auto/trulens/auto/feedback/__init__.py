@@ -1,4 +1,5 @@
 # ruff: noqa: E402, F822
+"""TruLens feedback function specification and implementation."""
 
 from typing import TYPE_CHECKING
 
@@ -62,10 +63,7 @@ _KINDS = {
     "interface": _INTERFACES,
 }
 
-__getattr__ = auto_utils.make_getattr_override(
-    doc="TruLens feedback function specification and implementation.",
-    kinds=_KINDS,
-)
+__getattr__ = auto_utils.make_getattr_override(kinds=_KINDS)
 
 __all__ = [
     # feedback specification

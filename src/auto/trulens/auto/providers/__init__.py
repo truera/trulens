@@ -1,4 +1,5 @@
 # ruff: noqa: E402
+"""TruLens providers and provider constructors."""
 
 from typing import TYPE_CHECKING
 
@@ -81,9 +82,7 @@ _KINDS = {
     "interface": _INTERFACES,
 }
 
-__getattr__ = auto_utils.make_getattr_override(
-    doc="TruLens providers.", kinds=_KINDS
-)
+__getattr__ = auto_utils.make_getattr_override(kinds=_KINDS)
 
 __all__ = [
     # providers

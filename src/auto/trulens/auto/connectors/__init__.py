@@ -1,4 +1,5 @@
 # ruff: noqa: E402, F822
+"""TruLens database connectors."""
 
 from typing import TYPE_CHECKING
 
@@ -24,9 +25,7 @@ _KINDS = {
     "connectors": _CONNECTORS,
 }
 
-__getattr__ = auto_utils.make_getattr_override(
-    doc="TruLens database connectors.", kinds=_KINDS
-)
+__getattr__ = auto_utils.make_getattr_override(kinds=_KINDS)
 
 __all__ = [
     "DefaultDBConnector",

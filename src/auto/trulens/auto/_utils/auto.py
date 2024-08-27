@@ -68,6 +68,10 @@ def make_help_ipython(
             python_utils.caller_frame(offset=1).f_locals["__name__"]
         ]
 
+    mod_docstring = getattr(mod, "__doc__", None)
+    if mod_docstring is not None:
+        doc = mod_docstring + "\n\n" + (doc if doc is not None else "")
+
     if kinds_docs is None:
         kinds_docs = {}
 

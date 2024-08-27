@@ -1,4 +1,5 @@
 # ruff: noqa: E402, F822
+"""TruLens recorders and configuration."""
 
 from typing import TYPE_CHECKING
 

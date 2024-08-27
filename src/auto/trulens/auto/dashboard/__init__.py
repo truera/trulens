@@ -1,4 +1,5 @@
 # ruff: noqa: E402, F822
+"""TruLens dashboard functions."""
 
 from typing import TYPE_CHECKING
 
@@ -18,9 +19,7 @@ _KINDS = {
     "function": _FUNCTIONS,
 }
 
-__getattr__ = auto_utils.make_getattr_override(
-    doc="TruLens dashboard functions.", kinds=_KINDS
-)
+__getattr__ = auto_utils.make_getattr_override(kinds=_KINDS)
 
 __all__ = [
     "run_dashboard",
