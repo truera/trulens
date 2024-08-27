@@ -33,7 +33,7 @@ class SnowflakeTestCase(TestCase):
         self._snowflake_schemas_to_delete = []
 
     def tearDown(self):
-        # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
+        # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
         for key in [
             curr for curr in TruSession._instances if curr[0] == "TruSession"
         ]:
