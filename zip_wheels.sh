@@ -1,5 +1,12 @@
 #!/bin/zsh
 
+# This script creates zips of packages to upload to a Snowflake stage so they
+# can be used in stored procedures, SiS, UDFs, and just generally anything run
+# on the warehouse.
+#
+# This should be run before upload and is therefore part of the `Makefile`
+# upload target.
+
 set -e
 
 OUTPUT_DIRECTORY="./src/connectors/snowflake/trulens/data/snowflake_stage_zips"

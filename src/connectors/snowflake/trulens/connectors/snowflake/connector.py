@@ -13,6 +13,7 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
+from trulens.core.database import base as mod_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -60,10 +61,12 @@ class SnowflakeConnector(DBConnector):
             for k, v in {
                 "database_url": database_url,
                 "database_redact_keys": database_redact_keys,
-                "database_prefix": database_prefix,
             }.items()
             if v is not None
         })
+        database_args["database_prefix"] = (
+            database_prefix or mod_db.DEFAULT_DATABASE_PREFIX
+        )
         self._db: Union[SQLAlchemyDB, OpaqueWrapper] = (
             SQLAlchemyDB.from_tru_args(**database_args)
         )
@@ -83,7 +86,7 @@ class SnowflakeConnector(DBConnector):
             schema,
             warehouse,
             role,
-            database_url,
+            database_args["database_prefix"],
         )
 
     def _initialize_snowflake_server_side_feedback_evaluations(
@@ -95,7 +98,7 @@ class SnowflakeConnector(DBConnector):
         schema: str,
         warehouse: str,
         role: str,
-        database_url: str,
+        database_prefix: str,
     ):
         connection_parameters = {
             "account": account,
@@ -115,7 +118,7 @@ class SnowflakeConnector(DBConnector):
                 schema,
                 warehouse,
                 role,
-                database_url,
+                database_prefix,
             ).set_up_all()
 
     @classmethod

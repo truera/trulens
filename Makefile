@@ -182,7 +182,7 @@ build: $(POETRY_DIRS)
 	done
 	make build-dashboard
 
-## Step: Build zip files to upload to staging
+## Step: Build zip files to upload to Snowflake staging
 zip-wheels:
 	poetry run ./zip_wheels.sh
 

@@ -1226,6 +1226,8 @@ Feedback function signature:
 
 
 class SnowflakeFeedback(Feedback):
+    """Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server."""
+
     def __init__(
         self,
         imp: Optional[Callable] = None,

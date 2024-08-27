@@ -42,20 +42,19 @@ def safe_importlib_package_name(package_name: str) -> str:
     )
 
 
-def requirements_of_file(path: str) -> Dict[str, requirements.Requirement]:
+def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
     file."""
-    _trulens_resources = resources.files("trulens.core")
-    with resources.as_file(_trulens_resources / path) as _path:
-        pip_reqs = parse_requirements(str(_path), session=None)
 
-        mapping = {}
+    pip_reqs = parse_requirements(str(path), session=None)
 
-        for pip_req in pip_reqs:
-            req = requirements.Requirement(pip_req.requirement)
-            mapping[req.name] = req
+    mapping = {}
 
-        return mapping
+    for pip_req in pip_reqs:
+        req = requirements.Requirement(pip_req.requirement)
+        mapping[req.name] = req
+
+    return mapping
 
 
 def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
@@ -158,13 +157,15 @@ dependencies get installed and hopefully corrected:
 """
 
 required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    "utils/requirements.txt"
+    static_resource(namespace="core", filepath="utils/requirements.txt")
 )
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
 optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    "utils/requirements.optional.txt"
+    static_resource(
+        namespace="core", filepath="utils/requirements.optional.txt"
+    )
 )
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""

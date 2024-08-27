@@ -24,6 +24,8 @@ _ZIPS_TO_UPLOAD = [
 
 
 class ServerSideEvaluationArtifacts:
+    """This class is used to set up any Snowflake server side artifacts for feedback evaluation."""
+
     def __init__(
         self,
         session: Session,
@@ -33,7 +35,7 @@ class ServerSideEvaluationArtifacts:
         schema: str,
         warehouse: str,
         role: str,
-        database_url: str,
+        database_prefix: str,
     ) -> None:
         self._session = session
         self._account = account
@@ -42,7 +44,7 @@ class ServerSideEvaluationArtifacts:
         self._schema = schema
         self._warehouse = warehouse
         self._role = role
-        self._database_url = database_url
+        self._database_prefix = database_prefix
         self._validate_name(database, "database")
         self._validate_name(schema, "schema")
         self._validate_name(warehouse, "warehouse")
@@ -79,7 +81,7 @@ class ServerSideEvaluationArtifacts:
         self._run_query(
             f"""
             CREATE STREAM IF NOT EXISTS {_STREAM_NAME}
-                ON TABLE {self._database}.{self._schema}.TRULENS_FEEDBACKS
+                ON TABLE {self._database}.{self._schema}.{self._database_prefix}FEEDBACKS
                 SHOW_INITIAL_ROWS = TRUE
             """
         )
@@ -137,7 +139,7 @@ class ServerSideEvaluationArtifacts:
                 CALL {_STORED_PROCEDURE_NAME}();
                 -- The following noop insert is done just so that the stream will clear.
                 -- Currently, the only way for the stream to clear is for the data involved to be in a DML query.
-                INSERT INTO TRULENS_FEEDBACKS (
+                INSERT INTO {self._database_prefix}FEEDBACKS (
                     SELECT *
                     EXCLUDE (METADATA$ACTION, METADATA$ISUPDATE, METADATA$ROW_ID)
                     FROM {_STREAM_NAME}
