@@ -25,6 +25,7 @@ import pandas
 import pydantic
 from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
+from trulens.core.app import base as base_app
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
@@ -179,7 +180,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             **self_args,
         )
 
-    def App(self, *args, app: Optional[Any] = None, **kwargs) -> App:
+    def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.
 
@@ -270,25 +271,25 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         )
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Basic(self, *args, **kwargs) -> App:
+    def Basic(self, *args, **kwargs) -> base_app.App:
         from trulens.core.app.basic import TruBasicApp
 
         return TruBasicApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Custom(self, *args, **kwargs) -> App:
+    def Custom(self, *args, **kwargs) -> base_app.App:
         from trulens.core.app.custom import TruCustomApp
 
         return TruCustomApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Virtual(self, *args, **kwargs) -> App:
+    def Virtual(self, *args, **kwargs) -> base_app.App:
         from trulens.core.app.virtual import TruVirtual
 
         return TruVirtual(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Chain(self, *args, **kwargs) -> App:
+    def Chain(self, *args, **kwargs) -> base_app.App:
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
         ):
@@ -297,7 +298,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         return tru_chain.TruChain(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Llama(self, *args, **kwargs) -> App:
+    def Llama(self, *args, **kwargs) -> base_app.App:
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
         ):
@@ -306,7 +307,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         return tru_llama.TruLlama(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
-    def Rails(self, *args, **kwargs) -> App:
+    def Rails(self, *args, **kwargs) -> base_app.App:
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
         ):
