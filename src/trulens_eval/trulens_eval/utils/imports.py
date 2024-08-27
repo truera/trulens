@@ -11,6 +11,12 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
+from trulens.core._utils.optional import (
+    REQUIREMENT_INSTRUMENT_LLAMA as REQUIREMENT_LLAMA,
+)
+from trulens.core._utils.optional import (
+    REQUIREMENT_INSTRUMENT_NEMO as REQUIREMENT_RAILS,
+)
 from trulens.core.utils.imports import MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND
 from trulens.core.utils.imports import MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND
 from trulens.core.utils.imports import MESSAGE_FRAGMENT_VERSION_MISMATCH
@@ -21,36 +27,6 @@ from trulens.core.utils.imports import MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP
 from trulens.core.utils.imports import (
     MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED,
 )
-from trulens.core.utils.imports import REQUIREMENT_BERT_SCORE
-from trulens.core.utils.imports import REQUIREMENT_EVALUATE
-from trulens.core.utils.imports import REQUIREMENT_GROUNDEDNESS
-from trulens.core.utils.imports import (
-    REQUIREMENT_INSTRUMENT_LLAMA as REQUIREMENT_LLAMA,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_INSTRUMENT_NEMO as REQUIREMENT_RAILS,
-)
-from trulens.core.utils.imports import REQUIREMENT_NOTEBOOK
-from trulens.core.utils.imports import REQUIREMENT_PINECONE
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_BEDROCK as REQUIREMENT_BEDROCK,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_CORTEX as REQUIREMENT_CORTEX,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_HUGGINGFACE as REQUIREMENT_HUGGINGFACE,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_LANGCHAIN as REQUIREMENT_LANGCHAIN,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_LITELLM as REQUIREMENT_LITELLM,
-)
-from trulens.core.utils.imports import (
-    REQUIREMENT_PROVIDER_OPENAI as REQUIREMENT_OPENAI,
-)
-from trulens.core.utils.imports import REQUIREMENT_SKLEARN
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.imports import ImportErrorMessages
 from trulens.core.utils.imports import OptionalImports
@@ -65,5 +41,30 @@ from trulens.core.utils.imports import pin_spec
 from trulens.core.utils.imports import required_packages
 from trulens.core.utils.imports import requirements_of_file
 from trulens.core.utils.imports import static_resource
+
+from trulens_eval._utils.optional import REQUIREMENT_BERT_SCORE
+from trulens_eval._utils.optional import REQUIREMENT_EVALUATE
+from trulens_eval._utils.optional import REQUIREMENT_GROUNDEDNESS
+from trulens_eval._utils.optional import REQUIREMENT_NOTEBOOK
+from trulens_eval._utils.optional import REQUIREMENT_PINECONE
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_BEDROCK as REQUIREMENT_BEDROCK,
+)
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_CORTEX as REQUIREMENT_CORTEX,
+)
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_HUGGINGFACE as REQUIREMENT_HUGGINGFACE,
+)
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_LANGCHAIN as REQUIREMENT_LANGCHAIN,
+)
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_LITELLM as REQUIREMENT_LITELLM,
+)
+from trulens_eval._utils.optional import (
+    REQUIREMENT_PROVIDER_OPENAI as REQUIREMENT_OPENAI,
+)
+from trulens_eval._utils.optional import REQUIREMENT_SKLEARN
 
 trulens_name: str = "trulens"

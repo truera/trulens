@@ -1,3 +1,8 @@
+"""Private optional import utils.
+
+Not for use outside trulens namespace.
+"""
+
 from trulens.core.utils.imports import format_import_errors
 
 # Optional app types:
