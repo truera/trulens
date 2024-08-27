@@ -330,7 +330,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             if app is None:
                 raise RuntimeError(
                     f"App {app_id} not present in db. "
-                    "Either add it with `session.add_app` or provide `app_json` to `session.run_feedback_functions`."
+                    "Either add it with `TruSession.add_app` or provide `app_json` to `TruSession.run_feedback_functions`."
                 )
 
         else:
