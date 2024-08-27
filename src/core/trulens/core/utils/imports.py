@@ -338,10 +338,10 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
 
 
 def is_dummy(obj: Any) -> bool:
-    """Check if the given object is an instance of Dummy.
+    """Check if the given object is an instance of `Dummy`.
 
-    This is necessary is isisintance and issubclass checks might fail if the
-    ones defined in Dummy get used; they always return False by design.
+    This is necessary as `isisintance` and `issubclass` checks might fail if the
+    ones defined in `Dummy` get used; they always return `False` by design.
     """
 
     return obj.__class__.__name__ == "Dummy" and obj.__module__ in [
