@@ -1,6 +1,5 @@
 from typing import Dict, Tuple, Union
 
-from llama_index.core.base.embeddings.base import BaseEmbedding
 import numpy as np
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import format_import_errors
@@ -13,6 +12,13 @@ with OptionalImports(
     )
 ):
     import sklearn.metrics
+
+with OptionalImports(
+    messages=format_import_errors(
+        "llama-index", purpose="instrumenting LlamaIndex apps"
+    )
+):
+    from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
 class Embeddings(WithClassInfo, SerialModel):
