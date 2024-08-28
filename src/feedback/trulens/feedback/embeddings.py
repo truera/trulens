@@ -10,15 +10,19 @@ with OptionalImports(
     messages=format_import_errors(
         "scikit-learn", purpose="using embedding vector distances"
     )
-):
+) as opt:
     import sklearn.metrics
+opt.assert_installed(sklearn.metrics)
+
 
 with OptionalImports(
     messages=format_import_errors(
         "llama-index", purpose="instrumenting LlamaIndex apps"
     )
-):
+) as opt:
+    import llama_index.core.base.embeddings.base
     from llama_index.core.base.embeddings.base import BaseEmbedding
+opt.assert_installed(llama_index.core.base.embeddings.base)
 
 
 class Embeddings(WithClassInfo, SerialModel):
