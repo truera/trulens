@@ -17,7 +17,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
 
 from packaging import requirements
 from packaging import version
-from pip._internal.req import parse_requirements
+import pkg_resources
 
 from trulens_eval import __name__ as trulens_name
 
@@ -28,16 +28,9 @@ pp = PrettyPrinter()
 def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
     file."""
-
-    pip_reqs = parse_requirements(str(path), session=None)
-
-    mapping = {}
-
-    for pip_req in pip_reqs:
-        req = requirements.Requirement(pip_req.requirement)
-        mapping[req.name] = req
-
-    return mapping
+    with open(path) as fh:
+        reqs = pkg_resources.parse_requirements(fh)
+        return {req.name: req for req in reqs}
 
 
 if sys.version_info >= (3, 9):
