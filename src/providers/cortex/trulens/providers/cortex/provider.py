@@ -34,7 +34,6 @@ class Cortex(
 
             ```python
             connection_parameters = {
-
                 "account": <account>,
                 "user": <user>,
                 "password": <password>,
@@ -54,7 +53,6 @@ class Cortex(
 
             ```python
             connection_parameters = {
-
                 "account": <account>,
                 "user": <user>,
                 "private_key": <private_key>,
@@ -73,16 +71,15 @@ class Cortex(
 
             ```python
             connection_parameters = {
-
-                    "account": <account>,
-                    "user": <user>,
-                    "private_key_file": <private_key_file>,
-                    "private_key_file_pwd": <private_key_file_pwd>,
-                    "role": <role>,
-                    "database": <database>,
-                    "schema": <schema>,
-                    "warehouse": <warehouse>
-                }
+                "account": <account>,
+                "user": <user>,
+                "private_key_file": <private_key_file>,
+                "private_key_file_pwd": <private_key_file_pwd>,
+                "role": <role>,
+                "database": <database>,
+                "schema": <schema>,
+                "warehouse": <warehouse>
+            }
             provider = Cortex(snowflake.connector.connect(
                 **connection_parameters
             ))
@@ -134,6 +131,13 @@ class Cortex(
                 parse_json(?)
             )
         """
+        if (
+            hasattr(self.snowflake_conn, "_paramstyle")
+            and self.snowflake_conn._paramstyle == "pyformat"
+        ):
+            completion_input_str = completion_input_str.replace("?", "%s")
+
+        # Executing Snow SQL command requires an active snow session
         cursor = self.snowflake_conn.cursor()
         try:
             cursor.execute(
