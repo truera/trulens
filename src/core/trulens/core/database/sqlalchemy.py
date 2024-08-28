@@ -1143,14 +1143,12 @@ class AppsExtractor:
                     )
 
                     feedback_usage = json.loads(_res.cost_json)
-                    if "snowflake_credits_consumed" in feedback_usage:
+                    cost_currency = feedback_usage.get("cost_currency", "USD")
+
+                    if "cost" in feedback_usage:
                         feedback_cost[
-                            _res.name + "_snowflake_credits_consumed"
-                        ] = feedback_usage["snowflake_credits_consumed"]
-                    elif "total_cost" in feedback_usage:
-                        feedback_cost[_res.name + "_total_cost"] = (
-                            feedback_usage["total_cost"]
-                        )
+                            f"{_res.name} cost in {cost_currency}"
+                        ] = feedback_usage["cost"]
 
                     if (
                         _res.multi_result is not None

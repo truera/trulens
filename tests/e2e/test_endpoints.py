@@ -82,12 +82,6 @@ class TestEndpoints(TestCase):
             == "<class 'trulens.providers.cortex.provider.Cortex'>"
         ):
             self.assertGreater(
-                cost.snowflake_credits_consumed,
-                0.0,
-                "Expected non-zero snowflake credits consumed.",
-            )
-
-            self.assertGreater(
                 cost.n_cortext_guardrails_tokens,
                 0.0,
                 "Expected non-zero cortex guardrails tokens.",

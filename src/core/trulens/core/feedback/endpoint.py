@@ -190,6 +190,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
 
+    cost_currency: str = Field(default="USD")
+
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
         name = name or cls.__name__
         return super().__new__(cls, *args, name=name, **kwargs)
