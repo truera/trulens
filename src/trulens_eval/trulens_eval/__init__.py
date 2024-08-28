@@ -5,10 +5,16 @@
     `trulens.feedback`, `trulens.dashboard` instead.
 """
 
+from trulens.core._utils import optional as optional_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as imports_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval")
+from trulens_eval._utils import optional as eval_optional_utils
+
+deprecation_utils.packages_dep_warn()
+
+__version_info__ = (1, 0, 0, "a")
+__version__ = ".".join(map(str, __version_info__))
 
 from trulens.core.app.basic import TruBasicApp
 from trulens.core.app.custom import TruCustomApp
@@ -21,49 +27,49 @@ from trulens.core.session import TruSession as Tru
 from trulens.core.utils.threading import TP
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_LITELLM
 ):
     from trulens.providers.litellm.provider import LiteLLM
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_BEDROCK
 ):
     from trulens.providers.bedrock.provider import Bedrock
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_OPENAI
 ):
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_CORTEX
 ):
     from trulens.providers.cortex.provider import Cortex
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
 ):
     from trulens.providers.huggingface.provider import Huggingface
     from trulens.providers.huggingface.provider import HuggingfaceLocal
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
+    messages=eval_optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
     from trulens.providers.langchain.provider import Langchain
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+    messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
 ):
     from trulens.instrument.langchain.tru_chain import TruChain
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_INSTRUMENT_LLAMA
+    messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
 ):
     from trulens.instrument.llamaindex.tru_llama import TruLlama
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_INSTRUMENT_NEMO
+    messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
 ):
     from trulens.instrument.nemo.tru_rails import TruRails
 
