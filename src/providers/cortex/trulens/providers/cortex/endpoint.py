@@ -18,28 +18,29 @@ pp = pprint.PrettyPrinter()
 
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
+    _model_costs: Optional[dict] = None
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 
     def _compute_credits_consumed(
         self, cortex_model_name: str, n_tokens: int
     ) -> float:
         try:
-            model_costs = {}
-            # the credit consumption table needs to be kept up-to-date with
-            # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+            if self._model_costs is None:
+                # the credit consumption table needs to be kept up-to-date with
+                # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
 
-            with open(
-                os.path.join(
-                    os.path.dirname(os.path.realpath(__file__)),
-                    "config/cortex_model_costs.json",
-                ),
-                "r",
-            ) as file:
-                model_costs = json.load(file)
-            if cortex_model_name in model_costs:
+                with open(
+                    os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        "config/cortex_model_costs.json",
+                    ),
+                    "r",
+                ) as file:
+                    self._model_costs = json.load(file)
+
+            if cortex_model_name in self._model_costs:
                 return (
-                    model_costs[cortex_model_name] * n_tokens / 1e6
+                    self._model_costs[cortex_model_name] * n_tokens / 1e6
                 )  # we maintain config per-1M-token cost
             else:
                 raise ValueError(
