@@ -1,6 +1,7 @@
 import inspect
 import json
 import logging
+import os
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
@@ -17,22 +18,6 @@ pp = pprint.PrettyPrinter()
 
 class CortexCallback(EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-    _model_costs = {}
-
-    def __init__(self):
-        # Load the model costs from the JSON file
-        self._load_model_costs()
-
-    def _load_model_costs(self):
-        try:
-            # the credit consumption table needs to be kept up-to-date with
-            # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
-            with open("./config/cortex_model_costs.json", "r") as file:
-                self._model_costs = json.load(file)
-            logger.info("Model costs loaded successfully.")
-        except Exception as e:
-            logger.error(f"Failed to load model costs: {e}")
-            self._model_costs = {}
 
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
 
@@ -40,9 +25,21 @@ class CortexCallback(EndpointCallback):
         self, cortex_model_name: str, n_tokens: int
     ) -> float:
         try:
-            if cortex_model_name in self._model_costs:
+            model_costs = {}
+            # the credit consumption table needs to be kept up-to-date with
+            # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+
+            with open(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    "config/cortex_model_costs.json",
+                ),
+                "r",
+            ) as file:
+                model_costs = json.load(file)
+            if cortex_model_name in model_costs:
                 return (
-                    self._model_costs[cortex_model_name] * n_tokens / 1e6
+                    model_costs[cortex_model_name] * n_tokens / 1e6
                 )  # we maintain config per-1M-token cost
             else:
                 raise ValueError(

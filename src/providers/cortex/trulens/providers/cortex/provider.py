@@ -1,8 +1,6 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
-import pydantic
-from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
@@ -19,8 +17,8 @@ class Cortex(
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
     model_engine: str
-    endpoint: CortexEndpoint = pydantic.Field(exclude=True)
-    snowflake_conn: SnowflakeConnection
+    endpoint: CortexEndpoint
+    snowflake_conn: Any
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
@@ -90,9 +88,6 @@ class Cortex(
             ))
             ```
     """
-
-    endpoint: CortexEndpoint
-    snowflake_conn: Any
 
     def __init__(
         self,
