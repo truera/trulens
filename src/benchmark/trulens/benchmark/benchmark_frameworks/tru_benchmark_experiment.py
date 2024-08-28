@@ -27,7 +27,18 @@ class TruBenchmarkExperiment:
     """
     Example usage:
 
-    cortex = Cortex(model_engine="snowflake-arctic")
+    snowflake_connection_parameters = {
+        "account": os.environ["SNOWFLAKE_ACCOUNT"],
+        "user": os.environ["SNOWFLAKE_USER"],
+        "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+        "database": os.environ["SNOWFLAKE_DATABASE"],
+        "schema": os.environ["SNOWFLAKE_SCHEMA"],
+        "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+    }
+    cortex = Cortex(
+        snowflake.connector.connect(**snowflake_connection_parameters)
+        model_engine="snowflake-arctic",
+    )
 
     def context_relevance_ff_to_score(input, output, temperature=0):
         return cortex.context_relevance(question=input, context=output, temperature=temperature)
