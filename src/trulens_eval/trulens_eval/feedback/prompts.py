@@ -12,8 +12,8 @@ deprecation_utils.packages_dep_warn()
 from trulens.feedback.prompts import AGREEMENT_SYSTEM
 from trulens.feedback.prompts import ANSWER_RELEVANCE_SYSTEM
 from trulens.feedback.prompts import ANSWER_RELEVANCE_USER
-from trulens.feedback.prompts import COMPOREHENSIVENESS_USER_PROMPT
 from trulens.feedback.prompts import COMPREHENSIVENESS_SYSTEM_PROMPT
+from trulens.feedback.prompts import COMPREHENSIVENESS_USER_PROMPT
 from trulens.feedback.prompts import CONTEXT_RELEVANCE_SYSTEM
 from trulens.feedback.prompts import CONTEXT_RELEVANCE_USER
 from trulens.feedback.prompts import CORRECT_SYSTEM
