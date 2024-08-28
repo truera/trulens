@@ -45,7 +45,7 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.feedback import Provider
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.select import Select
-from trulens.instrument.core import TruBasicApp
+from trulens.instrument.basic import TruBasicApp
 
 
 class TestDBSpecifications(TestCase):

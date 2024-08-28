@@ -97,7 +97,7 @@ Any text-to-text application can be simply wrapped with `TruBasicApp`, and then 
 !!! example "Using `TruBasicApp` to log text to text apps"
 
     ```python
-    from trulens.instrument.core import TruBasicApp
+    from trulens.instrument.basic import TruBasicApp
 
     def custom_application(prompt: str) -> str:
         return "a response"

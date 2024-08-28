@@ -14,7 +14,7 @@ from typing import (
 )
 
 from trulens.core.utils.threading import ThreadPoolExecutor
-from trulens.instrument.core import instrument
+from trulens.instrument.custom import instrument
 
 from examples.dev.dummy_app.agent import DummyAgent
 from examples.dev.dummy_app.dummy import Dummy

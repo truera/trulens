@@ -13,7 +13,7 @@ from trulens.core import SnowflakeFeedback
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
-from trulens.instrument.core import TruBasicApp
+from trulens.instrument.basic import TruBasicApp
 import trulens.providers.cortex.provider as cortex_provider
 from trulens.providers.cortex.provider import Cortex
 from trulens.providers.openai.provider import OpenAI

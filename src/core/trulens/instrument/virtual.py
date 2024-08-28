@@ -21,7 +21,7 @@ Example: "Constructing a Virtual Application"
     }
     # Converting the dictionary to a VirtualApp instance
     from trulens.core import Select
-    from trulens.instrument.core import VirtualApp
+    from trulens.instrument.virtual import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -52,7 +52,7 @@ be provided.
 Example: "Adding Records for a Context Retrieval Component"
 
     ```python
-    from trulens.core import VirtualRecord
+    from trulens.instrument.virtual import VirtualRecord
 
     # Selector for the context retrieval component's `get_context` call
     context_call = retriever_component.get_context
@@ -147,7 +147,7 @@ apps.
 Example: "Integrating Feedback Functions into TruVirtual"
 
     ```python
-    from trulens.instrument.core import TruVirtual
+    from trulens.instrument.virtual import TruVirtual
 
     # Setting up the virtual recorder
     virtual_recorder = TruVirtual(
@@ -184,7 +184,7 @@ Example: "Storing metadata in a VirtualApp"
     }
 
     from trulens.core import Select
-    from trulens.instrument.core import VirtualApp
+    from trulens.instrument.virtual import VirtualApp
 
     virtual_app = VirtualApp(virtual_app)
     virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
@@ -268,7 +268,7 @@ class VirtualApp(dict):
 
 
 virtual_module = Module(
-    package_name="trulens", module_name="trulens.core.app.virtual"
+    package_name="trulens", module_name="trulens.instrument.virtual"
 )
 """Module to represent the module of virtual apps.
 
@@ -329,7 +329,7 @@ class VirtualRecord(mod_record_schema.Record):
 
     | PARAMETER | TYPE |DEFAULT |
     | --- | ---| --- |
-    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens.core.app.virtual.virtual_object], method name derived from the last element of the selector of this call. |
+    | `stack` | [List][typing.List][[RecordAppCallMethod][trulens.core.schema.record.RecordAppCallMethod]] | Two frames: a root call followed by a call by [virtual_object][trulens.instrument.virtual.virtual_object], method name derived from the last element of the selector of this call. |
     | `args` | [JSON][trulens.core.utils.json.JSON] | `[]` |
     | `rets` | [JSON][trulens.core.utils.json.JSON] | `[]` |
     | `perf` | [Perf][trulens.core.schema.base.Perf] | Time spanning the processing of this virtual call. |
@@ -445,8 +445,8 @@ class TruVirtual(App):
 
     Virtual apps are data only in that they cannot be executed but for whom
     previously-computed results can be added using
-    [add_record][trulens.core.app.virtual.TruVirtual]. The
-    [VirtualRecord][trulens.core.app.virtual.VirtualRecord] class may be useful
+    [add_record][trulens.instrument.virtual.TruVirtual]. The
+    [VirtualRecord][trulens.instrument.virtual.VirtualRecord] class may be useful
     for creating records for this. Fields used by non-virtual apps can be
     specified here, notably:
 
@@ -519,7 +519,7 @@ class TruVirtual(App):
             else:
                 raise ValueError(
                     "Unknown type for `app`. "
-                    "Either dict or `trulens.core.app.virtual.VirtualApp` expected."
+                    "Either dict or `trulens.instrument.virtual.VirtualApp` expected."
                 )
 
         if (

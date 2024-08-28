@@ -14,6 +14,27 @@ trulens.benchmark.benchmark_frameworks:
   highs: {}
   lows:
     __path__: builtins.list
+trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    BenchmarkParams: pydantic._internal._model_construction.ModelMetaclass
+    TruBenchmarkExperiment: builtins.type
+    create_benchmark_experiment_app: builtins.staticmethod
+trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.BenchmarkParams:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
+    output_space: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: builtins.float
+trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExperiment:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    run_score_generation_on_single_row: builtins.function
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}

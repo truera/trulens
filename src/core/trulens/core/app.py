@@ -461,11 +461,11 @@ class App(
     - [TruChain][trulens.instrument.langchain.TruChain] for _LangChain_ apps.
     - [TruRails][trulens.instrument.nemo.TruRails] for _NeMo Guardrails_
         apps.
-    - [TruVirtual][trulens.instrument.core.TruVirtual] for recording
+    - [TruVirtual][trulens.instrument.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
     - [TruCustomApp][trulens.instrument.custom.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
-    - [TruBasicApp][trulens.instrument.core.TruBasicApp] for apps defined
+    - [TruBasicApp][trulens.instrument.basic.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
 

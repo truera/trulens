@@ -22,10 +22,10 @@ General and 🦑_TruLens_-specific concepts.
   [TruChain][trulens.instrument.langchain.TruChain], _LlamaIndex_ via
   [TruLlama][trulens.instrument.llamaindex.TruLlama], and _NeMo Guardrails_ via
   [TruRails][trulens.instrument.nemo.TruRails] `Applications` as well as custom
-  apps via [TruBasicApp][trulens.instrument.core.TruBasicApp] or
+  apps via [TruBasicApp][trulens.instrument.basic.TruBasicApp] or
   [TruCustomApp][trulens.instrument.custom.TruCustomApp], and apps that
   already come with `Trace`s via
-  [TruVirtual][trulens.instrument.core.TruVirtual].
+  [TruVirtual][trulens.instrument.virtual.TruVirtual].
 
 - `Chain`. A _LangChain_ `App`.
 
