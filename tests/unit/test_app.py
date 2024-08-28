@@ -47,7 +47,9 @@ class TestApp(TestCase):
             app={},
         )
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(DeprecationWarning):
+            # change to below after dep period:
+            # with self.assertRaises(ValueError):
             AppDefinition(
                 app_name="test_application",
                 app_version="v1",
