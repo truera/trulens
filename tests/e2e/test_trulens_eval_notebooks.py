@@ -8,7 +8,9 @@ called "_trulens_eval" on how this is done or just run that target.
 The tests also require optional test dependencies to be installed. This can be
 done with poetry:
 
-```shell poetry install --with tests-optional ```
+```shell
+poetry install --with tests-optional
+```
 """
 
 import os
