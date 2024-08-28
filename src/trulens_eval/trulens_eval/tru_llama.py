@@ -2,13 +2,13 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use
-     `trulens.instrument.llamaindex.tru_llama` instead.
+     `trulens.apps.llamaindex.tru_llama` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.instrument.llamaindex.tru_llama import LlamaInstrument
-from trulens.instrument.llamaindex.tru_llama import TruLlama
-from trulens.instrument.llamaindex.tru_llama import legacy
+from trulens.apps.llamaindex.tru_llama import LlamaInstrument
+from trulens.apps.llamaindex.tru_llama import TruLlama
+from trulens.apps.llamaindex.tru_llama import legacy

@@ -6,8 +6,8 @@ from unittest import TestCase
 from unittest import main
 
 import numpy as np
+from trulens.apps.basic import TruBasicApp
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.select import Select

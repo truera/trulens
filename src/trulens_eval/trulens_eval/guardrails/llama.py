@@ -2,11 +2,11 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use
-    `trulens.instrument.llamaindex.guardrails` instead.
+    `trulens.apps.llamaindex.guardrails` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.instrument.llamaindex.guardrails import WithFeedbackFilterNodes
+from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
