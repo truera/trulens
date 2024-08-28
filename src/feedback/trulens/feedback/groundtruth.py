@@ -102,9 +102,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         Args:
             ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-            or callable that returns a ground truth string given a prompt string.
-            provider (LLMProvider): The provider to use for agreement measures.
-            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+                or callable that returns a ground truth string given a prompt string.
+                provider (LLMProvider): The provider to use for agreement measures.
+                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
 
         """
         if isinstance(ground_truth, List):
@@ -431,8 +431,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         Args:
             scores (List[float]): relevance scores returned by feedback function
-
-            k (int): top k results to consider
 
         Returns:
             float: NDCG@k

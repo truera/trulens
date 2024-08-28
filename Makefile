@@ -104,7 +104,7 @@ test-static:
 # API tests.
 test-api:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
-test-write-api:
+test-write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
 # Depercation tests.

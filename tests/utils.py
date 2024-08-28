@@ -445,8 +445,8 @@ def get_module_members(
     if isinstance(mod, str):
         try:
             mod = importlib.import_module(mod)
-        except Exception:
-            return None
+        except Exception as e:
+            raise ValueError(f"Could not import module {mod}.") from e
 
     definitions: List[Member] = []
     exports: List[Member] = []

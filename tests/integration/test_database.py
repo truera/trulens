@@ -31,8 +31,8 @@ from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
+from trulens.apps.basic import TruBasicApp
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
 from trulens.core import TruSession
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException

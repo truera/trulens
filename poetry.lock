@@ -9245,6 +9245,64 @@ tests = ["autopep8", "flake8", "isort", "llnl-hatchet", "numpy", "pytest", "scip
 tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
+name = "trulens-apps-langchain"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9,<3.13"
+files = []
+develop = true
+
+[package.dependencies]
+langchain = "^0.2.10,!=0.2.12"
+langchain-core = "^0.2.24,!=0.2.27"
+pydantic = "^2"
+trulens-core = "^1.0.0"
+typing-inspect = "^0.8"
+
+[package.source]
+type = "directory"
+url = "src/apps/langchain"
+
+[[package]]
+name = "trulens-apps-llamaindex"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+llama-index = "^0.10"
+pydantic = "^2"
+trulens-apps-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
+trulens-core = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/llamaindex"
+
+[[package]]
+name = "trulens-apps-nemo"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = ">=3.9,<3.12"
+files = []
+develop = true
+
+[package.dependencies]
+nemoguardrails = "^0.9"
+pydantic = "^2"
+trulens-apps-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
+trulens-core = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/nemo"
+
+[[package]]
 name = "trulens-benchmark"
 version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -9271,7 +9329,7 @@ develop = true
 
 [package.dependencies]
 snowflake-connector-python = {version = "^3.11", markers = "python_version < \"3.12\""}
-snowflake-core = "^0.9.0"
+snowflake-core = {version = "^0.9.0", markers = "python_version < \"3.12\""}
 snowflake-snowpark-python = {version = "^1.18", markers = "python_version < \"3.12\""}
 snowflake-sqlalchemy = {version = "^1.6", markers = "python_version < \"3.12\""}
 trulens-core = "^1.0.0"
@@ -9368,64 +9426,6 @@ trulens-core = "^1.0.0"
 [package.source]
 type = "directory"
 url = "src/feedback"
-
-[[package]]
-name = "trulens-instrument-langchain"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9,<3.13"
-files = []
-develop = true
-
-[package.dependencies]
-langchain = "^0.2.10,!=0.2.12"
-langchain-core = "^0.2.24,!=0.2.27"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-typing-inspect = "^0.8"
-
-[package.source]
-type = "directory"
-url = "src/instrument/langchain"
-
-[[package]]
-name = "trulens-instrument-llamaindex"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9"
-files = []
-develop = true
-
-[package.dependencies]
-llama-index = "^0.10"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-trulens-instrument-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
-
-[package.source]
-type = "directory"
-url = "src/instrument/llamaindex"
-
-[[package]]
-name = "trulens-instrument-nemo"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = ">=3.9,<3.12"
-files = []
-develop = true
-
-[package.dependencies]
-nemoguardrails = "^0.9"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-trulens-instrument-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
-
-[package.source]
-type = "directory"
-url = "src/instrument/nemo"
 
 [[package]]
 name = "trulens-providers-bedrock"
@@ -10401,4 +10401,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "c387302850f2e073537323ee2ffd8e0666a858882857117a815ff03fd7371679"
+content-hash = "bc79017fa672a80a76dcaad3c8e5470ec83ab6ad38ba36550bb16b2859754a05"
