@@ -115,9 +115,12 @@ test-deprecation:
 LAST_TRULENS_EVAL_COMMIT := 4cadb05
 .PHONY: _trulens_eval
 _trulens_eval:
+#	rm -Rf _trulens_eval
 	git worktree add -f _trulens_eval --no-checkout --detach
-	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- trulens_eval/tests/docs_notebooks/notebooks_to_test
-	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- trulens_eval/examples
+	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- \
+		trulens_eval/tests/docs_notebooks/notebooks_to_test \
+		trulens_eval/examples
+	git worktree prune
 
 test-deprecation-notebooks: _trulens_eval
 	TEST_OPTIONAL=1 $(PYTEST) tests/e2e/test_trulens_eval_notebooks.py
