@@ -236,6 +236,9 @@ class DBConnector(ABC):
                 f"Unknown type {type(feedback_result_or_future)} in feedback_results."
             )
 
+        if feedback_result.feedback_definition_id is None:
+            feedback_result.feedback_definition_id = "anonymous"  # or "human" feedback that does not come with a feedback definition
+
         return self.db.insert_feedback(feedback_result=feedback_result)
 
     def add_feedbacks(
@@ -330,6 +333,13 @@ class DBConnector(ABC):
             app_ids, offset=offset, limit=limit
         )
 
+        df["app_name"] = df["app_json"].apply(
+            lambda x: json.loads(x).get("app_name")
+        )
+        df["app_version"] = df["app_json"].apply(
+            lambda x: json.loads(x).get("app_version")
+        )
+
         return df, list(feedback_columns)
 
     def get_leaderboard(
@@ -354,6 +364,13 @@ class DBConnector(ABC):
 
         df, feedback_cols = self.get_records_and_feedback(app_ids)
 
+        df["app_name"] = df["app_json"].apply(
+            lambda x: json.loads(x).get("app_name")
+        )
+        df["app_version"] = df["app_json"].apply(
+            lambda x: json.loads(x).get("app_version")
+        )
+
         col_agg_list = feedback_cols + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:
@@ -368,13 +385,17 @@ class DBConnector(ABC):
                 for item in df["meta"]
             ]
             return (
-                df.groupby(["app_id", str(group_by_metadata_key)])[col_agg_list]
+                df.groupby([
+                    "app_name",
+                    "app_version",
+                    str(group_by_metadata_key),
+                ])[col_agg_list]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
         else:
             return (
-                df.groupby("app_id")[col_agg_list]
+                df.groupby(["app_name", "app_version"])[col_agg_list]
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )

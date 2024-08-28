@@ -17,7 +17,10 @@ packages = [
   { include = "trulens" },
 ]
 include = [
-  { path = "trulens/data/snowflake_stage_zips" },
+  { path = "trulens/data/snowflake_stage_zips/*.zip", format = [
+    "sdist",
+    "wheel",
+  ] },
 ]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/trulens/getting_started/"
@@ -32,6 +35,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9"
 trulens-core = { version = "^1.0.0", allow-prereleases = true }
+snowflake-core = { version = "^0.9.0" }
 snowflake-connector-python = { version = "^3.11", python = "<3.12" }
 snowflake-snowpark-python = { version = "^1.18", python = "<3.12" }
 snowflake-sqlalchemy = { version = "^1.6", python = "<3.12" }

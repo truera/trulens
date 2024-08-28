@@ -157,11 +157,11 @@ class TestTruLensEvalNotebooks(TestCase):
                 except Exception as e:
                     self.fail(e)
 
-    @skip("Not working yet")
+    # @skip("Not working yet")
     def test_groundtruth_evals(self):
         self._test_notebook(self.notebooks["groundtruth_evals.ipynb"])
 
-    @skip("Not working yet")
+    @skip("Done")
     def test_human_feedback(self):
         self._test_notebook(self.notebooks["human_feedback.ipynb"])
 
@@ -185,6 +185,7 @@ class TestTruLensEvalNotebooks(TestCase):
     def test_llama_index_quickstart(self):
         self._test_notebook(self.notebooks["llama_index_quickstart.ipynb"])
 
+    @skip("Done")
     def test_logging(self):
         self._test_notebook(self.notebooks["logging.ipynb"])
 

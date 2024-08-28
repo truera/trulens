@@ -932,11 +932,13 @@ trulens.core.schema.base.Cost:
     cost: builtins.float
     n_classes: builtins.int
     n_completion_tokens: builtins.int
+    n_cortext_guardrails_tokens: builtins.int
     n_prompt_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
     n_tokens: builtins.int
+    snowflake_credits_consumed: builtins.float
 trulens.core.schema.base.Perf:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -1864,7 +1866,6 @@ trulens.dashboard.streamlit:
   lows:
     FeedbackDisplay: pydantic._internal._model_construction.ModelMetaclass
     MIGRATION_UNKNOWN_STR: builtins.str
-    stmetricdelta_hidearrow: builtins.str
     trulens_feedback: builtins.function
     trulens_leaderboard: builtins.function
     trulens_trace: builtins.function
@@ -1915,7 +1916,7 @@ trulens.dashboard.ux.components:
     draw_call: builtins.function
     draw_calls: builtins.function
     draw_llm_info: builtins.function
-    draw_metadata: builtins.function
+    draw_metadata_and_tags: builtins.function
     draw_prompt_info: builtins.function
     draw_selector_button: builtins.function
     draw_tool_info: builtins.function
@@ -2210,7 +2211,7 @@ trulens.feedback.prompts:
     AGREEMENT_SYSTEM: builtins.str
     ANSWER_RELEVANCE_SYSTEM: builtins.str
     ANSWER_RELEVANCE_USER: builtins.str
-    COMPOREHENSIVENESS_USER_PROMPT: builtins.str
+    COMPREHENSIVENESS_USER_PROMPT: builtins.str
     COMPREHENSIVENESS_SYSTEM_PROMPT: builtins.str
     CONTEXT_RELEVANCE_SYSTEM: builtins.str
     CONTEXT_RELEVANCE_USER: builtins.str
@@ -2398,7 +2399,7 @@ trulens.feedback.v2.feedback.ContextRelevance:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    override_critera_and_output_space: builtins.classmethod
+    override_criteria_and_output_space: builtins.classmethod
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str

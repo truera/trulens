@@ -43,8 +43,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             if len(res) == num_expected_feedbacks and all([
                 curr.STATUS == "done" for curr in res
             ]):
-                break
+                return
             time.sleep(1)
+        raise ValueError("Feedback evaluation didn't complete in time!")
 
     def _call_stored_procedure(self) -> None:
         self._snowflake_session.sql(
