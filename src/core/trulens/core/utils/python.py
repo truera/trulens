@@ -156,6 +156,12 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
 def callable_name(c: Callable):
     """Get the name of the given callable."""
 
+    if isinstance(c, staticmethod):
+        return callable_name(c.__func__)
+
+    if isinstance(c, classmethod):
+        return callable_name(c.__func__)
+
     if not isinstance(c, Callable):
         raise ValueError(
             f"Expected a callable. Got {class_name(type(c))} instead."
@@ -391,6 +397,22 @@ def superstack() -> Iterator[FrameType]:
             continue
 
     return
+
+
+def caller_module_name(offset=0) -> str:
+    """
+    Get the caller's (of this function) module name.
+    """
+
+    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+
+
+def caller_module(offset=0) -> ModuleType:
+    """
+    Get the caller's (of this function) module.
+    """
+
+    return sys.modules[caller_module_name(offset=offset + 1)]
 
 
 def caller_frame(offset=0) -> FrameType:
