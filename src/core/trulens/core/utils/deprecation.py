@@ -265,8 +265,6 @@ def class_moved(
     Issues the warning only once.
     """
 
-    return cls
-
     if new_location is None:
         new_location = cls.__module__
 
@@ -296,7 +294,10 @@ def class_moved(
                 warnings.warn(message, DeprecationWarning, stacklevel=2)
                 warned = True
 
-            return moved_class.__new__(cls, *args, **kwargs)
+            if isinstance(moved_class.__new__, classmethod):
+                return moved_class.__new__(cls, *args, **kwargs)
+            else:
+                return moved_class.__new__(cls)
 
     _MovedClass.__doc__ = message
 
