@@ -17,13 +17,15 @@ class Cortex(
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
     model_engine: str
+    endpoint: CortexEndpoint
+    snowflake_conn: Any
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
     Args:
-
         snowflake_conn (Any): Snowflake connection.
+
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
         Connecting with user/password:
@@ -87,9 +89,6 @@ class Cortex(
             ```
     """
 
-    endpoint: CortexEndpoint
-    snowflake_conn: Any
-
     def __init__(
         self,
         snowflake_conn: Any,
@@ -109,6 +108,7 @@ class Cortex(
         self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
         if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
             self_kwargs["snowflake_conn"] = snowflake_conn
+
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
@@ -120,9 +120,11 @@ class Cortex(
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
+
         messages_json_str = json.dumps(messages)
 
         options = {"temperature": temperature}
+
         options_json_str = json.dumps(options)
 
         completion_input_str = """
@@ -132,8 +134,6 @@ class Cortex(
                 parse_json(?)
             )
         """
-
-        # Executing Snow SQL command requires an active snow session
         cursor = self.snowflake_conn.cursor()
         try:
             cursor.execute(
@@ -166,6 +166,9 @@ class Cortex(
             raise ValueError("`prompt` or `messages` must be specified.")
 
         res = self._exec_snowsql_complete_command(**kwargs)
+
+        if len(res) == 0 or len(res[0]) == 0:
+            raise ValueError("No completion returned from Snowflake Cortex.")
 
         completion = json.loads(res[0][0])["choices"][0]["messages"]
 
