@@ -32,37 +32,92 @@ apply when referring to things like package names, classes, methods.
 
 ### Format
 
-- Use `pylint` for various code issues.
-
-- Use `yapf` to format code with configuration:
-
-    ```toml
-    [style]
-    based_on_style = google
-    DEDENT_CLOSING_BRACKETS=true
-    SPLIT_BEFORE_FIRST_ARGUMENT=true
-    SPLIT_COMPLEX_COMPREHENSION=true
-    COLUMN_LIMIT=80
-    ```
-
-  !!! Warning
-    `yapf` version matters. The one we expect and compare against in pull requests can be found in `requirements.dev.txt`.
+- See `pyproject.toml` section `[tool.ruff]`.
 
 ### Imports
 
-- Use `isort` to organize import statements.
+- See `pyproject.toml` section `[tool.ruff.lint.isort]` on tooling to organize import statements.
 
 - Generally import modules only as per
-  <https://google.github.io/styleguide/pyguide.html#22-imports> with some
-  exceptions:
+  <https://google.github.io/styleguide/pyguide.html#22-imports>. That us:
 
-  - Very standard names like types from python or widely used packages. Also
-    names meant to stand in for them.
-  - Other exceptions in the google style guide above.
+  ```python
+  from trulens.schema.record import Record # don't do this
+  from trulens.schema import record as mod_record # do this instead
+  ```
 
-- Use full paths when importing internally
-  <https://google.github.io/styleguide/pyguide.html#23-packages>. Aliases still
-  ok for external users.
+  This prevents the `record` module from being loaded until something inside it
+  is needed. If your uses of `mod_record.Record` are inside functions, this
+  loading can be delayed as far as the execution of that function.
+
+- Import and rename modules:
+
+  ```python
+  from trulens.schema import record # don't do this
+  from trulens.schema import record as record_schema # do this
+  ```
+
+  This is especially important for module names which might cause name
+  collisions with other things such as variables named `record`.
+
+- Keep module renames consistent:
+
+  ```python
+  from trulens.schema import X as X_schema
+  from trulens.utils import X as X_utils
+
+  # if X is inside some category of module Y:
+  from trulens...Y import Y as X_Y
+  # otherwise if X is not in some category of modules:
+  from trulens... import X as mod_X
+  ```
+
+- If an imported module is only used in type annotations, import it inside a `TYPE_CHECKING` block:
+
+  ```python
+  from typing import TYPE_CHECKING
+
+  if TYPE_CHECKING:
+    from trulens.schema import record as record_schema
+  ```
+
+- Do not create exportable aliases (an alias that is listed in `__all__`
+  and refers to an element from some other module). Don't import aliases. Type aliases, even exportable ones are ok:
+
+  ```python
+  Thunk[T] = Callable[[], T] # OK
+  AppID = types_schema.AppID # not OK
+  ```
+
+#### Circular imports
+
+Circular imports may become an issue (error when executing your/`trulens` code, indicated by phrase "likely due to circular imports"). The Import guideline above may help alleviate the problem. A few more things can help:
+
+- Use annotations feature flag:
+
+  ```python
+  from __future__ import annotations
+  ```
+
+  However, if your module contains `pydantic` models, you may need to run `model_rebuild`:
+
+  ```python
+  from __future__ import annotations
+
+  ...
+
+  class SomeModel(pydantic.BaseModel):
+
+    some_attribute: some_module.SomeType
+
+  ...
+
+  SomeModel.model_rebuild()
+  ```
+
+  If you have multiple mutually referential models, you may need to rebuild only
+  after all are defined.
+
 
 ### Docstrings
 
@@ -107,11 +162,40 @@ Examples:
 ```
 
 Attrs:
-    attribute_name (attribute_type): Description.
+    attribute_name: Description.
 
-    attribute_name (attribute_type): Description.
+    attribute_name: Description.
 """
 ````
+
+For pydantic classes, provide the attribute description as a long string right after the attribute definition:
+
+```python
+class SomeModel(pydantic.BaseModel)
+  """Class summary
+
+  Class details.
+  """
+
+  attribute: Type = defaultvalue # or pydantic.Field(...)
+  """Summary as first sentence.
+
+  Details as the rest.
+  """
+
+  cls_attribute: typing.ClassVar[Type] = defaultvalue # or pydantic.Field(...)
+  """Summary as first sentence.
+
+  Details as the rest.
+  """
+
+  _private_attribute: Type = pydantic.PrivateAttr(...)
+  """Summary as first sentence.
+
+  Details as the rest.
+  """
+
+```
 
 #### Example: Functions/Methods
 
@@ -120,11 +204,10 @@ Attrs:
 
 More details if necessary.
 
-Examples:
-
-```python
-# example if needed
-```
+Example:
+  ```python
+  # example if needed
+  ```
 
 Args:
     argument_name: Description. Some long description of argument may wrap over to the next line and needs to
@@ -133,19 +216,21 @@ Args:
     argument_name: Description.
 
 Returns:
-
     return_type: Description.
 
     Additional return discussion. Use list above to point out return components if there are multiple relevant components.
 
 Raises:
-
     ExceptionType: Description.
 """
 ````
 
 Note that the types are automatically filled in by docs generator from the
 function signature.
+
+## Typescript
+
+No standards are currently recommended.
 
 ## Markdown
 
@@ -157,13 +242,42 @@ function signature.
     ```
     ````
 
+  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`. Examples below can serve as a test of the markdown renderer you are viewing these instructions with.
+
+  - Python
+    ```python
+    a = 42
+    ```
+
+  - Typescript
+    ```typescript
+    var a = 42;
+    ```
+
+  - JSON
+    ```json
+    {'a': [1,2,3]}
+    ```
+
+  - Shell
+    ```shell
+    > make test-api
+    > pip install trulens
+    ```
+
+  - Markdown
+    ```markdown
+    # Section heading
+    content
+    ```
+
 - Use `markdownlint` to suggest formatting.
 
 - Use 80 columns if possible.
 
 ## Jupyter notebooks
 
-Do not include output unless core goal of given notebook.
+Do not include output. The pre-commit hooks should automatically clear all notebook outputs.
 
 ## Tests
 
@@ -176,7 +290,7 @@ See `tests/unit`.
 See `tests/unit/static`.
 
 Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`, and being a
-subset of unit tests, are also run on latest supported python, `3.12` .
+subset of unit tests, are also run on latest supported python, `3.12` . Some tests that require all optional packages to be installed run only on `3.11` as the latter python version does not support some of those optional packages.
 
 ### Test pipelines
 

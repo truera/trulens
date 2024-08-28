@@ -83,14 +83,28 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ground_truth_imp = llm_app
         response = llm_app(prompt)
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        ground_truth_collection = GroundTruthAgreement(
+            ground_truth_imp,
+            provider=Cortex(
+                snowflake.connector.connect(**snowflake_connection_parameters),
+                model_engine="mistral-7b",
+            ),
+        )
         ```
 
         Args:
             ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-            or callable that returns a ground truth string given a prompt string.
-            provider (LLMProvider): The provider to use for agreement measures.
-            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+                or callable that returns a ground truth string given a prompt string.
+                provider (LLMProvider): The provider to use for agreement measures.
+                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
 
         """
         if isinstance(ground_truth, List):
@@ -373,6 +387,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         return ret
 
+    @property
+    def mae(self):
+        raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
+
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(
@@ -413,8 +431,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         Args:
             scores (List[float]): relevance scores returned by feedback function
-
-            k (int): top k results to consider
 
         Returns:
             float: NDCG@k

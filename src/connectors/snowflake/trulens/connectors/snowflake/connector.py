@@ -10,6 +10,10 @@ from typing import (
     Union,
 )
 
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    ServerSideEvaluationArtifacts,
+)
+from trulens.core.database import base as mod_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
@@ -31,10 +35,10 @@ class SnowflakeConnector(DBConnector):
         account: str,
         user: str,
         password: str,
-        database_name: str,
-        schema_name: str,
-        warehouse: Optional[str] = None,
-        role: Optional[str] = None,
+        database: str,
+        schema: str,
+        warehouse: str,
+        role: str,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -42,13 +46,13 @@ class SnowflakeConnector(DBConnector):
     ):
         database_args = database_args or {}
 
-        self._validate_schema_name(schema_name)
+        self._validate_schema_name(schema)
         database_url = self._create_snowflake_database_url(
             account=account,
             user=user,
             password=password,
-            database=database_name,
-            schema=schema_name,
+            database=database,
+            schema=schema,
             warehouse=warehouse,
             role=role,
         )
@@ -57,10 +61,12 @@ class SnowflakeConnector(DBConnector):
             for k, v in {
                 "database_url": database_url,
                 "database_redact_keys": database_redact_keys,
-                "database_prefix": database_prefix,
             }.items()
             if v is not None
         })
+        database_args["database_prefix"] = (
+            database_prefix or mod_db.DEFAULT_DATABASE_PREFIX
+        )
         self._db: Union[SQLAlchemyDB, OpaqueWrapper] = (
             SQLAlchemyDB.from_tru_args(**database_args)
         )
@@ -72,6 +78,49 @@ class SnowflakeConnector(DBConnector):
                 print(e)
                 self._db = OpaqueWrapper(obj=self._db, e=e)
 
+        self._initialize_snowflake_server_side_feedback_evaluations(
+            account,
+            user,
+            password,
+            database,
+            schema,
+            warehouse,
+            role,
+            database_args["database_prefix"],
+        )
+
+    def _initialize_snowflake_server_side_feedback_evaluations(
+        self,
+        account: str,
+        user: str,
+        password: str,
+        database: str,
+        schema: str,
+        warehouse: str,
+        role: str,
+        database_prefix: str,
+    ):
+        connection_parameters = {
+            "account": account,
+            "user": user,
+            "password": password,
+            "database": database,
+            "schema": schema,
+            "warehouse": warehouse,
+            "role": role,
+        }
+        with Session.builder.configs(connection_parameters).create() as session:
+            ServerSideEvaluationArtifacts(
+                session,
+                account,
+                user,
+                database,
+                schema,
+                warehouse,
+                role,
+                database_prefix,
+            ).set_up_all()
+
     @classmethod
     def _validate_schema_name(cls, name: str) -> None:
         if not re.match(r"^[A-Za-z0-9_]+$", name):
@@ -81,24 +130,27 @@ class SnowflakeConnector(DBConnector):
 
     @classmethod
     def _create_snowflake_database_url(cls, **kwargs) -> str:
-        cls._create_snowflake_schema_if_not_exists(**kwargs)
+        kwargs = {k: v for k, v in kwargs.items() if v}
+        cls._create_snowflake_schema_if_not_exists(kwargs)
         return URL(**kwargs)
 
     @classmethod
-    def _create_snowflake_schema_if_not_exists(cls, **kwargs):
-        session = Session.builder.configs(**kwargs).create()
-        root = Root(session)
-        schema_name = kwargs.get("schema", None)
-        if schema_name is None:
-            raise ValueError("Schema name must be provided.")
+    def _create_snowflake_schema_if_not_exists(
+        cls, connection_parameters: Dict[str, str]
+    ):
+        with Session.builder.configs(connection_parameters).create() as session:
+            root = Root(session)
+            schema_name = connection_parameters.get("schema", None)
+            if schema_name is None:
+                raise ValueError("Schema name must be provided.")
 
-        database_name = kwargs.get("database", None)
-        if database_name is None:
-            raise ValueError("Database name must be provided.")
-        schema = Schema(name=schema_name)
-        root.databases[database_name].schemas.create(
-            schema, mode=CreateMode.if_not_exists
-        )
+            database_name = connection_parameters.get("database", None)
+            if database_name is None:
+                raise ValueError("Database name must be provided.")
+            schema = Schema(name=schema_name)
+            root.databases[database_name].schemas.create(
+                schema, mode=CreateMode.if_not_exists
+            )
 
     @cached_property
     def db(self) -> DB:

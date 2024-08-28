@@ -28,9 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", extras = [
-  "snowflake",
-], allow-prereleases = true }
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
 # Remove after deprecation period:
@@ -72,10 +70,10 @@ mkdocs-gen-files = "^0.5"
 mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
-[tool.poetry.group.instrument.dependencies]
-trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
-trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
-trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
+[tool.poetry.group.apps.dependencies]
+trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
+trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
+trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.12" }
 
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }

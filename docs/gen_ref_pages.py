@@ -26,6 +26,7 @@ _SPECIAL_FORMATTING = {
     "nemo": "Nemo Guardrails",
     "cortex": "Snowflake Cortex",
     "bedrock": "Amazon Bedrock",
+    "snowflake": "Snowflake",
 }
 
 
@@ -33,7 +34,7 @@ def format_parts(parts: tuple):
     if parts[0] == "trulens":
         parts = tuple(parts[1:])
 
-    external_package = len(parts) and parts[0] in ("providers", "instrument")
+    external_package = len(parts) and parts[0] in ("providers", "apps")
     seen_package_level = False
 
     def _format_part(idx: int, part: str):
@@ -85,15 +86,11 @@ core_packages = [
 provider_packages = [
     f"providers/{pkg_dir}" for pkg_dir in next(os.walk("src/providers"))[1]
 ]
-instrument_packages = [
-    f"instrument/{pkg_dir}" for pkg_dir in next(os.walk("src/instrument"))[1]
-]
+app_packages = [f"apps/{pkg_dir}" for pkg_dir in next(os.walk("src/apps"))[1]]
 connector_packages = [
     f"connectors/{pkg_dir}" for pkg_dir in next(os.walk("src/connectors"))[1]
 ]
-packages = (
-    core_packages + provider_packages + instrument_packages + connector_packages
-)
+packages = core_packages + provider_packages + app_packages + connector_packages
 print("Collecting from packages:", packages)
 
 # Write Index Page
@@ -125,12 +122,19 @@ for package in packages:
 
         if not len(parts):
             continue
-        if package == "dashboard":
+        elif package == "dashboard":
             if parts[0] != "trulens":
                 continue
             if len(parts) > 2 and parts[2] == "react_components":
                 continue
-        if not os.path.exists(path.parent / "__init__.py"):
+        elif path.parent.name == "apps" and path.name in [
+            "basic.py",
+            "custom.py",
+            "virtual.py",
+        ]:
+            # Write core apps
+            pass
+        elif not os.path.exists(path.parent / "__init__.py"):
             print(
                 "Skipping due to missing __init__.py: ",
                 path.parent / "__init__.py",

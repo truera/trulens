@@ -56,7 +56,7 @@ class FeedbackMode(str, Enum):
 
     DEFERRED = "deferred"
     """Evaluate later via the process started by
-    `session.start_deferred_feedback_evaluator`."""
+    `TruSession.start_deferred_feedback_evaluator`."""
 
 
 class FeedbackRunLocation(str, Enum):
