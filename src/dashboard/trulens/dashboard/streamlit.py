@@ -15,9 +15,8 @@ from trulens.core.utils.text import format_quantity
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
-from trulens.dashboard.ux.components import draw_metadata
-from trulens.dashboard.ux.styles import CATEGORY
-from trulens.dashboard.ux.styles import stmetricdelta_hidearrow
+from trulens.dashboard.ux import styles
+from trulens.dashboard.ux.components import draw_metadata_and_tags
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -67,17 +66,29 @@ def trulens_leaderboard(app_ids: List[str] = None):
     if df.empty:
         st.write("No records yet...")
 
-    if app_ids is None:
-        app_ids = list(df.app_id.unique())
+    def get_data():
+        return lms.get_records_and_feedback([])
 
-    for app_id in app_ids:
-        app_df = df.loc[df.app_id == app_id]
+    def get_apps():
+        return list(lms.get_apps())
+
+    records, feedback_col_names = get_data()
+    records = records.sort_values(by="app_id")
+
+    apps = get_apps()
+
+    for app in apps:
+        app_df = records.loc[records.app_id == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
+        app_name = app_json["app_name"]
+        app_version = app_json["app_version"]
+        app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
-        st.header(app_id, help=draw_metadata(metadata))
+        tags = app_json.get("tags")
+        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -121,7 +132,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
             mean = app_df[col_name].mean()
 
             st.write(
-                stmetricdelta_hidearrow,
+                styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 
@@ -134,7 +145,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color="normal",
                 )
             else:
-                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
+                cat = styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
@@ -142,7 +155,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color=(
                         "normal"
                         if cat.compare(
-                            mean, CATEGORY.PASS[cat.direction].threshold
+                            mean, styles.CATEGORY.PASS[cat.direction].threshold
                         )
                         else "inverse"
                     ),
