@@ -187,7 +187,7 @@ zip-wheels:
 	poetry run ./zip_wheels.sh
 
 ## Step: Upload wheels to pypi
-# Usage: TOKEN=... make upload-trulens-instrument-langchain
+# Usage: TOKEN=... make upload-trulens-apps-langchain
 upload-%: clean build zip-wheels
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 

@@ -7,8 +7,8 @@ DummyAPI for its requests.
 
 from unittest import main
 
+from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
-from trulens.instrument.custom import TruCustomApp
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import JSONTestCase

@@ -72,7 +72,7 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
 !!! example "Instrument a NeMo app"
 
     ```python
-    from trulens.instrument.nemo import TruRails
+    from trulens.apps.nemo import TruRails
 
     # instrument with TruRails
     tru_recorder = TruRails(
@@ -117,7 +117,7 @@ the appropriate Instrument subclass.
 !!! example
 
     ```python
-    from trulens.instrument.nemo import RailsInstrument
+    from trulens.apps.nemo import RailsInstrument
 
     RailsInstrument().print_instrumentation()
     ```

@@ -6,6 +6,7 @@ import time
 from unittest import main
 
 import snowflake.connector
+from trulens.apps.basic import TruBasicApp
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
 from trulens.core import Feedback
@@ -13,7 +14,6 @@ from trulens.core import SnowflakeFeedback
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackRunLocation
-from trulens.instrument.basic import TruBasicApp
 import trulens.providers.cortex.provider as cortex_provider
 from trulens.providers.cortex.provider import Cortex
 from trulens.providers.openai.provider import OpenAI

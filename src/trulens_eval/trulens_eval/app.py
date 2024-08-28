@@ -2,8 +2,8 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use `trulens.core.app.base`,
-    `trulens.instrument.langchain.langchain`, or
-    `trulens.instrument.llamaindex.llama` instead.
+    `trulens.apps.langchain.langchain`, or
+    `trulens.apps.llamaindex.llama` instead.
 
 """
 
@@ -11,6 +11,8 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
+from trulens.apps.langchain.langchain import LangChainComponent
+from trulens.apps.llamaindex.llama import LlamaIndexComponent
 from trulens.core.app import ATTRIBUTE_ERROR_MESSAGE
 from trulens.core.app import CLASS_INFO
 from trulens.core.app import JSON_BASES
@@ -26,5 +28,3 @@ from trulens.core.app import RecordingContext
 from trulens.core.app import Tool
 from trulens.core.app import TrulensComponent
 from trulens.core.app import instrumented_component_views
-from trulens.instrument.langchain.langchain import LangChainComponent
-from trulens.instrument.llamaindex.llama import LlamaIndexComponent

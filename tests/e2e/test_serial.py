@@ -15,9 +15,9 @@ are expected.
 
 from unittest import main
 
+from trulens.apps.custom import TruCustomApp
 from trulens.core import Feedback
 from trulens.feedback.dummy.provider import DummyProvider
-from trulens.instrument.custom import TruCustomApp
 from trulens.providers.huggingface.provider import Dummy
 
 from examples.dev.dummy_app.app import DummyApp

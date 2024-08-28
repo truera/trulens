@@ -459,15 +459,15 @@ class App(
     [AppDefinition][trulens.core.schema.app.AppDefinition].
 
     This class is abstract. Use one of these concrete subclasses as appropriate:
-    - [TruLlama][trulens.instrument.llamaindex.TruLlama] for _LlamaIndex_ apps.
-    - [TruChain][trulens.instrument.langchain.TruChain] for _LangChain_ apps.
-    - [TruRails][trulens.instrument.nemo.TruRails] for _NeMo Guardrails_
+    - [TruLlama][trulens.apps.llamaindex.TruLlama] for _LlamaIndex_ apps.
+    - [TruChain][trulens.apps.langchain.TruChain] for _LangChain_ apps.
+    - [TruRails][trulens.apps.nemo.TruRails] for _NeMo Guardrails_
         apps.
-    - [TruVirtual][trulens.instrument.virtual.TruVirtual] for recording
+    - [TruVirtual][trulens.apps.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens.instrument.custom.TruCustomApp] for custom
+    - [TruCustomApp][trulens.apps.custom.TruCustomApp] for custom
         apps. These need to be decorated to have appropriate data recorded.
-    - [TruBasicApp][trulens.instrument.basic.TruBasicApp] for apps defined
+    - [TruBasicApp][trulens.apps.basic.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
 

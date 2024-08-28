@@ -892,10 +892,10 @@ trulens_eval.Tru:
     warning: builtins.function
 trulens_eval.TruBasicApp:
   __bases__:
-  - trulens.instrument.basic.TruBasicApp
+  - trulens.apps.basic.TruBasicApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    app: trulens.instrument.basic.TruWrapperApp
+    app: trulens.apps.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     app_id: builtins.str
@@ -988,7 +988,7 @@ trulens_eval.TruBasicApp:
     with_record: builtins.function
 trulens_eval.TruChain:
   __bases__:
-  - trulens.instrument.langchain.tru_chain.TruChain
+  - trulens.apps.langchain.tru_chain.TruChain
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     acall_with_record: builtins.function
@@ -1085,7 +1085,7 @@ trulens_eval.TruChain:
     with_record: builtins.function
 trulens_eval.TruCustomApp:
   __bases__:
-  - trulens.instrument.custom.TruCustomApp
+  - trulens.apps.custom.TruCustomApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     app: typing.Any
@@ -1183,7 +1183,7 @@ trulens_eval.TruCustomApp:
     with_record: builtins.function
 trulens_eval.TruLlama:
   __bases__:
-  - trulens.instrument.llamaindex.tru_llama.TruLlama
+  - trulens.apps.llamaindex.tru_llama.TruLlama
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     achat: builtins.function
@@ -1291,7 +1291,7 @@ trulens_eval.TruLlama:
     with_record: builtins.function
 trulens_eval.TruRails:
   __bases__:
-  - trulens.instrument.nemo.tru_rails.TruRails
+  - trulens.apps.nemo.tru_rails.TruRails
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     app: nemoguardrails.rails.llm.llmrails.LLMRails
@@ -1386,11 +1386,11 @@ trulens_eval.TruRails:
     with_record: builtins.function
 trulens_eval.TruVirtual:
   __bases__:
-  - trulens.instrument.virtual.TruVirtual
+  - trulens.apps.virtual.TruVirtual
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     add_record: builtins.function
-    app: trulens.instrument.virtual.VirtualApp
+    app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     app_id: builtins.str
@@ -7488,7 +7488,7 @@ trulens_eval.utils.langchain:
 trulens_eval.utils.langchain.LLM:
   __bases__:
   - trulens.core.app.LLM
-  - trulens.instrument.langchain.langchain.LangChainComponent
+  - trulens.apps.langchain.langchain.LangChainComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7499,7 +7499,7 @@ trulens_eval.utils.langchain.LLM:
 trulens_eval.utils.langchain.Other:
   __bases__:
   - trulens.core.app.Other
-  - trulens.instrument.langchain.langchain.LangChainComponent
+  - trulens.apps.langchain.langchain.LangChainComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7509,7 +7509,7 @@ trulens_eval.utils.langchain.Other:
 trulens_eval.utils.langchain.Prompt:
   __bases__:
   - trulens.core.app.Prompt
-  - trulens.instrument.langchain.langchain.LangChainComponent
+  - trulens.apps.langchain.langchain.LangChainComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7534,7 +7534,7 @@ trulens_eval.utils.llama:
 trulens_eval.utils.llama.Agent:
   __bases__:
   - trulens.core.app.Agent
-  - trulens.instrument.llamaindex.llama.LlamaIndexComponent
+  - trulens.apps.llamaindex.llama.LlamaIndexComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     agent_name: builtins.property
@@ -7545,7 +7545,7 @@ trulens_eval.utils.llama.Agent:
 trulens_eval.utils.llama.LLM:
   __bases__:
   - trulens.core.app.LLM
-  - trulens.instrument.llamaindex.llama.LlamaIndexComponent
+  - trulens.apps.llamaindex.llama.LlamaIndexComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7556,7 +7556,7 @@ trulens_eval.utils.llama.LLM:
 trulens_eval.utils.llama.Other:
   __bases__:
   - trulens.core.app.Other
-  - trulens.instrument.llamaindex.llama.LlamaIndexComponent
+  - trulens.apps.llamaindex.llama.LlamaIndexComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7566,7 +7566,7 @@ trulens_eval.utils.llama.Other:
 trulens_eval.utils.llama.Prompt:
   __bases__:
   - trulens.core.app.Prompt
-  - trulens.instrument.llamaindex.llama.LlamaIndexComponent
+  - trulens.apps.llamaindex.llama.LlamaIndexComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod
@@ -7577,7 +7577,7 @@ trulens_eval.utils.llama.Prompt:
 trulens_eval.utils.llama.Tool:
   __bases__:
   - trulens.core.app.Tool
-  - trulens.instrument.llamaindex.llama.LlamaIndexComponent
+  - trulens.apps.llamaindex.llama.LlamaIndexComponent
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     class_is: builtins.staticmethod

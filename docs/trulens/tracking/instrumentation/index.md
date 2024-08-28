@@ -46,7 +46,7 @@ Read more about Usage Tracking in [Cost API Reference][trulens.core.schema.base.
 !!! example "Using `@instrument`"
 
     ```python
-    from trulens.instrument.custom import instrument
+    from trulens.apps.custom import instrument
 
     class RAG_from_scratch:
         @instrument
@@ -77,7 +77,7 @@ is via `instrument.method`. See a usage example below:
 !!! example "Using `instrument.method`"
 
     ```python
-    from trulens.instrument.custom import instrument
+    from trulens.apps.custom import instrument
     from somepackage.from custom_retriever import CustomRetriever
 
     instrument.method(CustomRetriever, "retrieve_chunks")
@@ -86,7 +86,7 @@ is via `instrument.method`. See a usage example below:
     ```
 
 Read more about instrumenting custom class applications in the [API
-Reference][trulens.instrument.custom.TruCustomApp]
+Reference][trulens.apps.custom.TruCustomApp]
 
 ## Tracking input-output applications
 
@@ -97,7 +97,7 @@ Any text-to-text application can be simply wrapped with `TruBasicApp`, and then 
 !!! example "Using `TruBasicApp` to log text to text apps"
 
     ```python
-    from trulens.instrument.basic import TruBasicApp
+    from trulens.apps.basic import TruBasicApp
 
     def custom_application(prompt: str) -> str:
         return "a response"
@@ -111,4 +111,4 @@ Any text-to-text application can be simply wrapped with `TruBasicApp`, and then 
     ```
 
 For frameworks with deep integrations, TruLens can expose additional internals
-of the application for tracking. See [TruChain][trulens.instrument.langchain] and [TruLlama][trulens.instrument.llamaindex] for more details.
+of the application for tracking. See [TruChain][trulens.apps.langchain] and [TruLlama][trulens.apps.llamaindex] for more details.

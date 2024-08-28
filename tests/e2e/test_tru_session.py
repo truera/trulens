@@ -10,13 +10,13 @@ import time
 from unittest import TestCase
 import uuid
 
+from trulens.apps.basic import TruBasicApp
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.virtual import TruVirtual
 from trulens.core import Feedback
 from trulens.core import TruSession
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils.keys import check_keys
-from trulens.instrument.basic import TruBasicApp
-from trulens.instrument.custom import TruCustomApp
-from trulens.instrument.virtual import TruVirtual
 from trulens.providers.huggingface.provider import Dummy
 
 from tests.test import optional_test
@@ -222,7 +222,7 @@ class TestTru(TestCase):
         """
         Test TruChain class that require optional packages.
         """
-        from trulens.instrument.langchain import TruChain
+        from trulens.apps.langchain import TruChain
 
         with self.subTest(type="TruChain"):
             app = self._create_chain()
@@ -252,7 +252,7 @@ class TestTru(TestCase):
         """
         Test TruLlama class that require optional packages.
         """
-        from trulens.instrument.llamaindex import TruLlama
+        from trulens.apps.llamaindex import TruLlama
 
         with self.subTest(type="TruLlama"):
             app = self._create_llama()

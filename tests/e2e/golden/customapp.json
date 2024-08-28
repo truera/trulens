@@ -2,15 +2,15 @@
   "tru_class_info": {
     "name": "TruCustomApp",
     "module": {
-      "package_name": "trulens.instrument.custom",
-      "module_name": "trulens.instrument.custom.custom"
+      "package_name": "trulens.apps.custom",
+      "module_name": "trulens.apps.custom.custom"
     },
     "bases": [
       {
         "name": "TruCustomApp",
         "module": {
-          "package_name": "trulens.instrument.custom",
-          "module_name": "trulens.instrument.custom.custom"
+          "package_name": "trulens.apps.custom",
+          "module_name": "trulens.apps.custom.custom"
         },
         "bases": null
       },

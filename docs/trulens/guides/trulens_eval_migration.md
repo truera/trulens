@@ -14,10 +14,10 @@ When running `pip install trulens`, the following base modules are installed:
 Furthermore, the following additional modules can be installed separately:
 - `trulens-benchmark`: provides benchmarking functionality for evaluating feedback functions on your dataset.
 
-Instrumentation libraries used to instrument specific frameworks like LangChain and LlamaIndex are now packaged separately and imported under the `trulens.instrument` namespace. For example, to use TruChain to instrument a LangChain app, run `pip install trulens-instrument-langchain` and import it as follows:
+Instrumentation libraries used to instrument specific frameworks like LangChain and LlamaIndex are now packaged separately and imported under the `trulens.instrument` namespace. For example, to use TruChain to instrument a LangChain app, run `pip install trulens-apps-langchain` and import it as follows:
 
 ```python
-from trulens.instrument.langchain import TruChain
+from trulens.apps.langchain import TruChain
 ```
 Similarly, providers are now packaged separately from the core library. To use a specific provider, install the corresponding package and import it as follows:
 
@@ -37,12 +37,12 @@ As a result of these changes, the package structure for the TruLens varies from 
 | `trulens_eval.Tru` | [`trulens.core.TruSession`][trulens.core.TruSession] | |
 | `trulens_eval.Feedback` | [`trulens.core.Feedback`][trulens.core.Feedback] | |
 | `trulens_eval.Select` | [`trulens.core.Select`][trulens.core.Select] | |
-| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.instrument.custom.TruCustomApp`][trulens.instrument.custom.TruCustomApp] | |
-| `trulens_eval.TruChain`, `TruSession().Chain(...)` | [`trulens.instrument.langchain.TruChain`][trulens.instrument.langchain.TruChain] | `trulens-instrument-langchain` |
-| `trulens_eval.TruLlama`, `TruSession().Llama(...)` | [`trulens.instrument.llamaindex.TruLlama`][trulens.instrument.llamaindex.TruLlama] | `trulens-instrument-llamaindex` |
+| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.apps.custom.TruCustomApp`][trulens.apps.custom.TruCustomApp] | |
+| `trulens_eval.TruChain`, `TruSession().Chain(...)` | [`trulens.apps.langchain.TruChain`][trulens.apps.langchain.TruChain] | `trulens-apps-langchain` |
+| `trulens_eval.TruLlama`, `TruSession().Llama(...)` | [`trulens.apps.llamaindex.TruLlama`][trulens.apps.llamaindex.TruLlama] | `trulens-apps-llamaindex` |
 | `trulens_eval.OpenAI` | [`trulens.providers.openai.OpenAI`][trulens.providers.openai.OpenAI] | `trulens-providers-openai` |
 | `trulens_eval.Huggingface` | [`trulens.providers.huggingface.Huggingface`][trulens.providers.huggingface.Huggingface] | `trulens-providers-huggingface` |
-| `trulens_eval.guardrails.llama` | [`trulens.instrument.llamaindex.guardrails`][trulens.instrument.llamaindex.guardrails] | `trulens-instrument-llamaindex` |
+| `trulens_eval.guardrails.llama` | [`trulens.apps.llamaindex.guardrails`][trulens.apps.llamaindex.guardrails] | `trulens-apps-llamaindex` |
 | `TruSession().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/trulens/core/index.md).
