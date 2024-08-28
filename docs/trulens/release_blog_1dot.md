@@ -188,14 +188,50 @@ To see the core re-architecture changes in action, we've included some usage exa
         )
         ```
 
-    === "Classification Models on Huggingface"
+    === "Classification Models with Huggingface API"
 
         ```bash
         pip install trulens-core trulens-providers-huggingface
         ```
 
         ```python
+        from trulens.core import Feedback
+        from trulens.core import Select
+        from trulens.providers.huggingface import Huggingface
 
+        # Define a remote Huggingface groundedness feedback function
+        remote_provider = Huggingface()
+        f_remote_groundedness = (
+            Feedback(
+                remote_provider.groundedness_measure_with_nli,
+                name="[Remote] Groundedness",
+            )
+            .on(Select.RecordCalls.retrieve.rets.collect())
+            .on_output()
+        )
+        ```
+
+        === "Local Classification Models with Huggingface"
+
+        ```bash
+        pip install trulens-core trulens-providers-huggingface
+        ```
+
+        ```python
+        from trulens.core import Feedback
+        from trulens.core import Select
+        from trulens.providers.huggingface import HuggingfaceLocal
+
+        # Define a local Huggingface groundedness feedback function
+        local_provider = HuggingfaceLocal()
+        f_local_groundedness = (
+            Feedback(
+                local_provider.groundedness_measure_with_nli,
+                name="[Local] Groundedness",
+            )
+            .on(Select.RecordCalls.retrieve.rets.collect())
+            .on_output()
+        )
         ```
 
 !!! example "Run the TruLens dashboard:"
