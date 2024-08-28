@@ -26,6 +26,7 @@ _SPECIAL_FORMATTING = {
     "nemo": "Nemo Guardrails",
     "cortex": "Snowflake Cortex",
     "bedrock": "Amazon Bedrock",
+    "snowflake": "Snowflake",
 }
 
 
@@ -33,7 +34,7 @@ def format_parts(parts: tuple):
     if parts[0] == "trulens":
         parts = tuple(parts[1:])
 
-    external_package = len(parts) and parts[0] in ("providers", "instrument")
+    external_package = len(parts) and parts[0] in ("providers", "apps")
     seen_package_level = False
 
     def _format_part(idx: int, part: str):
@@ -85,9 +86,7 @@ core_packages = [
 provider_packages = [
     f"providers/{pkg_dir}" for pkg_dir in next(os.walk("src/providers"))[1]
 ]
-app_packages = [
-    f"instrument/{pkg_dir}" for pkg_dir in next(os.walk("src/apps"))[1]
-]
+app_packages = [f"apps/{pkg_dir}" for pkg_dir in next(os.walk("src/apps"))[1]]
 connector_packages = [
     f"connectors/{pkg_dir}" for pkg_dir in next(os.walk("src/connectors"))[1]
 ]

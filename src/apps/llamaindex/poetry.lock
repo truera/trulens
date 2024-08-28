@@ -857,13 +857,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.35"
+version = "0.2.36"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.35-py3-none-any.whl", hash = "sha256:e994fb8598e919842205824836a584243c1fb7f44268f6f14921c529667c4e6e"},
-    {file = "langchain_core-0.2.35.tar.gz", hash = "sha256:da8f51355a4a285345c41a3232fd0f1cc3a33726eb7b3557b753ffabfeb68b3f"},
+    {file = "langchain_core-0.2.36-py3-none-any.whl", hash = "sha256:eabce6e7538cb9dc60db4bc1eb584bbb91a5e7e02a96d5b65b4a6ab151081b6d"},
+    {file = "langchain_core-0.2.36.tar.gz", hash = "sha256:56f2367070e8afc43922bba1d046035a144b4e732a5474676403bd0eb33d85f2"},
 ]
 
 [package.dependencies]
@@ -2443,6 +2443,26 @@ slack = ["slack-sdk"]
 telegram = ["requests"]
 
 [[package]]
+name = "trulens-apps-langchain"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9,<3.13"
+files = []
+develop = false
+
+[package.dependencies]
+langchain = "^0.2.10,!=0.2.12"
+langchain-core = "^0.2.24,!=0.2.27"
+pydantic = "^2"
+trulens-core = "^1.0.0"
+typing-inspect = "^0.8"
+
+[package.source]
+type = "directory"
+url = "../langchain"
+
+[[package]]
 name = "trulens-core"
 version = "1.0.1a2"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -2467,26 +2487,6 @@ typing_extensions = "^4.9"
 [package.source]
 type = "directory"
 url = "../../core"
-
-[[package]]
-name = "trulens-apps-langchain"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9,<3.13"
-files = []
-develop = false
-
-[package.dependencies]
-langchain = "^0.2.10,!=0.2.12"
-langchain-core = "^0.2.24,!=0.2.27"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-typing-inspect = "^0.8"
-
-[package.source]
-type = "directory"
-url = "../langchain"
 
 [[package]]
 name = "typing-extensions"
@@ -2742,4 +2742,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "f84e7342bcb4c6e47095061d5f06c13822c1cdebc949de214aa0a60c928c7520"
+content-hash = "2a70b75b2241fcc5951c9a8c3a40f9891243076e0d015fd023e0d9914c7c0f94"

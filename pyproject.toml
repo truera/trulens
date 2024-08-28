@@ -70,7 +70,7 @@ mkdocs-gen-files = "^0.5"
 mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
-[tool.poetry.group.instrument.dependencies]
+[tool.poetry.group.apps.dependencies]
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
 trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.12" }

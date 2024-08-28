@@ -1,5 +1,5 @@
 from concurrent.futures import as_completed
-from typing import List
+from typing import Any, List
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
@@ -102,7 +102,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         return filtered
 
     @staticmethod
-    def of_retriever(retriever: VectorStoreRetriever, **kwargs):
+    def of_retriever(retriever: VectorStoreRetriever, **kwargs: Any):
         """
         Create a new instance of WithFeedbackFilterDocuments based on an existing retriever.
 
