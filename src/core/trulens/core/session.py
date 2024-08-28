@@ -148,7 +148,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
 
-    def __new__(cls, *args, **kwargs) -> TruSession:
+    def __new__(cls, *args, **kwargs: Any) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
         assert isinstance(inst, TruSession)
         return inst
