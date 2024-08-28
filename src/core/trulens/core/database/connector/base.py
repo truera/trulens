@@ -9,6 +9,7 @@ import queue
 from threading import Thread
 import time
 from typing import (
+    Any,
     Iterable,
     List,
     Optional,
@@ -51,7 +52,7 @@ class DBConnector(ABC):
         """
         self.db.reset_database()
 
-    def migrate_database(self, **kwargs):
+    def migrate_database(self, **kwargs: Any):
         """Migrates the database.
 
         This should be run whenever there are breaking changes in a database
@@ -190,7 +191,7 @@ class DBConnector(ABC):
                 Future[mod_feedback_schema.FeedbackResult],
             ]
         ] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> mod_types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 

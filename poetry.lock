@@ -2813,19 +2813,19 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.2.14"
+version = "0.2.15"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain-0.2.14-py3-none-any.whl", hash = "sha256:eed76194ee7d9c081037a3df7868d4de90e0410b51fc1ca933a8379e464bf40c"},
-    {file = "langchain-0.2.14.tar.gz", hash = "sha256:dc2aa5a58882054fb5d043c39ab8332ebd055f88f17839da68e1c7fd0a4fefe2"},
+    {file = "langchain-0.2.15-py3-none-any.whl", hash = "sha256:9e6231441870aaa8523be24a5785ccccfdde759a7e27dd082b6ec80f68e49dec"},
+    {file = "langchain-0.2.15.tar.gz", hash = "sha256:f613ce7594be34f9bac687134a56f6e8274951907b798dbd037aefc95df78953"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
-langchain-core = ">=0.2.32,<0.3.0"
+langchain-core = ">=0.2.35,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
@@ -2840,20 +2840,20 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.12"
+version = "0.2.13"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.2.12-py3-none-any.whl", hash = "sha256:50e74473dd2309bdef561760afbbf0c5ea17ed91fc4dfa0d52279dd16d6d34e0"},
-    {file = "langchain_community-0.2.12.tar.gz", hash = "sha256:d671cfc6a4f3b65f49a2e59ab420d0164f109d0a56fc4b4996518205c63b8c7e"},
+    {file = "langchain_community-0.2.13-py3-none-any.whl", hash = "sha256:37fb1944f17b373e7c5bbc4398c3140ee65a135a4627b7b9120bd308163b9175"},
+    {file = "langchain_community-0.2.13.tar.gz", hash = "sha256:493f5f9087b657d8f1dfd4c25169db9ecab9f96916c2845ed92babe57e1f6cda"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.13,<0.3.0"
-langchain-core = ">=0.2.30,<0.3.0"
+langchain = ">=0.2.15,<0.3.0"
+langchain-core = ">=0.2.35,<0.3.0"
 langsmith = ">=0.1.0,<0.2.0"
 numpy = [
     {version = ">=1,<2", markers = "python_version < \"3.12\""},
@@ -2866,13 +2866,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.35"
+version = "0.2.36"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.35-py3-none-any.whl", hash = "sha256:e994fb8598e919842205824836a584243c1fb7f44268f6f14921c529667c4e6e"},
-    {file = "langchain_core-0.2.35.tar.gz", hash = "sha256:da8f51355a4a285345c41a3232fd0f1cc3a33726eb7b3557b753ffabfeb68b3f"},
+    {file = "langchain_core-0.2.36-py3-none-any.whl", hash = "sha256:eabce6e7538cb9dc60db4bc1eb584bbb91a5e7e02a96d5b65b4a6ab151081b6d"},
+    {file = "langchain_core-0.2.36.tar.gz", hash = "sha256:56f2367070e8afc43922bba1d046035a144b4e732a5474676403bd0eb33d85f2"},
 ]
 
 [package.dependencies]
@@ -2889,17 +2889,17 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-openai"
-version = "0.1.22"
+version = "0.1.23"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_openai-0.1.22-py3-none-any.whl", hash = "sha256:e184ab867a30f803dc210a388537186b1b670a33d910a7e0fa4e0329d3b6c654"},
-    {file = "langchain_openai-0.1.22.tar.gz", hash = "sha256:0cf93133f230a893e3b0cc2a792bbf2580950e879b577f6e8d4ff9963a7de44b"},
+    {file = "langchain_openai-0.1.23-py3-none-any.whl", hash = "sha256:8e3d215803e157f26480c6108eb4333629832b1a0e746723060c24f93b8b78f4"},
+    {file = "langchain_openai-0.1.23.tar.gz", hash = "sha256:ed7f16671ea0af177ac5f82d5645a746c5097c56f97b31798e5c07b5c84f0eed"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.33,<0.3.0"
+langchain-core = ">=0.2.35,<0.3.0"
 openai = ">=1.40.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
@@ -6241,13 +6241,13 @@ cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 
 [[package]]
 name = "qtconsole"
-version = "5.5.2"
+version = "5.6.0"
 description = "Jupyter Qt console"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "qtconsole-5.5.2-py3-none-any.whl", hash = "sha256:42d745f3d05d36240244a04e1e1ec2a86d5d9b6edb16dbdef582ccb629e87e0b"},
-    {file = "qtconsole-5.5.2.tar.gz", hash = "sha256:6b5fb11274b297463706af84dcbbd5c92273b1f619e6d25d08874b0a88516989"},
+    {file = "qtconsole-5.6.0-py3-none-any.whl", hash = "sha256:c36e0d497a473b67898b96dd38666e645e4594019244263da7b409b84fa2ebb5"},
+    {file = "qtconsole-5.6.0.tar.gz", hash = "sha256:4c82120a3b53a3d36e3f76e6a1a26ffddf4e1ce2359d56a19889c55e1d73a436"},
 ]
 
 [package.dependencies]
@@ -6256,7 +6256,6 @@ jupyter-client = ">=4.1"
 jupyter-core = "*"
 packaging = "*"
 pygments = "*"
-pyzmq = ">=17.1"
 qtpy = ">=2.4.0"
 traitlets = "<5.2.1 || >5.2.1,<5.2.2 || >5.2.2"
 
@@ -8022,6 +8021,64 @@ tests = ["autopep8", "flake8", "isort", "llnl-hatchet", "numpy", "pytest", "scip
 tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
+name = "trulens-apps-langchain"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9,<3.13"
+files = []
+develop = true
+
+[package.dependencies]
+langchain = "^0.2.10,!=0.2.12"
+langchain-core = "^0.2.24,!=0.2.27"
+pydantic = "^2"
+trulens-core = "^1.0.0"
+typing-inspect = "^0.8"
+
+[package.source]
+type = "directory"
+url = "src/apps/langchain"
+
+[[package]]
+name = "trulens-apps-llamaindex"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = "^3.9"
+files = []
+develop = true
+
+[package.dependencies]
+llama-index = "^0.10"
+pydantic = "^2"
+trulens-apps-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
+trulens-core = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/llamaindex"
+
+[[package]]
+name = "trulens-apps-nemo"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+optional = false
+python-versions = ">=3.9,<3.12"
+files = []
+develop = true
+
+[package.dependencies]
+nemoguardrails = "^0.9"
+pydantic = "^2"
+trulens-apps-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
+trulens-core = "^1.0.0"
+
+[package.source]
+type = "directory"
+url = "src/apps/nemo"
+
+[[package]]
 name = "trulens-benchmark"
 version = "1.0.1a1"
 description = "Library to systematically track and evaluate LLM based applications."
@@ -8048,7 +8105,7 @@ develop = true
 
 [package.dependencies]
 snowflake-connector-python = {version = "^3.11", markers = "python_version < \"3.12\""}
-snowflake-core = "^0.9.0"
+snowflake-core = {version = "^0.9.0", markers = "python_version < \"3.12\""}
 snowflake-snowpark-python = {version = "^1.18", markers = "python_version < \"3.12\""}
 snowflake-sqlalchemy = {version = "^1.6", markers = "python_version < \"3.12\""}
 trulens-core = "^1.0.0"
@@ -8148,64 +8205,6 @@ trulens-core = "^1.0.0"
 [package.source]
 type = "directory"
 url = "src/feedback"
-
-[[package]]
-name = "trulens-instrument-langchain"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9,<3.13"
-files = []
-develop = true
-
-[package.dependencies]
-langchain = "^0.2.10,!=0.2.12"
-langchain-core = "^0.2.24,!=0.2.27"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-typing-inspect = "^0.8"
-
-[package.source]
-type = "directory"
-url = "src/instrument/langchain"
-
-[[package]]
-name = "trulens-instrument-llamaindex"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = "^3.9"
-files = []
-develop = true
-
-[package.dependencies]
-llama-index = "^0.10"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-trulens-instrument-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
-
-[package.source]
-type = "directory"
-url = "src/instrument/llamaindex"
-
-[[package]]
-name = "trulens-instrument-nemo"
-version = "1.0.1a1"
-description = "Library to systematically track and evaluate LLM based applications."
-optional = false
-python-versions = ">=3.9,<3.12"
-files = []
-develop = true
-
-[package.dependencies]
-nemoguardrails = "^0.9"
-pydantic = "^2"
-trulens-core = "^1.0.0"
-trulens-instrument-langchain = {version = "^1.0.0", markers = "python_version < \"3.13\""}
-
-[package.source]
-type = "directory"
-url = "src/instrument/nemo"
 
 [[package]]
 name = "trulens-providers-bedrock"
@@ -8850,4 +8849,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "b9fa13a46c5d6aa233e85f8ac5c0cbae703a560e8f97bad497f8b5e7c91bd05c"
+content-hash = "1475d2e49706571e63d36d2a5465f1c7a07a4c65b78df584519211911e1f2619"

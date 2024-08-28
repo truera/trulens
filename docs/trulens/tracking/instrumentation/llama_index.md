@@ -35,7 +35,7 @@ To instrument an Llama-Index query engine, all that's required is to wrap it usi
 !!! example "Instrument a Llama-Index Query Engine"
 
     ```python
-    from trulens.instrument.llamaindex import TruLlama
+    from trulens.apps.llamaindex import TruLlama
 
     tru_query_engine_recorder = TruLlama(query_engine)
 
@@ -84,7 +84,7 @@ As an example, below is an LlamaIndex async chat engine (`achat`).
     from llama_index.core import VectorStoreIndex
     from llama_index.readers.web import SimpleWebPageReader
     from trulens.core import Tru
-    from trulens.instrument.llamaindex import TruLlama
+    from trulens.apps.llamaindex import TruLlama
 
     tru = Tru()
     documents = SimpleWebPageReader(html_to_text=True).load_data(
@@ -150,7 +150,7 @@ the appropriate Instrument subclass.
 !!! example
 
     ```python
-    from trulens.instrument.llamaindex import LlamaInstrument
+    from trulens.apps.llamaindex import LlamaInstrument
 
     LlamaInstrument().print_instrumentation()
     ```

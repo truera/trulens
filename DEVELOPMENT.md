@@ -179,8 +179,8 @@ TOKEN=... make upload-all
 To upload a specific package, run the following command with the `TOKEN` environment variable set to your PyPI token. The package name should exclude the `trulens` prefix.
 
 ```bash
-# Uploads trulens-instrument-openai
-TOKEN=... make upload-instrument-openai
+# Uploads trulens-providers-openai
+TOKEN=... make upload-trulens-providers-openai
 ```
 
 ### Deploy documentation locally
