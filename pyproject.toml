@@ -119,6 +119,9 @@ llama-index-embeddings-huggingface = "^0.2.2"
 llama-index-embeddings-openai = "^0.1.10"
 faiss-cpu = "^1.7.4"                          # some example notebooks
 ipytree = "^0.2.2"                            # some example notebooks
+chromadb = "^0.4.24"                          # some example notebooks
+unstructured = "^0.10.23"                     # some example notebooks
+llama-index-readers-web = "^0.1.0"            # some example notebooks
 
 [tool.ruff]
 line-length = 80

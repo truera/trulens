@@ -675,7 +675,7 @@ class App(
                 from trulens.instrument.langchain import TruChain
 
                 return TruChain.select_context(app=app)
-            elif mod.startswith("llamaindex"):
+            elif mod.startswith("llama_index"):
                 from trulens.instrument.llamaindex import TruLlama
 
                 return TruLlama.select_context(app=app)

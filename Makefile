@@ -115,11 +115,12 @@ test-deprecation:
 ## Test for trulens_eval notebooks.
 .PHONY: _trulens_eval
 _trulens_eval:
-#	rm -Rf _trulens_eval
 	git worktree add -f _trulens_eval --no-checkout --detach
 	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- \
 		trulens_eval/tests/docs_notebooks/notebooks_to_test \
-		trulens_eval/examples
+		trulens_eval/README.md \
+		trulens_eval/examples \
+		docs/trulens_eval/tracking
 	git worktree prune
 test-legacy-notebooks: _trulens_eval
 	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py

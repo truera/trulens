@@ -742,19 +742,19 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.2.14"
+version = "0.2.15"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain-0.2.14-py3-none-any.whl", hash = "sha256:eed76194ee7d9c081037a3df7868d4de90e0410b51fc1ca933a8379e464bf40c"},
-    {file = "langchain-0.2.14.tar.gz", hash = "sha256:dc2aa5a58882054fb5d043c39ab8332ebd055f88f17839da68e1c7fd0a4fefe2"},
+    {file = "langchain-0.2.15-py3-none-any.whl", hash = "sha256:9e6231441870aaa8523be24a5785ccccfdde759a7e27dd082b6ec80f68e49dec"},
+    {file = "langchain-0.2.15.tar.gz", hash = "sha256:f613ce7594be34f9bac687134a56f6e8274951907b798dbd037aefc95df78953"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
-langchain-core = ">=0.2.32,<0.3.0"
+langchain-core = ">=0.2.35,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
@@ -769,20 +769,20 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.12"
+version = "0.2.14"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.2.12-py3-none-any.whl", hash = "sha256:50e74473dd2309bdef561760afbbf0c5ea17ed91fc4dfa0d52279dd16d6d34e0"},
-    {file = "langchain_community-0.2.12.tar.gz", hash = "sha256:d671cfc6a4f3b65f49a2e59ab420d0164f109d0a56fc4b4996518205c63b8c7e"},
+    {file = "langchain_community-0.2.14-py3-none-any.whl", hash = "sha256:8ebf42e6c14be95fb5d86450785ac802f60a10e382bb6548af0dcc05323d4819"},
+    {file = "langchain_community-0.2.14.tar.gz", hash = "sha256:70e5c51863e93705517527f1ed30a8a5db3920e48331592f98edcafb13134017"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.13,<0.3.0"
-langchain-core = ">=0.2.30,<0.3.0"
+langchain = ">=0.2.15,<0.3.0"
+langchain-core = "0.2.36"
 langsmith = ">=0.1.0,<0.2.0"
 numpy = [
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
@@ -795,13 +795,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.35"
+version = "0.2.36"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.35-py3-none-any.whl", hash = "sha256:e994fb8598e919842205824836a584243c1fb7f44268f6f14921c529667c4e6e"},
-    {file = "langchain_core-0.2.35.tar.gz", hash = "sha256:da8f51355a4a285345c41a3232fd0f1cc3a33726eb7b3557b753ffabfeb68b3f"},
+    {file = "langchain_core-0.2.36-py3-none-any.whl", hash = "sha256:eabce6e7538cb9dc60db4bc1eb584bbb91a5e7e02a96d5b65b4a6ab151081b6d"},
+    {file = "langchain_core-0.2.36.tar.gz", hash = "sha256:56f2367070e8afc43922bba1d046035a144b4e732a5474676403bd0eb33d85f2"},
 ]
 
 [package.dependencies]
@@ -818,17 +818,17 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-openai"
-version = "0.1.22"
+version = "0.1.23"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_openai-0.1.22-py3-none-any.whl", hash = "sha256:e184ab867a30f803dc210a388537186b1b670a33d910a7e0fa4e0329d3b6c654"},
-    {file = "langchain_openai-0.1.22.tar.gz", hash = "sha256:0cf93133f230a893e3b0cc2a792bbf2580950e879b577f6e8d4ff9963a7de44b"},
+    {file = "langchain_openai-0.1.23-py3-none-any.whl", hash = "sha256:8e3d215803e157f26480c6108eb4333629832b1a0e746723060c24f93b8b78f4"},
+    {file = "langchain_openai-0.1.23.tar.gz", hash = "sha256:ed7f16671ea0af177ac5f82d5645a746c5097c56f97b31798e5c07b5c84f0eed"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.33,<0.3.0"
+langchain-core = ">=0.2.35,<0.3.0"
 openai = ">=1.40.0,<2.0.0"
 tiktoken = ">=0.7,<1"
 
