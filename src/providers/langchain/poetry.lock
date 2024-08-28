@@ -1424,7 +1424,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1450,7 +1450,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -1511,4 +1511,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "1bbaface6c0b1a7be206cc3fe1f4b47f732471d95adfa08e44aaadc24483f752"
+content-hash = "55d4ad7197b388bcac426ad1c679866dfefceef5414c40e5d137175714fc7949"

@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,11 +28,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", allow-prereleases = true }
-trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
-trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0" }
 # Remove after deprecation period:
-trulens_eval = { version = "^1.0.0", allow-prereleases = true }
+trulens_eval = { version = "^1.0.0" }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }

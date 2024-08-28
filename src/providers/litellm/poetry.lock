@@ -862,13 +862,13 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "litellm"
-version = "1.44.7"
+version = "1.44.8"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 files = [
-    {file = "litellm-1.44.7-py3-none-any.whl", hash = "sha256:7671b2e5287a4876a8b05f8025d6a976e22ae9c61e30355bf28c1d25e74c17df"},
-    {file = "litellm-1.44.7.tar.gz", hash = "sha256:c8f8f9d80065be81580258177f3a006de86d2c4af1f9a732ac37bd317a13f042"},
+    {file = "litellm-1.44.8-py3-none-any.whl", hash = "sha256:76f30428c4dc37c3571ce746f8141ed4a4cac1506dcad1c0213a2c23cbb701b9"},
+    {file = "litellm-1.44.8.tar.gz", hash = "sha256:885d19db883fb13c8e32563cfbbc3d02dc1b80fe4bb52a67ebdbf6cdc8d0cb83"},
 ]
 
 [package.dependencies]
@@ -2216,7 +2216,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -2242,7 +2242,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -2425,4 +2425,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "fa00caa86cad7127da13d44e729e8d1af3abd9ddb566bf4f362ed05dc814c12b"
+content-hash = "c508516e2bc5af9c2099332f19be40e3e87e92e173d5ee9212285ed05b39270a"

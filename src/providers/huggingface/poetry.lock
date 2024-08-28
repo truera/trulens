@@ -1865,7 +1865,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1891,7 +1891,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -1952,4 +1952,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "bf29b1219b555df8a44f5275087608a030de968ce0dc5d3482da93f2343150f8"
+content-hash = "03772703ae44b6638908d688be6ef5537a79ffb42d59bad204ef1e513abf2240"

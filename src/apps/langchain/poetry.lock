@@ -1549,7 +1549,7 @@ test = ["pytest", "tornado (>=4.5)", "typeguard"]
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1733,4 +1733,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,<3.13"
-content-hash = "2f6127f078e8450507275809339f98290948e84cac20334d56dfcd741c1ce730"
+content-hash = "e97db0cbe43154a2538b544f891b5c5ba16795ea0529d3338acf492067425485"
