@@ -7,40 +7,42 @@
 
 from trulens.core.utils import deprecation as deprecation_utils
 
-deprecation_utils.packages_dep_warn("trulens_eval.feedback.provider.endpoint")
+from trulens_eval._utils import optional as optional_utils
+
+deprecation_utils.packages_dep_warn()
 
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.utils import imports as imports_utils
 from trulens.feedback.dummy.endpoint import DummyEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_LITELLM
+    messages=optional_utils.REQUIREMENT_PROVIDER_LITELLM
 ):
     from trulens.providers.litellm.endpoint import LiteLLMEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_BEDROCK
+    messages=optional_utils.REQUIREMENT_PROVIDER_BEDROCK
 ):
     from trulens.providers.bedrock.endpoint import BedrockEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_OPENAI
+    messages=optional_utils.REQUIREMENT_PROVIDER_OPENAI
 ):
     from trulens.providers.openai.endpoint import OpenAIClient
     from trulens.providers.openai.endpoint import OpenAIEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_CORTEX
+    messages=optional_utils.REQUIREMENT_PROVIDER_CORTEX
 ):
     from trulens.providers.cortex.endpoint import CortexEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_LANGCHAIN
+    messages=optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
     from trulens.providers.langchain.endpoint import LangchainEndpoint
 
 with imports_utils.OptionalImports(
-    messages=imports_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
+    messages=optional_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
 ):
     from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
 
