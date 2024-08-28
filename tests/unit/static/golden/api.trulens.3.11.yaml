@@ -932,11 +932,13 @@ trulens.core.schema.base.Cost:
     cost: builtins.float
     n_classes: builtins.int
     n_completion_tokens: builtins.int
+    n_cortext_guardrails_tokens: builtins.int
     n_prompt_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
     n_tokens: builtins.int
+    snowflake_credits_consumed: builtins.float
 trulens.core.schema.base.Perf:
   __bases__:
   - trulens.core.utils.serial.SerialModel
