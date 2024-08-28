@@ -196,7 +196,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
 from pydantic import Field
-from trulens.core.app.base import App
+from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
 from trulens.core.utils.pyschema import Class
