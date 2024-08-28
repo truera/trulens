@@ -31,6 +31,7 @@ optional_mods = dict(
         "trulens.apps.llamaindex.tru_llama",
         "trulens.apps.llamaindex.llama",
         "trulens.apps.llamaindex.guardrails",
+        "trulens.feedback.embeddings",
     ],
     boto3=[
         "trulens.providers.bedrock.provider",

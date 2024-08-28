@@ -19,9 +19,9 @@ with OptionalImports(
         "llama-index", purpose="using llama-index embedding models"
     )
 ) as opt:
-    import llama_index
+    import llama_index.core.base.embeddings.base
     from llama_index.core.base.embeddings.base import BaseEmbedding
-opt.assert_installed(llama_index)
+opt.assert_installed(llama_index.core.base.embeddings.base)
 
 
 class Embeddings(WithClassInfo, SerialModel):
