@@ -169,8 +169,16 @@ app_name_versions = list(
     set(f"{app['app_name']} - {app['app_version']}" for app in apps)
 )
 
+if "app" in st.session_state:
+    selected_apps = st.session_state.app
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = list(
+        set(
+            f"{app['app_name']} - {app['app_version']}" for app in filtered_apps
+        )
+    )
 selected_app_name_versions = st.multiselect(
-    "Filter Applications", app_name_versions, default=app_name_versions
+    "Filter Apps", app_name_versions, default=app_name_versions
 )
 
 selected_apps = [
@@ -206,12 +214,13 @@ else:
         output_array = evaluations_df["output"].to_numpy()
 
         # pull additional data from app_json into columns
-        evaluations_df["app_name"] = json.loads(evaluations_df["app_json"][0])[
-            "app_name"
-        ]
-        evaluations_df["app_version"] = json.loads(
-            evaluations_df["app_json"][0]
-        )["app_version"]
+        evaluations_df["app_name"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_name"]
+        )
+        evaluations_df["app_version"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_version"]
+        )
+
         metadata = json.loads(evaluations_df["app_json"][0])["metadata"]
         metadata_cols = list(metadata.keys())
         for key in metadata_cols:
