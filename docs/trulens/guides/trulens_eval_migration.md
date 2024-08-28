@@ -14,7 +14,7 @@ When running `pip install trulens`, the following base modules are installed:
 Furthermore, the following additional modules can be installed separately:
 - `trulens-benchmark`: provides benchmarking functionality for evaluating feedback functions on your dataset.
 
-Instrumentation libraries used to instrument specific frameworks like LangChain and LlamaIndex are now packaged separately and imported under the `trulens.instrument` namespace. For example, to use TruChain to instrument a LangChain app, run `pip install trulens-apps-langchain` and import it as follows:
+Instrumentation libraries used to instrument specific frameworks like LangChain and LlamaIndex are now packaged separately and imported under the `trulens.apps` namespace. For example, to use TruChain to instrument a LangChain app, run `pip install trulens-apps-langchain` and import it as follows:
 
 ```python
 from trulens.apps.langchain import TruChain

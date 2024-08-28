@@ -196,7 +196,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             if len(args) == 0:
                 # Basic app can be specified using the text_to_text key argument.
                 if "text_to_text" in kwargs:
-                    from trulens.instrument import basic
+                    from trulens.apps import basic
 
                     return basic.TruBasicApp(
                         *args, connector=self.connector, **kwargs
@@ -245,8 +245,8 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             )
 
         # Check for virtual. Either VirtualApp or JSON app arg.
+        from trulens.apps import virtual
         from trulens.core.utils import serial as serial_utils
-        from trulens.instrument import virtual
 
         if isinstance(app, virtual.VirtualApp) or serial_utils.is_json(app):
             print(f"{text_utils.UNICODE_SQUID} Instrumenting virtual app.")
@@ -256,7 +256,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         # Check for basic. Either TruWrapperApp or the text_to_text arg. Unsure
         # what we want to do if they provide both. Let's TruBasicApp handle it.
-        from trulens.instrument import basic
+        from trulens.apps import basic
 
         if isinstance(app, basic.TruWrapperApp) or "text_to_text" in kwargs:
             print(f"{text_utils.UNICODE_SQUID} Instrumenting basic app.")
@@ -267,7 +267,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         # If all else fails, assume it is a custom app.
         print(f"{text_utils.UNICODE_SQUID} Instrumenting custom app.")
-        from trulens.instrument import custom
+        from trulens.apps import custom
 
         return custom.TruCustomApp(
             *args, app=app, connector=self.connector, **kwargs
