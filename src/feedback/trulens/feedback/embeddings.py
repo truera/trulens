@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 from trulens.core.utils.imports import OptionalImports
@@ -13,21 +13,20 @@ with OptionalImports(
 ):
     import sklearn.metrics
 
-if TYPE_CHECKING:
-    with OptionalImports(
-        messages=format_import_errors(
-            "llama-index", purpose="instrumenting LlamaIndex apps"
-        )
-    ):
-        from llama_index.core.base.embeddings.base import BaseEmbedding
+with OptionalImports(
+    messages=format_import_errors(
+        "llama-index", purpose="using llama-index embedding models"
+    )
+):
+    from llama_index.core.base.embeddings.base import BaseEmbedding
 
 
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations."""
 
-    _embed_model: "BaseEmbedding"
+    _embed_model: BaseEmbedding
 
-    def __init__(self, embed_model: "BaseEmbedding"):
+    def __init__(self, embed_model: BaseEmbedding):
         """Instantiates embeddings for feedback functions.
         !!! example
 
@@ -44,7 +43,7 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            embed_model BaseEmbedding: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+            embed_model: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
         """
         super().__init__()
         self._embed_model = embed_model
