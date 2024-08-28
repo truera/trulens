@@ -4,7 +4,7 @@ Tests for TruBasicApp.
 
 from unittest import main
 
-from trulens.core import TruBasicApp
+from trulens.apps.basic import TruBasicApp
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys

@@ -19,13 +19,13 @@ General and 🦑_TruLens_-specific concepts.
 - `Application` or `App`. An "application" that is tracked by 🦑_TruLens_.
   Abstract definition of this tracking corresponds to
   [App][trulens.core.app.App]. We offer special support for _LangChain_ via
-  [TruChain][trulens.instrument.langchain.TruChain], _LlamaIndex_ via
-  [TruLlama][trulens.instrument.llamaindex.TruLlama], and _NeMo Guardrails_ via
-  [TruRails][trulens.instrument.nemo.TruRails] `Applications` as well as custom
-  apps via [TruBasicApp][trulens.core.TruBasicApp] or
-  [TruCustomApp][trulens.core.TruCustomApp], and apps that
+  [TruChain][trulens.apps.langchain.TruChain], _LlamaIndex_ via
+  [TruLlama][trulens.apps.llamaindex.TruLlama], and _NeMo Guardrails_ via
+  [TruRails][trulens.apps.nemo.TruRails] `Applications` as well as custom
+  apps via [TruBasicApp][trulens.apps.basic.TruBasicApp] or
+  [TruCustomApp][trulens.apps.custom.TruCustomApp], and apps that
   already come with `Trace`s via
-  [TruVirtual][trulens.core.TruVirtual].
+  [TruVirtual][trulens.apps.virtual.TruVirtual].
 
 - `Chain`. A _LangChain_ `App`.
 

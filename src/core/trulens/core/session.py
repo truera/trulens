@@ -10,6 +10,7 @@ import threading
 from threading import Thread
 from time import sleep
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     Iterable,
@@ -25,7 +26,6 @@ import pandas
 import pydantic
 from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
-from trulens.core.app import base as base_app
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
@@ -43,6 +43,9 @@ from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
+
+if TYPE_CHECKING:
+    from trulens.core import app as base_app
 
 tqdm = None
 with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
@@ -66,22 +69,22 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
     referred to by `database_url`.
 
     Supported App Types:
-        [TruChain][trulens.instrument.langchain.TruChain]: Langchain
+        [TruChain][trulens.apps.langchain.TruChain]: Langchain
             apps.
 
-        [TruLlama][trulens.instrument.llamaindex.TruLlama]: Llama Index
+        [TruLlama][trulens.apps.llamaindex.TruLlama]: Llama Index
             apps.
 
-        [TruRails][trulens.instrument.nemo.TruRails]: NeMo Guardrails apps.
+        [TruRails][trulens.apps.nemo.TruRails]: NeMo Guardrails apps.
 
-        [TruBasicApp][trulens.core.TruBasicApp]:
+        [TruBasicApp][trulens.apps.basic.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.core.TruCustomApp]:
+        [TruCustomApp][trulens.apps.custom.TruCustomApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
-        [TruVirtual][trulens.core.TruVirtual]: Virtual
+        [TruVirtual][trulens.apps.virtual.TruVirtual]: Virtual
             apps that do not have a real app to instrument but have a virtual
             structure and can log existing captured data as if they were trulens
             records.
@@ -145,7 +148,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
 
-    def __new__(cls, *args, **kwargs) -> TruSession:
+    def __new__(cls, *args, **kwargs: Any) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
         assert isinstance(inst, TruSession)
         return inst
@@ -193,7 +196,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             if len(args) == 0:
                 # Basic app can be specified using the text_to_text key argument.
                 if "text_to_text" in kwargs:
-                    from trulens.core.app import basic
+                    from trulens.apps import basic
 
                     return basic.TruBasicApp(
                         *args, connector=self.connector, **kwargs
@@ -209,7 +212,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
             ):
-                from trulens.instrument.langchain import tru_chain
+                from trulens.apps.langchain import tru_chain
 
             print(f"{text_utils.UNICODE_SQUID} Instrumenting LangChain app.")
             return tru_chain.TruChain(
@@ -220,7 +223,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
             ):
-                from trulens.instrument.llamaindex import tru_llama
+                from trulens.apps.llamaindex import tru_llama
 
             print(f"{text_utils.UNICODE_SQUID} Instrumenting LlamaIndex app.")
             return tru_llama.TruLlama(
@@ -231,7 +234,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             with import_utils.OptionalImports(
                 messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
             ):
-                from trulens.instrument.nemo import tru_rails
+                from trulens.apps.nemo import tru_rails
 
             print(
                 f"{text_utils.UNICODE_SQUID} Instrumenting NeMo GuardRails app."
@@ -242,7 +245,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             )
 
         # Check for virtual. Either VirtualApp or JSON app arg.
-        from trulens.core.app import virtual
+        from trulens.apps import virtual
         from trulens.core.utils import serial as serial_utils
 
         if isinstance(app, virtual.VirtualApp) or serial_utils.is_json(app):
@@ -253,7 +256,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         # Check for basic. Either TruWrapperApp or the text_to_text arg. Unsure
         # what we want to do if they provide both. Let's TruBasicApp handle it.
-        from trulens.core.app import basic
+        from trulens.apps import basic
 
         if isinstance(app, basic.TruWrapperApp) or "text_to_text" in kwargs:
             print(f"{text_utils.UNICODE_SQUID} Instrumenting basic app.")
@@ -264,7 +267,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         # If all else fails, assume it is a custom app.
         print(f"{text_utils.UNICODE_SQUID} Instrumenting custom app.")
-        from trulens.core.app import custom
+        from trulens.apps import custom
 
         return custom.TruCustomApp(
             *args, app=app, connector=self.connector, **kwargs
@@ -272,19 +275,19 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Basic(self, *args, **kwargs) -> base_app.App:
-        from trulens.core.app.basic import TruBasicApp
+        from trulens.apps.basic import TruBasicApp
 
         return TruBasicApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Custom(self, *args, **kwargs) -> base_app.App:
-        from trulens.core.app.custom import TruCustomApp
+        from trulens.apps.custom import TruCustomApp
 
         return TruCustomApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Virtual(self, *args, **kwargs) -> base_app.App:
-        from trulens.core.app.virtual import TruVirtual
+        from trulens.apps.virtual import TruVirtual
 
         return TruVirtual(*args, connector=self.connector, **kwargs)
 
@@ -293,7 +296,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
         ):
-            from trulens.instrument.langchain import tru_chain
+            from trulens.apps.langchain import tru_chain
 
         return tru_chain.TruChain(*args, connector=self.connector, **kwargs)
 
@@ -302,7 +305,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
         ):
-            from trulens.instrument.llamaindex import tru_llama
+            from trulens.apps.llamaindex import tru_llama
 
         return tru_llama.TruLlama(*args, connector=self.connector, **kwargs)
 
@@ -311,7 +314,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
         ):
-            from trulens.instrument.nemo import tru_rails
+            from trulens.apps.nemo import tru_rails
 
         return tru_rails.TruRails(*args, connector=self.connector, **kwargs)
 

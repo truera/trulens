@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 
-from trulens.core.app.custom import instrument
+from trulens.apps.custom import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 

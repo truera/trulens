@@ -4,10 +4,10 @@ import logging
 from typing import Callable, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.custom import instrument
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core.app import TruCustomApp
-from trulens.core.app.custom import instrument
 from trulens.core.feedback.feedback import AggCallable
 from trulens.core.utils.pyschema import FunctionOrMethod
 

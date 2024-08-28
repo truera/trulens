@@ -13,7 +13,7 @@ from typing import (
     Type,
 )
 
-from trulens.core.app.custom import instrument
+from trulens.apps.custom import instrument
 from trulens.core.utils.threading import ThreadPoolExecutor
 
 from examples.dev.dummy_app.agent import DummyAgent

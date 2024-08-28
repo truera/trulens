@@ -43,7 +43,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
     === "with _Langchain_"
 
         ```python
-        from trulens.instrument.langchain.guardrails import WithFeedbackFilterDocuments
+        from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
 
         feedback = Feedback(provider.context_relevance)
 
@@ -65,7 +65,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
     === "with _Llama-Index_"
 
         ```python
-        from trulens.instrument.llamaindex.guardrails import WithFeedbackFilterNodes
+        from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes
 
         feedback = Feedback(provider.context_relevance)
 
@@ -78,4 +78,4 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
     Feedback function used as a guardrail must only return a float score, and cannot also return reasons.
 
-TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native python][trulens.core.guardrails.base], [Langchain][trulens.instrument.langchain.guardrails] and [Llama-Index][trulens.instrument.llamaindex.guardrails].
+TruLens has native python and framework-specific tooling for implementing guardrails. Read more about the available guardrails in [native python][trulens.core.guardrails.base], [Langchain][trulens.apps.langchain.guardrails] and [Llama-Index][trulens.apps.llamaindex.guardrails].
