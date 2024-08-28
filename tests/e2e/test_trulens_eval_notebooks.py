@@ -159,7 +159,7 @@ class TestTruLensEvalNotebooks(TestCase):
                 except Exception as e:
                     self.fail(e)
 
-    # @skip("Not working yet")
+    @skip("Done")
     def test_groundtruth_evals(self):
         self._test_notebook(self.notebooks["groundtruth_evals.ipynb"])
 
