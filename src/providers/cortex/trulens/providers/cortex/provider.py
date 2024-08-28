@@ -23,14 +23,8 @@ class Cortex(
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
-    Args:
-        snowflake_conn (Any): Snowflake connection.
-
-        model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
-
-        Connecting with user/password:
-
         !!! example
+        === Connecting with user/password:
 
             ```python
             connection_parameters = {
@@ -47,9 +41,7 @@ class Cortex(
             ))
             ```
 
-        Connecting with private key:
-
-        !!! example
+        === Connecting with private key:
 
             ```python
             connection_parameters = {
@@ -65,9 +57,7 @@ class Cortex(
                 **connection_parameters
             ))
 
-        Connecting with a private key file:
-
-        !!! example
+        === Connecting with a private key file:
 
             ```python
             connection_parameters = {
@@ -84,6 +74,12 @@ class Cortex(
                 **connection_parameters
             ))
             ```
+
+    Args:
+        snowflake_conn (Any): Snowflake connection.
+
+        model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
+
     """
 
     def __init__(

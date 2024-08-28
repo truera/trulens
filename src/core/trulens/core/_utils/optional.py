@@ -7,13 +7,13 @@ from trulens.core.utils.imports import format_import_errors
 
 # Optional app types:
 REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
-    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
+    "trulens-apps-llamaindex", purpose="instrumenting LlamaIndex apps"
 )
 REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
-    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
+    "trulens-apps-langchain", purpose="instrumenting LangChain apps"
 )
 REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
-    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
+    "trulens-apps-nemo", purpose="instrumenting NeMo Guardrails apps"
 )
 
 REQUIREMENT_SNOWFLAKE = format_import_errors(

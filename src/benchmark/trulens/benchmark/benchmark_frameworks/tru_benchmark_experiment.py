@@ -5,10 +5,10 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.custom import instrument
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core.app import TruCustomApp
-from trulens.core.app.custom import instrument
 from trulens.core.feedback.feedback import AggCallable
 
 log = logging.getLogger(__name__)

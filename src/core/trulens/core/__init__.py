@@ -7,9 +7,6 @@ The `trulens-core` library includes everything to get started.
 from importlib.metadata import version
 import os
 
-from trulens.core.app import TruBasicApp
-from trulens.core.app import TruCustomApp
-from trulens.core.app import TruVirtual
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import Provider
 from trulens.core.feedback import SnowflakeFeedback
@@ -29,10 +26,6 @@ __version__ = version(safe_importlib_package_name(__package__ or __name__))
 __all__ = [
     "Tru",  # aliases TruSession for backwards compatibility
     "TruSession",  # main interface
-    # app types
-    "TruBasicApp",
-    "TruCustomApp",
-    "TruVirtual",
     # app setup
     "FeedbackMode",
     # feedback setup

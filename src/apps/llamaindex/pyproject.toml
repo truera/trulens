@@ -1,0 +1,38 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-apps-llamaindex"
+version = "1.0.1a1"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/trulens/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
+trulens-apps-langchain = { version = "^1.0.0", python = "<3.13", allow-prereleases = true }
+pydantic = "^2"
+llama-index = "^0.10"
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
+trulens-apps-langchain = { path = "../langchain", python = "<3.13" }
