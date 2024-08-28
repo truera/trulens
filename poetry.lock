@@ -8052,7 +8052,7 @@ develop = true
 
 [package.dependencies]
 snowflake-connector-python = {version = "^3.11", markers = "python_version < \"3.12\""}
-snowflake-core = "^0.9.0"
+snowflake-core = {version = "^0.9.0", markers = "python_version < \"3.12\""}
 snowflake-snowpark-python = {version = "^1.18", markers = "python_version < \"3.12\""}
 snowflake-sqlalchemy = {version = "^1.6", markers = "python_version < \"3.12\""}
 trulens-core = "^1.0.0"

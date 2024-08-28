@@ -245,8 +245,8 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             )
 
         # Check for virtual. Either VirtualApp or JSON app arg.
-        from trulens.core.app import virtual
         from trulens.core.utils import serial as serial_utils
+        from trulens.instrument import virtual
 
         if isinstance(app, virtual.VirtualApp) or serial_utils.is_json(app):
             print(f"{text_utils.UNICODE_SQUID} Instrumenting virtual app.")
