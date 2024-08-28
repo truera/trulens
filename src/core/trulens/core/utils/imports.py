@@ -110,7 +110,7 @@ def get_package_version(name: str) -> Optional[version.Version]:
         return None
 
 
-def is_packaged_installed(name: str) -> bool:
+def is_package_installed(name: str) -> bool:
     """Check if a package is installed."""
 
     return get_package_version(name) is not None

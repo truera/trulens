@@ -117,6 +117,8 @@ optional = true
 [tool.poetry.group.tests-optional.dependencies]
 llama-index-embeddings-huggingface = "^0.2.2"
 llama-index-embeddings-openai = "^0.1.10"
+faiss-cpu = "^1.7.4"                          # some example notebooks
+ipytree = "^0.2.2"                            # some example notebooks
 
 [tool.ruff]
 line-length = 80

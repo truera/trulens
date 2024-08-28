@@ -265,6 +265,8 @@ def class_moved(
     Issues the warning only once.
     """
 
+    return cls
+
     if new_location is None:
         new_location = cls.__module__
 
