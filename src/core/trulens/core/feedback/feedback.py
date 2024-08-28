@@ -1226,8 +1226,23 @@ Feedback function signature:
 
 
 class SnowflakeFeedback(Feedback):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server."""
+
+    def __init__(
+        self,
+        imp: Optional[Callable] = None,
+        agg: Optional[Callable] = None,
+        **kwargs,
+    ):
+        if (
+            not hasattr(imp, "__self__")
+            or str(type(imp.__self__))
+            != "<class 'trulens.providers.cortex.provider.Cortex'>"
+        ):
+            raise ValueError(
+                "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!"
+            )
+        super().__init__(imp, agg, **kwargs)
         self.run_location = mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
 
 

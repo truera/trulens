@@ -83,7 +83,21 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ground_truth_imp = llm_app
         response = llm_app(prompt)
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        ground_truth_collection = GroundTruthAgreement(
+            ground_truth_imp,
+            provider=Cortex(
+                snowflake.connector.connect(**snowflake_connection_parameters),
+                model_engine="mistral-7b",
+            ),
+        )
         ```
 
         Args:
@@ -372,6 +386,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ret = np.nan
 
         return ret
+
+    @property
+    def mae(self):
+        raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):

@@ -1205,11 +1205,13 @@ trulens_eval.schema.base.Cost:
     cost: builtins.float
     n_classes: builtins.int
     n_completion_tokens: builtins.int
+    n_cortext_guardrails_tokens: builtins.int
     n_prompt_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
     n_successful_requests: builtins.int
     n_tokens: builtins.int
+    snowflake_credits_consumed: builtins.float
 trulens_eval.schema.base.Perf:
   __bases__:
   - trulens_eval.utils.serial.SerialModel
@@ -1823,7 +1825,6 @@ trulens_eval.utils.imports:
     parse_version: builtins.function
     pin_spec: builtins.function
     required_packages: builtins.dict
-    requirements_of_file: builtins.function
     static_resource: builtins.function
     trulens_name: builtins.str
 trulens_eval.utils.imports.Dummy:

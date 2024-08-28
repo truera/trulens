@@ -259,13 +259,13 @@ def _check_needs_migration(version: str, warn=False) -> None:
         if _upgrade_possible(compat_version):
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release. "
-                f"You can either reset your db with `session.reset_database()`, "
-                f"or you can initiate a db migration with `session.migrate_database()`"
+                f"You can either reset your db with `TruSession.reset_database()`, "
+                f"or you can initiate a db migration with `TruSession.migrate_database()`"
             )
         else:
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. "
-                f"Reset your db with `session.reset_database()`"
+                f"Reset your db with `TruSession.reset_database()`"
             )
         if warn:
             print(f"Warning! {msg}")
@@ -290,7 +290,7 @@ def _serialization_asserts(db) -> None:
     validation_fail_advice = (
         f"Please open a ticket on trulens github page including details on the old and new trulens versions. "
         f"The migration completed so you can still proceed; but stability is not guaranteed. "
-        f"Your original DB file is saved here: {SAVED_DB_FILE_LOC} and can be used with the previous version, or you can `session.reset_database()`"
+        f"Your original DB file is saved here: {SAVED_DB_FILE_LOC} and can be used with the previous version, or you can `TruSession.reset_database()`"
     )
 
     for table in db.TABLES:

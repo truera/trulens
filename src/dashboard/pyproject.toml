@@ -21,6 +21,9 @@ documentation = "https://trulens.org/trulens/getting_started/"
 repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Operating System :: OS Independent",
   "Development Status :: 3 - Alpha",
   "License :: OSI Approved :: MIT License",
@@ -31,7 +34,7 @@ python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0", allow-prereleases = true }
 ipywidgets = "^8.1.3"
 jupyter = "^1"
-pandas = ">=2.1,<3"
+pandas = "^2.1"
 psutil = "^5.9"
 rich = "^13.6"
 streamlit = "^1.33"

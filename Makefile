@@ -107,7 +107,7 @@ test-write-api:
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
 test-deprecation:
-	$(PYTEST) tests/unit/static/test_deprecation.py
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
@@ -174,18 +174,22 @@ build: $(POETRY_DIRS)
 		popd; \
 	done
 
+## Step: Build zip files to upload to Snowflake staging
+zip-wheels:
+	poetry run ./zip_wheels.sh
+
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
-upload-%: build
+upload-%: clean build zip-wheels
 	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-all: build
+upload-all: clean build zip-wheels
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
-upload-testpypi-%: build
+upload-testpypi-%: clean build zip-wheels
 	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-testpypi-all: build
+upload-testpypi-all: clean build zip-wheels
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
 	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz

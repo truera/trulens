@@ -303,7 +303,12 @@ The API level of class members is the API level of the class itself.
 """
 
 
-def get_class_members(class_: type, class_api_level: str = "low") -> Members:
+def get_class_members(
+    class_: type,
+    class_api_level: str = "low",
+    class_alias: Optional[str] = None,
+    overrides_are_defs: bool = False,
+) -> Members:
     """Get all members of a class.
 
     Args:
@@ -347,8 +352,14 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
             for name, field in class_.__fields__.items()
         ]
 
+    qualbase: str = (
+        class_.__module__ + "." + class_.__qualname__
+        if class_alias is None
+        else class_alias
+    )
+
     for name, val, typ in static_members + slot_members + fields_members:
-        qualname = class_.__module__ + "." + class_.__qualname__ + "." + name
+        qualname = qualbase + "." + name
         member = Member(
             class_.__module__, name=name, qualname=qualname, val=val, typ=typ
         )
@@ -357,7 +368,10 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
         is_public = False
 
         if any(
-            ((not base.__name__.startswith("trulens")) and hasattr(base, name))
+            (
+                (not base.__module__.startswith("trulens"))
+                and hasattr(base, name)
+            )
             for base in class_.__bases__
         ):
             # Skip anything that is a member of non trulens_eval bases.
@@ -373,12 +387,14 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
             is_public = True
             group = publics
 
-        if not any(
-            (base.__name__.startswith("trulens")) and hasattr(base, name)
+        if overrides_are_defs or not any(
+            (base.__module__.startswith("trulens")) and hasattr(base, name)
             for base in class_.__bases__
         ):
             # View the class-equivalent of a definitions as members of a class
             # that are not members of its bases.
+
+            # If alias provided, we consider everything to be a definition though.
             is_def = True
             definitions.append(member)
 
@@ -404,13 +420,19 @@ def get_class_members(class_: type, class_api_level: str = "low") -> Members:
     )
 
 
-def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
+def get_module_members(
+    mod: Union[str, ModuleType], aliases_are_defs: bool = False
+) -> Optional[Members]:
     """Get all members of a module organized into exports, definitions;
     three types of access: public, friends, privates; and two levels of API:
     high-level and low-level.
 
     Args:
         mod: The module or its name.
+
+        aliases_are_defs: If True, members that are aliases for definitions in other
+            modules are considered definitions here too. This is to catch
+            deprecation aliases.
 
     Returns:
         A namedtuples (modname, exports, definitions, access_publics,
@@ -450,7 +472,7 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
         is_export = False
         is_base = False
 
-        if _isdefinedin(val, mod):
+        if aliases_are_defs or _isdefinedin(val, mod):
             is_def = True
             definitions.append(member)
 
@@ -476,6 +498,9 @@ def get_module_members(mod: Union[str, ModuleType]) -> Optional[Members]:
                 "__builtins__",
                 "__warningregistry__",
             ]
+            and (
+                len(name) > 1 and not isinstance(val, TypeVar)
+            )  # skip generic type vars
         ):
             # Checking if name is in builtins filters out standard module
             # attributes like __package__. A few other standard attributes are
