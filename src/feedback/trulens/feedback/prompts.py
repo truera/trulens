@@ -164,7 +164,7 @@ Key Point: <Mention the key point from the source text being evaluated>
 Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
 """
 
-COMPOREHENSIVENESS_USER_PROMPT = """
+COMPREHENSIVENESS_USER_PROMPT = """
 /KEY POINT/
 {key_point}
 /END OF KEY POINT/

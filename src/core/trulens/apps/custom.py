@@ -89,7 +89,7 @@ is via:
 # custom_app.py`:
 
 from trulens.apps.custom import instrument
-from somepackage.from custom_retriever import CustomRetriever
+from some_package.from custom_retriever import CustomRetriever
 
 instrument.method(CustomRetriever, "retrieve_chunks")
 
@@ -381,7 +381,7 @@ class TruCustomApp(App):
 
                 if not safe_hasattr(main_method_loaded, "__self__"):
                     raise ValueError(
-                        "Please specify `main_method` as a bound method (like `someapp.somemethod` instead of `Someclass.somemethod`)."
+                        "Please specify `main_method` as a bound method (like `some_app.some_method` instead of `SomeClass.some_method`)."
                     )
 
                 app_self = main_method_loaded.__self__
@@ -532,12 +532,12 @@ class instrument(base_instrument):
     """
 
     @classmethod
-    def method(self_class, cls: type, name: str) -> None:
-        base_instrument.method(cls, name)
+    def method(cls, inst_cls: type, name: str) -> None:
+        base_instrument.method(inst_cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.functions_to_instrument.add(getattr(cls, name))
+        TruCustomApp.functions_to_instrument.add(getattr(inst_cls, name))
 
 
 TruCustomApp.model_rebuild()
