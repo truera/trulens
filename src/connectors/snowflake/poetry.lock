@@ -42,6 +42,17 @@ files = [
 ]
 
 [[package]]
+name = "atpublic"
+version = "5.0"
+description = "Keep all y'all's __all__'s in sync"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "atpublic-5.0-py3-none-any.whl", hash = "sha256:b651dcd886666b1042d1e38158a22a4f2c267748f4e97fde94bc492a4a28a3f3"},
+    {file = "atpublic-5.0.tar.gz", hash = "sha256:d5cb6cbabf00ec1d34e282e8ce7cbc9b74ba4cb732e766c24e2d78d1ad7f723f"},
+]
+
+[[package]]
 name = "certifi"
 version = "2024.7.4"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -1123,6 +1134,25 @@ pandas = ["pandas (>=1.0.0,<3.0.0)", "pyarrow"]
 secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
+name = "snowflake-core"
+version = "0.9.0"
+description = "Snowflake Python API for Resource Management"
+optional = false
+python-versions = "<3.12,>=3.8"
+files = [
+    {file = "snowflake_core-0.9.0-py3-none-any.whl", hash = "sha256:19adcf3662364c15c2d25367479fe3a6361015d64d05146e20c35fdecfae0fb2"},
+    {file = "snowflake_core-0.9.0.tar.gz", hash = "sha256:027ba663ca5b797acebd8baaed17b9f885649037d61d40ad3342ad6b2f3d9571"},
+]
+
+[package.dependencies]
+atpublic = ">=4"
+pydantic = ">=2"
+python-dateutil = ">=2.8.2"
+requests = "*"
+snowflake-snowpark-python = ">=1.5.0,<2.0.0"
+urllib3 = "*"
+
+[[package]]
 name = "snowflake-snowpark-python"
 version = "1.21.0"
 description = "Snowflake Snowpark for Python"
@@ -1362,4 +1392,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "2ac98f3cc0f68d67114b8377461d8b5436cea1ab891e1aea9cd2922b2fd4ac36"
+content-hash = "6bcbab3caf38600b9f75a8663d3ae3b6bd6c4fd29795a6ad798ae411d002abc7"

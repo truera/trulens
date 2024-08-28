@@ -30,6 +30,7 @@ from typing import (
 )
 
 import pydantic
+from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 import trulens.core.feedback as mod_feedback
@@ -41,6 +42,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.session import TruSession
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
@@ -484,9 +486,23 @@ class App(
     )
     """Database connector.
 
-    If this is not provided, a [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector] will be made
-    (if not already) and used.
+    If this is not provided, a
+    [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector]
+    will be made (if not already) and used.
     """
+
+    @deprecation_utils.deprecated_property(
+        "The `App.db` property is deprecated. Use `App.connector.db` instead."
+    )
+    def db(self) -> mod_base_db.DB:
+        return self.connector.db
+
+    @deprecation_utils.deprecated_property(
+        "The `App.tru` property for retrieving `Tru` is deprecated. "
+        "Use `App.connector` which contains the replacement `DBConnector` class instead."
+    )
+    def tru(self) -> DBConnector:
+        return self.connector
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
@@ -653,7 +669,8 @@ class App(
         components to execute.
         """
         raise NotImplementedError(
-            "`select_context` not implemented for base App. Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
+            f"`select_context` not implemented for {cls.__name__}. "
+            "Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."
         )
 
     def __hash__(self):
@@ -1437,7 +1454,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
 
-        if safe_hasattr(self.app, __name):
+        app = self.app
+
+        if safe_hasattr(app, __name):
             msg = ATTRIBUTE_ERROR_MESSAGE.format(
                 attribute_name=__name,
                 class_name=type(self).__name__,
