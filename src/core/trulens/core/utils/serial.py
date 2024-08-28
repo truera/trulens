@@ -68,6 +68,22 @@ Formal JSON must be a `dict` at the root but non-strict here means that the root
 can be a basic type or a sequence as well.
 """
 
+
+def is_strict_json(obj: Any) -> bool:
+    """Determine if the given object is JSON-able, strictly.
+
+    Strict JSON starts as a dictionary at the root.
+    """
+
+    return isinstance(obj, dict)
+
+
+def is_json(obj: Any) -> bool:
+    """Determine if the given object is JSON-able."""
+
+    return isinstance(obj, (*JSON_BASES, Sequence, Dict))
+
+
 JSON_STRICT = Dict[str, JSON]
 """
 Alias for (strictly) JSON-able data.
