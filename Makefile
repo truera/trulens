@@ -107,8 +107,20 @@ test-api:
 test-write-api:
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
+# Depercation tests.
+## Test for trulens_eval exported names.
 test-deprecation:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py
+## Test for trulens_eval notebooks.
+LAST_TRULENS_EVAL_COMMIT := 4cadb05
+.PHONY: _trulens_eval
+_trulens_eval:
+	git worktree add -f _trulens_eval --no-checkout --detach
+	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- trulens_eval/tests/docs_notebooks/notebooks_to_test
+	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- trulens_eval/examples
+
+test-deprecation-notebooks: _trulens_eval
+	TEST_OPTIONAL=1 $(PYTEST) tests/e2e/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
