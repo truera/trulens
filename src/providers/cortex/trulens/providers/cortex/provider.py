@@ -1,47 +1,114 @@
 import json
-import os
-from typing import ClassVar, Dict, Optional, Sequence
+from typing import Any, ClassVar, Dict, Optional, Sequence
 
-import snowflake
-import snowflake.connector
-from snowflake.connector import SnowflakeConnection
 from trulens.feedback import LLMProvider
 from trulens.providers.cortex.endpoint import CortexEndpoint
 
+# If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
+# TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
+_SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
-class Cortex(LLMProvider):
-    # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+
+class Cortex(
+    LLMProvider
+):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
 
     model_engine: str
+
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
        Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
+
+    Args:
+
+        snowflake_conn (Any): Snowflake connection.
+        model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
+
+        Connecting with user/password:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+
+                "account": <account>,
+                "user": <user>,
+                "password": <password>,
+                "role": <role>,
+                "database": <database>,
+                "schema": <schema>,
+                "warehouse": <warehouse>
+            }
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
+            ```
+
+        Connecting with private key:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+
+                "account": <account>,
+                "user": <user>,
+                "private_key": <private_key>,
+                "role": <role>,
+                "database": <database>,
+                "schema": <schema>,
+                "warehouse": <warehouse>
+            }
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
+
+        Connecting with a private key file:
+
+        !!! example
+
+            ```python
+            connection_parameters = {
+
+                    "account": <account>,
+                    "user": <user>,
+                    "private_key_file": <private_key_file>,
+                    "private_key_file_pwd": <private_key_file_pwd>,
+                    "role": <role>,
+                    "database": <database>,
+                    "schema": <schema>,
+                    "warehouse": <warehouse>
+                }
+            provider = Cortex(snowflake.connector.connect(
+                **connection_parameters
+            ))
+            ```
     """
 
     endpoint: CortexEndpoint
-    snowflake_conn: SnowflakeConnection
+    snowflake_conn: Any
 
     def __init__(
-        self, model_engine: Optional[str] = None, *args, **kwargs: Dict
+        self,
+        snowflake_conn: Any,
+        model_engine: Optional[str] = None,
+        *args,
+        **kwargs: Dict,
     ):
         self_kwargs = dict(kwargs)
 
         self_kwargs["model_engine"] = (
             self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         )
+
         self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
 
         # Create a Snowflake connector
-        self_kwargs["snowflake_conn"] = snowflake.connector.connect(
-            account=os.environ["SNOWFLAKE_ACCOUNT"],
-            user=os.environ["SNOWFLAKE_USER"],
-            password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            database=os.environ["SNOWFLAKE_DATABASE"],
-            schema=os.environ["SNOWFLAKE_SCHEMA"],
-            warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
-        )
+        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
+        if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
+            self_kwargs["snowflake_conn"] = snowflake_conn
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
@@ -60,9 +127,9 @@ class Cortex(LLMProvider):
 
         completion_input_str = """
             SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                %s,
-                parse_json(%s),
-                parse_json(%s)
+                ?,
+                parse_json(?),
+                parse_json(?)
             )
         """
 

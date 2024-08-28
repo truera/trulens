@@ -9,6 +9,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 from trulens.core.feedback.provider import Provider
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.feedback import prompts
 from trulens.feedback.generated import re_configured_rating
 from trulens.feedback.v2.feedback import ContextRelevance
@@ -1397,12 +1398,17 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
-        hypotheses = self._remove_trivial_statements(hypotheses)
+        try:
+            hypotheses = self._remove_trivial_statements(hypotheses)
+        except Exception as e:
+            logger.error(
+                f"Error removing trivial statements: {e}. Proceeding with all statements."
+            )
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
@@ -1444,6 +1450,20 @@ class LLMProvider(Provider):
 
         return average_groundedness_score, {"reasons": reasons_str}
 
+    @deprecation_utils.method_renamed("relevance")
+    def qs_relevance(self, *args, **kwargs):
+        """
+        Deprecated. Use `relevance` instead.
+        """
+        return self.relevance(*args, **kwargs)
+
+    @deprecation_utils.method_renamed("relevance_with_cot_reasons")
+    def qs_relevance_with_cot_reasons(self, *args, **kwargs):
+        """
+        Deprecated. Use `relevance_with_cot_reasons` instead.
+        """
+        return self.relevance_with_cot_reasons(*args, **kwargs)
+
     def groundedness_measure_with_cot_reasons_consider_answerability(
         self, source: str, statement: str, question: str
     ) -> Tuple[float, dict]:
@@ -1484,7 +1504,7 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 

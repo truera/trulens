@@ -10,6 +10,7 @@ from sqlalchemy import Column
 from sqlalchemy import Engine
 from sqlalchemy import Float
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
 from sqlalchemy import event
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref
@@ -150,10 +151,17 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
 
             _table_base_name: ClassVar[str] = "apps"
 
-            app_id = Column(VARCHAR(256), nullable=False, primary_key=True)
-            app_name = Column(VARCHAR(256), nullable=False)
-            app_version = Column(VARCHAR(256), nullable=False)
+            app_id = Column(
+                VARCHAR(256),
+                nullable=False,
+                primary_key=True,
+            )
+            app_name = Column(
+                VARCHAR(256), nullable=False, default="default_app"
+            )
+            app_version = Column(VARCHAR(256), nullable=False, default="base")
             app_json = Column(TYPE_JSON, nullable=False)
+            __table_args__ = (UniqueConstraint("app_name", "app_version"),)
 
             # records via one-to-many on Record.app_id
             # feedback_results via one-to-many on FeedbackResult.record_id

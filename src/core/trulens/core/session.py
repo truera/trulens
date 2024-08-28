@@ -24,6 +24,8 @@ import warnings
 import pandas
 import pydantic
 from trulens.core import feedback
+from trulens.core._utils import optional as optional_utils
+from trulens.core.app import base as base_app
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
@@ -32,16 +34,18 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
+from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python
 from trulens.core.utils import serial
+from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as tru_threading
-from trulens.core.utils.imports import REQUIREMENT_SNOWFLAKE
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
 
 tqdm = None
-with OptionalImports(messages=REQUIREMENT_SNOWFLAKE):
+with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
     from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -175,6 +179,170 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             connector=connector or DefaultDBConnector(**connector_args),
             **self_args,
         )
+
+    def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
+        """Create an App from the given App constructor arguments by guessing
+        which app type they refer to.
+
+        This method intentionally prints out the type of app being created to
+        let user know in case the guess is wrong.
+        """
+        if app is None:
+            # If app is not given as a keyword argument, check the positional args.
+
+            if len(args) == 0:
+                # Basic app can be specified using the text_to_text key argument.
+                if "text_to_text" in kwargs:
+                    from trulens.core.app import basic
+
+                    return basic.TruBasicApp(
+                        *args, connector=self.connector, **kwargs
+                    )
+
+                raise ValueError("No app provided.")
+
+            # Otherwise the app must be the first positional arg.
+            app, args = args[0], args[1:]
+
+        # Check for optional app types.
+        if app.__module__.startswith("langchain"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+            ):
+                from trulens.instrument.langchain import tru_chain
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LangChain app.")
+            return tru_chain.TruChain(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        elif app.__module__.startswith("llamaindex"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+            ):
+                from trulens.instrument.llamaindex import tru_llama
+
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting LlamaIndex app.")
+            return tru_llama.TruLlama(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        elif app.__module__.startswith("nemoguardrails"):
+            with import_utils.OptionalImports(
+                messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+            ):
+                from trulens.instrument.nemo import tru_rails
+
+            print(
+                f"{text_utils.UNICODE_SQUID} Instrumenting NeMo GuardRails app."
+            )
+
+            return tru_rails.TruRails(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        # Check for virtual. Either VirtualApp or JSON app arg.
+        from trulens.core.app import virtual
+        from trulens.core.utils import serial as serial_utils
+
+        if isinstance(app, virtual.VirtualApp) or serial_utils.is_json(app):
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting virtual app.")
+            return virtual.TruVirtual(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        # Check for basic. Either TruWrapperApp or the text_to_text arg. Unsure
+        # what we want to do if they provide both. Let's TruBasicApp handle it.
+        from trulens.core.app import basic
+
+        if isinstance(app, basic.TruWrapperApp) or "text_to_text" in kwargs:
+            print(f"{text_utils.UNICODE_SQUID} Instrumenting basic app.")
+
+            return basic.TruBasicApp(
+                *args, app=app, connector=self.connector, **kwargs
+            )
+
+        # If all else fails, assume it is a custom app.
+        print(f"{text_utils.UNICODE_SQUID} Instrumenting custom app.")
+        from trulens.core.app import custom
+
+        return custom.TruCustomApp(
+            *args, app=app, connector=self.connector, **kwargs
+        )
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Basic(self, *args, **kwargs) -> base_app.App:
+        from trulens.core.app.basic import TruBasicApp
+
+        return TruBasicApp(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Custom(self, *args, **kwargs) -> base_app.App:
+        from trulens.core.app.custom import TruCustomApp
+
+        return TruCustomApp(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Virtual(self, *args, **kwargs) -> base_app.App:
+        from trulens.core.app.virtual import TruVirtual
+
+        return TruVirtual(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Chain(self, *args, **kwargs) -> base_app.App:
+        with import_utils.OptionalImports(
+            messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+        ):
+            from trulens.instrument.langchain import tru_chain
+
+        return tru_chain.TruChain(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Llama(self, *args, **kwargs) -> base_app.App:
+        with import_utils.OptionalImports(
+            messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+        ):
+            from trulens.instrument.llamaindex import tru_llama
+
+        return tru_llama.TruLlama(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.App")
+    def Rails(self, *args, **kwargs) -> base_app.App:
+        with import_utils.OptionalImports(
+            messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+        ):
+            from trulens.instrument.nemo import tru_rails
+
+        return tru_rails.TruRails(*args, connector=self.connector, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.find_unused_port")
+    def find_unused_port(self, *args, **kwargs):
+        from trulens.dashboard.run import find_unused_port
+
+        return find_unused_port(*args, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
+    def run_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import run_dashboard
+
+        return run_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
+    def start_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import run_dashboard
+
+        return run_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("trulens.dashboard.run.stop_dashboard")
+    def stop_dashboard(self, *args, **kwargs):
+        from trulens.dashboard.run import stop_dashboard
+
+        return stop_dashboard(*args, session=self, **kwargs)
+
+    @deprecation_utils.method_renamed("TruSession.connector.db.insert_record")
+    def update_record(self, *args, **kwargs):
+        assert self.connector is not None
+        return self.connector.db.insert_record(*args, **kwargs)
 
     def reset_database(self):
         """Reset the database. Clears all tables.
@@ -597,6 +765,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
             total = 0
 
+            # TODO: a lot of the time we say `if tqdm`, but shouldn't we say `if not disable_tqdm`?
             if tqdm:
                 # Getting total counts from the database to start off the tqdm
                 # progress bar initial values so that they offer accurate
