@@ -1,0 +1,16 @@
+{
+    "reka-core": 5.5,
+    "mistral-large": 5.1,
+    "llama3.1-405b": 5,
+    "llama3-70b": 1.21,
+    "llama3.1-70b": 1.21,
+    "snowflake-arctic": 0.84,
+    "jamba-instruct": 0.83,
+    "llama2-chat-70b": 0.45,
+    "reka-flash": 0.45,
+    "mixtral-8x7b": 0.22,
+    "llama3-8b": 0.19,
+    "llama3.1-8b": 0.19,
+    "mistral-7b": 0.12,
+    "gemma-7b": 0.12
+}
