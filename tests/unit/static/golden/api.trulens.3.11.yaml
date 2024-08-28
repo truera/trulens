@@ -2212,7 +2212,7 @@ trulens.feedback.prompts:
     AGREEMENT_SYSTEM: builtins.str
     ANSWER_RELEVANCE_SYSTEM: builtins.str
     ANSWER_RELEVANCE_USER: builtins.str
-    COMPOREHENSIVENESS_USER_PROMPT: builtins.str
+    COMPREHENSIVENESS_USER_PROMPT: builtins.str
     COMPREHENSIVENESS_SYSTEM_PROMPT: builtins.str
     CONTEXT_RELEVANCE_SYSTEM: builtins.str
     CONTEXT_RELEVANCE_USER: builtins.str
@@ -2400,7 +2400,7 @@ trulens.feedback.v2.feedback.ContextRelevance:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    override_critera_and_output_space: builtins.classmethod
+    override_criteria_and_output_space: builtins.classmethod
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
