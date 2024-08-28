@@ -2,7 +2,7 @@
 """
 !!! warning
     This module is deprecated and will be removed. Use
-     `trulens.core.app.virtual` instead.
+     `trulens.apps.virtual` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils
