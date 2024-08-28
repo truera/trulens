@@ -17,7 +17,10 @@ packages = [
   { include = "trulens" },
 ]
 include = [
-  { path = "trulens/data/snowflake_stage_zips" },
+  { path = "trulens/data/snowflake_stage_zips/*.zip", format = [
+    "sdist",
+    "wheel",
+  ] },
 ]
 homepage = "https://trulens.org/"
 documentation = "https://trulens.org/trulens/getting_started/"
