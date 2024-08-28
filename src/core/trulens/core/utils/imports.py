@@ -110,6 +110,12 @@ def get_package_version(name: str) -> Optional[version.Version]:
         return None
 
 
+def is_packaged_installed(name: str) -> bool:
+    """Check if a package is installed."""
+
+    return get_package_version(name) is not None
+
+
 MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = """Optional package %s is not installed. Related optional functionality will not
 be available.
 """
@@ -331,79 +337,11 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
-# To remove after trulens_eval is removed:
-
-# Optional sub-packages:
-REQUIREMENT_FEEDBACK = format_import_errors(
-    "trulens-feedback", purpose="evaluating feedback functions"
-)
-
-# Optional app types:
-REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
-    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
-)
-REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
-    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
-)
-REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
-    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
-)
-
-# Optional provider types:
-
-REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
-    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
-)
-REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
-    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
-)
-REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
-    "trulens-providers-huggingface",
-    purpose="evaluating feedback using Huggingface",
-)
-REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
-    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
-)
-REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
-    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
-)
-REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
-    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
-)
-
-# Other optionals:
-REQUIREMENT_SKLEARN = format_import_errors(
-    "scikit-learn", purpose="using embedding vector distances"
-)
-REQUIREMENT_BERT_SCORE = format_import_errors(
-    "bert-score", purpose="measuring BERT Score"
-)
-REQUIREMENT_EVALUATE = format_import_errors(
-    "evaluate", purpose="using certain metrics"
-)
-REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
-)
-REQUIREMENT_OPENAI = format_import_errors(
-    ["openai", "langchain_community"], purpose="using OpenAI models"
-)
-
-REQUIREMENT_SNOWFLAKE = format_import_errors(
-    [
-        "snowflake-core",
-        "snowflake-connector-python",
-        "snowflake-snowpark-python",
-        "snowflake-sqlalchemy",
-    ],
-    purpose="connecting to Snowflake",
-)
-
-
 def is_dummy(obj: Any) -> bool:
-    """Check if the given object is an instance of Dummy.
+    """Check if the given object is an instance of `Dummy`.
 
-    This is necessary is isisintance and issubclass checks might fail if the
-    ones defined in Dummy get used; they always return False by design.
+    This is necessary as `isisintance` and `issubclass` checks might fail if the
+    ones defined in `Dummy` get used; they always return `False` by design.
     """
 
     return obj.__class__.__name__ == "Dummy" and obj.__module__ in [
