@@ -373,6 +373,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         return ret
 
+    @property
+    def mae(self):
+        raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
+
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(

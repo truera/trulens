@@ -95,7 +95,6 @@ trulens.core.app.base:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     ATTRIBUTE_ERROR_MESSAGE: builtins.str
     Agent: trulens.core.app.base.ComponentViewMeta
     App: pydantic._internal._model_construction.ModelMetaclass
@@ -569,7 +568,6 @@ trulens.core.database.orm:
     BaseWithTablePrefix: builtins.type
     DEFAULT_DATABASE_PREFIX: builtins.str
     ORM: abc.ABCMeta
-    T: typing.TypeVar
     make_base_for_prefix: functools._lru_cache_wrapper
     make_orm_for_prefix: functools._lru_cache_wrapper
     new_base: functools._lru_cache_wrapper
@@ -656,14 +654,11 @@ trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
     DEFAULT_NETWORK_TIMEOUT: builtins.float
     DEFAULT_RPM: builtins.int
     Endpoint: pydantic._internal._model_construction.ModelMetaclass
     EndpointCallback: pydantic._internal._model_construction.ModelMetaclass
     INSTRUMENT: builtins.str
-    T: typing.TypeVar
 trulens.core.feedback.endpoint.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
@@ -709,7 +704,6 @@ trulens.core.feedback.feedback:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     InvalidSelector: builtins.type
     SkipEval: builtins.type
@@ -981,7 +975,6 @@ trulens.core.schema.feedback:
     FeedbackResult: pydantic._internal._model_construction.ModelMetaclass
     FeedbackResultStatus: enum.EnumType
     FeedbackRunLocation: enum.EnumType
-    T: typing.TypeVar
 trulens.core.schema.feedback.FeedbackCall:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -1114,7 +1107,6 @@ trulens.core.schema.record:
     Record: pydantic._internal._model_construction.ModelMetaclass
     RecordAppCall: pydantic._internal._model_construction.ModelMetaclass
     RecordAppCallMethod: pydantic._internal._model_construction.ModelMetaclass
-    T: typing.TypeVar
 trulens.core.schema.record.Record:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -1173,7 +1165,6 @@ trulens.core.schema.select:
   highs: {}
   lows:
     Select: builtins.type
-    T: typing.TypeVar
 trulens.core.schema.select.Select:
   __bases__:
   - builtins.object
@@ -1244,9 +1235,6 @@ trulens.core.utils.asynchro:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
-    T: typing.TypeVar
     desync: builtins.function
     sync: builtins.function
 trulens.core.utils.constants:
@@ -1262,10 +1250,7 @@ trulens.core.utils.containers:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
     BlockingSet: builtins.type
-    T: typing.TypeVar
     dict_merge_with: builtins.function
     dict_set_with: builtins.function
     dict_set_with_multikey: builtins.function
@@ -1364,7 +1349,6 @@ trulens.core.utils.json:
     CLASS_INFO: builtins.str
     ENCODERS_BY_TYPE: builtins.dict
     JSON_BASES: builtins.tuple
-    T: typing.TypeVar
     TYPE_CHECKING: builtins.bool
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
@@ -1534,7 +1518,6 @@ trulens.core.utils.python:
     STACK: builtins.str
     SingletonInfo: builtins.type
     SingletonPerName: builtins.type
-    T: typing.TypeVar
     callable_name: builtins.function
     caller_frame: builtins.function
     caller_frameinfo: builtins.function
@@ -1606,7 +1589,6 @@ trulens.core.utils.serial:
     SerialModel: pydantic._internal._model_construction.ModelMetaclass
     Step: pydantic._internal._model_construction.ModelMetaclass
     StepItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
-    T: typing.TypeVar
     all_objects: builtins.function
     all_queries: builtins.function
     leaf_queries: builtins.function
@@ -1743,7 +1725,6 @@ trulens.core.utils.threading:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
     DEFAULT_NETWORK_TIMEOUT: builtins.float
     TP: builtins.type
     Thread: builtins.type
@@ -2015,8 +1996,6 @@ trulens.feedback.dummy.endpoint:
   __class__: builtins.module
   highs: {}
   lows:
-    A: typing.TypeVar
-    B: typing.TypeVar
     DEFAULT_NETWORK_TIMEOUT: builtins.float
     DEFAULT_RPM: builtins.int
     DummyAPI: pydantic._internal._model_construction.ModelMetaclass
@@ -2025,7 +2004,6 @@ trulens.feedback.dummy.endpoint:
     DummyEndpointCallback: pydantic._internal._model_construction.ModelMetaclass
     INSTRUMENT: builtins.str
     NonDeterminism: pydantic._internal._model_construction.ModelMetaclass
-    T: typing.TypeVar
 trulens.feedback.dummy.endpoint.DummyAPI:
   __bases__:
   - pydantic.main.BaseModel
