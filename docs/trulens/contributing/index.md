@@ -92,10 +92,18 @@ or [🧙 all open issues](https://github.com/truera/trulens/issues).
 
 ## 👀 Things to be Aware Of
 
+### Development guide
+
+See [Development guide](development.md).
+
 ### 🧭 Design Goals and Principles
 
 The design of the API is governed by the principles outlined in the
 [Design](design.md) doc.
+
+### Release Policies
+
+Versioning and deprecation guidelines are included. [Release policies](policies.md).
 
 ### ✅ Standards
 

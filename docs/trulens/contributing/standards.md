@@ -36,7 +36,8 @@ apply when referring to things like package names, classes, methods.
 
 ### Imports
 
-- See `pyproject.toml` section `[tool.ruff.lint.isort]` on tooling to organize import statements.
+- See `pyproject.toml` section `[tool.ruff.lint.isort]` on tooling to organize
+  import statements.
 
 - Generally import modules only as per
   <https://google.github.io/styleguide/pyguide.html#22-imports>. That us:
@@ -81,8 +82,9 @@ apply when referring to things like package names, classes, methods.
     from trulens.schema import record as record_schema
   ```
 
-- Do not create exportable aliases (an alias that is listed in `__all__`
-  and refers to an element from some other module). Don't import aliases. Type aliases, even exportable ones are ok:
+- Do not create exportable aliases (an alias that is listed in `__all__` and
+  refers to an element from some other module). Don't import aliases. Type
+  aliases, even exportable ones are ok:
 
   ```python
   Thunk[T] = Callable[[], T] # OK
@@ -91,7 +93,9 @@ apply when referring to things like package names, classes, methods.
 
 #### Circular imports
 
-Circular imports may become an issue (error when executing your/`trulens` code, indicated by phrase "likely due to circular imports"). The Import guideline above may help alleviate the problem. A few more things can help:
+Circular imports may become an issue (error when executing your/`trulens` code,
+indicated by phrase "likely due to circular imports"). The Import guideline
+above may help alleviate the problem. A few more things can help:
 
 - Use annotations feature flag:
 
@@ -99,7 +103,8 @@ Circular imports may become an issue (error when executing your/`trulens` code, 
   from __future__ import annotations
   ```
 
-  However, if your module contains `pydantic` models, you may need to run `model_rebuild`:
+  However, if your module contains `pydantic` models, you may need to run
+  `model_rebuild`:
 
   ```python
   from __future__ import annotations
@@ -168,7 +173,8 @@ Attrs:
 """
 ````
 
-For pydantic classes, provide the attribute description as a long string right after the attribute definition:
+For pydantic classes, provide the attribute description as a long string right
+after the attribute definition:
 
 ```python
 class SomeModel(pydantic.BaseModel)
@@ -242,7 +248,9 @@ No standards are currently recommended.
     ```
     ````
 
-  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`. Examples below can serve as a test of the markdown renderer you are viewing these instructions with.
+  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`.
+  Examples below can serve as a test of the markdown renderer you are viewing
+  these instructions with.
 
   - Python
     ```python
@@ -277,7 +285,8 @@ No standards are currently recommended.
 
 ## Jupyter notebooks
 
-Do not include output. The pre-commit hooks should automatically clear all notebook outputs.
+Do not include output. The pre-commit hooks should automatically clear all
+notebook outputs.
 
 ## Tests
 
@@ -289,8 +298,11 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`, and being a
-subset of unit tests, are also run on latest supported python, `3.12` . Some tests that require all optional packages to be installed run only on `3.11` as the latter python version does not support some of those optional packages.
+Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`,
+and being a subset of unit tests, are also run on latest supported python,
+`3.12` . Some tests that require all optional packages to be installed run only
+on `3.11` as the latter python version does not support some of those optional
+packages.
 
 ### Test pipelines
 
