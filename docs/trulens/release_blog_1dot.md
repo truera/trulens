@@ -142,7 +142,7 @@ To see the core re-architecture changes in action, we've included some usage exa
 
 !!! example "Run Feedback Functions with different LLMs"
 
-    === "OpenAI LLMs"
+    === "Closed LLMs (OpenAI)"
 
         ```bash
         pip install trulens-core  trulens-providers-openai
@@ -164,7 +164,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         )
         ```
 
-    === "Local LLMs with Ollama"
+    === "Local LLMs (Ollama)"
 
         ```bash
         pip install trulens-core trulens-providers-litellm
@@ -188,7 +188,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         )
         ```
 
-    === "Classification Models with Huggingface API"
+    === "Classification Models on Huggingface"
 
         ```bash
         pip install trulens-core trulens-providers-huggingface
@@ -211,7 +211,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         )
         ```
 
-        === "Local Classification Models with Huggingface"
+        === "Local Classification Models"
 
         ```bash
         pip install trulens-core trulens-providers-huggingface
@@ -292,17 +292,59 @@ To bring these changes to life, we've also added new filters to the Leaderboard 
 
 ## **First-class support for Ground Truth Evaluation**
 
-Along with the high level changes in TruLens v1, ground truth can now be persisted in SQL-compatible datastores and loaded on demand as pandas dataframe objects in memory as required. By enabling the persistence of ground truth data, you can now run evaluations without loading ground truth data into memory.
+Along with the high level changes in TruLens v1, ground truth can now be persisted in SQL-compatible datastores and loaded on demand as pandas dataframe objects in memory as required. By enabling the persistence of ground truth data, you can now easily store and share ground truth data used across your team.
+
+!!! example "Using Ground Truth Data"
+
+    === "Persist Ground Truth Data"
+
+        ```python
+        import pandas as pd
+        from trulens.core import TruSession
+
+        session = TruSession()
+
+        data = {
+            "query": ["What is Windows 11?", "who is the president?", "what is AI?"],
+            "query_id": ["1", "2", "3"],
+            "expected_response": ["greeting", "Joe Biden", "Artificial Intelligence"],
+            "expected_chunks": [
+                "Windows 11 is a client operating system",
+                ["Joe Biden is the president of the United States", "Javier Milei is the president of Argentina"],
+                ["AI is the simulation of human intelligence processes by machines", "AI stands for Artificial Intelligence"],
+            ],
+        }
+
+        df = pd.DataFrame(data)
+
+        session.add_ground_truth_to_dataset(
+            dataset_name="test_dataset_new",
+            ground_truth_df=df,
+            dataset_metadata={"domain": "Random QA"},
+        )
+        ```
+
+    === "Load and Evaluate with Persisted Groundtruth Data"
+
+        ```python
+        from trulens.core import Feedback
+        from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.openai import OpenAI as fOpenAI
+
+        ground_truth_df = tru.get_ground_truth("test_dataset_new")
+
+        f_groundtruth = Feedback(
+            GroundTruthAgreement(ground_truth_df, provider=fOpenAI()).agreement_measure,
+            name="Ground Truth Semantic Similarity",
+        ).on_input_output()
+        ```
 
 ## **New Conceptual Guide and TruLens Cookbook**
 
 On the top-level of TruLens docs, we previously had separated out Evaluation, Evaluation Benchmarks, Tracking and Guardrails. These are now combined to form the new Conceptual Guide.
 
-We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. If you’re new to the examples library, the examples are organized into two categories: quickstart and expositional.
+We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. You can find these examples in the top-level navigation under "Cookbook".
 
-Quickstart examples are tested with every release, and show core functionality of the TruLens package.
-Expositional examples focus on using TruLens with different data sources, models, frameworks and more. They are generally sorted by the type of integration you’re looking to use. For example, if you want to learn how to run feedback functions with a new LLM, you should check out expositional/models. Alternatively, if you want to learn how TruLens can instrument a new framework, you should check out expositional/frameworks.
+## **Conclusion**
 
-## Conclusion
-
-Ready to get started with the v1 stable release of TruLens? Check out our migration guide, or just jump in to the quickstart!
+Ready to get started with the v1 stable release of TruLens? Check out our [migration guide][./guides/trulens_eval_migration.md], or just jump in to the [quickstart][./getting_started/quickstarts/quickstart.ipynb]!
