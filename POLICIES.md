@@ -36,7 +36,7 @@ will occur at the introduction of the warning period.
   `trulens` and several associated required and optional packages. See
   [trulens_eval migration](/trulens/guides/trulens_eval_migration) for details.
 
-    - Warning period: 2024-09-01 (`trulens-eval==1.0.0a0`) to
+    - Warning period: 2024-09-01 (`trulens-eval==1.0.1`) to
     2024-10-14. Backwards compatibility during the warning period is provided by
     the new content of the `trulens_eval` package which provides aliases to the
     features in their new locations. See
@@ -45,6 +45,6 @@ will occur at the introduction of the warning period.
     - Deprecated period: 2024-10-14 to 2025-12-01. Usage of `trulens_eval` will
   	produce errors indicating deprecation.
 
-    - Removed expected 2024-02-01 Installation of the latest version of
+    - Removed expected 2024-12-01 Installation of the latest version of
   	`trulens_eval` will be an error itself with a message that `trulens_eval` is
     no longer maintained.

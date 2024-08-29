@@ -21,7 +21,7 @@ types and providers:
 - [Apps](apps/index.md).
 
     - [TruChain][trulens.apps.langchain.TruChain] in package
-        `trulens-app-langchain`.
+        `trulens-apps-langchain`.
 
     - [TruLlama][trulens.apps.llamaindex.TruLlama] in package
         `trulens-app-trullama`.
