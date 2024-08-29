@@ -11,7 +11,7 @@ from types import ModuleType
 from typing import Iterable, Optional, Tuple, Union
 
 # Add base dir to path to be able to access test folder.
-base_dir = Path().cwd().parent.parent.resolve()
+base_dir = Path().cwd().parent.resolve()
 if str(base_dir) not in sys.path:
     sys.path.append(str(base_dir))
 
