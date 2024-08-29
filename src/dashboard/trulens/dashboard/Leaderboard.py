@@ -64,6 +64,9 @@ def leaderboard():
         )
 
         # Sort selected_apps based on the concatenation of app_name and app_version
+        selected_apps = [
+            app_id for app_id in selected_apps if app_id in app_info
+        ]
         sorted_apps = sorted(
             selected_apps,
             key=lambda app_id: f"{app_info[app_id][0]}{app_info[app_id][1]}",
@@ -137,7 +140,7 @@ def leaderboard():
             for i in range(len(apps)):
                 try:
                     unique_values.add(apps[i]["metadata"][metadata_key])
-                except KeyError:
+                except (KeyError, TypeError):
                     pass
             metadata_options[metadata_key] = list(unique_values)
 
