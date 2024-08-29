@@ -1,5 +1,4 @@
-"""LangChain Provider
-
+"""
 !!! note "Additional Dependency Required"
 
     To use this module, you must have the `trulens-providers-langchain` package installed.
