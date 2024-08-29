@@ -221,10 +221,36 @@ def leaderboard():
                 else "nan"
             ),
         )
-        col3.metric(
-            "Total Cost (USD)",
-            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
-        )
+
+        # Filter for Snowflake credits costs
+        filtered_snowflake_credits_app_df = app_df[
+            app_df["cost_currency"] == "Snowflake credits"
+        ]
+
+        # Calculate the total cost for Snowflake credits
+        if len(filtered_snowflake_credits_app_df) > 0:
+            total_cost_snowflake_credits = (
+                filtered_snowflake_credits_app_df["total_cost"].dropna().sum()
+            )
+            col3.metric(
+                "Total Cost (Snowflake credits)",
+                f"{format_quantity(round(total_cost_snowflake_credits, 8), precision=5)}",
+            )
+        else:
+            col3.empty()
+        # Filter for USD costs
+        filtered_usd_app_df = app_df[app_df["cost_currency"] == "USD"]
+
+        if len(filtered_usd_app_df) > 0:
+            # Calculate the total cost for USD
+            total_cost_usd = filtered_usd_app_df["total_cost"].dropna().sum()
+            col3.metric(
+                "Total Cost (USD)",
+                f"${format_quantity(round(total_cost_usd, 5), precision=2)}",
+            )
+        else:
+            col3.empty()
+
         col4.metric(
             "Total Tokens",
             format_quantity(
