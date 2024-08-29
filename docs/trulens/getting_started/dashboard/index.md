@@ -10,8 +10,8 @@ To view and examine application logs and feedback results, TruLens provides a bu
 
     ```python
     from trulens.dashboard import run_dashboard
-    tru = TruSession(database_url = ...) # or default.sqlite by default
-    run_dashboard(tru)
+    session = TruSession(database_url = ...) # or default.sqlite by default
+    run_dashboard(session)
     ```
 
 By default, the dashboard will find and run on an unused port number. You can also specify a port number for the dashboard to run on. The function will output a link where the dashboard is running.
@@ -46,7 +46,7 @@ Consider the below `app.py` which consists of a simple RAG application that is a
     from base import rag # a rag app with a query method
     from base import tru_rag # a rag app wrapped by trulens
 
-    tru = TruSession()
+    session = TruSession()
 
     def generate_and_log_response(input_text):
         with tru_rag as recording:

@@ -61,7 +61,7 @@ from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
 if TYPE_CHECKING:
-    from trulens.core.app.base import RecordingContext
+    from trulens.core.app import RecordingContext
 
 logger = logging.getLogger(__name__)
 
@@ -1041,3 +1041,6 @@ class instrument(AddInstruments):
         # Note that this does not actually change the method, just adds it to
         # list of filters.
         self.method(cls, name)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)

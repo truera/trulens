@@ -16,9 +16,9 @@ deprecation_utils.packages_dep_warn()
 __version_info__ = (1, 0, 0, "a")
 __version__ = ".".join(map(str, __version_info__))
 
-from trulens.core.app.basic import TruBasicApp
-from trulens.core.app.custom import TruCustomApp
-from trulens.core.app.virtual import TruVirtual
+from trulens.apps.basic import TruBasicApp
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.virtual import TruVirtual
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
 from trulens.core.schema import Select
@@ -61,17 +61,17 @@ with imports_utils.OptionalImports(
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
 ):
-    from trulens.instrument.langchain.tru_chain import TruChain
+    from trulens.apps.langchain.tru_chain import TruChain
 
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
 ):
-    from trulens.instrument.llamaindex.tru_llama import TruLlama
+    from trulens.apps.llamaindex.tru_llama import TruLlama
 
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
 ):
-    from trulens.instrument.nemo.tru_rails import TruRails
+    from trulens.apps.nemo.tru_rails import TruRails
 
 __all__ = [
     # main interface

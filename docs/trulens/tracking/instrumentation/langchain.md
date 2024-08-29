@@ -68,7 +68,7 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
 !!! example "Instrument with `TruChain`"
 
     ```python
-    from trulens.instrument.langchain import TruChain
+    from trulens.apps.langchain import TruChain
 
     # instrument with TruChain
     tru_recorder = TruChain(rag_chain)
@@ -116,7 +116,7 @@ As an example, below is an LLM chain set up with an async callback.
     from langchain.chains import LLMChain
     from langchain.prompts import PromptTemplate
     from langchain_openai import ChatOpenAI
-    from trulens.instrument.langchain import TruChain
+    from trulens.apps.langchain import TruChain
 
     # Set up an async callback.
     callback = AsyncIteratorCallbackHandler()
@@ -156,7 +156,7 @@ the appropriate Instrument subclass.
 !!! example "Instrument async apps with `TruChain`"
 
     ```python
-    from trulens.instrument.langchain import LangChainInstrument
+    from trulens.apps.langchain import LangChainInstrument
 
     LangChainInstrument().print_instrumentation()
     ```

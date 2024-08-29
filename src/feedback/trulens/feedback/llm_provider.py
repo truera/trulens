@@ -129,7 +129,7 @@ class LLMProvider(Provider):
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
+            verb_confidence_prompt: A pre-formatted system prompt.
 
             user_prompt: An optional user prompt.
 
@@ -326,7 +326,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance)
@@ -384,7 +384,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -447,7 +447,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.llamaindex import TruLlama
+            from trulens.apps.llamaindex import TruLlama
             context = TruLlama.select_context(llamaindex_rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
