@@ -27,9 +27,8 @@ any {
   `from trulens_eval.guardrails.base import context_filter` => `from trulens.core.guardrails.base import context_filter`,
   `from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments` => `from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments`,
   `from trulens_eval.guardrails.llama import WithFeedbackFilterDocuments` => `from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes`,
-  `$session.run_dashboard($port)` => `from trulens.dashboard import run_dashboard; session = TruSession(); run_dashboard($port)`,
+  `tru.run_dashboard($port)` => `from trulens.dashboard import run_dashboard; run_dashboard(session, $port)`,
   `tru = Tru($connection)` => `from trulens.core.database.connector.default import DefaultDBConnector; connector = DefaultDBConnector($connection); session = TruSession(connector)`,
-  `tru = Tru($connection)` => `from trulens.connectors.snowflake import SnowflakeConnector; connector = SnowflakeConnector($connection); session = TruSession(connector)`,
   `tru.reset_database()` => `session.reset_database()`,
   `from trulens_eval.utils.display import get_feedback_result` => `from trulens.dashboard.display import get_feedback_result`,
 }
@@ -44,7 +43,9 @@ tru.reset_database()
 ```
 ```python
 from trulens.core import TruSession
-session = TruSession()
+from trulens.core.database.connector.default import DefaultDBConnector
+connector = DefaultDBConnector()
+session = TruSession(connector)
 session.reset_database()
 ```
 
@@ -57,8 +58,27 @@ tru.run_dashboard()
 ```
 ```python
 from trulens.core import TruSession
-from trulens
-session = TruSession()
+from trulens.core.database.connector.default import DefaultDBConnector
+connector = DefaultDBConnector()
+session = TruSession(connector)
+from trulens.dashboard import run_dashboard
+run_dashboard(session,)
+```
+
+## Updates to Dashboard with port
+
+```python
+from trulens_eval import Tru
+tru = Tru()
+tru.run_dashboard(port=888)
+```
+```python
+from trulens.core import TruSession
+from trulens.core.database.connector.default import DefaultDBConnector
+connector = DefaultDBConnector()
+session = TruSession(connector)
+from trulens.dashboard import run_dashboard
+run_dashboard(session, port=888)
 ```
 
 ## Migrations to TruLens Core
@@ -69,7 +89,7 @@ from trulens_eval import Feedback
 from trulens_eval.guardrails.base import context_filter
 ```
 ```python
-from trulens.core import TruSession
+from trulens.core import Select
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
 ```
