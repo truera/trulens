@@ -28,6 +28,7 @@ STATEMENT: {hypothesis}
 
 LLM_GROUNDEDNESS_SYSTEM = v2.Groundedness.system_prompt
 LLM_GROUNDEDNESS_USER = v2.Groundedness.user_prompt
+LLM_GROUNDEDNESS_SENTENCES_SPLITTER = v2.Groundedness.sentences_splitter_prompt
 
 LLM_ANSWERABILITY_SYSTEM = v2.Answerability.system_prompt
 LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt

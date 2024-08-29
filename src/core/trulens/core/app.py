@@ -663,11 +663,31 @@ class App(
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> Lens:
-        """
-        Try to find retriever components in the given `app` and return a lens to
+        """Try to find retriever components in the given `app` and return a lens to
         access the retrieved contexts that would appear in a record were these
-        components to execute.
-        """
+        components to execute."""
+
+        # Catch the old case where a user calls App.select_context and gives
+        # their app (not an App instance) as the app arg.
+        if app is not None:
+            mod = app.__class__.__module__
+            if mod.startswith("langchain"):
+                from trulens.instrument.langchain import TruChain
+
+                return TruChain.select_context(app=app)
+            elif mod.startswith("llama_index"):
+                from trulens.instrument.llamaindex import TruLlama
+
+                return TruLlama.select_context(app=app)
+            elif mod.startswith("nemoguardrails"):
+                from trulens.instrument.nemo import TruRails
+
+                return TruRails.select_context(app=app)
+            else:
+                raise ValueError(
+                    f"Cannot determine the app type from its module {mod}."
+                )
+
         raise NotImplementedError(
             f"`select_context` not implemented for {cls.__name__}. "
             "Call `select_context` using the appropriate subclass (TruChain, TruLlama, TruRails, etc)."

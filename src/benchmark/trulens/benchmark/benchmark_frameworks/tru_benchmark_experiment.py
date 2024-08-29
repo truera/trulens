@@ -1,15 +1,15 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
+import pandas as pd
 from pydantic import BaseModel
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.custom import instrument
 from trulens.core import Feedback
 from trulens.core import Select
 from trulens.core.feedback.feedback import AggCallable
-from trulens.core.utils.pyschema import FunctionOrMethod
 
 log = logging.getLogger(__name__)
 
@@ -84,21 +84,29 @@ class TruBenchmarkExperiment:
 
     @instrument
     def run_score_generation_on_single_row(
-        self, row, feedback_fn: Callable
+        self,
+        feedback_fn: Callable,
+        feedback_args: List[Any],
     ) -> Union[float, Tuple[float, float]]:
         """Generate a score with the feedback_fn
 
+        Args:
+            row: A single row from the dataset.
+            feedback_fn: The function used to generate feedback scores.
+
         Returns:
-            Union[float, Tuple[float, Dict[str, float]]]: feedback score (with metadata) after running the benchmark on a single entry in ground truth data
+            Union[float, Tuple[float, float]]: Feedback score (with metadata) after running the benchmark on a single entry in ground truth data.
         """
 
         benchmark_params_dict: dict = self.benchmark_params.model_dump()
 
-        # TODO: better define the shape of arguments of feedback_fn after GT database schema is finalized
+        # Extract required values from the row based on the specified columns
+        # feedback_args = [get_nested_value(row, col) for col in required_columns]
 
-        ret = feedback_fn(
-            row["query"], row["expected_response"], benchmark_params_dict
-        )
+        # Append the benchmark parameters dictionary
+        feedback_args.append(benchmark_params_dict)
+
+        ret = feedback_fn(*feedback_args)
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
@@ -115,14 +123,13 @@ class TruBenchmarkExperiment:
     @instrument
     def __call__(
         self,
-        ground_truth: Union[List, Callable, FunctionOrMethod],
+        ground_truth: pd.DataFrame,
     ) -> Union[
         List[float], List[Tuple[float]], Tuple[List[float], List[float]]
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
-
-        ground_truth (Union[List, Callable, FunctionOrMethod]): ground truth dataset / collection to evaluate the feedback function on
-
+        Note the order of generated scores must be preserved to match the order of the true labels.
+        ground_truth pd.DataFrame: ground truth dataset / collection to evaluate the feedback function on
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
@@ -132,29 +139,46 @@ class TruBenchmarkExperiment:
         scores = []
         meta_scores = []
         with ThreadPoolExecutor() as executor:
-            future_to_row = {
-                executor.submit(
-                    self.run_score_generation_on_single_row,
-                    row,
-                    self.feedback_fn,
-                ): row
-                for row in ground_truth
-            }
-            for future in as_completed(future_to_row):
+            future_to_index = {}
+            index_to_results = {}
+
+            for index, row in ground_truth.iterrows():
+                if "expected_chunks" in row:
+                    for expected_chunk in row["expected_chunks"]:
+                        future = executor.submit(
+                            self.run_score_generation_on_single_row,
+                            self.feedback_fn,
+                            [row["query"], expected_chunk["text"]],
+                        )
+                        future_to_index[future] = index
+                elif "expected_response" in row:
+                    future = executor.submit(
+                        self.run_score_generation_on_single_row,
+                        self.feedback_fn,
+                        [row["query"], row["expected_response"]],
+                    )
+                    future_to_index[future] = index
+
+            for future in as_completed(future_to_index):
+                index = future_to_index[future]
                 try:
                     ret = future.result()
-
-                    if isinstance(ret, float):
-                        score = ret
-                    else:
-                        score, metadata = ret
-
-                        meta_scores.append(metadata)
-
-                    scores.append(score)
+                    index_to_results.setdefault(index, []).append(ret)
 
                 except Exception as e:
                     log.error(f"Row generated an exception: {e}")
+
+            # Process results in the original order
+            for index in range(len(ground_truth)):
+                if index in index_to_results:
+                    for ret in index_to_results[index]:
+                        if isinstance(ret, float):
+                            score = ret
+                        else:
+                            score, metadata = ret
+                            meta_scores.append(metadata)
+
+                        scores.append(score)
 
         if meta_scores:
             return scores, meta_scores
