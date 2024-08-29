@@ -116,6 +116,14 @@ def grit_patterns_dealias(mod: Union[ModuleType, str]) -> Iterable[str]:
 
 
 if __name__ == "__main__":
+    print("""
+engine marzano(0.1)
+language python
+
+any {
+    """)
     for mod_name in get_submodule_names("trulens_eval"):
         for pattern in grit_patterns_dealias(mod_name):
-            print(pattern)
+            print("  " + pattern + ",")
+
+print("}")
