@@ -14,7 +14,7 @@ For example, for Postgres database `trulens` running on `localhost` with usernam
 
     ```python
     from trulens.core import TruSession
-    tru = TruSession(database_url="postgresql://trulensuser:password@localhost/trulens")
+    session = TruSession(database_url="postgresql://trulensuser:password@localhost/trulens")
     ```
 
 After which you should receive the following message:
