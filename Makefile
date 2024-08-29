@@ -87,6 +87,10 @@ docs-linkcheck: site
 trubot:
 	poetry run python -u examples/trubot/trubot.py
 
+# Spellchecking
+codespell:
+	poetry run codespell -L tru * --skip "*.svg,*.js,*.yaml,*.jsonl,*.lock,*.css.map"
+
 # Generates a coverage report.
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
