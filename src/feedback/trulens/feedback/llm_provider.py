@@ -1519,7 +1519,10 @@ class LLMProvider(Provider):
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
         else:
-            hypotheses = [statement]
+            hypotheses = self._create_chat_completion(
+                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                messages=[{"role": "user", "content": statement}],
+            ).split("\n")
 
         groundedness_scores = {}
         reasons_str = ""
