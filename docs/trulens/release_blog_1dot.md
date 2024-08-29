@@ -27,11 +27,15 @@ Today, we’re releasing trulens, trulens-core, trulens-dashboard, trulens-feedb
 
 The base install of trulens will install trulens-core, trulens-feedback and trulens-dashboard making it easy for developers to try TruLens.
 
-trulens-eval starting 1.0.0 will consist solely of backwards compatibility modules that alias trulens-* packages while emitting deprecation warnings. trulens-eval version will track trulens-core version for 6 weeks (Until October 10, 2024) after which the deprecation warnings will be replaced by error messages instructing the user to update to trulens.
+Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of `trulens` and several associated required and optional packages.
 
-During the depreciation period, trulens-eval will track the trulens version and contain aliases for non-private API elements while giving deprecation warnings upon usage. After the depreciation period, the latest version of trulens_eval will refuse to install with a note that it has been deprecated.
+Until 10-14-2024, backwards compatibility during the warning period is provided by the new content of the `trulens_eval` package which provides aliases to the in their new locations. See [trulens_eval](./api/trulens_eval/index.md).
 
-Read more about the [TruLens deprecation policy](./contributing/policies.md).
+Starting 10-15-2014 until 2025-12-01. Usage of `trulens_eval` will produce errors indicating deprecation.
+
+Beginning 2024-02-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
+
+Read more about the [TruLens deprecation policy](./policies.md).
 
 Along with this change, we’ve also included a [migration guide](./guides/trulens_eval_migration.md) for moving to TruLens v1.
 
