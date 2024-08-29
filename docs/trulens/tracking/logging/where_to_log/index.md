@@ -13,14 +13,16 @@ For example, for Postgres database `trulens` running on `localhost` with usernam
 !!! example "Connecting with a Database URL"
 
     ```python
-    from trulens.core import TruSession
-    session = TruSession(database_url="postgresql://trulensuser:password@localhost/trulens")
+    from trulens.core.session import TruSession
+    from trulens.core.database.connector.default import DefaultDBConnector
+    connector = DefaultDBConnector(database_url = "postgresql://trulensuser:password@localhost/trulens")
+    session = TruSession(connector = connector)
     ```
 
 After which you should receive the following message:
 
 ```
-🦑 Tru initialized with db url postgresql://trulensuser:password@localhost/trulens.
+🦑 TruSession initialized with db url postgresql://trulensuser:password@localhost/trulens.
 ```
 
 ## Connecting to a Database Engine
@@ -32,18 +34,20 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
 !!! example "Connecting with a Database Engine"
 
     ```python
-    from trulens.core import Tru
+    from trulens.core.session import TruSession
     from sqlalchemy import create_engine
 
-    engine = create_engine(
+    database_engine = create_engine(
         "postgresql://trulensuser:password@localhost/trulens",
         connect_args={"connection_factory": MyConnectionFactory},
     )
+    connector = DefaultDBConnector(database_engine = database_engine)
+    session = TruSession(connector = connector)
 
-    tru = Tru(database_engine=engine)
+    session = TruSession(database_engine=engine)
     ```
 
 After which you should receive the following message:
 
 ```
-🦑 Tru initialized with db url postgresql://trulensuser:password@localhost/trulens.
+🦑 TruSession initialized with db url postgresql://trulensuser:password@localhost/trulens.
