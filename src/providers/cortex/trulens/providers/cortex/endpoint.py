@@ -80,12 +80,14 @@ class CortexCallback(EndpointCallback):
         # compute credits consumed in Snowflake account based on tokens processed
         setattr(
             self.cost,
-            "snowflake_credits_consumed",
-            getattr(self.cost, "snowflake_credits_consumed", 0)
+            "cost",
+            getattr(self.cost, "cost", 0)
             + self._compute_credits_consumed(
                 response["model"], usage.get("total_tokens", 0)
             ),
         )
+
+        setattr(self.cost, "cost_currency", "Snowflake credits")
 
 
 class CortexEndpoint(Endpoint):
