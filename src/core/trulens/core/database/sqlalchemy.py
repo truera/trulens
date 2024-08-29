@@ -970,18 +970,18 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
+    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float, str]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
             cost = mod_base_schema.Cost(**_cost_json)
         else:
             cost = mod_base_schema.Cost()
-        return cost.n_tokens, cost.cost
+        return cost.n_tokens, cost.cost, cost.cost_currency
 
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
-        columns=["total_tokens", "total_cost"],
+        columns=["total_tokens", "total_cost", "cost_currency"],
     )
 
 
@@ -1147,7 +1147,7 @@ class AppsExtractor:
 
                     if "cost" in feedback_usage:
                         feedback_cost[
-                            f"{_res.name} cost in {cost_currency}"
+                            f"{_res.name} feedback cost in {cost_currency}"
                         ] = feedback_usage["cost"]
 
                     if (
