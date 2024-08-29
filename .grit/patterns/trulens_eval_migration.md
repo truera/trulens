@@ -28,8 +28,9 @@ any {
   `from trulens_eval.guardrails.langchain import WithFeedbackFilterDocuments` => `from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments`,
   `from trulens_eval.guardrails.llama import WithFeedbackFilterDocuments` => `from trulens.apps.llamaindex.guardrails import WithFeedbackFilterNodes`,
   `$var.run_dashboard($port)` => `from trulens.dashboard import run_dashboard; run_dashboard(session=$var, $port)`,
-  `$var = Tru($connection)` => `$var = TruSession($connection)`,
+  `$var = Tru($connection)` => `from trulens.core.database.connector.default import DefaultDBConnector; connector = DefaultDBConnector($connection); $var = TruSession(connector=connector)`,
   `from trulens_eval.utils.display import get_feedback_result` => `from trulens.dashboard.display import get_feedback_result`,
+
 }
 ```
 
@@ -37,15 +38,15 @@ any {
 
 ```python
 from trulens_eval import Tru
-tru = Tru()
+tru = Tru(database_url)
 tru.reset_database()
 ```
 ```python
 from trulens.core import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
-connector = DefaultDBConnector()
-session = TruSession(connector)
-session.reset_database()
+connector = DefaultDBConnector(database_url)
+tru = TruSession(connector=connector)
+tru.reset_database()
 ```
 
 ## Updates to Dashboard
@@ -59,9 +60,9 @@ tru.run_dashboard()
 from trulens.core import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
 connector = DefaultDBConnector()
-session = TruSession(connector)
+tru = TruSession(connector=connector)
 from trulens.dashboard import run_dashboard
-run_dashboard(session,)
+run_dashboard(session=tru,)
 ```
 
 ## Updates to Dashboard with port
@@ -75,9 +76,9 @@ tru.run_dashboard(port=888)
 from trulens.core import TruSession
 from trulens.core.database.connector.default import DefaultDBConnector
 connector = DefaultDBConnector()
-session = TruSession(connector)
+tru = TruSession(connector=connector)
 from trulens.dashboard import run_dashboard
-run_dashboard(session, port=888)
+run_dashboard(session=tru, port=888)
 ```
 
 ## Migrations to TruLens Core
