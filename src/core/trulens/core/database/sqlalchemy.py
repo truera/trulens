@@ -369,7 +369,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_record(
         self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
-        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
+        """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
@@ -1135,12 +1135,23 @@ class AppsExtractor:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
-
+            feedback_cost = {}
             try:
                 for _res in _rec.feedback_results:
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
+
+                    feedback_usage = json.loads(_res.cost_json)
+                    if "snowflake_credits_consumed" in feedback_usage:
+                        feedback_cost[
+                            _res.name + "_snowflake_credits_consumed"
+                        ] = feedback_usage["snowflake_credits_consumed"]
+                    elif "total_cost" in feedback_usage:
+                        feedback_cost[_res.name + "_total_cost"] = (
+                            feedback_usage["total_cost"]
+                        )
+
                     if (
                         _res.multi_result is not None
                         and (multi_result := json.loads(_res.multi_result))
@@ -1162,6 +1173,7 @@ class AppsExtractor:
                 row = {
                     **{k: np.mean(v) for k, v in values.items()},
                     **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{k: v for k, v in feedback_cost.items()},
                 }
 
                 for col in self.rec_cols:

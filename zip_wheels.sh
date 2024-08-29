@@ -27,6 +27,7 @@ zip_wheel() {
     rm -f $2
     cd ./tmp_build_zip
     unzip trulens*-py3-none-any.whl
+    rm -rf `find ./ -name snowflake_stage_zips`
     rm trulens*-py3-none-any.whl
     zip -r ../$2 *
     cd ../

@@ -61,7 +61,7 @@ from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
 if TYPE_CHECKING:
-    from trulens.core.app.base import RecordingContext
+    from trulens.core.app import RecordingContext
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class WithInstrumentCallbacks:
         requested to be instrumented.
 
         Given are the object of the class in which `func` belongs
-        (i.e. the "self" for that function), the `func` itsels, and the `path`
+        (i.e. the "self" for that function), the `func` itself, and the `path`
         of the owner object in the app hierarchy.
 
         Args:
@@ -443,7 +443,7 @@ class Instrument:
 
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
-            # another wrinke, the addresses of methods in the stack may vary
+            # another wrinkle, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
             ctx_stacks = get_first_local_in_call_stack(
@@ -969,15 +969,17 @@ class Instrument:
                             )
                             if inspect.iscoroutinefunction(func):
 
-                                async def bound(*args, **kwargs):
+                                async def abound(*args, **kwargs):
                                     return await unbound(obj, *args, **kwargs)
+
+                                setattr(obj, method_name, abound)
 
                             else:
 
                                 def bound(*args, **kwargs):
                                     return unbound(obj, *args, **kwargs)
 
-                            setattr(obj, method_name, bound)
+                                setattr(obj, method_name, bound)
                         except Exception as e:
                             logger.debug(
                                 f"\t\t\t{query}: could not instrument because {e}"

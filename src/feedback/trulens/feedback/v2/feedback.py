@@ -352,7 +352,7 @@ class ContextRelevance(Relevance, WithPrompt):
         return validated
 
     @classmethod
-    def override_critera_and_output_space(
+    def override_criteria_and_output_space(
         cls, criteria: str, output_space: str
     ):
         validated = cls.validate_criteria_and_output_space(
@@ -554,7 +554,7 @@ class Toxicity(Semantics):
 
 class Maliciousness(Moderation, WithPrompt):
     """
-    Examples of malciousness:
+    Examples of maliciousness:
 
     """
 
@@ -736,7 +736,7 @@ class COTExplained(Feedback):
                         / normalize
                     )
 
-        return FeedbackWithExplanation(**feedback)
+        return FeedbackWithExplanation(**feedback.model_dump())
 
 
 # Level 3 abstraction

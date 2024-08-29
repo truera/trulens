@@ -129,7 +129,7 @@ class LLMProvider(Provider):
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
+            verb_confidence_prompt: A pre-formatted system prompt.
 
             user_prompt: An optional user prompt.
 
@@ -326,7 +326,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance)
@@ -351,7 +351,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -384,7 +384,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -418,7 +418,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -447,7 +447,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.llamaindex import TruLlama
+            from trulens.apps.llamaindex import TruLlama
             context = TruLlama.select_context(llamaindex_rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -474,7 +474,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -892,7 +892,7 @@ class LLMProvider(Provider):
 
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
-        Uses chat compoletion model. A function that completes a
+        Uses chat completion model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
@@ -1192,7 +1192,7 @@ class LLMProvider(Provider):
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
-                prompts.COMPOREHENSIVENESS_USER_PROMPT,
+                prompts.COMPREHENSIVENESS_USER_PROMPT,
                 key_point=key_point,
                 summary=summary,
             )
@@ -1346,7 +1346,7 @@ class LLMProvider(Provider):
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The statement will first be split by a tokenizer into its compoenent sentences.
+        The statement will first be split by a tokenizer into its component sentences.
 
         Then, trivial statements are eliminated so as to not dilute the evaluation.
 
@@ -1470,9 +1470,9 @@ class LLMProvider(Provider):
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The statement will first be split by a tokenizer into its compoenent sentences.
+        The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not delute the evaluation.
+        Then, trivial statements are eliminated so as to not delete the evaluation.
 
         The LLM will process each statement, using chain of thought methodology to emit the reasons.
 

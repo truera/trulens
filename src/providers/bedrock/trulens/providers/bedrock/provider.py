@@ -186,10 +186,10 @@ class Bedrock(LLMProvider):
 
         Args:
             system_prompt: A pre-formatted system prompt.
-
             user_prompt: An optional user prompt.
-
-            normalize: The normalization factor for the score.
+            min_score_val: The minimum score value. Default is 0.
+            max_score_val: The maximum score value. Default is 3.
+            temperature: The temperature value for LLM score generation. Default is 0.0.
 
         Returns:
             The score on a 0-1 scale.
@@ -226,10 +226,10 @@ class Bedrock(LLMProvider):
 
         Args:
             system_prompt: A pre-formatted system prompt.
-
             user_prompt: An optional user prompt.
-
-            normalize: The normalization factor for the score.
+            min_score_val: The minimum score value. Default is 0.
+            max_score_val: The maximum score value. Default is 3.
+            temperature: The temperature value for LLM score generation. Default is 0.0.
 
         Returns:
             The score on a 0-1 scale.

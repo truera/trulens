@@ -2,23 +2,23 @@
   "tru_class_info": {
     "name": "TruCustomApp",
     "module": {
-      "package_name": "trulens.core.app",
-      "module_name": "trulens.core.app.custom"
+      "package_name": "trulens.apps.custom",
+      "module_name": "trulens.apps.custom.custom"
     },
     "bases": [
       {
         "name": "TruCustomApp",
         "module": {
-          "package_name": "trulens.core.app",
-          "module_name": "trulens.core.app.custom"
+          "package_name": "trulens.apps.custom",
+          "module_name": "trulens.apps.custom.custom"
         },
         "bases": null
       },
       {
         "name": "App",
         "module": {
-          "package_name": "trulens.core.app",
-          "module_name": "trulens.core.app.base"
+          "package_name": "trulens.core",
+          "module_name": "trulens.core.app"
         },
         "bases": null
       },
