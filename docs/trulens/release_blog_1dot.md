@@ -1,6 +1,6 @@
 # Moving to TruLens v1: Reliable and Modular Logging and Evaluation
 
-It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (trulens-explain) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint. Today we’re announcing an extensive re-architecture of TruLens that aims to give developers a stable, modular platform for logging and evaluation they can rely on.
+It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (`trulens-explain`) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint. Today we’re announcing an extensive re-architecture of TruLens that aims to give developers a stable, modular platform for logging and evaluation they can rely on.
 
 
 ## **Split off trulens-eval from trulens-explain**
@@ -11,7 +11,7 @@ Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take ove
 
 ## **Separate TruLens-Eval into different trulens packages**
 
-Next, we modularize TruLens into a family of different packages, described below. This change is designed to minimize the overhead required for TruLens developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
+Next, we modularize _TruLens_ into a family of different packages, described below. This change is designed to minimize the overhead required for _TruLens_ developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
 
 * `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation
 * `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
@@ -23,9 +23,9 @@ Next, we modularize TruLens into a family of different packages, described below
 
 ## **Versioning and Backwards Compatibility**
 
-Today, we’re releasing trulens, trulens-core, trulens-dashboard, trulens-feedback, trulens-providers packages and trulens-instrument packages at v1.0. We will not make breaking changes in the future without bumping the major version.
+Today, we’re releasing `trulens`, `trulens-core`, `trulens-dashboard`, `trulens-feedback`, `trulens-providers` packages and `trulens-instrument` packages at v1.0. We will not make breaking changes in the future without bumping the major version.
 
-The base install of trulens will install trulens-core, trulens-feedback and trulens-dashboard making it easy for developers to try TruLens.
+The base install of trulens will install `trulens-core`, `trulens-feedback` and `trulens-dashboard` making it easy for developers to try _TruLens_.
 
 Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of `trulens` and several associated required and optional packages.
 
@@ -33,7 +33,7 @@ Until 10-14-2024, backwards compatibility during the warning period is provided 
 
 Starting 10-15-2014 until 2025-12-01. Usage of `trulens_eval` will produce errors indicating deprecation.
 
-Beginning 2024-02-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
+Beginning 2024-12-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
 
 Read more about the [TruLens deprecation policy](../policies.md).
 
@@ -249,9 +249,9 @@ To see the core re-architecture changes in action, we've included some usage exa
 
 ## **TruLens Sessions**
 
-In TruLens, we have long had the `Tru()` class, a singleton that sets the logging configuration. If instantiated with no arguments, traces and evaluations are logged to a local sqlite file. In the case you don’t deliberately instantiate Tru(), traces and evaluations are still logged to a local sqlite file.
+In _TruLens_, we have long had the `Tru()` class, a singleton that sets the logging configuration. If instantiated with no arguments, traces and evaluations are logged to a local sqlite file. In the case you don’t deliberately instantiate `Tru()`, traces and evaluations are still logged to a local sqlite file.
 
-In v1, we are renaming `Tru` to `TruSession`, to represent a session for logging TruLens traces and evaluations.
+In v1, we are renaming `Tru` to `TruSession`, to represent a session for logging TruLens traces and evaluations. In addition, we have introduced a more deliberate set of database of connectors that can be passed to `TruSession()`.
 
 You can see how to start a TruLens session logging to a postgres database below:
 
@@ -265,11 +265,14 @@ You can see how to start a TruLens session logging to a postgres database below:
     session = TruSession(connector=connector)
     ```
 
+! note
+    database_url can also be passed directly to `TruSession()`
+
 ## **Up-leveled Experiment Tracking**
 
-In v1, we’re also introducing new ways to track experiments with app_name and app_version. These new required arguments replace app_id to give you a more dynamic way to track app versions.
+In v1, we’re also introducing new ways to track experiments with app_name and app_version. These new required arguments replace `app_id` to give you a more dynamic way to track app versions.
 
-In our suggested workflow, app_name represents an objective you’re building your LLM app to solve. All apps with the same app_name should be directly comparable with each other. Then app_version can be used to track each experiment. This should be changed each time you change your application configuration. To more explicitly track the changes to individual configurations and semantic names for versions - you can still use app metadata and tags!
+In our suggested workflow, `app_name` represents an objective you’re building your LLM app to solve. All apps with the same `app_name` should be directly comparable with each other. Then `app_version` can be used to track each experiment. This should be changed each time you change your application configuration. To more explicitly track the changes to individual configurations and semantic names for versions - you can still use app `metadata` and `tags`!
 
 !!! example "Track Experiments"
 
@@ -336,6 +339,8 @@ Along with the high level changes in TruLens v1, ground truth can now be persist
             name="Ground Truth Semantic Similarity",
         ).on_input_output()
         ```
+
+See this in action in the new [Ground Truth Persistence Quickstart](../../examples/quickstart/groundtruth_dataset_persistence.ipynb)
 
 ## **New Component Guides and TruLens Cookbook**
 
