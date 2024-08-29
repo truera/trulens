@@ -1041,3 +1041,6 @@ class instrument(AddInstruments):
         # Note that this does not actually change the method, just adds it to
         # list of filters.
         self.method(cls, name)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
