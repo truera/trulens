@@ -12,11 +12,11 @@ Split off trulens-eval from trulens-explain, and let trulens-eval take over the 
 
 ### Separate TruLens-Eval into different trulens packages
 
-trulens-core holds core abstractions for database operations, app instrumentation, guardrails and evaluation
-trulens-dashboard gives you the required capabilities to run and operate the TruLens dashboard
-trulens-instrument-*/ describes a set of third-party integrations for instrumentation and logging, including our popular TruChain and TruLlama offerings that seamlessly instrument LangChain and Llama-Index apps. Each of these integrations can be installed separately as a standalone package, and include trulens-instrument-langchain, trulens-instrument-llamaindex and trulens-instrument-nemo.
-trulens-feedback gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
-trulens-providers-*/ describes a set of third party integrations for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: trulens-providers-openai, trulens-providers-huggingface, trulens-providers-litellm, trulens-providers-langchain, trulens-providers-bedrock, trulens-providers-cortex.
+* `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation
+* `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
+* `trulens-instrument-` prefixed packages give you tools for instrumentation and logging. This includes both `trulens-instrument-core` for logging custom and virtual apps, along with `trulens-instrument-langchain` and `trulens-instrument-llama-index` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument LangChain and Llama-Index apps.
+* `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
+* `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
 
 ![TruLens 1.0 Release Graphics](../assets/images/trulens_1_release_graphic_modular.png)
 
@@ -24,8 +24,8 @@ trulens-providers-*/ describes a set of third party integrations for running fee
 
 The driving motivation behind these changes are twofold:
 
-* Minimize the overhead required for TruLens developers to use the capabilities they need
-* Make it easy to understand what code and set of dependencies is needed
+1. Minimize the overhead required for TruLens developers to use the capabilities they need
+2. Make it easy to understand what code and set of dependencies is needed
 
 ## **Versioning and Backwards Compatibility**
 
@@ -39,7 +39,7 @@ During the depreciation period, trulens-eval will track the trulens version and 
 
 Read more about the [TruLens deprecation policy](./contributing/policies.md).
 
-Along with this change, we’ve also included a [migration guide](./guides/trulens_eval/trulens_eval_migration.md) for moving to TruLens v1.
+Along with this change, we’ve also included a [migration guide](./guides/trulens_eval_migration.md) for moving to TruLens v1.
 
 Please give us feedback on GitHub by creating issues and starting discussions.
 
