@@ -237,6 +237,9 @@ class DBConnector(ABC):
                 f"Unknown type {type(feedback_result_or_future)} in feedback_results."
             )
 
+        if feedback_result.feedback_definition_id is None:
+            feedback_result.feedback_definition_id = "anonymous"  # or "human" feedback that does not come with a feedback definition
+
         return self.db.insert_feedback(feedback_result=feedback_result)
 
     def add_feedbacks(

@@ -12,6 +12,7 @@ POETRY_DIRS := $(shell find . \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
 	-exec dirname {} \;)
+LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
 
 # Global setting: execute all commands of a target in a single shell session.
 # Note for MAC OS, the default make is too old to support this. "brew install
@@ -106,8 +107,22 @@ test-api:
 test-write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
+# Depercation tests.
+## Test for trulens_eval exported names.
 test-deprecation:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py
+## Test for trulens_eval notebooks.
+.PHONY: _trulens_eval
+_trulens_eval:
+	git worktree add -f _trulens_eval --no-checkout --detach
+	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- \
+		trulens_eval/tests/docs_notebooks/notebooks_to_test \
+		trulens_eval/README.md \
+		trulens_eval/examples \
+		docs/trulens_eval/tracking
+	git worktree prune
+test-legacy-notebooks: _trulens_eval
+	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
