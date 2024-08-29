@@ -351,7 +351,7 @@ class TruCustomApp(App):
     main_method: Optional[Function] = None
     """Serialized version of the main method."""
 
-    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: dict):
+    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)
 
