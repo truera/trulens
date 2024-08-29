@@ -1,4 +1,4 @@
-"""Populate app name and version fields.
+"""Update app_id column in records table with matching app_id from apps table.
 
 Revision ID: 8
 Revises: 7
