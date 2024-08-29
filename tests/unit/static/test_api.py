@@ -26,6 +26,8 @@ from tests.utils import get_module_members
 from tests.utils import get_submodule_names
 from tests.utils import type_str
 
+_GOLDEN_DIRECTORY = "tests/unit/static/golden"
+
 
 class TestAPI(JSONTestCase):
     """API Tests."""
@@ -176,7 +178,9 @@ class TestAPI(JSONTestCase):
         """
         # TODEP: Deprecate after trulens_eval is removed.
 
-        golden_file = f"api.trulens_eval.{self.pyversion}.yaml"
+        golden_file = (
+            f"{_GOLDEN_DIRECTORY}/api.trulens_eval.{self.pyversion}.yaml"
+        )
 
         members = self.get_members_trulens_eval(aliases_are_defs=True)
 
@@ -230,7 +234,7 @@ class TestAPI(JSONTestCase):
         To regenerate golden file, run `make test-write-api`.
         """
 
-        golden_file = f"api.trulens.{self.pyversion}.yaml"
+        golden_file = f"{_GOLDEN_DIRECTORY}/api.trulens.{self.pyversion}.yaml"
 
         members = self.get_members_trulens()
 
