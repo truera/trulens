@@ -14,7 +14,9 @@ For example, for Postgres database `trulens` running on `localhost` with usernam
 
     ```python
     from trulens.core import TruSession
-    session = TruSession(database_url="postgresql://trulensuser:password@localhost/trulens")
+    from trulens.core.database.connector.default import DefaultDBConnector
+    connector = DefaultDBConnector(database_url = "postgresql://trulensuser:password@localhost/trulens")
+    session = TruSession(connector = connector)
     ```
 
 After which you should receive the following message:
@@ -35,10 +37,12 @@ See [this article](https://docs.sqlalchemy.org/en/20/core/engines.html#database-
     from trulens.core import Tru
     from sqlalchemy import create_engine
 
-    engine = create_engine(
+    database_engine = create_engine(
         "postgresql://trulensuser:password@localhost/trulens",
         connect_args={"connection_factory": MyConnectionFactory},
     )
+    connector = DefaultDBConnector(database_engine = database_engine)
+    session = TruSession(connector = connector)
 
     tru = Tru(database_engine=engine)
     ```
