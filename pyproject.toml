@@ -51,6 +51,7 @@ ruff = "^0.5"
 mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
+codespell = "^2.3"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
