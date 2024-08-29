@@ -2,15 +2,16 @@
 
 It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (trulens-explain) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint. Today we’re announcing an extensive re-architecture of TruLens that aims to give developers a stable, modular platform for logging and evaluation they can rely on.
 
-## **TLDR;**
 
-### Split off trulens-eval from trulens-explain
+## **Split off trulens-eval from trulens-explain**
 
-Split off trulens-eval from trulens-explain, and let trulens-eval take over the trulens package name. TruLens-eval is now renamed to TruLens and sits at the root of the TruLens repo, while TruLens-explain has been moved to its own repository, and is installable at trulens-explain.
+Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take over the `trulens` package name. _TruLens-Eval_ is now renamed to _TruLens_ and sits at the root of the _TruLens_ repo, while _TruLens-Explain_ has been moved to its own repository, and is installable at `trulens-explain`.
 
 ![TruLens 1.0 Release Graphics](../assets/images/trulens_1_release_graphic_split.png)
 
-### Separate TruLens-Eval into different trulens packages
+## **Separate TruLens-Eval into different trulens packages**
+
+Next, we modularize TruLens into a family of different packages, described below. This change is designed to minimize the overhead required for TruLens developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
 
 * `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation
 * `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
@@ -19,13 +20,6 @@ Split off trulens-eval from trulens-explain, and let trulens-eval take over the 
 * `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
 
 ![TruLens 1.0 Release Graphics](../assets/images/trulens_1_release_graphic_modular.png)
-
-## **Motivation**
-
-The driving motivation behind these changes are twofold:
-
-1. Minimize the overhead required for TruLens developers to use the capabilities they need
-2. Make it easy to understand what code and set of dependencies is needed
 
 ## **Versioning and Backwards Compatibility**
 
