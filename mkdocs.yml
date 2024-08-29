@@ -90,6 +90,7 @@ plugins:
             - src/providers/litellm
             - src/providers/openai
             - src/connectors/snowflake
+            - src/trulens_eval # to remove after deprecation
             - examples/
           options:
 

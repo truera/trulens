@@ -19,8 +19,8 @@ __version__ = version(safe_importlib_package_name(__package__ or __name__))
 
 
 __all__ = [
-    "Embeddings",
     "GroundTruthAgreement",
     "GroundTruthAggregator",
     "LLMProvider",
+    "Embeddings",
 ]

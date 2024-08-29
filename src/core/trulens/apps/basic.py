@@ -7,7 +7,7 @@ from inspect import Signature
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
 from trulens.core.app import App
@@ -121,7 +121,7 @@ class TruBasicApp(App):
         self,
         text_to_text: Optional[Callable[[str], str]] = None,
         app: Optional[TruWrapperApp] = None,
-        **kwargs: dict,
+        **kwargs: Any,
     ):
         if text_to_text is not None:
             app = TruWrapperApp(text_to_text)
