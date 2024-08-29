@@ -83,10 +83,8 @@ As an example, below is an LlamaIndex async chat engine (`achat`).
     ```python
     from llama_index.core import VectorStoreIndex
     from llama_index.readers.web import SimpleWebPageReader
-    from trulens.core import Tru
     from trulens.apps.llamaindex import TruLlama
 
-    tru = Tru()
     documents = SimpleWebPageReader(html_to_text=True).load_data(
         ["http://paulgraham.com/worked.html"]
     )
