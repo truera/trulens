@@ -178,6 +178,16 @@ build: $(POETRY_DIRS)
 zip-wheels:
 	poetry run ./zip_wheels.sh
 
+
+# Usage: make bump-version-patch
+bump-version-%: $(POETRY_DIRS)
+	for dir in $(POETRY_DIRS); do \
+		echo "Updating $$dir version"; \
+		pushd $$dir; \
+		poetry version $*; \
+		popd; \
+	done
+
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
 # In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.

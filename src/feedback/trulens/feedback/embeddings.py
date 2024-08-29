@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 from trulens.core.utils.imports import OptionalImports
@@ -10,16 +10,19 @@ with OptionalImports(
     messages=format_import_errors(
         "scikit-learn", purpose="using embedding vector distances"
     )
-):
+) as opt:
     import sklearn.metrics
+opt.assert_installed(sklearn.metrics)
 
-if TYPE_CHECKING:
-    with OptionalImports(
-        messages=format_import_errors(
-            "llama-index", purpose="instrumenting LlamaIndex apps"
-        )
-    ):
-        from llama_index.core.base.embeddings.base import BaseEmbedding
+
+with OptionalImports(
+    messages=format_import_errors(
+        "llama-index", purpose="using embedding vector distances"
+    )
+) as opt:
+    import llama_index.core.base.embeddings.base
+    from llama_index.core.base.embeddings.base import BaseEmbedding
+opt.assert_installed(llama_index.core.base.embeddings.base)
 
 
 class Embeddings(WithClassInfo, SerialModel):
