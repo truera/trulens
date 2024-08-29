@@ -339,12 +339,12 @@ Along with the high level changes in TruLens v1, ground truth can now be persist
         ).on_input_output()
         ```
 
-## **New Conceptual Guide and TruLens Cookbook**
+## **New Component Guides and TruLens Cookbook**
 
-On the top-level of TruLens docs, we previously had separated out Evaluation, Evaluation Benchmarks, Tracking and Guardrails. These are now combined to form the new Conceptual Guide.
+On the top-level of TruLens docs, we previously had separated out Evaluation, Evaluation Benchmarks, Tracking and Guardrails. These are now combined to form the new [Component Guides](../tracking/instrumentation/).
 
-We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. You can find these examples in the top-level navigation under "Cookbook".
+We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. You can find these examples in the top-level navigation under ["Cookbook"](../../examples/).
 
 ## **Conclusion**
 
-Ready to get started with the v1 stable release of TruLens? Check out our [migration guide][./guides/trulens_eval_migration.md], or just jump in to the [quickstart][./getting_started/quickstarts/quickstart.ipynb]!
+Ready to get started with the v1 stable release of TruLens? Check out our [migration guide](./guides/trulens_eval_migration.md), or just jump in to the [quickstart](./getting_started/quickstarts/quickstart.ipynb)!
