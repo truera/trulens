@@ -1,7 +1,12 @@
 from concurrent.futures import as_completed
+import inspect
+import logging
+from typing import Optional
 
 from trulens.core import Feedback
 from trulens.core.utils.threading import ThreadPoolExecutor
+
+logger = logging.getLogger(__name__)
 
 
 class context_filter:
@@ -31,20 +36,41 @@ class context_filter:
     """
 
     def __init__(
-        self, feedback: Feedback, threshold: float, keyword_for_prompt: str
+        self,
+        feedback: Feedback,
+        threshold: float,
+        keyword_for_prompt: Optional[str] = None,
     ):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
 
     def __call__(self, func):
+        sig = inspect.signature(func)
+
+        if self.keyword_for_prompt is not None:
+            if self.keyword_for_prompt not in sig.parameters:
+                raise TypeError(
+                    f"Keyword argument '{self.keyword_for_prompt}' not found in `{func.__name__}` signature."
+                )
+        else:
+            # For backwards compatibility, allow inference of keyword_for_prompt:
+            first_arg = list(k for k in sig.parameters.keys() if k != "self")[0]
+            self.keyword_for_prompt = first_arg
+            logger.warn(
+                f"Assuming `{self.keyword_for_prompt}` is the `{func.__name__}` arg to filter. "
+                "Specify `keyword_for_prompt` to avoid this warning."
+            )
+
         def wrapper(*args, **kwargs):
+            bindings = sig.bind(*args, **kwargs)
+
             contexts = func(*args, **kwargs)
             with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
                 future_to_context = {
                     ex.submit(
                         lambda context=context: self.feedback(
-                            kwargs[self.keyword_for_prompt], context
+                            bindings.arguments[self.keyword_for_prompt], context
                         )
                     ): context
                     for context in contexts

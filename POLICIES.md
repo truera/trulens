@@ -1,4 +1,4 @@
-# Release policies
+# 📦 Release policies
 
 ## Versioning
 
@@ -20,9 +20,9 @@ these two periods, the deprecated capability will be completely removed.
 
 !!! Info "Deprecation process"
 
-    - 6 weeks - warning
+    - 6 weeks: deprecation warning
 
-    - 6 weeks - warning + error
+    - 6 weeks: deprecation message __and error__
 
     - removal
 
@@ -32,19 +32,19 @@ will occur at the introduction of the warning period.
 
 ## Currently deprecating features
 
-- Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of
+- Starting 1.0, the `trulens_eval` package is being deprecated in favor of
   `trulens` and several associated required and optional packages. See
   [trulens_eval migration](/trulens/guides/trulens_eval_migration) for details.
 
-    - Warning period: 2024-09-01 (`trulens-eval==1.0.0a0`) to
-    2024-10-14. Backwards compatibility during the warning period is provided by
-    the new content of the `trulens_eval` package which provides aliases to the
-    features in their new locations. See
+    - Warning period: 2024-09-01 (`trulens-eval==1.0.1`) to 2024-10-14.
+    Backwards compatibility during the warning period is provided by the new
+    content of the `trulens_eval` package which provides aliases to the features
+    in their new locations. See
     [trulens_eval](trulens/api/trulens_eval/index.md).
 
     - Deprecated period: 2024-10-14 to 2025-12-01. Usage of `trulens_eval` will
   	produce errors indicating deprecation.
 
-    - Removed expected 2024-02-01 Installation of the latest version of
+    - Removed expected 2024-12-01 Installation of the latest version of
   	`trulens_eval` will be an error itself with a message that `trulens_eval` is
     no longer maintained.
