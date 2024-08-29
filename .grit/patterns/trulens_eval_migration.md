@@ -356,6 +356,14 @@ from trulens_eval import OpenAI
 from trulens.providers.openai.provider import OpenAI
 ```
 
+## Using OpenAI Provider with alias
+```python
+from trulens_eval import OpenAI as ProviderOpenAI
+```
+```python
+from trulens.providers.openai.provider import OpenAI as ProviderOpenAI
+```
+
 ## Using OpenAI Provider Full Import Path
 ```python
 from trulens_eval.feedback.provider.openai import OpenAI
