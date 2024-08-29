@@ -1121,6 +1121,8 @@ class AppsExtractor:
                         else:
                             df[col] = getattr(_app, col)
 
+                    df["app_name"] = _app.app_name
+                    df["app_version"] = _app.app_version
                     yield df
             except OperationalError as e:
                 print(
