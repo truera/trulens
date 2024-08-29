@@ -210,7 +210,7 @@ class TruBEIRDataLoader:
         for corpus in list(
             corpus_gen
         ):  # TODO: (Daniel) this is still going to be a memory hog for large datasets, but if we don't
-            # load the entire corpus into memory, we'll have to re-read the entire corpus using genrator for each query
+            # load the entire corpus into memory, we'll have to re-read the entire corpus using generator for each query
             corpus_dict.update(corpus)
 
         # Iterate over queries generator and process entries

@@ -107,7 +107,7 @@ test-api:
 test-write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
-# Depercation tests.
+# Deprecation tests.
 ## Test for trulens_eval exported names.
 test-deprecation:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py

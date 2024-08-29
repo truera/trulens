@@ -57,7 +57,7 @@ if HUGGINGFACE_API_KEY is None or not HUGGINGFACE_API_KEY.startswith("hf_"):
     )
 
 # Some changes that need to be made to old notebooks to run independent of trulens_eval.
-PACHES: Dict[str, str] = {
+PATCHES: Dict[str, str] = {
     'nltk.download("averaged_perceptron_tagger")': 'nltk.download("averaged_perceptron_tagger_eng")',
     "sk-...": OPENAI_API_KEY,
     'os.environ["OPENAI_API_KEY"] = "..."': f'os.environ["OPENAI_API_KEY"] = "{OPENAI_API_KEY}"',
@@ -86,9 +86,9 @@ class KeysPreprocessor(ExecutePreprocessor):
 
         print(f"  Executing cell {index}: {first_line}.")
 
-        for patch_from, path_to in PACHES.items():
+        for patch_from, patch_to in PATCHES.items():
             if patch_from in cell["source"]:
-                cell["source"] = cell["source"].replace(patch_from, path_to)
+                cell["source"] = cell["source"].replace(patch_from, patch_to)
                 print(f"    Patched: {patch_from}")
 
         ret = super().preprocess_cell(cell, resources, index, **kwargs)

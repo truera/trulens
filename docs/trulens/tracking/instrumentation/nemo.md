@@ -9,7 +9,7 @@ Methods*.
 In addition to the default instrumentation, TruRails exposes the
 *select_context* method for evaluations that require access to retrieved
 context. Exposing *select_context* bypasses the need to know the json structure
-of your app ahead of time, and makes your evaluations re-usable across different
+of your app ahead of time, and makes your evaluations reusable across different
 apps.
 
 ## Example Usage
@@ -82,7 +82,7 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
     ```
 
 To properly evaluate LLM apps we often need to point our evaluation at an
-internal step of our application, such as the retreived context. Doing so allows
+internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
 For Nemo applications with a knowledge base, `select_context` can

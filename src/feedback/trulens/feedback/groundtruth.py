@@ -412,7 +412,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed=True, extra="allow"
     )
-    """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback fuctions."""
+    """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""
 
     true_labels: List[int]  # ground truth labels in [0, 1, 0, ...] format
     custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)

@@ -22,4 +22,4 @@ from trulens.core.database import utils
 
 # NOTE: There trulens_eval.database.__init__.py was blank so this backwards
 # compatibility module is complete assuming the interfaces to the above imported
-# submodules havn't changed.
+# submodules haven't changed.
