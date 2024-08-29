@@ -86,6 +86,11 @@ class TestEndpoints(TestCase):
                 0.0,
                 "Expected non-zero cortex guardrails tokens.",
             )
+            self.assertEqual(
+                cost.cost_currency,
+                "Snowflake credits",
+                "Expected cost currency to be Snowflake credits.",
+            )
 
     @optional_test
     def test_hugs(self):

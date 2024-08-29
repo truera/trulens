@@ -87,6 +87,8 @@ class CortexCallback(EndpointCallback):
             ),
         )
 
+        setattr(self.cost, "cost_currency", "Snowflake credits")
+
 
 class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
@@ -105,7 +107,6 @@ class CortexEndpoint(Endpoint):
 
         kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
-        kwargs["cost_currency"] = "Snowflake credits"
 
         super().__init__(*args, **kwargs)
 
