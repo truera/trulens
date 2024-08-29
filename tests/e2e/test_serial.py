@@ -8,7 +8,7 @@ These tests make sure that:
    of this test.
 
 To refresh the golden files, set the environment variable `WRITE_GOLDEN` to
-anything that evalutes to true. This will overwrite the golden files with the
+anything that evaluates to true. This will overwrite the golden files with the
 actual results produced by the tests. Only do this if changes to serialization
 are expected.
 """
