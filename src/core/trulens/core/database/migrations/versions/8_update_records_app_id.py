@@ -25,14 +25,13 @@ def upgrade(config) -> None:
     # ### begin Alembic commands ###
     with Session(bind=op.get_bind()) as session:
         orm = make_orm_for_prefix(table_prefix=prefix)
-        records = session.query(orm.Record).all()
 
         apps = session.query(orm.AppDefinition).all()
-        app_id_mapping = {app.app_version: app.app_id for app in apps}
+        for app in apps:
+            op.execute(
+                f"UPDATE {prefix + 'records'} SET app_id = '{app.app_id}' WHERE app_id = '{app.app_version}'"
+            )
 
-        for record in records:
-            if record.app_id is not None:
-                record.app_id = app_id_mapping[record.app_id]
         session.commit()
     # ### end Alembic commands ###
 
@@ -48,13 +47,10 @@ def downgrade(config) -> None:
     with Session(bind=op.get_bind()) as session:
         orm = make_orm_for_prefix(table_prefix=prefix)
 
-        records = session.query(orm.Record).all()
-
         apps = session.query(orm.AppDefinition).all()
-        app_id_mapping = {app.app_id: app.app_version for app in apps}
-
-        for record in records:
-            if record.app_id is not None:
-                record.app_id = app_id_mapping[record.app_id]
+        for app in apps:
+            op.execute(
+                f"UPDATE {prefix + 'records'} SET app_id = '{app.app_version}' WHERE app_id = '{app.app_id}'"
+            )
         session.commit()
     # ### end Alembic commands ###
