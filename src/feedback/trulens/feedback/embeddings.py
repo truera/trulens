@@ -17,7 +17,7 @@ opt.assert_installed(sklearn.metrics)
 
 with OptionalImports(
     messages=format_import_errors(
-        "llama-index", purpose="instrumenting LlamaIndex apps"
+        "llama-index", purpose="using embedding vector distances"
     )
 ) as opt:
     import llama_index.core.base.embeddings.base
