@@ -135,7 +135,10 @@ def leaderboard():
         for metadata_key in metadata_keys_unique:
             unique_values = set()
             for i in range(len(apps)):
-                unique_values.add(apps[i]["metadata"][metadata_key])
+                try:
+                    unique_values.add(apps[i]["metadata"][metadata_key])
+                except KeyError:
+                    pass
             metadata_options[metadata_key] = list(unique_values)
 
         # select metadata
@@ -152,7 +155,8 @@ def leaderboard():
             app["app_id"]
             for app in apps
             if all(
-                app["metadata"][metadata_key]
+                metadata_key not in app["metadata"]
+                or app["metadata"][metadata_key]
                 in metadata_selections[metadata_key]
                 for metadata_key in metadata_selections.keys()
             )

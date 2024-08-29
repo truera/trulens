@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class SnowflakeConnector(DBConnector):
+    """Connector to snowflake databases."""
+
     def __init__(
         self,
         account: str,
