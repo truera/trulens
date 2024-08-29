@@ -224,6 +224,15 @@ class Groundedness(Semantics, WithPrompt):
         """
     )
 
+    sentences_splitter_prompt: ClassVar[str] = cleandoc(
+        """Split the following statement into individual sentences:
+
+        Statement: {statement}
+
+        Return each sentence on a new line.
+        """
+    )
+
 
 class Answerability(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(

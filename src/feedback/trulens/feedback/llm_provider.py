@@ -1341,7 +1341,7 @@ class LLMProvider(Provider):
         )
 
     def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str
+        self, source: str, statement: str, use_sent_tokenize: bool = True
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1394,15 +1394,22 @@ class LLMProvider(Provider):
         Args:
             source: The source that should support the statement.
             statement: The statement to check groundedness.
-
+            use_sent_tokenize: Whether to split the statement into sentences using punkt sentence tokenizer. If False, use LLM to split the statement.
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt_tab", quiet=True)
+
         groundedness_scores = {}
         reasons_str = ""
 
-        hypotheses = sent_tokenize(statement)
+        if use_sent_tokenize:
+            nltk.download("punkt_tab", quiet=True)
+            hypotheses = sent_tokenize(statement)
+        else:
+            hypotheses = self._create_chat_completion(
+                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                messages=[{"role": "user", "content": statement}],
+            ).split("\n")
         try:
             hypotheses = self._remove_trivial_statements(hypotheses)
         except Exception as e:
@@ -1465,7 +1472,11 @@ class LLMProvider(Provider):
         return self.relevance_with_cot_reasons(*args, **kwargs)
 
     def groundedness_measure_with_cot_reasons_consider_answerability(
-        self, source: str, statement: str, question: str
+        self,
+        source: str,
+        statement: str,
+        question: str,
+        use_sent_tokenize: bool = True,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1500,11 +1511,16 @@ class LLMProvider(Provider):
             source: The source that should support the statement.
             statement: The statement to check groundedness.
             question: The question to check answerability.
-
+            use_sent_tokenize: Whether to split the statement into sentences using punkt sentence tokenizer. If False, use LLM to split the statement.
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt_tab", quiet=True)
+        if use_sent_tokenize:
+            nltk.download("punkt_tab", quiet=True)
+            hypotheses = sent_tokenize(statement)
+        else:
+            hypotheses = [statement]
+
         groundedness_scores = {}
         reasons_str = ""
 
@@ -1525,8 +1541,6 @@ class LLMProvider(Provider):
                 prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
             )
             return score
-
-        hypotheses = sent_tokenize(statement)
 
         hypotheses = self._remove_trivial_statements(hypotheses)
 
