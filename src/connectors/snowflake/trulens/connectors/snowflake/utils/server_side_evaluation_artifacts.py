@@ -157,6 +157,7 @@ class ServerSideEvaluationArtifacts:
                 WAREHOUSE = {self._warehouse}
                 SCHEDULE = '1 MINUTE'
                 ALLOW_OVERLAPPING_EXECUTION = FALSE
+                SUSPEND_TASK_AFTER_NUM_FAILURES = 0
                 WHEN SYSTEM$STREAM_HAS_DATA('{_STREAM_NAME}')
                 AS
                     CALL {_WRAPPER_STORED_PROCEDURE_NAME}()
