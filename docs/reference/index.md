@@ -7,9 +7,13 @@ the various modules and classes available in the TruLens library.
 
 These packages are installed when installing the main `trulens` package.
 
-- [core](trulens/core)
-- [feedback](trulens/feedback)
-- [dashboard](trulens/dashboard)
+- `trulens-core` installs [core][trulens.core].
+
+- `trulens-feedback` installs [feedback][trulens.feedback].
+
+- `trulens-dashboard` installs [dashboard][trulens.dashboard].
+
+- `trulens_eval` installs [trulens_eval](trulens_eval), a temporary package for backwards compatibility.
 
 Two categories of optional packages contain integrations with 3rd party app
 types and providers:
@@ -46,6 +50,12 @@ types and providers:
     - [OpenAI][trulens.providers.openai.provider.OpenAI] and
         [AzureOpenAI][trulens.providers.openai.provider.AzureOpenAI] in the package
         `trulens-providers-openai`.
+
+Two additional optional packages:
+
+- `trulens-connectors-snowflake` for connecting to Snowflake databases.
+
+- `trulens-benchmark` for running benchmarks or meta evaluations.
 
 ## Private API
 
