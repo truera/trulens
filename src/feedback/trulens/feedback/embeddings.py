@@ -14,10 +14,9 @@ with OptionalImports(
     import sklearn.metrics
 opt.assert_installed(sklearn.metrics)
 
-
 with OptionalImports(
     messages=format_import_errors(
-        "llama-index", purpose="using embedding vector distances"
+        "llama-index", purpose="using llama-index embedding models"
     )
 ) as opt:
     import llama_index.core.base.embeddings.base
@@ -28,9 +27,9 @@ opt.assert_installed(llama_index.core.base.embeddings.base)
 class Embeddings(WithClassInfo, SerialModel):
     """Embedding related feedback function implementations."""
 
-    _embed_model: "BaseEmbedding"
+    _embed_model: BaseEmbedding
 
-    def __init__(self, embed_model: "BaseEmbedding"):
+    def __init__(self, embed_model: BaseEmbedding):
         """Instantiates embeddings for feedback functions.
         !!! example
 
@@ -47,7 +46,7 @@ class Embeddings(WithClassInfo, SerialModel):
             ```
 
         Args:
-            embed_model BaseEmbedding: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
+            embed_model: Supports embedders from llama-index: https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
         """
         super().__init__()
         self._embed_model = embed_model
