@@ -33,7 +33,7 @@ Today, we’re releasing trulens, trulens-core, trulens-dashboard, trulens-feedb
 
 The base install of trulens will install trulens-core, trulens-feedback and trulens-dashboard making it easy for developers to try TruLens.
 
-trulens-eval will remain at major version 0. All existing trulens-eval imports are mapped to v1 packages, and v1 packages are installable with trulens-eval.
+trulens-eval starting 1.0.0 will consist solely of backwards compatibility modules that alias trulens-* packages while emitting deprecation warnings. trulens-eval version will track trulens-core version for 6 weeks (Until October 10, 2024) after which the deprecation warnings will be replaced by error messages instructing the user to update to trulens.
 
 During the depreciation period, trulens-eval will track the trulens version and contain aliases for non-private API elements while giving deprecation warnings upon usage. After the depreciation period, the latest version of trulens_eval will refuse to install with a note that it has been deprecated.
 
