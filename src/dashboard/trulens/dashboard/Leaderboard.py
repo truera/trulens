@@ -1,48 +1,170 @@
 import asyncio
-from typing import Dict, Sequence, Tuple
+import json
+import math
 
-import pandas as pd
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import ColumnsAutoSizeMode
-from st_aggrid.shared import DataReturnMode
-from st_aggrid.shared import JsCode
-from st_keyup import st_keyup
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page
-from trulens.core import Tru
+from trulens.core import TruSession
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.utils.text import format_quantity
 from trulens.dashboard.streamlit_utils import init_from_args
+from trulens.dashboard.ux import styles
+from trulens.dashboard.ux.components import draw_metadata_and_tags
 from trulens.dashboard.ux.page_config import set_page_config
-from trulens.dashboard.ux.styles import cellstyle_jscode
+from trulens.dashboard.ux.styles import CATEGORY
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
 
+if __name__ == "__main__":
+    # If not imported, gets args from command line and creates Tru singleton
+    init_from_args()
 
-def _preprocess_df(df: pd.DataFrame, feedback_col_names: Sequence[str]):
-    df = df.sort_values(by="app_id")
-    agg_dict = {
-        "Records": ("record_id", "count"),
-        "Average Latency": ("latency", "mean"),
-        "Total Cost": ("total_cost", "sum"),
-        "Total Tokens": ("total_tokens", "sum"),
-    }
-    for col in feedback_col_names:
-        agg_dict[col] = (col, "mean")
 
-    return (
-        df.groupby("app_id", dropna=True, sort=True)
-        .agg(**agg_dict)
-        .reset_index()
-        .round(2)
+def leaderboard():
+    """Render the leaderboard page."""
+
+    set_page_config(page_title="Leaderboard")
+
+    session = TruSession()  # get singleton whether this file was imported or executed from command line.
+
+    lms = session.connector.db
+
+    # Set the title
+    st.title("App Leaderboard")
+
+    def get_data():
+        return lms.get_records_and_feedback([])
+
+    def get_apps():
+        return list(lms.get_apps())
+
+    # sort apps by name
+    def sort_selected_apps(selected_apps, records):
+        """
+        Sorts the selected_apps list based on the concatenation of app_name and app_version.
+
+        Parameters:
+        selected_apps (list): List of app_ids to be sorted.
+        apps (DataFrame): DataFrame containing app_id and app_json columns.
+
+        Returns:
+        list: Sorted list of selected_apps.
+        """
+        # Create a mapping from app_id to (app_name, app_version)
+        app_info = (
+            records.set_index("app_id")["app_json"]
+            .apply(
+                lambda x: (
+                    json.loads(x).get("app_name"),
+                    json.loads(x).get("app_version"),
+                )
+            )
+            .to_dict()
+        )
+
+        # Sort selected_apps based on the concatenation of app_name and app_version
+        sorted_apps = sorted(
+            selected_apps,
+            key=lambda app_id: f"{app_info[app_id][0]}{app_info[app_id][1]}",
+        )
+
+        return sorted_apps
+
+    records, feedback_col_names = get_data()
+    records = records.sort_values(by="app_id")
+
+    apps = get_apps()
+    app_names = sorted(list(set(app["app_name"] for app in apps)))
+
+    selected_app_names = st.multiselect("Filter apps:", app_names, app_names)
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if any(name in app["app_name"] for name in selected_app_names)
+    ]
+    st.session_state.app = selected_apps
+
+    # Filter app versions to only include those from selected apps
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = sorted(
+        list(
+            set(
+                f"{app['app_name']} - {app['app_version']}"
+                for app in filtered_apps
+            )
+        )
     )
 
+    selected_app_name_versions = st.multiselect(
+        "Filter by app version:", app_name_versions, app_name_versions
+    )
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if f"{app['app_name']} - {app['app_version']}"
+        in selected_app_name_versions
+    ]
+    st.session_state.app = selected_apps
 
-@st.cache_data
-def load_apps_data() -> Tuple[pd.DataFrame, Sequence[str], Dict[str, bool]]:
-    tru = Tru()
-    lms = tru.db
-    df, feedback_col_names = lms.get_records_and_feedback()
+    with st.expander("Advanced Filters"):
+        # get tag options
+        tags = []
+        for i in range(len(apps)):
+            tags.append(apps[i]["tags"])
+        unique_tags = sorted(list(set(tags)))
+        # select tags
+        selected_tags = st.multiselect("Filter tags:", unique_tags, unique_tags)
+
+        # filter to apps with selected tags
+        tag_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if any(tag in app["tags"] for tag in selected_tags)
+        ]
+        selected_apps = list(set(selected_apps) & set(tag_selected_apps))
+        st.session_state.app = selected_apps
+
+        # get metadata options
+        metadata_keys_unique = set()
+        for app in apps:
+            metadata_keys_unique.update(app["metadata"].keys())
+        metadata_keys_unique = list(metadata_keys_unique)
+        # select metadata
+        metadata_options = {}
+        for metadata_key in metadata_keys_unique:
+            unique_values = set()
+            for i in range(len(apps)):
+                try:
+                    unique_values.add(apps[i]["metadata"][metadata_key])
+                except KeyError:
+                    pass
+            metadata_options[metadata_key] = list(unique_values)
+
+        # select metadata
+        metadata_selections = metadata_options.copy()
+        for metadata_key in metadata_options.keys():
+            metadata_selections[metadata_key] = st.multiselect(
+                "Filter " + metadata_key + ":",
+                sorted(metadata_options[metadata_key]),
+                sorted(metadata_options[metadata_key]),
+            )
+
+        # filter to apps with selected metadata
+        metadata_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if all(
+                metadata_key not in app["metadata"]
+                or app["metadata"][metadata_key]
+                in metadata_selections[metadata_key]
+                for metadata_key in metadata_selections.keys()
+            )
+        ]
+
+        selected_apps = list(set(selected_apps) & set(metadata_selected_apps))
+        st.session_state.app = selected_apps
+
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
@@ -51,132 +173,111 @@ def load_apps_data() -> Tuple[pd.DataFrame, Sequence[str], Dict[str, bool]]:
         ): row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
-    df = _preprocess_df(df, feedback_col_names)
-    return df, feedback_col_names, feedback_directions
 
-
-def build_grid_options(
-    df: pd.DataFrame,
-    feedback_col_names: Sequence[str],
-    feedback_directions: Dict[str, bool],
-):
-    gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_default_column(resizable=False)
-    # gb.configure_first_column_as_index()
-    gb.configure_column(
-        "app_id",
-        header_name="App ID",
-        resizable=True,
-        checkboxSelection=True,
-    )
-
-    for feedback_col in feedback_col_names:
-        if "distance" in feedback_col:
-            gb.configure_column(
-                feedback_col, hide=feedback_col.endswith("_calls")
-            )
-        else:
-            default_direction = "HIGHER_IS_BETTER"
-            # cell highlight depending on feedback direction
-            cellstyle = JsCode(
-                cellstyle_jscode[
-                    "HIGHER_IS_BETTER"
-                    if feedback_directions.get(feedback_col, default_direction)
-                    else "LOWER_IS_BETTER"
-                ]
-            )
-
-            gb.configure_column(
-                feedback_col,
-                cellStyle=cellstyle,
-                hide=feedback_col.endswith("_calls"),
-            )
-
-    # gb.configure_grid_options(rowHeight=60)
-    # gb.configure_auto_height()
-    gb.configure_selection(
-        selection_mode="multiple",
-        use_checkbox=True,
-    )
-    gb.configure_pagination(enabled=False)
-    # gb.configure_grid_options(
-    #     onSelectionChanged=JsCode("""function(params) {
-    #             const selectedRows = params.api.getSelectedNodes();
-    #             let selectedRowsCount = selectedRows.length;
-    #             while (selectedRowsCount > 2) {
-    #                 params.api.deselectNode(selectedRows[selectedRowsCount - 1])
-    #                 selectedRowsCount--;
-    #             }
-    #         }"""),
-    # )
-    gb.configure_side_bar()
-    gb = gb.build()
-    # st.write(gb)
-    return gb
-
-
-def leaderboard():
-    """Render the leaderboard page."""
-
-    set_page_config(page_title="Leaderboard")
-
-    # Set the title and subtitle of the app
-    st.title("App Leaderboard")
-    st.write(
-        "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
-    )
-
-    grid_df, feedback_col_names, feedback_directions = load_apps_data()
-    if grid_df.empty:
-        st.write("No Applications yet...")
+    if records.empty:
+        st.write("No records yet...")
         return
 
-    app_filter = st_keyup("App Filter")
-    st.write(app_filter)
-    if app_filter:
-        grid_df = grid_df[grid_df["app_id"].str.contains(app_filter)]
+    if records.empty:
+        st.write("No records yet...")
 
-    data = AgGrid(
-        grid_df,
-        # theme="quartz",
-        gridOptions=build_grid_options(
-            df=grid_df,
-            feedback_col_names=feedback_col_names,
-            feedback_directions=feedback_directions,
-        ),
-        update_on=["selectionChanged"],
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
-        data_return_mode=DataReturnMode.AS_INPUT,
-        allow_unsafe_jscode=True,
-    )
+    st.markdown("""---""")
 
-    selected_rows = data.selected_rows
-    selected_rows = pd.DataFrame(selected_rows)
+    selected_apps = sort_selected_apps(selected_apps, records)
 
-    if selected_rows.empty:
-        st.write("No Apps selected")
-        return
+    for app in selected_apps:
+        app_df = records.loc[records.app_id == app]
+        if app_df.empty:
+            continue
+        app_str = app_df["app_json"].iloc[0]
+        app_json = json.loads(app_str)
+        app_name = app_json["app_name"]
+        app_version = app_json["app_version"]
+        app_name_version = f"{app_name} - {app_version}"
+        metadata = app_json.get("metadata")
+        tags = app_json.get("tags")
+        # st.text('Metadata' + str(metadata))
+        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
+        app_feedback_col_names = [
+            col_name
+            for col_name in feedback_col_names
+            if not app_df[col_name].isna().all()
+        ]
+        col1, col2, col3, col4, *feedback_cols, col99 = st.columns(
+            5 + len(app_feedback_col_names)
+        )
+        latency_mean = (
+            app_df["latency"]
+            .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
+            .mean()
+        )
 
-    # st.markdown("""---""")
-    # st.header("Selected Versions")
-    # st.write(selected_rows[["app_id"]].reset_index(drop=True))
-    col1, col2 = st.columns(2)
+        col1.metric("Records", len(app_df))
+        col2.metric(
+            "Average Latency (Seconds)",
+            (
+                f"{format_quantity(round(latency_mean, 5), precision=2)}"
+                if not math.isnan(latency_mean)
+                else "nan"
+            ),
+        )
+        col3.metric(
+            "Total Cost (USD)",
+            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
+        )
+        col4.metric(
+            "Total Tokens",
+            format_quantity(
+                sum(
+                    tokens
+                    for tokens in app_df.total_tokens
+                    if tokens is not None
+                ),
+                precision=2,
+            ),
+        )
 
-    apps = list(selected_rows.app_id.unique())
-    if col1.button("Examine Records", type="primary", key="examine"):
-        st.session_state["app_ids"] = apps
-        switch_page("Records")
-    if len(apps) >= 2:
-        if col2.button(
-            "Compare",
-            key="sxs",
-            args=(apps,),
-        ):
-            st.session_state["app_ids"] = apps[:2]
-            switch_page("compare")
+        for i, col_name in enumerate(app_feedback_col_names):
+            mean = app_df[col_name].mean()
+
+            st.write(
+                styles.stmetricdelta_hidearrow,
+                unsafe_allow_html=True,
+            )
+
+            higher_is_better = feedback_directions.get(col_name, True)
+
+            if "distance" in col_name:
+                feedback_cols[i].metric(
+                    label=col_name,
+                    value=f"{round(mean, 2)}",
+                    delta_color="normal",
+                )
+            else:
+                cat = CATEGORY.of_score(mean, higher_is_better=higher_is_better)
+                feedback_cols[i].metric(
+                    label=col_name,
+                    value=f"{round(mean, 2)}",
+                    delta=f"{cat.icon} {cat.adjective}",
+                    delta_color=(
+                        "normal"
+                        if cat.compare(
+                            mean, CATEGORY.PASS[cat.direction].threshold
+                        )
+                        else "inverse"
+                    ),
+                )
+
+        with col99:
+            if st.button("Select App", key=f"app-selector-{app}"):
+                st.session_state.app = app
+                switch_page("Evaluations")
+
+        # with st.expander("Model metadata"):
+        #    st.markdown(draw_metadata(metadata))
+
+        st.markdown("""---""")
 
 
 if __name__ == "__main__":
-    # If not imported, gets args from command line and creates Tru singleton
-    init_from_args()
     leaderboard()

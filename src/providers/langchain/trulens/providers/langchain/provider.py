@@ -62,13 +62,11 @@ class Langchain(LLMProvider):
         **kwargs,
     ) -> str:
         if prompt is not None:
-            predict = self.endpoint.chain.predict(prompt, **kwargs)
+            predict = self.endpoint.chain.invoke(prompt, **kwargs)
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.predict_messages(
-                messages, **kwargs
-            ).content
+            predict = self.endpoint.chain.invoke(messages, **kwargs).content
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

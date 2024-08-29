@@ -1,6 +1,7 @@
 import asyncio
 import json
 import pprint as pp
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,13 +12,13 @@ from st_aggrid.shared import GridUpdateMode
 from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
-from trulens.core.app.base import LLM
-from trulens.core.app.base import Agent
-from trulens.core.app.base import ComponentView
-from trulens.core.app.base import Other
-from trulens.core.app.base import Prompt
-from trulens.core.app.base import Tool
+from trulens.core import TruSession
+from trulens.core.app import LLM
+from trulens.core.app import Agent
+from trulens.core.app import ComponentView
+from trulens.core.app import Other
+from trulens.core.app import Prompt
+from trulens.core.app import Tool
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.core.schema.select import Select
 from trulens.core.utils.json import jsonify_for_ui
@@ -43,8 +44,8 @@ if __name__ == "__main__":
     # If not imported, gets args from command line and creates Tru singleton
     init_from_args()
 
-tru = Tru()
-lms = tru.db
+session = TruSession()
+lms = session.connector.db
 
 # TODO: remove code redundancy / redundant database calls
 feedback_directions = {
@@ -148,24 +149,51 @@ def extract_metadata(row: pd.Series) -> str:
     return str(record_data["meta"])
 
 
-apps = list(app["app_id"] for app in lms.get_apps())
+app_ids = list(app["app_id"] for app in lms.get_apps())
+
+
+def get_apps():
+    return list(lms.get_apps())
+
+
+apps = get_apps()
 
 if "app_ids" in st.session_state:
     app_ids = sorted(st.session_state["app_ids"])
 else:
-    app_ids = apps
+    app = app_ids
 
 st.query_params["app_ids"] = ",".join(app_ids)
 
-options = st.multiselect("Filter Applications", apps, default=app_ids)
+app_name_versions = list(
+    set(f"{app['app_name']} - {app['app_version']}" for app in apps)
+)
 
-df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
+if "app" in st.session_state:
+    selected_apps = st.session_state.app
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = list(
+        set(
+            f"{app['app_name']} - {app['app_version']}" for app in filtered_apps
+        )
+    )
+selected_app_name_versions = st.multiselect(
+    "Filter Apps", app_name_versions, default=app_name_versions
+)
 
-if len(options) == 0:
+selected_apps = [
+    app["app_id"]
+    for app in apps
+    if f"{app['app_name']} - {app['app_version']}" in selected_app_name_versions
+]
+
+df_results, feedback_cols = lms.get_records_and_feedback(app_ids=selected_apps)
+
+if len(selected_apps) == 0:
     st.header("All Applications")
 
-elif len(options) == 1:
-    st.header(options[0])
+elif len(selected_apps) == 1:
+    st.header(selected_app_name_versions[0])
 
 else:
     st.header("Multiple Applications Selected")
@@ -185,6 +213,38 @@ else:
         input_array = evaluations_df["input"].to_numpy()
         output_array = evaluations_df["output"].to_numpy()
 
+        # pull additional data from app_json into columns
+        evaluations_df["app_name"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_name"]
+        )
+        evaluations_df["app_version"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_version"]
+        )
+
+        metadata = json.loads(evaluations_df["app_json"][0])["metadata"]
+        metadata_cols = list(metadata.keys())
+        for key in metadata_cols:
+            evaluations_df[key] = evaluations_df["app_json"].apply(
+                lambda x: json.loads(x)["metadata"].get(key)
+            )
+
+        # Drop the original app_metadata column if it exists
+        if "app_metadata" in evaluations_df.columns:
+            evaluations_df.drop(columns=["app_metadata"], inplace=True)
+
+        # Reorder columns
+        columns = (
+            ["app_name", "app_version", "tags"]
+            + metadata_cols
+            + [
+                col
+                for col in evaluations_df.columns
+                if col
+                not in (["app_name", "app_version", "tags"] + metadata_cols)
+            ]
+        )
+        evaluations_df = evaluations_df[columns]
+
         decoded_input = np.vectorize(
             lambda x: x.encode("utf-8").decode("unicode-escape")
         )(input_array)
@@ -202,14 +262,16 @@ else:
 
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
-        gb.configure_column("type", header_name="App Type")
+        gb.configure_column("app_name", header_name="App Name")
+        gb.configure_column("app_version", header_name="App Version")
+        gb.configure_column("type", header_name="App Type", hide=True)
         gb.configure_column("record_json", header_name="Record JSON", hide=True)
         gb.configure_column("app_json", header_name="App JSON", hide=True)
         gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
         gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
 
         gb.configure_column("record_id", header_name="Record ID", hide=True)
-        gb.configure_column("app_id", header_name="App ID")
+        gb.configure_column("app_id", header_name="App ID", hide=True)
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
@@ -223,6 +285,8 @@ else:
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
         non_feedback_cols = [
+            "app_name",
+            "app_version",
             "app_id",
             "type",
             "ts",
@@ -238,7 +302,7 @@ else:
             "input",
             "output",
             "perf_json",
-        ]
+        ] + metadata_cols
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             if "distance" in feedback_col:
@@ -360,6 +424,20 @@ else:
                         )
                         return [f"background-color: {cat.color}"] * len(s)
 
+                    def highlight_groundedness(s):
+                        if "distance" in feedback_name:
+                            return [
+                                f"background-color: {CATEGORY.UNKNOWN.color}"
+                            ] * len(s)
+                        cat = CATEGORY.of_score(
+                            s.Score,
+                            higher_is_better=feedback_directions.get(
+                                feedback_name, default_direction
+                            )
+                            == default_direction,
+                        )
+                        return [f"background-color: {cat.color}"] * len(s)
+
                     if call is not None and len(call) > 0:
                         # NOTE(piotrm for garett): converting feedback
                         # function inputs to strings here as other
@@ -390,12 +468,74 @@ else:
                             df.meta.apply(lambda m: pd.Series(m))
                         ).drop(columns="meta")
 
-                        st.dataframe(
-                            df.style.apply(highlight, axis=1).format(
-                                "{:.2f}", subset=["result"]
+                        # note: improve conditional to not rely on the feedback name
+                        if "groundedness" in feedback_name.lower():
+                            try:
+                                # Split the reasons value into separate rows and columns
+                                reasons = df["reasons"].iloc[0]
+                                # Split the reasons into separate statements
+                                statements = reasons.split("STATEMENT")
+                                data = []
+                                # Each reason has three components: statement, supporting evidence, and score
+                                # Parse each reason into these components and add them to the data list
+                                for statement in statements[1:]:
+                                    try:
+                                        criteria = statement.split(
+                                            "Criteria: "
+                                        )[1].split("Supporting Evidence: ")[0]
+                                        supporting_evidence = statement.split(
+                                            "Supporting Evidence: "
+                                        )[1].split("Score: ")[0]
+                                        score_pattern = re.compile(
+                                            r"([0-9]+)(?=\D*$)"
+                                        )
+                                        score_split = statement.split(
+                                            "Score: "
+                                        )[1]
+                                        score_match = score_pattern.search(
+                                            score_split
+                                        )
+                                        if score_match:
+                                            score = (
+                                                float(score_match.group(1)) / 10
+                                            )
+                                    except Exception:
+                                        pass
+                                    data.append({
+                                        "Statement": criteria,
+                                        "Supporting Evidence from Source": supporting_evidence,
+                                        "Score": score,
+                                    })
+                                reasons_df = pd.DataFrame(data)
+                                # Combine the original feedback data with the expanded reasons
+                                df_expanded = pd.concat(
+                                    [
+                                        df.reset_index(drop=True),
+                                        reasons_df.reset_index(drop=True),
+                                    ],
+                                    axis=1,
+                                )
+                                st.dataframe(
+                                    df_expanded.style.apply(
+                                        highlight_groundedness, axis=1
+                                    ).format("{:.2f}", subset=["Score"]),
+                                    hide_index=True,
+                                    column_order=[
+                                        "Statement",
+                                        "Supporting Evidence from Source",
+                                        "Score",
+                                    ],
+                                )
+                            except Exception:
+                                st.dataframe(
+                                    df.style.apply(highlight, axis=1),
+                                    hide_index=True,
+                                )
+                        else:
+                            st.dataframe(
+                                df.style.apply(highlight, axis=1),
+                                hide_index=True,
                             )
-                        )
-
                     else:
                         st.text("No feedback details.")
 

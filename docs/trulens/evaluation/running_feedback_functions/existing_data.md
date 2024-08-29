@@ -14,7 +14,7 @@ feedback_result = provider.relevance("<some prompt>", "<some response>")
 In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using `tru.run_feedback_functions`:
 
 ```python
-tru_rag = TruCustomApp(rag, app_id = 'RAG v1')
+tru_rag = TruCustomApp(rag, app_name="RAG", app_version="v1")
 
 result, record = tru_rag.with_record(rag.query, "How many professors are at UW in Seattle?")
 feedback_results = tru.run_feedback_functions(record, feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
@@ -58,7 +58,7 @@ The parameters you'll use with `VirtualRecord` are the same as those for `Record
 In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.
 
 ```python
-from trulens.core.app.virtual import VirtualRecord
+from trulens.apps.virtual import VirtualRecord
 
 # The selector for a presumed context retrieval component's call to
 # `get_context`. The names are arbitrary but may be useful for readability on
@@ -152,10 +152,10 @@ f_context_relevance = (
 Then, the feedback functions can be passed to `TruVirtual` to construct the `recorder`. Most of the fields that other non-virtual apps take can also be specified here.
 
 ```python
-from trulens.core.app.virtual import TruVirtual
+from trulens.apps.virtual import TruVirtual
 
 virtual_recorder = TruVirtual(
-    app_id="a virtual app",
+    app_name="a virtual app",
     app=virtual_app,
     feedbacks=[f_context_relevance]
 )
@@ -180,7 +180,7 @@ virtual_app = dict(
 )
 
 from trulens.core.schema import Select
-from trulens.core.app import VirtualApp
+from trulens.apps.virtual import VirtualApp
 
 virtual_app = VirtualApp(virtual_app)
 ```

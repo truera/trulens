@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
-from trulens.core.app.custom import TruCustomApp
-from trulens.core.app.custom import instrument
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.custom import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 
@@ -47,7 +47,7 @@ class DummyAgent(Dummy):
         self.app = app
 
         if self.use_app:
-            self.tru_app = TruCustomApp(self.app, app_id=description)
+            self.tru_app = TruCustomApp(self.app, app_name=description)
 
         self.dummy_allocate()
 

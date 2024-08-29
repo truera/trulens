@@ -45,7 +45,7 @@ from trulens.core.utils import text as mod_text_utils
 from trulens.core.utils import threading as mod_threading_utils
 
 if TYPE_CHECKING:
-    from trulens.core import Tru
+    from trulens.core import TruSession
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -328,7 +328,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        tru: Tru,
+        session: TruSession,
         limit: Optional[int] = None,
         shuffle: bool = False,
         run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
@@ -351,16 +351,16 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
             run_location: Only run feedback functions with this run_location.
 
-        Constants that govern behaviour:
+        Constants that govern behavior:
 
-        - Tru.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
+        - TruSession.RETRY_RUNNING_SECONDS: How long to time before restarting a feedback
           that was started but never failed (or failed without recording that
           fact).
 
-        - Tru.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
+        - TruSession.RETRY_FAILED_SECONDS: How long to wait to retry a failed feedback.
         """
 
-        db = tru.db
+        db = session.connector.db
 
         def prepare_feedback(
             row,
@@ -383,7 +383,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             return feedback.run_and_log(
                 record=record,
                 app=app_json,
-                tru=tru,
+                session=session,
                 feedback_result_id=row.feedback_result_id,
             )
 
@@ -422,14 +422,14 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
                 futures.append((row, tp.submit(prepare_feedback, row)))
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.RUNNING:
-                if elapsed > tru.RETRY_RUNNING_SECONDS:
+                if elapsed > session.RETRY_RUNNING_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
                     pass
 
             elif row.status == mod_feedback_schema.FeedbackResultStatus.FAILED:
-                if elapsed > tru.RETRY_FAILED_SECONDS:
+                if elapsed > session.RETRY_FAILED_SECONDS:
                     futures.append((row, tp.submit(prepare_feedback, row)))
 
                 else:
@@ -633,7 +633,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
             ValueError: If a selector is invalid and warning is not set.
         """
 
-        from trulens.core.app.base import App
+        from trulens.core.app import App
 
         if source_data is None:
             source_data = {}
@@ -1025,13 +1025,13 @@ Feedback function signature:
     def run_and_log(
         self,
         record: mod_record_schema.Record,
-        tru: "Tru",
+        session: TruSession,
         app: Union[mod_app_schema.AppDefinition, mod_serial_utils.JSON] = None,
         feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
     ) -> Optional[mod_feedback_schema.FeedbackResult]:
         record_id = record.record_id
 
-        db = tru.db
+        db = session.connector.db
 
         # Placeholder result to indicate a run.
         feedback_result = mod_feedback_schema.FeedbackResult(
@@ -1226,8 +1226,23 @@ Feedback function signature:
 
 
 class SnowflakeFeedback(Feedback):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """Similar to the parent class Feedback except this ensures the feedback is run only on the Snowflake server."""
+
+    def __init__(
+        self,
+        imp: Optional[Callable] = None,
+        agg: Optional[Callable] = None,
+        **kwargs,
+    ):
+        if (
+            not hasattr(imp, "__self__")
+            or str(type(imp.__self__))
+            != "<class 'trulens.providers.cortex.provider.Cortex'>"
+        ):
+            raise ValueError(
+                "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!"
+            )
+        super().__init__(imp, agg, **kwargs)
         self.run_location = mod_feedback_schema.FeedbackRunLocation.SNOWFLAKE
 
 

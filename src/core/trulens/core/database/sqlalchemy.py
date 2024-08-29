@@ -43,7 +43,9 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
+from trulens.core.schema import dataset as mod_dataset_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import text
@@ -119,13 +121,15 @@ class SQLAlchemyDB(DB):
             )
 
     def _reload_engine(self):
-        self.engine = sa.create_engine(**self.engine_params)
+        if self.engine is None:
+            self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
     @classmethod
     def from_tru_args(
         cls,
         database_url: Optional[str] = None,
+        database_engine: Optional[sa.Engine] = None,
         database_file: Optional[str] = None,
         database_redact_keys: Optional[
             bool
@@ -133,7 +137,7 @@ class SQLAlchemyDB(DB):
         database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
-        """Process database-related configuration provided to the [Tru][trulens.core.tru.Tru] class to
+        """Process database-related configuration provided to the [Tru][trulens.core.session.TruSession] class to
         create a database.
 
         Emits warnings if appropriate.
@@ -165,10 +169,13 @@ class SQLAlchemyDB(DB):
         if "redact_keys" not in kwargs:
             kwargs["redact_keys"] = database_redact_keys
 
-        new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
+        if database_engine is not None:
+            new_db: DB = SQLAlchemyDB.from_db_engine(database_engine, **kwargs)
+        else:
+            new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s Tru initialized with db url %s ."
+            "%s TruSession initialized with db url %s ."
             % (text.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:
@@ -178,7 +185,7 @@ class SQLAlchemyDB(DB):
         else:
             print(
                 f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of `Tru` to prevent this."
+                "See the `database_redact_keys` option of `TruSession` to prevent this."
             )
 
         return new_db
@@ -201,7 +208,7 @@ class SQLAlchemyDB(DB):
         # Params are from
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
 
-        engine_params = {
+        default_engine_params = {
             "url": url,
             "pool_size": 10,
             "pool_recycle": 300,
@@ -210,10 +217,32 @@ class SQLAlchemyDB(DB):
 
         if not is_memory_sqlite(url=url):
             # These params cannot be given to memory-based sqlite engine.
-            engine_params["max_overflow"] = 2
-            engine_params["pool_use_lifo"] = True
+            default_engine_params["max_overflow"] = 2
+            default_engine_params["pool_use_lifo"] = True
 
-        return cls(engine_params=engine_params, **kwargs)
+        if "engine_params" in kwargs:
+            for k, v in default_engine_params.items():
+                if k not in kwargs["engine_params"]:
+                    kwargs["engine_params"][k] = v
+        else:
+            kwargs["engine_params"] = default_engine_params
+
+        return cls(**kwargs)
+
+    @classmethod
+    def from_db_engine(
+        cls, engine: sa.Engine, **kwargs: Dict[str, Any]
+    ) -> SQLAlchemyDB:
+        """
+        Create a database for the given engine.
+        Args:
+            engine: The database engine.
+            kwargs: Additional arguments to pass to the database constructor.
+        Returns:
+            A database instance.
+        """
+
+        return cls(engine=engine, **kwargs)
 
     def check_db_revision(self):
         """See
@@ -248,12 +277,12 @@ class SQLAlchemyDB(DB):
                     raise RuntimeError(
                         "Migrating legacy sqlite database is no longer supported. "
                         "A database reset is required. This will delete all existing data: "
-                        "`tru.reset_database()`."
+                        "`TruSession.reset_database()`."
                     ) from e
 
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `tru.migrate_database(backup_db_url="...")`)
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `TruSession.migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(
@@ -340,7 +369,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_record(
         self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
-        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
+        """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
@@ -400,7 +429,7 @@ class SQLAlchemyDB(DB):
         Args:
             app_id (schema.AppID): The unique identifier of the app to be deleted.
         """
-        with self.Session.begin() as session:
+        with self.session.begin() as session:
             _app = (
                 session.query(self.orm.AppDefinition)
                 .filter_by(app_id=app_id)
@@ -715,6 +744,145 @@ class SQLAlchemyDB(DB):
 
             return AppsExtractor().get_df_and_cols(records=records)
 
+    def insert_ground_truth(
+        self, ground_truth: mod_groundtruth_schema.GroundTruth
+    ) -> mod_types_schema.GroundTruthID:
+        """See [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
+
+        # TODO: thread safety
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth.ground_truth_id)
+                .first()
+            ):
+                # Update the existing record for idempotency
+                _ground_truth.ground_truth_json = ground_truth.model_dump_json()
+            else:
+                _ground_truth = self.orm.GroundTruth.parse(
+                    ground_truth, redact_keys=self.redact_keys
+                )
+
+                session.merge(_ground_truth)
+
+            logger.info(
+                f"{UNICODE_CHECK} added ground truth {_ground_truth.ground_truth_id}"
+            )
+
+            return _ground_truth.ground_truth_id
+
+    def batch_insert_ground_truth(
+        self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
+    ) -> List[mod_types_schema.GroundTruthID]:
+        """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
+        with self.session.begin() as session:
+            ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
+
+            # Fetch existing GroundTruth records that match these ids in one query
+            existing_ground_truths = (
+                session.query(self.orm.GroundTruth)
+                .filter(
+                    self.orm.GroundTruth.ground_truth_id.in_(ground_truth_ids)
+                )
+                .all()
+            )
+
+            existing_ground_truth_dict = {
+                gt.ground_truth_id: gt for gt in existing_ground_truths
+            }
+
+            ground_truths_to_insert = []
+            for ground_truth in ground_truths:
+                if ground_truth.ground_truth_id in existing_ground_truth_dict:
+                    existing_record = existing_ground_truth_dict[
+                        ground_truth.ground_truth_id
+                    ]
+                    # Update the existing record for idempotency
+                    existing_record.ground_truth_json = (
+                        ground_truth.model_dump_json()
+                    )
+                else:
+                    new_ground_truth = self.orm.GroundTruth.parse(
+                        ground_truth, redact_keys=self.redact_keys
+                    )
+                    ground_truths_to_insert.append(new_ground_truth)
+
+            session.bulk_save_objects(ground_truths_to_insert)
+            return [gt.ground_truth_id for gt in ground_truths]
+
+    def get_ground_truth(
+        self, ground_truth_id: str | None = None
+    ) -> Optional[JSONized]:
+        """See [DB.get_ground_truth][trulens.core.database.base.DB.get_ground_truth]."""
+
+        with self.session.begin() as session:
+            if (
+                _ground_truth := session.query(self.orm.GroundTruth)
+                .filter_by(ground_truth_id=ground_truth_id)
+                .first()
+            ):
+                return json.loads(_ground_truth)
+
+    def get_ground_truths_by_dataset(
+        self, dataset_name: str
+    ) -> pd.DataFrame | None:
+        """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
+        with self.session.begin() as session:
+            q = sa.select(self.orm.Dataset)
+            all_datasets = (row[0] for row in session.execute(q))
+            df = None
+            for dataset in all_datasets:
+                dataset_json = json.loads(dataset.dataset_json)
+                if (
+                    "name" in dataset_json
+                    and dataset_json["name"] == dataset_name
+                ):
+                    q = sa.select(self.orm.GroundTruth).filter_by(
+                        dataset_id=dataset.dataset_id
+                    )
+                    results = (row[0] for row in session.execute(q))
+
+                    if df is None:
+                        df = _extract_ground_truths(results)
+                    else:
+                        df = pd.concat([df, _extract_ground_truths(results)])
+            return df
+            # TODO: use a generator instead of a list? (for large datasets)
+
+    def insert_dataset(
+        self, dataset: mod_dataset_schema.Dataset
+    ) -> mod_types_schema.DatasetID:
+        """See [DB.insert_dataset][trulens.core.database.base.DB.insert_dataset]."""
+
+        with self.session.begin() as session:
+            if (
+                _dataset := session.query(self.orm.Dataset)
+                .filter_by(dataset_id=dataset.dataset_id)
+                .first()
+            ):
+                # Update the existing record for idempotency
+                _dataset.dataset_json = dataset.model_dump_json()
+            else:
+                _dataset = self.orm.Dataset.parse(
+                    dataset, redact_keys=self.redact_keys
+                )
+                session.merge(_dataset)
+
+            logger.info(f"{UNICODE_CHECK} added dataset {_dataset.dataset_id}")
+
+            return _dataset.dataset_id
+
+    def get_datasets(self) -> pd.DataFrame:
+        """See [DB.get_datasets][trulens.core.database.base.DB.get_datasets]."""
+
+        with self.session.begin() as session:
+            results = session.query(self.orm.Dataset)
+
+            return pd.DataFrame(
+                data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
+                columns=["dataset_id", "name", "meta"],
+            )
+
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
@@ -814,6 +982,36 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
         columns=["total_tokens", "total_cost"],
+    )
+
+
+def _extract_ground_truths(
+    results: Iterable["mod_orm.GroundTruth"],
+) -> pd.DataFrame:
+    def _extract(_result: "mod_orm.GroundTruth"):
+        ground_truth_json = json.loads(_result.ground_truth_json)
+
+        return (
+            _result.ground_truth_id,
+            _result.dataset_id,
+            ground_truth_json["query"],
+            ground_truth_json["query_id"],
+            ground_truth_json["expected_response"],
+            ground_truth_json["expected_chunks"],
+            ground_truth_json["meta"],
+        )
+
+    return pd.DataFrame(
+        data=(_extract(r) for r in results),
+        columns=[
+            "ground_truth_id",
+            "dataset_id",
+            "query",
+            "query_id",
+            "expected_response",
+            "expected_chunks",
+            "meta",
+        ],
     )
 
 
@@ -937,12 +1135,23 @@ class AppsExtractor:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
-
+            feedback_cost = {}
             try:
                 for _res in _rec.feedback_results:
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
+
+                    feedback_usage = json.loads(_res.cost_json)
+                    if "snowflake_credits_consumed" in feedback_usage:
+                        feedback_cost[
+                            _res.name + "_snowflake_credits_consumed"
+                        ] = feedback_usage["snowflake_credits_consumed"]
+                    elif "total_cost" in feedback_usage:
+                        feedback_cost[_res.name + "_total_cost"] = (
+                            feedback_usage["total_cost"]
+                        )
+
                     if (
                         _res.multi_result is not None
                         and (multi_result := json.loads(_res.multi_result))
@@ -964,6 +1173,7 @@ class AppsExtractor:
                 row = {
                     **{k: np.mean(v) for k, v in values.items()},
                     **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{k: v for k, v in feedback_cost.items()},
                 }
 
                 for col in self.rec_cols:

@@ -1,14 +1,14 @@
 import argparse
 import sys
 
+from trulens.core import TruSession
 from trulens.core.database import base as mod_db
-from trulens.core.tru import Tru
 
 
 def init_from_args():
     """Parse command line arguments and initialize Tru with them.
 
-    As Tru is a singleton, further Tru() uses will get the same configuration.
+    As Tru is a singleton, further TruSession() uses will get the same configuration.
     """
 
     parser = argparse.ArgumentParser()
@@ -27,4 +27,6 @@ def init_from_args():
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    Tru(database_url=args.database_url, database_prefix=args.database_prefix)
+    TruSession(
+        database_url=args.database_url, database_prefix=args.database_prefix
+    )

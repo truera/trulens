@@ -28,11 +28,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", extras = [
-  "snowflake",
-], allow-prereleases = true }
+trulens-core = { version = "^1.0.0", allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+# Remove after deprecation period:
+trulens_eval = { version = "^1.0.0", allow-prereleases = true }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -70,10 +70,10 @@ mkdocs-gen-files = "^0.5"
 mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
-[tool.poetry.group.instrument.dependencies]
-trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
-trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
-trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
+[tool.poetry.group.apps.dependencies]
+trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
+trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
+trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.12" }
 
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
@@ -83,13 +83,16 @@ trulens-providers-huggingface = { path = "src/providers/huggingface", develop = 
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 
+[tool.poetry.group.connectors.dependencies]
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+
 [tool.poetry.group.required.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { path = "src/core", extras = [
-  "snowflake",
-], develop = true }
+trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
+# Remove after deprecation period.
+trulens_eval = { path = "src/trulens_eval", develop = true, python = "!=3.9.7" }
 
 [tool.poetry.group.tests]
 optional = true
@@ -104,6 +107,7 @@ ruff = "^0.5"
 pre-commit = "^3.7"
 pytest-cov = "^5.0"
 frozendict = "^2.4"
+jsondiff = "^2.2"
 
 [tool.poetry.group.tests-optional]
 optional = true

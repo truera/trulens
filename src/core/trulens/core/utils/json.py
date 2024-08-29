@@ -24,11 +24,10 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
 from pydantic.v1.json import pydantic_encoder
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils.constants import ALL_SPECIAL_KEYS
 from trulens.core.utils.constants import CIRCLE
 from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.imports import REQUIREMENT_OPENAI
-from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.keys import redact_value
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import WithClassInfo
@@ -45,7 +44,11 @@ from trulens.core.utils.serial import SerialModel
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
 
-with OptionalImports(messages=REQUIREMENT_OPENAI):
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        ["openai", "httpx"], purpose="instrumenting apps with OpenAI components"
+    )
+):
     # httpx.URL and Timeout needed for openai client.
     import httpx
     from openai import Timeout
@@ -97,7 +100,7 @@ def _recursive_hash(
 # Add encoders for some types that pydantic cannot handle but we need.
 
 
-def obj_id_of_obj(obj: dict, prefix="obj"):
+def obj_id_of_obj(obj: Dict[Any, Any], prefix="obj"):
     """
     Create an id from a json-able structure/definition. Should produce the same
     name if definition stays the same.

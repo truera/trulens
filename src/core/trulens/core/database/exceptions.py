@@ -44,8 +44,8 @@ class DatabaseVersionException(Exception):
 
         return cls(
             "Database schema is behind the expected revision. "
-            "Please upgrade it by running `tru.migrate_database()` "
-            "or reset it by running `tru.reset_database()`.",
+            "Please upgrade it by running `TruSession.migrate_database()` "
+            "or reset it by running `TruSession.reset_database()`.",
             cls.Reason.BEHIND,
         )
 
@@ -59,8 +59,8 @@ class DatabaseVersionException(Exception):
         """
         return cls(
             "Database has been reconfigured. "
-            f'Please update it by running `tru.migrate_database(prior_prefix="{prior_prefix}")`'
-            " or reset it by running `tru.reset_database()`.",
+            f'Please update it by running `TruSession.migrate_database(prior_prefix="{prior_prefix}")`'
+            " or reset it by running `TruSession.reset_database()`.",
             cls.Reason.RECONFIGURED,
             prior_prefix=prior_prefix,
         )

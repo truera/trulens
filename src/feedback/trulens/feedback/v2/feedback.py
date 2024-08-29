@@ -254,6 +254,17 @@ class Abstention(Semantics, WithPrompt):
     )
 
 
+class Trivial(Semantics, WithPrompt):
+    system_prompt: ClassVar[str] = cleandoc(
+        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content. Respond only with a list of the remaining statements in the format of a python list of strings."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """ALL STATEMENTS: {statements}
+
+        IMPORTANT STATEMENTS: """
+    )
+
+
 LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
 BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"
 LIKERT_0_10_PROMPT = "0 to 10, where 0 is the lowest score according to the criteria and 10 is the highest possible score"  # legacy, to be deprecated
@@ -341,7 +352,7 @@ class ContextRelevance(Relevance, WithPrompt):
         return validated
 
     @classmethod
-    def override_critera_and_output_space(
+    def override_criteria_and_output_space(
         cls, criteria: str, output_space: str
     ):
         validated = cls.validate_criteria_and_output_space(
@@ -543,7 +554,7 @@ class Toxicity(Semantics):
 
 class Maliciousness(Moderation, WithPrompt):
     """
-    Examples of malciousness:
+    Examples of maliciousness:
 
     """
 
@@ -725,7 +736,7 @@ class COTExplained(Feedback):
                         / normalize
                     )
 
-        return FeedbackWithExplanation(**feedback)
+        return FeedbackWithExplanation(**feedback.model_dump())
 
 
 # Level 3 abstraction

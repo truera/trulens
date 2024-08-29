@@ -1,7 +1,6 @@
 """Import utilities for required and optional imports.
 
-Utilities for importing python modules and optional importing. This is some long
-line. Hopefully this wraps automatically.
+Utilities for importing python modules and optional importing.
 """
 
 import builtins
@@ -14,17 +13,28 @@ import logging
 from pathlib import Path
 from pprint import PrettyPrinter
 import sys
-from typing import Any, Dict, Iterable, Optional, Sequence, Type, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 
 from packaging import requirements
 from packaging import version
-from pip._internal.req import parse_requirements
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
 def safe_importlib_package_name(package_name: str) -> str:
+    """Convert a package name that may have periods in it to one that uses
+    hyphens for periods but only if the python version is old."""
+
     return (
         package_name
         if sys.version_info >= (3, 10)
@@ -32,19 +42,22 @@ def safe_importlib_package_name(package_name: str) -> str:
     )
 
 
-def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
+def _requirements_of_trulens_core_file(
+    path: str,
+) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
-    file."""
+    file in trulens.core."""
+    _trulens_resources = resources.files("trulens.core")
+    with resources.as_file(_trulens_resources / path) as _path:
+        with open(_path) as fh:
+            reqs = pkg_resources.parse_requirements(fh)
 
-    pip_reqs = parse_requirements(str(path), session=None)
+            mapping = {}
 
-    mapping = {}
+            for req in reqs:
+                mapping[req.name] = req
 
-    for pip_req in pip_reqs:
-        req = requirements.Requirement(pip_req.requirement)
-        mapping[req.name] = req
-
-    return mapping
+            return mapping
 
 
 def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
@@ -97,6 +110,12 @@ def get_package_version(name: str) -> Optional[version.Version]:
         return None
 
 
+def is_packaged_installed(name: str) -> bool:
+    """Check if a package is installed."""
+
+    return get_package_version(name) is not None
+
+
 MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = """Optional package %s is not installed. Related optional functionality will not
 be available.
 """
@@ -145,6 +164,78 @@ dependencies get installed and hopefully corrected:
     pip install trulens
     ```
 """
+
+required_packages: Dict[str, requirements.Requirement] = (
+    _requirements_of_trulens_core_file("utils/requirements.txt")
+)
+"""Mapping of required package names to the requirement object with info
+about that requirement including version constraints."""
+
+optional_packages: Dict[str, requirements.Requirement] = (
+    _requirements_of_trulens_core_file("utils/requirements.optional.txt")
+)
+"""Mapping of optional package names to the requirement object with info
+about that requirement including version constraints."""
+
+all_packages: Dict[str, requirements.Requirement] = {
+    **required_packages,
+    **optional_packages,
+}
+"""Mapping of optional and required package names to the requirement object
+with info about that requirement including version constraints."""
+
+
+class VersionConflict(Exception):
+    """Exception to raise when a version conflict is found in a required package."""
+
+
+def check_imports(ignore_version_mismatch: bool = False):
+    """Check required and optional package versions.
+    Args:
+        ignore_version_mismatch: If set, will not raise an error if a
+            version mismatch is found in a required package. Regardless of
+            this setting, mismatch in an optional package is a warning.
+    Raises:
+        VersionConflict: If a version mismatch is found in a required package
+            and `ignore_version_mismatch` is not set.
+    """
+
+    for n, req in all_packages.items():
+        is_optional = n in optional_packages
+
+        try:
+            dist = metadata.distribution(req.name)
+
+        except metadata.PackageNotFoundError as e:
+            if is_optional:
+                logger.debug(MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND, req.name)
+
+            else:
+                raise ModuleNotFoundError(
+                    MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND.format(req=req)
+                ) from e
+
+        if dist.version not in req.specifier:
+            message = MESSAGE_FRAGMENT_VERSION_MISMATCH.format(
+                req=req, dist=dist
+            )
+
+            if is_optional:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_OPTIONAL.format(
+                    req=req
+                )
+
+            else:
+                message += MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED.format(
+                    req=req
+                )
+
+            message += MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP.format(req=req)
+
+            if (not is_optional) and (not ignore_version_mismatch):
+                raise VersionConflict(message)
+
+            logger.debug(message)
 
 
 def pin_spec(r: requirements.Requirement) -> requirements.Requirement:
@@ -196,6 +287,14 @@ def format_import_errors(
     requirements = []
     requirements_pinned = []
 
+    for pkg in packages:
+        if pkg in all_packages:
+            requirements.append(str(all_packages[pkg]))
+            requirements_pinned.append(str(pin_spec(all_packages[pkg])))
+        else:
+            logger.warning("Package %s not present in requirements.", pkg)
+            requirements.append(pkg)
+
     packs = ",".join(packages)
     pack_s = "package" if len(packages) == 1 else "packages"
     is_are = "is" if len(packages) == 1 else "are"
@@ -238,19 +337,17 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
-REQUIREMENT_OPENAI = format_import_errors(
-    ["openai", "langchain_community"], purpose="using OpenAI models"
-)
+def is_dummy(obj: Any) -> bool:
+    """Check if the given object is an instance of `Dummy`.
 
-REQUIREMENT_SNOWFLAKE = format_import_errors(
-    [
-        "snowflake-core",
-        "snowflake-connector-python",
-        "snowflake-snowpark-python",
-        "snowflake-sqlalchemy",
-    ],
-    purpose="connecting to Snowflake",
-)
+    This is necessary as `isisintance` and `issubclass` checks might fail if the
+    ones defined in `Dummy` get used; they always return `False` by design.
+    """
+
+    return obj.__class__.__name__ == "Dummy" and obj.__module__ in [
+        "trulens.core.utils.imports",
+        "trulens_eval.utils.imports",
+    ]
 
 
 # Try to pretend to be a type as well as an instance.
@@ -317,6 +414,11 @@ class Dummy(type):
                 "original_exception", None
             )
 
+        # For easier checking that an instance is Dummy. If may be hard to check
+        # for dummy if comparing against something that does not come with its
+        # own __isinstance__ as the one we include here always returns False.
+        self.__dummy__ = True
+
         self.name = name
         self.message = message
         self.importer = importer
@@ -364,6 +466,9 @@ class Dummy(type):
     def __getattr__(self, name):
         # If in OptionalImport context, create a new dummy for the requested attribute. Otherwise
         # raise error.
+
+        if name == "__dummy__":
+            return True
 
         # Pretend to be object for generic attributes.
         if hasattr(object, name):

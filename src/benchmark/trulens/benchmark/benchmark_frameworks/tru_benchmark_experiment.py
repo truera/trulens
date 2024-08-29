@@ -4,10 +4,10 @@ import logging
 from typing import Callable, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
+from trulens.apps.custom import TruCustomApp
+from trulens.apps.custom import instrument
 from trulens.core import Feedback
 from trulens.core import Select
-from trulens.core.app import TruCustomApp
-from trulens.core.app.custom import instrument
 from trulens.core.feedback.feedback import AggCallable
 from trulens.core.utils.pyschema import FunctionOrMethod
 
@@ -27,7 +27,18 @@ class TruBenchmarkExperiment:
     """
     Example usage:
 
-    cortex = Cortex(model_engine="snowflake-arctic")
+    snowflake_connection_parameters = {
+        "account": os.environ["SNOWFLAKE_ACCOUNT"],
+        "user": os.environ["SNOWFLAKE_USER"],
+        "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+        "database": os.environ["SNOWFLAKE_DATABASE"],
+        "schema": os.environ["SNOWFLAKE_SCHEMA"],
+        "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+    }
+    cortex = Cortex(
+        snowflake.connector.connect(**snowflake_connection_parameters)
+        model_engine="snowflake-arctic",
+    )
 
     def context_relevance_ff_to_score(input, output, temperature=0):
         return cortex.context_relevance(question=input, context=output, temperature=temperature)
@@ -36,8 +47,8 @@ class TruBenchmarkExperiment:
     tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
     mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
 
-    tru_benchmark_artic = tru.BenchmarkExperiment(
-        app_id="MAE",
+    tru_benchmark_artic = session.BenchmarkExperiment(
+        app_name="MAE",
         feedback_fn=context_relevance_ff_to_score,
         agg_funcs=[mae_agg_func],
         benchmark_params=BenchmarkParams(temperature=0.5),
@@ -71,9 +82,6 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
-    def load_beir_dataset(self, *args, **kwargs):
-        pass  # TODO
-
     @instrument
     def run_score_generation_on_single_row(
         self, row, feedback_fn: Callable
@@ -88,7 +96,9 @@ class TruBenchmarkExperiment:
 
         # TODO: better define the shape of arguments of feedback_fn after GT database schema is finalized
 
-        ret = feedback_fn(row["query"], row["response"], benchmark_params_dict)
+        ret = feedback_fn(
+            row["query"], row["expected_response"], benchmark_params_dict
+        )
 
         if not isinstance(ret, tuple) and not isinstance(ret, float):
             raise ValueError(
@@ -154,12 +164,16 @@ class TruBenchmarkExperiment:
 
 @staticmethod
 def create_benchmark_experiment_app(
-    app_id: str, benchmark_experiment: TruBenchmarkExperiment, **kwargs
+    app_name: str,
+    app_version: str,
+    benchmark_experiment: TruBenchmarkExperiment,
+    **kwargs,
 ) -> TruCustomApp:
     """Create a Custom app for special use case: benchmarking feedback functions.
 
     Args:
-        app_id (str): user-defined identifier of the experiment run.
+        app_name (str): user-defined name of the experiment run.
+        app_version (str): user-defined version of the experiment run.
         feedback_fn (Callable): feedback function of interest to perform meta-evaluation on.
         agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
         benchmark_params (Any): parameters for the benchmarking experiment.
@@ -170,7 +184,8 @@ def create_benchmark_experiment_app(
 
     return TruCustomApp(
         benchmark_experiment,
-        app_id=app_id,
+        app_name=app_name,
+        app_version=app_version,
         feedbacks=benchmark_experiment.f_benchmark_metrics,
         **kwargs,
     )

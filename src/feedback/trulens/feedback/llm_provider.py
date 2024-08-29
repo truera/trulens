@@ -9,6 +9,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
 from trulens.core.feedback.provider import Provider
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.feedback import prompts
 from trulens.feedback.generated import re_configured_rating
 from trulens.feedback.v2.feedback import ContextRelevance
@@ -128,7 +129,7 @@ class LLMProvider(Provider):
         Base method to generate a score normalized to 0 to 1, used for evaluation.
 
         Args:
-            system_prompt: A pre-formatted system prompt.
+            verb_confidence_prompt: A pre-formatted system prompt.
 
             user_prompt: An optional user prompt.
 
@@ -155,7 +156,6 @@ class LLMProvider(Provider):
             messages=llm_messages,
             temperature=temperature,
         )
-        # print(f'Relevance score and Confidence score: {response}')
         relevance_score = re.search(r"\d+", response)
 
         confidence_score = re.search(
@@ -326,7 +326,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance)
@@ -351,7 +351,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -384,7 +384,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.langchain import TruChain
+            from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -418,7 +418,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -447,7 +447,7 @@ class LLMProvider(Provider):
         Example:
 
             ```python
-            from trulens.instrument.llamaindex import TruLlama
+            from trulens.apps.llamaindex import TruLlama
             context = TruLlama.select_context(llamaindex_rag_app)
             feedback = (
                 Feedback(provider.context_relevance_with_cot_reasons)
@@ -474,7 +474,7 @@ class LLMProvider(Provider):
         )
 
         if criteria and output_space:
-            ContextRelevance.override_critera_and_output_space(
+            ContextRelevance.override_criteria_and_output_space(
                 criteria, output_space
             )
 
@@ -892,7 +892,7 @@ class LLMProvider(Provider):
 
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
         """
-        Uses chat compoletion model. A function that completes a
+        Uses chat completion model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to LangChain Eval.
         Also uses chain of thought methodology and emits the reasons.
 
@@ -1192,7 +1192,7 @@ class LLMProvider(Provider):
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
-                prompts.COMPOREHENSIVENESS_USER_PROMPT,
+                prompts.COMPREHENSIVENESS_USER_PROMPT,
                 key_point=key_point,
                 summary=summary,
             )
@@ -1314,14 +1314,43 @@ class LLMProvider(Provider):
 
         return self.generate_score_and_reasons(system_prompt, user_prompt)
 
+    def _remove_trivial_statements(self, statements: List[str]) -> List[str]:
+        """
+        Removes trivial statements from a list of statements.
+
+        Args:
+            statements (List[str]): A list of statements.
+
+        Returns:
+            List[str]: A list of statements with trivial statements removed.
+        """
+
+        system_prompt = prompts.LLM_TRIVIAL_SYSTEM
+
+        user_prompt = prompts.LLM_TRIVIAL_USER.format(
+            statements=str(statements)
+        )
+
+        llm_messages = [{"role": "system", "content": system_prompt}]
+        llm_messages.append({"role": "user", "content": user_prompt})
+
+        return eval(
+            self.endpoint.run_in_pace(
+                func=self._create_chat_completion, messages=llm_messages
+            )
+        )
+
     def groundedness_measure_with_cot_reasons(
         self, source: str, statement: str
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons.
+        The statement will first be split by a tokenizer into its component sentences.
+
+        Then, trivial statements are eliminated so as to not dilute the evaluation.
+
+        The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
         Abstentions will be considered as grounded.
 
@@ -1339,6 +1368,29 @@ class LLMProvider(Provider):
                 .on_output()
                 )
             ```
+
+        To further explain how the function works under the hood, consider the statement:
+
+        "Hi. I'm here to help. The university of Washington is a public research university. UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        The function will split the statement into its component sentences:
+
+        1. "Hi."
+        2. "I'm here to help."
+        3. "The university of Washington is a public research university."
+        4. "UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        Next, trivial statements are removed, leaving only:
+
+        3. "The university of Washington is a public research university."
+        4. "UW's connections to major corporations in Seattle contribute to its reputation as a hub for innovation and technology"
+
+        The LLM will then process the statement, to assess the groundedness of the statement.
+
+        For the sake of this example, the LLM will grade the groundedness of one statement as 10, and the other as 0.
+
+        Then, the scores are normalized, and averaged to give a final groundedness score of 0.5.
+
         Args:
             source: The source that should support the statement.
             statement: The statement to check groundedness.
@@ -1346,11 +1398,17 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
         hypotheses = sent_tokenize(statement)
+        try:
+            hypotheses = self._remove_trivial_statements(hypotheses)
+        except Exception as e:
+            logger.error(
+                f"Error removing trivial statements: {e}. Proceeding with all statements."
+            )
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 
@@ -1392,16 +1450,33 @@ class LLMProvider(Provider):
 
         return average_groundedness_score, {"reasons": reasons_str}
 
+    @deprecation_utils.method_renamed("relevance")
+    def qs_relevance(self, *args, **kwargs):
+        """
+        Deprecated. Use `relevance` instead.
+        """
+        return self.relevance(*args, **kwargs)
+
+    @deprecation_utils.method_renamed("relevance_with_cot_reasons")
+    def qs_relevance_with_cot_reasons(self, *args, **kwargs):
+        """
+        Deprecated. Use `relevance_with_cot_reasons` instead.
+        """
+        return self.relevance_with_cot_reasons(*args, **kwargs)
+
     def groundedness_measure_with_cot_reasons_consider_answerability(
         self, source: str, statement: str, question: str
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
 
-        The LLM will process the entire statement at once, using chain of
-        thought methodology to emit the reasons.
+        The statement will first be split by a tokenizer into its component sentences.
 
-        In the case of abstentions, the LLM will be asked to consider the answerability of the question given the source material.
+        Then, trivial statements are eliminated so as to not delete the evaluation.
+
+        The LLM will process each statement, using chain of thought methodology to emit the reasons.
+
+        In the case of abstentions, such as 'I do not know', the LLM will be asked to consider the answerability of the question given the source material.
 
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
@@ -1420,6 +1495,7 @@ class LLMProvider(Provider):
                 .on_input()
                 )
             ```
+
         Args:
             source: The source that should support the statement.
             statement: The statement to check groundedness.
@@ -1428,7 +1504,7 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
         reasons_str = ""
 
@@ -1451,6 +1527,8 @@ class LLMProvider(Provider):
             return score
 
         hypotheses = sent_tokenize(statement)
+
+        hypotheses = self._remove_trivial_statements(hypotheses)
 
         system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
 

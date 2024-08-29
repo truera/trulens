@@ -4,20 +4,19 @@ issues that occur from merely importing trulens.
 """
 
 import importlib
-from pathlib import Path
-import pkgutil
 import sys
 from unittest import TestCase
 from unittest import main
 from unittest import skipIf
 
-import trulens.core
+import trulens
 from trulens.core.instruments import Instrument
 from trulens.core.utils.imports import Dummy
 
 from tests.test import module_installed
 from tests.test import optional_test
 from tests.test import requiredonly_test
+from tests.utils import get_submodule_names
 
 # Importing any of these should throw ImportError (or its subclass
 # ModuleNotFoundError) if optional packages are not installed. The key is the
@@ -29,9 +28,9 @@ from tests.test import requiredonly_test
 
 optional_mods = dict(
     llama_index=[
-        "trulens.instrument.llamaindex.tru_llama",
-        "trulens.instrument.llamaindex.llama",
-        "trulens.instrument.llamaindex.guardrails",
+        "trulens.apps.llamaindex.tru_llama",
+        "trulens.apps.llamaindex.llama",
+        "trulens.apps.llamaindex.guardrails",
     ],
     boto3=[
         "trulens.providers.bedrock.provider",
@@ -49,7 +48,7 @@ optional_mods = dict(
 
 # snowflake (snowflake-snowpark-python) is not yet supported in python 3.12
 if sys.version_info < (3, 12):
-    optional_mods["nemoguardrails"] = ["trulens.instrument.nemo"]
+    optional_mods["nemoguardrails"] = ["trulens.apps.nemo"]
 else:
     assert not module_installed(
         "snowflake-snowpark-python"
@@ -63,32 +62,8 @@ optional_mods_flat = [mod for mods in optional_mods.values() for mod in mods]
 # Every module not mentioned above should be importable without any optional
 # packages.
 
-
-def get_all_modules(path: Path, startswith=None):
-    ret = []
-    for modinfo in pkgutil.iter_modules([str(path)]):
-        if startswith is not None and not modinfo.name.startswith(startswith):
-            continue
-
-        ret.append(modinfo.name)
-        if modinfo.ispkg:
-            for submod in get_all_modules(path / modinfo.name, startswith=None):
-                submodqualname = modinfo.name + "." + submod
-
-                if startswith is not None and not submodqualname.startswith(
-                    startswith
-                ):
-                    continue
-
-                ret.append(modinfo.name + "." + submod)
-
-    return ret
-
-
-# Get all modules inside trulens:
-all_trulens_mods = get_all_modules(
-    Path(trulens.core.__file__).parent.parent, startswith="trulens"
-)
+# Get all modules inside trulens_eval:
+all_trulens_mods = list(get_submodule_names(trulens))
 
 # Things which should not be imported at all.
 not_mods = [
@@ -108,6 +83,9 @@ base_mods = [
 
 
 class TestStatic(TestCase):
+    """Static tests, those that are not expected to execute real code other than
+    code involved in loading and executing modules."""
+
     def setUp(self):
         pass
 
@@ -160,7 +138,7 @@ class TestStatic(TestCase):
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
-        from trulens.instrument.langchain import LangChainInstrument
+        from trulens.apps.langchain import LangChainInstrument
 
         self._test_instrumentation(LangChainInstrument())
 
@@ -168,7 +146,7 @@ class TestStatic(TestCase):
     def test_instrumentation_llama_index(self) -> None:
         """Check that the llama_index instrumentation is up to date."""
 
-        from trulens.instrument.llamaindex import LlamaInstrument
+        from trulens.apps.llamaindex import LlamaInstrument
 
         self._test_instrumentation(LlamaInstrument())
 
@@ -178,7 +156,7 @@ class TestStatic(TestCase):
     @optional_test
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
-        from trulens.instrument.nemo import RailsInstrument
+        from trulens.apps.nemo import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
 

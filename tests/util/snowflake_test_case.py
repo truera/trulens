@@ -4,19 +4,22 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
+from typing import Dict
 from unittest import TestCase
 from unittest import main
 import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from trulens.core import Tru
+from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.core import TruSession
 
 
 class SnowflakeTestCase(TestCase):
     def setUp(self):
         self._logger = logging.getLogger(__name__)
-        self._snowflake_connection_parameters = {
+        self._database = os.environ["SNOWFLAKE_DATABASE"]
+        self._snowflake_connection_parameters: Dict[str, str] = {
             "account": os.environ["SNOWFLAKE_ACCOUNT"],
             "user": os.environ["SNOWFLAKE_USER"],
             "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
@@ -31,9 +34,11 @@ class SnowflakeTestCase(TestCase):
         self._snowflake_schemas_to_delete = []
 
     def tearDown(self):
-        # [HACK!] Clean up any instances of `Tru` so tests don't interfere with each other.
-        for key in [curr for curr in Tru._instances if curr[0] == "Tru"]:
-            del Tru._instances[key]
+        # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
+        for key in [
+            curr for curr in TruSession._instances if curr[0] == "TruSession"
+        ]:
+            del TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -45,10 +50,12 @@ class SnowflakeTestCase(TestCase):
             except Exception:
                 schemas_not_deleted.append(curr)
                 self._logger.error(f"Failed to clean up schema {curr}!")
+        # Check if any artifacts weren't deleted.
         if schemas_not_deleted:
             error_msg = "Failed to clean up the following schemas:\n"
             error_msg += "\n".join(schemas_not_deleted)
             raise ValueError(error_msg)
+        # Close session.
         self._snowflake_session.close()
 
     def list_schemas(self):
@@ -57,19 +64,27 @@ class SnowflakeTestCase(TestCase):
         ].schemas.iter()
         return [curr.name for curr in schemas]
 
-    def get_tru(self, app_base_name: str) -> Tru:
+    def get_snowpark_session_with_schema(self, schema: str) -> Session:
+        snowflake_connection_parameters = (
+            self._snowflake_connection_parameters.copy()
+        )
+        snowflake_connection_parameters["schema"] = schema
+        return Session.builder.configs(snowflake_connection_parameters).create()
+
+    def get_session(self, app_base_name: str) -> TruSession:
         app_name = app_base_name
         app_name += "__"
         app_name += str(uuid.uuid4()).replace("-", "_")
-        schema_name = Tru._validate_and_compute_schema_name(app_name)
-        self.assertNotIn(schema_name, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(schema_name)
-        tru = Tru(
-            snowflake_connection_parameters=self._snowflake_connection_parameters,
-            app_name=app_name,
+        self._schema = app_name.upper()
+        self.assertNotIn(self._schema, self.list_schemas())
+        self._snowflake_schemas_to_delete.append(self._schema)
+        connector = SnowflakeConnector(
+            schema=self._schema,
+            **self._snowflake_connection_parameters,
         )
-        self.assertIn(schema_name, self.list_schemas())
-        return tru
+        session = TruSession(connector=connector)
+        self.assertIn(self._schema, self.list_schemas())
+        return session
 
 
 if __name__ == "__main__":

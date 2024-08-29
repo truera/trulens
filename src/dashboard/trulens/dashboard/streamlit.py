@@ -6,17 +6,17 @@ from typing import List
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import Tru
+from trulens.core import TruSession
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
-from trulens.core.utils.trulens import get_feedback_result
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
 from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata
+from trulens.dashboard.ux.components import draw_metadata_and_tags
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -44,9 +44,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
         trulens_st.trulens_leaderboard()
         ```
     """
-    tru = Tru()
+    session = TruSession()
 
-    lms = tru.db
+    lms = session.connector.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
@@ -66,17 +66,29 @@ def trulens_leaderboard(app_ids: List[str] = None):
     if df.empty:
         st.write("No records yet...")
 
-    if app_ids is None:
-        app_ids = list(df.app_id.unique())
+    def get_data():
+        return lms.get_records_and_feedback([])
 
-    for app_id in app_ids:
-        app_df = df.loc[df.app_id == app_id]
+    def get_apps():
+        return list(lms.get_apps())
+
+    records, feedback_col_names = get_data()
+    records = records.sort_values(by="app_id")
+
+    apps = get_apps()
+
+    for app in apps:
+        app_df = records.loc[records.app_id == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
+        app_name = app_json["app_name"]
+        app_version = app_json["app_version"]
+        app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
-        st.header(app_id, help=draw_metadata(metadata))
+        tags = app_json.get("tags")
+        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -152,7 +164,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.fragment(run_every=2)
+@st.experimental_fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
     Render clickable feedback pills for a given record.
@@ -232,6 +244,6 @@ def trulens_trace(record: Record):
         ```
     """
 
-    tru = Tru()
-    app = tru.get_app(app_id=record.app_id)
+    session = TruSession()
+    app = session.get_app(app_id=record.app_id)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)

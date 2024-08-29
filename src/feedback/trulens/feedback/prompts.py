@@ -35,6 +35,8 @@ LLM_ANSWERABILITY_USER = v2.Answerability.user_prompt
 LLM_ABSTENTION_SYSTEM = v2.Abstention.system_prompt
 LLM_ABSTENTION_USER = v2.Abstention.user_prompt
 
+LLM_TRIVIAL_SYSTEM = v2.Trivial.system_prompt
+LLM_TRIVIAL_USER = v2.Trivial.user_prompt
 
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt
@@ -162,7 +164,7 @@ Key Point: <Mention the key point from the source text being evaluated>
 Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
 """
 
-COMPOREHENSIVENESS_USER_PROMPT = """
+COMPREHENSIVENESS_USER_PROMPT = """
 /KEY POINT/
 {key_point}
 /END OF KEY POINT/

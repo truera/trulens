@@ -2,6 +2,7 @@ import logging
 from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import pydantic
 import scipy.stats as stats
 from sklearn.metrics import ndcg_score
@@ -11,7 +12,7 @@ from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
-from trulens.feedback.generated import re_configured_rating
+from trulens.feedback.generated import re_0_10_rating
 from trulens.feedback.llm_provider import LLMProvider
 
 with OptionalImports(
@@ -33,7 +34,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     Measures Agreement against a Ground Truth.
     """
 
-    ground_truth: Union[List[Dict], FunctionOrMethod]
+    ground_truth: Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]
     provider: LLMProvider
 
     # Note: the bert scorer object isn't serializable
@@ -46,7 +47,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
     def __init__(
         self,
-        ground_truth: Union[List, Callable, FunctionOrMethod],
+        ground_truth: Union[
+            List[Dict], Callable, pd.DataFrame, FunctionOrMethod
+        ],
         provider: LLMProvider,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
@@ -58,26 +61,50 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         from trulens.feedback import GroundTruthAgreement
         from trulens.providers.openai import OpenAI
         golden_set = [
-            {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+            {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+            {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
         ]
         ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
         ```
 
         Usage 2:
+        from trulens.feedback import GroundTruthAgreement
+        from trulens.providers.openai import OpenAI
+
+        session = TruSession()
+        ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
+
+        ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+
+        Usage 3:
         ```
         from trulens.feedback import GroundTruthAgreement
         from trulens.providers.cortex import Cortex
         ground_truth_imp = llm_app
         response = llm_app(prompt)
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        ground_truth_collection = GroundTruthAgreement(
+            ground_truth_imp,
+            provider=Cortex(
+                snowflake.connector.connect(**snowflake_connection_parameters),
+                model_engine="mistral-7b",
+            ),
+        )
         ```
 
         Args:
-            ground_truth (Union[Callable, FunctionOrMethod]): A list of query/response pairs or a function or callable that returns a ground truth string given a prompt string.
-            provider (LLMProvider): The provider to use for agreement measures.
-            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+            ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
+                or callable that returns a ground truth string given a prompt string.
+                provider (LLMProvider): The provider to use for agreement measures.
+                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
 
         """
         if isinstance(ground_truth, List):
@@ -87,6 +114,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         elif isinstance(ground_truth, Callable):
             ground_truth_imp = ground_truth
             ground_truth = FunctionOrMethod.of_callable(ground_truth)
+        elif isinstance(ground_truth, pd.DataFrame):
+            ground_truth_df = ground_truth
+            ground_truth = []
+            for _, row in ground_truth_df.iterrows():
+                entry = row.to_dict()
+                ground_truth.append(entry)
+            ground_truth_imp = None
         elif isinstance(ground_truth, Dict):
             # Serialized FunctionOrMethod?
             ground_truth = FunctionOrMethod.model_validate(ground_truth)
@@ -109,7 +143,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             return self.ground_truth_imp(prompt)
 
         responses = [
-            qr["response"] for qr in self.ground_truth if qr["query"] == prompt
+            qr["expected_response"]
+            for qr in self.ground_truth
+            if qr["query"] == prompt
         ]
         if responses:
             return responses[0]
@@ -123,7 +159,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         responses = [
             qr["expected_score"]
             for qr in self.ground_truth
-            if qr["query"] == prompt and qr["response"] == response
+            if qr["query"] == prompt and qr["expected_response"] == response
         ]
         if responses:
             return responses[0]
@@ -150,8 +186,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             from trulens.providers.openai import OpenAI
 
             golden_set = [
-                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
@@ -174,10 +210,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_configured_rating(
-                    agreement_txt, min_score_val=0, max_score_val=3
-                )
-                / 3,
+                re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:
@@ -201,8 +234,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             from trulens.providers.bedrock import Bedrock
 
             golden_set =
-            {"query": "How many stomachs does a cow have?", "response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
-            {"query": "Name some top dental floss brands", "response": "I don't know", "expected_score": 0.8}
+            {"query": "How many stomachs does a cow have?", "expected_response": "Cows' diet relies primarily on grazing.", "expected_score": 0.4},
+            {"query": "Name some top dental floss brands", "expected_response": "I don't know", "expected_score": 0.8}
             ]
 
             bedrock = Bedrock(
@@ -239,8 +272,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.openai import OpenAI
             golden_set = [
-                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
@@ -289,8 +322,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.openai import OpenAI
             golden_set = [
-                {"query": "who invented the lightbulb?", "response": "Thomas Edison"},
-                {"query": "¿quien invento la bombilla?", "response": "Thomas Edison"}
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
             ]
             ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
 
@@ -354,6 +387,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         return ret
 
+    @property
+    def mae(self):
+        raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
+
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(
@@ -394,8 +431,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         Args:
             scores (List[float]): relevance scores returned by feedback function
-
-            k (int): top k results to consider
 
         Returns:
             float: NDCG@k

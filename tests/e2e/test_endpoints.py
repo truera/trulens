@@ -10,6 +10,7 @@ from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
 
+import snowflake.connector
 from trulens.core.feedback import Endpoint
 from trulens.core.utils.keys import check_keys
 
@@ -75,6 +76,22 @@ class TestEndpoints(TestCase):
 
         if with_cost:
             self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
+
+        if (
+            str(type(provider.__self__))
+            == "<class 'trulens.providers.cortex.provider.Cortex'>"
+        ):
+            self.assertGreater(
+                cost.snowflake_credits_consumed,
+                0.0,
+                "Expected non-zero snowflake credits consumed.",
+            )
+
+            self.assertGreater(
+                cost.n_cortext_guardrails_tokens,
+                0.0,
+                "Expected non-zero cortex guardrails tokens.",
+            )
 
     @optional_test
     def test_hugs(self):
@@ -217,7 +234,18 @@ class TestEndpoints(TestCase):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
         from trulens.providers.cortex import Cortex
 
-        provider = Cortex(model_engine="snowflake-arctic")
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        provider = Cortex(
+            snowflake.connector.connect(**snowflake_connection_parameters),
+            model_engine="snowflake-arctic",
+        )
 
         self._test_llm_provider_endpoint(provider)
 

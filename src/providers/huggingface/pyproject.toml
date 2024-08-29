@@ -32,7 +32,7 @@ trulens-core = { version = "^1.0.0", allow-prereleases = true }
 trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
 requests = "^2.31"
 numpy = ">=1.23"
-nltk = "^3.8"
+nltk = "^3.9.1"
 # HuggingfaceLocal dependencies
 torch = "^2.1.2"
 transformers = "^4.38.1"

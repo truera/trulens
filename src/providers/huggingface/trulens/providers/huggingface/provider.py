@@ -23,11 +23,11 @@ from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
-from trulens.core.feedback.dummy.endpoint import DummyEndpoint
 from trulens.core.utils.python import Future
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import prompts
+from trulens.feedback.dummy.endpoint import DummyEndpoint
 from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
 
 logger = logging.getLogger(__name__)
@@ -219,7 +219,7 @@ class HuggingfaceBase(Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a string containing the reasons for the evaluation.
         """
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         groundedness_scores = {}
 
         reasons_str = ""

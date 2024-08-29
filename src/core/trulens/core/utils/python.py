@@ -37,6 +37,24 @@ T = TypeVar("T")
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
 
+if sys.version_info >= (3, 11):
+    getmembers_static = inspect.getmembers_static
+else:
+
+    def getmembers_static(obj, predicate=None):
+        """Implementation of inspect.getmembers_static for python < 3.11."""
+
+        if predicate is None:
+            predicate = lambda name, value: True
+
+        return [
+            (name, value)
+            for name in dir(obj)
+            if hasattr(obj, name)
+            and predicate(name, value := getattr(obj, name))
+        ]
+
+
 if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
@@ -137,6 +155,12 @@ def module_name(obj: Union[ModuleType, Type, Any]) -> str:
 
 def callable_name(c: Callable):
     """Get the name of the given callable."""
+
+    if isinstance(c, staticmethod):
+        return callable_name(c.__func__)
+
+    if isinstance(c, classmethod):
+        return callable_name(c.__func__)
 
     if not isinstance(c, Callable):
         raise ValueError(
@@ -373,6 +397,22 @@ def superstack() -> Iterator[FrameType]:
             continue
 
     return
+
+
+def caller_module_name(offset=0) -> str:
+    """
+    Get the caller's (of this function) module name.
+    """
+
+    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+
+
+def caller_module(offset=0) -> ModuleType:
+    """
+    Get the caller's (of this function) module.
+    """
+
+    return sys.modules[caller_module_name(offset=offset + 1)]
 
 
 def caller_frame(offset=0) -> FrameType:

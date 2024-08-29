@@ -16,7 +16,7 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.utils.pyschema import FunctionOrMethod
 
-sql_alchemy_migration_versions: List[int] = [1, 2]
+sql_alchemy_migration_versions: List[int] = [1, 2, 3]
 """DB versions."""
 
 sqlalchemy_upgrade_paths: Dict[int, Tuple[int, Callable[[DB]]]] = {
@@ -157,7 +157,7 @@ def data_migrate(db: DB, from_version: Optional[str]):
         sql_alchemy_from_version
     )
     to_compat_version = None
-    fail_advice = "Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `tru.reset_database()`"
+    fail_advice = "Please open a ticket on trulens github page including this error message. The migration completed so you can still proceed; but stability is not guaranteed. If needed, you can `TruSession.reset_database()`"
 
     try:
         while from_compat_version in sqlalchemy_upgrade_paths:

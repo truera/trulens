@@ -8,7 +8,7 @@ Currently to get going, a user needs to add  4 lines of python:
 
 ```python
 from trulens.dashboard import run_dashboard # line 1
-from trulens.instrument.langchain import TruChain # line 2
+from trulens.apps.langchain import TruChain # line 2
 with TruChain(app): # 3
     app.invoke("some question") # doesn't count since they already had this
 
