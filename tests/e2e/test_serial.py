@@ -70,7 +70,8 @@ class TestSerial(JSONTestCase):
 
         with self.subTest("app serialization"):
             self.assertGoldenJSONEqual(
-                actual=ta.model_dump(), golden_filename="customapp.json"
+                actual=ta.model_dump(),
+                golden_filename="tests/e2e/golden/customapp.json",
             )
 
         with ta as recorder:
@@ -78,7 +79,8 @@ class TestSerial(JSONTestCase):
 
         with self.subTest("app result serialization"):
             self.assertGoldenJSONEqual(
-                actual=res, golden_filename="customapp_result.json"
+                actual=res,
+                golden_filename="tests/e2e/golden/customapp_result.json",
             )
 
         record = recorder.get()
@@ -86,7 +88,7 @@ class TestSerial(JSONTestCase):
         with self.subTest("record serialization"):
             self.assertGoldenJSONEqual(
                 actual=record.model_dump(),
-                golden_filename="customapp_record.json",
+                golden_filename="tests/e2e/golden/customapp_record.json",
                 skips=set([
                     "end_time",
                     "start_time",
@@ -105,13 +107,13 @@ class TestSerial(JSONTestCase):
             with self.subTest(f"feedback definition {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fdef.model_dump(),
-                    golden_filename=f"customapp_{name}.def.json",
+                    golden_filename=f"tests/e2e/golden/customapp_{name}.def.json",
                     skips=set(["feedback_definition_id", "id"]),
                 )
             with self.subTest(f"feedback result {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fres.model_dump(),
-                    golden_filename=f"customapp_{name}.result.json",
+                    golden_filename=f"tests/e2e/golden/customapp_{name}.result.json",
                     skips=set([
                         "feedback_definition_id",
                         "id",

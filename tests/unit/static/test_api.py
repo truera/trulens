@@ -176,7 +176,9 @@ class TestAPI(JSONTestCase):
         """
         # TODEP: Deprecate after trulens_eval is removed.
 
-        golden_file = f"api.trulens_eval.{self.pyversion}.yaml"
+        golden_file = (
+            f"tests/unit/static/golden/api.trulens_eval.{self.pyversion}.yaml"
+        )
 
         members = self.get_members_trulens_eval(aliases_are_defs=True)
 
@@ -230,7 +232,9 @@ class TestAPI(JSONTestCase):
         To regenerate golden file, run `make test-write-api`.
         """
 
-        golden_file = f"api.trulens.{self.pyversion}.yaml"
+        golden_file = (
+            f"tests/unit/static/golden/api.trulens.{self.pyversion}.yaml"
+        )
 
         members = self.get_members_trulens()
 
