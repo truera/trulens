@@ -18,16 +18,17 @@ Next, we modularized _TruLens_ into a family of different packages, described be
 * `trulens-instrument-` prefixed packages give you tools for instrumentation and logging. This includes both `trulens-instrument-core` for logging custom and virtual apps, along with `trulens-instrument-langchain` and `trulens-instrument-llama-index` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument LangChain and Llama-Index apps.
 * `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
 * `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
+* `trulens-connectors-` provide ways to log _TruLens_ traces and evaluations to other databases. In addition to connect to any `sqlalchemy` database with `trulens-core`, we've added with `trulens-connectors-snowflake` tailored specifically to connecting to Snowflake. We plan to add more connectors over time.
 
 ![TruLens 1.0 Release Graphics](../assets/images/trulens_1_release_graphic_modular.png)
 
 ## **Versioning and Backwards Compatibility**
 
-Today, we’re releasing `trulens`, `trulens-core`, `trulens-dashboard`, `trulens-feedback`, `trulens-providers` packages and `trulens-instrument` packages at v1.0. We will not make breaking changes in the future without bumping the major version.
+Today, we’re releasing `trulens`, `trulens-core`, `trulens-dashboard`, `trulens-feedback`, `trulens-providers` packages, `trulens-connectors` packages and `trulens-instrument` packages at v1.0. We will not make breaking changes in the future without bumping the major version.
 
-The base install of trulens will install `trulens-core`, `trulens-feedback` and `trulens-dashboard` making it easy for developers to try _TruLens_.
+The base install of `trulens` will install `trulens-core`, `trulens-feedback` and `trulens-dashboard` making it easy for developers to try _TruLens_.
 
-Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of `trulens` and several associated required and optional packages.
+Starting 1.0, the `trulens_eval` package is being deprecated in favor of `trulens` and several associated required and optional packages.
 
 Until 2024-10-14, backwards compatibility during the warning period is provided by the new content of the `trulens_eval` package which provides aliases to the in their new locations. See [trulens_eval](./api/trulens_eval/index.md).
 
