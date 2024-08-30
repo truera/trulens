@@ -12,6 +12,10 @@ LLM experiments with TruLens. As you develop your app including prompts, models,
 retrievers, knowledge sources and more, *TruLens* is the tool you need to
 understand its performance.
 
+!!! info
+
+    TruLens 1.0 is now available. [Read more](./release_blog_1dot.md) and check out the [migration guide](./guides/trulens_eval_migration.md)
+
 Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
 you to identify failure modes & systematically iterate to improve your
 application.
