@@ -249,7 +249,7 @@ To see the core re-architecture changes in action, we've included some usage exa
 
 ## **TruLens Sessions**
 
-In _TruLens_, we have long had the `Tru()` class, a singleton that sets the logging configuration. If instantiated with no arguments, traces and evaluations are logged to a local sqlite file. In the case you don’t deliberately instantiate `Tru()`, traces and evaluations are still logged to a local sqlite file.
+In _TruLens_, we have long had the `Tru()` class, a singleton that sets the logging configuration. Many users and new maintainers have found the purpose and usage of `Tru()` not as clear as it could be.
 
 In v1, we are renaming `Tru` to `TruSession`, to represent a session for logging TruLens traces and evaluations. In addition, we have introduced a more deliberate set of database of connectors that can be passed to `TruSession()`.
 
