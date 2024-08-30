@@ -40,8 +40,8 @@ class DefaultDBConnector(DBConnector):
             database_prefix (Optional[str]): The database prefix to use to separate tables in the database.
             database_args (Optional[Dict[str, Any]]): Additional arguments to pass to the database.
             database_check_revision (bool): Whether to compare the database revision with the expected TruLens revision.
-
         """
+
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 

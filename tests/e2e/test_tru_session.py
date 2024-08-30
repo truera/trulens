@@ -32,67 +32,50 @@ class TestTru(TestCase):
         check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
-            "PINECONE_API_KEY",
-            "PINECONE_ENV",
+            # "PINECONE_API_KEY",
+            # "PINECONE_ENV",
         )
 
     def test_init(self):
-        """
-        Test Tru class constructor. This involves just database-related
-        specifications right now.
+        """Test Tru class constructor.
+
+        This involves just database-related specifications right now.
         """
 
         # Try all combinations of arguments to Tru constructor.
         test_args = dict()
-        test_args["database_url"] = [None, "sqlite:///default_url.db"]
-        test_args["database_file"] = [None, "default_file.db"]
+        test_args["database_url"] = [None, "sqlite:///some_filename.db"]
         test_args["database_redact_keys"] = [None, True, False]
 
         for url in test_args["database_url"]:
-            for file in test_args["database_file"]:
-                for redact in test_args["database_redact_keys"]:
-                    with self.subTest(url=url, file=file, redact=redact):
-                        args = dict()
-                        if url is not None:
-                            args["database_url"] = url
-                        if file is not None:
-                            args["database_file"] = file
-                        if redact is not None:
-                            args["database_redact_keys"] = redact
+            for redact in test_args["database_redact_keys"]:
+                with self.subTest(url=url, redact=redact):
+                    args = dict()
+                    if url is not None:
+                        args["database_url"] = url
+                    if redact is not None:
+                        args["database_redact_keys"] = redact
 
-                        if url is not None and file is not None:
-                            # Specifying both url and file should throw exception.
-                            with self.assertRaises(Exception):
-                                session = TruSession(**args)
+                    try:
+                        session = TruSession(**args)
+                    finally:
+                        if session is not None:
+                            session.delete_singleton()
 
-                            if session is not None:
-                                session.delete_singleton()
+                    if session is None:
+                        continue
 
-                        else:
-                            try:
-                                session = TruSession(**args)
-                            finally:
-                                if session is not None:
-                                    session.delete_singleton()
+                    # Do some db operations to the expected files get created.
+                    session.reset_database()
 
-                            if session is None:
-                                continue
+                    # Check that the expected files were created.
+                    if url is not None:
+                        self.assertTrue(Path("some_filename.db").exists())
+                    else:
+                        self.assertTrue(Path("default.sqlite").exists())
 
-                            # Do some db operations to the expected files get created.
-                            session.reset_database()
-
-                            # Check that the expected files were created.
-                            if url is not None:
-                                self.assertTrue(Path("default_url.db").exists())
-                            elif file is not None:
-                                self.assertTrue(
-                                    Path("default_file.db").exists()
-                                )
-                            else:
-                                self.assertTrue(Path("default.sqlite").exists())
-
-                        # Need to delete singleton after test as otherwise we
-                        # cannot change the arguments in next test.
+                # Need to delete singleton after test as otherwise we
+                # cannot change the arguments in next test.
 
     def _create_custom(self):
         from examples.dev.dummy_app.app import DummyApp
@@ -465,12 +448,12 @@ class TestTru(TestCase):
     def test_start_evaluator_with_blocking(self):
         session = TruSession()
         f = Feedback(custom_feedback_function).on_default()
-        app_id = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
+        app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
             feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,
-            app_id=app_id,
+            app_name=app_name,
         )
         with tru_app:
             tru_app.main_call("test_deferred_mode")
@@ -480,7 +463,7 @@ class TestTru(TestCase):
             # We should never get here since the variable isn't supposed to be set.
             raise ValueError("The evaluator is still running!")
         records_and_feedback = session.get_records_and_feedback(
-            app_ids=[app_id]
+            app_ids=[tru_app.app_id]
         )
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["custom_feedback_function"])
