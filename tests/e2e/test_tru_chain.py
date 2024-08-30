@@ -38,8 +38,8 @@ class TestTruChain(JSONTestCase):
         check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
-            "PINECONE_API_KEY",
-            "PINECONE_ENV",
+            #            "PINECONE_API_KEY",
+            #            "PINECONE_ENV",
         )
 
     def _create_basic_chain(self, app_name: Optional[str] = None):
@@ -72,7 +72,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = "this is plain metadata"
 
-        _, rec = tc.with_record(tc.app, message, record_metadata=meta)
+        _, rec = tc.with_record(tc.app.invoke, message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
@@ -95,7 +95,7 @@ class TestTruChain(JSONTestCase):
 
         # Check adding meta to a record that initially didn't have it.
         # Record with no meta:
-        _, rec = tc.with_record(tc.app, message)
+        _, rec = tc.with_record(tc.app.invoke, message)
         self.assertEqual(rec.meta, None)
         recs, _ = session.get_records_and_feedback([tc.app_id])
         self.assertGreater(len(recs), 1)
@@ -121,7 +121,7 @@ class TestTruChain(JSONTestCase):
         message = "What is 1+2?"
         meta = dict(field1="hello", field2="there")
 
-        _, rec = tc.with_record(tc.app, message, record_metadata=meta)
+        _, rec = tc.with_record(tc.app.invoke, message, record_metadata=meta)
 
         # Check record has metadata.
         self.assertEqual(rec.meta, meta)
@@ -160,14 +160,14 @@ class TestTruChain(JSONTestCase):
 
         async def test1():
             # Does not create a task:
-            result = await chain.llm._agenerate(messages=[msg])
+            result = await chain.middle[0]._agenerate(messages=[msg])
             return result
 
         res1, _ = Endpoint.track_all_costs(lambda: sync(test1))
 
         async def test2():
             # Creates a task internally via asyncio.gather:
-            result = await chain.acall(inputs=dict(question="hello there"))
+            result = await chain.ainvoke(input=dict(question="hello there"))
             return result
 
         res2, _ = Endpoint.track_all_costs(lambda: sync(test2))
@@ -175,7 +175,7 @@ class TestTruChain(JSONTestCase):
         # Results are not the same as they involve different prompts but should
         # not be empty at least:
         self.assertGreater(len(res1.generations[0].text), 5)
-        self.assertGreater(len(res2["text"]), 5)
+        self.assertGreater(len(res2), 5)
 
         # And cost tracking should have counted some number of tokens.
         # TODO: broken
@@ -206,7 +206,7 @@ class TestTruChain(JSONTestCase):
         chain = prompt | llm | StrOutputParser()
         tc = TruChain(chain)
         sync_res, sync_record = tc.with_record(
-            tc.app, inputs=dict(question=message)
+            tc.app.invoke, input=dict(question=message)
         )
 
         # Get async results.
@@ -215,8 +215,8 @@ class TestTruChain(JSONTestCase):
         tc = TruChain(chain)
         async_res, async_record = sync(
             tc.awith_record,
-            tc.app.acall,
-            inputs=dict(question=message),
+            tc.app.ainvoke,
+            input=dict(question=message),
         )
 
         self.assertJSONEqual(async_res, sync_res)

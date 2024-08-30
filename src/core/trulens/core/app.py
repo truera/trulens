@@ -1317,6 +1317,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         its results as well as a record of the execution.
         """
 
+        if not isinstance(func, Callable):
+            if hasattr(func, "__call__"):
+                func = func.__call__
+
         self._check_instrumented(func)
 
         with self as ctx:
