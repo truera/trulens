@@ -1,6 +1,4 @@
-"""
-Utilities for user-facing text generation.
-"""
+"""Utilities for generating user-facing text."""
 
 import logging
 import math
@@ -21,6 +19,16 @@ UNICODE_HOURGLASS = "⏳"
 UNICODE_CLOCK = "⏰"
 UNICODE_SQUID = "🦑"
 UNICODE_LOCK = "🔒"
+
+
+class WithIdentString:  # want to be a Protocol but having metaclass conflicts
+    """Mixin to indicate _ident_str is provided."""
+
+    def _ident_str(self) -> str:
+        """Get a string to identify this instance in some way without
+        overburdening the output with details."""
+
+        return f"{self.__class__.__name__} instance"
 
 
 def make_retab(tab):

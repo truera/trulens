@@ -99,6 +99,13 @@ class SQLAlchemyDB(DB):
     [ORM][trulens.core.database.orm.ORM] upon initialization.
     """
 
+    def __str__(self) -> str:
+        return f"SQLAlchemyDB({self.engine.url})"
+
+    # for DB's WithIdentString mixin
+    def _ident_str(self) -> str:
+        return self.engine.url
+
     def __init__(
         self,
         redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
