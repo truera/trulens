@@ -41,6 +41,8 @@ Along with this change, we’ve also included a [migration guide](./guides/trule
 
 Please give us feedback on GitHub by creating [issues](https://github.com/truera/trulens/issues) and starting [discussions](https://github.com/truera/trulens/discussions). You can also chime in on [slack](https://communityinviter.com/apps/aiqualityforum/josh).
 
+## **TruLens 1.0 Examples**
+
 To see the core re-architecture changes in action, we've included some usage examples below:
 
 !!! example "Log and Instrument LLM Apps"
