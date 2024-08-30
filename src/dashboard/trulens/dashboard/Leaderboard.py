@@ -64,6 +64,9 @@ def leaderboard():
         )
 
         # Sort selected_apps based on the concatenation of app_name and app_version
+        selected_apps = [
+            app_id for app_id in selected_apps if app_id in app_info
+        ]
         sorted_apps = sorted(
             selected_apps,
             key=lambda app_id: f"{app_info[app_id][0]}{app_info[app_id][1]}",
@@ -137,7 +140,7 @@ def leaderboard():
             for i in range(len(apps)):
                 try:
                     unique_values.add(apps[i]["metadata"][metadata_key])
-                except KeyError:
+                except (KeyError, TypeError):
                     pass
             metadata_options[metadata_key] = list(unique_values)
 
@@ -221,10 +224,36 @@ def leaderboard():
                 else "nan"
             ),
         )
-        col3.metric(
-            "Total Cost (USD)",
-            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
-        )
+
+        # Filter for Snowflake credits costs
+        filtered_snowflake_credits_app_df = app_df[
+            app_df["cost_currency"] == "Snowflake credits"
+        ]
+
+        # Calculate the total cost for Snowflake credits
+        if len(filtered_snowflake_credits_app_df) > 0:
+            total_cost_snowflake_credits = (
+                filtered_snowflake_credits_app_df["total_cost"].dropna().sum()
+            )
+            col3.metric(
+                "Total Cost (Snowflake credits)",
+                f"{format_quantity(round(total_cost_snowflake_credits, 8), precision=5)}",
+            )
+        else:
+            col3.empty()
+        # Filter for USD costs
+        filtered_usd_app_df = app_df[app_df["cost_currency"] == "USD"]
+
+        if len(filtered_usd_app_df) > 0:
+            # Calculate the total cost for USD
+            total_cost_usd = filtered_usd_app_df["total_cost"].dropna().sum()
+            col3.metric(
+                "Total Cost (USD)",
+                f"${format_quantity(round(total_cost_usd, 5), precision=2)}",
+            )
+        else:
+            col3.empty()
+
         col4.metric(
             "Total Tokens",
             format_quantity(

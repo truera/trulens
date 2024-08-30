@@ -16,7 +16,6 @@ from unittest import TestCase
 from frozendict import frozendict
 import pydantic
 from pydantic import BaseModel
-from trulens.core.utils.python import caller_frame
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSON_BASES
 from trulens.core.utils.serial import Lens
@@ -172,8 +171,7 @@ class JSONTestCase(TestCase):
                 determines the input format.
 
         """
-        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
-        golden_path = (caller_path / "golden" / path).resolve()
+        golden_path = Path(path)
 
         if ".json" in golden_path.suffixes:
             loader = functools.partial(json.load)
@@ -203,8 +201,7 @@ class JSONTestCase(TestCase):
         if not self.writing_golden():
             return
 
-        caller_path = Path(caller_frame(offset=1).f_code.co_filename).parent
-        golden_path = (caller_path / "golden" / path).resolve()
+        golden_path = Path(path)
 
         if golden_path.suffix == ".json":
             writer = functools.partial(json.dump, indent=2, sort_keys=True)
@@ -247,7 +244,8 @@ class JSONTestCase(TestCase):
             golden_filename: The name of the golden file to compare against that
                 stores the expected JSON-like results for the test. File must
                 have an extension of either `.json` or `.yaml`. The extension
-                determines output format.
+                determines output format. This is in relation to the git base
+                directory.
 
                 !!! WARNING
                     YAML dumper does not fully serialize all types which
