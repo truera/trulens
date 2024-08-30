@@ -50,7 +50,7 @@ To find a specific definition, use the search functionality or go directly to th
 
 ## Automatic Migration with Grit
 
-To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrade your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
+To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
 
 To use on the command line, follow these instructions:
 
