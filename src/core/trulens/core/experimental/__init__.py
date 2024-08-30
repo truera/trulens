@@ -346,49 +346,78 @@ class WithExperimentalSettings(
 from trulens.core.experimental import Feature
 
 # Enable for this instance when creating it:
-tru = Tru(feature_flags=[{flag}]
+val = {self.__name__}(experimental_feature_flags=[{flag}]
 
 # Enable for this instance after it has been crated (for features that allows this):
-tru.enable_feature({flag})
+val.experimental_enable_feature({flag})
 ```
 """
             )
 
+    @staticmethod
+    def experimental_method_override(
+        flag: Feature, enabled: T, lock: bool = False
+    ) -> T:
+        """Decorator to replace the decorated method with the given one if the
+        specified feature is enabled.
 
-def experimental_value(
-    flag: Feature, enabled: T, disabled: T, lock: bool = False
-) -> T:
-    """Select between two values based on the status of a feature flag.
+        Locks the flag if the lock parameter is set to True.
 
-    Locks the flag if the lock parameter is set to True.
-    """
+        Example:
+            ```python
+            class MyClass(WithExperimentalSettings, ...):
 
-    # Here to avoid circular imports.
-    from trulens.core import session as mod_session
+                def my_method_experimental(self, ...): ...
 
-    if mod_session.TruSession().experimental_feature(flag, lock=lock):
-        return enabled
+                @MyClass.experimental_method_override(
+                    flag=Feature.OTEL_TRACING,
+                    enabled=my_method_experimental
+                )
+                def my_method(self, ...): ...
+            ```
+        """
 
-    return disabled
+        def wrapper(func: T) -> T:
+            @functools.wraps(func)
+            def wrapped(self: WithExperimentalSettings, *args, **kwargs):
+                if self.experimental_feature(flag, lock=lock):
+                    return enabled(*args, **kwargs)
 
+                return func(self, *args, **kwargs)
 
-def experimental_method(
-    flag: Feature, enabled: Callable, disabled: Callable, lock: bool = False
-) -> Callable:
-    """Select between two methods based on the status of a feature flag.
+            return wrapped
 
-    The selection happens after the method is called. Locks the flag if the lock
-    parameter is set to True.
-    """
+        return wrapper
 
-    # Here to avoid circular imports.
-    from trulens.core import session as mod_session
+    @staticmethod
+    def experimental_method(
+        flag: Feature, enabled: Callable, disabled: Callable, lock: bool = False
+    ) -> Callable:
+        """Select between two methods based on the status of a feature flag.
 
-    @functools.wraps(enabled)
-    def wrapper(*args, **kwargs):
-        if mod_session.TruSession().experimental_feature(flag, lock=lock):
-            return enabled(*args, **kwargs)
+        The selection happens after the method is called. Locks the flag if the lock
+        parameter is set to True.
 
-        return disabled(*args, **kwargs)
+        Example:
+            ```python
+            class MyClass(WithExperimentalSettings, ...):
+                ...
+                def my_method_default(self, ...): ...
+                def my_method_experimental(self, ...): ...
+                ...
+                my_method = MyClass.experimental_method(
+                    flag=Feature.OTEL_TRACING,
+                    enabled=my_method_experimental,
+                    disabled=my_method_default
+                )
+                ```
+        """
 
-    return wrapper
+        @functools.wraps(enabled)  # or disabled
+        def wrapper(self: WithExperimentalSettings, *args, **kwargs):
+            if self.experimental_feature(flag, lock=lock):
+                return enabled(*args, **kwargs)
+
+            return disabled(*args, **kwargs)
+
+        return wrapper
