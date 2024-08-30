@@ -329,7 +329,7 @@ On the top-level of TruLens docs, we previously had separated out Evaluation, Ev
 
 We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. You can find these examples in the top-level navigation under ["Cookbook"](../../examples/).
 
-## Automatic Migration with Grit
+## **Automatic Migration with Grit**
 
 To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrade your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
 
