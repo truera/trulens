@@ -136,6 +136,11 @@ class TestDeprecation(TestCase):
                             # The deprecation warning scheme does not work for Enums.
                             continue
 
+                        # NOTE(piotrm): temporarily disabling this test as the
+                        # deprecation mechanism being tested had to be disabled
+                        # due to an unsolved interaction with feedback function
+                        # serialization.
+                        """
                         with self.subTest("alias call deprecation warning"):
                             with self.assertWarns(DeprecationWarning):
                                 # try calling it:
@@ -143,6 +148,7 @@ class TestDeprecation(TestCase):
                                     val()  # will most likely fail, but should do so after the deprecation message
                                 except BaseException:
                                     pass
+                        """
 
 
 if __name__ == "__main__":
