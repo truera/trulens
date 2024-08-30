@@ -321,7 +321,7 @@ Along with the high level changes in TruLens v1, ground truth can now be persist
         ).on_input_output()
         ```
 
-See this in action in the new [Ground Truth Persistence Quickstart](../../examples/quickstart/groundtruth_dataset_persistence.ipynb)
+See this in action in the new [Ground Truth Persistence Quickstart](./getting_started/quickstarts/groundtruth_dataset_persistence.ipynb)
 
 ## **New Component Guides and TruLens Cookbook**
 
