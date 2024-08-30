@@ -212,29 +212,6 @@ To see the core re-architecture changes in action, we've included some usage exa
         )
         ```
 
-        === "Local Classification Models"
-
-        ```bash
-        pip install trulens-core trulens-providers-huggingface
-        ```
-
-        ```python
-        from trulens.core import Feedback
-        from trulens.core import Select
-        from trulens.providers.huggingface import HuggingfaceLocal
-
-        # Define a local Huggingface groundedness feedback function
-        local_provider = HuggingfaceLocal()
-        f_local_groundedness = (
-            Feedback(
-                local_provider.groundedness_measure_with_nli,
-                name="[Local] Groundedness",
-            )
-            .on(Select.RecordCalls.retrieve.rets.collect())
-            .on_output()
-        )
-        ```
-
 !!! example "Run the TruLens dashboard:"
 
     ```bash
@@ -269,6 +246,7 @@ You can see how to start a TruLens session logging to a postgres database below:
     ```
 
 ! note
+
     database_url can also be passed directly to `TruSession()`
 
 ## **Up-leveled Experiment Tracking**
