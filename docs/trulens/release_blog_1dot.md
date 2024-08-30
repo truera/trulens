@@ -5,7 +5,7 @@ It has always been our goal to make it easy to build trustworthy LLM application
 
 ## **Split off trulens-eval from trulens-explain**
 
-Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take over the `trulens` package name. _TruLens-Eval_ is now renamed to _TruLens_ and sits at the root of the _TruLens_ repo, while _TruLens-Explain_ has been moved to its own repository, and is installable at `trulens-explain`.
+Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take over the `trulens` package name. _TruLens-Eval_ is now renamed to _TruLens_ and sits at the root of the [_TruLens_ repo](https://github.com/truera/trulens), while _TruLens-Explain_ has been moved to its own [repository](https://github.com/truera/trulens_explain), and is installable at `trulens-explain`.
 
 ![TruLens 1.0 Release Graphics](../assets/images/trulens_1_release_graphic_split.png)
 
@@ -15,7 +15,7 @@ Next, we modularized _TruLens_ into a family of different packages, described be
 
 * `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
 * `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
-* `trulens-instrument-` prefixed packages give you tools for instrumentation and logging. This includes both `trulens-instrument-core` for logging custom and virtual apps, along with `trulens-instrument-langchain` and `trulens-instrument-llama-index` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument LangChain and Llama-Index apps.
+* `trulens-apps-` prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities inlcuding tracing, logging and guardrailing. These include `trulens-apps-langchain` and `trulens-apps-llamaindex` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument _LangChain_ and _Llama-Index_ apps.
 * `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
 * `trulens-providers-` prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: `trulens-providers-openai`, `trulens-providers-huggingface`, `trulens-providers-litellm`, `trulens-providers-langchain`, `trulens-providers-bedrock`, `trulens-providers-cortex`.
 * `trulens-connectors-` provide ways to log _TruLens_ traces and evaluations to other databases. In addition to connect to any `sqlalchemy` database with `trulens-core`, we've added with `trulens-connectors-snowflake` tailored specifically to connecting to Snowflake. We plan to add more connectors over time.
