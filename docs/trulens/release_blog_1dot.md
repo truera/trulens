@@ -280,7 +280,7 @@ In our suggested workflow, `app_name` represents an objective you’re building 
     tru_rag = TruCustomApp(
     rag,
     app_name="RAG",
-    app_vesion="v1",
+    app_version="v1",
     tags="prototype",
     metadata=metadata={
                 "top_k": top_k,
