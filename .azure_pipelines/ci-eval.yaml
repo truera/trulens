@@ -1,10 +1,9 @@
-trigger: none
-
-pr:
-  # Run this pipeline for any PR from a branch that starts with "releases/"
+trigger:
   branches:
     include:
       - releases/*
+
+pr: none
 
 jobs:
   - job: ReleaseTests
