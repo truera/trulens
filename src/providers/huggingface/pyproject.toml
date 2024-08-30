@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-huggingface"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,8 +28,8 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
-trulens-core = { version = "^1.0.0", allow-prereleases = true }
-trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
 requests = "^2.31"
 numpy = ">=1.23"
 nltk = "^3.9.1"
