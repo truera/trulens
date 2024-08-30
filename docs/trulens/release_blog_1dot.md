@@ -333,7 +333,7 @@ We also pulled in our extensive GitHub examples library directly into docs. This
 
 To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrade your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
 
-Read more detailed instructions in our [migration guide]((./guides/trulens_eval_migration.md))
+Read more detailed instructions in our [migration guide](./guides/trulens_eval_migration.md)
 
 Be sure to audit its changes: we suggest ensuring you have a clean working tree beforehand.
 
