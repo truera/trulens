@@ -4161,7 +4161,7 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "trulens"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -4457,4 +4457,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9,!=3.9.7"
-content-hash = "370c6f0275166fb8b0f445628d335d3a9af691e60ac5405c149aa81bb476f58e"
+content-hash = "3e24c3ad8c424835a142a335978bff9f035b493f31d82caca088105396b2b75c"

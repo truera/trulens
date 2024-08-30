@@ -1313,7 +1313,7 @@ files = [
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -1392,4 +1392,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6bcbab3caf38600b9f75a8663d3ae3b6bd6c4fd29795a6ad798ae411d002abc7"
+content-hash = "e6fbc1eb70b0d435d934c17368538a5a553020fbaa028f05e7c082caa23e8946"

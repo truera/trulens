@@ -2446,7 +2446,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -2466,7 +2466,7 @@ url = "../langchain"
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -2744,4 +2744,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "2feaf08dfe18f82bea2730ee7c51152cf1408ae6b274fca62c1aee05607c7d8b"
+content-hash = "b33126b0329d915dc449ca18387dafe60a94de364a0044094b7ecdcfb9acc278"
