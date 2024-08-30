@@ -36,7 +36,7 @@ Starting 2024-10-15 until 2025-12-01. Usage of `trulens_eval` will produce error
 
 Beginning 2024-12-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
 
-Read more about the [TruLens deprecation policy](../policies.md).
+Read more about the [TruLens deprecation policy](../../POLICIES.md).
 
 Along with this change, we’ve also included a [migration guide](./guides/trulens_eval_migration.md) for moving to TruLens v1.
 
