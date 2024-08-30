@@ -245,7 +245,7 @@ You can see how to start a TruLens session logging to a postgres database below:
     session = TruSession(connector=connector)
     ```
 
-! note
+!!! note
 
     database_url can also be passed directly to `TruSession()`
 
