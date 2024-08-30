@@ -87,6 +87,10 @@ docs-linkcheck: site
 trubot:
 	poetry run python -u examples/trubot/trubot.py
 
+# Spellchecking
+codespell:
+	poetry run codespell -L tru * --skip "*.svg,*.js,*.yaml,*.jsonl,*.lock,*.css.map"
+
 # Generates a coverage report.
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
@@ -107,7 +111,7 @@ test-api:
 test-write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
-# Depercation tests.
+# Deprecation tests.
 ## Test for trulens_eval exported names.
 test-deprecation:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py

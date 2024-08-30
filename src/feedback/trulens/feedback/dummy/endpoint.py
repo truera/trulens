@@ -115,7 +115,7 @@ class DummyAPI(pydantic.BaseModel):
             + self.overloaded_prob
             + self.loading_prob
             <= 1.0
-        ), "Total probabilites should not exceed 1.0 ."
+        ), "Total probabilities should not exceed 1.0 ."
 
     async def apost(
         self, url: str, payload: JSON, timeout: Optional[float] = None

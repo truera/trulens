@@ -67,7 +67,7 @@ Other optional packages:
 Module members which begin with an underscore `_` are private are should not be
 used by code outside of _TruLens_.
 
-Module members which begin but not end with double undescore `__` are class/module private
+Module members which begin but not end with double underscore `__` are class/module private
 and should not be used outside of the defining module or class.
 
 !!! Warning
