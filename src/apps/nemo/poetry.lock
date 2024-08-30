@@ -2449,7 +2449,7 @@ telegram = ["requests"]
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -2469,7 +2469,7 @@ url = "../langchain"
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"

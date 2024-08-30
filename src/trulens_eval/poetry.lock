@@ -4204,7 +4204,7 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "trulens"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -4223,7 +4223,7 @@ url = "../.."
 
 [[package]]
 name = "trulens-core"
-version = "1.0.1a3"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "<4.0,>=3.9"
@@ -4251,7 +4251,7 @@ snowflake = ["snowflake-connector-python (>=3.11,<4.0)", "snowflake-snowpark-pyt
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "!=3.9.7,<4.0,>=3.9"
@@ -4277,7 +4277,7 @@ dev = ["build (>=1.2.1)", "ipython (>=7.25)"]
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1a2"
+version = "1.0.1"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "<4.0,>=3.9"
