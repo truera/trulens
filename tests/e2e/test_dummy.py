@@ -28,7 +28,7 @@ class TestDummy(JSONTestCase):
 
         # Create custom app:
         ca = DummyApp(
-            delay=0.0, alloc=0, use_parallel=True
+            delay=0.0, alloc=0, use_parallel=False
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:

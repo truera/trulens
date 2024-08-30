@@ -9,11 +9,20 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar, Union
+from typing import (
+    Dict,
+    Mapping,
+    Optional,
+    OrderedDict,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 import unittest
 from unittest import TestCase
 
-from frozendict import frozendict
 import pydantic
 from pydantic import BaseModel
 from trulens.core.utils.serial import JSON
@@ -73,8 +82,8 @@ def module_installed(module: str) -> bool:
 T = TypeVar("T")
 
 
-def hashable_skip(obj: T, skips: Set[str]) -> T:
-    """Return a hashable copy of `obj` with all keys/attributes in `skips`
+def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
+    """Return a canonical copy of `obj` with all keys/attributes in `skips`
     removed.
 
     Sequences are returned as tuples and container types are returned as
@@ -89,7 +98,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
     """
 
     def recur(obj):
-        return hashable_skip(obj, skips=skips)
+        return canonical(obj, skips=skips)
 
     if isinstance(obj, float):
         return 0.0
@@ -98,44 +107,49 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
         return obj
 
     if isinstance(obj, Mapping):
-        return frozendict({
-            k: recur(v) for k, v in obj.items() if k not in skips
-        })
+        ret = OrderedDict()
+        for k in sorted(obj.keys()):
+            v = obj[k]
+            if k in skips:
+                continue
+            ret[k] = recur(v)
+
+        return ret
 
     elif isinstance(obj, Sequence):
         return tuple(recur(v) for v in obj)
 
     elif is_dataclass(obj):
-        ret = {}
+        ret = OrderedDict()
 
-        for f in fields(obj):
+        for f in sorted(fields(obj), key=lambda f: f.name):
             if f.name in skips:
                 continue
 
             ret[f.name] = recur(getattr(obj, f.name))
 
-        return frozendict(ret)
+        return ret
 
     elif isinstance(obj, BaseModel):
-        ret = {}
-        for f in obj.model_fields:
+        ret = OrderedDict()
+        for f in sorted(obj.model_fields):
             if f in skips:
                 continue
 
             ret[f] = recur(getattr(obj, f))
 
-        return frozendict(ret)
+        return ret
 
     elif isinstance(obj, pydantic.v1.BaseModel):
-        ret = {}
+        ret = OrderedDict()
 
-        for f in obj.__fields__:
+        for f in sorted(obj.__fields__):
             if f in skips:
                 continue
 
             ret[f] = recur(getattr(obj, f))
 
-        return frozendict(ret)
+        return ret
 
     else:
         raise TypeError(f"Unhandled type {type(obj).__name__}.")
@@ -153,7 +167,7 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
         skips: The keys/attributes to skip for string conversion.
     """
 
-    objs_and_strs = [(o, str(hashable_skip(o, skips=skips))) for o in seq]
+    objs_and_strs = [(o, str(canonical(o, skips=skips))) for o in seq]
     objs_and_strs_sorted = sorted(objs_and_strs, key=lambda x: x[1])
 
     return [o for o, _ in objs_and_strs_sorted]

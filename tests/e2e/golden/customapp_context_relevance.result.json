@@ -22,12 +22,12 @@
     "n_tokens": 0
   },
   "error": null,
-  "feedback_definition_id": "feedback_definition_hash_165860af030a5997f3e7ac64c33480cc",
-  "feedback_result_id": "feedback_result_hash_a8b7bcde775fac39e1e3ebf8d3c597ee",
-  "last_ts": "2024-08-30T13:48:07.631578",
+  "feedback_definition_id": "feedback_definition_hash_a7593c564dfec4bb148fa890c9842671",
+  "feedback_result_id": "feedback_result_hash_ce724c48cdb34cd6467dece0d819f459",
+  "last_ts": "2024-08-30T13:55:16.227789",
   "multi_result": "null",
   "name": "context_relevance",
-  "record_id": "record_hash_0f0896307b99a6701a934ae41438f464",
+  "record_id": "record_hash_a1c0a05fda7703532d1ecdfce3b13f3e",
   "result": 0.0,
   "status": "done"
 }

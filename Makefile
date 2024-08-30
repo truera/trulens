@@ -6,7 +6,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-PYTEST := poetry run pytest --rootdir=.
+PYTEST := poetry run pytest --rootdir=. -s
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
