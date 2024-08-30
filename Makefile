@@ -108,8 +108,11 @@ test-static:
 # API tests.
 test-api:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
-test-write-api: env
+write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
+test-write-api:
+	@echo "The 'test-write-api' target has been renamed to 'write-api'."
+	@false
 
 # Deprecation tests.
 ## Test for trulens_eval exported names.
@@ -129,14 +132,28 @@ test-legacy-notebooks: _trulens_eval
 	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
-test-dummy: # has golden file
-	$(PYTEST) tests/e2e/test_dummy.py
-test-serial: # has golden file
-	$(PYTEST) tests/e2e/test_serial.py
-test-golden: test-dummy test-serial
-test-write-golden: test-write-golden-dummy test-write-golden-serial
-test-write-golden-%: tests/e2e/test_$*.py
+test-golden-%: tests/e2e/test_%.py # has golden file
+	$(PYTEST) tests/e2e/test_$*.py
+test-golden: test-golden-dummy test-golden-serial
+write-golden-%: tests/e2e/test_%.py
 	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
+write-golden: write-golden-dummy write-golden-serial
+
+# Run the tests for a specific file.
+test-file-%: tests/e2e/%
+	$(PYTEST) tests/e2e/$*
+test-file-%: tests/unit/%
+	$(PYTEST) tests/unit/$*
+test-file-%: tests/unit/static/%
+	$(PYTEST) tests/unit/static/$*
+
+# Run the tests for a specific file with the optional flag on.
+test-optional-file-%: tests/e2e/%
+	TEST_OPTIONAL=true $(PYTEST) tests/e2e/$*
+test-optional-file-%: tests/unit/%
+	TEST_OPTIONAL=true $(PYTEST) tests/unit/$*
+test-optional-file-%: tests/unit/static/%
+	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
 test-%-required: env-required

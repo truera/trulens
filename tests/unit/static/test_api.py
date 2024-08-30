@@ -174,7 +174,7 @@ class TestAPI(JSONTestCase):
     def test_api_trulens_eval_compat(self):
         """Check that the trulens_eval API members are still present.
 
-        To regenerate golden file, run `make test-write-api`.
+        To regenerate golden file, run `make write-api`.
         """
         # TODEP: Deprecate after trulens_eval is removed.
 
@@ -231,7 +231,7 @@ class TestAPI(JSONTestCase):
     def test_api_trulens(self):
         """Check that the trulens API members are still present.
 
-        To regenerate golden file, run `make test-write-api`.
+        To regenerate golden file, run `make write-api`.
         """
 
         golden_file = f"{_GOLDEN_DIRECTORY}/api.trulens.{self.pyversion}.yaml"

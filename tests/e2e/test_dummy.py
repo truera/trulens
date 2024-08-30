@@ -5,6 +5,7 @@ Uses and records an invocation of the DummyApp example which internally uses
 DummyAPI for its requests.
 """
 
+from pathlib import Path
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
@@ -40,8 +41,9 @@ class TestDummy(JSONTestCase):
 
         self.assertGoldenJSONEqual(
             actual=rec.model_dump(),
-            golden_filename="tests/e2e/golden/dummy.json",
+            golden_path=Path("tests") / "e2e" / "golden" / "dummy.json",
             skips=set([
+                "app_id",
                 "record_id",
                 "start_time",
                 "end_time",

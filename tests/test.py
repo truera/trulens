@@ -166,7 +166,7 @@ class JSONTestCase(TestCase):
         """Load the golden file `path` and return its contents.
 
         Args:
-            golden_filename: The name of the golden file to load. The file must
+            path: The name of the golden file to load. The file must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines the input format.
 
@@ -223,14 +223,14 @@ class JSONTestCase(TestCase):
     def assertGoldenJSONEqual(
         self,
         actual: JSON,
-        golden_filename: str,
+        golden_path: Union[Path, str],
         skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
         unordereds: Optional[Set[str]] = None,
         unordered: bool = False,
     ):
         """Assert equality between [JSON-like][trulens_eval.util.serial.JSON]
-        `actual` and the content of `golden_filename`.
+        `actual` and the content of `golden_path`.
 
         If the environment variable
         [WRITE_GOLDEN_VAR][trulens_eval.tests.unit.test.WRITE_GOLDEN_VAR] is
@@ -241,7 +241,7 @@ class JSONTestCase(TestCase):
         Args:
             actual: The actual JSON-like object produced by some test.
 
-            golden_filename: The name of the golden file to compare against that
+            golden_path: The path to the golden file to compare against that
                 stores the expected JSON-like results for the test. File must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines output format. This is in relation to the git base
@@ -272,11 +272,14 @@ class JSONTestCase(TestCase):
             AssertionError: If the golden file is written.
         """
 
+        if isinstance(golden_path, str):
+            golden_path = Path(golden_path)
+
         # Write golden and raise exception if writing golden is enabled.
-        self.write_golden(path=golden_filename, data=actual)
+        self.write_golden(path=golden_path, data=actual)
 
         # Otherwise load the golden file and compare.
-        expected = self.load_golden(golden_filename)
+        expected = self.load_golden(golden_path)
 
         self.assertJSONEqual(
             actual,

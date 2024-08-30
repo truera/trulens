@@ -1,106 +1,4 @@
 {
-  "tru_class_info": {
-    "name": "TruCustomApp",
-    "module": {
-      "package_name": "trulens.apps.custom",
-      "module_name": "trulens.apps.custom.custom"
-    },
-    "bases": [
-      {
-        "name": "TruCustomApp",
-        "module": {
-          "package_name": "trulens.apps.custom",
-          "module_name": "trulens.apps.custom.custom"
-        },
-        "bases": null
-      },
-      {
-        "name": "App",
-        "module": {
-          "package_name": "trulens.core",
-          "module_name": "trulens.core.app"
-        },
-        "bases": null
-      },
-      {
-        "name": "AppDefinition",
-        "module": {
-          "package_name": "trulens.core.schema",
-          "module_name": "trulens.core.schema.app"
-        },
-        "bases": null
-      },
-      {
-        "name": "WithClassInfo",
-        "module": {
-          "package_name": "trulens.core.utils",
-          "module_name": "trulens.core.utils.pyschema"
-        },
-        "bases": null
-      },
-      {
-        "name": "SerialModel",
-        "module": {
-          "package_name": "trulens.core.utils",
-          "module_name": "trulens.core.utils.serial"
-        },
-        "bases": null
-      },
-      {
-        "name": "BaseModel",
-        "module": {
-          "package_name": "pydantic",
-          "module_name": "pydantic.main"
-        },
-        "bases": null
-      },
-      {
-        "name": "WithInstrumentCallbacks",
-        "module": {
-          "package_name": "trulens.core",
-          "module_name": "trulens.core.instruments"
-        },
-        "bases": null
-      },
-      {
-        "name": "Hashable",
-        "module": {
-          "package_name": "collections",
-          "module_name": "collections.abc"
-        },
-        "bases": null
-      },
-      {
-        "name": "Generic",
-        "module": {
-          "package_name": "",
-          "module_name": "typing"
-        },
-        "bases": null
-      },
-      {
-        "name": "object",
-        "module": {
-          "package_name": "",
-          "module_name": "builtins"
-        },
-        "bases": null
-      }
-    ]
-  },
-  "app_id": "customapp",
-  "tags": "-",
-  "metadata": {},
-  "feedback_definitions": [],
-  "feedback_mode": "with_app_thread",
-  "root_class": {
-    "name": "DummyApp",
-    "module": {
-      "package_name": "examples.dev.dummy_app",
-      "module_name": "examples.dev.dummy_app.app"
-    },
-    "bases": null
-  },
   "app": {
     "agents": [
       {
@@ -118,37 +16,37 @@
             "seed": 3735928559,
             "temperature": 0.5,
             "tru_class_info": {
-              "name": "DummyLLM",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.llm"
-              },
               "bases": [
                 {
-                  "name": "DummyLLM",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.llm"
+                    "module_name": "examples.dev.dummy_app.llm",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyLLM"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.llm",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyLLM"
             }
           },
           "memory": {
@@ -158,37 +56,37 @@
             "messages": [],
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "DummyMemory",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.memory"
-              },
               "bases": [
                 {
-                  "name": "DummyMemory",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.memory"
+                    "module_name": "examples.dev.dummy_app.memory",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyMemory"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.memory",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyMemory"
             }
           },
           "reranker": {
@@ -199,37 +97,37 @@
             "seed": 3735928559,
             "top_n": 2,
             "tru_class_info": {
-              "name": "DummyReranker",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.reranker"
-              },
               "bases": [
                 {
-                  "name": "DummyReranker",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.reranker"
+                    "module_name": "examples.dev.dummy_app.reranker",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyReranker"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.reranker",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyReranker"
             }
           },
           "retriever": {
@@ -239,37 +137,37 @@
             "num_contexts": 2,
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "DummyRetriever",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.retriever"
-              },
               "bases": [
                 {
-                  "name": "DummyRetriever",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.retriever"
+                    "module_name": "examples.dev.dummy_app.retriever",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyRetriever"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.retriever",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyRetriever"
             }
           },
           "seed": 3735928559,
@@ -280,37 +178,37 @@
             "seed": 3735928559,
             "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
-              "name": "DummyTemplate",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.template"
-              },
               "bases": [
                 {
-                  "name": "DummyTemplate",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.template"
+                    "module_name": "examples.dev.dummy_app.template",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyTemplate"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.template",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyTemplate"
             }
           },
           "tools": [
@@ -321,45 +219,45 @@
               "last_stacks": [],
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyStackTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyStackTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyStackTool"
                   },
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyStackTool"
               }
             },
             {
@@ -368,37 +266,37 @@
               "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyTool"
               }
             },
             {
@@ -407,113 +305,113 @@
               "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyTool"
               }
             }
           ],
-          "use_parallel": false,
           "tru_class_info": {
-            "name": "DummyApp",
-            "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.app"
-            },
             "bases": [
               {
-                "name": "DummyApp",
+                "bases": null,
                 "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.app"
+                  "module_name": "examples.dev.dummy_app.app",
+                  "package_name": "examples.dev.dummy_app"
                 },
-                "bases": null
+                "name": "DummyApp"
               },
               {
-                "name": "Dummy",
+                "bases": null,
                 "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.dummy"
+                  "module_name": "examples.dev.dummy_app.dummy",
+                  "package_name": "examples.dev.dummy_app"
                 },
-                "bases": null
+                "name": "Dummy"
               },
               {
-                "name": "object",
+                "bases": null,
                 "module": {
-                  "package_name": "",
-                  "module_name": "builtins"
+                  "module_name": "builtins",
+                  "package_name": ""
                 },
-                "bases": null
+                "name": "object"
               }
-            ]
-          }
+            ],
+            "module": {
+              "module_name": "examples.dev.dummy_app.app",
+              "package_name": "examples.dev.dummy_app"
+            },
+            "name": "DummyApp"
+          },
+          "use_parallel": false
         },
         "delay": 0.0,
         "description": "ensemble agent 0",
         "seed": 3735928559,
-        "use_app": false,
-        "use_recorder": false,
         "tru_class_info": {
-          "name": "DummyAgent",
-          "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.agent"
-          },
           "bases": [
             {
-              "name": "DummyAgent",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.agent"
+                "module_name": "examples.dev.dummy_app.agent",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyAgent"
             },
             {
-              "name": "Dummy",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.dummy"
+                "module_name": "examples.dev.dummy_app.dummy",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "Dummy"
             },
             {
-              "name": "object",
+              "bases": null,
               "module": {
-                "package_name": "",
-                "module_name": "builtins"
+                "module_name": "builtins",
+                "package_name": ""
               },
-              "bases": null
+              "name": "object"
             }
-          ]
-        }
+          ],
+          "module": {
+            "module_name": "examples.dev.dummy_app.agent",
+            "package_name": "examples.dev.dummy_app"
+          },
+          "name": "DummyAgent"
+        },
+        "use_app": false,
+        "use_recorder": false
       },
       {
         "alloc": 0,
@@ -530,37 +428,37 @@
             "seed": 3735928559,
             "temperature": 0.5,
             "tru_class_info": {
-              "name": "DummyLLM",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.llm"
-              },
               "bases": [
                 {
-                  "name": "DummyLLM",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.llm"
+                    "module_name": "examples.dev.dummy_app.llm",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyLLM"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.llm",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyLLM"
             }
           },
           "memory": {
@@ -570,37 +468,37 @@
             "messages": [],
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "DummyMemory",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.memory"
-              },
               "bases": [
                 {
-                  "name": "DummyMemory",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.memory"
+                    "module_name": "examples.dev.dummy_app.memory",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyMemory"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.memory",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyMemory"
             }
           },
           "reranker": {
@@ -611,37 +509,37 @@
             "seed": 3735928559,
             "top_n": 2,
             "tru_class_info": {
-              "name": "DummyReranker",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.reranker"
-              },
               "bases": [
                 {
-                  "name": "DummyReranker",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.reranker"
+                    "module_name": "examples.dev.dummy_app.reranker",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyReranker"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.reranker",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyReranker"
             }
           },
           "retriever": {
@@ -651,37 +549,37 @@
             "num_contexts": 2,
             "seed": 3735928559,
             "tru_class_info": {
-              "name": "DummyRetriever",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.retriever"
-              },
               "bases": [
                 {
-                  "name": "DummyRetriever",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.retriever"
+                    "module_name": "examples.dev.dummy_app.retriever",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyRetriever"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.retriever",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyRetriever"
             }
           },
           "seed": 3735928559,
@@ -692,37 +590,37 @@
             "seed": 3735928559,
             "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
             "tru_class_info": {
-              "name": "DummyTemplate",
-              "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.template"
-              },
               "bases": [
                 {
-                  "name": "DummyTemplate",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.template"
+                    "module_name": "examples.dev.dummy_app.template",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "DummyTemplate"
                 },
                 {
-                  "name": "Dummy",
+                  "bases": null,
                   "module": {
-                    "package_name": "examples.dev.dummy_app",
-                    "module_name": "examples.dev.dummy_app.dummy"
+                    "module_name": "examples.dev.dummy_app.dummy",
+                    "package_name": "examples.dev.dummy_app"
                   },
-                  "bases": null
+                  "name": "Dummy"
                 },
                 {
-                  "name": "object",
+                  "bases": null,
                   "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
+                    "module_name": "builtins",
+                    "package_name": ""
                   },
-                  "bases": null
+                  "name": "object"
                 }
-              ]
+              ],
+              "module": {
+                "module_name": "examples.dev.dummy_app.template",
+                "package_name": "examples.dev.dummy_app"
+              },
+              "name": "DummyTemplate"
             }
           },
           "tools": [
@@ -733,45 +631,45 @@
               "last_stacks": [],
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyStackTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyStackTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyStackTool"
                   },
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyStackTool"
               }
             },
             {
@@ -780,37 +678,37 @@
               "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyTool"
               }
             },
             {
@@ -819,113 +717,113 @@
               "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
               "seed": 3735928559,
               "tru_class_info": {
-                "name": "DummyTool",
-                "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.tool"
-                },
                 "bases": [
                   {
-                    "name": "DummyTool",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.tool"
+                      "module_name": "examples.dev.dummy_app.tool",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "DummyTool"
                   },
                   {
-                    "name": "Dummy",
+                    "bases": null,
                     "module": {
-                      "package_name": "examples.dev.dummy_app",
-                      "module_name": "examples.dev.dummy_app.dummy"
+                      "module_name": "examples.dev.dummy_app.dummy",
+                      "package_name": "examples.dev.dummy_app"
                     },
-                    "bases": null
+                    "name": "Dummy"
                   },
                   {
-                    "name": "object",
+                    "bases": null,
                     "module": {
-                      "package_name": "",
-                      "module_name": "builtins"
+                      "module_name": "builtins",
+                      "package_name": ""
                     },
-                    "bases": null
+                    "name": "object"
                   }
-                ]
+                ],
+                "module": {
+                  "module_name": "examples.dev.dummy_app.tool",
+                  "package_name": "examples.dev.dummy_app"
+                },
+                "name": "DummyTool"
               }
             }
           ],
-          "use_parallel": false,
           "tru_class_info": {
-            "name": "DummyApp",
-            "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.app"
-            },
             "bases": [
               {
-                "name": "DummyApp",
+                "bases": null,
                 "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.app"
+                  "module_name": "examples.dev.dummy_app.app",
+                  "package_name": "examples.dev.dummy_app"
                 },
-                "bases": null
+                "name": "DummyApp"
               },
               {
-                "name": "Dummy",
+                "bases": null,
                 "module": {
-                  "package_name": "examples.dev.dummy_app",
-                  "module_name": "examples.dev.dummy_app.dummy"
+                  "module_name": "examples.dev.dummy_app.dummy",
+                  "package_name": "examples.dev.dummy_app"
                 },
-                "bases": null
+                "name": "Dummy"
               },
               {
-                "name": "object",
+                "bases": null,
                 "module": {
-                  "package_name": "",
-                  "module_name": "builtins"
+                  "module_name": "builtins",
+                  "package_name": ""
                 },
-                "bases": null
+                "name": "object"
               }
-            ]
-          }
+            ],
+            "module": {
+              "module_name": "examples.dev.dummy_app.app",
+              "package_name": "examples.dev.dummy_app"
+            },
+            "name": "DummyApp"
+          },
+          "use_parallel": false
         },
         "delay": 0.0,
         "description": "ensemble agent 1",
         "seed": 3735928559,
-        "use_app": false,
-        "use_recorder": false,
         "tru_class_info": {
-          "name": "DummyAgent",
-          "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.agent"
-          },
           "bases": [
             {
-              "name": "DummyAgent",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.agent"
+                "module_name": "examples.dev.dummy_app.agent",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyAgent"
             },
             {
-              "name": "Dummy",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.dummy"
+                "module_name": "examples.dev.dummy_app.dummy",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "Dummy"
             },
             {
-              "name": "object",
+              "bases": null,
               "module": {
-                "package_name": "",
-                "module_name": "builtins"
+                "module_name": "builtins",
+                "package_name": ""
               },
-              "bases": null
+              "name": "object"
             }
-          ]
-        }
+          ],
+          "module": {
+            "module_name": "examples.dev.dummy_app.agent",
+            "package_name": "examples.dev.dummy_app"
+          },
+          "name": "DummyAgent"
+        },
+        "use_app": false,
+        "use_recorder": false
       }
     ],
     "alloc": 0,
@@ -939,37 +837,37 @@
       "seed": 3735928559,
       "temperature": 0.5,
       "tru_class_info": {
-        "name": "DummyLLM",
-        "module": {
-          "package_name": "examples.dev.dummy_app",
-          "module_name": "examples.dev.dummy_app.llm"
-        },
         "bases": [
           {
-            "name": "DummyLLM",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.llm"
+              "module_name": "examples.dev.dummy_app.llm",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "DummyLLM"
           },
           {
-            "name": "Dummy",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.dummy"
+              "module_name": "examples.dev.dummy_app.dummy",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "Dummy"
           },
           {
-            "name": "object",
+            "bases": null,
             "module": {
-              "package_name": "",
-              "module_name": "builtins"
+              "module_name": "builtins",
+              "package_name": ""
             },
-            "bases": null
+            "name": "object"
           }
-        ]
+        ],
+        "module": {
+          "module_name": "examples.dev.dummy_app.llm",
+          "package_name": "examples.dev.dummy_app"
+        },
+        "name": "DummyLLM"
       }
     },
     "memory": {
@@ -979,37 +877,37 @@
       "messages": [],
       "seed": 3735928559,
       "tru_class_info": {
-        "name": "DummyMemory",
-        "module": {
-          "package_name": "examples.dev.dummy_app",
-          "module_name": "examples.dev.dummy_app.memory"
-        },
         "bases": [
           {
-            "name": "DummyMemory",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.memory"
+              "module_name": "examples.dev.dummy_app.memory",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "DummyMemory"
           },
           {
-            "name": "Dummy",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.dummy"
+              "module_name": "examples.dev.dummy_app.dummy",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "Dummy"
           },
           {
-            "name": "object",
+            "bases": null,
             "module": {
-              "package_name": "",
-              "module_name": "builtins"
+              "module_name": "builtins",
+              "package_name": ""
             },
-            "bases": null
+            "name": "object"
           }
-        ]
+        ],
+        "module": {
+          "module_name": "examples.dev.dummy_app.memory",
+          "package_name": "examples.dev.dummy_app"
+        },
+        "name": "DummyMemory"
       }
     },
     "reranker": {
@@ -1020,37 +918,37 @@
       "seed": 3735928559,
       "top_n": 2,
       "tru_class_info": {
-        "name": "DummyReranker",
-        "module": {
-          "package_name": "examples.dev.dummy_app",
-          "module_name": "examples.dev.dummy_app.reranker"
-        },
         "bases": [
           {
-            "name": "DummyReranker",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.reranker"
+              "module_name": "examples.dev.dummy_app.reranker",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "DummyReranker"
           },
           {
-            "name": "Dummy",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.dummy"
+              "module_name": "examples.dev.dummy_app.dummy",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "Dummy"
           },
           {
-            "name": "object",
+            "bases": null,
             "module": {
-              "package_name": "",
-              "module_name": "builtins"
+              "module_name": "builtins",
+              "package_name": ""
             },
-            "bases": null
+            "name": "object"
           }
-        ]
+        ],
+        "module": {
+          "module_name": "examples.dev.dummy_app.reranker",
+          "package_name": "examples.dev.dummy_app"
+        },
+        "name": "DummyReranker"
       }
     },
     "retriever": {
@@ -1060,37 +958,37 @@
       "num_contexts": 2,
       "seed": 3735928559,
       "tru_class_info": {
-        "name": "DummyRetriever",
-        "module": {
-          "package_name": "examples.dev.dummy_app",
-          "module_name": "examples.dev.dummy_app.retriever"
-        },
         "bases": [
           {
-            "name": "DummyRetriever",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.retriever"
+              "module_name": "examples.dev.dummy_app.retriever",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "DummyRetriever"
           },
           {
-            "name": "Dummy",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.dummy"
+              "module_name": "examples.dev.dummy_app.dummy",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "Dummy"
           },
           {
-            "name": "object",
+            "bases": null,
             "module": {
-              "package_name": "",
-              "module_name": "builtins"
+              "module_name": "builtins",
+              "package_name": ""
             },
-            "bases": null
+            "name": "object"
           }
-        ]
+        ],
+        "module": {
+          "module_name": "examples.dev.dummy_app.retriever",
+          "package_name": "examples.dev.dummy_app"
+        },
+        "name": "DummyRetriever"
       }
     },
     "seed": 3735928559,
@@ -1101,37 +999,37 @@
       "seed": 3735928559,
       "template": "Please answer the following question given the context.\nQUESTION: {question}\nCONTEXT: {context}\n",
       "tru_class_info": {
-        "name": "DummyTemplate",
-        "module": {
-          "package_name": "examples.dev.dummy_app",
-          "module_name": "examples.dev.dummy_app.template"
-        },
         "bases": [
           {
-            "name": "DummyTemplate",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.template"
+              "module_name": "examples.dev.dummy_app.template",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "DummyTemplate"
           },
           {
-            "name": "Dummy",
+            "bases": null,
             "module": {
-              "package_name": "examples.dev.dummy_app",
-              "module_name": "examples.dev.dummy_app.dummy"
+              "module_name": "examples.dev.dummy_app.dummy",
+              "package_name": "examples.dev.dummy_app"
             },
-            "bases": null
+            "name": "Dummy"
           },
           {
-            "name": "object",
+            "bases": null,
             "module": {
-              "package_name": "",
-              "module_name": "builtins"
+              "module_name": "builtins",
+              "package_name": ""
             },
-            "bases": null
+            "name": "object"
           }
-        ]
+        ],
+        "module": {
+          "module_name": "examples.dev.dummy_app.template",
+          "package_name": "examples.dev.dummy_app"
+        },
+        "name": "DummyTemplate"
       }
     },
     "tools": [
@@ -1142,45 +1040,45 @@
         "last_stacks": [],
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "DummyStackTool",
-          "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.tool"
-          },
           "bases": [
             {
-              "name": "DummyStackTool",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.tool"
+                "module_name": "examples.dev.dummy_app.tool",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyStackTool"
             },
             {
-              "name": "DummyTool",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.tool"
+                "module_name": "examples.dev.dummy_app.tool",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyTool"
             },
             {
-              "name": "Dummy",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.dummy"
+                "module_name": "examples.dev.dummy_app.dummy",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "Dummy"
             },
             {
-              "name": "object",
+              "bases": null,
               "module": {
-                "package_name": "",
-                "module_name": "builtins"
+                "module_name": "builtins",
+                "package_name": ""
               },
-              "bases": null
+              "name": "object"
             }
-          ]
+          ],
+          "module": {
+            "module_name": "examples.dev.dummy_app.tool",
+            "package_name": "examples.dev.dummy_app"
+          },
+          "name": "DummyStackTool"
         }
       },
       {
@@ -1189,37 +1087,37 @@
         "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "DummyTool",
-          "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.tool"
-          },
           "bases": [
             {
-              "name": "DummyTool",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.tool"
+                "module_name": "examples.dev.dummy_app.tool",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyTool"
             },
             {
-              "name": "Dummy",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.dummy"
+                "module_name": "examples.dev.dummy_app.dummy",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "Dummy"
             },
             {
-              "name": "object",
+              "bases": null,
               "module": {
-                "package_name": "",
-                "module_name": "builtins"
+                "module_name": "builtins",
+                "package_name": ""
               },
-              "bases": null
+              "name": "object"
             }
-          ]
+          ],
+          "module": {
+            "module_name": "examples.dev.dummy_app.tool",
+            "package_name": "examples.dev.dummy_app"
+          },
+          "name": "DummyTool"
         }
       },
       {
@@ -1228,78 +1126,186 @@
         "description": "Return a capitalized version of the string.\n\nMore specifically, make the first character have upper case and the rest lower\ncase.",
         "seed": 3735928559,
         "tru_class_info": {
-          "name": "DummyTool",
-          "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.tool"
-          },
           "bases": [
             {
-              "name": "DummyTool",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.tool"
+                "module_name": "examples.dev.dummy_app.tool",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "DummyTool"
             },
             {
-              "name": "Dummy",
+              "bases": null,
               "module": {
-                "package_name": "examples.dev.dummy_app",
-                "module_name": "examples.dev.dummy_app.dummy"
+                "module_name": "examples.dev.dummy_app.dummy",
+                "package_name": "examples.dev.dummy_app"
               },
-              "bases": null
+              "name": "Dummy"
             },
             {
-              "name": "object",
+              "bases": null,
               "module": {
-                "package_name": "",
-                "module_name": "builtins"
+                "module_name": "builtins",
+                "package_name": ""
               },
-              "bases": null
+              "name": "object"
             }
-          ]
+          ],
+          "module": {
+            "module_name": "examples.dev.dummy_app.tool",
+            "package_name": "examples.dev.dummy_app"
+          },
+          "name": "DummyTool"
         }
       }
     ],
-    "use_parallel": false,
     "tru_class_info": {
-      "name": "DummyApp",
-      "module": {
-        "package_name": "examples.dev.dummy_app",
-        "module_name": "examples.dev.dummy_app.app"
-      },
       "bases": [
         {
-          "name": "DummyApp",
+          "bases": null,
           "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.app"
+            "module_name": "examples.dev.dummy_app.app",
+            "package_name": "examples.dev.dummy_app"
           },
-          "bases": null
+          "name": "DummyApp"
         },
         {
-          "name": "Dummy",
+          "bases": null,
           "module": {
-            "package_name": "examples.dev.dummy_app",
-            "module_name": "examples.dev.dummy_app.dummy"
+            "module_name": "examples.dev.dummy_app.dummy",
+            "package_name": "examples.dev.dummy_app"
           },
-          "bases": null
+          "name": "Dummy"
         },
         {
-          "name": "object",
+          "bases": null,
           "module": {
-            "package_name": "",
-            "module_name": "builtins"
+            "module_name": "builtins",
+            "package_name": ""
           },
-          "bases": null
+          "name": "object"
         }
-      ]
-    }
+      ],
+      "module": {
+        "module_name": "examples.dev.dummy_app.app",
+        "package_name": "examples.dev.dummy_app"
+      },
+      "name": "DummyApp"
+    },
+    "use_parallel": false
   },
-  "initial_app_loader_dump": null,
   "app_extra_json": {},
+  "app_id": "app_hash_f23a545202d08b8ef32f8d992cf79e7e",
+  "app_name": "customapp",
+  "app_version": "base",
+  "feedback_definitions": [
+    "feedback_definition_hash_410456a37f42fbd23eab4659562bda84",
+    "feedback_definition_hash_165860af030a5997f3e7ac64c33480cc"
+  ],
+  "feedback_mode": "with_app_thread",
+  "initial_app_loader_dump": null,
+  "main_method": null,
+  "metadata": {},
+  "record_ingest_mode": "immediate",
+  "root_class": {
+    "bases": null,
+    "module": {
+      "module_name": "examples.dev.dummy_app.app",
+      "package_name": "examples.dev.dummy_app"
+    },
+    "name": "DummyApp"
+  },
   "selector_check_warning": false,
   "selector_nocheck": false,
-  "main_method": null
+  "tags": "-",
+  "tru_class_info": {
+    "bases": [
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.apps.custom",
+          "package_name": "trulens.apps"
+        },
+        "name": "TruCustomApp"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.app",
+          "package_name": "trulens.core"
+        },
+        "name": "App"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.schema.app",
+          "package_name": "trulens.core.schema"
+        },
+        "name": "AppDefinition"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.utils.pyschema",
+          "package_name": "trulens.core.utils"
+        },
+        "name": "WithClassInfo"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.utils.serial",
+          "package_name": "trulens.core.utils"
+        },
+        "name": "SerialModel"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "pydantic.main",
+          "package_name": "pydantic"
+        },
+        "name": "BaseModel"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.instruments",
+          "package_name": "trulens.core"
+        },
+        "name": "WithInstrumentCallbacks"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "collections.abc",
+          "package_name": "collections"
+        },
+        "name": "Hashable"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "typing",
+          "package_name": ""
+        },
+        "name": "Generic"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "builtins",
+          "package_name": ""
+        },
+        "name": "object"
+      }
+    ],
+    "module": {
+      "module_name": "trulens.apps.custom",
+      "package_name": "trulens.apps"
+    },
+    "name": "TruCustomApp"
+  }
 }
