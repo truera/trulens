@@ -289,7 +289,7 @@ In our suggested workflow, `app_name` represents an objective you’re building 
     )
     ```
 
-To bring these changes to life, we've also added new filters to the Leaderboard and Evaluations pages. These filters give you the power to focus in on particular apps and versons, or even slice to apps with a specific tag or metadata.
+To bring these changes to life, we've also added new filters to the Leaderboard and Evaluations pages. These filters give you the power to focus in on particular apps and versions, or even slice to apps with a specific tag or metadata.
 
 ## **First-class support for Ground Truth Evaluation**
 
