@@ -13,7 +13,7 @@ Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take ove
 
 Next, we modularize _TruLens_ into a family of different packages, described below. This change is designed to minimize the overhead required for _TruLens_ developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
 
-* `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation
+* `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
 * `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
 * `trulens-instrument-` prefixed packages give you tools for instrumentation and logging. This includes both `trulens-instrument-core` for logging custom and virtual apps, along with `trulens-instrument-langchain` and `trulens-instrument-llama-index` which hold our popular `TruChain` and `TruLlama` wrappers that seamlessly instrument LangChain and Llama-Index apps.
 * `trulens-feedback` gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.
@@ -39,7 +39,7 @@ Read more about the [TruLens deprecation policy](../policies.md).
 
 Along with this change, we’ve also included a [migration guide](./guides/trulens_eval_migration.md) for moving to TruLens v1.
 
-Please give us feedback on GitHub by creating issues and starting discussions.
+Please give us feedback on GitHub by creating [issues](https://github.com/truera/trulens/issues) and starting [discussions](https://github.com/truera/trulens/discussions). You can also chime in on [slack](https://communityinviter.com/apps/aiqualityforum/josh).
 
 To see the core re-architecture changes in action, we've included some usage examples below:
 
@@ -347,6 +347,31 @@ See this in action in the new [Ground Truth Persistence Quickstart](../../exampl
 On the top-level of TruLens docs, we previously had separated out Evaluation, Evaluation Benchmarks, Tracking and Guardrails. These are now combined to form the new [Component Guides](../tracking/instrumentation/).
 
 We also pulled in our extensive GitHub examples library directly into docs. This should make it easier for you to learn about all of the different ways to get started using TruLens. You can find these examples in the top-level navigation under ["Cookbook"](../../examples/).
+
+## Automatic Migration with Grit
+
+To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrade your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
+
+To use on the command line, follow these instructions:
+
+### Install `grit`
+   
+You can install the Grit CLI from NPM:
+```bash
+npm install --location=global @getgrit/cli
+```
+Alternatively, you can also install Grit with an installation script:
+```bash
+curl -fsSL https://docs.grit.io/install | bash
+```
+
+### Apply automatic changes
+
+```bash
+grit apply trulens_eval_migration
+```
+
+Be sure to audit its changes: we suggest ensuring you have a clean working tree beforehand.
 
 ## **Conclusion**
 
