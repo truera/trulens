@@ -201,10 +201,10 @@ To see the core re-architecture changes in action, we've included some usage exa
         from trulens.providers.huggingface import Huggingface
 
         # Define a remote Huggingface groundedness feedback function
-        remote_provider = Huggingface()
+        provider = Huggingface()
         f_remote_groundedness = (
             Feedback(
-                remote_provider.groundedness_measure_with_nli,
+                provider.groundedness_measure_with_nli,
                 name="[Remote] Groundedness",
             )
             .on(Select.RecordCalls.retrieve.rets.collect())
