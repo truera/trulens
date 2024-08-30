@@ -120,7 +120,7 @@ class TestDeprecation(TestCase):
                         "CortexEndpoint",
                         "TruRails",
                     ] and sys.version_info >= (3, 12):
-                        # These require python 3.12 .
+                        # These require python < 3.12 .
                         continue
 
                     with self.subTest(name=name):
