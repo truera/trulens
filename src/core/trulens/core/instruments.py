@@ -611,14 +611,31 @@ class Instrument:
                 return records
 
             if isinstance(rets, Awaitable):
+                # NOTE(piotrm): In case of producing an awaitable result, we
+                # need to insert a placeholder call/record before we return the
+                # awaitable as otherwise we might never get a chance to record
+                # anything especially if the user never awaits the return.
+
+                type_name = class_name(type(rets))
                 # If method produced an awaitable
                 logger.info(
-                    f"""This app produced an asynchronous response of type `{class_name(type(rets))}`.
-                            This record will be updated once the response is available"""
+                    "This app produced an asynchronous response of type `%s`."
+                    "This record will be updated once the response is available",
+                    type_name,
                 )
 
                 # TODO(piotrm): need to track costs of awaiting the ret in the
                 # below.
+
+                # Placeholder:
+                records: Dict = handle_done(
+                    rets=f"""
+The method {callable_name(func)} produced an asynchronous response of type
+`{type_name}`. This record will be updated once the response is available. If
+this message persists, check that you are using the correct version of the app
+method and `await` any asynchronous results it produces.
+"""
+                )
 
                 return wrap_awaitable(rets, on_done=handle_done)
 
