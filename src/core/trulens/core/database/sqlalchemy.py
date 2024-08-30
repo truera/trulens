@@ -970,18 +970,18 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
+    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float, str]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
             cost = mod_base_schema.Cost(**_cost_json)
         else:
             cost = mod_base_schema.Cost()
-        return cost.n_tokens, cost.cost
+        return cost.n_tokens, cost.cost, cost.cost_currency
 
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
-        columns=["total_tokens", "total_cost"],
+        columns=["total_tokens", "total_cost", "cost_currency"],
     )
 
 
@@ -1121,6 +1121,8 @@ class AppsExtractor:
                         else:
                             df[col] = getattr(_app, col)
 
+                    df["app_name"] = _app.app_name
+                    df["app_version"] = _app.app_version
                     yield df
             except OperationalError as e:
                 print(
@@ -1143,14 +1145,12 @@ class AppsExtractor:
                     )
 
                     feedback_usage = json.loads(_res.cost_json)
-                    if "snowflake_credits_consumed" in feedback_usage:
+                    cost_currency = feedback_usage.get("cost_currency", "USD")
+
+                    if "cost" in feedback_usage:
                         feedback_cost[
-                            _res.name + "_snowflake_credits_consumed"
-                        ] = feedback_usage["snowflake_credits_consumed"]
-                    elif "total_cost" in feedback_usage:
-                        feedback_cost[_res.name + "_total_cost"] = (
-                            feedback_usage["total_cost"]
-                        )
+                            f"{_res.name} feedback cost in {cost_currency}"
+                        ] = feedback_usage["cost"]
 
                     if (
                         _res.multi_result is not None

@@ -106,7 +106,7 @@ class DummyStackTool(DummyTool):
             """
 
             # Don't include bytecode as it has non-deterministic addresses which mess with
-            # golden test comparsion.
+            # golden test comparison.
             # bytecode = dis.Bytecode(frame.f_code)
             # <td><pre><code>{bytecode.dis()}</code></pre></td>
 

@@ -228,6 +228,12 @@ else:
                 lambda x: json.loads(x)["metadata"].get(key)
             )
 
+        feedback_cost_cols = []
+
+        for col in evaluations_df.columns:
+            if "feedback cost" in col:
+                feedback_cost_cols.append(col)
+
         # Drop the original app_metadata column if it exists
         if "app_metadata" in evaluations_df.columns:
             evaluations_df.drop(columns=["app_metadata"], inplace=True)
@@ -279,30 +285,36 @@ else:
         gb.configure_column("record_metadata", header_name="Record Metadata")
 
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
-        gb.configure_column("total_cost", header_name="Total Cost (USD)")
+        gb.configure_column("total_cost", header_name="Total Cost (App)")
+        gb.configure_column("cost_currency", header_name="Cost Currency")
         gb.configure_column("latency", header_name="Latency (Seconds)")
         gb.configure_column("tags", header_name="Application Tag")
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
-        non_feedback_cols = [
-            "app_name",
-            "app_version",
-            "app_id",
-            "type",
-            "ts",
-            "total_tokens",
-            "total_cost",
-            "record_json",
-            "latency",
-            "tags",
-            "record_metadata",
-            "record_id",
-            "cost_json",
-            "app_json",
-            "input",
-            "output",
-            "perf_json",
-        ] + metadata_cols
+        non_feedback_cols = (
+            [
+                "app_name",
+                "app_version",
+                "app_id",
+                "type",
+                "ts",
+                "total_tokens",
+                "total_cost",
+                "cost_currency",
+                "record_json",
+                "latency",
+                "tags",
+                "record_metadata",
+                "record_id",
+                "cost_json",
+                "app_json",
+                "input",
+                "output",
+                "perf_json",
+            ]
+            + metadata_cols
+            + feedback_cost_cols
+        )
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             if "distance" in feedback_col:

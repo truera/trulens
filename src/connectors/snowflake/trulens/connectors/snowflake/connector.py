@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class SnowflakeConnector(DBConnector):
+    """Connector to snowflake databases."""
+
     def __init__(
         self,
         account: str,
@@ -39,6 +41,7 @@ class SnowflakeConnector(DBConnector):
         schema: str,
         warehouse: str,
         role: str,
+        init_server_side: bool = True,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -78,16 +81,17 @@ class SnowflakeConnector(DBConnector):
                 print(e)
                 self._db = OpaqueWrapper(obj=self._db, e=e)
 
-        self._initialize_snowflake_server_side_feedback_evaluations(
-            account,
-            user,
-            password,
-            database,
-            schema,
-            warehouse,
-            role,
-            database_args["database_prefix"],
-        )
+        if init_server_side:
+            self._initialize_snowflake_server_side_feedback_evaluations(
+                account,
+                user,
+                password,
+                database,
+                schema,
+                warehouse,
+                role,
+                database_args["database_prefix"],
+            )
 
     def _initialize_snowflake_server_side_feedback_evaluations(
         self,

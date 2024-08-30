@@ -9,7 +9,7 @@ Methods*.
 In addition to the default instrumentation, TruChain exposes the
 *select_context* method for evaluations that require access to retrieved
 context. Exposing *select_context* bypasses the need to know the json structure
-of your app ahead of time, and makes your evaluations re-usable across different
+of your app ahead of time, and makes your evaluations reusable across different
 apps.
 
 ## Example Usage

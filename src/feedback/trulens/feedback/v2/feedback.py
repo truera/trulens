@@ -208,7 +208,7 @@ class Groundedness(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
         """You are a INFORMATION OVERLAP classifier; providing the overlap of information between the source and statement.
         Respond only as a number from 0 to 10 where 0 is no information overlap and 10 is all information is overlapping.
-        Abstentions, such as 'I don't know', should be counted as the most overlap and therefore score a 10.
+        Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore score a 10.
         Never elaborate."""
     )
     user_prompt: ClassVar[str] = cleandoc(
@@ -221,6 +221,15 @@ class Groundedness(Semantics, WithPrompt):
         Criteria: <Statement Sentence>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
         Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
+        """
+    )
+
+    sentences_splitter_prompt: ClassVar[str] = cleandoc(
+        """Split the following statement into individual sentences:
+
+        Statement: {statement}
+
+        Return each sentence on a new line.
         """
     )
 
