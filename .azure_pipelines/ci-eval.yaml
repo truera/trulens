@@ -3,7 +3,10 @@ trigger:
     include:
       - releases/*
 
-pr: none
+pr:
+  branches:
+    include:
+      - main
 
 jobs:
   - job: ReleaseTests
