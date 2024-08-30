@@ -36,6 +36,22 @@ class Feature(str, Enum):
         changed after any wrapper is produced.
     """
 
+    @classmethod
+    def _repr_all(cls) -> str:
+        """Return a string representation of all the feature flags."""
+
+        ret = ""
+        for flag in cls:
+            ret += f'  {flag.name} = "{flag.value}"\n'
+
+        return ret
+
+    @classmethod
+    def _missing_(cls, value: str):
+        raise ValueError(
+            f"Invalid feature flag `{value}`. Available flags are:\n{cls._repr_all()}"
+        )
+
 
 class Setting(Generic[T]):
     """A setting that attains some value and can be locked from changing."""
@@ -76,7 +92,7 @@ class Setting(Generic[T]):
 
                 raise ValueError(
                     f"Feature flag has already been set to {self.value} and cannot be changed. "
-                    f"It has been set by:\n{locked_frames}"
+                    f"It has been locked here:\n{locked_frames}"
                 )
 
             self.value = value
@@ -326,13 +342,15 @@ class WithExperimentalSettings(
             for flag in flags:
                 self._experimental_feature(flag, value=True, lock=lock)
 
-    def _experimental_assert_feature(
+    def experimental_assert_feature(
         self, flag: Feature, purpose: Optional[str] = None
     ):
         """Raise a ValueError if the given feature flag is not enabled.
 
         Gives instructions on how to enable the feature flag if error gets
         raised."""
+
+        flag = Feature(flag)
 
         if purpose is None:
             purpose = "."
@@ -341,16 +359,16 @@ class WithExperimentalSettings(
 
         if not self.experimental_feature(flag):
             raise ValueError(
-                f"""Feature flag {flag} is not enabled{purpose} You can enable it in three ways:
-```python
-from trulens.core.experimental import Feature
+                f"""Feature flag {flag} is not enabled{purpose} You can enable it in two ways:
+    ```python
+    from trulens.core.experimental import Feature
 
-# Enable for this instance when creating it:
-val = {self.__name__}(experimental_feature_flags=[{flag}]
+    # Enable for this instance when creating it:
+    val = {self.__class__.__name__}(experimental_feature_flags=[{flag}]
 
-# Enable for this instance after it has been crated (for features that allows this):
-val.experimental_enable_feature({flag})
-```
+    # Enable for this instance after it has been crated (for features that allows this):
+    val.experimental_enable_feature({flag})
+    ```
 """
             )
 

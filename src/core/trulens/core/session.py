@@ -216,7 +216,8 @@ class TruSession(
         )
 
         # for WithExperimentalSettings mixin
-        self.experimental_set_features(experimental_feature_flags)
+        if experimental_feature_flags is not None:
+            self.experimental_set_features(experimental_feature_flags)
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
