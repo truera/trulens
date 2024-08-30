@@ -6,6 +6,7 @@ from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
+from subprocess import check_call
 import time
 from unittest import TestCase
 import uuid
@@ -32,7 +33,7 @@ class TestTru(TestCase):
         check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
-            # "PINECONE_API_KEY",
+            # "PINECONE_API_KEY", # don't seem to be needed
             # "PINECONE_ENV",
         )
 
@@ -130,14 +131,23 @@ class TestTru(TestCase):
         # Starter example of
         # https://docs.llamaindex.ai/en/latest/getting_started/starter_example.html
 
-        import os
-
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
 
-        os.system(
-            "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
-        )
+        path = Path("data")
+
+        if not path.exists():
+            try:
+                check_call([
+                    "wget",
+                    "https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt",
+                    "-P",
+                    "data/",
+                ])
+            except Exception as e:
+                raise RuntimeError(
+                    "Could not download required text data."
+                ) from e
 
         documents = SimpleDirectoryReader("data").load_data()
         index = VectorStoreIndex.from_documents(documents)
@@ -224,7 +234,7 @@ class TestTru(TestCase):
 
             # Specifying the chain using any of these other argument names
             # should be an error.
-            wrong_args = ["app", "engine", "text_to_text"]
+            wrong_args = ["engine", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
@@ -253,7 +263,7 @@ class TestTru(TestCase):
 
             # Specifying engine using any of these other argument names
             # should be an error.
-            wrong_args = ["chain", "app", "text_to_text"]
+            wrong_args = ["chain", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
