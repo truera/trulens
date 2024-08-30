@@ -11,7 +11,7 @@ Split off `trulens-eval` from `trulens-explain`, and let `trulens-eval` take ove
 
 ## **Separate TruLens-Eval into different trulens packages**
 
-Next, we modularize _TruLens_ into a family of different packages, described below. This change is designed to minimize the overhead required for _TruLens_ developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
+Next, we modularized _TruLens_ into a family of different packages, described below. This change is designed to minimize the overhead required for _TruLens_ developers to use the capabilities they need. For example, you can now install instrumentation packages in production without the additional dependencies required to run the dashboard.
 
 * `trulens-core` holds core abstractions for database operations, app instrumentation, guardrails and evaluation.
 * `trulens-dashboard` gives you the required capabilities to run and operate the TruLens dashboard.
@@ -29,9 +29,9 @@ The base install of trulens will install `trulens-core`, `trulens-feedback` and 
 
 Starting 1.0.0, the `trulens_eval` package is being deprecated in favor of `trulens` and several associated required and optional packages.
 
-Until 10-14-2024, backwards compatibility during the warning period is provided by the new content of the `trulens_eval` package which provides aliases to the in their new locations. See [trulens_eval](./api/trulens_eval/index.md).
+Until 2024-10-14, backwards compatibility during the warning period is provided by the new content of the `trulens_eval` package which provides aliases to the in their new locations. See [trulens_eval](./api/trulens_eval/index.md).
 
-Starting 10-15-2014 until 2025-12-01. Usage of `trulens_eval` will produce errors indicating deprecation.
+Starting 2024-10-15 until 2025-12-01. Usage of `trulens_eval` will produce errors indicating deprecation.
 
 Beginning 2024-12-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
 
@@ -355,7 +355,7 @@ To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a
 To use on the command line, follow these instructions:
 
 ### Install `grit`
-   
+
 You can install the Grit CLI from NPM:
 ```bash
 npm install --location=global @getgrit/cli
