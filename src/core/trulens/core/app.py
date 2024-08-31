@@ -434,13 +434,21 @@ class RecordingContext:
         """
         Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
+
+        If existing_record is provided, updates that record with new data.
         """
 
         with self.lock:
-            record = calls_to_record(
-                list(self.calls.values()), self.record_metadata, existing_record
-            )
+            current_calls = dict(self.calls)  # copy
             self.calls = {}
+
+            if existing_record is not None:
+                for call in existing_record.calls:
+                    current_calls[call.call_id] = call
+
+            record = calls_to_record(
+                current_calls.values(), self.record_metadata, existing_record
+            )
 
             if existing_record is None:
                 # If existing record was given, we assume it was already
@@ -1153,9 +1161,11 @@ class App(
         cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ) -> mod_record_schema.Record:
-        """Called by instrumented methods if they use _new_record to construct a record call list.
+        """Called by instrumented methods if they use _new_record to construct a
+        "record call list.
 
-        See [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
+        See
+        [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
         def build_record(
@@ -1166,6 +1176,9 @@ class App(
             calls = list(calls)
 
             assert len(calls) > 0, "No information recorded in call."
+
+            # if existing_record is not None:
+            #    calls = existing_record.calls
 
             if bindings is not None:
                 main_in = self.main_input(func, sig, bindings)
@@ -1275,30 +1288,32 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     async def awith_(
         self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
-        """
-        Call the given async `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard. If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context manager instead.
+        """Call the given async `func` with the given `*args` and `**kwargs`
+        while recording, producing `func` results.
+
+        The record of the computation is available through other means like the
+        database or dashboard. If you need a record of this execution
+        immediately, you can use `awith_record` or the `App` as a context
+        manager instead.
         """
 
         awaitable, _ = self.with_record(func, *args, **kwargs)
 
         if not isinstance(awaitable, Awaitable):
             raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
+                f"Expected {callable_name(func)} to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
             )
 
         return await awaitable
 
     async def with_(self, func: Callable[[A], T], *args, **kwargs) -> T:
-        """
-        Call the given async `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard. If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context manager instead.
+        """Call the given async `func` with the given `*args` and `**kwargs`
+        while recording, producing `func` results.
+
+        The record of the computation is available through other means like the
+        database or dashboard. If you need a record of this execution
+        immediately, you can use `awith_record` or the `App` as a context
+        manager instead.
         """
 
         res, _ = self.with_record(func, *args, **kwargs)

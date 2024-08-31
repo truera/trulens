@@ -1,6 +1,7 @@
 """TestCase subclass with JSON comparisons and test enable/disable flag
 handling."""
 
+import asyncio
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
@@ -39,6 +40,19 @@ WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 true) or read and compared (if false/undefined)."""
 
 ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
+
+
+def async_test(func):
+    """Decorator for running async tests."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        temp = loop.run_until_complete(func(*args, **kwargs))
+        loop.close()
+        return temp
+
+    return wrapper
 
 
 def optional_test(testmethodorclass):
@@ -173,7 +187,7 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
     return [o for o, _ in objs_and_strs_sorted]
 
 
-class JSONTestCase(TestCase):
+class WithJSONTestCase:
     """TestCase class that adds JSON comparisons and golden expectation handling."""
 
     def load_golden(self, path: Union[str, Path]) -> JSON:
@@ -457,3 +471,10 @@ class JSONTestCase(TestCase):
             raise RuntimeError(
                 f"Don't know how to compare objects of type {type(j1)} at {ps}."
             )
+
+
+class JSONTestCase(WithJSONTestCase, TestCase):
+    """TestCase subclass with JSON comparisons and test enable/disable flag
+    handling."""
+
+    pass

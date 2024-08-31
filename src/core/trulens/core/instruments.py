@@ -559,6 +559,8 @@ class Instrument:
             records = {}
 
             def handle_done(rets):
+                nonlocal records
+
                 # (re) generate end_time here because cases where the initial end_time was
                 # just to produce an awaitable before being awaited.
                 end_time = datetime.now()
@@ -602,13 +604,11 @@ class Instrument:
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
-                            existing_record=records.get(ctx),
+                            existing_record=records.get(ctx, None),
                         )
 
                 if error is not None:
                     raise error
-
-                return records
 
             if isinstance(rets, Awaitable):
                 # NOTE(piotrm): In case of producing an awaitable result, we
@@ -628,7 +628,7 @@ class Instrument:
                 # below.
 
                 # Placeholder:
-                records: Dict = handle_done(
+                handle_done(
                     rets=f"""
 The method {callable_name(func)} produced an asynchronous response of type
 `{type_name}`. This record will be updated once the response is available. If
