@@ -82,7 +82,7 @@ class TestEndpoints(TestCase):
             == "<class 'trulens.providers.cortex.provider.Cortex'>"
         ):
             self.assertGreater(
-                cost.n_cortext_guardrails_tokens,
+                cost.n_cortex_guardrails_tokens,
                 0.0,
                 "Expected non-zero cortex guardrails tokens.",
             )

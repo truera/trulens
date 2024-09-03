@@ -6,6 +6,7 @@ from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
 from datetime import datetime
 from pathlib import Path
+from subprocess import check_call
 import time
 from unittest import TestCase
 import uuid
@@ -32,67 +33,50 @@ class TestTru(TestCase):
         check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
-            "PINECONE_API_KEY",
-            "PINECONE_ENV",
+            # "PINECONE_API_KEY", # don't seem to be needed
+            # "PINECONE_ENV",
         )
 
     def test_init(self):
-        """
-        Test Tru class constructor. This involves just database-related
-        specifications right now.
+        """Test Tru class constructor.
+
+        This involves just database-related specifications right now.
         """
 
         # Try all combinations of arguments to Tru constructor.
         test_args = dict()
-        test_args["database_url"] = [None, "sqlite:///default_url.db"]
-        test_args["database_file"] = [None, "default_file.db"]
+        test_args["database_url"] = [None, "sqlite:///some_filename.db"]
         test_args["database_redact_keys"] = [None, True, False]
 
         for url in test_args["database_url"]:
-            for file in test_args["database_file"]:
-                for redact in test_args["database_redact_keys"]:
-                    with self.subTest(url=url, file=file, redact=redact):
-                        args = dict()
-                        if url is not None:
-                            args["database_url"] = url
-                        if file is not None:
-                            args["database_file"] = file
-                        if redact is not None:
-                            args["database_redact_keys"] = redact
+            for redact in test_args["database_redact_keys"]:
+                with self.subTest(url=url, redact=redact):
+                    args = dict()
+                    if url is not None:
+                        args["database_url"] = url
+                    if redact is not None:
+                        args["database_redact_keys"] = redact
 
-                        if url is not None and file is not None:
-                            # Specifying both url and file should throw exception.
-                            with self.assertRaises(Exception):
-                                session = TruSession(**args)
+                    try:
+                        session = TruSession(**args)
+                    finally:
+                        if session is not None:
+                            session.delete_singleton()
 
-                            if session is not None:
-                                session.delete_singleton()
+                    if session is None:
+                        continue
 
-                        else:
-                            try:
-                                session = TruSession(**args)
-                            finally:
-                                if session is not None:
-                                    session.delete_singleton()
+                    # Do some db operations to the expected files get created.
+                    session.reset_database()
 
-                            if session is None:
-                                continue
+                    # Check that the expected files were created.
+                    if url is not None:
+                        self.assertTrue(Path("some_filename.db").exists())
+                    else:
+                        self.assertTrue(Path("default.sqlite").exists())
 
-                            # Do some db operations to the expected files get created.
-                            session.reset_database()
-
-                            # Check that the expected files were created.
-                            if url is not None:
-                                self.assertTrue(Path("default_url.db").exists())
-                            elif file is not None:
-                                self.assertTrue(
-                                    Path("default_file.db").exists()
-                                )
-                            else:
-                                self.assertTrue(Path("default.sqlite").exists())
-
-                        # Need to delete singleton after test as otherwise we
-                        # cannot change the arguments in next test.
+                # Need to delete singleton after test as otherwise we
+                # cannot change the arguments in next test.
 
     def _create_custom(self):
         from examples.dev.dummy_app.app import DummyApp
@@ -147,14 +131,23 @@ class TestTru(TestCase):
         # Starter example of
         # https://docs.llamaindex.ai/en/latest/getting_started/starter_example.html
 
-        import os
-
         from llama_index.core import SimpleDirectoryReader
         from llama_index.core import VectorStoreIndex
 
-        os.system(
-            "wget https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt -P data/"
-        )
+        path = Path("data")
+
+        if not path.exists():
+            try:
+                check_call([
+                    "wget",
+                    "https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt",
+                    "-P",
+                    "data/",
+                ])
+            except Exception as e:
+                raise RuntimeError(
+                    "Could not download required text data."
+                ) from e
 
         documents = SimpleDirectoryReader("data").load_data()
         index = VectorStoreIndex.from_documents(documents)
@@ -241,7 +234,7 @@ class TestTru(TestCase):
 
             # Specifying the chain using any of these other argument names
             # should be an error.
-            wrong_args = ["app", "engine", "text_to_text"]
+            wrong_args = ["engine", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
@@ -270,7 +263,7 @@ class TestTru(TestCase):
 
             # Specifying engine using any of these other argument names
             # should be an error.
-            wrong_args = ["chain", "app", "text_to_text"]
+            wrong_args = ["chain", "text_to_text"]
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
@@ -465,12 +458,12 @@ class TestTru(TestCase):
     def test_start_evaluator_with_blocking(self):
         session = TruSession()
         f = Feedback(custom_feedback_function).on_default()
-        app_id = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
+        app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
             feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,
-            app_id=app_id,
+            app_name=app_name,
         )
         with tru_app:
             tru_app.main_call("test_deferred_mode")
@@ -480,7 +473,7 @@ class TestTru(TestCase):
             # We should never get here since the variable isn't supposed to be set.
             raise ValueError("The evaluator is still running!")
         records_and_feedback = session.get_records_and_feedback(
-            app_ids=[app_id]
+            app_ids=[tru_app.app_id]
         )
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(records_and_feedback[1], ["custom_feedback_function"])
