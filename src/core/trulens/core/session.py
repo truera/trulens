@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 class TruSession(
-    mod_experimental.WithExperimentalSettings,
+    mod_experimental._WithExperimentalSettings,
     pydantic.BaseModel,
     python.SingletonPerName,
 ):

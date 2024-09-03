@@ -25,7 +25,17 @@ class Feature(str, Enum):
     """Experimental feature flags.
 
     Use [TruSession.experimental_enable_feature][trulens.core.session.TruSession.experimental_enable_feature] to enable
-    these features.
+    these features:
+
+    Examples:
+        ```python
+        from trulens.core.session import TruSession
+        from trulens.core.experimental import Feature
+
+        session = TruSession()
+
+        session.experimental_enable_feature(Feature.OTEL_TRACING)
+        ```
     """
 
     OTEL_TRACING = "otel_tracing"
@@ -53,7 +63,7 @@ class Feature(str, Enum):
         )
 
 
-class Setting(Generic[T]):
+class _Setting(Generic[T]):
     """A setting that attains some value and can be locked from changing."""
 
     def __init__(self, default: T):
@@ -123,7 +133,7 @@ class Setting(Generic[T]):
         return self.set(value, lock=True)
 
 
-class ExperimentalSettings:
+class _Settings:
     """A collection of settings to enable/disable experimental features.
 
     A feature can be enabled/disabled and/or locked so that once it is set, it
@@ -133,8 +143,8 @@ class ExperimentalSettings:
     """
 
     def __init__(self):
-        self.settings: Dict[Feature, Setting[bool]] = defaultdict(
-            lambda: Setting(default=False)
+        self.settings: Dict[Feature, _Setting[bool]] = defaultdict(
+            lambda: _Setting(default=False)
         )
         """The settings for the experimental features."""
 
@@ -232,19 +242,20 @@ class ExperimentalSettings:
                 self.set(flag, value=True, lock=lock)
 
 
-class WithExperimentalSettings(
+class _WithExperimentalSettings(
     pydantic.BaseModel,
     text_utils.WithIdentString,
 ):
-    """Mixin to add experimental flags and control methods."""
+    """Mixin to add experimental flags and control methods.
 
-    _experimental_feature_flags: ExperimentalSettings = pydantic.PrivateAttr(
-        default_factory=ExperimentalSettings
+    Prints out messages when features are enabled/disabled locked and when
+    a setting fails to take up due to locking.
+    """
+
+    _experimental_feature_flags: _Settings = pydantic.PrivateAttr(
+        default_factory=_Settings
     )
     """EXPERIMENTAL: Flags to control experimental features."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
     def _experimental_feature(
         self,
@@ -285,7 +296,7 @@ class WithExperimentalSettings(
 
         return val
 
-    def experimental_lock_feature(self, flag: Union[str, Feature]) -> bool:
+    def _experimental_lock_feature(self, flag: Union[str, Feature]) -> bool:
         """Get and lock the given feature flag."""
 
         return self._experimental_feature(flag, lock=True)
@@ -342,7 +353,7 @@ class WithExperimentalSettings(
             for flag in flags:
                 self._experimental_feature(flag, value=True, lock=lock)
 
-    def experimental_assert_feature(
+    def _experimental_assert_feature(
         self, flag: Feature, purpose: Optional[str] = None
     ):
         """Raise a ValueError if the given feature flag is not enabled.
@@ -373,7 +384,7 @@ class WithExperimentalSettings(
             )
 
     @staticmethod
-    def experimental_method_override(
+    def _experimental_method_override(
         flag: Feature, enabled: T, lock: bool = False
     ) -> T:
         """Decorator to replace the decorated method with the given one if the
@@ -397,7 +408,7 @@ class WithExperimentalSettings(
 
         def wrapper(func: T) -> T:
             @functools.wraps(func)
-            def wrapped(self: WithExperimentalSettings, *args, **kwargs):
+            def wrapped(self: _WithExperimentalSettings, *args, **kwargs):
                 if self.experimental_feature(flag, lock=lock):
                     return enabled(*args, **kwargs)
 
@@ -408,7 +419,7 @@ class WithExperimentalSettings(
         return wrapper
 
     @staticmethod
-    def experimental_method(
+    def _experimental_method(
         flag: Feature, enabled: Callable, disabled: Callable, lock: bool = False
     ) -> Callable:
         """Select between two methods based on the status of a feature flag.
@@ -432,7 +443,7 @@ class WithExperimentalSettings(
         """
 
         @functools.wraps(enabled)  # or disabled
-        def wrapper(self: WithExperimentalSettings, *args, **kwargs):
+        def wrapper(self: _WithExperimentalSettings, *args, **kwargs):
             if self.experimental_feature(flag, lock=lock):
                 return enabled(*args, **kwargs)
 
