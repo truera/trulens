@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { StreamlitComponentBase, withStreamlitConnection } from 'streamlit-component-lib';
 
 import RecordInfo from '@/RecordInfo';
+import { ThemeProvider } from '@/utils/ThemeProvider';
 import { DataRaw } from '@/utils/types';
 import { createNodeMap, createTreeFromCalls } from '@/utils/utils';
 
@@ -26,7 +27,11 @@ class RecordViewer extends StreamlitComponentBase {
 
     const nodeMap = createNodeMap(root);
 
-    return <RecordInfo root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />;
+    return (
+      <ThemeProvider streamlitTheme={this.props.theme}>
+        <RecordInfo root={root} recordJSON={recordJSON} nodeMap={nodeMap} appJSON={appJSON} />
+      </ThemeProvider>
+    );
   };
 }
 

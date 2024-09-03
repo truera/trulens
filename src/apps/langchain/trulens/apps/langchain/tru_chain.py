@@ -295,6 +295,8 @@ class TruChain(mod_app.App):
                 vals = list(temp.values())
             elif isinstance(temp, list):
                 vals = temp
+            else:
+                vals = [temp]
 
             if len(vals) == 0:
                 return None

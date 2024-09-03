@@ -13,6 +13,7 @@ actual results produced by the tests. Only do this if changes to serialization
 are expected.
 """
 
+from pathlib import Path
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
@@ -23,7 +24,7 @@ from trulens.providers.huggingface.provider import Dummy
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import JSONTestCase
 
-_GOLDEN_DIRECTORY = "tests/e2e/golden/"
+_GOLDEN_PATH = Path("tests") / "e2e" / "golden"
 
 
 class TestSerial(JSONTestCase):
@@ -35,7 +36,7 @@ class TestSerial(JSONTestCase):
     def test_app_serial(self):
         """Check that the custom app and products are serialized consistently."""
 
-        ca = DummyApp(delay=0.0, alloc=0)
+        ca = DummyApp(delay=0.0, alloc=0, use_parallel=False)
 
         d = DummyProvider(
             loading_prob=0.0,
@@ -70,28 +71,33 @@ class TestSerial(JSONTestCase):
             feedbacks=[feedback_language_match, feedback_context_relevance],
         )
 
-        with self.subTest("app serialization"):
+        with self.subTest(step="app serialization"):
             self.assertGoldenJSONEqual(
                 actual=ta.model_dump(),
-                golden_filename=f"{_GOLDEN_DIRECTORY}/customapp.json",
+                golden_path=_GOLDEN_PATH / "customapp.json",
+                skips=set([
+                    "app_id",
+                    "feedback_definitions",  # contains ids
+                ]),
             )
 
         with ta as recorder:
             res = ca.respond_to_query("hello")
 
-        with self.subTest("app result serialization"):
+        with self.subTest(step="app result serialization"):
             self.assertGoldenJSONEqual(
                 actual=res,
-                golden_filename=f"{_GOLDEN_DIRECTORY}/customapp_result.json",
+                golden_path=_GOLDEN_PATH / "customapp_result.json",
             )
 
         record = recorder.get()
 
-        with self.subTest("record serialization"):
+        with self.subTest(step="record serialization"):
             self.assertGoldenJSONEqual(
                 actual=record.model_dump(),
-                golden_filename=f"{_GOLDEN_DIRECTORY}/customapp_record.json",
+                golden_path=_GOLDEN_PATH / "customapp_record.json",
                 skips=set([
+                    "app_id",
                     "end_time",
                     "start_time",
                     "record_id",
@@ -106,16 +112,19 @@ class TestSerial(JSONTestCase):
         feedbacks = record.wait_for_feedback_results()
         for fdef, fres in feedbacks.items():
             name = fdef.name
-            with self.subTest(f"feedback definition {name} serialization"):
+            with self.subTest(step=f"feedback definition {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fdef.model_dump(),
-                    golden_filename=f"{_GOLDEN_DIRECTORY}/customapp_{name}.def.json",
-                    skips=set(["feedback_definition_id", "id"]),
+                    golden_path=_GOLDEN_PATH / f"customapp_{name}.def.json",
+                    skips=set([
+                        "feedback_definition_id",
+                        "id",
+                    ]),
                 )
-            with self.subTest(f"feedback result {name} serialization"):
+            with self.subTest(step=f"feedback result {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fres.model_dump(),
-                    golden_filename=f"{_GOLDEN_DIRECTORY}/customapp_{name}.result.json",
+                    golden_path=_GOLDEN_PATH / f"customapp_{name}.result.json",
                     skips=set([
                         "feedback_definition_id",
                         "id",

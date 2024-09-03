@@ -54,6 +54,7 @@ class DefaultDBConnector(DBConnector):
                 with the expected TruLens revision.
 
         """
+
         self._db: Union[DB, OpaqueWrapper]
         database_args = database_args or {}
 
