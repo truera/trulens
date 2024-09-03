@@ -221,7 +221,9 @@ def trulens_feedback(record: Record):
         feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
             score=call_data["result"],
             calls=[],
-            icon=get_icon(fdef=feedback, result=feedback_result.result),
+            icon=get_icon(
+                fdef=feedback, result=feedback_result.result, name=feedback.name
+            ),
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
