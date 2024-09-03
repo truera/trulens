@@ -234,6 +234,9 @@ def trulens_feedback(record: Record):
     if selected_feedback is not None:
 
         def highlight(df):
+            if "distance" in selected_feedback:
+                return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(df)
+
             result_value = df["ret"]  # Use the 'result' column's value
             cat = CATEGORY.of_score(
                 result_value,
