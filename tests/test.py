@@ -188,8 +188,9 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
     return [o for o, _ in objs_and_strs_sorted]
 
 
-class WithJSONTestCase:
-    """TestCase class that adds JSON comparisons and golden expectation handling."""
+class WithJSONTestCase(TestCase):
+    """TestCase mixin class that adds JSON comparisons and golden expectation
+    handling."""
 
     def load_golden(self, golden_path: Union[str, Path]) -> JSON:
         """Load the golden file `path` and return its contents.
