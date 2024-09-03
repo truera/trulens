@@ -9034,7 +9034,7 @@
 </ul>
 <p><img alt="TruLens 1.0 Release Graphics" src="../../assets/images/trulens_1_release_graphic_modular.png" /></p>
 <h2 id="versioning-and-backwards-compatibility"><strong>Versioning and Backwards Compatibility</strong><a class="headerlink" href="#versioning-and-backwards-compatibility" title="Permanent link">&para;</a></h2>
-<p>Today, we’re releasing <code>trulens</code>, <code>trulens-core</code>, <code>trulens-dashboard</code>, <code>trulens-feedback</code>, <code>trulens-providers</code> packages, <code>trulens-connectors</code> packages and <code>trulens-instrument</code> packages at v1.0. We will not make breaking changes in the future without bumping the major version.</p>
+<p>Today, we’re releasing <code>trulens</code>, <code>trulens-core</code>, <code>trulens-dashboard</code>, <code>trulens-feedback</code>, <code>trulens-providers</code> packages, <code>trulens-connectors</code> packages and <code>trulens-apps</code> packages at v1.0. We will not make breaking changes in the future without bumping the major version.</p>
 <p>The base install of <code>trulens</code> will install <code>trulens-core</code>, <code>trulens-feedback</code> and <code>trulens-dashboard</code> making it easy for developers to try <em>TruLens</em>.</p>
 <p>Starting 1.0, the <code>trulens_eval</code> package is being deprecated in favor of <code>trulens</code> and several associated required and optional packages.</p>
 <p>Until 2024-10-14, backwards compatibility during the warning period is provided by the new content of the <code>trulens_eval</code> package which provides aliases to the in their new locations. See <a href="./api/trulens_eval/index.md">trulens_eval</a>.</p>
@@ -9051,7 +9051,7 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-core
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core.app.custom</span> <span class="kn">import</span> <span class="n">instrument</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.custom</span> <span class="kn">import</span> <span class="n">instrument</span>
 
 <span class="k">class</span> <span class="nc">CustomApp</span><span class="p">:</span>
 
@@ -9078,7 +9078,7 @@
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-instrument-langchain
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-apps-langchain
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">langchain</span> <span class="kn">import</span> <span class="n">hub</span>
 <span class="kn">from</span> <span class="nn">langchain.chat_models</span> <span class="kn">import</span> <span class="n">ChatOpenAI</span>
@@ -9097,7 +9097,7 @@
     <span class="o">|</span> <span class="n">StrOutputParser</span><span class="p">()</span>
 <span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">trulens.instrument.langchain</span> <span class="kn">import</span> <span class="n">TruChain</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.langchain</span> <span class="kn">import</span> <span class="n">TruChain</span>
 
 <span class="c1"># Wrap application</span>
 <span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
@@ -9111,7 +9111,7 @@
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-core<span class="w"> </span>trulens-instrument-llamaindex
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>trulens-core<span class="w"> </span>trulens-apps-llamaindex
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">llama_index.core</span> <span class="kn">import</span> <span class="n">VectorStoreIndex</span><span class="p">,</span> <span class="n">SimpleDirectoryReader</span>
 
@@ -9119,7 +9119,7 @@
 <span class="n">index</span> <span class="o">=</span> <span class="n">VectorStoreIndex</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span>
 <span class="n">query_engine</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">as_query_engine</span><span class="p">()</span>
 
-<span class="kn">from</span> <span class="nn">trulens.instrument.llamaindex</span> <span class="kn">import</span> <span class="n">TruLlama</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.llamaindex</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 <span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
 <span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="p">(</span><span class="n">query_engine</span><span class="p">,</span>
