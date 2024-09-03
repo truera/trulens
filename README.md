@@ -1,5 +1,5 @@
 ![PyPI - Version](https://img.shields.io/pypi/v/trulens?label=trulens&link=https%3A%2F%2Fpypi.org%2Fproject%2Ftrulens%2F)
-![Azure DevOps builds (job)](https://img.shields.io/azure-devops/build/truera/5a27f3d2-132d-40fc-9b0c-81abd1182f41/9)
+[![Azure Build Status](https://dev.azure.com/truera/trulens/_apis/build/status%2FTruLens%20E2E%20Tests?branchName=main)](https://dev.azure.com/truera/trulens/_build/latest?definitionId=8&branchName=main)
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
