@@ -6,7 +6,7 @@ from trulens.core.schema.record import Record
 from trulens.dashboard.ux.styles import CATEGORY
 
 
-def get_icon(fdef: FeedbackDefinition, result: float, name: str) -> str:
+def get_icon(fdef: FeedbackDefinition, result: float) -> str:
     """
     Get the icon for a given feedback definition and result.
 
