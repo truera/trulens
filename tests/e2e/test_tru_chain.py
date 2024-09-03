@@ -11,13 +11,13 @@ from langchain.prompts import PromptTemplate
 from langchain.schema.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
+from trulens.apps.langchain import TruChain
 from trulens.core import TruSession
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
 from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
-from trulens.instrument.langchain import TruChain
 
 from tests.test import JSONTestCase
 from tests.test import optional_test

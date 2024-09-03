@@ -25,7 +25,7 @@ from typing import (
 
 from packaging import requirements
 from packaging import version
-from pip._internal.req import parse_requirements
+import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -42,19 +42,22 @@ def safe_importlib_package_name(package_name: str) -> str:
     )
 
 
-def requirements_of_file(path: Path) -> Dict[str, requirements.Requirement]:
+def _requirements_of_trulens_core_file(
+    path: str,
+) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
-    file."""
+    file in trulens.core."""
+    _trulens_resources = resources.files("trulens.core")
+    with resources.as_file(_trulens_resources / path) as _path:
+        with open(_path) as fh:
+            reqs = pkg_resources.parse_requirements(fh)
 
-    pip_reqs = parse_requirements(str(path), session=None)
+            mapping = {}
 
-    mapping = {}
+            for req in reqs:
+                mapping[req.name] = req
 
-    for pip_req in pip_reqs:
-        req = requirements.Requirement(pip_req.requirement)
-        mapping[req.name] = req
-
-    return mapping
+            return mapping
 
 
 def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
@@ -107,6 +110,12 @@ def get_package_version(name: str) -> Optional[version.Version]:
         return None
 
 
+def is_package_installed(name: str) -> bool:
+    """Check if a package is installed."""
+
+    return get_package_version(name) is not None
+
+
 MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND = """Optional package %s is not installed. Related optional functionality will not
 be available.
 """
@@ -156,16 +165,14 @@ dependencies get installed and hopefully corrected:
     ```
 """
 
-required_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource(namespace="core", filepath="utils/requirements.txt")
+required_packages: Dict[str, requirements.Requirement] = (
+    _requirements_of_trulens_core_file("utils/requirements.txt")
 )
 """Mapping of required package names to the requirement object with info
 about that requirement including version constraints."""
 
-optional_packages: Dict[str, requirements.Requirement] = requirements_of_file(
-    static_resource(
-        namespace="core", filepath="utils/requirements.optional.txt"
-    )
+optional_packages: Dict[str, requirements.Requirement] = (
+    _requirements_of_trulens_core_file("utils/requirements.optional.txt")
 )
 """Mapping of optional package names to the requirement object with info
 about that requirement including version constraints."""
@@ -330,79 +337,11 @@ Alternatively, if you do not need {packs}, uninstall {it_them}:
     return ImportErrorMessages(module_not_found=msg, import_error=msg_pinned)
 
 
-# To remove after trulens_eval is removed:
-
-# Optional sub-packages:
-REQUIREMENT_FEEDBACK = format_import_errors(
-    "trulens-feedback", purpose="evaluating feedback functions"
-)
-
-# Optional app types:
-REQUIREMENT_INSTRUMENT_LLAMA = format_import_errors(
-    "trulens-instrument-llamaindex", purpose="instrumenting LlamaIndex apps"
-)
-REQUIREMENT_INSTRUMENT_LANGCHAIN = format_import_errors(
-    "trulens-instrument-langchain", purpose="instrumenting LangChain apps"
-)
-REQUIREMENT_INSTRUMENT_NEMO = format_import_errors(
-    "trulens-instrument-nemo", purpose="instrumenting NeMo Guardrails apps"
-)
-
-# Optional provider types:
-
-REQUIREMENT_PROVIDER_BEDROCK = format_import_errors(
-    "trulens-providers-bedrock", purpose="evaluating feedback using Bedrock"
-)
-REQUIREMENT_PROVIDER_CORTEX = format_import_errors(
-    "trulens-providers-cortex", purpose="evaluating feedback using Cortex"
-)
-REQUIREMENT_PROVIDER_HUGGINGFACE = format_import_errors(
-    "trulens-providers-huggingface",
-    purpose="evaluating feedback using Huggingface",
-)
-REQUIREMENT_PROVIDER_LANGCHAIN = format_import_errors(
-    "trulens-providers-langchain", purpose="evaluating feedback using LangChain"
-)
-REQUIREMENT_PROVIDER_LITELLM = format_import_errors(
-    "trulens-providers-litellm", purpose="evaluating feedback using LiteLLM"
-)
-REQUIREMENT_PROVIDER_OPENAI = format_import_errors(
-    "trulens-providers-openai", purpose="evaluating feedback using OpenAI"
-)
-
-# Other optionals:
-REQUIREMENT_SKLEARN = format_import_errors(
-    "scikit-learn", purpose="using embedding vector distances"
-)
-REQUIREMENT_BERT_SCORE = format_import_errors(
-    "bert-score", purpose="measuring BERT Score"
-)
-REQUIREMENT_EVALUATE = format_import_errors(
-    "evaluate", purpose="using certain metrics"
-)
-REQUIREMENT_NOTEBOOK = format_import_errors(
-    ["ipython", "ipywidgets"], purpose="using TruLens-Eval in a notebook"
-)
-REQUIREMENT_OPENAI = format_import_errors(
-    ["openai", "langchain_community"], purpose="using OpenAI models"
-)
-
-REQUIREMENT_SNOWFLAKE = format_import_errors(
-    [
-        "snowflake-core",
-        "snowflake-connector-python",
-        "snowflake-snowpark-python",
-        "snowflake-sqlalchemy",
-    ],
-    purpose="connecting to Snowflake",
-)
-
-
 def is_dummy(obj: Any) -> bool:
-    """Check if the given object is an instance of Dummy.
+    """Check if the given object is an instance of `Dummy`.
 
-    This is necessary is isisintance and issubclass checks might fail if the
-    ones defined in Dummy get used; they always return False by design.
+    This is necessary as `isisintance` and `issubclass` checks might fail if the
+    ones defined in `Dummy` get used; they always return `False` by design.
     """
 
     return obj.__class__.__name__ == "Dummy" and obj.__module__ in [

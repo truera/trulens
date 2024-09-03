@@ -68,6 +68,22 @@ Formal JSON must be a `dict` at the root but non-strict here means that the root
 can be a basic type or a sequence as well.
 """
 
+
+def is_strict_json(obj: Any) -> bool:
+    """Determine if the given object is JSON-able, strictly.
+
+    Strict JSON starts as a dictionary at the root.
+    """
+
+    return isinstance(obj, dict)
+
+
+def is_json(obj: Any) -> bool:
+    """Determine if the given object is JSON-able."""
+
+    return isinstance(obj, (*JSON_BASES, Sequence, Dict))
+
+
 JSON_STRICT = Dict[str, JSON]
 """
 Alias for (strictly) JSON-able data.
@@ -291,7 +307,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
     """A step in a path lens that selects an item or an attribute.
 
     Note:
-        _TruLens_ allows lookuping elements within sequences if the subelements
+        _TruLens_ allows looking up elements within sequences if the subelements
         have the item or attribute. We issue warning if this is ambiguous (looking
         up in a sequence of more than 1 element).
     """

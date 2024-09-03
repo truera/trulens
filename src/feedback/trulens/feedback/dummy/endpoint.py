@@ -22,6 +22,7 @@ from trulens.core.feedback.endpoint import DEFAULT_RPM
 from trulens.core.feedback.endpoint import INSTRUMENT
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import JSON
@@ -114,7 +115,7 @@ class DummyAPI(pydantic.BaseModel):
             + self.overloaded_prob
             + self.loading_prob
             <= 1.0
-        ), "Total probabilites should not exceed 1.0 ."
+        ), "Total probabilities should not exceed 1.0 ."
 
     async def apost(
         self, url: str, payload: JSON, timeout: Optional[float] = None
@@ -170,7 +171,7 @@ class DummyAPI(pydantic.BaseModel):
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
-                *self.wait_time_uniform_params
+                *self.loading_time_uniform_params
             )
             logger.warning(
                 "Waiting for model to load (%s) second(s).",
@@ -361,6 +362,48 @@ class DummyEndpoint(Endpoint):
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.alloc` instead."
+    )
+    def alloc(self) -> int:
+        return self.api.alloc
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.float` instead."
+    )
+    def delay(self) -> float:
+        return self.api.delay
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.error_prob` instead."
+    )
+    def error_prob(self) -> float:
+        return self.api.error_prob
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.freeze_prob` instead."
+    )
+    def freeze_prob(self) -> float:
+        return self.api.freeze_prob
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.loading_prob` instead."
+    )
+    def loading_prob(self) -> float:
+        return self.api.loading_prob
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.loading_time_uniform_params` instead."
+    )
+    def loading_time(self) -> Tuple[float, float]:
+        return self.api.loading_time_uniform_params
+
+    @deprecation_utils.deprecated_property(
+        "Use `DummyEndpoint.api.overloaded_prob` instead."
+    )
+    def overloaded_prob(self) -> float:
+        return self.api.overloaded_prob
 
     def __init__(
         self,

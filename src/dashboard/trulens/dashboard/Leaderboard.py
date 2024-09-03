@@ -9,7 +9,7 @@ from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata
+from trulens.dashboard.ux.components import draw_metadata_and_tags
 from trulens.dashboard.ux.page_config import set_page_config
 from trulens.dashboard.ux.styles import CATEGORY
 
@@ -30,12 +30,144 @@ def leaderboard():
 
     lms = session.connector.db
 
-    # Set the title and subtitle of the app
+    # Set the title
     st.title("App Leaderboard")
-    st.write(
-        "Average feedback values displayed in the range from 0 (worst) to 1 (best)."
+
+    def get_data():
+        return lms.get_records_and_feedback([])
+
+    def get_apps():
+        return list(lms.get_apps())
+
+    # sort apps by name
+    def sort_selected_apps(selected_apps, records):
+        """
+        Sorts the selected_apps list based on the concatenation of app_name and app_version.
+
+        Parameters:
+        selected_apps (list): List of app_ids to be sorted.
+        apps (DataFrame): DataFrame containing app_id and app_json columns.
+
+        Returns:
+        list: Sorted list of selected_apps.
+        """
+        # Create a mapping from app_id to (app_name, app_version)
+        app_info = (
+            records.set_index("app_id")["app_json"]
+            .apply(
+                lambda x: (
+                    json.loads(x).get("app_name"),
+                    json.loads(x).get("app_version"),
+                )
+            )
+            .to_dict()
+        )
+
+        # Sort selected_apps based on the concatenation of app_name and app_version
+        selected_apps = [
+            app_id for app_id in selected_apps if app_id in app_info
+        ]
+        sorted_apps = sorted(
+            selected_apps,
+            key=lambda app_id: f"{app_info[app_id][0]}{app_info[app_id][1]}",
+        )
+
+        return sorted_apps
+
+    records, feedback_col_names = get_data()
+    records = records.sort_values(by="app_id")
+
+    apps = get_apps()
+    app_names = sorted(list(set(app["app_name"] for app in apps)))
+
+    selected_app_names = st.multiselect("Filter apps:", app_names, app_names)
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if any(name in app["app_name"] for name in selected_app_names)
+    ]
+    st.session_state.app = selected_apps
+
+    # Filter app versions to only include those from selected apps
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = sorted(
+        list(
+            set(
+                f"{app['app_name']} - {app['app_version']}"
+                for app in filtered_apps
+            )
+        )
     )
-    df, feedback_col_names = lms.get_records_and_feedback([])
+
+    selected_app_name_versions = st.multiselect(
+        "Filter by app version:", app_name_versions, app_name_versions
+    )
+    selected_apps = [
+        app["app_id"]
+        for app in apps
+        if f"{app['app_name']} - {app['app_version']}"
+        in selected_app_name_versions
+    ]
+    st.session_state.app = selected_apps
+
+    with st.expander("Advanced Filters"):
+        # get tag options
+        tags = []
+        for i in range(len(apps)):
+            tags.append(apps[i]["tags"])
+        unique_tags = sorted(list(set(tags)))
+        # select tags
+        selected_tags = st.multiselect("Filter tags:", unique_tags, unique_tags)
+
+        # filter to apps with selected tags
+        tag_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if any(tag in app["tags"] for tag in selected_tags)
+        ]
+        selected_apps = list(set(selected_apps) & set(tag_selected_apps))
+        st.session_state.app = selected_apps
+
+        # get metadata options
+        metadata_keys_unique = set()
+        for app in apps:
+            metadata_keys_unique.update(app["metadata"].keys())
+        metadata_keys_unique = list(metadata_keys_unique)
+        # select metadata
+        metadata_options = {}
+        for metadata_key in metadata_keys_unique:
+            unique_values = set()
+            for i in range(len(apps)):
+                try:
+                    unique_values.add(apps[i]["metadata"][metadata_key])
+                except (KeyError, TypeError):
+                    pass
+            metadata_options[metadata_key] = list(unique_values)
+
+        # select metadata
+        metadata_selections = metadata_options.copy()
+        for metadata_key in metadata_options.keys():
+            metadata_selections[metadata_key] = st.multiselect(
+                "Filter " + metadata_key + ":",
+                sorted(metadata_options[metadata_key]),
+                sorted(metadata_options[metadata_key]),
+            )
+
+        # filter to apps with selected metadata
+        metadata_selected_apps = [
+            app["app_id"]
+            for app in apps
+            if all(
+                metadata_key not in app["metadata"]
+                or app["metadata"][metadata_key]
+                in metadata_selections[metadata_key]
+                for metadata_key in metadata_selections.keys()
+            )
+        ]
+
+        selected_apps = list(set(selected_apps) & set(metadata_selected_apps))
+        st.session_state.app = selected_apps
+
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
         (
@@ -45,27 +177,30 @@ def leaderboard():
         for _, row in feedback_defs.iterrows()
     }
 
-    if df.empty:
+    if records.empty:
         st.write("No records yet...")
         return
 
-    df = df.sort_values(by="app_id")
-
-    if df.empty:
+    if records.empty:
         st.write("No records yet...")
 
-    apps = list(df.app_id.unique())
     st.markdown("""---""")
 
-    for app in apps:
-        app_df = df.loc[df.app_id == app]
+    selected_apps = sort_selected_apps(selected_apps, records)
+
+    for app in selected_apps:
+        app_df = records.loc[records.app_id == app]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
+        app_name = app_json["app_name"]
+        app_version = app_json["app_version"]
+        app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
+        tags = app_json.get("tags")
         # st.text('Metadata' + str(metadata))
-        st.header(app, help=draw_metadata(metadata))
+        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -80,8 +215,6 @@ def leaderboard():
             .mean()
         )
 
-        # app_df_feedback = df.loc[df.app_id == app]
-
         col1.metric("Records", len(app_df))
         col2.metric(
             "Average Latency (Seconds)",
@@ -91,10 +224,36 @@ def leaderboard():
                 else "nan"
             ),
         )
-        col3.metric(
-            "Total Cost (USD)",
-            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
-        )
+
+        # Filter for Snowflake credits costs
+        filtered_snowflake_credits_app_df = app_df[
+            app_df["cost_currency"] == "Snowflake credits"
+        ]
+
+        # Calculate the total cost for Snowflake credits
+        if len(filtered_snowflake_credits_app_df) > 0:
+            total_cost_snowflake_credits = (
+                filtered_snowflake_credits_app_df["total_cost"].dropna().sum()
+            )
+            col3.metric(
+                "Total Cost (Snowflake credits)",
+                f"{format_quantity(round(total_cost_snowflake_credits, 8), precision=5)}",
+            )
+        else:
+            col3.empty()
+        # Filter for USD costs
+        filtered_usd_app_df = app_df[app_df["cost_currency"] == "USD"]
+
+        if len(filtered_usd_app_df) > 0:
+            # Calculate the total cost for USD
+            total_cost_usd = filtered_usd_app_df["total_cost"].dropna().sum()
+            col3.metric(
+                "Total Cost (USD)",
+                f"${format_quantity(round(total_cost_usd, 5), precision=2)}",
+            )
+        else:
+            col3.empty()
+
         col4.metric(
             "Total Tokens",
             format_quantity(

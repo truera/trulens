@@ -7,8 +7,8 @@ DummyAPI for its requests.
 
 from unittest import main
 
+from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
-from trulens.core.app.custom import TruCustomApp
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import JSONTestCase
@@ -40,7 +40,7 @@ class TestDummy(JSONTestCase):
 
         self.assertGoldenJSONEqual(
             actual=rec.model_dump(),
-            golden_filename="dummy.json",
+            golden_filename="tests/e2e/golden/dummy.json",
             skips=set([
                 "record_id",
                 "start_time",

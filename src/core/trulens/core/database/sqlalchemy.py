@@ -185,7 +185,7 @@ class SQLAlchemyDB(DB):
         else:
             print(
                 f"{text.UNICODE_STOP} Secret keys may be written to the database. "
-                "See the `database_redact_keys` option of `Tru` to prevent this."
+                "See the `database_redact_keys` option of `TruSession` to prevent this."
             )
 
         return new_db
@@ -208,7 +208,7 @@ class SQLAlchemyDB(DB):
         # Params are from
         # https://stackoverflow.com/questions/55457069/how-to-fix-operationalerror-psycopg2-operationalerror-server-closed-the-conn
 
-        engine_params = {
+        default_engine_params = {
             "url": url,
             "pool_size": 10,
             "pool_recycle": 300,
@@ -217,10 +217,17 @@ class SQLAlchemyDB(DB):
 
         if not is_memory_sqlite(url=url):
             # These params cannot be given to memory-based sqlite engine.
-            engine_params["max_overflow"] = 2
-            engine_params["pool_use_lifo"] = True
+            default_engine_params["max_overflow"] = 2
+            default_engine_params["pool_use_lifo"] = True
 
-        return cls(engine_params=engine_params, **kwargs)
+        if "engine_params" in kwargs:
+            for k, v in default_engine_params.items():
+                if k not in kwargs["engine_params"]:
+                    kwargs["engine_params"][k] = v
+        else:
+            kwargs["engine_params"] = default_engine_params
+
+        return cls(**kwargs)
 
     @classmethod
     def from_db_engine(
@@ -270,12 +277,12 @@ class SQLAlchemyDB(DB):
                     raise RuntimeError(
                         "Migrating legacy sqlite database is no longer supported. "
                         "A database reset is required. This will delete all existing data: "
-                        "`session.reset_database()`."
+                        "`TruSession.reset_database()`."
                     ) from e
 
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `session.migrate_database(backup_db_url="...")`)
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `TruSession.migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(
@@ -362,7 +369,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_record(
         self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
-        """See [DB.insert_record_batch][trulens_eval.database.base.DB.insert_record_batch]."""
+        """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
@@ -963,18 +970,18 @@ def _extract_latency(
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
-    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float]:
+    def _extract(_cost_json: Union[str, dict]) -> Tuple[int, float, str]:
         if isinstance(_cost_json, str):
             _cost_json = json.loads(_cost_json)
         if _cost_json is not None:
             cost = mod_base_schema.Cost(**_cost_json)
         else:
             cost = mod_base_schema.Cost()
-        return cost.n_tokens, cost.cost
+        return cost.n_tokens, cost.cost, cost.cost_currency
 
     return pd.DataFrame(
         data=(_extract(c) for c in cost_json),
-        columns=["total_tokens", "total_cost"],
+        columns=["total_tokens", "total_cost", "cost_currency"],
     )
 
 
@@ -1114,6 +1121,8 @@ class AppsExtractor:
                         else:
                             df[col] = getattr(_app, col)
 
+                    df["app_name"] = _app.app_name
+                    df["app_version"] = _app.app_version
                     yield df
             except OperationalError as e:
                 print(
@@ -1128,12 +1137,21 @@ class AppsExtractor:
         for _rec in records:
             calls = defaultdict(list)
             values = defaultdict(list)
-
+            feedback_cost = {}
             try:
                 for _res in _rec.feedback_results:
                     calls[_res.name].append(
                         json.loads(_res.calls_json)["calls"]
                     )
+
+                    feedback_usage = json.loads(_res.cost_json)
+                    cost_currency = feedback_usage.get("cost_currency", "USD")
+
+                    if "cost" in feedback_usage:
+                        feedback_cost[
+                            f"{_res.name} feedback cost in {cost_currency}"
+                        ] = feedback_usage["cost"]
+
                     if (
                         _res.multi_result is not None
                         and (multi_result := json.loads(_res.multi_result))
@@ -1155,6 +1173,7 @@ class AppsExtractor:
                 row = {
                     **{k: np.mean(v) for k, v in values.items()},
                     **{k + "_calls": flatten(v) for k, v in calls.items()},
+                    **{k: v for k, v in feedback_cost.items()},
                 }
 
                 for col in self.rec_cols:

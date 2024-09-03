@@ -13,12 +13,12 @@ from st_aggrid.shared import JsCode
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import TruSession
-from trulens.core.app.base import LLM
-from trulens.core.app.base import Agent
-from trulens.core.app.base import ComponentView
-from trulens.core.app.base import Other
-from trulens.core.app.base import Prompt
-from trulens.core.app.base import Tool
+from trulens.core.app import LLM
+from trulens.core.app import Agent
+from trulens.core.app import ComponentView
+from trulens.core.app import Other
+from trulens.core.app import Prompt
+from trulens.core.app import Tool
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.core.schema.select import Select
 from trulens.core.utils.json import jsonify_for_ui
@@ -149,24 +149,51 @@ def extract_metadata(row: pd.Series) -> str:
     return str(record_data["meta"])
 
 
-apps = list(app["app_id"] for app in lms.get_apps())
+app_ids = list(app["app_id"] for app in lms.get_apps())
+
+
+def get_apps():
+    return list(lms.get_apps())
+
+
+apps = get_apps()
 
 if "app" in st.session_state:
     app = st.session_state.app
 else:
-    app = apps
+    app = app_ids
 
 st.query_params["app"] = app
 
-options = st.multiselect("Filter Applications", apps, default=app)
+app_name_versions = list(
+    set(f"{app['app_name']} - {app['app_version']}" for app in apps)
+)
 
-df_results, feedback_cols = lms.get_records_and_feedback(app_ids=options)
+if "app" in st.session_state:
+    selected_apps = st.session_state.app
+    filtered_apps = [app for app in apps if app["app_id"] in selected_apps]
+    app_name_versions = list(
+        set(
+            f"{app['app_name']} - {app['app_version']}" for app in filtered_apps
+        )
+    )
+selected_app_name_versions = st.multiselect(
+    "Filter Apps", app_name_versions, default=app_name_versions
+)
 
-if len(options) == 0:
+selected_apps = [
+    app["app_id"]
+    for app in apps
+    if f"{app['app_name']} - {app['app_version']}" in selected_app_name_versions
+]
+
+df_results, feedback_cols = lms.get_records_and_feedback(app_ids=selected_apps)
+
+if len(selected_apps) == 0:
     st.header("All Applications")
 
-elif len(options) == 1:
-    st.header(options[0])
+elif len(selected_apps) == 1:
+    st.header(selected_app_name_versions[0])
 
 else:
     st.header("Multiple Applications Selected")
@@ -186,6 +213,44 @@ else:
         input_array = evaluations_df["input"].to_numpy()
         output_array = evaluations_df["output"].to_numpy()
 
+        # pull additional data from app_json into columns
+        evaluations_df["app_name"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_name"]
+        )
+        evaluations_df["app_version"] = evaluations_df["app_json"].apply(
+            lambda x: json.loads(x)["app_version"]
+        )
+
+        metadata = json.loads(evaluations_df["app_json"][0])["metadata"]
+        metadata_cols = list(metadata.keys())
+        for key in metadata_cols:
+            evaluations_df[key] = evaluations_df["app_json"].apply(
+                lambda x: json.loads(x)["metadata"].get(key)
+            )
+
+        feedback_cost_cols = []
+
+        for col in evaluations_df.columns:
+            if "feedback cost" in col:
+                feedback_cost_cols.append(col)
+
+        # Drop the original app_metadata column if it exists
+        if "app_metadata" in evaluations_df.columns:
+            evaluations_df.drop(columns=["app_metadata"], inplace=True)
+
+        # Reorder columns
+        columns = (
+            ["app_name", "app_version", "tags"]
+            + metadata_cols
+            + [
+                col
+                for col in evaluations_df.columns
+                if col
+                not in (["app_name", "app_version", "tags"] + metadata_cols)
+            ]
+        )
+        evaluations_df = evaluations_df[columns]
+
         decoded_input = np.vectorize(
             lambda x: x.encode("utf-8").decode("unicode-escape")
         )(input_array)
@@ -203,14 +268,16 @@ else:
 
         gb = GridOptionsBuilder.from_dataframe(evaluations_df)
 
-        gb.configure_column("type", header_name="App Type")
+        gb.configure_column("app_name", header_name="App Name")
+        gb.configure_column("app_version", header_name="App Version")
+        gb.configure_column("type", header_name="App Type", hide=True)
         gb.configure_column("record_json", header_name="Record JSON", hide=True)
         gb.configure_column("app_json", header_name="App JSON", hide=True)
         gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
         gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
 
         gb.configure_column("record_id", header_name="Record ID", hide=True)
-        gb.configure_column("app_id", header_name="App ID")
+        gb.configure_column("app_id", header_name="App ID", hide=True)
 
         gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
         gb.configure_column("input", header_name="User Input")
@@ -218,28 +285,36 @@ else:
         gb.configure_column("record_metadata", header_name="Record Metadata")
 
         gb.configure_column("total_tokens", header_name="Total Tokens (#)")
-        gb.configure_column("total_cost", header_name="Total Cost (USD)")
+        gb.configure_column("total_cost", header_name="Total Cost (App)")
+        gb.configure_column("cost_currency", header_name="Cost Currency")
         gb.configure_column("latency", header_name="Latency (Seconds)")
         gb.configure_column("tags", header_name="Application Tag")
         gb.configure_column("ts", header_name="Time Stamp", sort="desc")
 
-        non_feedback_cols = [
-            "app_id",
-            "type",
-            "ts",
-            "total_tokens",
-            "total_cost",
-            "record_json",
-            "latency",
-            "tags",
-            "record_metadata",
-            "record_id",
-            "cost_json",
-            "app_json",
-            "input",
-            "output",
-            "perf_json",
-        ]
+        non_feedback_cols = (
+            [
+                "app_name",
+                "app_version",
+                "app_id",
+                "type",
+                "ts",
+                "total_tokens",
+                "total_cost",
+                "cost_currency",
+                "record_json",
+                "latency",
+                "tags",
+                "record_metadata",
+                "record_id",
+                "cost_json",
+                "app_json",
+                "input",
+                "output",
+                "perf_json",
+            ]
+            + metadata_cols
+            + feedback_cost_cols
+        )
 
         for feedback_col in evaluations_df.columns.drop(non_feedback_cols):
             if "distance" in feedback_col:

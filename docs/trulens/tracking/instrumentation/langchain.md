@@ -9,7 +9,7 @@ Methods*.
 In addition to the default instrumentation, TruChain exposes the
 *select_context* method for evaluations that require access to retrieved
 context. Exposing *select_context* bypasses the need to know the json structure
-of your app ahead of time, and makes your evaluations re-usable across different
+of your app ahead of time, and makes your evaluations reusable across different
 apps.
 
 ## Example Usage
@@ -68,7 +68,7 @@ To instrument an LLM chain, all that's required is to wrap it using TruChain.
 !!! example "Instrument with `TruChain`"
 
     ```python
-    from trulens.instrument.langchain import TruChain
+    from trulens.apps.langchain import TruChain
 
     # instrument with TruChain
     tru_recorder = TruChain(rag_chain)
@@ -116,7 +116,7 @@ As an example, below is an LLM chain set up with an async callback.
     from langchain.chains import LLMChain
     from langchain.prompts import PromptTemplate
     from langchain_openai import ChatOpenAI
-    from trulens.instrument.langchain import TruChain
+    from trulens.apps.langchain import TruChain
 
     # Set up an async callback.
     callback = AsyncIteratorCallbackHandler()
@@ -156,7 +156,7 @@ the appropriate Instrument subclass.
 !!! example "Instrument async apps with `TruChain`"
 
     ```python
-    from trulens.instrument.langchain import LangChainInstrument
+    from trulens.apps.langchain import LangChainInstrument
 
     LangChainInstrument().print_instrumentation()
     ```

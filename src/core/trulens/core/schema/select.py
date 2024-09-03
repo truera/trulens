@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Tuple, TypeVar
+from typing import Any, Optional, Tuple, TypeVar
 
+from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import serial
 
 T = TypeVar("T")
@@ -90,6 +91,15 @@ class Select:
             return Select.Query(path=select.path[1:])
 
         return select
+
+    @deprecation_utils.staticmethod_renamed(
+        "trulens.core.app.base.App.select_context"
+    )
+    @staticmethod
+    def context(app: Optional[Any] = None) -> Query:
+        if app is None:
+            raise ValueError("App must be given to select context.")
+        return app.select_context(app)
 
     @staticmethod
     def for_record(query: Select.Query) -> Query:

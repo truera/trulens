@@ -80,9 +80,9 @@ plugins:
             - src/feedback
             - src/dashboard
             - src/benchmark
-            - src/instrument/langchain
-            - src/instrument/llamaindex
-            - src/instrument/nemo
+            - src/apps/langchain
+            - src/apps/llamaindex
+            - src/apps/nemo
             - src/providers/bedrock
             - src/providers/cortex
             - src/providers/huggingface
@@ -90,6 +90,7 @@ plugins:
             - src/providers/litellm
             - src/providers/openai
             - src/connectors/snowflake
+            - src/trulens_eval # to remove after deprecation
             - examples/
           options:
 

@@ -9,10 +9,10 @@ REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 PYTEST := poetry run pytest --rootdir=.
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
-	-not -path "./src/dashboard/*" \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
 	-exec dirname {} \;)
+LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
 
 # Global setting: execute all commands of a target in a single shell session.
 # Note for MAC OS, the default make is too old to support this. "brew install
@@ -34,7 +34,7 @@ env-optional:
 
 
 # Lock the poetry dependencies for all the subprojects.
-lock: $(POETRY_DIRS) clean-dashboard
+lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
@@ -87,6 +87,10 @@ docs-linkcheck: site
 trubot:
 	poetry run python -u examples/trubot/trubot.py
 
+# Spellchecking
+codespell:
+	poetry run codespell -L tru * --skip "*.svg,*.js,*.yaml,*.jsonl,*.lock,*.css.map"
+
 # Generates a coverage report.
 coverage:
 	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
@@ -104,11 +108,25 @@ test-static:
 # API tests.
 test-api:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
-test-write-api:
+test-write-api: env
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 
+# Deprecation tests.
+## Test for trulens_eval exported names.
 test-deprecation:
-	$(PYTEST) tests/unit/static/test_deprecation.py
+	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_deprecation.py
+## Test for trulens_eval notebooks.
+.PHONY: _trulens_eval
+_trulens_eval:
+	git worktree add -f _trulens_eval --no-checkout --detach
+	git --work-tree=_trulens_eval checkout $(LAST_TRULENS_EVAL_COMMIT) -- \
+		trulens_eval/tests/docs_notebooks/notebooks_to_test \
+		trulens_eval/README.md \
+		trulens_eval/examples \
+		docs/trulens_eval/tracking
+	git worktree prune
+test-legacy-notebooks: _trulens_eval
+	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-dummy: # has golden file
@@ -150,10 +168,7 @@ install-wheels:
 
 # Release Steps:
 ## Step: Clean repo:
-clean-dashboard:
-	rm -rf src/dashboard/*.egg-info
-
-clean: clean-dashboard
+clean:
 	git clean --dry-run -fxd
 	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
 	echo
@@ -162,9 +177,6 @@ clean: clean-dashboard
 	fi;
 
 ## Step: Build wheels
-build-dashboard: env clean-dashboard
-	poetry run python -m build src/dashboard -o $(REPO_ROOT)/dist/trulens-dashboard;
-
 build: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Building $$dir"; \
@@ -180,20 +192,42 @@ build: $(POETRY_DIRS)
 		rm -rf .venv; \
 		popd; \
 	done
-	make build-dashboard
+
+## Step: Build zip files to upload to Snowflake staging
+zip-wheels:
+	poetry run ./zip_wheels.sh
+
+
+# Usage: make bump-version-patch
+bump-version-%: $(POETRY_DIRS)
+	for dir in $(POETRY_DIRS); do \
+		echo "Updating $$dir version"; \
+		pushd $$dir; \
+		poetry version $*; \
+		popd; \
+	done
 
 ## Step: Upload wheels to pypi
 # Usage: TOKEN=... make upload-trulens-instrument-langchain
-upload-%: build
-	poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
+# In all cases, we need to clean, build, zip-wheels, then build again. The reason is because we want the final build to have the zipped wheels.
+upload-%: clean build
+	make zip-wheels \
+		&& make build \
+		&& poetry run twine upload -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-all: build
-	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
-	poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+upload-all: clean build
+	make zip-wheels \
+		&& make build \
+		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
+		&& poetry run twine upload --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
 
-upload-testpypi-%: build
-	poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
+upload-testpypi-%: clean build
+	make zip-wheels \
+		&& make build \
+		&& poetry run twine upload -r testpypi -u __token__ -p $(TOKEN) dist/$*/*
 
-upload-testpypi-all: build
-	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl
-	poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz
+upload-testpypi-all: clean build
+	make zip-wheels \
+		&& make build \
+		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.whl \
+		&& poetry run twine upload -r testpypi --skip-existing -u __token__ -p $(TOKEN) dist/**/*.tar.gz

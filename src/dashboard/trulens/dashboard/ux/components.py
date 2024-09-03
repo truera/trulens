@@ -4,11 +4,12 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from trulens.core.app.base import ComponentView
+from trulens.core.app import ComponentView
 from trulens.core.schema.record import Record
 from trulens.core.schema.record import RecordAppCall
 from trulens.core.schema.select import Select
 from trulens.core.schema.types import Metadata
+from trulens.core.schema.types import Tags
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.containers import is_empty
 from trulens.core.utils.json import jsonify
@@ -75,11 +76,12 @@ def dict_to_md(dictionary: dict) -> str:
     return mdtext
 
 
-def draw_metadata(metadata: Metadata) -> str:
+def draw_metadata_and_tags(metadata: Metadata, tags: Tags) -> str:
     if isinstance(metadata, Dict):
+        metadata["tags"] = tags
         return dict_to_md(metadata)
     else:
-        return str(metadata)
+        return str(metadata) + "\n" + str(tags)
 
 
 def draw_call(call: RecordAppCall) -> None:

@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,13 +28,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", extras = [
-  "snowflake",
-], allow-prereleases = true }
-trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
-trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0" }
 # Remove after deprecation period:
-trulens_eval = { version = "^1.0.0", allow-prereleases = true }
+trulens_eval = { version = "^1.0.0" }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -53,6 +51,7 @@ ruff = "^0.5"
 mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
+codespell = "^2.3"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
@@ -72,10 +71,10 @@ mkdocs-gen-files = "^0.5"
 mkdocs-literate-nav = "^0.6"
 mkdocs-section-index = "^0.3"
 
-[tool.poetry.group.instrument.dependencies]
-trulens-instrument-langchain = { path = "src/instrument/langchain", develop = true, python = "<3.13" }
-trulens-instrument-llamaindex = { path = "src/instrument/llamaindex", develop = true }
-trulens-instrument-nemo = { path = "src/instrument/nemo", develop = true, python = "<3.12" }
+[tool.poetry.group.apps.dependencies]
+trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
+trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
+trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.12" }
 
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
@@ -117,6 +116,11 @@ optional = true
 [tool.poetry.group.tests-optional.dependencies]
 llama-index-embeddings-huggingface = "^0.2.2"
 llama-index-embeddings-openai = "^0.1.10"
+faiss-cpu = "^1.7.4"                          # some example notebooks
+ipytree = "^0.2.2"                            # some example notebooks
+chromadb = "^0.4.24"                          # some example notebooks
+unstructured = "^0.10.23"                     # some example notebooks
+llama-index-readers-web = "^0.1.0"            # some example notebooks
 
 [tool.ruff]
 line-length = 80

@@ -6,8 +6,8 @@ from unittest import TestCase
 from unittest import main
 
 import numpy as np
+from trulens.apps.basic import TruBasicApp
 from trulens.core import Feedback
-from trulens.core import TruBasicApp
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.select import Select
@@ -43,7 +43,7 @@ class TestFeedbackEval(TestCase):
         res = f.run(source_data=source_data)
 
         self.assertNotAlmostEqual((1 + 2 + 3 + 4 + 5 + 6) / 6, (2 + 4 + 6) / 3)
-        # Make sure that the wrong behaviour is not accidentally equal to the
+        # Make sure that the wrong behavior is not accidentally equal to the
         # correct one.
 
         self.assertIsInstance(res.result, float)
@@ -103,7 +103,7 @@ class TestFeedbackConstructors(TestCase):
             # (CustomClassWithArgs.class_method, 0.9),
             # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.
@@ -136,7 +136,7 @@ class TestFeedbackConstructors(TestCase):
             (CustomClassWithArgs.class_method, 0.9),
             (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
                 with self.assertRaises(Exception):
                     Feedback.model_validate(f.model_dump())
@@ -159,7 +159,7 @@ class TestFeedbackConstructors(TestCase):
             # (NG.CustomClassWithArgs.class_method, 0.9),
             # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
-            with self.subTest(imp=imp, taget=target):
+            with self.subTest(imp=imp, target=target):
                 f = Feedback(imp).on_default()
 
                 # Run the feedback function.

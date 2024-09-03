@@ -1,5 +1,6 @@
 import logging
 from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -7,6 +8,7 @@ import pydantic
 import scipy.stats as stats
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import format_import_errors
 from trulens.core.utils.pyschema import FunctionOrMethod
@@ -30,9 +32,7 @@ logger = logging.getLogger(__name__)
 
 # TODEP
 class GroundTruthAgreement(WithClassInfo, SerialModel):
-    """
-    Measures Agreement against a Ground Truth.
-    """
+    """Measures Agreement against a Ground Truth."""
 
     ground_truth: Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]
     provider: LLMProvider
@@ -50,7 +50,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ground_truth: Union[
             List[Dict], Callable, pd.DataFrame, FunctionOrMethod
         ],
-        provider: LLMProvider,
+        provider: Optional[LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
@@ -83,16 +83,46 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ground_truth_imp = llm_app
         response = llm_app(prompt)
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_imp, provider=Cortex(model_engine="mistral-7b"))
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        ground_truth_collection = GroundTruthAgreement(
+            ground_truth_imp,
+            provider=Cortex(
+                snowflake.connector.connect(**snowflake_connection_parameters),
+                model_engine="mistral-7b",
+            ),
+        )
         ```
 
         Args:
             ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-            or callable that returns a ground truth string given a prompt string.
-            provider (LLMProvider): The provider to use for agreement measures.
-            bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+                or callable that returns a ground truth string given a prompt string.
+                provider (LLMProvider): The provider to use for agreement measures.
+                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
 
         """
+        if provider is None:
+            warnings.warn(
+                "Default provider is being deprecated. Defaulting to OpenAI.",
+                DeprecationWarning,
+            )
+            if not import_utils.is_package_installed(
+                "trulens-providers-openai"
+            ):
+                raise ImportError(
+                    "`trulens-providers-openai` package is required for the default OpenAI provider."
+                )
+            else:
+                from trulens.providers.openai import OpenAI
+
+                provider = OpenAI()
+
         if isinstance(ground_truth, List):
             ground_truth_imp = None
         elif isinstance(ground_truth, FunctionOrMethod):
@@ -373,12 +403,16 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         return ret
 
+    @property
+    def mae(self):
+        raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
+
 
 class GroundTruthAggregator(WithClassInfo, SerialModel):
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed=True, extra="allow"
     )
-    """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback fuctions."""
+    """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""
 
     true_labels: List[int]  # ground truth labels in [0, 1, 0, ...] format
     custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
@@ -413,8 +447,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         Args:
             scores (List[float]): relevance scores returned by feedback function
-
-            k (int): top k results to consider
 
         Returns:
             float: NDCG@k

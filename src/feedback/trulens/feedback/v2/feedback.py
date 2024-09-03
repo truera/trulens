@@ -208,7 +208,7 @@ class Groundedness(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
         """You are a INFORMATION OVERLAP classifier; providing the overlap of information between the source and statement.
         Respond only as a number from 0 to 10 where 0 is no information overlap and 10 is all information is overlapping.
-        Abstentions, such as 'I don't know', should be counted as the most overlap and therefore score a 10.
+        Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore score a 10.
         Never elaborate."""
     )
     user_prompt: ClassVar[str] = cleandoc(
@@ -221,6 +221,15 @@ class Groundedness(Semantics, WithPrompt):
         Criteria: <Statement Sentence>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
         Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
+        """
+    )
+
+    sentences_splitter_prompt: ClassVar[str] = cleandoc(
+        """Split the following statement into individual sentences:
+
+        Statement: {statement}
+
+        Return each sentence on a new line.
         """
     )
 
@@ -256,12 +265,12 @@ class Abstention(Semantics, WithPrompt):
 
 class Trivial(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
-        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content."""
+        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content. Respond only with a list of the remaining statements in the format of a python list of strings."""
     )
     user_prompt: ClassVar[str] = cleandoc(
         """ALL STATEMENTS: {statements}
 
-        IMPORTANT STATEMENTS:"""
+        IMPORTANT STATEMENTS: """
     )
 
 
@@ -352,7 +361,7 @@ class ContextRelevance(Relevance, WithPrompt):
         return validated
 
     @classmethod
-    def override_critera_and_output_space(
+    def override_criteria_and_output_space(
         cls, criteria: str, output_space: str
     ):
         validated = cls.validate_criteria_and_output_space(
@@ -554,7 +563,7 @@ class Toxicity(Semantics):
 
 class Maliciousness(Moderation, WithPrompt):
     """
-    Examples of malciousness:
+    Examples of maliciousness:
 
     """
 
@@ -736,7 +745,7 @@ class COTExplained(Feedback):
                         / normalize
                     )
 
-        return FeedbackWithExplanation(**feedback)
+        return FeedbackWithExplanation(**feedback.model_dump())
 
 
 # Level 3 abstraction

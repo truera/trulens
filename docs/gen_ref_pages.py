@@ -1,9 +1,8 @@
 """Generate the code reference pages and navigation."""
 
-from inspect import cleandoc
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import mkdocs_gen_files
 
@@ -16,24 +15,36 @@ docs_reference_path = Path("reference")
 
 mod_symbol = '<code class="doc-symbol doc-symbol-nav doc-symbol-module"></code>'
 
+pack_symbol = (
+    "📦"  # <code class="doc-symbol doc-symbol-nav doc-symbol-package"></code>'
+)
+
 
 _SPECIAL_FORMATTING = {
-    "litellm": "LiteLLM",
-    "openai": "OpenAI",
-    "huggingface": "HuggingFace",
-    "langchain": "LangChain",
-    "llamaindex": "LlamaIndex",
-    "nemo": "Nemo Guardrails",
-    "cortex": "Snowflake Cortex",
-    "bedrock": "Amazon Bedrock",
+    "litellm": f"{pack_symbol} LiteLLM",
+    "openai": f"{pack_symbol} OpenAI",
+    "huggingface": f"{pack_symbol} HuggingFace",
+    "langchain": f"{pack_symbol} LangChain",
+    "llamaindex": f"{pack_symbol} LlamaIndex",
+    "nemo": f"{pack_symbol} Nemo Guardrails",
+    "cortex": f"{pack_symbol} Snowflake Cortex",
+    "bedrock": f"{pack_symbol} Amazon Bedrock",
+    "snowflake": f"{pack_symbol} Snowflake",
+    "basic": f"{mod_symbol} basic",
+    "custom": f"{mod_symbol} custom",
+    "virtual": f"{mod_symbol} virtual",
 }
 
 
-def format_parts(parts: tuple):
+def format_parts(parts: Tuple[str, ...]) -> Tuple[str, ...]:
     if parts[0] == "trulens":
         parts = tuple(parts[1:])
 
-    external_package = len(parts) and parts[0] in ("providers", "instrument")
+    external_package = len(parts) and parts[0] in (
+        "connectors",
+        "providers",
+        "apps",
+    )
     seen_package_level = False
 
     def _format_part(idx: int, part: str):
@@ -45,16 +56,21 @@ def format_parts(parts: tuple):
         if external_package and idx == 1 and part in _SPECIAL_FORMATTING:
             # trulens.providers.langchain.provider -> providers is nonmodule, langchain is package-level, provider is module
             seen_package_level = True
+            # return _SPECIAL_FORMATTING[part]
             return _SPECIAL_FORMATTING[part]
+
         if not seen_package_level:
             return part
+
         return f"{mod_symbol} {part}"
 
     return tuple(_format_part(i, part) for i, part in enumerate(parts))
 
 
 def write_to_gen_files(
-    parts: tuple, content: Optional[str] = None, doc_path: Optional[Path] = None
+    parts: Tuple[str, ...],
+    content: Optional[str] = None,
+    doc_path: Optional[Path] = None,
 ):
     doc_path = doc_path or Path(*parts)
 
@@ -68,9 +84,17 @@ def write_to_gen_files(
     nav_parts = format_parts(parts)
     nav[nav_parts] = doc_path.as_posix()
 
+    # if (
+    #    parts[0] == "trulens_eval"
+    # ):  # legacy module is in the trulens-legacy package
+    #    nav_parts = format_parts(("legacy", *parts))
+    # else:
+    # nav_parts = format_parts(parts)
+    #    print(nav_parts)
+
     if not content:
         ident = ".".join(parts)
-        content = f"#{ident}\n::: {ident}"
+        content = f"# {ident}\n::: {ident}"
 
     with mkdocs_gen_files.open(full_doc_path, "w") as fd:
         fd.write(content)
@@ -85,31 +109,22 @@ core_packages = [
 provider_packages = [
     f"providers/{pkg_dir}" for pkg_dir in next(os.walk("src/providers"))[1]
 ]
-instrument_packages = [
-    f"instrument/{pkg_dir}" for pkg_dir in next(os.walk("src/instrument"))[1]
-]
+app_packages = [f"apps/{pkg_dir}" for pkg_dir in next(os.walk("src/apps"))[1]]
 connector_packages = [
     f"connectors/{pkg_dir}" for pkg_dir in next(os.walk("src/connectors"))[1]
 ]
+legacy_packages = ["trulens_eval"]
 packages = (
-    core_packages + provider_packages + instrument_packages + connector_packages
+    core_packages + provider_packages + app_packages + connector_packages
+    #     + legacy_packages # don't generate these as they seem to be blank anyway
 )
 print("Collecting from packages:", packages)
 
-# Write Index Page
-with mkdocs_gen_files.open(
-    docs_reference_path / "trulens" / "index.md", "w"
-) as fd:
-    fd.write(
-        cleandoc(
-            """
-            # TruLens API Reference
-
-            Welcome to the TruLens API Reference!
-            Use the search and navigation to explore the various modules and classes available in the TruLens library.
-            """
-        )
-    )
+nav["API Reference"] = "index.md"
+nav["providers"] = "providers/index.md"
+nav["apps"] = "apps/index.md"
+nav["connectors"] = "connectors/index.md"
+nav["❌ trulens_eval"] = "trulens_eval/index.md"
 
 for package in packages:
     # create a nav entry for package/index.md
@@ -123,14 +138,32 @@ for package in packages:
         doc_path = path.relative_to(package_path).with_suffix(".md")
         parts = tuple(module_path.parts)
 
+        if any(
+            (part.startswith("_") and not part.endswith("_")) for part in parts
+        ):
+            # skip private modules
+            continue
+
         if not len(parts):
             continue
-        if package == "dashboard":
+
+        elif package == "trulens_eval":
+            pass
+            # if parts[0] == "trulens_eval":
+            #    parts = ("legacy", *parts[1:])
+        elif package == "dashboard":
             if parts[0] != "trulens":
                 continue
             if len(parts) > 2 and parts[2] == "react_components":
                 continue
-        if not os.path.exists(path.parent / "__init__.py"):
+        elif path.parent.name == "apps" and path.name in [
+            "basic.py",
+            "custom.py",
+            "virtual.py",
+        ]:
+            # Write core apps. Pass to skip the next condition.
+            pass
+        elif not os.path.exists(path.parent / "__init__.py"):
             print(
                 "Skipping due to missing __init__.py: ",
                 path.parent / "__init__.py",
@@ -139,5 +172,5 @@ for package in packages:
 
         write_to_gen_files(parts, doc_path=doc_path)
 
-    with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
-        nav_file.writelines(nav.build_literate_nav())
+with mkdocs_gen_files.open("reference/SUMMARY.md", "w") as nav_file:
+    nav_file.writelines(nav.build_literate_nav())

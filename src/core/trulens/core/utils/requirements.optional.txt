@@ -71,6 +71,8 @@ beautifulsoup4 >= 4.12.2  # no direct uses
 pdfminer.six   >= 20221105 #  no direct uses
 tokenizers     >= 0.13.3  # no direct uses
 
+nltk >= 3.9.1
+
 # Datasets
 datasets >= 2.12.0
 kaggle   >= 1.5.13
@@ -79,9 +81,9 @@ snowflake-core >= 0.10.0
 snowflake-sqlalchemy >= 1.6.1
 
 # Optional trulens packages
-trulens-instrument-llamaindex >= 1.0.0
-trulens-instrument-langchain >= 1.0.0
-trulens-instrument-nemo >= 1.0.0
+trulens-apps-llamaindex >= 1.0.0
+trulens-apps-langchain >= 1.0.0
+trulens-apps-nemo >= 1.0.0
 trulens-providers-bedrock >= 1.0.0
 trulens-providers-cortex >= 1.0.0
 trulens-providers-huggingface >= 1.0.0

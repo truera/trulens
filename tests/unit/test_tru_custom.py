@@ -4,7 +4,7 @@ Tests for TruCustomApp.
 
 from unittest import main
 
-from trulens.core import TruCustomApp
+from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
 
 from examples.dev.dummy_app.app import DummyApp

@@ -13,7 +13,7 @@ from typing import (
     Type,
 )
 
-from trulens.core.app.custom import instrument
+from trulens.apps.custom import instrument
 from trulens.core.utils.threading import ThreadPoolExecutor
 
 from examples.dev.dummy_app.agent import DummyAgent
@@ -118,7 +118,7 @@ class DummyApp(Dummy):
 
         self.agents = [
             DummyAgent(
-                # Recursivly includes app, set num_agents to 0 to prevent infinite loop:
+                # Recursively includes app, set num_agents to 0 to prevent infinite loop:
                 app=DummyApp(num_agents=0),
                 description=f"ensemble agent {i}",
                 **kwargs,

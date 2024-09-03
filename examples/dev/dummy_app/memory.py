@@ -1,12 +1,12 @@
 import sys
 
-from trulens.core.app.custom import instrument
+from trulens.apps.custom import instrument
 
 from examples.dev.dummy_app.dummy import Dummy
 
 
 class DummyMemory(Dummy):
-    """Dummy memory implementation that marely apends memories to a list."""
+    """Dummy memory implementation that merely appends memories to a list."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

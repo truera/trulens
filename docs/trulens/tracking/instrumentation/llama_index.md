@@ -10,7 +10,7 @@ In addition to the default instrumentation, TruLlama exposes the
 *select_context* and *select_source_nodes* methods for evaluations that require
 access to retrieved context or source nodes. Exposing these methods bypasses the
 need to know the json structure of your app ahead of time, and makes your
-evaluations re-usable across different apps.
+evaluations reusable across different apps.
 
 ## Example usage
 
@@ -35,7 +35,7 @@ To instrument an Llama-Index query engine, all that's required is to wrap it usi
 !!! example "Instrument a Llama-Index Query Engine"
 
     ```python
-    from trulens.instrument.llamaindex import TruLlama
+    from trulens.apps.llamaindex import TruLlama
 
     tru_query_engine_recorder = TruLlama(query_engine)
 
@@ -44,7 +44,7 @@ To instrument an Llama-Index query engine, all that's required is to wrap it usi
     ```
 
 To properly evaluate LLM apps we often need to point our evaluation at an
-internal step of our application, such as the retreived context. Doing so allows
+internal step of our application, such as the retrieved context. Doing so allows
 us to evaluate for metrics including context relevance and groundedness.
 
 For LlamaIndex applications where the source nodes are used, `select_context`
@@ -74,7 +74,7 @@ You can find the full quickstart available here: [Llama-Index Quickstart]((trule
 ## Async Support
 TruLlama also provides async support for LlamaIndex through the `aquery`,
 `achat`, and `astream_chat` methods. This allows you to track and evaluate async
-applciations.
+applications.
 
 As an example, below is an LlamaIndex async chat engine (`achat`).
 
@@ -83,10 +83,8 @@ As an example, below is an LlamaIndex async chat engine (`achat`).
     ```python
     from llama_index.core import VectorStoreIndex
     from llama_index.readers.web import SimpleWebPageReader
-    from trulens.core import Tru
-    from trulens.instrument.llamaindex import TruLlama
+    from trulens.apps.llamaindex import TruLlama
 
-    tru = Tru()
     documents = SimpleWebPageReader(html_to_text=True).load_data(
         ["http://paulgraham.com/worked.html"]
     )
@@ -150,7 +148,7 @@ the appropriate Instrument subclass.
 !!! example
 
     ```python
-    from trulens.instrument.llamaindex import LlamaInstrument
+    from trulens.apps.llamaindex import LlamaInstrument
 
     LlamaInstrument().print_instrumentation()
     ```
