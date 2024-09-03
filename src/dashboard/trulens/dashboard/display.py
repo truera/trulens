@@ -6,7 +6,7 @@ from trulens.core.schema.record import Record
 from trulens.dashboard.ux.styles import CATEGORY
 
 
-def get_icon(fdef: FeedbackDefinition, result: float) -> str:
+def get_icon(fdef: FeedbackDefinition, result: float, name: str) -> str:
     """
     Get the icon for a given feedback definition and result.
 
@@ -25,6 +25,7 @@ def get_icon(fdef: FeedbackDefinition, result: float) -> str:
         higher_is_better=fdef.higher_is_better
         if fdef.higher_is_better is not None
         else True,
+        is_distance="distance" in fdef.name.lower(),
     )
     return cat.icon
 
@@ -33,7 +34,7 @@ def get_feedback_result(
     tru_record: Record, feedback_name: str, timeout: int = 60
 ) -> pd.DataFrame:
     """
-    Retrieve the feedback results for a given feedback name from a TruLens record.
+    Retrieve the feedback results including reasons for a given feedback name from a TruLens record.
 
     Args:
         tru_record: The record containing feedback and future results.
@@ -70,7 +71,11 @@ def get_feedback_result(
         raise ValueError("feedback_calls is not iterable")
 
     feedback_result = [
-        {**call.model_dump()["args"], "ret": call.model_dump()["ret"]}
+        {
+            **call.model_dump()["args"],
+            "ret": call.model_dump()["ret"],
+            **call.model_dump()["meta"],
+        }
         for call in feedback_calls.calls
     ]
     return pd.DataFrame(feedback_result)

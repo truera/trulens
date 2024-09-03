@@ -1,8 +1,10 @@
 import asyncio
 import json
 import math
+import re
 from typing import List
 
+import pandas as pd
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
@@ -17,6 +19,7 @@ from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata_and_tags
+from trulens.dashboard.ux.styles import CATEGORY
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -139,6 +142,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
             higher_is_better = feedback_directions.get(col_name, True)
 
             if "distance" in col_name:
+                cat = styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better, is_distance=True
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
@@ -164,7 +170,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.experimental_fragment(run_every=2)
+@st.fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
     Render clickable feedback pills for a given record.
@@ -189,7 +195,23 @@ def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
+    default_direction = "HIGHER_IS_BETTER"
+    session = TruSession()
+    lms = session.connector.db
+    feedback_defs = lms.get_feedback_defs()
+
     for feedback, feedback_result in record.wait_for_feedback_results().items():
+        feedback_directions = {
+            (
+                row.feedback_json.get("supplied_name", "")
+                or row.feedback_json["implementation"]["name"]
+            ): (
+                "HIGHER_IS_BETTER"
+                if row.feedback_json.get("higher_is_better", True)
+                else "LOWER_IS_BETTER"
+            )
+            for _, row in feedback_defs.iterrows()
+        }
         call_data = {
             "feedback_definition": feedback,
             "feedback_name": feedback.name,
@@ -215,11 +237,103 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
-        st.dataframe(
-            get_feedback_result(record, feedback_name=selected_feedback),
-            use_container_width=True,
-            hide_index=True,
-        )
+
+        def highlight(df):
+            if "distance" in selected_feedback:
+                return [f"background-color: {CATEGORY.DISTANCE.color}"] * len(
+                    df
+                )
+
+            result_value = df["ret"]  # Use the 'result' column's value
+            cat = CATEGORY.of_score(
+                result_value,
+                higher_is_better=feedback_directions.get(
+                    selected_feedback, default_direction
+                )
+                == default_direction,
+            )
+            # Apply the background color to the entire row
+            return [f"background-color: {cat.color}" for _ in df]
+
+        def highlight_groundedness(df):
+            if "distance" in selected_feedback:
+                return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(df)
+
+            result_value = df["Score"]  # Use the 'Score' column's value
+            cat = CATEGORY.of_score(
+                result_value,
+                higher_is_better=feedback_directions.get(
+                    selected_feedback, default_direction
+                )
+                == default_direction,
+            )
+            # Apply the background color to the entire row
+            return [f"background-color: {cat.color}" for _ in df]
+
+        df = get_feedback_result(record, feedback_name=selected_feedback)
+
+        if "groundedness" in selected_feedback.lower():
+            try:
+                # Split the reasons value into separate rows and columns
+                reasons = df["reasons"].iloc[0]
+                # Split the reasons into separate statements
+                statements = reasons.split("STATEMENT")
+                data = []
+                # Each reason has three components: statement, supporting evidence, and score
+                # Parse each reason into these components and add them to the data list
+                for statement in statements[1:]:
+                    try:
+                        criteria = statement.split("Criteria: ")[1].split(
+                            "Supporting Evidence: "
+                        )[0]
+                        supporting_evidence = statement.split(
+                            "Supporting Evidence: "
+                        )[1].split("Score: ")[0]
+                        score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
+                        score_split = statement.split("Score: ")[1]
+                        score_match = score_pattern.search(score_split)
+                        if score_match:
+                            score = float(score_match.group(1)) / 10
+                    except Exception:
+                        pass
+                    data.append({
+                        "Statement": criteria,
+                        "Supporting Evidence from Source": supporting_evidence,
+                        "Score": score,
+                    })
+                reasons_df = pd.DataFrame(data)
+                # Combine the original feedback data with the expanded reasons
+                df_expanded = pd.concat(
+                    [
+                        df.reset_index(drop=True),
+                        reasons_df.reset_index(drop=True),
+                    ],
+                    axis=1,
+                )
+                st.dataframe(
+                    df_expanded.style.apply(
+                        highlight_groundedness, axis=1
+                    ).format("{:.2f}", subset=["Score"]),
+                    hide_index=True,
+                    column_order=[
+                        "Statement",
+                        "Supporting Evidence from Source",
+                        "Score",
+                    ],
+                )
+            except Exception as e:
+                st.write(e)
+                st.dataframe(
+                    df.style.apply(highlight, axis=1),
+                    use_container_width=True,
+                    hide_index=True,
+                )
+        else:
+            st.dataframe(
+                df.style.apply(highlight, axis=1),
+                use_container_width=True,
+                hide_index=True,
+            )
 
 
 def trulens_trace(record: Record):
