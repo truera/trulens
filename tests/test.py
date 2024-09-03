@@ -101,8 +101,9 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
     removed.
 
     Dicts are returned as OrderedDict with sorted keys. Keys in `skips` are
-    omitted. Floats are returned as 0.0 to avoid tolerance issues. Note that the
-    returned objects are only used for ordering their originals and are not
+    omitted. Sequences are returned as Tuples no matter what sequence type the
+    input was. Floats are returned as 0.0 to avoid tolerance issues. Note that
+    the returned objects are only used for ordering their originals and are not
     compared themselves.
 
     Args:
