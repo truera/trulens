@@ -1,5 +1,6 @@
-"""
-Tests for TruChain. Some of the tests are outdated.
+"""Tests for TruChain.
+
+Some of the tests are outdated.
 """
 
 from typing import Optional
