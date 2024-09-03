@@ -190,23 +190,23 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
 class WithJSONTestCase:
     """TestCase class that adds JSON comparisons and golden expectation handling."""
 
-    def load_golden(self, path: Union[str, Path]) -> JSON:
+    def load_golden(self, golden_path: Union[str, Path]) -> JSON:
         """Load the golden file `path` and return its contents.
 
         Args:
-            path: The name of the golden file to load. The file must
+            golden_path: The name of the golden file to load. The file must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines the input format.
 
         """
-        golden_path = Path(path)
+        golden_path = Path(golden_path)
 
         if ".json" in golden_path.suffixes:
             loader = functools.partial(json.load)
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         else:
-            raise ValueError(f"Unknown file extension {path}.")
+            raise ValueError(f"Unknown file extension {golden_path}.")
 
         if not golden_path.exists():
             raise FileNotFoundError(f"Golden file {golden_path} not found.")
@@ -214,22 +214,22 @@ class WithJSONTestCase:
         with golden_path.open() as f:
             return loader(f)
 
-    def write_golden(self, path: Union[str, Path], data: JSON) -> None:
+    def write_golden(self, golden_path: Union[str, Path], data: JSON) -> None:
         """If writing golden file is enabled, write the golden file `path` with
         `data` and raise exception indicating so.
 
         If not writing golden file, does nothing.
 
         Args:
-            path: The path to the golden file to write. Format is determined by
-                suffix.
+            golden_path: The path to the golden file to write. Format is
+                determined by suffix.
 
             data: The data to write to the golden file.
         """
         if not self.writing_golden():
             return
 
-        golden_path = Path(path)
+        golden_path = Path(golden_path)
 
         if golden_path.suffix == ".json":
             writer = functools.partial(json.dump, indent=2, sort_keys=True)
@@ -241,7 +241,7 @@ class WithJSONTestCase:
         with golden_path.open("w") as f:
             writer(data, f)
 
-        self.fail(f"Golden file {path} written.")
+        self.fail(f"Golden file {golden_path} written.")
 
     def writing_golden(self) -> bool:
         """Return whether the golden files are to be written."""
@@ -304,7 +304,7 @@ class WithJSONTestCase:
             golden_path = Path(golden_path)
 
         # Write golden and raise exception if writing golden is enabled.
-        self.write_golden(path=golden_path, data=actual)
+        self.write_golden(golden_path=golden_path, data=actual)
 
         # Otherwise load the golden file and compare.
         expected = self.load_golden(golden_path)

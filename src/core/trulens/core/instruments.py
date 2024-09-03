@@ -462,7 +462,7 @@ class Instrument:
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = {k: v for k, v in ctx_stacks.items()}
+            stacks = dict(ctx_stacks.items())
 
             start_time = None
 
@@ -560,6 +560,7 @@ class Instrument:
 
             def handle_done(rets):
                 nonlocal records
+                nonlocal contexts
 
                 # (re) generate end_time here because cases where the initial end_time was
                 # just to produce an awaitable before being awaited.
@@ -590,9 +591,15 @@ class Instrument:
                     # If stack has only 1 thing on it, we are looking at a "root
                     # call". Create a record of the result and notify the app:
 
-                    if len(stack) == 1:
+                    existing_record = records.get(ctx, None)
+
+                    print("handle_done", len(stack))
+                    print("  existing_record=", existing_record)
+
+                    if len(stack) == 1 or existing_record is not None:
                         # If this is a root call, notify app to add the completed record
                         # into its containers:
+
                         records[ctx] = ctx.app.on_add_record(
                             ctx=ctx,
                             func=func,
@@ -604,7 +611,7 @@ class Instrument:
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
-                            existing_record=records.get(ctx, None),
+                            existing_record=existing_record,
                         )
 
                 if error is not None:
@@ -617,6 +624,9 @@ class Instrument:
                 # anything especially if the user never awaits the return.
 
                 type_name = class_name(type(rets))
+
+                print(path, callable_name(func), type_name)
+
                 # If method produced an awaitable
                 logger.info(
                     "This app produced an asynchronous response of type `%s`."

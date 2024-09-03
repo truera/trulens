@@ -185,7 +185,7 @@ class TestAPI(JSONTestCase):
         members = self.get_members_trulens_eval(aliases_are_defs=True)
 
         self.write_golden(
-            path=golden_file, data=members
+            golden_path=golden_file, data=members
         )  # will raise exception if golden file is written
 
         expected = self.load_golden(golden_file)
@@ -239,7 +239,7 @@ class TestAPI(JSONTestCase):
         members = self.get_members_trulens()
 
         self.write_golden(
-            path=golden_file, data=members
+            golden_path=golden_file, data=members
         )  # will raise exception if golden file is written
 
         expected = self.load_golden(golden_file)

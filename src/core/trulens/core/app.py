@@ -1135,6 +1135,25 @@ class App(
 
         return
 
+    # For use as a context manager.
+    async def __aenter__(self):
+        ctx = RecordingContext(app=self)
+
+        token = self.recording_contexts.set(ctx)
+        ctx.token = token
+
+        return ctx
+
+    # For use as a context manager.
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        # ctx = self.recording_contexts.get()
+        # self.recording_contexts.reset(ctx.token)
+
+        if exc_type is not None:
+            raise exc_value
+
+        return
+
     # WithInstrumentCallbacks requirement
     def on_new_record(self, func) -> Iterable[RecordingContext]:
         """Called at the start of record creation.
@@ -1297,14 +1316,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         manager instead.
         """
 
-        awaitable, _ = self.with_record(func, *args, **kwargs)
+        res, _ = await self.awith_record(func, *args, **kwargs)
 
-        if not isinstance(awaitable, Awaitable):
-            raise TypeError(
-                f"Expected {callable_name(func)} to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
-            )
-
-        return await awaitable
+        return res
 
     async def with_(self, func: Callable[[A], T], *args, **kwargs) -> T:
         """Call the given async `func` with the given `*args` and `**kwargs`
@@ -1361,15 +1375,22 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         its results as well as a record of the execution.
         """
 
-        awaitable, record = self.with_record(
-            func, *args, record_metadata=record_metadata, **kwargs
-        )
-        if not isinstance(awaitable, Awaitable):
-            raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
-            )
+        if not isinstance(func, Callable):
+            if hasattr(func, "__call__"):
+                func = func.__call__
 
-        return await awaitable, record
+        self._check_instrumented(func)
+
+        async with self as ctx:
+            ctx.record_metadata = record_metadata
+            ret = await func(*args, **kwargs)
+
+        assert len(ctx.records) > 0, (
+            f"Did not create any records. "
+            f"This means that no instrumented methods were invoked in the process of calling {func}."
+        )
+
+        return ret, ctx.get()
 
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False
