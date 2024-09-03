@@ -100,9 +100,9 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
     """Return a canonical copy of `obj` with all keys/attributes in `skips`
     removed.
 
-    Sequences are returned as tuples and container types are returned as
-    frozendicts. Floats are returned as 0.0 to avoid tolerance issues. Note that
-    the returned objects are only used for ordering their originals and are not
+    Dicts are returned as OrderedDict with sorted keys. Keys in `skips` are
+    omitted. Floats are returned as 0.0 to avoid tolerance issues. Note that the
+    returned objects are only used for ordering their originals and are not
     compared themselves.
 
     Args:
@@ -172,7 +172,7 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
 def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
     """Return a sorted version of `seq` by string order.
 
-    Items are converted to strings using `hashable_skip` with `skips`
+    Items are converted to strings using `canonical` with `skips`
     keys/attributes skipped.
 
     Args:
