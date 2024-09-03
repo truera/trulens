@@ -36,6 +36,9 @@ class RecordAppCallMethod(serial.SerialModel):
 class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
 
+    def __str__(self):
+        return f"RecordAppCall({self.top.path} {self.top.method.name})"
+
     call_id: mod_types_schema.CallID = pydantic.Field(
         default_factory=mod_types_schema.new_call_id
     )
@@ -93,6 +96,13 @@ class Record(serial.SerialModel, Hashable):
     Note:
         This class will be renamed to `Trace` in the future.
     """
+
+    def __str__(self):
+        ret = f"Record({self.record_id}) with {len(self.calls)} calls:\n"
+        for call in self.calls:
+            ret += "  " + str(call) + "\n"
+
+        return ret
 
     model_config: ClassVar[dict] = {
         # for `Future[FeedbackResult]`

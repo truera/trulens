@@ -25,9 +25,9 @@ import logging
 import pprint
 from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
 
-from langchain.callbacks.openai_info import OpenAICallbackHandler
 from langchain.schema import Generation
 from langchain.schema import LLMResult
+from langchain_community.callbacks.openai_info import OpenAICallbackHandler
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint

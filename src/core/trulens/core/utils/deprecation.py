@@ -265,6 +265,11 @@ def class_moved(
     Issues the warning only once.
     """
 
+    return cls
+
+    # NOTE(piotrm): Temporarily disabling the class moved mechanism as it
+    # interferes with Feedback serialization.
+
     if new_location is None:
         new_location = cls.__module__
 
