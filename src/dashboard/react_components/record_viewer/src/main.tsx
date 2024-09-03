@@ -1,18 +1,18 @@
 import '@/assets/fonts.css';
 
-import { StyledEngineProvider, ThemeProvider } from '@mui/material';
+import { StyledEngineProvider, ThemeProvider as MuiThemeProvider } from '@mui/material';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 import RecordViewer from '@/RecordViewer';
-import TrueraTheme from '@/utils/TrueraTheme';
+import theme from '@/utils/theme';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <StyledEngineProvider injectFirst>
-      <ThemeProvider theme={TrueraTheme}>
+      <MuiThemeProvider theme={theme}>
         <RecordViewer />
-      </ThemeProvider>
+      </MuiThemeProvider>
     </StyledEngineProvider>
   </React.StrictMode>
 );

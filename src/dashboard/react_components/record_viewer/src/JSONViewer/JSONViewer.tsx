@@ -1,10 +1,13 @@
 import ReactJson, { ReactJsonViewProps } from '@microlink/react-json-view';
+import { useColorScheme } from '@mui/material';
 import { Streamlit } from 'streamlit-component-lib';
 
 /**
  * Utility component as a rapper around react-json-view with default params
  */
 export default function JSONViewer({ src }: { src: ReactJsonViewProps['src'] }) {
+  const { mode } = useColorScheme();
+
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
@@ -17,6 +20,7 @@ export default function JSONViewer({ src }: { src: ReactJsonViewProps['src'] }) 
         collapsed={2}
         collapseStringsAfterLength={140}
         style={{ fontSize: '14px' }}
+        theme={mode === 'light' ? 'rjv-default' : 'harmonic'}
       />
     </div>
   );

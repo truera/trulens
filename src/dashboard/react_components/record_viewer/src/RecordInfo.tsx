@@ -1,4 +1,4 @@
-import { Box, Grid, gridClasses, Stack, Typography } from '@mui/material';
+import { Box, Grid2, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import JSONViewer from '@/JSONViewer/JSONViewer';
@@ -60,7 +60,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
     }
 
     if (selectedTab === RECORD_CONTENT_TABS.SPAN_JSON) {
-      return <JSONViewer src={selectedNodeId === root.nodeId ? recordJSON : selectedNode.raw ?? {}} />;
+      return <JSONViewer src={selectedNodeId === root.nodeId ? recordJSON : (selectedNode.raw ?? {})} />;
     }
 
     if (selectedTab === RECORD_CONTENT_TABS.RECORD_JSON) {
@@ -86,21 +86,18 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
   const isTimeline = selectedSpanView === SPAN_VIEW.TIMELINE;
 
   return (
-    <Grid
+    <Grid2
       container
       sx={{
-        border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
+        border: ({ vars }) => `0.5px solid ${vars.palette.grey[300]}`,
         borderRadius: 0.5,
-        [`& .${gridClasses.item}`]: {
-          border: ({ palette }) => `0.5px solid ${palette.grey[300]}`,
-        },
       }}
     >
-      <Grid item xs={12} md={isTimeline ? 12 : 5} lg={isTimeline ? 12 : 4}>
+      <Grid2 size={{ xs: 12, md: isTimeline ? 12 : 5, lg: isTimeline ? 12 : 4 }}>
         <Tabs
           value={selectedSpanView}
           onChange={(_event, value) => setSelectedSpanView(value as SPAN_VIEW)}
-          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
+          sx={{ borderBottom: ({ vars }) => `1px solid ${vars.palette.grey[300]}` }}
         >
           {SPAN_VIEWS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
@@ -117,13 +114,13 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
             nodeMap={nodeMap}
           />
         )}
-      </Grid>
+      </Grid2>
 
-      <Grid item xs={12} md={isTimeline ? 12 : 7} lg={isTimeline ? 12 : 8}>
+      <Grid2 size={{ xs: 12, md: isTimeline ? 12 : 7, lg: isTimeline ? 12 : 8 }}>
         <Tabs
           value={selectedTab}
           onChange={(_event, value) => setSelectedTab(value as RECORD_CONTENT_TABS)}
-          sx={{ borderBottom: ({ palette }) => `1px solid ${palette.grey[300]}` }}
+          sx={{ borderBottom: ({ vars }) => `1px solid ${vars.palette.grey[300]}` }}
         >
           {SPAN_TREE_TABS.map((tab) => (
             <Tab label={tab} value={tab} key={tab} id={tab} />
@@ -137,7 +134,7 @@ export default function RecordInfo({ appJSON, nodeMap, recordJSON, root }: Recor
         <Stack gap={2} sx={{ flexGrow: 1, p: 1, mb: 4 }}>
           {getSelectedView()}
         </Stack>
-      </Grid>
-    </Grid>
+      </Grid2>
+    </Grid2>
   );
 }
