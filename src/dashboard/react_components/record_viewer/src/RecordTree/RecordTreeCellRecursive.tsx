@@ -43,7 +43,7 @@ export default function RecordTreeCellRecursive({ node, depth, totalTime, treeSt
   );
 }
 
-const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
+const treeItemSx: SxProps<Theme> = ({ spacing, vars }) => ({
   [`& .${treeItemClasses.content}`]: {
     textAlign: 'left',
     position: 'relative',
@@ -61,7 +61,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
         // Magic value, based on the height of a single cell.
         height: `calc(54px + ${spacing(1)})`,
         width: spacing(2),
-        borderBottom: `1px solid ${palette.grey[300]}`,
+        borderBottom: `1px solid ${vars.palette.grey[300]}`,
       },
     },
     // Vertical segment connector
@@ -71,7 +71,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
       position: 'absolute',
       height: `calc(100% + ${spacing(3)})`,
       borderBottomLeftRadius: 4,
-      borderLeft: `1px solid ${palette.grey[300]}`,
+      borderLeft: `1px solid ${vars.palette.grey[300]}`,
 
       // Magic values, based on paddings
       left: spacing(-2),
@@ -93,7 +93,7 @@ const treeItemSx: SxProps<Theme> = ({ spacing, palette }) => ({
         width: spacing(2),
         height: spacing(1),
         top: '50%',
-        borderBottom: `1px solid ${palette.grey[300]}`,
+        borderBottom: `1px solid ${vars.palette.grey[300]}`,
         transform: 'translate(-100%, -50%)',
       },
     },

@@ -26,7 +26,7 @@ export default function Tabs({ children, value = false, onChange, sx = {} }: Pro
   );
 }
 
-const tabsSx: SxProps<Theme> = ({ spacing, palette }) => ({
+const tabsSx: SxProps<Theme> = ({ spacing, vars }) => ({
   minHeight: spacing(5),
   cursor: 'pointer',
   [`& .${tabClasses.root}`]: {
@@ -38,12 +38,12 @@ const tabsSx: SxProps<Theme> = ({ spacing, palette }) => ({
     borderTopRightRadius: spacing(0.5),
   },
   [`& .${tabClasses.selected}`]: {
-    backgroundColor: palette.primary.lighter,
+    backgroundColor: vars.palette.grey[100],
     ':hover': {
-      backgroundColor: palette.primary.lighter,
+      backgroundColor: vars.palette.grey[100],
     },
   },
   '& button:hover': {
-    backgroundColor: palette.grey[50],
+    backgroundColor: vars.palette.grey[100],
   },
 });

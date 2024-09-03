@@ -33,23 +33,14 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   return (
     <SpanTooltip node={node}>
       <Box
-        sx={({ palette }) => ({
+        sx={({ vars }) => ({
           [`&:hover > div`]: {
-            background: `${palette.grey[100]}`,
-          },
-          [`&.${classes.focused} > div`]: {
-            background: `${palette.grey[50]}`,
-          },
-          [`&.${classes.focused}:hover > div`]: {
-            background: `${palette.grey[100]}`,
+            background: 'rgba(var(--mui-palette-primary-mainChannel) / var(--mui-palette-action-selectedOpacity))',
           },
 
           [`&.${classes.selected} > div`]: {
-            background: `${palette.primary.lighter!}`,
-            border: `1px solid ${palette.primary.main}`,
-          },
-          [`&.${classes.selected}:hover > div`]: {
-            background: `${palette.primary.light}`,
+            background: 'rgba(var(--mui-palette-primary-mainChannel) / var(--mui-palette-action-focusOpacity))',
+            border: `1px solid ${vars.palette.primary.main}`,
           },
         })}
         className={clsx(className, classes.root, {
@@ -74,7 +65,6 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
               <Tag
                 leftIcon={<AccessTimeRounded sx={{ fontSize: 12 }} />}
                 sx={tagSx}
-                severity="info"
                 title={formatDuration(timeTaken)}
               />
             </Box>
@@ -87,16 +77,16 @@ export const RecordTreeCell = forwardRef(function CustomContent(props: RecordTre
   );
 });
 
-const cellSx: SxProps<Theme> = ({ spacing, palette }) => ({
+const cellSx: SxProps<Theme> = ({ spacing, vars }) => ({
   display: 'flex',
-  border: `1px solid ${palette.grey[300]}`,
+  border: `1px solid ${vars.palette.grey[300]}`,
   p: 1,
   borderRadius: spacing(0.5),
   width: '-webkit-fill-available',
   alignItems: 'center',
   justifyContent: 'space-between',
   '& svg': {
-    color: palette.grey[600],
+    color: vars.palette.grey[600],
   },
   overflow: 'hidden',
 });

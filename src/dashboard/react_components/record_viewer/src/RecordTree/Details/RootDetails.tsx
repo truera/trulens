@@ -26,7 +26,7 @@ export default function RootDetails({ root, recordJSON }: RootDetailsProps) {
 }
 
 const rootDetailsContainerSx: SxProps<Theme> = {
-  border: ({ palette }) => `1px solid ${palette.grey[300]}`,
+  border: ({ vars }) => `1px solid ${vars.palette.grey[300]}`,
   pl: 2,
   py: 1,
   borderRadius: 0.5,
