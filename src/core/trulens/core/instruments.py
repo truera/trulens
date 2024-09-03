@@ -593,8 +593,9 @@ class Instrument:
 
                     existing_record = records.get(ctx, None)
 
-                    print("handle_done", len(stack))
-                    print("  existing_record=", existing_record)
+                    # Async debugging work ongoing:
+                    # print("handle_done", len(stack))
+                    # print("  existing_record=", existing_record)
 
                     if len(stack) == 1 or existing_record is not None:
                         # If this is a root call, notify app to add the completed record
@@ -625,7 +626,8 @@ class Instrument:
 
                 type_name = class_name(type(rets))
 
-                print(path, callable_name(func), type_name)
+                # Async debugging work ongoing:
+                # print(path, callable_name(func), type_name)
 
                 # If method produced an awaitable
                 logger.info(
