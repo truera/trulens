@@ -9,3 +9,18 @@
   --md-primary-fg-color--light: #D5E2E1;
   --md-accent-fg-color: #E0735C;
 }
+
+.banner {
+  height: 12px;       /* Height of the banner */
+  position: sticky;   /* Follows as you scroll */
+  top: 0;             /* Absolute top of page */
+  left: 0;
+  width: 100%;
+  z-index: 1;         /* Tells the renderer "this is important", otherwise Admonition and Code Blocks will render into it */
+  text-align: center;
+  background-color: color-accent;
+}
+
+.md-header {
+  top: 12px;          /* This setting prevents the Material header from imposing into the space of the banner! */
+}

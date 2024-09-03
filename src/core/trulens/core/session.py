@@ -147,6 +147,8 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
     connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
+    """Database Connector to use. If not provided, a default is created and
+    used."""
 
     def __new__(cls, *args, **kwargs: Any) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
@@ -275,24 +277,48 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Basic(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         from trulens.apps.basic import TruBasicApp
 
         return TruBasicApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Custom(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         from trulens.apps.custom import TruCustomApp
 
         return TruCustomApp(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Virtual(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         from trulens.apps.virtual import TruVirtual
 
         return TruVirtual(*args, connector=self.connector, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Chain(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
         ):
@@ -302,6 +328,12 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Llama(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
         ):
@@ -311,6 +343,12 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("TruSession.App")
     def Rails(self, *args, **kwargs) -> base_app.App:
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.App][trulens.core.session.TruSession.App]
+            instead.
+        """
         with import_utils.OptionalImports(
             messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
         ):
@@ -320,30 +358,60 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
     @deprecation_utils.method_renamed("trulens.dashboard.run.find_unused_port")
     def find_unused_port(self, *args, **kwargs):
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.dashboard.run.find_unused_port][trulens.dashboard.run.find_unused_port]
+            instead.
+        """
         from trulens.dashboard.run import find_unused_port
 
         return find_unused_port(*args, **kwargs)
 
     @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
     def run_dashboard(self, *args, **kwargs):
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.dashboard.run.run_dashboard][trulens.dashboard.run.run_dashboard]
+            instead.
+        """
         from trulens.dashboard.run import run_dashboard
 
         return run_dashboard(*args, session=self, **kwargs)
 
     @deprecation_utils.method_renamed("trulens.dashboard.run.run_dashboard")
     def start_dashboard(self, *args, **kwargs):
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.dashboard.run.run_dashboard][trulens.dashboard.run.run_dashboard]
+            instead.
+        """
         from trulens.dashboard.run import run_dashboard
 
         return run_dashboard(*args, session=self, **kwargs)
 
     @deprecation_utils.method_renamed("trulens.dashboard.run.stop_dashboard")
     def stop_dashboard(self, *args, **kwargs):
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.dashboard.run.stop_dashboard][trulens.dashboard.run.stop_dashboard]
+            instead.
+        """
         from trulens.dashboard.run import stop_dashboard
 
         return stop_dashboard(*args, session=self, **kwargs)
 
     @deprecation_utils.method_renamed("TruSession.connector.db.insert_record")
     def update_record(self, *args, **kwargs):
+        """
+        !!! warning "Deprecated"
+            Use
+            [trulens.core.session.TruSession.connector][trulens.core.session.TruSession.connector] [.db.insert_record][trulens.core.database.base.DB.insert_record]
+            instead.
+        """
         assert self.connector is not None
         return self.connector.db.insert_record(*args, **kwargs)
 
@@ -662,7 +730,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             name=dataset_name,
             meta=dataset_metadata,
         )
-        dataset_id = self.db.insert_dataset(dataset=dataset)
+        dataset_id = self.connector.db.insert_dataset(dataset=dataset)
 
         buffer = []
 

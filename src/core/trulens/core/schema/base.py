@@ -40,15 +40,18 @@ class Cost(SerialModel, pydantic.BaseModel):
     """Number of guardrails tokens generated. i.e. available in Cortex endpoint."""
 
     cost: float = 0.0
-    """Cost in USD."""
+    """Cost in [cost_currency]."""
 
-    snowflake_credits_consumed: float = 0.0
-    """Credits consumed in Snowflake account."""
+    cost_currency: str = "USD"
 
     def __add__(self, other: "Cost") -> "Cost":
-        kwargs = {}
-        for k in self.model_fields.keys():
-            kwargs[k] = getattr(self, k) + getattr(other, k)
+        kwargs = {
+            k: getattr(self, k) + getattr(other, k)
+            if k != "cost_currency"
+            and isinstance(getattr(self, k), (int, float))
+            else getattr(other, k)
+            for k in self.model_fields.keys()
+        }
         return Cost(**kwargs)
 
     def __radd__(self, other: "Cost") -> "Cost":

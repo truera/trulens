@@ -31,6 +31,7 @@ optional_mods = dict(
         "trulens.apps.llamaindex.tru_llama",
         "trulens.apps.llamaindex.llama",
         "trulens.apps.llamaindex.guardrails",
+        "trulens.feedback.embeddings",  # requires llama_index embedding models
     ],
     boto3=[
         "trulens.providers.bedrock.provider",
@@ -67,7 +68,7 @@ all_trulens_mods = list(get_submodule_names(trulens))
 
 # Things which should not be imported at all.
 not_mods = [
-    "trulens.core.database.migrations.env"  # can only be executed by alembic
+    "trulens.core.database.migrations.env",  # can only be executed by alembic
 ]
 
 if sys.version_info >= (3, 12):

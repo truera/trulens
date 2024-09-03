@@ -34,15 +34,41 @@ As a result of these changes, the package structure for the TruLens varies from 
 
 | TruLens Eval | TruLens | Additional Dependencies |
 |------------|-------------|------------------|
-| `trulens_eval.Tru` | [`trulens.core.TruSession`][trulens.core.TruSession] | |
-| `trulens_eval.Feedback` | [`trulens.core.Feedback`][trulens.core.Feedback] | |
-| `trulens_eval.Select` | [`trulens.core.Select`][trulens.core.Select] | |
-| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [`trulens.apps.custom.TruCustomApp`][trulens.apps.custom.TruCustomApp] | |
-| `trulens_eval.TruChain`, `TruSession().Chain(...)` | [`trulens.apps.langchain.TruChain`][trulens.apps.langchain.TruChain] | `trulens-apps-langchain` |
-| `trulens_eval.TruLlama`, `TruSession().Llama(...)` | [`trulens.apps.llamaindex.TruLlama`][trulens.apps.llamaindex.TruLlama] | `trulens-apps-llamaindex` |
-| `trulens_eval.OpenAI` | [`trulens.providers.openai.OpenAI`][trulens.providers.openai.OpenAI] | `trulens-providers-openai` |
-| `trulens_eval.Huggingface` | [`trulens.providers.huggingface.Huggingface`][trulens.providers.huggingface.Huggingface] | `trulens-providers-huggingface` |
-| `trulens_eval.guardrails.llama` | [`trulens.apps.llamaindex.guardrails`][trulens.apps.llamaindex.guardrails] | `trulens-apps-llamaindex` |
-| `TruSession().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
+| `trulens_eval.Tru` | [trulens.core.TruSession][trulens.core.TruSession] | |
+| `trulens_eval.Feedback` | [trulens.core.Feedback][trulens.core.Feedback] | |
+| `trulens_eval.Select` | [trulens.core.Select][trulens.core.Select] | |
+| `trulens_eval.TruCustomApp`, `TruSession().Custom(...)` | [trulens.apps.custom.TruCustomApp][trulens.apps.custom.TruCustomApp] | |
+| `trulens_eval.TruChain`, `Tru().Chain(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.langchain.TruChain][trulens.apps.langchain.TruChain] | `trulens-apps-langchain` |
+| `trulens_eval.TruLlama`, `Tru().Llama(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.llamaindex.TruLlama][trulens.apps.llamaindex.TruLlama] | `trulens-apps-llamaindex` |
+| `trulens_eval.TruRails`, `Tru().Rails(...)` | [`TruSession().App(...)`][trulens.core.session.TruSession.App] or [trulens.apps.nemo.TruRails][trulens.apps.nemo.TruRails] | `trulens-apps-nemo` |
+| `trulens_eval.OpenAI` | [trulens.providers.openai.OpenAI][trulens.providers.openai.OpenAI] | `trulens-providers-openai` |
+| `trulens_eval.Huggingface` | [trulens.providers.huggingface.Huggingface][trulens.providers.huggingface.Huggingface] | `trulens-providers-huggingface` |
+| `trulens_eval.guardrails.llama` | [trulens.apps.llamaindex.guardrails][trulens.apps.llamaindex.guardrails] | `trulens-apps-llamaindex` |
+| `Tru().run_dashboard()` | [`trulens.dashboard.run_dashboard()`][trulens.dashboard.run_dashboard] | `trulens-dashboard` |
 
 To find a specific definition, use the search functionality or go directly to the [API Reference](../../reference/trulens/core/index.md).
+
+## Automatic Migration with Grit
+
+To assist you in migrating your codebase to _TruLens_ to v1.0, we've published a `grit` pattern. You can migrate your codebase [online](https://docs.grit.io/patterns/library/trulens_eval_migration#migrate-and-use-tru-session), or by using `grit` on the command line.
+
+To use on the command line, follow these instructions:
+
+### Install `grit`
+
+You can install the Grit CLI from NPM:
+```bash
+npm install --location=global @getgrit/cli
+```
+Alternatively, you can also install Grit with an installation script:
+```bash
+curl -fsSL https://docs.grit.io/install | bash
+```
+
+### Apply automatic changes
+
+```bash
+grit apply trulens_eval_migration
+```
+
+Be sure to audit its changes: we suggest ensuring you have a clean working tree beforehand.

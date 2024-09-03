@@ -1,3 +1,7 @@
+!!! info
+
+    TruLens 1.0 is now available. [Read more](../release_blog_1dot.md) and check out the [migration guide](../guides/trulens_eval_migration.md)
+
 # 🔨 Installation
 
 These installation instructions assume that you have conda installed and added

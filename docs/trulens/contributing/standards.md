@@ -36,87 +36,93 @@ apply when referring to things like package names, classes, methods.
 
 ### Imports
 
-- See `pyproject.toml` section `[tool.ruff.lint.isort]` on tooling to organize import statements.
+- See `pyproject.toml` section `[tool.ruff.lint.isort]` on tooling to organize
+  import statements.
 
 - Generally import modules only as per
   <https://google.github.io/styleguide/pyguide.html#22-imports>. That us:
 
-  ```python
-  from trulens.schema.record import Record # don't do this
-  from trulens.schema import record as mod_record # do this instead
-  ```
+    ```python
+    from trulens.schema.record import Record # don't do this
+    from trulens.schema import record as mod_record # do this instead
+    ```
 
-  This prevents the `record` module from being loaded until something inside it
-  is needed. If your uses of `mod_record.Record` are inside functions, this
-  loading can be delayed as far as the execution of that function.
+    This prevents the `record` module from being loaded until something inside it
+    is needed. If your uses of `mod_record.Record` are inside functions, this
+    loading can be delayed as far as the execution of that function.
 
 - Import and rename modules:
 
-  ```python
-  from trulens.schema import record # don't do this
-  from trulens.schema import record as record_schema # do this
-  ```
+    ```python
+    from trulens.schema import record # don't do this
+    from trulens.schema import record as record_schema # do this
+    ```
 
-  This is especially important for module names which might cause name
-  collisions with other things such as variables named `record`.
+    This is especially important for module names which might cause name
+    collisions with other things such as variables named `record`.
 
 - Keep module renames consistent:
 
-  ```python
-  from trulens.schema import X as X_schema
-  from trulens.utils import X as X_utils
+    ```python
+    from trulens.schema import X as X_schema
+    from trulens.utils import X as X_utils
 
-  # if X is inside some category of module Y:
-  from trulens...Y import Y as X_Y
-  # otherwise if X is not in some category of modules:
-  from trulens... import X as mod_X
-  ```
+    # if X is inside some category of module Y:
+    from trulens...Y import Y as X_Y
+    # otherwise if X is not in some category of modules:
+    from trulens... import X as mod_X
+    ```
 
-- If an imported module is only used in type annotations, import it inside a `TYPE_CHECKING` block:
+- If an imported module is only used in type annotations, import it inside a
+  `TYPE_CHECKING` block:
 
-  ```python
-  from typing import TYPE_CHECKING
+    ```python
+    from typing import TYPE_CHECKING
 
-  if TYPE_CHECKING:
-    from trulens.schema import record as record_schema
-  ```
+    if TYPE_CHECKING:
+      from trulens.schema import record as record_schema
+    ```
 
-- Do not create exportable aliases (an alias that is listed in `__all__`
-  and refers to an element from some other module). Don't import aliases. Type aliases, even exportable ones are ok:
+- Do not create exportable aliases (an alias that is listed in `__all__` and
+  refers to an element from some other module). Don't import aliases. Type
+  aliases, even exportable ones are ok:
 
-  ```python
-  Thunk[T] = Callable[[], T] # OK
-  AppID = types_schema.AppID # not OK
-  ```
+    ```python
+    Thunk[T] = Callable[[], T] # OK
+    AppID = types_schema.AppID # not OK
+    ```
 
 #### Circular imports
 
-Circular imports may become an issue (error when executing your/`trulens` code, indicated by phrase "likely due to circular imports"). The Import guideline above may help alleviate the problem. A few more things can help:
+Circular imports may become an issue (error when executing your/`trulens` code,
+indicated by phrase "likely due to circular imports"). The Import guideline
+above may help alleviate the problem. A few more things can help:
 
 - Use annotations feature flag:
 
-  ```python
-  from __future__ import annotations
-  ```
+    ```python
+    from __future__ import annotations
+    ```
 
-  However, if your module contains `pydantic` models, you may need to run `model_rebuild`:
+    However, if your module contains `pydantic` models, you may need to run
+    `model_rebuild`:
 
-  ```python
-  from __future__ import annotations
+    ```python
+    from __future__ import annotations
 
-  ...
+    ...
 
-  class SomeModel(pydantic.BaseModel):
+    class SomeModel(pydantic.BaseModel):
 
-    some_attribute: some_module.SomeType
+      some_attribute: some_module.SomeType
 
-  ...
+    ...
 
-  SomeModel.model_rebuild()
-  ```
+    SomeModel.model_rebuild()
+    ```
 
-  If you have multiple mutually referential models, you may need to rebuild only
-  after all are defined.
+    If you have multiple mutually referential models, you may need to rebuild only
+    after all are defined.
 
 
 ### Docstrings
@@ -168,7 +174,8 @@ Attrs:
 """
 ````
 
-For pydantic classes, provide the attribute description as a long string right after the attribute definition:
+For pydantic classes, provide the attribute description as a long string right
+after the attribute definition:
 
 ```python
 class SomeModel(pydantic.BaseModel)
@@ -242,7 +249,9 @@ No standards are currently recommended.
     ```
     ````
 
-  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`. Examples below can serve as a test of the markdown renderer you are viewing these instructions with.
+  Relevant types are `python`, `typescript`, `json`, `shell`, `markdown`.
+  Examples below can serve as a test of the markdown renderer you are viewing
+  these instructions with.
 
   - Python
     ```python
@@ -277,7 +286,8 @@ No standards are currently recommended.
 
 ## Jupyter notebooks
 
-Do not include output. The pre-commit hooks should automatically clear all notebook outputs.
+Do not include output. The pre-commit hooks should automatically clear all
+notebook outputs.
 
 ## Tests
 
@@ -289,8 +299,11 @@ See `tests/unit`.
 
 See `tests/unit/static`.
 
-Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`, and being a
-subset of unit tests, are also run on latest supported python, `3.12` . Some tests that require all optional packages to be installed run only on `3.11` as the latter python version does not support some of those optional packages.
+Static tests run on multiple versions of python: `3.8`, `3.9`, `3.10`, `3.11`,
+and being a subset of unit tests, are also run on latest supported python,
+`3.12` . Some tests that require all optional packages to be installed run only
+on `3.11` as the latter python version does not support some of those optional
+packages.
 
 ### Test pipelines
 

@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-apps-langchain"
-version = "1.0.1a1"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,7 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.13"
-trulens-core = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0" }
 langchain = "^0.2.10,!=0.2.12"
 langchain-core = "^0.2.24,!=0.2.27"
 typing-inspect = "^0.8"

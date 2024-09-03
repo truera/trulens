@@ -342,7 +342,7 @@ class VirtualRecord(mod_record_schema.Record):
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
         cost: Optional[mod_base_schema.Cost] = None,
         perf: Optional[mod_base_schema.Perf] = None,
-        **kwargs: Dict[str, Any],
+        **kwargs: Any,
     ):
         root_call = mod_record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
@@ -507,7 +507,7 @@ class TruVirtual(App):
     """
 
     def __init__(
-        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: dict
+        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: Any
     ):
         """Virtual app for logging existing app results."""
 
