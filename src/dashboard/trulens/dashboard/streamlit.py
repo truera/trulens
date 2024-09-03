@@ -17,6 +17,7 @@ from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata_and_tags
+from trulens.dashboard.ux.styles import CATEGORY
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -164,7 +165,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.experimental_fragment(run_every=2)
+@st.fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
     Render clickable feedback pills for a given record.
@@ -189,7 +190,23 @@ def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
+    default_direction = "HIGHER_IS_BETTER"
+    session = TruSession()
+    lms = session.connector.db
+    feedback_defs = lms.get_feedback_defs()
+
     for feedback, feedback_result in record.wait_for_feedback_results().items():
+        feedback_directions = {
+            (
+                row.feedback_json.get("supplied_name", "")
+                or row.feedback_json["implementation"]["name"]
+            ): (
+                "HIGHER_IS_BETTER"
+                if row.feedback_json.get("higher_is_better", True)
+                else "LOWER_IS_BETTER"
+            )
+            for _, row in feedback_defs.iterrows()
+        }
         call_data = {
             "feedback_definition": feedback,
             "feedback_name": feedback.name,
@@ -215,8 +232,22 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
+
+        def highlight(df):
+            result_value = df["ret"]  # Use the 'result' column's value
+            cat = CATEGORY.of_score(
+                result_value,
+                higher_is_better=feedback_directions.get(
+                    selected_feedback, default_direction
+                )
+                == default_direction,
+            )
+            # Apply the background color to the entire row
+            return [f"background-color: {cat.color}" for _ in df]
+
+        df = get_feedback_result(record, feedback_name=selected_feedback)
         st.dataframe(
-            get_feedback_result(record, feedback_name=selected_feedback),
+            df.style.apply(highlight, axis=1),
             use_container_width=True,
             hide_index=True,
         )
