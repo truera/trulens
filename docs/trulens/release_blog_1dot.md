@@ -24,7 +24,7 @@ Next, we modularized _TruLens_ into a family of different packages, described be
 
 ## **Versioning and Backwards Compatibility**
 
-Today, we’re releasing `trulens`, `trulens-core`, `trulens-dashboard`, `trulens-feedback`, `trulens-providers` packages, `trulens-connectors` packages and `trulens-instrument` packages at v1.0. We will not make breaking changes in the future without bumping the major version.
+Today, we’re releasing `trulens`, `trulens-core`, `trulens-dashboard`, `trulens-feedback`, `trulens-providers` packages, `trulens-connectors` packages and `trulens-apps` packages at v1.0. We will not make breaking changes in the future without bumping the major version.
 
 The base install of `trulens` will install `trulens-core`, `trulens-feedback` and `trulens-dashboard` making it easy for developers to try _TruLens_.
 
@@ -35,8 +35,6 @@ Until 2024-10-14, backwards compatibility during the warning period is provided 
 Starting 2024-10-15 until 2025-12-01. Usage of `trulens_eval` will produce errors indicating deprecation.
 
 Beginning 2024-12-01 Installation of the latest version of `trulens_eval` will be an error itself with a message that `trulens_eval` is no longer maintained.
-
-Read more about the [TruLens deprecation policy](../../POLICIES.md).
 
 Along with this change, we’ve also included a [migration guide](./guides/trulens_eval_migration.md) for moving to TruLens v1.
 
@@ -55,7 +53,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         ```
 
         ```python
-        from trulens.core.app.custom import instrument
+        from trulens.apps.custom import instrument
 
         class CustomApp:
 
@@ -84,7 +82,7 @@ To see the core re-architecture changes in action, we've included some usage exa
     === "Langchain"
 
         ```bash
-        pip install trulens-instrument-langchain
+        pip install trulens-apps-langchain
         ```
 
         ```python
@@ -105,7 +103,7 @@ To see the core re-architecture changes in action, we've included some usage exa
             | StrOutputParser()
         )
 
-        from trulens.instrument.langchain import TruChain
+        from trulens.apps.langchain import TruChain
 
         # Wrap application
         tru_recorder = TruChain(
@@ -121,7 +119,7 @@ To see the core re-architecture changes in action, we've included some usage exa
     === "Llama-Index"
 
         ```bash
-        pip install trulens-core trulens-instrument-llamaindex
+        pip install trulens-core trulens-apps-llamaindex
         ```
 
         ```python
@@ -131,7 +129,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         index = VectorStoreIndex.from_documents(documents)
         query_engine = index.as_query_engine()
 
-        from trulens.instrument.llamaindex import TruLlama
+        from trulens.apps.llamaindex import TruLlama
         from trulens.core import Feedback
 
         tru_recorder = TruLlama(query_engine,
