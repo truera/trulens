@@ -13,14 +13,14 @@ export default function StyledTooltip({
   return (
     <Tooltip
       title={title}
-      componentsProps={{
+      slotProps={{
         tooltip: {
           sx: {
             // The typing for tooltip is weird and doesn't understand SxProps<Theme>
             // properly.
             /* eslint-disable */
-            color: ({ palette }) => palette.text.primary,
-            backgroundColor: ({ palette }) => palette.grey[50],
+            color: ({ vars }) => vars.palette.text.primary,
+            backgroundColor: ({ vars }) => vars.palette.grey[100],
             border: ({ palette }) => `1px solid ${palette.grey[300]}`,
             boxShadow: `0px 8px 16px 0px #0000000D`,
             /* eslint-enable */
