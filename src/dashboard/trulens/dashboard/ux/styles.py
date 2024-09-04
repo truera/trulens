@@ -41,9 +41,9 @@ class CATEGORY:
     ]
 
     styling = {
-        "PASS": dict(color="#aaffaa", icon="✅"),
-        "WARNING": dict(color="#ffffaa", icon="⚠️"),
-        "FAIL": dict(color="#ffaaaa", icon="🛑"),
+        "PASS": dict(color="#aaffaa44", icon="✅"),
+        "WARNING": dict(color="#ffffaa44", icon="⚠️"),
+        "FAIL": dict(color="#ffaaaa44", icon="🛑"),
     }
 
     PASS: defaultdict = defaultdict(dict)
@@ -74,7 +74,7 @@ class CATEGORY:
         name="unknown",
         adjective="unknown",
         threshold=np.nan,
-        color="#aaaaaa",
+        color="#aaaaaa44",
         icon="?",
     )
 
@@ -138,7 +138,6 @@ cellstyle_jscode = {
         f"""
         if (v {">=" if k == "HIGHER_IS_BETTER" else "<="} {cat.threshold}) {{
             return {{
-                'color': 'black',
                 'backgroundColor': '{cat.color}'
             }};
         }}
@@ -148,7 +147,6 @@ cellstyle_jscode = {
     + f"""
         // i.e. not a number
         return {{
-            'color': 'black',
             'backgroundColor': '{CATEGORY.UNKNOWN.color}'
         }};
     }}"""
