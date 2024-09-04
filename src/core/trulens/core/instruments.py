@@ -8,6 +8,7 @@ typical use cases.
 
 from __future__ import annotations
 
+import contextvars
 import dataclasses
 from datetime import datetime
 import functools
@@ -49,9 +50,7 @@ from trulens.core.utils.pyschema import Method
 from trulens.core.utils.pyschema import clean_attributes
 from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import callable_name
-from trulens.core.utils.python import caller_frame
 from trulens.core.utils.python import class_name
-from trulens.core.utils.python import get_first_local_in_call_stack
 from trulens.core.utils.python import id_str
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import safe_hasattr
@@ -72,6 +71,14 @@ class WithInstrumentCallbacks:
 
     Needs to be mixed into [App][trulens.core.app.App].
     """
+
+    _context_contexts = contextvars.ContextVar("context_contexts")
+    """ContextVars for storing collections of RecordingContext ."""
+    _context_contexts.set(set())
+
+    _stack_contexts = contextvars.ContextVar("stack_contexts")
+    """ContextVars for storing call stacks."""
+    _stack_contexts.set({})
 
     # Called during instrumentation.
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
@@ -386,13 +393,6 @@ class Instrument:
 
         sig = safe_signature(func)
 
-        def find_instrumented(f):
-            # Used for finding the wrappers methods in the call stack. Note that
-            # the sync version uses the async one internally and all of the
-            # relevant locals are in the async version. We thus don't look for
-            # sync tru_wrapper calls in the stack.
-            return id(f) == id(tru_wrapper.__code__)
-
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
             logger.debug(
@@ -407,20 +407,14 @@ class Instrument:
             )
 
             apps = getattr(tru_wrapper, Instrument.APPS)
+            context_contexts = WithInstrumentCallbacks._context_contexts
+            stack_contexts = WithInstrumentCallbacks._stack_contexts
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
             # Get any contexts already known from higher in the call stack.
-            contexts = get_first_local_in_call_stack(
-                key="contexts",
-                func=find_instrumented,
-                offset=1,
-                skip=python_utils.caller_frame(),
-            )
-            # Note: are empty sets false?
-            if contexts is None:
-                contexts = set()
+            contexts = set(context_contexts.get())  # copy
 
             # And add any new contexts from all apps wishing to record this
             # function. This may produce some of the same contexts that were
@@ -441,33 +435,24 @@ class Instrument:
 
                 return func(*args, **kwargs)
 
+            context_token = context_contexts.set(contexts)
+
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
             # another wrinkle, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            ctx_stacks = get_first_local_in_call_stack(
-                key="stacks",
-                func=find_instrumented,
-                offset=1,
-                skip=caller_frame(),
-            )
-            # Note: Empty dicts are false.
-            if ctx_stacks is None:
-                ctx_stacks = {}
-
-            error = None
-            rets = None
+            stacks = dict(stack_contexts.get())  # copy
 
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict(ctx_stacks.items())
+            stacks_token = stack_contexts.set(stacks)
 
+            error = None
+            rets = None
             start_time = None
-
             bindings = None
-            cost = mod_base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -498,13 +483,13 @@ class Instrument:
                     )
                     continue
 
-                if ctx not in ctx_stacks:
+                if ctx not in stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = ctx_stacks[ctx]
+                    stack = stacks[ctx]
 
                 frame_ident = mod_record_schema.RecordAppCallMethod(
                     path=path, method=Method.of_method(func, obj=obj, cls=cls)
@@ -531,7 +516,7 @@ class Instrument:
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
+                rets, tally = mod_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
 
@@ -593,9 +578,7 @@ class Instrument:
 
                     existing_record = records.get(ctx, None)
 
-                    # Async debugging work ongoing:
-                    # print("handle_done", len(stack))
-                    # print("  existing_record=", existing_record)
+                    cost = tally()  # get updated cost
 
                     if len(stack) == 1 or existing_record is not None:
                         # If this is a root call, notify app to add the completed record
@@ -626,11 +609,7 @@ class Instrument:
 
                 type_name = class_name(type(rets))
 
-                # Async debugging work ongoing:
-                # print(path, callable_name(func), type_name)
-
-                # If method produced an awaitable
-                logger.info(
+                logger.debug(
                     "This app produced an asynchronous response of type `%s`."
                     "This record will be updated once the response is available",
                     type_name,
@@ -649,9 +628,26 @@ method and `await` any asynchronous results it produces.
 """
                 )
 
-                return wrap_awaitable(rets, on_done=handle_done)
+                # NOTE(piotrm): The `wrap_awaitable` below captures the current
+                # state of contextvars and makes it available to any asyncio
+                # Tasks that will execute the wrapped computation. It is
+                # important that the `reset` (see below) happens after wrapping,
+                # not before.
+                temp = wrap_awaitable(
+                    rets,
+                    on_done=handle_done,
+                )
+
+                stack_contexts.reset(stacks_token)
+                context_contexts.reset(context_token)
+
+                return temp
 
             handle_done(rets=rets)
+
+            stack_contexts.reset(stacks_token)
+            context_contexts.reset(context_token)
+
             return rets
 
         # Create a new set of apps expecting to be notified about calls to the

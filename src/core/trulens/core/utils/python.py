@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 from concurrent import futures
+import contextvars
 import dataclasses
 import inspect
 import logging
@@ -23,6 +24,7 @@ from typing import (
     Generator,
     Generic,
     Hashable,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -498,9 +500,8 @@ asyncio.new_event_loop = tru_new_event_loop
 
 
 def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
-    """
-    Get the annotated stack (if available) on the given task.
-    """
+    """Get the annotated stack (if available) on the given task."""
+
     if safe_hasattr(task, STACK):
         return getattr(task, STACK)
     else:
@@ -536,12 +537,11 @@ def merge_stacks(
 
 
 def stack_with_tasks() -> Sequence[FrameType]:
-    """
-    Get the current stack (not including this function) with frames reaching
+    """Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
 
-    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
+    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_tasks
 
     try:
         task_stack = get_task_stack(asyncio.current_task())
@@ -563,7 +563,7 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     # TODO: See if threading.stack_size([size]) can be used instead.
 
     # Keep this for looking up via get_first_local_in_call_stack .
-    pre_start_stack = stack  # noqa: F841
+    pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
 
     for var, value in context.items():
         var.set(value)
@@ -635,7 +635,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f"Looking via {func.__name__}; found {f}")
+            logger.debug(
+                "Looking via %s; found %s", callable_name(func), str(f)
+            )
             if skip is not None and f == skip:
                 logger.debug("Skipping.")
                 continue
@@ -723,9 +725,14 @@ def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
     on_done: Optional[Callable[[T], Any]] = None,
+    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
+
+    !!! Important
+        This method captures a [Context][contextvars.Context] at the time this
+        method is called and copies it over to the wrapped awaitable.
 
     Note that the resulting awaitable needs to be awaited for the callback to
     eventually trigger.
@@ -738,9 +745,22 @@ def wrap_awaitable(
 
         on_done: The callback to call with the result of the wrapped awaitable
             once it is ready.
+
+        context_vars: The context variables to copy over to the wrapped
+            awaitable. If None, all context variables are copied.
     """
 
+    if context_vars is None:
+        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
+    else:
+        context_copy = {cv: cv.get() for cv in context_vars}
+
     async def wrapper(awaitable):
+        tokens = {}
+        for k, v in context_copy.items():
+            # print("copied", k, len(v) if hasattr(v, "__len__") else "no len")
+            tokens[k] = k.set(v)
+
         if on_await is not None:
             on_await()
 
@@ -748,6 +768,9 @@ def wrap_awaitable(
 
         if on_done is not None:
             on_done(val)
+
+        for k, v in tokens.items():
+            k.reset(v)
 
         return val
 

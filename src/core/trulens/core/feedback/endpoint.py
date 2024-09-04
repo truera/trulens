@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import contextvars
 from dataclasses import dataclass
 import functools
 import importlib
@@ -34,7 +35,6 @@ from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import Thunk
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name
-from trulens.core.utils.python import get_first_local_in_call_stack
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
 from trulens.core.utils.python import safe_hasattr
@@ -189,6 +189,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
+
+    _context_endpoints: ClassVar[contextvars.ContextVar] = (
+        contextvars.ContextVar("endpoints")
+    )
+    _context_endpoints.set({})
 
     def __new__(cls, *args, name: Optional[str] = None, **kwargs):
         name = name or cls.__name__
@@ -482,10 +487,18 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 try:
                     mod = importlib.import_module(endpoint.module_name)
                     cls = safe_getattr(mod, endpoint.class_name)
-                except Exception:
+                except ImportError:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
                     # at getattr. Skip either way.
+                    continue
+                except Exception as e:
+                    logger.warning(
+                        "Could not import tracking module %s. "
+                        "trulens will not track costs/usage of this endpoint. %s",
+                        endpoint.module_name,
+                        e,
+                    )
                     continue
 
                 try:
@@ -515,10 +528,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_bedrock: bool = True,
         with_cortex: bool = True,
         **kwargs,
-    ) -> Tuple[T, Cost]:
+    ) -> Tuple[T, Thunk[Cost]]:
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
+
+        Returns:
+            T: Result of evaluating the thunk.
+
+            Thunk[Cost]: A thunk that returns the total cost of all
+                callbacks that tracked costs. This is a thunk as the costs might
+                change after this method returns in case of Awaitable results.
         """
 
         result, cbs = Endpoint.track_all_costs(
@@ -534,11 +554,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            costs = Cost()
+            tally = lambda: Cost()
         else:
-            costs = sum(cb.cost for cb in cbs)
+            tally = lambda: sum(cb.cost for cb in cbs)
 
-        return result, costs
+        return result, tally
 
     @staticmethod
     def _track_costs(
@@ -547,33 +567,13 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        """
-        Root of all cost tracking methods. Runs the given `thunk`, tracking
-        costs using each of the provided endpoints' callbacks.
+        """Root of all cost tracking methods.
+
+        Runs the given `thunk`, tracking costs using each of the provided
+        endpoints' callbacks.
         """
         # Check to see if this call is within another _track_costs call:
-        endpoints: Dict[
-            Type[EndpointCallback], List[Tuple[Endpoint, EndpointCallback]]
-        ] = get_first_local_in_call_stack(
-            key="endpoints", func=Endpoint.__find_tracker, offset=1
-        )
-
-        if endpoints is None:
-            # If not, lets start a new collection of endpoints here along with
-            # the callbacks for each. See type above.
-
-            endpoints = {}
-
-        else:
-            # We copy the dict here so that the outer call to _track_costs will
-            # have their own version unaffacted by our additions below. Once
-            # this frame returns, the outer frame will have its own endpoints
-            # again and any wrapped method will get that smaller set of
-            # endpoints.
-
-            # TODO: check if deep copy is needed given we are storing lists in
-            # the values and don't want to affect the existing ones here.
-            endpoints = dict(endpoints)
+        endpoints = dict(Endpoint._context_endpoints.get())  # copy
 
         # Collect any new endpoints requested of us.
         with_endpoints = with_endpoints or []
@@ -597,8 +597,18 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             callbacks.append(callback)
 
+        endpoints_token = Endpoint._context_endpoints.set(endpoints)
+
         # Call the function.
         result: T = __func(*args, **kwargs)
+
+        if isinstance(result, Awaitable):
+            result = wrap_awaitable(
+                result
+            )  # copies contextvars needed for cost tracking
+
+        # Pop the endpoints from the contextvars.
+        Endpoint._context_endpoints.reset(endpoints_token)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
@@ -610,8 +620,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         *args,
         **kwargs,
     ) -> Tuple[T, EndpointCallback]:
-        """
-        Tally only the usage performed within the execution of the given thunk.
+        """Tally only the usage performed within the execution of the given
+        thunk.
+
         Returns the thunk's result alongside the EndpointCallback object that
         includes the usage information.
         """
@@ -622,10 +633,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         return result, callbacks[0]
 
-    @staticmethod
-    def __find_tracker(f):
-        return id(f) == id(Endpoint._track_costs.__code__)
-
     def handle_wrapped_call(
         self,
         func: Callable,
@@ -633,9 +640,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         response: Any,
         callback: Optional[EndpointCallback],
     ) -> None:
-        """
-        This gets called with the results of every instrumented method. This
-        should be implemented by each subclass.
+        """This gets called with the results of every instrumented method.
+
+        This should be implemented by each subclass.
 
         Args:
             func: the wrapped method.
@@ -645,7 +652,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             response: whatever the wrapped function returned.
 
             callback: the callback set up by
-                `track_cost` if the wrapped method was called and returned within an
+                `track_cost` if the wrapped method was called and returned
+                within an
                  invocation of `track_cost`.
         """
         raise NotImplementedError(
@@ -700,8 +708,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 inspect.isasyncgenfunction(func),
             )
 
-            # Get the result of the wrapped function:
+            endpoints = Endpoint._context_endpoints.get()
 
+            # Get the result of the wrapped function:
             response = func(*args, **kwargs)
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
@@ -711,20 +720,10 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # the wrapper method.
             registered_callback_classes = getattr(tru_wrapper, INSTRUMENT)
 
-            # Look up the endpoints that are expecting to be notified and the
-            # callback tracking the tally. See Endpoint._track_costs for
-            # definition.
-            endpoints: Dict[
-                Type[EndpointCallback],
-                Sequence[Tuple[Endpoint, EndpointCallback]],
-            ] = get_first_local_in_call_stack(
-                key="endpoints", func=self.__find_tracker, offset=0
-            )
-
             # If wrapped method was not called from within _track_costs, we
             # will get None here and do nothing but return wrapped
             # function's response.
-            if endpoints is None:
+            if len(endpoints) == 0:
                 logger.debug("No endpoints found.")
                 return response
 
@@ -750,9 +749,12 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         )
 
             if isinstance(response, Awaitable):
-                return wrap_awaitable(response, on_done=response_callback)
+                return wrap_awaitable(
+                    response, on_done=response_callback
+                )  # copies contextvars into the awaitable computation
 
             response_callback(response)
+
             return response
 
         # Set our tracking attribute to tell whether something is already

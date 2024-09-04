@@ -26,6 +26,9 @@ logger = logging.getLogger(__name__)
 class RecordAppCallMethod(serial.SerialModel):
     """Method information for the stacks inside `RecordAppCall`."""
 
+    def __str__(self):
+        return f"{self.path}.{self.method.name}"
+
     path: serial.Lens
     """Path to the method in the app's structure."""
 
@@ -37,7 +40,8 @@ class RecordAppCall(serial.SerialModel):
     """Info regarding each instrumented method call."""
 
     def __str__(self):
-        return f"RecordAppCall({self.top.path} {self.top.method.name})"
+        stack = " -> ".join(map(str, self.stack))
+        return f"RecordAppCall: {stack}"
 
     call_id: mod_types_schema.CallID = pydantic.Field(
         default_factory=mod_types_schema.new_call_id

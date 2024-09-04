@@ -23,7 +23,7 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 from langchain.schema import Generation
 from langchain.schema import LLMResult
@@ -32,6 +32,7 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
+from trulens.core.schema import base as base_schema
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.pace import Pace
 from trulens.core.utils.pyschema import Class
@@ -47,8 +48,7 @@ pp = pprint.PrettyPrinter()
 
 
 class OpenAIClient(SerialModel):
-    """
-    A wrapper for openai clients.
+    """A wrapper for openai clients.
 
     This class allows wrapped clients to be serialized into json. Does not
     serialize API key though. You can access openai.OpenAI under the `client`
@@ -162,6 +162,16 @@ class OpenAICallback(EndpointCallback):
         exclude=True,
     )
 
+    _FIELDS_MAP: ClassVar[Tuple[str, str]] = [
+        ("cost", "total_cost"),
+        ("n_tokens", "total_tokens"),
+        ("n_successful_requests", "successful_requests"),
+        ("n_prompt_tokens", "prompt_tokens"),
+        ("n_completion_tokens", "completion_tokens"),
+    ]
+    """Pairs where first element is the cost attribute name and second is
+    attribute of langchain.OpenAICallbackHandler that corresponds to it."""
+
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
 
@@ -169,7 +179,7 @@ class OpenAICallback(EndpointCallback):
 
         if response.choices[0].finish_reason == "stop":
             llm_result = LLMResult(
-                llm_output=dict(token_usage=dict(), model_name=response.model),
+                llm_output=dict(token_usage={}, model_name=response.model),
                 generations=[self.chunks],
             )
             self.chunks = []
@@ -180,24 +190,21 @@ class OpenAICallback(EndpointCallback):
 
         self.langchain_handler.on_llm_end(response)
 
-        for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
-            ("n_successful_requests", "successful_requests"),
-            ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens"),
-        ]:
-            setattr(
-                self.cost,
+        addl_cost = base_schema.Cost(**{
+            cost_field: getattr(self.langchain_handler, langchain_field)
+            for (
                 cost_field,
-                getattr(self.cost, cost_field, 0)
-                + getattr(self.langchain_handler, langchain_field, 0),
-            )
+                langchain_field,
+            ) in OpenAICallback._FIELDS_MAP
+        })
+
+        self.cost += addl_cost
 
 
 class OpenAIEndpoint(Endpoint):
-    """
-    OpenAI endpoint. Instruments "create" methods in openai client.
+    """OpenAI endpoint.
+
+    Instruments "create" methods in openai client.
 
     Args:
         client: openai client to use. If not provided, a new client will be
@@ -268,9 +275,11 @@ class OpenAIEndpoint(Endpoint):
         super().__init__(**self_kwargs)
 
         # Instrument various methods for usage/cost tracking.
+        import openai
         from openai import resources
         from openai.resources import chat
 
+        self._instrument_module_members(openai, "create")
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
 
@@ -288,15 +297,6 @@ class OpenAIEndpoint(Endpoint):
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
-
-        logger.debug(
-            "Handling openai instrumented call to func: %s,\n"
-            "\tbindings: %s,\n"
-            "\tresponse: %s",
-            func,
-            bindings,
-            response,
-        )
 
         model_name = ""
         if "model" in bindings.kwargs:
@@ -338,16 +338,22 @@ class OpenAIEndpoint(Endpoint):
             if callback is not None:
                 callback.handle_generation(response=llm_res)
 
-        if "choices" in response and "delta" in response.choices[0]:
-            # Streaming data.
-            content = response.choices[0].delta.content
+        if "choices" in response:
+            if "delta" in response.choices[0]:
+                # Streaming data.
+                content = response.choices[0].delta.content
 
-            gen = Generation(text=content or "", generation_info=response)
-            self.global_callback.handle_generation_chunk(gen)
-            if callback is not None:
-                callback.handle_generation_chunk(gen)
+                gen = Generation(text=content or "", generation_info=response)
+                self.global_callback.handle_generation_chunk(gen)
+                if callback is not None:
+                    callback.handle_generation_chunk(gen)
 
-            counted_something = True
+                counted_something = True
+
+            else:
+                pass
+                # Async responses that are not streams are like this. Should
+                # already be handled by the "usage" above.
 
         if results is not None:
             for res in results:

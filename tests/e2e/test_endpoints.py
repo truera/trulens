@@ -46,9 +46,10 @@ class TestEndpoints(TestCase):
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
-        _, cost = Endpoint.track_all_costs_tally(
+        _, cost_tally = Endpoint.track_all_costs_tally(
             provider.sentiment, text="This rocks!"
         )
+        cost = cost_tally()
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(
@@ -100,9 +101,10 @@ class TestEndpoints(TestCase):
 
         hugs = Huggingface()
 
-        _, cost = Endpoint.track_all_costs_tally(
+        _, cost_tally = Endpoint.track_all_costs_tally(
             hugs.positive_sentiment, text="This rocks!"
         )
+        cost = cost_tally()
 
         self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
         self.assertEqual(

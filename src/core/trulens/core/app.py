@@ -876,10 +876,7 @@ class App(
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> JSON:
-        """
-        Determine the main input string for the given function `func` with
-        signature `sig` if it is to be called with the given bindings
-        `bindings`.
+        """Determine (guess) the main input string for a main app call.
 
         Args:
             func: The main function we are targetting in this determination.
@@ -944,15 +941,27 @@ class App(
             "Could not determine main input/output of %s.", str(all_args)
         )
 
-        return "Could not determine main input from " + str(all_args)
+        return "TruLens: Could not determine main input from " + str(all_args)
 
     def main_output(
-        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+        self,
+        func: Callable,  # pylint: disable=W0613
+        sig: Signature,  # pylint: disable=W0613
+        bindings: BoundArguments,  # pylint: disable=W0613
+        ret: Any,
     ) -> JSON:
-        """
-        Determine the main out string for the given function `func` with
-        signature `sig` after it is called with the given `bindings` and has
-        returned `ret`.
+        """Determine (guess) the "main output" string for a given main app call.
+
+        This is for functions whose output is not a string.
+
+        Args:
+            func: The main function whose main output we are guessing.
+
+            sig: The signature of the above function.
+
+            bindings: The arguments that were passed to that function.
+
+            ret: The return value of the function.
         """
 
         # Use _extract_content to get the content out of the return value
@@ -971,14 +980,25 @@ class App(
             if len(content) > 0:
                 return str(content[0])
             else:
-                return "Could not determine main output from " + str(content)
+                return (
+                    f"Could not determine main output of {func.__name__}"
+                    f" from {class_name(type(content))} value {content}."
+                )
 
         else:
-            logger.warning("Could not determine main output from %s.", content)
+            logger.warning(
+                "Could not determine main output of %s from %s value %s.",
+                func.__name__,
+                class_name(type(content)),
+                content,
+            )
             return (
                 str(content)
                 if content is not None
-                else "Could not determine main output from " + str(content)
+                else (
+                    f"TruLens: could not determine main output of {func.__name__} "
+                    f"from {class_name(type(content))} value {content}."
+                )
             )
 
     # WithInstrumentCallbacks requirement

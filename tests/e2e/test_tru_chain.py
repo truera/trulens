@@ -25,23 +25,6 @@ from tests.test import async_test
 from tests.test import optional_test
 
 
-class TestTruChainAsync(JSONTestCase):
-    """Test async in the TruChain class."""
-
-    @classmethod
-    def setUpClass(cls):
-        # Cannot reset on each test as they might be done in parallel.
-        TruSession().reset_database()
-
-    def setUp(self):
-        check_keys(
-            "OPENAI_API_KEY",
-            "HUGGINGFACE_API_KEY",
-            #            "PINECONE_API_KEY",
-            #            "PINECONE_ENV",
-        )
-
-
 class TestTruChain(JSONTestCase):
     """Test TruChain class."""
 
@@ -285,8 +268,6 @@ class TestTruChain(JSONTestCase):
             tc.app.invoke, input=dict(question=message)
         )
 
-        print("sync_record", sync_record)
-
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
         chain = prompt | llm | StrOutputParser()
@@ -295,8 +276,6 @@ class TestTruChain(JSONTestCase):
             tc.app.ainvoke,
             input=dict(question=message),
         )
-
-        print("async_record", async_record)
 
         # These are sometimes different despite temperature=0.0. So check that
         # they both mention "3" in the response.
@@ -314,10 +293,17 @@ class TestTruChain(JSONTestCase):
                 "start_time",
                 "end_time",
                 "record_id",
+                "call_id",
                 "tid",
                 "pid",
                 "app_id",
-                "cost",  # TODO(piotrm): cost tracking not working with async
+                "main_output",  # see prior note about non-deterministic answers
+                "content",  # same issue
+                "rets",  # same issue
+                "total_tokens",  # same
+                "output_tokens",  # same
+                "completion_tokens",  # same
+                # "cost",  # TODO(piotrm): cost tracking not working with async
             ]),
         )
 
