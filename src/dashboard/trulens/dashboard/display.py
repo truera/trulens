@@ -34,7 +34,7 @@ def get_feedback_result(
     tru_record: Record, feedback_name: str, timeout: int = 60
 ) -> pd.DataFrame:
     """
-    Retrieve the feedback results including reasons for a given feedback name from a TruLens record.
+    Retrieve the feedback results including metadata (such as reasons) for a given feedback name from a TruLens record.
 
     Args:
         tru_record: The record containing feedback and future results.
