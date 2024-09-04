@@ -33,11 +33,11 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.schema import base as base_schema
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.pace import Pace
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import SerialModel
 
 import openai as oai
@@ -129,7 +129,7 @@ class OpenAIClient(SerialModel):
                     # default_headers contains the api_key.
                     continue
 
-                if safe_hasattr(client, k):
+                if python_utils.safe_hasattr(client, k):
                     client_kwargs[k] = safe_getattr(client, k)
 
             # Create serializable class description.
@@ -142,7 +142,7 @@ class OpenAIClient(SerialModel):
     def __getattr__(self, k):
         # Pass through attribute lookups to `self.client`, the openai.OpenAI
         # instance.
-        if safe_hasattr(self.client, k):
+        if python_utils.safe_hasattr(self.client, k):
             return safe_getattr(self.client, k)
 
         raise AttributeError(
@@ -175,15 +175,21 @@ class OpenAICallback(EndpointCallback):
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
 
-        self.chunks.append(response)
-
-        if response.choices[0].finish_reason == "stop":
-            llm_result = LLMResult(
-                llm_output=dict(token_usage={}, model_name=response.model),
-                generations=[self.chunks],
-            )
-            self.chunks = []
-            self.handle_generation(response=llm_result)
+        if hasattr(response, "choices"):
+            choices = response.choices
+            for choice in choices:
+                if choice.finish_reason == "stop":
+                    llm_result = LLMResult(
+                        llm_output=dict(
+                            token_usage={}, model_name=response.model
+                        ),
+                        generations=[self.chunks],
+                    )
+                    self.chunks = []
+                    self.handle_generation(response=llm_result)
+                else:
+                    if hasattr(choice, "delta"):
+                        self.chunks.append({"text": choice.delta.content})
 
     def handle_generation(self, response: LLMResult) -> None:
         super().handle_generation(response)
@@ -227,7 +233,7 @@ class OpenAIEndpoint(Endpoint):
         pace: Optional[Pace] = None,
         **kwargs: dict,
     ):
-        if safe_hasattr(self, "name") and client is not None:
+        if python_utils.safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism
             if len(kwargs) != 0:
                 logger.warning(
@@ -292,7 +298,7 @@ class OpenAIEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
@@ -302,12 +308,17 @@ class OpenAIEndpoint(Endpoint):
         if "model" in bindings.kwargs:
             model_name = bindings.kwargs["model"]
 
+        # logger.warning("OpenAI streams of type `%s` do not include cost information.", python_utils.class_name(type(response)))
         if isinstance(response, oai.Stream):
-            # NOTE(piotrm): Merely checking membership in these will exhaust internal
-            # generators or iterators which will break users' code. While we work
-            # out something, I'm disabling any cost-tracking for these streams.
-            logger.warning("Cannot track costs from a OpenAI Stream.")
-            return
+            response._iterator = python_utils.wrap_generator(
+                response._iterator, on_next=callback.handle_generation_chunk
+            )
+            return response
+        elif isinstance(response, oai.AsyncStream):
+            response._iterator = python_utils.wrap_async_generator(
+                response._iterator, on_next=callback.handle_generation_chunk
+            )
+            return response
 
         results = None
         if "results" in response:
@@ -369,3 +380,5 @@ class OpenAIEndpoint(Endpoint):
                 "Could not find usage information in openai response:\n%s",
                 pp.pformat(response),
             )
+
+        return response

@@ -12,10 +12,12 @@ from time import sleep
 from types import ModuleType
 from typing import (
     Any,
+    AsyncGenerator,
     Awaitable,
     Callable,
     ClassVar,
     Dict,
+    Generator,
     List,
     Optional,
     Sequence,
@@ -38,7 +40,9 @@ from trulens.core.utils.python import class_name
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
 from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.python import wrap_async_generator
 from trulens.core.utils.python import wrap_awaitable
+from trulens.core.utils.python import wrap_generator
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
@@ -75,6 +79,7 @@ class EndpointCallback(SerialModel):
 
     def handle_chunk(self, response: Any) -> None:
         """Called after receiving a chunk from a request."""
+
         self.cost.n_stream_chunks += 1
 
     def handle_generation(self, response: Any) -> None:
@@ -83,6 +88,7 @@ class EndpointCallback(SerialModel):
 
     def handle_generation_chunk(self, response: Any) -> None:
         """Called after receiving a chunk from a completion request."""
+
         self.handle_chunk(response)
 
     def handle_classification(self, response: Any) -> None:
@@ -591,21 +597,29 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             if callback_class not in endpoints:
                 endpoints[callback_class] = []
 
-            # And add them to the endpoints dict. This will be retrieved from
-            # locals of this frame later in the wrapped methods.
+            # And add them to the endpoints dict.
             endpoints[callback_class].append((endpoint, callback))
 
             callbacks.append(callback)
 
+        # Push the endpoints into the contextvars for wrappers inside the
+        # following call to retrieve.
         endpoints_token = Endpoint._context_endpoints.set(endpoints)
 
         # Call the function.
         result: T = __func(*args, **kwargs)
 
-        if isinstance(result, Awaitable):
-            result = wrap_awaitable(
-                result
-            )  # copies contextvars needed for cost tracking
+        if isinstance(result, AsyncGenerator):
+            # Copies contextvars:
+            result = wrap_async_generator(result)
+
+        elif isinstance(result, Awaitable):
+            # Copies contextvars:
+            result = wrap_awaitable(result)
+
+        elif isinstance(result, Generator):
+            # Copies contextvars:
+            result = wrap_generator(result)
 
         # Pop the endpoints from the contextvars.
         Endpoint._context_endpoints.reset(endpoints_token)
@@ -639,10 +653,11 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         """This gets called with the results of every instrumented method.
 
-        This should be implemented by each subclass.
+        This should be implemented by each subclass. Importantly, it must return
+        the response or some wrapping of the response.
 
         Args:
             func: the wrapped method.
@@ -656,9 +671,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                 within an
                  invocation of `track_cost`.
         """
-        raise NotImplementedError(
-            "Subclasses of Endpoint must implement handle_wrapped_call."
-        )
+        return response
 
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
@@ -689,7 +702,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             else:
                 # Otherwise add our callback class but don't instrument again.
-
                 registered_callback_classes += [self.callback_class]
                 setattr(func, INSTRUMENT, registered_callback_classes)
 
@@ -741,21 +753,40 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
                     for endpoint, callback in endpoints[callback_class]:
                         logger.debug("Handling endpoint %s.", endpoint.name)
-                        endpoint.handle_wrapped_call(
+                        response_ = endpoint.handle_wrapped_call(
                             func=func,
                             bindings=bindings,
                             response=response,
                             callback=callback,
                         )
+                        if response_ is not None:
+                            # Handler is allowed to override the response in
+                            # case it wants to wrap some generators or similar
+                            # lazy structures.
+                            response = response_
 
-            if isinstance(response, Awaitable):
-                return wrap_awaitable(
-                    response, on_done=response_callback
-                )  # copies contextvars into the awaitable computation
+            # Problem here: OpenAI returns generators inside its own special
+            # classes. These are thus handled in
+            # OpenAIEndpoint.handle_wrapped_call .
 
-            response_callback(response)
+            if inspect.isasyncgen(response):
+                return wrap_async_generator(
+                    response,
+                    on_next=response_callback,
+                    on_done=response_callback,
+                )
+            elif inspect.isawaitable(response):
+                return wrap_awaitable(response, on_done=response_callback)
+            elif isinstance(response, Generator):
+                return wrap_generator(
+                    response,
+                    on_next=response_callback,
+                    on_done=response_callback,
+                )
+            else:
+                response_callback(response)
 
-            return response
+                return response
 
         # Set our tracking attribute to tell whether something is already
         # instrumented onto both the sync and async version since either one

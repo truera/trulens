@@ -28,8 +28,9 @@ class HuggingfaceCallback(EndpointCallback):
 
 
 class HuggingfaceEndpoint(Endpoint):
-    """
-    Huggingface. Instruments the requests.post method for requests to
+    """Huggingface endpoint.
+
+    Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
     """
 
@@ -42,15 +43,15 @@ class HuggingfaceEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: requests.Response,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> requests.Response:
         # Call here can only be requests.post .
 
         if "url" not in bindings.arguments:
-            return
+            return response
 
         url = bindings.arguments["url"]
         if not url.startswith("https://api-inference.huggingface.co"):
-            return
+            return response
 
         # TODO: Determine whether the request was a classification or some other
         # type of request. Currently we use huggingface only for classification
@@ -60,6 +61,8 @@ class HuggingfaceEndpoint(Endpoint):
 
         if callback is not None:
             callback.handle_classification(response=response)
+
+        return response
 
     def __init__(self, *args, **kwargs):
         if safe_hasattr(self, "name"):

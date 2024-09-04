@@ -38,6 +38,9 @@ class BedrockCallback(EndpointCallback):
                 }}'''}}
         """
 
+        if not isinstance(response, dict):
+            return
+
         chunk = response.get("chunk")
         if chunk is None:
             return
@@ -233,3 +236,5 @@ class BedrockEndpoint(Endpoint):
 
         else:
             logger.warning("Unhandled wrapped call to %s.", func.__name__)
+
+        return response

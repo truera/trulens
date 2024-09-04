@@ -18,6 +18,7 @@ from types import ModuleType
 import typing
 from typing import (
     Any,
+    AsyncGenerator,
     Awaitable,
     Callable,
     Dict,
@@ -471,32 +472,34 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     return task
 
 
+# NOTE(piotrm): If this is found not necessary through 2025-01-01, lets remove
+# it.
+
+# NOTE(piotrm): The overriding of the task factory may no longer be necessary
+# due to changes in how instrumented methods are executed. It might be possible,
+# however, that some older libraries are not copying contexts into Tasks which
+# would make this neccessary.
+
+'''
 try:
     loop = asyncio.get_running_loop()
     loop.set_task_factory(task_factory_with_stack)
-    # Async debugging work ongoing:
-    # print("Patched existing running loop.")
 except Exception:
     pass
 
 # Instrument new_event_loop to set the above task_factory upon creation:
 original_new_event_loop = asyncio.new_event_loop
-# Async debugging work ongoing:
-# print("Patched new loops")
-
 
 def tru_new_event_loop():
-    """
-    Replacement for [new_event_loop][asyncio.new_event_loop] that sets
-    the task factory to make tasks that copy the stack from their creators.
-    """
+    """Replacement for [new_event_loop][asyncio.new_event_loop] that sets
+    the task factory to make tasks that copy the stack from their creators."""
 
     loop = original_new_event_loop()
     loop.set_task_factory(task_factory_with_stack)
     return loop
 
-
 asyncio.new_event_loop = tru_new_event_loop
+'''
 
 
 def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
@@ -781,7 +784,8 @@ def wrap_generator(
     gen: Generator[T, None, None],
     on_iter: Optional[Callable[[], Any]] = None,
     on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None,
+    on_done: Optional[Callable[[List[T]], Any]] = None,
+    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
 ) -> Generator[T, None, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -798,17 +802,90 @@ def wrap_generator(
         on_done: The callback to call when the wrapped generator is exhausted.
     """
 
+    if context_vars is None:
+        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
+    else:
+        context_copy = {cv: cv.get() for cv in context_vars}
+
     def wrapper(gen):
+        tokens = {}
+        for k, v in context_copy.items():
+            tokens[k] = k.set(v)
+
         if on_iter is not None:
             on_iter()
 
+        vals = []
+
         for val in gen:
+            vals.append(val)
             if on_next is not None:
                 on_next(val)
             yield val
 
         if on_done is not None:
-            on_done()
+            on_done(vals)
+
+        for k, v in tokens.items():
+            try:
+                k.reset(v)
+            except Exception:
+                pass
+
+    return wrapper(gen)
+
+
+def wrap_async_generator(
+    gen: AsyncGenerator[T, None, None],
+    on_iter: Optional[Callable[[], Any]] = None,
+    on_next: Optional[Callable[[T], Any]] = None,
+    on_done: Optional[Callable[[List[T]], Any]] = None,
+    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+) -> Generator[T, None, None]:
+    """Wrap a generator in another generator that will call callbacks at various
+    points in the generation process.
+
+    Args:
+        gen: The generator to wrap.
+
+        on_iter: The callback to call when the wrapper generator is created but
+            before a first iteration is produced.
+
+        on_next: The callback to call with the result of each iteration of the
+            wrapped generator.
+
+        on_done: The callback to call when the wrapped generator is exhausted.
+    """
+
+    if context_vars is None:
+        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
+    else:
+        context_copy = {cv: cv.get() for cv in context_vars}
+
+    async def wrapper(gen):
+        tokens = {}
+        for k, v in context_copy.items():
+            tokens[k] = k.set(v)
+
+        if on_iter is not None:
+            on_iter()
+
+        vals = []
+
+        async for val in gen:
+            vals.append(val)
+            if on_next is not None:
+                on_next(val)
+            yield val
+
+        if on_done is not None:
+            on_done(vals)
+
+        for k, v in tokens.items():
+            try:
+                k.reset(v)
+            except Exception:
+                pass
 
     return wrapper(gen)
 

@@ -6,7 +6,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
@@ -84,9 +84,21 @@ class LangChainInstrument(Instrument):
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"): RunnableSerializable,
+                (
+                    "invoke",
+                    "ainvoke",
+                    "stream",
+                    "astream",
+                ): RunnableSerializable,
                 ("save_context", "clear"): BaseMemory,
-                ("run", "arun", "_call", "__call__", "_acall", "acall"): Chain,
+                (
+                    "run",
+                    "arun",
+                    "_call",
+                    "__call__",
+                    "_acall",
+                    "acall",
+                ): Chain,
                 (
                     "_get_relevant_documents",
                     "get_relevant_documents",
@@ -329,6 +341,18 @@ class TruChain(mod_app.App):
         signature `sig` after it is called with the given `bindings` and has
         returned `ret`.
         """
+
+        if isinstance(ret, Sequence) and all(
+            isinstance(x, Dict) and "content" in x for x in ret
+        ):
+            # Streaming outputs for some internal methods are lists of dicts
+            # with each having "content".
+            return "".join(x["content"] for x in ret)
+
+        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
+            # Streaming outputs of main stream methods like Runnable.stream are
+            # bundled by us into a sequence of strings.
+            return "".join(ret)
 
         if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:

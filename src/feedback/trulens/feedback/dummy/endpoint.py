@@ -458,7 +458,7 @@ class DummyEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
@@ -487,3 +487,5 @@ class DummyEndpoint(Endpoint):
                 "Could not find usage information in DummyAPI response:\n%s",
                 pformat(response),
             )
+
+            return response

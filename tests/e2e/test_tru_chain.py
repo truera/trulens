@@ -4,7 +4,6 @@ Some of the tests are outdated.
 """
 
 from typing import Optional
-import unittest
 from unittest import main
 
 from langchain.callbacks import AsyncIteratorCallbackHandler
@@ -15,9 +14,9 @@ from langchain_openai.chat_models.base import ChatOpenAI
 from trulens.apps.langchain import TruChain
 from trulens.core import TruSession
 from trulens.core.feedback.endpoint import Endpoint
+from trulens.core.schema import base as base_schema
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
-from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 
 from tests.test import JSONTestCase
@@ -26,10 +25,7 @@ from tests.test import optional_test
 
 
 class TestTruChain(JSONTestCase):
-    """Test TruChain class."""
-
-    # TODO: See problem in TestTruLlama.
-    # USE IsolatedAsyncioTestCase
+    """Test TruChain apps."""
 
     @classmethod
     def setUpClass(cls):
@@ -40,8 +36,6 @@ class TestTruChain(JSONTestCase):
         check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
-            #            "PINECONE_API_KEY",
-            #            "PINECONE_ENV",
         )
 
     def _create_basic_chain(self, app_name: Optional[str] = None):
@@ -61,6 +55,16 @@ class TestTruChain(JSONTestCase):
         )
 
         return tc
+
+    def _check_generation_costs(self, cost: base_schema.Cost):
+        # Check that all cost fields that should be filled in for a successful generations are non-zero.
+
+        self.assertGreater(cost.n_requests, 0)
+        self.assertGreater(cost.n_successful_requests, 0)
+        self.assertGreater(cost.n_tokens, 0)
+        self.assertGreater(cost.n_prompt_tokens, 0)
+        self.assertGreater(cost.n_completion_tokens, 0)
+        self.assertGreater(cost.cost, 0.0)
 
     @optional_test
     def test_record_metadata_plain(self):
@@ -146,7 +150,6 @@ class TestTruChain(JSONTestCase):
         self.assertEqual(rec.meta, new_meta)
 
     @optional_test
-    @unittest.skip("bug in langchain")
     @async_test
     async def test_async_with_task(self):
         # Check whether an async call that makes use of Task (via
@@ -167,24 +170,29 @@ class TestTruChain(JSONTestCase):
             result = await chain.middle[0]._agenerate(messages=[msg])
             return result
 
-        res1, _ = Endpoint.track_all_costs(lambda: sync(test1))
+        res1_, tally1 = Endpoint.track_all_costs_tally(test1)
+        res1 = await res1_
+
+        costs1 = tally1()
+        with self.subTest(part="costs1"):
+            self._check_generation_costs(costs1)
 
         async def test2():
             # Creates a task internally via asyncio.gather:
             result = await chain.ainvoke(input=dict(question="hello there"))
             return result
 
-        res2, _ = Endpoint.track_all_costs(lambda: sync(test2))
+        res2_, tally2 = Endpoint.track_all_costs_tally(test2)
+        res2 = await res2_
+
+        costs2 = tally2()
+        with self.subTest(part="costs2"):
+            self._check_generation_costs(costs2)
 
         # Results are not the same as they involve different prompts but should
         # not be empty at least:
         self.assertGreater(len(res1.generations[0].text), 5)
         self.assertGreater(len(res2), 5)
-
-        # And cost tracking should have counted some number of tokens.
-        # TODO: broken
-        # self.assertGreater(costs1[0].cost.n_tokens, 3)
-        # self.assertGreater(costs2[0].cost.n_tokens, 3)
 
         # If streaming were used, should count some number of chunks.
         # TODO: test with streaming
@@ -192,15 +200,9 @@ class TestTruChain(JSONTestCase):
         # self.assertGreater(costs2[0].cost.n_stream_chunks, 0)
 
     @optional_test
-    @unittest.skip("bug in langchain")
     @async_test
-    def test_async_token_gen(self):
-        # Test of chain acall methods as requested in https://github.com/truera/trulens/issues/309 .
-
+    async def test_async_stream_token_gen(self):
         from langchain_openai import ChatOpenAI
-
-        # hugs = feedback.Huggingface()
-        # f_lang_match = Feedback(hugs.language_match).on_input_output()
 
         async_callback = AsyncIteratorCallbackHandler()
         prompt = PromptTemplate.from_template(
@@ -213,13 +215,17 @@ class TestTruChain(JSONTestCase):
         agent_recorder = TruChain(agent)  # , feedbacks=[f_lang_match])
 
         message = "What is 1+2? Explain your answer."
-        with agent_recorder as recording:
-            async_res = sync(agent.acall, inputs=dict(question=message))
+        async with agent_recorder as recording:
+            async_res = await agent.ainvoke(input=dict(question=message))
+
+        # Need to iterate stream before the full record gets populated.
+        async for chunk in async_callback.aiter():
+            print("chunk: ", chunk)
 
         async_record = recording.records[0]
 
         with agent_recorder as recording:
-            sync_res = agent(inputs=dict(question=message))
+            sync_res = agent.invoke(input=dict(question=message))
 
         sync_record = recording.records[0]
 
@@ -230,6 +236,7 @@ class TestTruChain(JSONTestCase):
             sync_record.model_dump(),
             skips=set([
                 "id",
+                "call_id",
                 "cost",  # usage info in streaming mode seems to not be available for openai by default https://community.openai.com/t/usage-info-in-api-responses/18862
                 "name",
                 "ts",
@@ -267,6 +274,8 @@ class TestTruChain(JSONTestCase):
         sync_res, sync_record = tc.with_record(
             tc.app.invoke, input=dict(question=message)
         )
+        with self.subTest(part="sync costs"):
+            self._check_generation_costs(sync_record.cost)
 
         # Get async results.
         llm = ChatOpenAI(temperature=0.0)
@@ -276,6 +285,8 @@ class TestTruChain(JSONTestCase):
             tc.app.ainvoke,
             input=dict(question=message),
         )
+        with self.subTest(part="async costs"):
+            self._check_generation_costs(async_record.cost)
 
         # These are sometimes different despite temperature=0.0. So check that
         # they both mention "3" in the response.
@@ -303,7 +314,7 @@ class TestTruChain(JSONTestCase):
                 "total_tokens",  # same
                 "output_tokens",  # same
                 "completion_tokens",  # same
-                # "cost",  # TODO(piotrm): cost tracking not working with async
+                "cost",  # same
             ]),
         )
 

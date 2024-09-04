@@ -22,9 +22,11 @@ import traceback
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncGenerator,
     Awaitable,
     Callable,
     Dict,
+    Generator,
     Iterable,
     Optional,
     Sequence,
@@ -55,7 +57,9 @@ from trulens.core.utils.python import id_str
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_signature
+from trulens.core.utils.python import wrap_async_generator
 from trulens.core.utils.python import wrap_awaitable
+from trulens.core.utils.python import wrap_generator
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
@@ -511,6 +515,8 @@ class Instrument:
 
             error_str = None
 
+            tally = None
+
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
@@ -578,7 +584,10 @@ class Instrument:
 
                     existing_record = records.get(ctx, None)
 
-                    cost = tally()  # get updated cost
+                    if tally is None:
+                        cost = mod_base_schema.Cost()
+                    else:
+                        cost = tally()  # get updated cost
 
                     if len(stack) == 1 or existing_record is not None:
                         # If this is a root call, notify app to add the completed record
@@ -601,7 +610,55 @@ class Instrument:
                 if error is not None:
                     raise error
 
-            if isinstance(rets, Awaitable):
+            if isinstance(rets, AsyncGenerator):
+                type_name = class_name(type(rets))
+
+                logger.debug(
+                    "This app produced an async generator response of type `%s`."
+                    "This record will be updated once the response is available",
+                    type_name,
+                )
+
+                # Placeholder:
+                temp_rets = f"""
+The method {callable_name(func)} produced an async generator response of type
+`{type_name}`. This record will be updated once the response is available. If
+this message persists, check that you are using the correct version of the app
+method and await and iterate over any results it produces.
+"""
+
+                # NOTE(piotrm): Trying to make wrap_generator capture context
+                # vars as well.
+                rets = wrap_async_generator(
+                    rets,
+                    on_done=handle_done,
+                )
+
+            elif isinstance(rets, Generator):
+                type_name = class_name(type(rets))
+
+                logger.debug(
+                    "This app produced a generator response of type `%s`."
+                    "This record will be updated once the response is available",
+                    type_name,
+                )
+
+                # Placeholder:
+                temp_rets = f"""
+The method {callable_name(func)} produced a generator response of type
+`{type_name}`. This record will be updated once the response is available. If
+this message persists, check that you are using the correct version of the app
+method and iterate over any results it produces.
+"""
+
+                # NOTE(piotrm): Trying to make wrap_generator capture context
+                # vars as well.
+                rets = wrap_generator(
+                    rets,
+                    on_done=handle_done,
+                )
+
+            elif isinstance(rets, Awaitable):
                 # NOTE(piotrm): In case of producing an awaitable result, we
                 # need to insert a placeholder call/record before we return the
                 # awaitable as otherwise we might never get a chance to record
@@ -619,31 +676,26 @@ class Instrument:
                 # below.
 
                 # Placeholder:
-                handle_done(
-                    rets=f"""
+                temp_rets = f"""
 The method {callable_name(func)} produced an asynchronous response of type
 `{type_name}`. This record will be updated once the response is available. If
 this message persists, check that you are using the correct version of the app
 method and `await` any asynchronous results it produces.
 """
-                )
 
                 # NOTE(piotrm): The `wrap_awaitable` below captures the current
                 # state of contextvars and makes it available to any asyncio
                 # Tasks that will execute the wrapped computation. It is
                 # important that the `reset` (see below) happens after wrapping,
                 # not before.
-                temp = wrap_awaitable(
+                rets = wrap_awaitable(
                     rets,
                     on_done=handle_done,
                 )
+            else:
+                temp_rets = rets
 
-                stack_contexts.reset(stacks_token)
-                context_contexts.reset(context_token)
-
-                return temp
-
-            handle_done(rets=rets)
+            handle_done(rets=temp_rets)
 
             stack_contexts.reset(stacks_token)
             context_contexts.reset(context_token)
