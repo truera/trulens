@@ -12,8 +12,8 @@ from typing import Optional
 
 from trulens.core import TruSession
 from trulens.core.utils.imports import static_resource
-from trulens.dashboard.notebook_utils import is_notebook
-from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
+from trulens.dashboard.utils.notebook_utils import is_notebook
+from trulens.dashboard.utils.notebook_utils import setup_widget_stdout_stderr
 from typing_extensions import Annotated
 from typing_extensions import Doc
 

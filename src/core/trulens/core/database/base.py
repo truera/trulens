@@ -309,6 +309,11 @@ class DB(SerialModel, abc.ABC):
 
         raise NotImplementedError()
 
+    def update_app_metadata(
+        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
+    ) -> Optional[AppDefinition]:
+        """Update the metadata of an app."""
+
     @abc.abstractmethod
     def get_records_and_feedback(
         self,

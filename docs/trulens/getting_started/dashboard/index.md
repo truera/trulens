@@ -85,14 +85,14 @@ In addition to the feedback results, we can also display the record's trace to h
         trulens_st.trulens_trace(record=record)
     ```
 
-Last, we can also display the TruLens leaderboard using [trulens_leaderboard][trulens.dashboard.streamlit.trulens_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
+Last, we can also display the TruLens leaderboard using [render_leaderboard][trulens.dashboard.leaderboard.render_leaderboard] from the _TruLens_ streamlit module to understand the aggregate performance across application versions.
 
 !!! example "Display the application leaderboard"
 
     ```python
-    from trulens.dashboard import streamlit as trulens_st
+    from trulens.dashboard.leaderboard import render_leaderboard
 
-    trulens_st.trulens_leaderboard()
+    render_leaderboard()
     ```
 
 In combination, the streamlit components allow you to make evaluation front-and-center in your app. This is particularly useful for developer playground use cases, or to ensure users of app reliability.

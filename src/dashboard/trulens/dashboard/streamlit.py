@@ -1,22 +1,17 @@
 import asyncio
 import json
-import math
 from typing import List
 
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import TruSession
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.text import format_quantity
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
-from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata_and_tags
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -26,142 +21,6 @@ class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
     icon: str
-
-
-def trulens_leaderboard(app_ids: List[str] = None):
-    """
-    Render the leaderboard page.
-
-    Args:
-
-        app_ids List[str]: A list of application IDs (default is None)
-
-    Example:
-
-        ```python
-        from trulens.core import streamlit as trulens_st
-
-        trulens_st.trulens_leaderboard()
-        ```
-    """
-    session = TruSession()
-
-    lms = session.connector.db
-    df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
-    feedback_defs = lms.get_feedback_defs()
-    feedback_directions = {
-        (
-            row.feedback_json.get("supplied_name", "")
-            or row.feedback_json["implementation"]["name"]
-        ): row.feedback_json.get("higher_is_better", True)
-        for _, row in feedback_defs.iterrows()
-    }
-
-    if df.empty:
-        st.write("No records yet...")
-        return
-
-    df.sort_values(by="app_id", inplace=True)
-
-    if df.empty:
-        st.write("No records yet...")
-
-    def get_data():
-        return lms.get_records_and_feedback([])
-
-    def get_apps():
-        return list(lms.get_apps())
-
-    records, feedback_col_names = get_data()
-    records = records.sort_values(by="app_id")
-
-    apps = get_apps()
-
-    for app in apps:
-        app_df = records.loc[records.app_id == app]
-        if app_df.empty:
-            continue
-        app_str = app_df["app_json"].iloc[0]
-        app_json = json.loads(app_str)
-        app_name = app_json["app_name"]
-        app_version = app_json["app_version"]
-        app_name_version = f"{app_name} - {app_version}"
-        metadata = app_json.get("metadata")
-        tags = app_json.get("tags")
-        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
-        app_feedback_col_names = [
-            col_name
-            for col_name in feedback_col_names
-            if not app_df[col_name].isna().all()
-        ]
-        col1, col2, col3, col4, *feedback_cols = st.columns(
-            5 + len(app_feedback_col_names)
-        )
-        latency_mean = (
-            app_df["latency"]
-            .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
-            .mean()
-        )
-
-        col1.metric("Records", len(app_df))
-        col2.metric(
-            "Average Latency (Seconds)",
-            (
-                f"{format_quantity(round(latency_mean, 5), precision=2)}"
-                if not math.isnan(latency_mean)
-                else "nan"
-            ),
-        )
-        col3.metric(
-            "Total Cost (USD)",
-            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
-        )
-        col4.metric(
-            "Total Tokens",
-            format_quantity(
-                sum(
-                    tokens
-                    for tokens in app_df.total_tokens
-                    if tokens is not None
-                ),
-                precision=2,
-            ),
-        )
-
-        for i, col_name in enumerate(app_feedback_col_names):
-            mean = app_df[col_name].mean()
-
-            st.write(
-                styles.stmetricdelta_hidearrow,
-                unsafe_allow_html=True,
-            )
-
-            higher_is_better = feedback_directions.get(col_name, True)
-
-            if "distance" in col_name:
-                feedback_cols[i].metric(
-                    label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta_color="normal",
-                )
-            else:
-                cat = styles.CATEGORY.of_score(
-                    mean, higher_is_better=higher_is_better
-                )
-                feedback_cols[i].metric(
-                    label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta=f"{cat.icon} {cat.adjective}",
-                    delta_color=(
-                        "normal"
-                        if cat.compare(
-                            mean, styles.CATEGORY.PASS[cat.direction].threshold
-                        )
-                        else "inverse"
-                    ),
-                )
-
-        st.markdown("""---""")
 
 
 @st.experimental_fragment(run_every=2)

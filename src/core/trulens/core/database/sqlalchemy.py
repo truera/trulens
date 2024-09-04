@@ -391,6 +391,23 @@ class SQLAlchemyDB(DB):
             ):
                 return json.loads(_app.app_json)
 
+    def update_app_metadata(
+        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
+    ) -> Optional[mod_app_schema.AppDefinition]:
+        """See [DB.get_app_definition][trulens.core.database.base.DB.get_app_definition]."""
+
+        with self.session.begin() as session:
+            if (
+                _app := session.query(self.orm.AppDefinition)
+                .filter_by(app_id=app_id)
+                .first()
+            ):
+                app_json = json.loads(_app.app_json)
+                if "metadata" not in app_json:
+                    app_json["metadata"] = {}
+                app_json["metadata"] |= metadata
+                _app.app_json = json.dumps(app_json)
+
     def get_apps(self) -> Iterable[JSON]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
 
