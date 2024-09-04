@@ -44,7 +44,6 @@ class CATEGORY:
         "PASS": dict(color="#aaffaa", icon="✅"),
         "WARNING": dict(color="#ffffaa", icon="⚠️"),
         "FAIL": dict(color="#ffaaaa", icon="🛑"),
-        "DISTANCE": dict(color="#808080", icon="📏"),
     }
 
     PASS: defaultdict = defaultdict(dict)
