@@ -88,7 +88,7 @@ class CATEGORY:
     )
 
     # order matters here because `of_score` returns the first best category
-    ALL = [PASS, WARNING, FAIL]
+    ALL = [PASS, WARNING, FAIL] # not including UNKNOWN intentionally
 
     @staticmethod
     def of_score(
