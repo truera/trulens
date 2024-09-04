@@ -1,6 +1,4 @@
-"""
-Utilities related to core python functionalities.
-"""
+"""Utilities related to core python functionalities."""
 
 from __future__ import annotations
 
