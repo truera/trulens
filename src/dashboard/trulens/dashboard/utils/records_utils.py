@@ -22,9 +22,8 @@ def display_feedback_call(
         cat = CATEGORY.of_score(
             s.result,
             higher_is_better=feedback_directions.get(
-                feedback_name, default_direction
-            )
-            == default_direction,
+                feedback_name, default_direction == "HIGHER_IS_BETTER"
+            ),
         )
         return [f"background-color: {cat.color}"] * len(s)
 
@@ -34,9 +33,8 @@ def display_feedback_call(
         cat = CATEGORY.of_score(
             s.Score,
             higher_is_better=feedback_directions.get(
-                feedback_name, default_direction
-            )
-            == default_direction,
+                feedback_name, default_direction == "HIGHER_IS_BETTER"
+            ),
         )
         return [f"background-color: {cat.color}"] * len(s)
 
@@ -134,7 +132,7 @@ def _render_feedback_pills(
     key_prefix: str = "",
 ):
     if len(feedback_col_names) == 0:
-        st.write("No feedback details")
+        st.warning("No feedback details")
         return
 
     if selected_row is not None:
@@ -157,7 +155,7 @@ def _render_feedback_pills(
         feedback_with_valid_results = feedback_col_names
 
     if len(feedback_with_valid_results) == 0:
-        st.write("No feedback functions found.")
+        st.warning("No feedback functions found.")
         return
 
     hash = hashlib.md5(str(feedback_with_valid_results).encode()).hexdigest()

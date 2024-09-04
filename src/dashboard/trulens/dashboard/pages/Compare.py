@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 import pandas as pd
 import plotly.express as px
@@ -36,44 +36,6 @@ def _preprocess_df(records_df: pd.DataFrame) -> pd.DataFrame:
     return records_df
 
 
-def _render_feedback_results(
-    selected_input: str,
-    col_data: dict[str, Any],
-    versions_df: pd.DataFrame,
-    feedback_directions: Dict[str, bool],
-    app_id: str,
-):
-    record_df = col_data["records"]
-    feedback_col_names = col_data["feedback_cols"]
-    selected_row = record_df[record_df["input"] == selected_input].iloc[0]
-
-    # Feedback results
-    st.subheader("Feedback results")
-
-    if feedback_col := _render_feedback_pills(
-        feedback_col_names=feedback_col_names,
-        selected_row=selected_row,
-        feedback_directions=feedback_directions,
-    ):
-        _render_feedback_call(feedback_col, selected_row, feedback_directions)
-
-
-def _render_trace_details(
-    col_data: dict[str, Any], selected_input: str, app_id: str
-):
-    record_df = col_data["records"]
-    selected_row = record_df[record_df["input"] == selected_input].iloc[0]
-    app_json = selected_row["app_json"]
-
-    # Trace details
-    st.subheader("Trace details")
-    record_viewer(
-        json.loads(selected_row["record_json"]),
-        json.loads(app_json),
-        key=f"compare_{app_id}",
-    )
-
-
 def _feedback_cols_intersect(
     col_data: Dict[str, Dict[str, List[str]]],
 ) -> List[str]:
@@ -86,26 +48,6 @@ def _feedback_cols_intersect(
     if feedback_cols is None:
         return []
     return list(feedback_cols)
-
-
-def _compute_feedback_means(
-    feedback_cols: List[str], col_data: Dict[str, Dict[str, pd.DataFrame]]
-):
-    feedback_means = {}
-
-    for feedback_col_name in feedback_cols:
-        col_values = {
-            app_id: data["records"][feedback_col_name]
-            for app_id, data in col_data.items()
-        }
-        total_mean = pd.concat(list(col_values.values())).mean()
-        feedback_means[feedback_col_name] = round(total_mean, 3)
-    return feedback_means
-    #     for app_id, col in col_values.items():
-    #         app_mean = col.mean()
-    #         delta = app_mean - total_mean
-    #         mean_feedback_values[app_id] = app_mean
-    # return mean_feedback_values
 
 
 def _render_all_app_feedback_plot(
@@ -146,50 +88,6 @@ def _render_all_app_feedback_plot(
     )
 
 
-def _render_app_feedback_plot(app_df: pd.DataFrame, feedback_cols: List[str]):
-    df = app_df[feedback_cols].mean(axis=0)
-    st.bar_chart(df, horizontal=True, use_container_width=True)
-
-
-def _render_app_feedback_means(
-    app_id: str,
-    feedback_means: Dict[str, float],
-    feedback_cols: List[str],
-    col_data: Dict[str, Dict[str, pd.DataFrame]],
-    feedback_directions: Dict[str, bool],
-    default_n_cols: Optional[int] = None,
-):
-    if len(feedback_cols) == 0:
-        st.info("No shared feedback functions.")
-        return
-
-    if default_n_cols is None:
-        n_comparators = st.session_state.get("compare.n_comparators", 2)
-        if n_comparators > 3:
-            default_n_cols = 2
-        else:
-            default_n_cols = 4
-    n_cols = min(default_n_cols, len(feedback_cols))
-    cols = st.columns(n_cols)
-    for i, feedback_col_name in enumerate(feedback_cols):
-        feedback_data = col_data[app_id]["records"][feedback_col_name]
-        app_mean = round(feedback_data.mean(), 3)
-        total_mean = feedback_means[feedback_col_name]
-        delta = round(app_mean - total_mean, 3)
-
-        with cols[i % n_cols]:
-            with st.container(border=True):
-                st.metric(
-                    label=feedback_col_name,
-                    value=app_mean,
-                    delta=delta,
-                    delta_color="normal"
-                    if feedback_directions.get(feedback_col_name, True)
-                    else "inverse",
-                    help=f"Total mean: {total_mean}",
-                )
-
-
 def _render_shared_records(
     col_data: Dict[str, Dict[str, pd.DataFrame]],
     feedback_cols: List[str],
@@ -212,7 +110,7 @@ def _render_shared_records(
     assert query_col is not None
 
     if query_col.empty:
-        st.write("No shared records found.")
+        st.warning("No shared records found.")
         return
     # Feedback difference
     diff_cols = []
@@ -226,8 +124,31 @@ def _render_shared_records(
     query_col["feedback_variance"] = query_col[diff_cols].sum(axis=1)
     query_col.sort_values("feedback_variance", ascending=False, inplace=True)
     query_col = query_col.set_index("input")
+    query_col["Mean Variance"] = query_col[diff_cols].mean(axis=1)
 
-    st.write(query_col[diff_cols])
+    def highlight_variance(row: pd.Series):
+        colors = []
+        for col_name, value in row.items():
+            if (
+                not pd.isna(value)
+                and isinstance(col_name, str)
+                and "Variance" in col_name
+            ):
+                transparency = hex(int(value * 255))[2:]
+                if len(transparency) == 1:
+                    transparency = "0" + transparency
+                colors.append(f"background-color: #ffaaaa{transparency}")
+            else:
+                colors.append("")
+        return colors
+
+    query_col = query_col.sort_values(by="Mean Variance", ascending=False)
+    with st.expander("Shared Records"):
+        st.dataframe(
+            query_col[["Mean Variance"] + diff_cols]
+            .style.apply(highlight_variance, axis=1)
+            .format("{:.2f}")
+        )
 
     selection = st.selectbox(
         "Select record",
@@ -318,7 +239,7 @@ def render_app_comparison():
     st.divider()
 
     if versions_df.empty:
-        st.write("No versions available for this app.")
+        st.warning("No versions available for this app.")
         return
 
     n_comparators = st.session_state["compare.n_comparators"]

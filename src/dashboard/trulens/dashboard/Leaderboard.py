@@ -233,7 +233,7 @@ def _render_grid_tab(
         selected_app_ids = []
     else:
         selected_app_ids = list(selected_rows.app_id.unique())
-        st.write(selected_rows.set_index("app_id"))
+        st.dataframe(selected_rows.set_index("app_id"))
 
     # Add to Leaderboard
     on_leaderboard = any(
@@ -288,7 +288,7 @@ def _render_list_tab(
     version_metadata_col_names: List[str],
     max_feedback_cols: int = 5,
 ):
-    st.write(
+    st.markdown(
         stmetricdelta_hidearrow,
         unsafe_allow_html=True,
     )
@@ -304,8 +304,10 @@ def _render_list_tab(
             for col in version_metadata_col_names
             if col in app_row
         }
-        st.header(app_version, help=draw_metadata_and_tags(metadata, tags))
-        st.code(app_id)
+        st.markdown(
+            f"#### {app_version}", help=draw_metadata_and_tags(metadata, tags)
+        )
+        st.caption(f"App ID: {app_id}")
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -414,7 +416,7 @@ def render_leaderboard():
     st.divider()
 
     if versions_df.empty:
-        st.write("No versions available for this app.")
+        st.warning("No versions available for this app.")
         return
     app_ids = versions_df["app_id"].tolist()
 
@@ -423,12 +425,12 @@ def render_leaderboard():
         app_ids, limit=1000
     )
     if records_df.empty:
-        st.write("No data available for this app.")
+        st.warning("No data available for this app.")
         return
     elif len(records_df) == 1000:
         st.info(
             "Computed using the last 1000 records.",
-            icon="🚨",
+            icon="ℹ️",
         )
 
     feedback_col_names = list(feedback_col_names)

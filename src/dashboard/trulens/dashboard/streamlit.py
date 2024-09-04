@@ -62,7 +62,7 @@ def trulens_feedback(record: Record):
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
-    st.write("**Feedback functions**")
+    st.header("Feedback Functions")
     selected_feedback = pills(
         "Feedback functions",
         feedback_cols,

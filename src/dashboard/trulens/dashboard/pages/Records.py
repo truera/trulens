@@ -77,17 +77,14 @@ def _render_trace(
 
     _render_record_metrics(records_df, selected_row)
 
-    # prompt = selected_rows["input"][0]
-    # response = selected_rows["output"][0]
     app_json = json.loads(selected_row["app_json"])
     record_json = json.loads(selected_row["record_json"])
-    # record_metadata = selected_rows["record_metadata"][0]
 
     feedback_results = st.container()
     trace_details = st.container()
 
     # Feedback results
-    feedback_results.subheader("Feedback results")
+    feedback_results.subheader("Feedback Results")
     with feedback_results:
         if _render_feedback_pills(
             feedback_col_names=feedback_col_names,
@@ -102,15 +99,12 @@ def _render_trace(
 
     # Trace details
     with trace_details:
-        st.subheader("Trace details")
+        st.subheader("Trace Details")
         record_viewer(record_json, app_json)
 
 
 def _preprocess_df(
     records_df: pd.DataFrame,
-    app_versions_df: pd.DataFrame,
-    feedback_col_names: List[str],
-    metadata_col_names: List[str],
     record_query: Optional[str] = None,
 ):
     records_df = records_df.sort_values(by="ts", ascending=False)
@@ -270,7 +264,10 @@ def _render_grid_tab(
     )
     selected_rows = grid_data.selected_rows
     if selected_rows is None or len(selected_rows) == 0:
-        st.write("No Records selected")
+        st.info(
+            "No record selected. Click a record's checkbox to view details.",
+            icon="ℹ️",
+        )
         return
 
     selected_record = pd.DataFrame(selected_rows)
@@ -320,7 +317,7 @@ def render_records():
     st.divider()
 
     if versions_df.empty:
-        st.write("No versions available for this app.")
+        st.warning("No versions available for this app.")
         return
     app_ids = versions_df["app_id"].tolist()
 
@@ -329,12 +326,12 @@ def render_records():
         app_ids, limit=1000
     )
     if records_df.empty:
-        st.write("No records available for this app.")
+        st.warning("No records available for this app.")
         return
     elif len(records_df) == 1000:
         st.info(
             "Limiting to the latest 1000 records. Use the search bar and filters to narrow your search.",
-            icon="🚨",
+            icon="ℹ️",
         )
 
     feedback_col_names = list(feedback_col_names)
@@ -342,9 +339,6 @@ def render_records():
     # Preprocess data
     df = _preprocess_df(
         records_df,
-        versions_df,
-        feedback_col_names,
-        version_metadata_col_names,
         record_query=record_query,
     )
     _, feedback_directions = get_feedback_defs()
