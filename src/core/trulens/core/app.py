@@ -30,6 +30,7 @@ from typing import (
 )
 
 import pydantic
+from trulens.core._utils import optional as optional_utils
 from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
@@ -43,6 +44,7 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
@@ -432,13 +434,21 @@ class RecordingContext:
         """
         Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
+
+        If existing_record is provided, updates that record with new data.
         """
 
         with self.lock:
-            record = calls_to_record(
-                list(self.calls.values()), self.record_metadata, existing_record
-            )
+            current_calls = dict(self.calls)  # copy
             self.calls = {}
+
+            if existing_record is not None:
+                for call in existing_record.calls:
+                    current_calls[call.call_id] = call
+
+            record = calls_to_record(
+                current_calls.values(), self.record_metadata, existing_record
+            )
 
             if existing_record is None:
                 # If existing record was given, we assume it was already
@@ -672,15 +682,24 @@ class App(
         if app is not None:
             mod = app.__class__.__module__
             if mod.startswith("langchain"):
-                from trulens.instrument.langchain import TruChain
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+                ):
+                    from trulens.apps.langchain.tru_chain import TruChain
 
                 return TruChain.select_context(app=app)
             elif mod.startswith("llama_index"):
-                from trulens.instrument.llamaindex import TruLlama
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+                ):
+                    from trulens.apps.llamaindex.tru_llama import TruLlama
 
                 return TruLlama.select_context(app=app)
             elif mod.startswith("nemoguardrails"):
-                from trulens.instrument.nemo import TruRails
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+                ):
+                    from trulens.apps.nemo.tru_rails import TruRails
 
                 return TruRails.select_context(app=app)
             else:
@@ -816,12 +835,21 @@ class App(
                 ]
 
             # Recursively extract content from nested pydantic models
-            return {
-                k: self._extract_content(v)
-                if isinstance(v, (pydantic.BaseModel, dict, list))
-                else v
-                for k, v in value.dict().items()
-            }
+            try:
+                return {
+                    k: self._extract_content(v)
+                    if isinstance(v, (pydantic.BaseModel, dict, list))
+                    else v
+                    for k, v in value.model_dump().items()
+                }
+            except Exception as e:
+                logger.warning(
+                    "Failed to extract content from pydantic model: %s", e
+                )
+                # Unsure what is best to do here. Lets just return the exception
+                # so that it might reach the user if nothing else gets picked up
+                # as main input/output.
+                return str(e)
 
         elif isinstance(value, dict):
             # Check for 'content' key in the dictionary
@@ -1107,6 +1135,25 @@ class App(
 
         return
 
+    # For use as a context manager.
+    async def __aenter__(self):
+        ctx = RecordingContext(app=self)
+
+        token = self.recording_contexts.set(ctx)
+        ctx.token = token
+
+        return ctx
+
+    # For use as a context manager.
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        # ctx = self.recording_contexts.get()
+        # self.recording_contexts.reset(ctx.token)
+
+        if exc_type is not None:
+            raise exc_value
+
+        return
+
     # WithInstrumentCallbacks requirement
     def on_new_record(self, func) -> Iterable[RecordingContext]:
         """Called at the start of record creation.
@@ -1133,9 +1180,11 @@ class App(
         cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
     ) -> mod_record_schema.Record:
-        """Called by instrumented methods if they use _new_record to construct a record call list.
+        """Called by instrumented methods if they use _new_record to construct a
+        "record call list.
 
-        See [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
+        See
+        [WithInstrumentCallbacks.on_add_record][trulens.core.instruments.WithInstrumentCallbacks.on_add_record].
         """
 
         def build_record(
@@ -1146,6 +1195,9 @@ class App(
             calls = list(calls)
 
             assert len(calls) > 0, "No information recorded in call."
+
+            # if existing_record is not None:
+            #    calls = existing_record.calls
 
             if bindings is not None:
                 main_in = self.main_input(func, sig, bindings)
@@ -1255,30 +1307,27 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     async def awith_(
         self, func: CallableMaybeAwaitable[A, T], *args, **kwargs
     ) -> T:
+        """Call the given async `func` with the given `*args` and `**kwargs`
+        while recording, producing `func` results.
+
+        The record of the computation is available through other means like the
+        database or dashboard. If you need a record of this execution
+        immediately, you can use `awith_record` or the `App` as a context
+        manager instead.
         """
-        Call the given async `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard. If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context manager instead.
-        """
 
-        awaitable, _ = self.with_record(func, *args, **kwargs)
+        res, _ = await self.awith_record(func, *args, **kwargs)
 
-        if not isinstance(awaitable, Awaitable):
-            raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
-            )
-
-        return await awaitable
+        return res
 
     async def with_(self, func: Callable[[A], T], *args, **kwargs) -> T:
-        """
-        Call the given async `func` with the given `*args` and `**kwargs` while
-        recording, producing `func` results. The record of the computation is
-        available through other means like the database or dashboard. If you
-        need a record of this execution immediately, you can use `awith_record`
-        or the `App` as a context manager instead.
+        """Call the given async `func` with the given `*args` and `**kwargs`
+        while recording, producing `func` results.
+
+        The record of the computation is available through other means like the
+        database or dashboard. If you need a record of this execution
+        immediately, you can use `awith_record` or the `App` as a context
+        manager instead.
         """
 
         res, _ = self.with_record(func, *args, **kwargs)
@@ -1296,6 +1345,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Call the given `func` with the given `*args` and `**kwargs`, producing
         its results as well as a record of the execution.
         """
+
+        if not isinstance(func, Callable):
+            if hasattr(func, "__call__"):
+                func = func.__call__
 
         self._check_instrumented(func)
 
@@ -1322,15 +1375,22 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         its results as well as a record of the execution.
         """
 
-        awaitable, record = self.with_record(
-            func, *args, record_metadata=record_metadata, **kwargs
-        )
-        if not isinstance(awaitable, Awaitable):
-            raise TypeError(
-                f"Expected `func` to be an async function or return an awaitable, but got {class_name(type(awaitable))}."
-            )
+        if not isinstance(func, Callable):
+            if hasattr(func, "__call__"):
+                func = func.__call__
 
-        return await awaitable, record
+        self._check_instrumented(func)
+
+        async with self as ctx:
+            ctx.record_metadata = record_metadata
+            ret = await func(*args, **kwargs)
+
+        assert len(ctx.records) > 0, (
+            f"Did not create any records. "
+            f"This means that no instrumented methods were invoked in the process of calling {func}."
+        )
+
+        return ret, ctx.get()
 
     def _throw_dep_message(
         self, method, is_async: bool = False, with_record: bool = False

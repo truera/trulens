@@ -1,284 +1,285 @@
 {
-  "tru_class_info": {
-    "name": "Feedback",
-    "module": {
-      "package_name": "trulens.core.feedback",
-      "module_name": "trulens.core.feedback.feedback"
-    },
-    "bases": [
-      {
-        "name": "Feedback",
-        "module": {
-          "package_name": "trulens.core.feedback",
-          "module_name": "trulens.core.feedback.feedback"
-        },
-        "bases": null
-      },
-      {
-        "name": "FeedbackDefinition",
-        "module": {
-          "package_name": "trulens.core.schema",
-          "module_name": "trulens.core.schema.feedback"
-        },
-        "bases": null
-      },
-      {
-        "name": "WithClassInfo",
-        "module": {
-          "package_name": "trulens.core.utils",
-          "module_name": "trulens.core.utils.pyschema"
-        },
-        "bases": null
-      },
-      {
-        "name": "SerialModel",
-        "module": {
-          "package_name": "trulens.core.utils",
-          "module_name": "trulens.core.utils.serial"
-        },
-        "bases": null
-      },
-      {
-        "name": "BaseModel",
-        "module": {
-          "package_name": "pydantic",
-          "module_name": "pydantic.main"
-        },
-        "bases": null
-      },
-      {
-        "name": "Hashable",
-        "module": {
-          "package_name": "collections",
-          "module_name": "collections.abc"
-        },
-        "bases": null
-      },
-      {
-        "name": "Generic",
-        "module": {
-          "package_name": "",
-          "module_name": "typing"
-        },
-        "bases": null
-      },
-      {
-        "name": "object",
-        "module": {
-          "package_name": "",
-          "module_name": "builtins"
-        },
-        "bases": null
-      }
-    ]
-  },
+  "aggregator": null,
+  "combinations": "product",
+  "feedback_definition_id": "feedback_definition_hash_a7593c564dfec4bb148fa890c9842671",
+  "higher_is_better": true,
+  "if_exists": null,
+  "if_missing": "error",
   "implementation": {
+    "name": "context_relevance",
     "obj": {
       "cls": {
-        "name": "DummyProvider",
+        "bases": null,
         "module": {
-          "package_name": "trulens.core.feedback.dummy",
-          "module_name": "trulens.core.feedback.dummy.provider"
+          "module_name": "trulens.feedback.dummy.provider",
+          "package_name": "trulens.feedback.dummy"
         },
-        "bases": null
+        "name": "DummyProvider"
       },
-      "id": 13687379664,
+      "id": 14620673040,
       "init_bindings": {
         "args": [],
         "kwargs": {
-          "tru_class_info": {
-            "name": "DummyProvider",
-            "module": {
-              "package_name": "trulens.core.feedback.dummy",
-              "module_name": "trulens.core.feedback.dummy.provider"
-            },
-            "bases": [
-              {
-                "name": "DummyProvider",
-                "module": {
-                  "package_name": "trulens.core.feedback.dummy",
-                  "module_name": "trulens.core.feedback.dummy.provider"
-                },
-                "bases": null
-              },
-              {
-                "name": "LLMProvider",
-                "module": {
-                  "package_name": "trulens.feedback",
-                  "module_name": "trulens.feedback.llm_provider"
-                },
-                "bases": null
-              },
-              {
-                "name": "Provider",
-                "module": {
-                  "package_name": "trulens.core.feedback",
-                  "module_name": "trulens.core.feedback.provider"
-                },
-                "bases": null
-              },
-              {
-                "name": "WithClassInfo",
-                "module": {
-                  "package_name": "trulens.core.utils",
-                  "module_name": "trulens.core.utils.pyschema"
-                },
-                "bases": null
-              },
-              {
-                "name": "SerialModel",
-                "module": {
-                  "package_name": "trulens.core.utils",
-                  "module_name": "trulens.core.utils.serial"
-                },
-                "bases": null
-              },
-              {
-                "name": "BaseModel",
-                "module": {
-                  "package_name": "pydantic",
-                  "module_name": "pydantic.main"
-                },
-                "bases": null
-              },
-              {
-                "name": "object",
-                "module": {
-                  "package_name": "",
-                  "module_name": "builtins"
-                },
-                "bases": null
-              }
-            ]
-          },
           "endpoint": {
-            "tru_class_info": {
-              "name": "DummyEndpoint",
-              "module": {
-                "package_name": "trulens.core.feedback.dummy",
-                "module_name": "trulens.feedback.dummy.endpoint"
-              },
-              "bases": [
-                {
-                  "name": "DummyEndpoint",
-                  "module": {
-                    "package_name": "trulens.core.feedback.dummy",
-                    "module_name": "trulens.feedback.dummy.endpoint"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "Endpoint",
-                  "module": {
-                    "package_name": "trulens.core.feedback",
-                    "module_name": "trulens.core.feedback.endpoint"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "WithClassInfo",
-                  "module": {
-                    "package_name": "trulens.core.utils",
-                    "module_name": "trulens.core.utils.pyschema"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "SerialModel",
-                  "module": {
-                    "package_name": "trulens.core.utils",
-                    "module_name": "trulens.core.utils.serial"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "BaseModel",
-                  "module": {
-                    "package_name": "pydantic",
-                    "module_name": "pydantic.main"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "SingletonPerName",
-                  "module": {
-                    "package_name": "trulens.core.utils",
-                    "module_name": "trulens.core.utils.python"
-                  },
-                  "bases": null
-                },
-                {
-                  "name": "object",
-                  "module": {
-                    "package_name": "",
-                    "module_name": "builtins"
-                  },
-                  "bases": null
-                }
-              ]
-            },
-            "name": "dummyendpoint",
-            "rpm": 60.0,
-            "retries": 3,
             "api": {
+              "alloc": 0,
+              "delay": 0.0,
+              "error_prob": 0.0,
+              "freeze_prob": 0.0,
+              "loading_prob": 0.0,
               "loading_time_uniform_params": [
                 0.7,
                 3.7
               ],
-              "loading_prob": 0.0,
-              "error_prob": 0.0,
-              "freeze_prob": 0.0,
-              "overloaded_prob": 0.0,
-              "alloc": 0,
-              "delay": 0.0,
               "ndt": {
-                "random": {
-                  "__tru_non_serialized_object": {
-                    "cls": {
-                      "name": "Random",
-                      "module": {
-                        "package_name": "",
-                        "module_name": "random"
-                      },
-                      "bases": null
-                    },
-                    "id": 13715532832,
-                    "init_bindings": null
-                  }
-                },
                 "np_random": {
                   "__tru_non_serialized_object": {
                     "cls": {
-                      "name": "RandomState",
+                      "bases": null,
                       "module": {
-                        "package_name": "numpy.random",
-                        "module_name": "numpy.random.mtrand"
+                        "module_name": "numpy.random.mtrand",
+                        "package_name": "numpy.random"
                       },
-                      "bases": null
+                      "name": "RandomState"
                     },
-                    "id": 13687236672,
+                    "id": 14620695872,
+                    "init_bindings": null
+                  }
+                },
+                "random": {
+                  "__tru_non_serialized_object": {
+                    "cls": {
+                      "bases": null,
+                      "module": {
+                        "module_name": "random",
+                        "package_name": ""
+                      },
+                      "name": "Random"
+                    },
+                    "id": 14566691360,
                     "init_bindings": null
                   }
                 },
                 "seed": 3735928559
-              }
+              },
+              "overloaded_prob": 0.0
+            },
+            "name": "dummyendpoint",
+            "retries": 3,
+            "rpm": 60.0,
+            "tru_class_info": {
+              "bases": [
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.feedback.dummy.endpoint",
+                    "package_name": "trulens.feedback.dummy"
+                  },
+                  "name": "DummyEndpoint"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.core.feedback.endpoint",
+                    "package_name": "trulens.core.feedback"
+                  },
+                  "name": "Endpoint"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.core.utils.pyschema",
+                    "package_name": "trulens.core.utils"
+                  },
+                  "name": "WithClassInfo"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.core.utils.serial",
+                    "package_name": "trulens.core.utils"
+                  },
+                  "name": "SerialModel"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "pydantic.main",
+                    "package_name": "pydantic"
+                  },
+                  "name": "BaseModel"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "trulens.core.utils.python",
+                    "package_name": "trulens.core.utils"
+                  },
+                  "name": "SingletonPerName"
+                },
+                {
+                  "bases": null,
+                  "module": {
+                    "module_name": "builtins",
+                    "package_name": ""
+                  },
+                  "name": "object"
+                }
+              ],
+              "module": {
+                "module_name": "trulens.feedback.dummy.endpoint",
+                "package_name": "trulens.feedback.dummy"
+              },
+              "name": "DummyEndpoint"
             }
           },
-          "model_engine": "dummymodel"
+          "model_engine": "dummymodel",
+          "tru_class_info": {
+            "bases": [
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "trulens.feedback.dummy.provider",
+                  "package_name": "trulens.feedback.dummy"
+                },
+                "name": "DummyProvider"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "trulens.feedback.llm_provider",
+                  "package_name": "trulens.feedback"
+                },
+                "name": "LLMProvider"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "trulens.core.feedback.provider",
+                  "package_name": "trulens.core.feedback"
+                },
+                "name": "Provider"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "trulens.core.utils.pyschema",
+                  "package_name": "trulens.core.utils"
+                },
+                "name": "WithClassInfo"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "trulens.core.utils.serial",
+                  "package_name": "trulens.core.utils"
+                },
+                "name": "SerialModel"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "pydantic.main",
+                  "package_name": "pydantic"
+                },
+                "name": "BaseModel"
+              },
+              {
+                "bases": null,
+                "module": {
+                  "module_name": "builtins",
+                  "package_name": ""
+                },
+                "name": "object"
+              }
+            ],
+            "module": {
+              "module_name": "trulens.feedback.dummy.provider",
+              "package_name": "trulens.feedback.dummy"
+            },
+            "name": "DummyProvider"
+          }
         }
       }
-    },
-    "name": "context_relevance"
+    }
   },
-  "aggregator": null,
-  "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
-  "if_exists": null,
-  "if_missing": "error",
+  "run_location": null,
   "selectors": {
-    "question": "__record__.main_input",
-    "context": "__record__.main_output"
+    "context": "__record__.main_output",
+    "question": "__record__.main_input"
   },
   "supplied_name": null,
-  "higher_is_better": true
+  "tru_class_info": {
+    "bases": [
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.feedback.feedback",
+          "package_name": "trulens.core.feedback"
+        },
+        "name": "Feedback"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.schema.feedback",
+          "package_name": "trulens.core.schema"
+        },
+        "name": "FeedbackDefinition"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.utils.pyschema",
+          "package_name": "trulens.core.utils"
+        },
+        "name": "WithClassInfo"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "trulens.core.utils.serial",
+          "package_name": "trulens.core.utils"
+        },
+        "name": "SerialModel"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "pydantic.main",
+          "package_name": "pydantic"
+        },
+        "name": "BaseModel"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "collections.abc",
+          "package_name": "collections"
+        },
+        "name": "Hashable"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "typing",
+          "package_name": ""
+        },
+        "name": "Generic"
+      },
+      {
+        "bases": null,
+        "module": {
+          "module_name": "builtins",
+          "package_name": ""
+        },
+        "name": "object"
+      }
+    ],
+    "module": {
+      "module_name": "trulens.core.feedback.feedback",
+      "package_name": "trulens.core.feedback"
+    },
+    "name": "Feedback"
+  }
 }

@@ -67,7 +67,7 @@ class CortexCallback(EndpointCallback):
 
         for cost_field, cortex_field in [
             ("n_tokens", "total_tokens"),
-            ("n_cortext_guardrails_tokens", "guardrails_tokens"),
+            ("n_cortex_guardrails_tokens", "guardrails_tokens"),
             ("n_prompt_tokens", "prompt_tokens"),
             ("n_completion_tokens", "completion_tokens"),
         ]:

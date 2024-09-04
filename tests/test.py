@@ -1,6 +1,7 @@
 """TestCase subclass with JSON comparisons and test enable/disable flag
 handling."""
 
+import asyncio
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
@@ -9,11 +10,20 @@ import importlib
 import json
 import os
 from pathlib import Path
-from typing import Dict, Mapping, Optional, Sequence, Set, TypeVar, Union
+from typing import (
+    Dict,
+    Mapping,
+    Optional,
+    OrderedDict,
+    Sequence,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 import unittest
 from unittest import TestCase
 
-from frozendict import frozendict
 import pydantic
 from pydantic import BaseModel
 from trulens.core.utils.serial import JSON
@@ -30,6 +40,19 @@ WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 true) or read and compared (if false/undefined)."""
 
 ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
+
+
+def async_test(func):
+    """Decorator for running async tests."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        temp = loop.run_until_complete(func(*args, **kwargs))
+        loop.close()
+        return temp
+
+    return wrapper
 
 
 def optional_test(testmethodorclass):
@@ -73,12 +96,13 @@ def module_installed(module: str) -> bool:
 T = TypeVar("T")
 
 
-def hashable_skip(obj: T, skips: Set[str]) -> T:
-    """Return a hashable copy of `obj` with all keys/attributes in `skips`
+def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
+    """Return a canonical copy of `obj` with all keys/attributes in `skips`
     removed.
 
-    Sequences are returned as tuples and container types are returned as
-    frozendicts. Floats are returned as 0.0 to avoid tolerance issues. Note that
+    Dicts are returned as OrderedDict with sorted keys. Keys in `skips` are
+    omitted. Sequences are returned as Tuples no matter what sequence type the
+    input was. Floats are returned as 0.0 to avoid tolerance issues. Note that
     the returned objects are only used for ordering their originals and are not
     compared themselves.
 
@@ -89,7 +113,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
     """
 
     def recur(obj):
-        return hashable_skip(obj, skips=skips)
+        return canonical(obj, skips=skips)
 
     if isinstance(obj, float):
         return 0.0
@@ -98,44 +122,49 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
         return obj
 
     if isinstance(obj, Mapping):
-        return frozendict({
-            k: recur(v) for k, v in obj.items() if k not in skips
-        })
+        ret = OrderedDict()
+        for k in sorted(obj.keys()):
+            v = obj[k]
+            if k in skips:
+                continue
+            ret[k] = recur(v)
+
+        return ret
 
     elif isinstance(obj, Sequence):
         return tuple(recur(v) for v in obj)
 
     elif is_dataclass(obj):
-        ret = {}
+        ret = OrderedDict()
 
-        for f in fields(obj):
+        for f in sorted(fields(obj), key=lambda f: f.name):
             if f.name in skips:
                 continue
 
             ret[f.name] = recur(getattr(obj, f.name))
 
-        return frozendict(ret)
+        return ret
 
     elif isinstance(obj, BaseModel):
-        ret = {}
-        for f in obj.model_fields:
+        ret = OrderedDict()
+        for f in sorted(obj.model_fields):
             if f in skips:
                 continue
 
             ret[f] = recur(getattr(obj, f))
 
-        return frozendict(ret)
+        return ret
 
     elif isinstance(obj, pydantic.v1.BaseModel):
-        ret = {}
+        ret = OrderedDict()
 
-        for f in obj.__fields__:
+        for f in sorted(obj.__fields__):
             if f in skips:
                 continue
 
             ret[f] = recur(getattr(obj, f))
 
-        return frozendict(ret)
+        return ret
 
     else:
         raise TypeError(f"Unhandled type {type(obj).__name__}.")
@@ -144,7 +173,7 @@ def hashable_skip(obj: T, skips: Set[str]) -> T:
 def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
     """Return a sorted version of `seq` by string order.
 
-    Items are converted to strings using `hashable_skip` with `skips`
+    Items are converted to strings using `canonical` with `skips`
     keys/attributes skipped.
 
     Args:
@@ -153,32 +182,33 @@ def str_sorted(seq: Sequence[T], skips: Set[str]) -> Sequence[T]:
         skips: The keys/attributes to skip for string conversion.
     """
 
-    objs_and_strs = [(o, str(hashable_skip(o, skips=skips))) for o in seq]
+    objs_and_strs = [(o, str(canonical(o, skips=skips))) for o in seq]
     objs_and_strs_sorted = sorted(objs_and_strs, key=lambda x: x[1])
 
     return [o for o, _ in objs_and_strs_sorted]
 
 
-class JSONTestCase(TestCase):
-    """TestCase class that adds JSON comparisons and golden expectation handling."""
+class WithJSONTestCase(TestCase):
+    """TestCase mixin class that adds JSON comparisons and golden expectation
+    handling."""
 
-    def load_golden(self, path: Union[str, Path]) -> JSON:
+    def load_golden(self, golden_path: Union[str, Path]) -> JSON:
         """Load the golden file `path` and return its contents.
 
         Args:
-            golden_filename: The name of the golden file to load. The file must
+            golden_path: The name of the golden file to load. The file must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines the input format.
 
         """
-        golden_path = Path(path)
+        golden_path = Path(golden_path)
 
         if ".json" in golden_path.suffixes:
             loader = functools.partial(json.load)
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         else:
-            raise ValueError(f"Unknown file extension {path}.")
+            raise ValueError(f"Unknown file extension {golden_path}.")
 
         if not golden_path.exists():
             raise FileNotFoundError(f"Golden file {golden_path} not found.")
@@ -186,22 +216,22 @@ class JSONTestCase(TestCase):
         with golden_path.open() as f:
             return loader(f)
 
-    def write_golden(self, path: Union[str, Path], data: JSON) -> None:
+    def write_golden(self, golden_path: Union[str, Path], data: JSON) -> None:
         """If writing golden file is enabled, write the golden file `path` with
         `data` and raise exception indicating so.
 
         If not writing golden file, does nothing.
 
         Args:
-            path: The path to the golden file to write. Format is determined by
-                suffix.
+            golden_path: The path to the golden file to write. Format is
+                determined by suffix.
 
             data: The data to write to the golden file.
         """
         if not self.writing_golden():
             return
 
-        golden_path = Path(path)
+        golden_path = Path(golden_path)
 
         if golden_path.suffix == ".json":
             writer = functools.partial(json.dump, indent=2, sort_keys=True)
@@ -213,7 +243,7 @@ class JSONTestCase(TestCase):
         with golden_path.open("w") as f:
             writer(data, f)
 
-        self.fail(f"Golden file {path} written.")
+        self.fail(f"Golden file {golden_path} written.")
 
     def writing_golden(self) -> bool:
         """Return whether the golden files are to be written."""
@@ -223,14 +253,14 @@ class JSONTestCase(TestCase):
     def assertGoldenJSONEqual(
         self,
         actual: JSON,
-        golden_filename: str,
+        golden_path: Union[Path, str],
         skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
         unordereds: Optional[Set[str]] = None,
         unordered: bool = False,
     ):
         """Assert equality between [JSON-like][trulens_eval.util.serial.JSON]
-        `actual` and the content of `golden_filename`.
+        `actual` and the content of `golden_path`.
 
         If the environment variable
         [WRITE_GOLDEN_VAR][trulens_eval.tests.unit.test.WRITE_GOLDEN_VAR] is
@@ -241,7 +271,7 @@ class JSONTestCase(TestCase):
         Args:
             actual: The actual JSON-like object produced by some test.
 
-            golden_filename: The name of the golden file to compare against that
+            golden_path: The path to the golden file to compare against that
                 stores the expected JSON-like results for the test. File must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines output format. This is in relation to the git base
@@ -272,11 +302,14 @@ class JSONTestCase(TestCase):
             AssertionError: If the golden file is written.
         """
 
+        if isinstance(golden_path, str):
+            golden_path = Path(golden_path)
+
         # Write golden and raise exception if writing golden is enabled.
-        self.write_golden(path=golden_filename, data=actual)
+        self.write_golden(golden_path=golden_path, data=actual)
 
         # Otherwise load the golden file and compare.
-        expected = self.load_golden(golden_filename)
+        expected = self.load_golden(golden_path)
 
         self.assertJSONEqual(
             actual,
@@ -440,3 +473,10 @@ class JSONTestCase(TestCase):
             raise RuntimeError(
                 f"Don't know how to compare objects of type {type(j1)} at {ps}."
             )
+
+
+class JSONTestCase(WithJSONTestCase, TestCase):
+    """TestCase subclass with JSON comparisons and test enable/disable flag
+    handling."""
+
+    pass

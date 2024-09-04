@@ -130,7 +130,6 @@ class SQLAlchemyDB(DB):
         cls,
         database_url: Optional[str] = None,
         database_engine: Optional[sa.Engine] = None,
-        database_file: Optional[str] = None,
         database_redact_keys: Optional[
             bool
         ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
@@ -143,26 +142,6 @@ class SQLAlchemyDB(DB):
         Emits warnings if appropriate.
         """
 
-        if None not in (database_url, database_file):
-            raise ValueError(
-                "Please specify at most one of `database_url` and `database_file`"
-            )
-
-        if database_file:
-            warnings.warn(
-                (
-                    "`database_file` is deprecated, "
-                    "use `database_url` instead as in `database_url='sqlite:///filename'."
-                ),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-
-        if database_url is None:
-            database_url = (
-                f"sqlite:///{database_file or mod_db.DEFAULT_DATABASE_FILE}"
-            )
-
         if "table_prefix" not in kwargs:
             kwargs["table_prefix"] = database_prefix
 
@@ -172,6 +151,8 @@ class SQLAlchemyDB(DB):
         if database_engine is not None:
             new_db: DB = SQLAlchemyDB.from_db_engine(database_engine, **kwargs)
         else:
+            if database_url is None:
+                database_url = f"sqlite:///{mod_db.DEFAULT_DATABASE_FILE}"
             new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
