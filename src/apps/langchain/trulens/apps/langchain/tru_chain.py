@@ -10,6 +10,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Sequence
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
+from langchain_core.runnables.base import Runnable
 from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
@@ -89,7 +90,7 @@ class LangChainInstrument(Instrument):
                     "ainvoke",
                     "stream",
                     "astream",
-                ): RunnableSerializable,
+                ): Runnable,
                 ("save_context", "clear"): BaseMemory,
                 (
                     "run",
@@ -104,8 +105,6 @@ class LangChainInstrument(Instrument):
                     "get_relevant_documents",
                     "aget_relevant_documents",
                     "_aget_relevant_documents",
-                    "invoke",
-                    "ainvoke",
                 ): RunnableSerializable,
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
@@ -219,7 +218,7 @@ class TruChain(mod_app.App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    app: Any  # Chain
+    app: Runnable
     """The langchain app to be instrumented."""
 
     # TODO: what if _acall is being used instead?
@@ -230,7 +229,7 @@ class TruChain(mod_app.App):
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Chain, **kwargs: dict):
+    def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
         # TruChain specific:
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)
@@ -284,6 +283,8 @@ class TruChain(mod_app.App):
             return retriever.invoke.rets[:].page_content
         if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
+
+        raise RuntimeError("Could not find a retriever component in app.")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
