@@ -1,4 +1,3 @@
-from collections import defaultdict
 from enum import Enum
 import operator
 from typing import Callable, List, NamedTuple, Optional
@@ -48,9 +47,9 @@ class CATEGORY:
         "FAIL": dict(color="#ffaaaaa6", icon="🛑"),
     }
 
-    PASS: defaultdict = defaultdict(dict)
-    FAIL: defaultdict = defaultdict(dict)
-    WARNING: defaultdict = defaultdict(dict)
+    PASS: dict[str, Category] = {}
+    FAIL: dict[str, Category] = {}
+    WARNING: dict[str, Category] = {}
 
     for direction in directions:
         a = sorted(

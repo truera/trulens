@@ -174,7 +174,7 @@ def render_app_version_filters(app_name: str):
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
-    col1, col2 = st.columns([0.8, 0.2], vertical_alignment="bottom")
+    col1, col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
     if version_str_query := col1.text_input("Search App Version", key="search"):
         filtered_app_versions = filtered_app_versions[
             filtered_app_versions["app_version"].str.contains(
@@ -182,7 +182,7 @@ def render_app_version_filters(app_name: str):
             )
         ]
 
-    with col2.popover("Advanced Filters"):
+    with col2.popover("Advanced Filters", use_container_width=True):
         # get tag options
         st.header("Advanced Filters")
         tags = set()
@@ -225,8 +225,7 @@ def render_app_version_filters(app_name: str):
                 lambda x: any(tag in x for tag in selected_tags)
             )
         ]
-
-    st.markdown(
-        f":blue-background[Got {len(filtered_app_versions)} App Versions]"
-    )
+    # st.markdown(
+    #     f":blue-background[Got {len(filtered_app_versions)} App Versions]"
+    # )
     return filtered_app_versions, app_version_metadata_cols

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
@@ -14,11 +14,15 @@ from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
 
-set_page_config(page_title="Records")
+set_page_config(page_title="Compare")
 render_sidebar()
 app_name = st.session_state[ST_APP_NAME]
 
-n_comparators = 2
+MAX_COMPARATORS = 5
+MIN_COMPARATORS = 2
+
+if st.session_state.get("compare.n_comparators", None) is None:
+    st.session_state["compare.n_comparators"] = 2
 
 
 def _preprocess_df(records_df: pd.DataFrame) -> pd.DataFrame:
@@ -46,7 +50,9 @@ def _render_feedback_results(
     st.subheader("Feedback results")
 
     if feedback_col := _render_feedback_pills(
-        feedback_col_names, selected_row, feedback_directions
+        feedback_col_names=feedback_col_names,
+        selected_row=selected_row,
+        feedback_directions=feedback_directions,
     ):
         _render_feedback_call(feedback_col, selected_row, feedback_directions)
 
@@ -101,14 +107,51 @@ def _compute_feedback_means(
     # return mean_feedback_values
 
 
+def _render_all_app_feedback_plot(
+    col_data: Dict[str, Dict[str, pd.DataFrame]], feedback_cols: List[str]
+):
+    ff_dfs = []
+    for _, data in col_data.items():
+        app_df = data["records"]
+        df = app_df[feedback_cols].mean(axis=0)
+        df["app_version"] = data["version"]
+        ff_dfs.append(df)
+
+    df = pd.concat(ff_dfs, axis=1).T.set_index("app_version").T
+    chart_tab, df_tab = st.tabs(["Graph", "DataFrame"])
+    df_tab.dataframe(df)
+
+    chart_tab.bar_chart(
+        df,
+        horizontal=True,
+        use_container_width=True,
+        stack=False,
+    )
+
+
+def _render_app_feedback_plot(app_df: pd.DataFrame, feedback_cols: List[str]):
+    df = app_df[feedback_cols].mean(axis=0)
+    st.bar_chart(df, horizontal=True, use_container_width=True)
+
+
 def _render_app_feedback_means(
     app_id: str,
     feedback_means: Dict[str, float],
     feedback_cols: List[str],
     col_data: Dict[str, Dict[str, pd.DataFrame]],
     feedback_directions: Dict[str, bool],
-    default_n_cols: int = 4,
+    default_n_cols: Optional[int] = None,
 ):
+    if len(feedback_cols) == 0:
+        st.info("No shared feedback functions.")
+        return
+
+    if default_n_cols is None:
+        n_comparators = st.session_state.get("compare.n_comparators", 2)
+        if n_comparators > 3:
+            default_n_cols = 2
+        else:
+            default_n_cols = 4
     n_cols = min(default_n_cols, len(feedback_cols))
     cols = st.columns(n_cols)
     for i, feedback_col_name in enumerate(feedback_cols):
@@ -130,11 +173,9 @@ def _render_app_feedback_means(
                 )
 
 
-@st.fragment
-def _render_shared(
+def _render_shared_records(
     col_data: Dict[str, Dict[str, pd.DataFrame]],
     feedback_cols: List[str],
-    versions_df: pd.DataFrame,
 ):
     query_col = None
     cols = ["input"] + feedback_cols
@@ -170,7 +211,11 @@ def _render_shared(
     query_col = query_col.set_index("input")
 
     st.write(query_col[diff_cols])
-    selection = st.selectbox("Select record", query_col.index)
+
+    selection = st.selectbox(
+        "Select record",
+        query_col.index,
+    )
     return selection
 
 
@@ -186,10 +231,11 @@ def _handle_app_version_search_params(i: int):
 def _version_selectors(
     versions_df: pd.DataFrame,
     versions: list[str],
-    dropdown_cols: List[DeltaGenerator],
+    app_selector_cols: List[DeltaGenerator],
 ):
     col_data = {}
     app_ids = []
+    n_comparators = st.session_state["compare.n_comparators"]
     for i in range(n_comparators):
         app_id = st.query_params.get(f"app_version_{i}", None)
         if app_id and app_id in versions_df["app_id"].values:
@@ -202,7 +248,7 @@ def _version_selectors(
             app_id = versions_df.iloc[idx]["app_id"]
             version = versions_df.iloc[idx]["app_version"]
 
-        version = dropdown_cols[i].selectbox(
+        version = app_selector_cols[i].selectbox(
             f"App Version {i}",
             key=f"compare_app_version_{i}",
             options=versions,
@@ -220,11 +266,34 @@ def _version_selectors(
                 "records": _preprocess_df(records),
                 "feedback_cols": feedback_cols,
             }
+
+    def _increment_comparators():
+        if n_comparators < MAX_COMPARATORS:
+            st.session_state["compare.n_comparators"] = n_comparators + 1
+
+    def _decrement_comparators():
+        if n_comparators > MIN_COMPARATORS:
+            st.session_state["compare.n_comparators"] = n_comparators - 1
+
+    app_selector_cols[-1].button(
+        "➕",
+        disabled=n_comparators >= MAX_COMPARATORS,
+        key="add_comparator",
+        on_click=_increment_comparators,
+    )
+
+    app_selector_cols[-1].button(
+        "➖",
+        disabled=n_comparators <= MIN_COMPARATORS,
+        key="remove_comparator",
+        on_click=_decrement_comparators,
+    )
+
     return col_data, app_ids
 
 
 def render_app_comparison():
-    st.title("Records")
+    st.title("Compare")
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
@@ -235,51 +304,79 @@ def render_app_comparison():
         st.write("No versions available for this app.")
         return
 
-    dropdown_cols = st.columns(n_comparators, gap="large")
-    shared_cont = st.container()
-    feedback_compare_cols = st.columns(n_comparators, gap="large")
-    trace_compare_cols = st.columns(n_comparators, gap="large")
+    n_comparators = st.session_state["compare.n_comparators"]
+
+    # Layout
+    app_selector_cols = st.columns(
+        [4] * n_comparators + [1], gap="large", vertical_alignment="top"
+    )
+    app_feedback_container = st.container()
+    st.divider()
+    record_selector_container = st.container()
+    record_feedback_graph_container = st.container()
+    record_feedback_selector_container = st.container()
+    trace_viewer_container = st.container()
+
     versions = versions_df["app_version"].tolist()
 
-    col_data, app_ids = _version_selectors(versions_df, versions, dropdown_cols)
-    feedback_cols = _feedback_cols_intersect(col_data)
+    col_data, app_ids = _version_selectors(
+        versions_df, versions, app_selector_cols
+    )
+    feedback_col_names = _feedback_cols_intersect(col_data)
 
     _, feedback_directions = get_feedback_defs()
-    feedback_means = _compute_feedback_means(feedback_cols, col_data)
 
-    for i, app_id in enumerate(app_ids):
-        with dropdown_cols[i]:
-            _render_app_feedback_means(
-                app_id=app_id,
-                feedback_means=feedback_means,
-                feedback_cols=feedback_cols,
-                feedback_directions=feedback_directions,
-                col_data=col_data,
-            )
+    with app_feedback_container:
+        app_feedback_container.header("Shared Feedback Functions")
+        _render_all_app_feedback_plot(col_data, feedback_col_names)
 
-    with shared_cont:
-        if selected_input := _render_shared(
-            col_data, feedback_cols, versions_df
+    with record_selector_container:
+        record_selector_container.header("Shared Records")
+        selected_input = _render_shared_records(col_data, feedback_col_names)
+
+    if selected_input is None:
+        return
+
+    record_data = {
+        app_id: {
+            **data,
+            "records": data["records"][
+                data["records"]["input"] == selected_input
+            ],
+        }
+        for app_id, data in col_data.items()
+    }
+    with record_feedback_graph_container:
+        _render_all_app_feedback_plot(record_data, feedback_col_names)
+
+    with record_feedback_selector_container:
+        if selected_ff := _render_feedback_pills(
+            feedback_col_names=feedback_col_names,
+            feedback_directions=feedback_directions,
+            key_prefix="shared",
         ):
+            feedback_selector_cols = record_feedback_selector_container.columns(
+                n_comparators
+            )
             for i, app_id in enumerate(app_ids):
-                with feedback_compare_cols[i]:
-                    _render_feedback_results(
-                        selected_input,
-                        col_data=col_data[app_id],
-                        versions_df=versions_df,
-                        feedback_directions=feedback_directions,
-                        app_id=app_id,
+                with feedback_selector_cols[i]:
+                    record_df = record_data[app_id]["records"]
+                    selected_row = record_df.iloc[0]
+                    _render_feedback_call(
+                        selected_ff, selected_row, feedback_directions
                     )
 
-            st.divider()
-
-            for i in range(n_comparators):
-                with trace_compare_cols[i]:
-                    _render_trace_details(
-                        col_data=col_data[app_ids[i]],
-                        selected_input=selected_input,
-                        app_id=app_ids[i],
-                    )
+    with trace_viewer_container:
+        trace_cols = trace_viewer_container.columns(n_comparators)
+        for i, app_id in enumerate(app_ids):
+            with trace_cols[i]:
+                record_df = record_data[app_id]["records"]
+                selected_row = record_df.iloc[0]
+                record_viewer(
+                    json.loads(selected_row["record_json"]),
+                    json.loads(selected_row["app_json"]),
+                    key=f"compare_{app_id}",
+                )
 
 
 if __name__ == "__main__":

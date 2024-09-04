@@ -1,6 +1,7 @@
+import hashlib
 import pprint as pp
 import re
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
@@ -120,6 +121,7 @@ def display_feedback_call(
         st.dataframe(
             df.style.apply(highlight, axis=1),
             hide_index=True,
+            use_container_width=True,
         )
     else:
         st.text("No feedback details.")
@@ -127,39 +129,54 @@ def display_feedback_call(
 
 def _render_feedback_pills(
     feedback_col_names: Sequence[str],
-    selected_row: pd.Series,
     feedback_directions: Dict[str, bool],
+    selected_row: Optional[pd.Series] = None,
+    key_prefix: str = "",
 ):
     if len(feedback_col_names) == 0:
         st.write("No feedback details")
         return
-    feedback_with_valid_results = sorted(
-        list(
-            filter(
-                lambda fcol: selected_row[fcol] is not None, feedback_col_names
+
+    if selected_row is not None:
+
+        def get_icon(feedback_name: str):
+            cat = CATEGORY.of_score(
+                selected_row[feedback_name],
+                higher_is_better=feedback_directions.get(feedback_name, True),
             )
-        )
-    )
+            return cat.icon
 
-    def get_icon(feedback_name: str):
-        cat = CATEGORY.of_score(
-            selected_row[feedback_name],
-            higher_is_better=feedback_directions.get(feedback_name, True),
-        )
-        return cat.icon
+        feedback_with_valid_results = sorted([
+            fcol
+            for fcol in feedback_col_names
+            if fcol in selected_row and selected_row[fcol] is not None
+        ])
 
-    icons = list(map(lambda fcol: get_icon(fcol), feedback_with_valid_results))
+        icons = [get_icon(fcol) for fcol in feedback_with_valid_results]
+    else:
+        feedback_with_valid_results = feedback_col_names
 
     if len(feedback_with_valid_results) == 0:
         st.write("No feedback functions found.")
         return
 
+    hash = hashlib.md5(str(feedback_with_valid_results).encode()).hexdigest()
+    if selected_row is None:
+        return pills(
+            "Feedback Functions (click to learn more)",
+            feedback_with_valid_results,
+            index=None,
+            format_func=lambda fcol: f"{fcol}",
+            key=f"{key_prefix}_pills_{hash}",
+        )
+
     return pills(
-        "Feedback functions (click on a pill to learn more)",
+        "Feedback Functions (click to learn more)",
         feedback_with_valid_results,
         index=None,
         format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
         icons=icons,
+        key=f"{key_prefix}pills_{selected_row['app_id']}",
     )
 
 
