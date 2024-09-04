@@ -1,8 +1,9 @@
 import json
 from typing import Dict, List, Optional, Sequence
 
-import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import ColumnsAutoSizeMode
@@ -279,36 +280,32 @@ def _render_grid_tab(
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     cols = 4
     rows = len(feedback_col_names) // cols + 1
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)
 
-    for row_num in range(rows):
-        with st.container():
-            columns = st.columns(cols)
-            for col_num in range(cols):
-                with columns[col_num]:
-                    ind = row_num * cols + col_num
-                    if ind < len(feedback_col_names):
-                        # Generate histogram
-                        fig, ax = plt.subplots()
-                        bins = [
-                            0,
-                            0.2,
-                            0.4,
-                            0.6,
-                            0.8,
-                            1.0,
-                        ]  # Quintile buckets
+    for i, feedback_col_name in enumerate(feedback_col_names):
+        row_num = i // cols + 1
+        col_num = i % cols + 1
+        _df = df[feedback_col_name].dropna()
 
-                        _df = df[feedback_col_names[ind]].dropna()
-                        ax.hist(
-                            _df,
-                            bins=bins,
-                            edgecolor="black",
-                            color="#2D736D",
-                        )
-                        ax.set_xlabel("Feedback Value")
-                        ax.set_ylabel("Frequency")
-                        ax.set_title(feedback_col_names[ind], loc="center")
-                        st.pyplot(fig)
+        plot = go.Histogram(
+            x=_df,
+            xbins={
+                "size": 0.2,
+                "start": 0,
+                "end": 1.0,
+            },
+            histfunc="count",
+            texttemplate="%{y}",
+        )
+        fig.add_trace(
+            plot,
+            row=row_num,
+            col=col_num,
+        )
+    fig.update_layout(height=1200, width=1000, dragmode=False)
+    fig.update_yaxes(fixedrange=True)
+    fig.update_xaxes(fixedrange=True, range=[0, 1])
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def render_records():
@@ -352,7 +349,7 @@ def render_records():
     )
     _, feedback_directions = get_feedback_defs()
 
-    grid_tab, plot_tab = st.tabs(["Grid", "Plot"])
+    grid_tab, plot_tab = st.tabs(["Records", "Feedback Distribution"])
     with grid_tab:
         _render_grid_tab(
             df,

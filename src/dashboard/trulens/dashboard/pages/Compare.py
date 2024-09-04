@@ -2,6 +2,7 @@ import json
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from trulens.dashboard.components.record_viewer import record_viewer
@@ -114,18 +115,34 @@ def _render_all_app_feedback_plot(
     for _, data in col_data.items():
         app_df = data["records"]
         df = app_df[feedback_cols].mean(axis=0)
-        df["app_version"] = data["version"]
+        df["App Version"] = data["version"]
         ff_dfs.append(df)
 
-    df = pd.concat(ff_dfs, axis=1).T.set_index("app_version").T
+    df = pd.concat(ff_dfs, axis=1).T
     chart_tab, df_tab = st.tabs(["Graph", "DataFrame"])
-    df_tab.dataframe(df)
 
-    chart_tab.bar_chart(
-        df,
-        horizontal=True,
-        use_container_width=True,
-        stack=False,
+    df_tab.dataframe(df.set_index("App Version").T)
+
+    df = df.melt(
+        id_vars="App Version",
+        var_name="Feedback Function Name",
+        value_name="Feedback Function Values",
+    )
+    fig = px.histogram(
+        data_frame=df,
+        x="Feedback Function Name",
+        y="Feedback Function Values",
+        color="App Version",
+        barmode="group",
+        histfunc="avg",
+    )
+    fig.update_layout(dragmode=False)
+
+    fig.update_yaxes(fixedrange=True, range=[0, 1])
+    fig.update_xaxes(fixedrange=True)
+
+    chart_tab.plotly_chart(
+        fig,
     )
 
 
