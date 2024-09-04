@@ -1,5 +1,4 @@
-"""
-# Instrumentation
+"""Instrumentation
 
 This module contains the core of the app instrumentation scheme employed by
 trulens to track and record apps. These details should not be relevant for
@@ -544,7 +543,8 @@ class Instrument:
                 for k, v in (
                     bindings.arguments.items() if bindings is not None else {}
                 )
-                if k != "self"
+                if k
+                not in ["self", "_self"]  # llama_index uses "_self" sometimes
             }
 
             records = {}

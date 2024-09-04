@@ -895,7 +895,11 @@ class App(
             )
 
         # ignore self
-        all_args = list(v for k, v in bindings.arguments.items() if k != "self")
+        all_args = list(
+            v
+            for k, v in bindings.arguments.items()
+            if k not in ["self", "_self"]
+        )  # llama_index is using "_self" in some places
 
         # If there is only one string arg, it is a pretty good guess that it is
         # the main input.

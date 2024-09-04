@@ -18,6 +18,7 @@ from tests.test import async_test
 from tests.test import optional_test
 
 
+@optional_test  # all tests are optional as langchain is optional
 class TestTruChain(JSONTestCase):
     """Test TruChain apps."""
 
@@ -92,9 +93,7 @@ class TestTruChain(JSONTestCase):
             with self.subTest(cost_field=field):
                 self.assertGreater(getattr(cost, field), 0)
 
-    @optional_test
-    @async_test
-    async def test_sync(self):
+    def test_sync(self):
         """Synchronous (`invoke`) test."""
 
         chain, recorder = self._create_basic_chain(streaming=False)
@@ -102,7 +101,7 @@ class TestTruChain(JSONTestCase):
         message, expected_answers = self._get_question_and_answers(0)
 
         with recorder as recording:
-            result = await chain.ainvoke(input=dict(question=message))
+            result = chain.invoke(input=dict(question=message))
 
         record = recording.get()
 
@@ -110,7 +109,6 @@ class TestTruChain(JSONTestCase):
 
         self._check_generation_costs(record.cost)
 
-    @optional_test
     @async_test
     async def test_async(self):
         """Asyncronous (`ainvoke`) test."""
@@ -128,7 +126,6 @@ class TestTruChain(JSONTestCase):
 
         self._check_generation_costs(record.cost)
 
-    @optional_test
     def test_sync_stream(self):
         """Syncronous stream (`stream`) test."""
 
@@ -147,7 +144,6 @@ class TestTruChain(JSONTestCase):
 
         self._check_stream_generation_costs(record.cost)
 
-    @optional_test
     @async_test
     async def test_async_stream(self):
         """Asyncronous stream (`astream`) test."""
@@ -167,7 +163,6 @@ class TestTruChain(JSONTestCase):
 
         self._check_stream_generation_costs(record.cost)
 
-    @optional_test
     def test_record_metadata_plain(self):
         """Test inclusion of metadata in records."""
 
@@ -220,7 +215,6 @@ class TestTruChain(JSONTestCase):
         rec = Record.model_validate_json(recs.iloc[1].record_json)
         self.assertEqual(rec.meta, new_meta)
 
-    @optional_test
     def test_record_metadata_json(self):
         """Test inclusion of json metadata in records."""
 

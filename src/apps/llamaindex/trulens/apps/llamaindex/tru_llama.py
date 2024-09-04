@@ -14,6 +14,7 @@ from trulens.apps.langchain import LangChainInstrument
 from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
+from trulens.core.utils import python as python_utils
 
 # TODO: Do we need to depend on this?
 from trulens.core.utils.containers import dict_set_with_multikey
@@ -46,6 +47,7 @@ if not legacy:
     from llama_index.core.base.embeddings.base import BaseEmbedding
     from llama_index.core.base.llms.base import BaseLLM
     from llama_index.core.base.llms.types import LLMMetadata
+    from llama_index.core.base.response.schema import AsyncStreamingResponse
     from llama_index.core.base.response.schema import Response
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
@@ -358,7 +360,14 @@ class TruLlama(mod_app.App):
             attr = self._main_output_attribute(ret)
 
             if attr is not None:
-                return getattr(ret, attr)
+                val = getattr(ret, attr)
+                if val is None and "txt" in attr:
+                    return (
+                        f"TruLens: this app produced a streaming response of type {python_utils.class_name(type(ret))}. "
+                        "The main output will not be available in TruLens."
+                    )
+                return val
+
             else:  # attr is None
                 return mod_app.App.main_output(self, func, sig, bindings, ret)
 
@@ -376,12 +385,15 @@ class TruLlama(mod_app.App):
         elif isinstance(ret, AgentChatResponse):  #  chat, achat
             return "response"
 
-        elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
-            raise NotImplementedError(
-                "App produced a streaming response. "
-                "Tracking content of streams in llama_index is not yet supported. "
-                "App main_output will be None."
-            )
+        elif isinstance(
+            ret,
+            (
+                StreamingResponse,
+                StreamingAgentChatResponse,
+                AsyncStreamingResponse,
+            ),
+        ):
+            return "response_txt"  # note that this is only available after the stream has been iterated over
 
         return None
 
