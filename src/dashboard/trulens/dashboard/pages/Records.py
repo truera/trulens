@@ -299,7 +299,7 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             row=row_num,
             col=col_num,
         )
-    fig.update_layout(height=1200, width=1000, dragmode=False)
+    fig.update_layout(height=250 * rows, width=250 * cols, dragmode=False)
     fig.update_yaxes(fixedrange=True)
     fig.update_xaxes(fixedrange=True, range=[0, 1])
     st.plotly_chart(fig, use_container_width=True)
@@ -314,6 +314,14 @@ def render_records():
     versions_df, version_metadata_col_names = render_app_version_filters(
         app_name
     )
+
+    if app_ids := st.session_state.get("records.app_ids", None):
+        # Reading session state from other pages
+        ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
+        st.info(f"Filtering with App IDs: {ids_str}")
+        versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
+        st.session_state["records.app_ids"] = None
+
     st.divider()
 
     if versions_df.empty:

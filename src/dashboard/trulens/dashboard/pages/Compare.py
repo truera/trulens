@@ -242,6 +242,15 @@ def render_app_comparison():
         st.warning("No versions available for this app.")
         return
 
+    if app_ids := st.session_state.get("compare.app_ids", None):
+        # Reading session state from other pages
+        ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
+        st.info(f"Filtering with App IDs: {ids_str}")
+        versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
+
+        st.session_state["compare.n_comparators"] = len(app_ids)
+        st.session_state["compare.app_ids"] = None
+
     n_comparators = st.session_state["compare.n_comparators"]
 
     # Layout

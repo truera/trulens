@@ -6,6 +6,8 @@ from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from trulens.core.utils.text import format_quantity
+from trulens.dashboard.pages.Compare import MAX_COMPARATORS
+from trulens.dashboard.pages.Compare import MIN_COMPARATORS
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
@@ -261,23 +263,30 @@ def _render_grid_tab(
         st.rerun()
 
     # Examine Records
-    c3.page_link(
-        "pages/Records.py",
-        icon="🔍",
-        label="Examine Records",
+    if c3.button(
+        "Examine Records",
         disabled=selected_rows.empty,
         use_container_width=True,
-    )
+    ):
+        st.session_state["records.app_ids"] = selected_app_ids
+        st.switch_page("pages/Records.py")
     # Compare App Versions
-    c4.page_link(
-        "pages/Compare.py",
-        icon="⚖️",
-        label="Compare"
-        if len(selected_app_ids) == 2
-        else "Select 2 Apps to Compare",
-        disabled=len(selected_app_ids) != 2,
+    if len(selected_app_ids) < MIN_COMPARATORS:
+        _compare_button_label = f"Min {MIN_COMPARATORS} Apps"
+        _compare_button_disabled = True
+    elif len(selected_app_ids) > MAX_COMPARATORS:
+        _compare_button_label = f"Max {MAX_COMPARATORS} Apps"
+        _compare_button_disabled = True
+    else:
+        _compare_button_label = "Compare"
+        _compare_button_disabled = False
+    if c4.button(
+        _compare_button_label,
+        disabled=_compare_button_disabled,
         use_container_width=True,
-    )
+    ):
+        st.session_state["compare.app_ids"] = selected_app_ids
+        st.switch_page("pages/Compare.py")
 
 
 @st.fragment
