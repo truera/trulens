@@ -319,7 +319,6 @@ def render_app_comparison(app_name: str):
 
     # Get app versions
     versions_df, _ = render_app_version_filters(app_name)
-    st.divider()
 
     global MAX_COMPARATORS
     MAX_COMPARATORS = min(MAX_COMPARATORS, len(versions_df))
@@ -335,6 +334,7 @@ def render_app_comparison(app_name: str):
     # get app version and record data
 
     col_data, selected_app_ids = _version_selectors(versions_df)
+    st.divider()
     feedback_col_names = _feedback_cols_intersect(col_data)
     _, feedback_directions = get_feedback_defs()
 
