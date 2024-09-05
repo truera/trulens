@@ -19,15 +19,13 @@ from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
 
 page_name = "Compare"
-set_page_config(page_title=page_name)
-app_name = render_sidebar()
 
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
 DEFAULT_COMPARATORS = MIN_COMPARATORS
 
 
-def init_page_state():
+def init_page_state(app_name: str):
     if st.session_state.get(f"{page_name}.initialized", False):
         return
 
@@ -212,7 +210,7 @@ def _version_selectors(
             versions_df, app_version=new_app_version
         )["app_id"]
         if new_app_id in selected_app_ids:
-            st.error("Cannot compare App Version with itself.")
+            st.error("Cannot compare an app version with itself.")
             prev_app_id = selected_app_ids[idx]
             prev_app_version = _lookup_app_version(
                 versions_df, app_id=prev_app_id
@@ -301,7 +299,7 @@ def _version_selectors(
     return col_data, selected_app_ids
 
 
-def render_app_comparison():
+def render_app_comparison(app_name: str):
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
@@ -313,7 +311,7 @@ def render_app_comparison():
     MAX_COMPARATORS = min(MAX_COMPARATORS, len(versions_df))
 
     if versions_df.empty:
-        st.error("No versions available for this app.")
+        st.error(f"No app versions available for app `{app_name}`.")
         return
     elif len(versions_df) < MIN_COMPARATORS:
         st.error(
@@ -390,6 +388,8 @@ def render_app_comparison():
 
 
 if __name__ == "__main__":
+    set_page_config(page_title=page_name)
+    app_name = render_sidebar()
     if app_name:
-        init_page_state()
-        render_app_comparison()
+        init_page_state(app_name)
+        render_app_comparison(app_name)

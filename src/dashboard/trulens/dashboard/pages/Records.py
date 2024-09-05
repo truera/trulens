@@ -27,18 +27,21 @@ from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
 
 page_name = "Records"
-set_page_config(page_title=page_name)
-app_name = render_sidebar()
 
 
-def init_page_state():
+def init_page_state(app_name: str):
     if st.session_state.get(f"{page_name}.initialized", False):
         return
 
     if app_name:
         add_query_param(ST_APP_NAME, app_name)
 
-    read_query_params_into_session_state(page_name=page_name)
+    read_query_params_into_session_state(
+        page_name=page_name,
+        transforms={
+            "app_ids": lambda x: x.split(","),
+        },
+    )
 
     app_ids: Optional[List[str]] = st.session_state.get(
         f"{page_name}.app_ids", None
@@ -50,7 +53,7 @@ def init_page_state():
 
 
 def _render_record_metrics(
-    records_df: pd.DataFrame, selected_row: pd.DataFrame
+    records_df: pd.DataFrame, selected_row: pd.Series
 ) -> None:
     """Render record level metrics (e.g. total tokens, cost, latency) compared
     to the average when appropriate."""
@@ -287,7 +290,7 @@ def _render_grid_tab(
     selected_rows = grid_data.selected_rows
     if selected_rows is None or len(selected_rows) == 0:
         st.info(
-            "No record selected. Click a record's checkbox to view details.",
+            "Click a record's checkbox to view details.",
             icon="ℹ️",
         )
         return
@@ -327,7 +330,30 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def render_records():
+def _reset_app_ids():
+    del st.session_state[f"{page_name}.app_ids"]
+    st.query_params.pop("app_ids")
+
+
+def _render_app_id_args_filter(versions_df: pd.DataFrame):
+    if app_ids := st.session_state.get(f"{page_name}.app_ids", None):
+        # Reading session state from other pages
+        ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
+        info_col, show_all_col = st.columns(
+            [0.9, 0.1], vertical_alignment="center"
+        )
+        info_col.info(f"Filtering with App IDs: {ids_str}")
+        versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
+
+        show_all_col.button(
+            "Show All", use_container_width=True, on_click=_reset_app_ids
+        )
+        if not st.query_params.get("app_ids", None):
+            st.query_params["app_ids"] = ",".join(app_ids)
+    return versions_df
+
+
+def render_records(app_name: str):
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
@@ -337,17 +363,12 @@ def render_records():
         app_name
     )
 
-    if app_ids := st.session_state.get(f"{page_name}.app_ids", None):
-        # Reading session state from other pages
-        ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
-        st.info(f"Filtering with App IDs: {ids_str}")
-        versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
-        st.session_state[f"{page_name}.app_ids"] = None
-
     st.divider()
 
+    versions_df = _render_app_id_args_filter(versions_df)
+
     if versions_df.empty:
-        st.warning("No versions available for this app.")
+        st.error(f"No app versions found for app `{app_name}`.")
         return
     app_ids = versions_df["app_id"].tolist()
 
@@ -356,7 +377,7 @@ def render_records():
         app_ids, limit=1000
     )
     if records_df.empty:
-        st.warning("No records available for this app.")
+        st.error(f"No records found for app `{app_name}`.")
         return
     elif len(records_df) == 1000:
         st.info(
@@ -388,6 +409,8 @@ def render_records():
 
 
 if __name__ == "__main__":
+    set_page_config(page_title=page_name)
+    app_name = render_sidebar()
     if app_name:
-        init_page_state()
-        render_records()
+        init_page_state(app_name)
+        render_records(app_name)

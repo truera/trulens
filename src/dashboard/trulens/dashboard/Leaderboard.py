@@ -30,14 +30,12 @@ from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import stmetricdelta_hidearrow
 
 page_name = "Leaderboard"
-set_page_config(page_title=page_name)
-app_name = render_sidebar()
 
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
 
 
-def init_page_state():
+def init_page_state(app_name: str):
     if st.session_state.get(f"{page_name}.initialized", False):
         return
 
@@ -245,8 +243,9 @@ def _render_grid_tab(
         if "_leaderboard.pinned" in df:
             df = df[df["_leaderboard.pinned"]]
         else:
-            st.warning(
-                "No App Versions have been pinned. To pin, select an App Version and click the `Pin` button."
+            st.info(
+                "Pin an app version by selecting it and clicking the `Pin` button.",
+                icon="📌",
             )
     st.query_params["show_pinned"] = str(show_pinned)
 
@@ -261,7 +260,7 @@ def _render_grid_tab(
     selected_rows = pd.DataFrame(selected_rows)
 
     if selected_rows.empty:
-        st.info("No Apps selected. Choose an row to view details.")
+        st.info("Click an App Version's checkbox to view details.")
         selected_app_ids = []
     else:
         selected_app_ids = list(selected_rows.app_id.unique())
@@ -441,7 +440,7 @@ def _render_list_tab(
         st.markdown("""---""")
 
 
-def render_leaderboard():
+def render_leaderboard(app_name: str):
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
@@ -452,7 +451,7 @@ def render_leaderboard():
     st.divider()
 
     if versions_df.empty:
-        st.warning("No versions available for this app.")
+        st.error(f"No app versions found for app `{app_name}`.")
         return
     app_ids = versions_df["app_id"].tolist()
 
@@ -461,7 +460,7 @@ def render_leaderboard():
         app_ids, limit=1000
     )
     if records_df.empty:
-        st.warning("No data available for this app.")
+        st.error(f"No records found for app `{app_name}`.")
         return
     elif len(records_df) == 1000:
         st.info(
@@ -501,6 +500,8 @@ def render_leaderboard():
 
 
 if __name__ == "__main__":
+    set_page_config(page_title=page_name)
+    app_name = render_sidebar()
     if app_name:
-        init_page_state()
-        render_leaderboard()
+        init_page_state(app_name)
+        render_leaderboard(app_name)

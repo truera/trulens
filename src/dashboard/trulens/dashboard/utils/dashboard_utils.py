@@ -20,7 +20,7 @@ ST_APP_ID = "app_id"
 def set_page_config(page_title: Optional[str] = None):
     page_title = f"TruLens: {page_title}" if page_title else "TruLens"
     st.set_page_config(
-        page_title=f"TruLens: {page_title}",
+        page_title=page_title,
         page_icon="https://www.trulens.org/img/favicon.ico",
         layout="wide",
     )

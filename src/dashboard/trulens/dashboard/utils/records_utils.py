@@ -124,7 +124,7 @@ def display_feedback_call(
             use_container_width=True,
         )
     else:
-        st.text("No feedback details.")
+        st.warning("No feedback details found.")
 
 
 def _render_feedback_pills(
@@ -134,7 +134,7 @@ def _render_feedback_pills(
     key_prefix: str = "",
 ):
     if len(feedback_col_names) == 0:
-        st.warning("No feedback details")
+        st.warning("No feedback details found.")
         return
 
     if selected_row is not None:
