@@ -77,10 +77,8 @@ def run_dashboard(
     if not os.path.exists(config_path):
         with open(config_path, "w") as f:
             f.write("[theme]\n")
-            f.write('primaryColor="#0A2C37"\n')
-            f.write('backgroundColor="#FFFFFF"\n')
-            f.write('secondaryBackgroundColor="F5F5F5"\n')
-            f.write('textColor="#0A2C37"\n')
+            f.write('base="dark"\n')
+            f.write('primaryColor="#E0735C"\n')
             f.write('font="sans serif"\n')
     else:
         print("Config file already exists. Skipping writing process.")
