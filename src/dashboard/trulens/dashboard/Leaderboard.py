@@ -8,7 +8,10 @@ import streamlit as st
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.pages.Compare import MAX_COMPARATORS
 from trulens.dashboard.pages.Compare import MIN_COMPARATORS
+from trulens.dashboard.pages.Compare import page_name as compare_page_name
+from trulens.dashboard.pages.Records import page_name as records_page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
+from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import (
@@ -28,15 +31,27 @@ from trulens.dashboard.ux.styles import stmetricdelta_hidearrow
 
 page_name = "Leaderboard"
 set_page_config(page_title=page_name)
-render_sidebar()
-app_name = st.session_state[ST_APP_NAME]
+app_name = render_sidebar()
 
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
 
 
-def read_query_params():
-    read_query_params_into_session_state(page_name=page_name)
+def init_page_state():
+    if st.session_state.get(f"{page_name}.initialized", False):
+        return
+
+    if app_name:
+        add_query_param(ST_APP_NAME, app_name)
+
+    read_query_params_into_session_state(
+        page_name=page_name,
+        transforms={
+            "metadata_to_front": lambda x: x == "True",
+            "show_pinned": lambda x: x == "True",
+        },
+    )
+    st.session_state[f"{page_name}.initialized"] = True
 
 
 def _preprocess_df(
@@ -203,10 +218,7 @@ def _render_grid_tab(
     if metadata_to_front := c1.toggle(
         "Metadata to Front",
         key=f"{grid_key}_metadata_toggle",
-        value=(
-            st.session_state.get(f"{page_name}.metadata_to_front", None)
-            == "True"
-        ),
+        value=st.session_state.get(f"{page_name}.metadata_to_front", False),
     ):
         df = order_columns(
             df,
@@ -228,7 +240,7 @@ def _render_grid_tab(
     if show_pinned := c1.toggle(
         "Show Pinned",
         key=f"{grid_key}_pinned_toggle",
-        value=st.session_state.get(f"{page_name}.show_pinned", None) == "True",
+        value=st.session_state.get(f"{page_name}.show_pinned", False),
     ):
         if "_leaderboard.pinned" in df:
             df = df[df["_leaderboard.pinned"]]
@@ -286,7 +298,7 @@ def _render_grid_tab(
         disabled=selected_rows.empty,
         use_container_width=True,
     ):
-        st.session_state["Records.app_ids"] = selected_app_ids
+        st.session_state[f"{records_page_name}.app_ids"] = selected_app_ids
         st.switch_page("pages/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < MIN_COMPARATORS:
@@ -303,7 +315,7 @@ def _render_grid_tab(
         disabled=_compare_button_disabled,
         use_container_width=True,
     ):
-        st.session_state["Compare.app_ids"] = selected_app_ids
+        st.session_state[f"{compare_page_name}.app_ids"] = selected_app_ids
         st.switch_page("pages/Compare.py")
 
 
@@ -322,10 +334,7 @@ def _render_list_tab(
     for _, app_row in df.iterrows():
         app_id = app_row["app_id"]
         app_version = app_row["app_version"]
-        # app_name = app_row["app_name"]
-        # app_name_version = f"{app_name} - {app_version}"
         tags = app_row["tags"]
-        # st.text('Metadata' + str(metadata))
         metadata = {
             col: app_row[col]
             for col in version_metadata_col_names
@@ -433,7 +442,7 @@ def _render_list_tab(
 
 
 def render_leaderboard():
-    st.title("Leaderboard")
+    st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
@@ -492,5 +501,6 @@ def render_leaderboard():
 
 
 if __name__ == "__main__":
-    read_query_params()
-    render_leaderboard()
+    if app_name:
+        init_page_state()
+        render_leaderboard()

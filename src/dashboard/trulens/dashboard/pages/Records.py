@@ -11,8 +11,12 @@ from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
+from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
+from trulens.dashboard.utils.dashboard_utils import (
+    read_query_params_into_session_state,
+)
 from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
@@ -22,9 +26,27 @@ from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
 
-set_page_config(page_title="Records")
-render_sidebar()
-app_name = st.session_state[ST_APP_NAME]
+page_name = "Records"
+set_page_config(page_title=page_name)
+app_name = render_sidebar()
+
+
+def init_page_state():
+    if st.session_state.get(f"{page_name}.initialized", False):
+        return
+
+    if app_name:
+        add_query_param(ST_APP_NAME, app_name)
+
+    read_query_params_into_session_state(page_name=page_name)
+
+    app_ids: Optional[List[str]] = st.session_state.get(
+        f"{page_name}.app_ids", None
+    )
+    if app_ids and not st.query_params.get("app_ids", None):
+        st.query_params["app_ids"] = ",".join(app_ids)
+
+    st.session_state[f"{page_name}.initialized"] = True
 
 
 def _render_record_metrics(
@@ -306,7 +328,7 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
 
 
 def render_records():
-    st.title("Records")
+    st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
@@ -315,12 +337,12 @@ def render_records():
         app_name
     )
 
-    if app_ids := st.session_state.get("records.app_ids", None):
+    if app_ids := st.session_state.get(f"{page_name}.app_ids", None):
         # Reading session state from other pages
         ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
         st.info(f"Filtering with App IDs: {ids_str}")
         versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
-        st.session_state["records.app_ids"] = None
+        st.session_state[f"{page_name}.app_ids"] = None
 
     st.divider()
 
@@ -341,6 +363,8 @@ def render_records():
             "Limiting to the latest 1000 records. Use the search bar and filters to narrow your search.",
             icon="ℹ️",
         )
+    else:
+        st.success(f"Found {len(records_df)} records.")
 
     feedback_col_names = list(feedback_col_names)
 
@@ -364,4 +388,6 @@ def render_records():
 
 
 if __name__ == "__main__":
-    render_records()
+    if app_name:
+        init_page_state()
+        render_records()

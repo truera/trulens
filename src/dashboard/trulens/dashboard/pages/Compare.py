@@ -1,29 +1,58 @@
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from streamlit.delta_generator import DeltaGenerator
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
+from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
+from trulens.dashboard.utils.dashboard_utils import (
+    read_query_params_into_session_state,
+)
 from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
 
-set_page_config(page_title="Compare")
-render_sidebar()
-app_name = st.session_state[ST_APP_NAME]
+page_name = "Compare"
+set_page_config(page_title=page_name)
+app_name = render_sidebar()
 
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
+DEFAULT_COMPARATORS = MIN_COMPARATORS
 
-if st.session_state.get("compare.n_comparators", None) is None:
-    st.session_state["compare.n_comparators"] = 2
+
+def init_page_state():
+    if st.session_state.get(f"{page_name}.initialized", False):
+        return
+
+    if app_name:
+        add_query_param(ST_APP_NAME, app_name)
+
+    # Read app_ids from query args if passed in
+    read_query_params_into_session_state(
+        page_name=page_name,
+        transforms={
+            "app_ids": lambda x: x.split(","),
+        },
+    )
+
+    # If app_ids is passed through session state
+    app_ids: Optional[List[str]] = st.session_state.get(
+        f"{page_name}.app_ids", None
+    )
+    if not app_ids:
+        # to be inferred later
+        st.session_state[f"{page_name}.app_ids"] = [None, None]
+    elif not st.query_params.get("app_ids", None):
+        st.query_params["app_ids"] = ",".join(app_ids)
+
+    st.session_state[f"{page_name}.initialized"] = True
 
 
 def _preprocess_df(records_df: pd.DataFrame) -> pd.DataFrame:
@@ -157,47 +186,91 @@ def _render_shared_records(
     return selection
 
 
-def _handle_app_version_search_params(i: int):
-    def update():
-        app_id = st.session_state[f"compare_app_version_{i}"]
-        if not st.query_params.get(f"app_version_{i}", None):
-            st.query_params[f"app_version_{i}"] = app_id
-
-    return update
+def _lookup_app_version(
+    versions_df: pd.DataFrame,
+    app_version: Optional[str] = None,
+    app_id: Optional[str] = None,
+):
+    if app_version and app_id:
+        raise ValueError("Can only pass one of `app_id` or `app_version`")
+    elif app_version:
+        return versions_df[versions_df["app_version"] == app_version].iloc[0]
+    elif app_id:
+        return versions_df[versions_df["app_id"] == app_id].iloc[0]
+    else:
+        raise ValueError("Must pass one of `app_id` or `app_version`")
 
 
 def _version_selectors(
     versions_df: pd.DataFrame,
-    versions: list[str],
-    app_selector_cols: List[DeltaGenerator],
 ):
+    def _handle_selector_change(
+        selected_app_ids: List[Optional[str]], selector_key: str, idx: int
+    ):
+        new_app_version = st.session_state[selector_key]
+        new_app_id = _lookup_app_version(
+            versions_df, app_version=new_app_version
+        )["app_id"]
+        if new_app_id in selected_app_ids:
+            st.error("Cannot compare App Version with itself.")
+            prev_app_id = selected_app_ids[idx]
+            prev_app_version = _lookup_app_version(
+                versions_df, app_id=prev_app_id
+            )["app_version"]
+            st.session_state[selector_key] = prev_app_version
+            return
+        selected_app_ids[idx] = new_app_id
+        st.session_state[f"{page_name}.app_ids"] = selected_app_ids
+        st.query_params["app_ids"] = ",".join(
+            str(app_id) for app_id in selected_app_ids
+        )
+
+    def _increment_comparators(selected_app_ids: List[Optional[str]]):
+        if len(selected_app_ids) < MAX_COMPARATORS:
+            selected_app_ids.append(None)
+            st.session_state[f"{page_name}.app_ids"] = selected_app_ids
+
+    def _decrement_comparators(selected_app_ids: List[Optional[str]]):
+        if len(selected_app_ids) > MIN_COMPARATORS:
+            selected_app_ids.pop(-1)
+            st.session_state[f"{page_name}.app_ids"] = selected_app_ids
+
     col_data = {}
-    app_ids = []
-    n_comparators = st.session_state["compare.n_comparators"]
-    for i in range(n_comparators):
-        app_id = st.query_params.get(f"app_version_{i}", None)
+    selected_app_ids = st.session_state.get(f"{page_name}.app_ids")[
+        :MAX_COMPARATORS
+    ]
+    selected_app_ids = [app_id for app_id in selected_app_ids]
+
+    app_selector_cols = st.columns(
+        [4] * len(selected_app_ids) + [1], gap="large", vertical_alignment="top"
+    )  # n_comparators = st.session_state[f"{page_name}.n_comparators"]
+
+    versions = versions_df["app_version"].tolist()
+
+    for i, app_id in enumerate(selected_app_ids):
         if app_id and app_id in versions_df["app_id"].values:
-            version = versions_df[versions_df["app_id"] == app_id][
+            version = _lookup_app_version(versions_df, app_id=app_id)[
                 "app_version"
-            ].values[0]
+            ]
             idx = versions.index(version)
         else:
             idx = i
             app_id = versions_df.iloc[idx]["app_id"]
             version = versions_df.iloc[idx]["app_version"]
+            selected_app_ids[i] = app_id
 
-        version = app_selector_cols[i].selectbox(
+        selectbox_key = f"{page_name}.app_version_selector_{i}"
+        if version := app_selector_cols[i].selectbox(
             f"App Version {i}",
-            key=f"compare_app_version_{i}",
+            key=selectbox_key,
             options=versions,
             index=idx,
-        )
-        if version:
-            app_id = versions_df[versions_df["app_version"] == version][
+            on_change=_handle_selector_change,
+            args=(selected_app_ids, selectbox_key, i),
+        ):
+            app_id = _lookup_app_version(versions_df, app_version=version)[
                 "app_id"
-            ].values[0]
-            app_ids.append(app_id)
-            _handle_app_version_search_params(i)()
+            ]
             records, feedback_cols = get_records_and_feedback(app_ids=[app_id])
             col_data[app_id] = {
                 "version": version,
@@ -205,73 +278,61 @@ def _version_selectors(
                 "feedback_cols": feedback_cols,
             }
 
-    def _increment_comparators():
-        if n_comparators < MAX_COMPARATORS:
-            st.session_state["compare.n_comparators"] = n_comparators + 1
-
-    def _decrement_comparators():
-        if n_comparators > MIN_COMPARATORS:
-            st.session_state["compare.n_comparators"] = n_comparators - 1
-
     app_selector_cols[-1].button(
         "➕",
-        disabled=n_comparators >= MAX_COMPARATORS,
+        disabled=len(selected_app_ids) >= MAX_COMPARATORS,
         key="add_comparator",
         on_click=_increment_comparators,
+        args=(selected_app_ids,),
     )
 
     app_selector_cols[-1].button(
         "➖",
-        disabled=n_comparators <= MIN_COMPARATORS,
+        disabled=len(selected_app_ids) <= MIN_COMPARATORS,
         key="remove_comparator",
         on_click=_decrement_comparators,
+        args=(selected_app_ids,),
     )
 
-    return col_data, app_ids
+    st.session_state[f"{page_name}.app_ids"] = selected_app_ids
+    st.query_params["app_ids"] = ",".join(
+        str(app_id) for app_id in selected_app_ids
+    )
+    return col_data, selected_app_ids
 
 
 def render_app_comparison():
-    st.title("Compare")
+    st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
     versions_df, _ = render_app_version_filters(app_name)
     st.divider()
 
+    global MAX_COMPARATORS
+    MAX_COMPARATORS = min(MAX_COMPARATORS, len(versions_df))
+
     if versions_df.empty:
-        st.warning("No versions available for this app.")
+        st.error("No versions available for this app.")
         return
+    elif len(versions_df) < MIN_COMPARATORS:
+        st.error(
+            "Not enough App Versions found to compare. Try a different page instead."
+        )
 
-    if app_ids := st.session_state.get("compare.app_ids", None):
-        # Reading session state from other pages
-        ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
-        st.info(f"Filtering with App IDs: {ids_str}")
-        versions_df = versions_df[versions_df["app_id"].isin(app_ids)]
+    # get app version and record data
 
-        st.session_state["compare.n_comparators"] = len(app_ids)
-        st.session_state["compare.app_ids"] = None
-
-    n_comparators = st.session_state["compare.n_comparators"]
+    col_data, selected_app_ids = _version_selectors(versions_df)
+    feedback_col_names = _feedback_cols_intersect(col_data)
+    _, feedback_directions = get_feedback_defs()
 
     # Layout
-    app_selector_cols = st.columns(
-        [4] * n_comparators + [1], gap="large", vertical_alignment="top"
-    )
     app_feedback_container = st.container()
     st.divider()
     record_selector_container = st.container()
     record_feedback_graph_container = st.container()
     record_feedback_selector_container = st.container()
     trace_viewer_container = st.container()
-
-    versions = versions_df["app_version"].tolist()
-
-    col_data, app_ids = _version_selectors(
-        versions_df, versions, app_selector_cols
-    )
-    feedback_col_names = _feedback_cols_intersect(col_data)
-
-    _, feedback_directions = get_feedback_defs()
 
     with app_feedback_container:
         app_feedback_container.header("Shared Feedback Functions")
@@ -303,9 +364,9 @@ def render_app_comparison():
             key_prefix="shared",
         ):
             feedback_selector_cols = record_feedback_selector_container.columns(
-                n_comparators
+                len(selected_app_ids), gap="large"
             )
-            for i, app_id in enumerate(app_ids):
+            for i, app_id in enumerate(selected_app_ids):
                 with feedback_selector_cols[i]:
                     record_df = record_data[app_id]["records"]
                     selected_row = record_df.iloc[0]
@@ -314,8 +375,10 @@ def render_app_comparison():
                     )
 
     with trace_viewer_container:
-        trace_cols = trace_viewer_container.columns(n_comparators)
-        for i, app_id in enumerate(app_ids):
+        trace_cols = trace_viewer_container.columns(
+            len(selected_app_ids), gap="large"
+        )
+        for i, app_id in enumerate(selected_app_ids):
             with trace_cols[i]:
                 record_df = record_data[app_id]["records"]
                 selected_row = record_df.iloc[0]
@@ -327,4 +390,6 @@ def render_app_comparison():
 
 
 if __name__ == "__main__":
-    render_app_comparison()
+    if app_name:
+        init_page_state()
+        render_app_comparison()

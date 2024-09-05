@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import pandas as pd
 import streamlit as st
@@ -30,13 +30,23 @@ def set_page_config(page_title: Optional[str] = None):
     st.logo(str(logo), link="https://www.trulens.org/")
 
 
-def read_query_params_into_session_state(page_name: str = "global"):
-    initialized = st.session_state.get(f"{page_name}.initialized", False)
-    if not initialized:
-        for param, value in st.query_params.to_dict().items():
-            print(param, value, page_name)
-            st.session_state[f"{page_name}.{param}"] = value
-        st.session_state[f"{page_name}.initialized"] = True
+def add_query_param(param_name: str, param_value: str):
+    st.query_params[param_name] = param_value
+
+
+def read_query_params_into_session_state(
+    page_name: str, transforms: Optional[dict[str, Callable]] = None
+):
+    for param, value in st.query_params.to_dict().items():
+        if transforms and param in transforms:
+            try:
+                value = transforms[param](value)
+            except Exception:
+                raise ValueError(
+                    f"Error reading argument `{param}` with value {value}"
+                )
+
+        st.session_state[f"{page_name}.{param}"] = value
 
 
 @st.cache_resource
@@ -115,6 +125,7 @@ def update_app_metadata(app_id: str, metadata: dict):
 
 def render_sidebar():
     apps = get_apps()
+    app_name = None
 
     if apps:
         app_names = sorted(list(set(app["app_name"] for app in apps)))
@@ -142,6 +153,9 @@ def render_sidebar():
             "https://forms.gle/HAc4HBk5nZRpgw7C6",
             help="Help us improve TruLens!",
         )
+    if app_name is None:
+        st.error("No apps found in the database.")
+    return app_name
 
 
 def _flatten_metadata(metadata: dict):
