@@ -446,7 +446,7 @@ def caller_frameinfo(
     return None
 
 
-def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence[FrameType]:
+def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     """
     A task factory that annotates created tasks with stacks of their parents.
 
@@ -469,8 +469,18 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> Sequence[FrameType]:
     return task
 
 
+try:
+    loop = asyncio.get_running_loop()
+    loop.set_task_factory(task_factory_with_stack)
+    # Async debugging work ongoing:
+    # print("Patched existing running loop.")
+except Exception:
+    pass
+
 # Instrument new_event_loop to set the above task_factory upon creation:
 original_new_event_loop = asyncio.new_event_loop
+# Async debugging work ongoing:
+# print("Patched new loops")
 
 
 def tru_new_event_loop():

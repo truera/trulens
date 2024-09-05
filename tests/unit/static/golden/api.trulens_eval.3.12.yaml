@@ -1206,7 +1206,7 @@ trulens_eval.schema.base.Cost:
     cost_currency: builtins.str
     n_classes: builtins.int
     n_completion_tokens: builtins.int
-    n_cortext_guardrails_tokens: builtins.int
+    n_cortex_guardrails_tokens: builtins.int
     n_prompt_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int

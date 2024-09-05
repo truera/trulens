@@ -38,7 +38,9 @@ export default function RecordTableRowRecursive({
         onClick={() => setSelectedNodeId(nodeId ?? null)}
         sx={{
           ...recordRowSx,
-          background: isNodeSelected ? ({ palette }) => palette.primary.lighter : undefined,
+          background: isNodeSelected
+            ? 'rgba(var(--mui-palette-primary-mainChannel) / calc(var(--mui-palette-action-focusOpacity)))'
+            : undefined,
         }}
       >
         <TableCell>
@@ -63,8 +65,8 @@ export default function RecordTableRowRecursive({
               sx={{
                 left: `${((startTime - treeStart) / totalTime) * 100}%`,
                 width: `${(timeTaken / totalTime) * 100}%`,
-                background: ({ palette }) =>
-                  selectedNodeId === null || isNodeSelected ? palette.grey[500] : palette.grey[300],
+                background: ({ vars }) =>
+                  selectedNodeId === null || isNodeSelected ? vars.palette.grey[500] : vars.palette.grey[300],
                 ...recordBarSx,
               }}
             />
@@ -97,6 +99,6 @@ const recordBarSx: SxProps<Theme> = {
 const recordRowSx: SxProps<Theme> = {
   cursor: 'pointer',
   '&:hover': {
-    background: ({ palette }) => palette.primary.lighter,
+    background: 'rgba(var(--mui-palette-primary-mainChannel) / var(--mui-palette-action-selectedOpacity))',
   },
 };

@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.0.1a6"
+version = "1.0.1"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -28,11 +28,11 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0", allow-prereleases = true }
-trulens-feedback = { version = "^1.0.0", allow-prereleases = true }
-trulens-dashboard = { version = "^1.0.0", allow-prereleases = true }
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0" }
 # Remove after deprecation period:
-trulens_eval = { version = "^1.0.0", allow-prereleases = true }
+trulens_eval = { version = "^1.0.0" }
 
 [tool.poetry.group.benchmark.dependencies]
 trulens-benchmark = { path = "src/benchmark", develop = true }
@@ -114,13 +114,15 @@ jsondiff = "^2.2"
 optional = true
 
 [tool.poetry.group.tests-optional.dependencies]
-llama-index-embeddings-huggingface = "^0.2.2"
-llama-index-embeddings-openai = "^0.1.10"
-faiss-cpu = "^1.7.4"                          # some example notebooks
-ipytree = "^0.2.2"                            # some example notebooks
-chromadb = "^0.4.24"                          # some example notebooks
-unstructured = "^0.10.23"                     # some example notebooks
-llama-index-readers-web = "^0.1.0"            # some example notebooks
+llama-index-embeddings-huggingface = "^0.3"
+llama-index-embeddings-openai = "^0.2"
+faiss-cpu = "^1.7"                          # some example notebooks
+ipytree = "^0.2"                            # some example notebooks
+chromadb = "^0.4"                           # some example notebooks
+unstructured = "^0.10"                      # some example notebooks
+llama-index-readers-web = "^0.2"            # some example notebooks
+llama-index = "^0.11"                       # some example notebooks
+llama-index-llms-openai = "^0.2"            # some example notebooks
 
 [tool.ruff]
 line-length = 80

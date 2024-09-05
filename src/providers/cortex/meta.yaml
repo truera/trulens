@@ -1,5 +1,5 @@
 {% set name = "trulens-providers-cortex" %}
-{% set version = "1.0.1a1" %}
+{% set version = "1.0.1" %}
 
 package:
   name: {{ name|lower }}
