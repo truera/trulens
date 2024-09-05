@@ -30,6 +30,15 @@ def set_page_config(page_title: Optional[str] = None):
     st.logo(str(logo), link="https://www.trulens.org/")
 
 
+def read_query_params_into_session_state(page_name: str = "global"):
+    initialized = st.session_state.get(f"{page_name}.initialized", False)
+    if not initialized:
+        for param, value in st.query_params.to_dict().items():
+            print(param, value, page_name)
+            st.session_state[f"{page_name}.{param}"] = value
+        st.session_state[f"{page_name}.initialized"] = True
+
+
 @st.cache_resource
 def get_session() -> TruSession:
     """Parse command line arguments and initialize TruSession with them.
