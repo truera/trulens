@@ -454,10 +454,9 @@ def render_leaderboard(app_name: str):
     app_ids = versions_df["app_id"].tolist()
 
     # Get records and feedback data
-    with st.spinner("Wait for it..."):
-        records_df, feedback_col_names = get_records_and_feedback(
-            app_ids, limit=RECORD_LIMIT
-        )
+    records_df, feedback_col_names = get_records_and_feedback(
+        app_ids, limit=RECORD_LIMIT
+    )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
