@@ -215,8 +215,7 @@ def _render_grid_tab(
     )
     if metadata_to_front := c1.toggle(
         "Metadata to Front",
-        key=f"{grid_key}_metadata_toggle",
-        value=st.session_state.get(f"{page_name}.metadata_to_front", False),
+        key=f"{page_name}.metadata_to_front",
     ):
         df = order_columns(
             df,
@@ -237,8 +236,7 @@ def _render_grid_tab(
 
     if show_pinned := c1.toggle(
         "Show Pinned",
-        key=f"{grid_key}_pinned_toggle",
-        value=st.session_state.get(f"{page_name}.show_pinned", False),
+        key=f"{page_name}.show_pinned",
     ):
         if "_leaderboard.pinned" in df:
             df = df[df["_leaderboard.pinned"]]

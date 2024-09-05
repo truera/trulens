@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 import pandas as pd
 import streamlit as st
@@ -35,18 +35,30 @@ def add_query_param(param_name: str, param_value: str):
 
 
 def read_query_params_into_session_state(
-    page_name: str, transforms: Optional[dict[str, Callable]] = None
+    page_name: str, transforms: Optional[dict[str, Callable[[str], Any]]] = None
 ):
-    for param, value in st.query_params.to_dict().items():
-        if transforms and param in transforms:
-            try:
-                value = transforms[param](value)
-            except Exception:
-                raise ValueError(
-                    f"Error reading argument `{param}` with value {value}"
-                )
+    """This method loads query params into the session state. This function should only be called only once when the page is first initialized.
 
-        st.session_state[f"{page_name}.{param}"] = value
+    Args:
+        page_name (str): Name of the page being initialized. Used to prefix page-specific session keys.
+        transforms (Optional[dict[str, Callable]], optional): An optional dictionary mapping query param names to a function that deserializes the respective query arg value. Defaults to None.
+
+    """
+    assert not st.session_state.get(f"{page_name}.initialized", False)
+    for param, value in st.query_params.to_dict().items():
+        prefix_page_name = True
+        if param.startswith("filter.") and param.endswith(".multiselect"):
+            value = value.split(",")
+            if len(value) == 1 and value[0] == "":
+                value = []
+            prefix_page_name = False
+        elif transforms and param in transforms:
+            value = transforms[param](value)
+
+        if prefix_page_name:
+            st.session_state[f"{page_name}.{param}"] = value
+        else:
+            st.session_state[param] = value
 
 
 @st.cache_resource
@@ -165,7 +177,7 @@ def _flatten_metadata(metadata: dict):
             for k2, v2 in _flatten_metadata(v).items():
                 results[f"{k}.{k2}"] = v2
         else:
-            results[k] = v
+            results[k] = str(v)
     return results
 
 
@@ -193,12 +205,48 @@ def get_app_versions(app_name: str):
     return app_versions_df, list(app_version_metadata_cols)
 
 
+def _get_query_args_handler(key: str, max_options: Optional[int] = None):
+    def handler():
+        new_val = st.session_state.get(key)
+        if isinstance(new_val, list):
+            print(new_val)
+            if len(new_val) == max_options:
+                # don't need to explicitly add query args as default is all options
+                del st.query_params[key]
+                return
+            val = ",".join(str(v) for v in new_val)
+        elif not isinstance(new_val, str):
+            raise ValueError(
+                f"Unable to save value to query params: {new_val} (type: {type(new_val)})"
+            )
+        st.query_params[key] = val
+
+    return handler
+
+
+def _render_filter_multiselect(name: str, options: List[str], key: str):
+    return st.multiselect(
+        name,
+        options,
+        default=options,
+        key=key,
+        on_change=_get_query_args_handler(
+            key,
+            max_options=len(options),
+        ),
+    )
+
+
 def render_app_version_filters(app_name: str):
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
     col1, col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
-    if version_str_query := col1.text_input("Search App Version", key="search"):
+    if version_str_query := col1.text_input(
+        "Search App Version",
+        key="filter.search",
+        on_change=_get_query_args_handler("filter.search"),
+    ):
         filtered_app_versions = filtered_app_versions[
             filtered_app_versions["app_version"].str.contains(
                 version_str_query, case=False
@@ -213,7 +261,9 @@ def render_app_version_filters(app_name: str):
             tags |= set(app_version["tags"])
         tags = sorted(tags)
         # select tags
-        selected_tags = st.multiselect("tags", tags, tags)
+        selected_tags = _render_filter_multiselect(
+            "tags", tags, key="filter.tags.multiselect"
+        )
 
         metadata_options = {}
         for metadata_key in app_version_metadata_cols:
@@ -225,16 +275,16 @@ def render_app_version_filters(app_name: str):
                 metadata_options[metadata_key] = list(unique_values)
 
         # select metadata
-        metadata_selections = metadata_options.copy()
+        metadata_selections = {}
         for metadata_key in metadata_options.keys():
-            metadata_selections[metadata_key] = st.multiselect(
-                metadata_key,
-                sorted(metadata_options[metadata_key], key=str),
-                sorted(metadata_options[metadata_key], key=str),
+            _metadata_select_options = sorted(
+                metadata_options[metadata_key], key=str
             )
-
-        # submitted = st.form_submit_button("Apply", type="primary")
-        # if submitted:
+            metadata_selections[metadata_key] = _render_filter_multiselect(
+                metadata_key,
+                _metadata_select_options,
+                key=f"filter.metadata.{metadata_key}.multiselect",
+            )
 
         # filter to apps with selected metadata
         for metadata_key in metadata_selections.keys():
@@ -248,7 +298,4 @@ def render_app_version_filters(app_name: str):
                 lambda x: any(tag in x for tag in selected_tags)
             )
         ]
-    # st.markdown(
-    #     f":blue-background[Got {len(filtered_app_versions)} App Versions]"
-    # )
     return filtered_app_versions, app_version_metadata_cols
