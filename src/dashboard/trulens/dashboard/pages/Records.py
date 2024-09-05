@@ -10,6 +10,8 @@ from st_aggrid.shared import ColumnsAutoSizeMode
 from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.constants import RECORD_LIMIT
+from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -25,8 +27,6 @@ from trulens.dashboard.utils.records_utils import _render_feedback_pills
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
-
-page_name = "Records"
 
 
 def init_page_state(app_name: str):
@@ -314,7 +314,7 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         plot = go.Histogram(
             x=_df,
             xbins={
-                "size": 0.2,
+                "size": 0.1,
                 "start": 0,
                 "end": 1.0,
             },
@@ -326,7 +326,23 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             row=row_num,
             col=col_num,
         )
-    fig.update_layout(height=250 * rows, width=250 * cols, dragmode=False)
+        if i == 0:
+            xaxis = fig["layout"]["xaxis"]
+            yaxis = fig["layout"]["yaxis"]
+        else:
+            xaxis = fig["layout"][f"xaxis{i + 1}"]
+            yaxis = fig["layout"][f"yaxis{i + 1}"]
+
+        xaxis["title"] = "Score"
+        if col_num == 1:
+            yaxis["title"] = "# Records"
+
+    fig.update_layout(
+        height=250 * rows,
+        width=250 * cols,
+        dragmode=False,
+        showlegend=False,
+    )
     fig.update_yaxes(fixedrange=True)
     fig.update_xaxes(fixedrange=True, range=[0, 1])
     st.plotly_chart(fig, use_container_width=True)
@@ -376,14 +392,14 @@ def render_records(app_name: str):
 
     # Get records and feedback data
     records_df, feedback_col_names = get_records_and_feedback(
-        app_ids, limit=1000
+        app_ids, limit=RECORD_LIMIT
     )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif len(records_df) == 1000:
+    elif len(records_df) == RECORD_LIMIT:
         st.info(
-            "Limiting to the latest 1000 records. Use the search bar and filters to narrow your search.",
+            f"Limiting to the latest {RECORD_LIMIT} records. Use the search bar and filters to narrow your search.",
             icon="ℹ️",
         )
     else:

@@ -6,10 +6,12 @@ from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from trulens.core.utils.text import format_quantity
+from trulens.dashboard.constants import COMPARE_PAGE_NAME as compare_page_name
+from trulens.dashboard.constants import LEADERBOARD_PAGE_NAME as page_name
+from trulens.dashboard.constants import RECORD_LIMIT
+from trulens.dashboard.constants import RECORDS_PAGE_NAME as records_page_name
 from trulens.dashboard.pages.Compare import MAX_COMPARATORS
 from trulens.dashboard.pages.Compare import MIN_COMPARATORS
-from trulens.dashboard.pages.Compare import page_name as compare_page_name
-from trulens.dashboard.pages.Records import page_name as records_page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -28,8 +30,6 @@ from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import stmetricdelta_hidearrow
-
-page_name = "Leaderboard"
 
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
@@ -201,7 +201,7 @@ def _render_grid(
     )
 
 
-@st.fragment
+# @st.fragment
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -455,14 +455,14 @@ def render_leaderboard(app_name: str):
 
     # Get records and feedback data
     records_df, feedback_col_names = get_records_and_feedback(
-        app_ids, limit=1000
+        app_ids, limit=RECORD_LIMIT
     )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif len(records_df) == 1000:
+    elif len(records_df) == RECORD_LIMIT:
         st.info(
-            "Computed using the last 1000 records.",
+            f"Computed using latest {RECORD_LIMIT} records.",
             icon="ℹ️",
         )
 
@@ -478,7 +478,7 @@ def render_leaderboard(app_name: str):
 
     versions_tab, list_tab = st.tabs([
         "App Versions",
-        "List",
+        "List View",
     ])
     with versions_tab:
         _render_grid_tab(

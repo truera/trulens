@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -18,8 +19,6 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
-
-page_name = "Compare"
 
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
@@ -184,7 +183,7 @@ def _render_shared_records(
     query_col["Mean Variance"] = query_col[diff_cols].mean(axis=1)
 
     query_col = query_col.sort_values(by="Mean Variance", ascending=False)
-    with st.expander("Shared Records"):
+    with st.expander("Shared Records Stats"):
         st.dataframe(
             query_col[["Mean Variance"] + diff_cols]
             .style.apply(_highlight_variance, axis=1)
