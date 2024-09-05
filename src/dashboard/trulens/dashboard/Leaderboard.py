@@ -340,7 +340,7 @@ def _render_list_tab(
         st.markdown(
             f"#### {app_version}", help=draw_metadata_and_tags(metadata, tags)
         )
-        st.caption(f"App ID: {app_id}")
+        st.caption(app_id)
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names

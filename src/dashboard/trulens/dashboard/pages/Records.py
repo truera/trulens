@@ -98,7 +98,7 @@ def _render_trace(
     # Breadcrumbs
     selected_row = selected_rows.iloc[0]
     st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
-    st.header(f"{selected_row['record_id']}")
+    st.markdown(f"#### {selected_row['record_id']}")
 
     _render_record_metrics(records_df, selected_row)
 
