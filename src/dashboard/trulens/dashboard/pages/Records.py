@@ -86,13 +86,13 @@ def _render_trace(
     # Feedback results
     feedback_results.subheader("Feedback Results")
     with feedback_results:
-        if _render_feedback_pills(
+        if selected_ff := _render_feedback_pills(
             feedback_col_names=feedback_col_names,
             selected_row=selected_row,
             feedback_directions=feedback_directions,
         ):
             _render_feedback_call(
-                feedback_col_names[0],
+                selected_ff,
                 selected_row,
                 feedback_directions=feedback_directions,
             )

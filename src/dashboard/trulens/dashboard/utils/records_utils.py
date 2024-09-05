@@ -12,6 +12,7 @@ from trulens.dashboard.ux.styles import default_direction
 
 
 def display_feedback_call(
+    record_id: str,
     call: List[Dict[str, Any]],
     feedback_name: str,
     feedback_directions: Dict[str, bool],
@@ -106,6 +107,7 @@ def display_feedback_call(
                         highlight_groundedness, axis=1
                     ).format("{:.2f}", subset=["Score"]),
                     hide_index=True,
+                    key=f"{record_id}_{feedback_name}",
                     column_order=[
                         "Statement",
                         "Supporting Evidence from Source",
@@ -174,7 +176,7 @@ def _render_feedback_pills(
         index=None,
         format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
         icons=icons,
-        key=f"{key_prefix}pills_{selected_row['app_id']}",
+        key=f"{key_prefix}_pills_{selected_row['app_id']}_{hash}",
     )
 
 
@@ -189,6 +191,7 @@ def _render_feedback_call(
 
     feedback_calls = selected_row[f"{feedback_col}_calls"]
     display_feedback_call(
+        selected_row["record_id"],
         feedback_calls,
         fcol,
         feedback_directions=feedback_directions,
