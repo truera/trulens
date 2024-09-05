@@ -60,32 +60,37 @@ def _render_record_metrics(
 
     app_specific_df = records_df[records_df["app_id"] == selected_row["app_id"]]
 
-    token_col, cost_col, latency_col = st.columns(3)
+    token_col, cost_col, latency_col, _ = st.columns([1, 1, 1, 3])
 
     num_tokens = selected_row["total_tokens"]
-    token_col.metric(label="Total tokens (#)", value=num_tokens)
+    with token_col.container(height=128, border=True):
+        st.metric(label="Total tokens (#)", value=num_tokens)
 
     cost = selected_row["total_cost"]
     average_cost = app_specific_df["total_cost"].mean()
     delta_cost = f"{cost - average_cost:.3g}"
-    cost_col.metric(
-        label="Total cost (USD)",
-        value=selected_row["total_cost"],
-        delta=delta_cost,
-        delta_color="inverse",
-    )
+
+    with cost_col.container(height=128, border=True):
+        st.metric(
+            label="Total cost (USD)",
+            value=selected_row["total_cost"],
+            delta=delta_cost,
+            delta_color="inverse",
+        )
 
     latency = selected_row["latency"]
     average_latency = app_specific_df["latency"].mean()
     delta_latency = f"{latency - average_latency:.3g}s"
-    latency_col.metric(
-        label="Latency (s)",
-        value=selected_row["latency"],
-        delta=delta_latency,
-        delta_color="inverse",
-    )
+    with latency_col.container(height=128, border=True):
+        st.metric(
+            label="Latency (s)",
+            value=selected_row["latency"],
+            delta=delta_latency,
+            delta_color="inverse",
+        )
 
 
+@st.fragment
 def _render_trace(
     selected_rows: pd.DataFrame,
     records_df: pd.DataFrame,
@@ -99,6 +104,13 @@ def _render_trace(
     selected_row = selected_rows.iloc[0]
     st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
     st.markdown(f"#### {selected_row['record_id']}")
+
+    input_col, output_col = st.columns(2)
+    with input_col.expander("Record Input"):
+        st.code(selected_row["input"], wrap_lines=True)
+
+    with output_col.expander("Record Output"):
+        st.code(selected_row["output"], wrap_lines=True)
 
     _render_record_metrics(records_df, selected_row)
 
@@ -123,6 +135,7 @@ def _render_trace(
             )
 
     # Trace details
+
     with trace_details:
         st.subheader("Trace Details")
         record_viewer(record_json, app_json)

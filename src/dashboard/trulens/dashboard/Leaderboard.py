@@ -322,7 +322,7 @@ def _render_list_tab(
     feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: List[str],
-    max_feedback_cols: int = 5,
+    max_feedback_cols: int = 6,
 ):
     st.markdown(
         stmetricdelta_hidearrow,
@@ -454,9 +454,10 @@ def render_leaderboard(app_name: str):
     app_ids = versions_df["app_id"].tolist()
 
     # Get records and feedback data
-    records_df, feedback_col_names = get_records_and_feedback(
-        app_ids, limit=RECORD_LIMIT
-    )
+    with st.spinner("Wait for it..."):
+        records_df, feedback_col_names = get_records_and_feedback(
+            app_ids, limit=RECORD_LIMIT
+        )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
