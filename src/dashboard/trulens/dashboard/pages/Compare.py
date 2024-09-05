@@ -1,6 +1,7 @@
 import json
 from typing import Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -90,7 +91,19 @@ def _render_all_app_feedback_plot(
     df = pd.concat(ff_dfs, axis=1).T
     chart_tab, df_tab = st.tabs(["Graph", "DataFrame"])
 
-    df_tab.dataframe(df.set_index("App Version").T)
+    _df = df.set_index("App Version").T
+    if len(_df.columns) == 2:
+        diff_col = "Diff"
+        _df[diff_col] = np.abs(_df[_df.columns[0]] - _df[_df.columns[1]])
+    else:
+        diff_col = "Variance"
+        _df[diff_col] = _df.var(axis=1)
+
+    df_tab.dataframe(
+        _df.sort_values(diff_col, ascending=False)
+        .style.apply(_highlight_variance, axis=1)
+        .format("{:.3f}")
+    )
 
     df = df.melt(
         id_vars="App Version",
@@ -113,6 +126,23 @@ def _render_all_app_feedback_plot(
     chart_tab.plotly_chart(
         fig,
     )
+
+
+def _highlight_variance(row: pd.Series):
+    colors = []
+    for col_name, value in row.items():
+        if (
+            not pd.isna(value)
+            and isinstance(col_name, str)
+            and (col_name.endswith("Variance") or col_name.endswith("Diff"))
+        ):
+            transparency = hex(int(value * 255))[2:]
+            if len(transparency) == 1:
+                transparency = "0" + transparency
+            colors.append(f"background-color: #ffaaaa{transparency}")
+        else:
+            colors.append("")
+    return colors
 
 
 def _render_shared_records(
@@ -153,28 +183,12 @@ def _render_shared_records(
     query_col = query_col.set_index("input")
     query_col["Mean Variance"] = query_col[diff_cols].mean(axis=1)
 
-    def highlight_variance(row: pd.Series):
-        colors = []
-        for col_name, value in row.items():
-            if (
-                not pd.isna(value)
-                and isinstance(col_name, str)
-                and "Variance" in col_name
-            ):
-                transparency = hex(int(value * 255))[2:]
-                if len(transparency) == 1:
-                    transparency = "0" + transparency
-                colors.append(f"background-color: #ffaaaa{transparency}")
-            else:
-                colors.append("")
-        return colors
-
     query_col = query_col.sort_values(by="Mean Variance", ascending=False)
     with st.expander("Shared Records"):
         st.dataframe(
             query_col[["Mean Variance"] + diff_cols]
-            .style.apply(highlight_variance, axis=1)
-            .format("{:.2f}")
+            .style.apply(_highlight_variance, axis=1)
+            .format("{:.3f}")
         )
 
     selection = st.selectbox(
@@ -241,7 +255,7 @@ def _version_selectors(
 
     app_selector_cols = st.columns(
         [4] * len(selected_app_ids) + [1], gap="large", vertical_alignment="top"
-    )  # n_comparators = st.session_state[f"{page_name}.n_comparators"]
+    )
 
     versions = versions_df["app_version"].tolist()
 

@@ -275,6 +275,7 @@ def _render_grid(
     )
 
 
+@st.fragment
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -299,6 +300,7 @@ def _render_grid_tab(
     _render_trace(selected_record, df, feedback_col_names, feedback_directions)
 
 
+@st.fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     cols = 4
     rows = len(feedback_col_names) // cols + 1

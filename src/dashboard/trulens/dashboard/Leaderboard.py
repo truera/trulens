@@ -201,7 +201,7 @@ def _render_grid(
     )
 
 
-# @st.fragment
+@st.fragment
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],

@@ -11,33 +11,44 @@ from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
 
+def df_cell_highlight(
+    score: float,
+    feedback_name: str,
+    feedback_directions: Dict[str, bool],
+    n_cells: int = 1,
+):
+    if "distance" in feedback_name:
+        return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells
+    cat = CATEGORY.of_score(
+        score,
+        higher_is_better=feedback_directions.get(
+            feedback_name, default_direction == "HIGHER_IS_BETTER"
+        ),
+    )
+    return [f"background-color: {cat.color}"] * n_cells
+
+
 def display_feedback_call(
     record_id: str,
     call: List[Dict[str, Any]],
     feedback_name: str,
     feedback_directions: Dict[str, bool],
 ):
-    def highlight(s):
-        if "distance" in feedback_name:
-            return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(s)
-        cat = CATEGORY.of_score(
-            s.result,
-            higher_is_better=feedback_directions.get(
-                feedback_name, default_direction == "HIGHER_IS_BETTER"
-            ),
-        )
-        return [f"background-color: {cat.color}"] * len(s)
-
-    def highlight_groundedness(s):
-        if "distance" in feedback_name:
-            return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(s)
-        cat = CATEGORY.of_score(
+    def highlight_groundedness(s: pd.Series):
+        return df_cell_highlight(
             s.Score,
-            higher_is_better=feedback_directions.get(
-                feedback_name, default_direction == "HIGHER_IS_BETTER"
-            ),
+            feedback_name=feedback_name,
+            feedback_directions=feedback_directions,
+            n_cells=len(s),
         )
-        return [f"background-color: {cat.color}"] * len(s)
+
+    def highlight(s: pd.Series):
+        return df_cell_highlight(
+            s.result,
+            feedback_name=feedback_name,
+            feedback_directions=feedback_directions,
+            n_cells=len(s),
+        )
 
     if call is not None and len(call) > 0:
         # NOTE(piotrm for garett): converting feedback
@@ -105,7 +116,7 @@ def display_feedback_call(
                 st.dataframe(
                     df_expanded.style.apply(
                         highlight_groundedness, axis=1
-                    ).format("{:.2f}", subset=["Score"]),
+                    ).format("{:.3f}", subset=["Score"]),
                     hide_index=True,
                     key=f"{record_id}_{feedback_name}",
                     column_order=[
