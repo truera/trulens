@@ -1,6 +1,6 @@
 import argparse
 import sys
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
@@ -209,7 +209,6 @@ def _get_query_args_handler(key: str, max_options: Optional[int] = None):
     def handler():
         new_val = st.session_state.get(key)
         if isinstance(new_val, list):
-            print(new_val)
             if len(new_val) == max_options:
                 # don't need to explicitly add query args as default is all options
                 del st.query_params[key]
@@ -237,12 +236,33 @@ def _render_filter_multiselect(name: str, options: List[str], key: str):
     )
 
 
+def _handle_reset_filters(
+    keys: List[str],
+    tags: List[str],
+    metadata_options: Dict[str, List[str]],
+):
+    for key in keys:
+        if key == "filter.tags.multiselect":
+            val = tags
+        elif key.startswith("filter.metadata.") and key.endswith(
+            ".multiselect"
+        ):
+            metadata_key = key[16:-12]
+            val = metadata_options[metadata_key]
+        else:
+            raise ValueError(f"Invalid key found: {key}")
+        st.session_state[key] = val
+        del st.query_params[key]
+
+
 def render_app_version_filters(app_name: str):
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
-    col1, col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
-    if version_str_query := col1.text_input(
+    col0, col1, col2 = st.columns(
+        [0.7, 0.15, 0.15], vertical_alignment="bottom"
+    )
+    if version_str_query := col0.text_input(
         "Search App Version",
         key="filter.search",
         on_change=_get_query_args_handler("filter.search"),
@@ -253,7 +273,8 @@ def render_app_version_filters(app_name: str):
             )
         ]
 
-    with col2.popover("Advanced Filters", use_container_width=True):
+    active_adv_filters = []
+    with col1.popover("Advanced Filters", use_container_width=True):
         # get tag options
         st.header("Advanced Filters")
         tags = set()
@@ -261,9 +282,12 @@ def render_app_version_filters(app_name: str):
             tags |= set(app_version["tags"])
         tags = sorted(tags)
         # select tags
+
         selected_tags = _render_filter_multiselect(
             "tags", tags, key="filter.tags.multiselect"
         )
+        if len(selected_tags) != len(tags):
+            active_adv_filters.append("filter.tags.multiselect")
 
         metadata_options = {}
         for metadata_key in app_version_metadata_cols:
@@ -285,6 +309,12 @@ def render_app_version_filters(app_name: str):
                 _metadata_select_options,
                 key=f"filter.metadata.{metadata_key}.multiselect",
             )
+            if len(metadata_selections[metadata_key]) != len(
+                _metadata_select_options
+            ):
+                active_adv_filters.append(
+                    f"filter.metadata.{metadata_key}.multiselect"
+                )
 
         # filter to apps with selected metadata
         for metadata_key in metadata_selections.keys():
@@ -298,4 +328,14 @@ def render_app_version_filters(app_name: str):
                 lambda x: any(tag in x for tag in selected_tags)
             )
         ]
+
+    if len(active_adv_filters):
+        col2.button(
+            "Reset Filters",
+            use_container_width=True,
+            type="primary",
+            on_click=_handle_reset_filters,
+            args=(active_adv_filters, tags, metadata_options),
+        )
+
     return filtered_app_versions, app_version_metadata_cols
