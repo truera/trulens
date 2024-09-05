@@ -21,11 +21,8 @@ import traceback
 from typing import (
     TYPE_CHECKING,
     Any,
-    AsyncGenerator,
-    Awaitable,
     Callable,
     Dict,
-    Generator,
     Iterable,
     Optional,
     Sequence,
@@ -56,9 +53,6 @@ from trulens.core.utils.python import id_str
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_signature
-from trulens.core.utils.python import wrap_async_generator
-from trulens.core.utils.python import wrap_awaitable
-from trulens.core.utils.python import wrap_generator
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
@@ -119,6 +113,28 @@ class WithInstrumentCallbacks:
         """
 
         raise NotImplementedError
+
+    # WithInstrumentCallbacks requirement
+    def wrap_lazy_values(
+        self, rets: Any, on_done: Callable[[Any], None]
+    ) -> Any:
+        """Wrap any lazy values in the return value of a method call to invoke
+        handle_done when the value is ready.
+
+        This is used to handle library-specific lazy values that are hidden in
+        containers not visible otherwise. Visible lazy values like iterators,
+        generators, awaitables, and async generators are handled elsewhere.
+
+        Args:
+            rets: The return value of the method call.
+
+            on_done: A callback to be called when the lazy value is ready.
+
+        Returns:
+            The return value with lazy values wrapped.
+        """
+
+        return rets
 
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
@@ -549,9 +565,50 @@ class Instrument:
 
             records = {}
 
+            if app is None:
+                raise ValueError("Instrumentation requires an app but is None.")
+
+            # We implicitly assume that all apps that have instrumented this
+            # method are of the same type. We use some classmethods of that
+            # app type below.
+
             def handle_done(rets):
                 nonlocal records
                 nonlocal contexts
+
+                print("handle_done ", python_utils.class_name(type(rets)))
+
+                if python_utils.is_lazy(rets):
+                    print("is lazy: ", python_utils.class_name(type(rets)))
+                    type_name = class_name(type(rets))
+
+                    logger.debug(
+                        "This app produced a lazy response of type `%s`."
+                        "This record will be updated once the response is available.",
+                        type_name,
+                    )
+
+                    # Placeholder:
+                    temp_rets = f"""
+    The method {callable_name(func)} produced a lazy response of type
+    `{type_name}`. This record will be updated once the response is available. If
+    this message persists, check that you are using the correct version of the app
+    method and await and/or iterate over any results it produces.
+    """
+
+                    # Will add placeholder to the record:
+                    handle_done(temp_rets)
+
+                    # NOTE(piotrm): This captures contextvars:
+                    rets = python_utils.wrap_lazy(
+                        rets,
+                        on_done=handle_done,
+                    )
+
+                    return rets
+
+                # Handle app-specific lazy values (like llama_index StreamResponse):
+                rets = self.app.wrap_lazy_values(rets, on_done=handle_done)
 
                 # (re) generate end_time here because cases where the initial end_time was
                 # just to produce an awaitable before being awaited.
@@ -610,97 +667,14 @@ class Instrument:
                 if error is not None:
                     raise error
 
-            if isinstance(rets, AsyncGenerator):
-                type_name = class_name(type(rets))
+                return rets
 
-                logger.debug(
-                    "This app produced an async generator response of type `%s`."
-                    "This record will be updated once the response is available",
-                    type_name,
-                )
-
-                # Placeholder:
-                temp_rets = f"""
-The method {callable_name(func)} produced an async generator response of type
-`{type_name}`. This record will be updated once the response is available. If
-this message persists, check that you are using the correct version of the app
-method and await and iterate over any results it produces.
-"""
-
-                # NOTE(piotrm): Trying to make wrap_generator capture context
-                # vars as well.
-                rets = wrap_async_generator(
-                    rets,
-                    on_done=handle_done,
-                )
-
-            elif isinstance(rets, Generator):
-                type_name = class_name(type(rets))
-
-                logger.debug(
-                    "This app produced a generator response of type `%s`."
-                    "This record will be updated once the response is available",
-                    type_name,
-                )
-
-                # Placeholder:
-                temp_rets = f"""
-The method {callable_name(func)} produced a generator response of type
-`{type_name}`. This record will be updated once the response is available. If
-this message persists, check that you are using the correct version of the app
-method and iterate over any results it produces.
-"""
-
-                # NOTE(piotrm): Trying to make wrap_generator capture context
-                # vars as well.
-                rets = wrap_generator(
-                    rets,
-                    on_done=handle_done,
-                )
-
-            elif isinstance(rets, Awaitable):
-                # NOTE(piotrm): In case of producing an awaitable result, we
-                # need to insert a placeholder call/record before we return the
-                # awaitable as otherwise we might never get a chance to record
-                # anything especially if the user never awaits the return.
-
-                type_name = class_name(type(rets))
-
-                logger.debug(
-                    "This app produced an asynchronous response of type `%s`."
-                    "This record will be updated once the response is available",
-                    type_name,
-                )
-
-                # TODO(piotrm): need to track costs of awaiting the ret in the
-                # below.
-
-                # Placeholder:
-                temp_rets = f"""
-The method {callable_name(func)} produced an asynchronous response of type
-`{type_name}`. This record will be updated once the response is available. If
-this message persists, check that you are using the correct version of the app
-method and `await` any asynchronous results it produces.
-"""
-
-                # NOTE(piotrm): The `wrap_awaitable` below captures the current
-                # state of contextvars and makes it available to any asyncio
-                # Tasks that will execute the wrapped computation. It is
-                # important that the `reset` (see below) happens after wrapping,
-                # not before.
-                rets = wrap_awaitable(
-                    rets,
-                    on_done=handle_done,
-                )
-            else:
-                temp_rets = rets
-
-            handle_done(rets=temp_rets)
+            temp = handle_done(rets)
 
             stack_contexts.reset(stacks_token)
             context_contexts.reset(context_token)
 
-            return rets
+            return temp
 
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the

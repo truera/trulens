@@ -314,6 +314,29 @@ class TruLlama(mod_app.App):
         """
         return cls.select_outputs().source_nodes[:]
 
+    # WithInstrumentCallbacks requirement:
+    def wrap_lazy_values(
+        self, rets: Any, on_done: Callable[[Any], None]
+    ) -> Any:
+        print(python_utils.class_name(rets))
+
+        if isinstance(rets, AsyncStreamingResponse):
+            rets.response_gen = python_utils.wrap_async_generator(
+                rets.response_gen, on_done=on_done
+            )
+            print("wrap async gen")
+            return rets
+
+        if isinstance(rets, StreamingResponse):
+            rets.response_gen = python_utils.wrap_generator(
+                rets.response_gen, on_done=on_done
+            )
+            print("wrap gen")
+            return rets
+
+        return rets
+
+    # App override:
     @classmethod
     def select_context(
         cls, app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
@@ -323,6 +346,7 @@ class TruLlama(mod_app.App):
         """
         return cls.select_outputs().source_nodes[:].node.text
 
+    # App override:
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -347,6 +371,7 @@ class TruLlama(mod_app.App):
         else:
             return mod_app.App.main_input(self, func, sig, bindings)
 
+    # App override:
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
     ) -> Optional[str]:
@@ -443,86 +468,6 @@ class TruLlama(mod_app.App):
             raise NotImplementedError(
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
             )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    def chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="chat", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    async def achat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="achat", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    def stream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="stream_chat", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    async def astream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.indices.query.base.BaseQueryEngine
-    def query(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="query", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.indices.query.base.BaseQueryEngine
-    async def aquery(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="aquery", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
-    def query_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="query", is_async=False, with_record=True
-        )
-
-    # TOREMOVE
-    # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
-    async def aquery_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="aquery", is_async=True, with_record=True
-        )
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
-    def chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="chat", is_async=False, with_record=True)
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
-    async def achat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="achat", is_async=True, with_record=True)
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
-    def stream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="stream", is_async=False, with_record=True
-        )
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
-    async def astream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=True
-        )
 
 
 TruLlama.model_rebuild()

@@ -86,6 +86,8 @@ class EndpointCallback(SerialModel):
         """Called after each completion request."""
         self.handle(response)
 
+        self.cost.n_completion_requests += 1
+
     def handle_generation_chunk(self, response: Any) -> None:
         """Called after receiving a chunk from a completion request."""
 
@@ -94,6 +96,14 @@ class EndpointCallback(SerialModel):
     def handle_classification(self, response: Any) -> None:
         """Called after each classification response."""
         self.handle(response)
+
+        self.cost.n_classification_requests += 1
+
+    def handle_embedding(self, response: Any) -> None:
+        """Called after each embedding response."""
+        self.handle(response)
+
+        self.cost.n_embedding_requests += 1
 
 
 class Endpoint(WithClassInfo, SerialModel, SingletonPerName):

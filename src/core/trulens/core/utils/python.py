@@ -759,7 +759,6 @@ def wrap_awaitable(
     async def wrapper(awaitable):
         tokens = {}
         for k, v in context_copy.items():
-            # print("copied", k, len(v) if hasattr(v, "__len__") else "no len")
             tokens[k] = k.set(v)
 
         if on_await is not None:
@@ -834,12 +833,12 @@ def wrap_generator(
 
 
 def wrap_async_generator(
-    gen: AsyncGenerator[T, None, None],
+    gen: AsyncGenerator[T, None],
     on_iter: Optional[Callable[[], Any]] = None,
     on_next: Optional[Callable[[T], Any]] = None,
     on_done: Optional[Callable[[List[T]], Any]] = None,
     context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
-) -> Generator[T, None, None]:
+) -> AsyncGenerator[T, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
 
@@ -886,6 +885,68 @@ def wrap_async_generator(
                 pass
 
     return wrapper(gen)
+
+
+def is_lazy(obj):
+    """Check if the given object is lazy.
+
+    An object is considered lazy if it is a generator or an awaitable.
+    """
+
+    return (
+        inspect.isawaitable(obj)
+        or inspect.isgenerator(obj)
+        or inspect.isasyncgen(obj)
+    )
+
+
+def wrap_lazy(
+    gen: Any,
+    on_start: Optional[Callable[[], None]] = None,
+    on_next: Optional[Callable[[T], None]] = None,
+    on_done: Optional[Callable[[Any], None]] = None,  # Any may be T or List[T]
+    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+) -> Any:
+    """Wrap a lazy value in one that will call
+    callbacks at various points in the generation process.
+
+    Args:
+        gen: The lazy value.
+
+        on_start: The callback to call when the wrapper is created.
+
+        on_next: The callback to call with the result of each iteration of the
+            wrapped generator.
+
+        on_done: The callback to call when the wrapped generator is exhausted.
+    """
+
+    if inspect.isasyncgen(gen):
+        return wrap_async_generator(
+            gen,
+            on_iter=on_start,
+            on_next=on_next,
+            on_done=on_done,
+            context_vars=context_vars,
+        )
+
+    if inspect.isgenerator(gen):
+        return wrap_generator(
+            gen,
+            on_iter=on_start,
+            on_next=on_next,
+            on_done=on_done,
+            context_vars=context_vars,
+        )
+
+    if inspect.isawaitable(gen):
+        return wrap_awaitable(
+            gen, on_await=on_start, on_done=on_done, context_vars=context_vars
+        )
+
+    raise ValueError(
+        f"Object of type {type(gen)} is not a generator or awaitable."
+    )
 
 
 # Class utilities
