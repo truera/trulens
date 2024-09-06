@@ -6,18 +6,17 @@ from typing import List
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import TruSession
+from trulens.core import Tru
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
+from trulens.core.utils.trulens import get_feedback_result
 from trulens.dashboard.components.record_viewer import record_viewer
-from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
 from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata_and_tags
-from trulens.dashboard.ux.styles import CATEGORY
+from trulens.dashboard.ux.components import draw_metadata
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -45,9 +44,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
         trulens_st.trulens_leaderboard()
         ```
     """
-    session = TruSession()
+    tru = Tru()
 
-    lms = session.connector.db
+    lms = tru.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
     feedback_defs = lms.get_feedback_defs()
     feedback_directions = {
@@ -67,29 +66,17 @@ def trulens_leaderboard(app_ids: List[str] = None):
     if df.empty:
         st.write("No records yet...")
 
-    def get_data():
-        return lms.get_records_and_feedback([])
+    if app_ids is None:
+        app_ids = list(df.app_id.unique())
 
-    def get_apps():
-        return list(lms.get_apps())
-
-    records, feedback_col_names = get_data()
-    records = records.sort_values(by="app_id")
-
-    apps = get_apps()
-
-    for app in apps:
-        app_df = records.loc[records.app_id == app]
+    for app_id in app_ids:
+        app_df = df.loc[df.app_id == app_id]
         if app_df.empty:
             continue
         app_str = app_df["app_json"].iloc[0]
         app_json = json.loads(app_str)
-        app_name = app_json["app_name"]
-        app_version = app_json["app_version"]
-        app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
-        tags = app_json.get("tags")
-        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
+        st.header(app_id, help=draw_metadata(metadata))
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -190,23 +177,7 @@ def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
-    default_direction = "HIGHER_IS_BETTER"
-    session = TruSession()
-    lms = session.connector.db
-    feedback_defs = lms.get_feedback_defs()
-
     for feedback, feedback_result in record.wait_for_feedback_results().items():
-        feedback_directions = {
-            (
-                row.feedback_json.get("supplied_name", "")
-                or row.feedback_json["implementation"]["name"]
-            ): (
-                "HIGHER_IS_BETTER"
-                if row.feedback_json.get("higher_is_better", True)
-                else "LOWER_IS_BETTER"
-            )
-            for _, row in feedback_defs.iterrows()
-        }
         call_data = {
             "feedback_definition": feedback,
             "feedback_name": feedback.name,
@@ -232,25 +203,8 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
-
-        def highlight(df):
-            if "distance" in selected_feedback:
-                return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(df)
-
-            result_value = df["ret"]  # Use the 'result' column's value
-            cat = CATEGORY.of_score(
-                result_value,
-                higher_is_better=feedback_directions.get(
-                    selected_feedback, default_direction
-                )
-                == default_direction,
-            )
-            # Apply the background color to the entire row
-            return [f"background-color: {cat.color}" for _ in df]
-
-        df = get_feedback_result(record, feedback_name=selected_feedback)
         st.dataframe(
-            df.style.apply(highlight, axis=1),
+            get_feedback_result(record, feedback_name=selected_feedback),
             use_container_width=True,
             hide_index=True,
         )
@@ -278,6 +232,6 @@ def trulens_trace(record: Record):
         ```
     """
 
-    session = TruSession()
-    app = session.get_app(app_id=record.app_id)
+    tru = Tru()
+    app = tru.get_app(app_id=record.app_id)
     record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)
