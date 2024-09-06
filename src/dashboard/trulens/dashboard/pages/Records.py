@@ -2,8 +2,6 @@ import json
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import ColumnsAutoSizeMode
@@ -396,54 +394,6 @@ def _render_grid_tab(
     _render_trace(selected_record, df, feedback_col_names, feedback_directions)
 
 
-@st.fragment
-def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
-    cols = 4
-    rows = len(feedback_col_names) // cols + 1
-    fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)
-
-    for i, feedback_col_name in enumerate(feedback_col_names):
-        row_num = i // cols + 1
-        col_num = i % cols + 1
-        _df = df[feedback_col_name].dropna()
-
-        plot = go.Histogram(
-            x=_df,
-            xbins={
-                "size": 0.1,
-                "start": 0,
-                "end": 1.0,
-            },
-            histfunc="count",
-            texttemplate="%{y}",
-        )
-        fig.add_trace(
-            plot,
-            row=row_num,
-            col=col_num,
-        )
-        if i == 0:
-            xaxis = fig["layout"]["xaxis"]
-            yaxis = fig["layout"]["yaxis"]
-        else:
-            xaxis = fig["layout"][f"xaxis{i + 1}"]
-            yaxis = fig["layout"][f"yaxis{i + 1}"]
-
-        xaxis["title"] = "Score"
-        if col_num == 1:
-            yaxis["title"] = "# Records"
-
-    fig.update_layout(
-        height=300 * rows,
-        width=200 * cols,
-        dragmode=False,
-        showlegend=False,
-    )
-    fig.update_yaxes(fixedrange=True)
-    fig.update_xaxes(fixedrange=True, range=[0, 1])
-    st.plotly_chart(fig, use_container_width=True)
-
-
 def _reset_app_ids():
     del st.session_state[f"{page_name}.app_ids"]
     st.query_params.pop("app_ids")
@@ -510,16 +460,12 @@ def render_records(app_name: str):
     )
     _, feedback_directions = get_feedback_defs()
 
-    grid_tab, plot_tab = st.tabs(["Records", "Feedback Distribution"])
-    with grid_tab:
-        _render_grid_tab(
-            df,
-            feedback_col_names,
-            feedback_directions,
-            version_metadata_col_names,
-        )
-    with plot_tab:
-        _render_plot_tab(df, feedback_col_names)
+    _render_grid_tab(
+        df,
+        feedback_col_names,
+        feedback_directions,
+        version_metadata_col_names,
+    )
 
 
 if __name__ == "__main__":

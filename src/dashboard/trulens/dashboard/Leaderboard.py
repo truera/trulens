@@ -3,6 +3,8 @@ import re
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
@@ -567,6 +569,54 @@ def _render_list_tab(
         st.markdown("""---""")
 
 
+@st.fragment
+def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
+    cols = 4
+    rows = len(feedback_col_names) // cols + 1
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)
+
+    for i, feedback_col_name in enumerate(feedback_col_names):
+        row_num = i // cols + 1
+        col_num = i % cols + 1
+        _df = df[feedback_col_name].dropna()
+
+        plot = go.Histogram(
+            x=_df,
+            xbins={
+                "size": 0.1,
+                "start": 0,
+                "end": 1.0,
+            },
+            histfunc="count",
+            texttemplate="%{y}",
+        )
+        fig.add_trace(
+            plot,
+            row=row_num,
+            col=col_num,
+        )
+        if i == 0:
+            xaxis = fig["layout"]["xaxis"]
+            yaxis = fig["layout"]["yaxis"]
+        else:
+            xaxis = fig["layout"][f"xaxis{i + 1}"]
+            yaxis = fig["layout"][f"yaxis{i + 1}"]
+
+        xaxis["title"] = "Score"
+        if col_num == 1:
+            yaxis["title"] = "# Records"
+
+    fig.update_layout(
+        height=300 * rows,
+        width=200 * cols,
+        dragmode=False,
+        showlegend=False,
+    )
+    fig.update_yaxes(fixedrange=True)
+    fig.update_xaxes(fixedrange=True, range=[0, 1])
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def render_leaderboard(app_name: str):
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
@@ -605,8 +655,13 @@ def render_leaderboard(app_name: str):
     )
     _, feedback_directions = get_feedback_defs()
 
-    versions_tab, list_tab = st.tabs([
+    (
+        versions_tab,
+        plot_tab,
+        list_tab,
+    ) = st.tabs([
         "App Versions",
+        "Feedback Histograms",
         "List View",
     ])
     with versions_tab:
@@ -617,6 +672,8 @@ def render_leaderboard(app_name: str):
             feedback_directions=feedback_directions,
             version_metadata_col_names=version_metadata_col_names,
         )
+    with plot_tab:
+        _render_plot_tab(records_df, feedback_col_names)
     with list_tab:
         _render_list_tab(
             df,
