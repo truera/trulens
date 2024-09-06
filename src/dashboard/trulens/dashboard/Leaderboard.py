@@ -297,7 +297,6 @@ def handle_add_metadata(selected_rows: pd.DataFrame):
 
     existing_value = None
     placeholder = None
-    print(selected_rows)
     if key in selected_rows.columns:
         existing_values = list(selected_rows[key].unique())
         if len(existing_values) == 1:
