@@ -122,6 +122,7 @@ cell_rules_styles = {
     f".cat-{cat_name.lower()}": {"background-color": styles["color"]}
     for cat_name, styles in CATEGORY.styling.items()
 }
+cell_rules_styles[".cat-unknown"] = {"background-color": "unset"}
 
 aggrid_css = {
     **cell_rules_styles,
