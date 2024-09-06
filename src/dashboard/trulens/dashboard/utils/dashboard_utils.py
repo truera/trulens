@@ -58,11 +58,12 @@ def read_query_params_into_session_state(
     assert not st.session_state.get(f"{page_name}.initialized", False)
     for param, value in st.query_params.to_dict().items():
         prefix_page_name = True
-        if param.startswith("filter.") and param.endswith(".multiselect"):
-            value = value.split(",")
-            if len(value) == 1 and value[0] == "":
-                value = []
+        if param.startswith("filter."):
             prefix_page_name = False
+            if param.endswith(".multiselect"):
+                value = value.split(",")
+                if len(value) == 1 and value[0] == "":
+                    value = []
         elif transforms and param in transforms:
             value = transforms[param](value)
 
@@ -72,7 +73,7 @@ def read_query_params_into_session_state(
             st.session_state[param] = value
 
 
-@st.cache_resource(ttl=CACHE_TTL, show_spinner="Setting up TruLens session")
+@st.cache_resource(show_spinner="Setting up TruLens session")
 def get_session() -> TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
@@ -236,21 +237,18 @@ def get_app_versions(app_name: str):
 
 
 def _get_query_args_handler(key: str, max_options: Optional[int] = None):
-    def handler():
-        new_val = st.session_state.get(key)
-        if isinstance(new_val, list):
-            if len(new_val) == max_options:
-                # don't need to explicitly add query args as default is all options
-                del st.query_params[key]
-                return
-            val = ",".join(str(v) for v in new_val)
-        elif not isinstance(new_val, str):
-            raise ValueError(
-                f"Unable to save value to query params: {new_val} (type: {type(new_val)})"
-            )
-        st.query_params[key] = val
-
-    return handler
+    new_val = st.session_state.get(key)
+    if isinstance(new_val, list):
+        if len(new_val) == max_options:
+            # don't need to explicitly add query args as default is all options
+            del st.query_params[key]
+            return
+        new_val = ",".join(str(v) for v in new_val)
+    elif not isinstance(new_val, str):
+        raise ValueError(
+            f"Unable to save value to query params: {new_val} (type: {type(new_val)})"
+        )
+    st.query_params[key] = new_val
 
 
 def _render_filter_multiselect(name: str, options: List[str], key: str):
@@ -259,9 +257,10 @@ def _render_filter_multiselect(name: str, options: List[str], key: str):
         options,
         default=options,
         key=key,
-        on_change=_get_query_args_handler(
+        on_change=_get_query_args_handler,
+        args=(
             key,
-            max_options=len(options),
+            len(options),
         ),
     )
 
@@ -272,7 +271,9 @@ def _handle_reset_filters(
     metadata_options: Dict[str, List[str]],
 ):
     for key in keys:
-        if key == "filter.tags.multiselect":
+        if key == "filter.search":
+            val = ""
+        elif key == "filter.tags.multiselect":
             val = tags
         elif key.startswith("filter.metadata.") and key.endswith(
             ".multiselect"
@@ -292,18 +293,20 @@ def render_app_version_filters(app_name: str):
     col0, col1, col2 = st.columns(
         [0.7, 0.15, 0.15], vertical_alignment="bottom"
     )
+    active_adv_filters = []
     if version_str_query := col0.text_input(
         "Search App Version",
         key="filter.search",
-        on_change=_get_query_args_handler("filter.search"),
+        on_change=_get_query_args_handler,
+        args=("filter.search",),
     ):
+        active_adv_filters.append("filter.search")
         filtered_app_versions = filtered_app_versions[
             filtered_app_versions["app_version"].str.contains(
                 version_str_query, case=False
             )
         ]
 
-    active_adv_filters = []
     with col1.popover("Advanced Filters", use_container_width=True):
         # get tag options
         st.header("Advanced Filters")
