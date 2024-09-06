@@ -34,6 +34,7 @@ class Thread(fThread):
     App components that do not use this thread class might not be properly
     tracked."""
 
+    """
     def __init__(
         self,
         name=None,
@@ -55,6 +56,8 @@ class Thread(fThread):
             kwargs=kwargs,
             daemon=daemon,
         )
+    """
+    pass
 
 
 # HACK007: Attempt to force other users of Thread to use our version instead.

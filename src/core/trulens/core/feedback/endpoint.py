@@ -779,15 +779,17 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # classes. These are thus handled in
             # OpenAIEndpoint.handle_wrapped_call .
 
-            if inspect.isasyncgen(response):
+            if inspect.isasyncgen(response) and True:
                 return wrap_async_generator(
                     response,
                     on_next=response_callback,
                     on_done=response_callback,
                 )
-            elif inspect.isawaitable(response):
+
+            elif inspect.isawaitable(response) and True:
                 return wrap_awaitable(response, on_done=response_callback)
-            elif isinstance(response, Generator):
+
+            elif isinstance(response, Generator) and True:
                 return wrap_generator(
                     response,
                     on_next=response_callback,

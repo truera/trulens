@@ -964,10 +964,12 @@ class SingletonInfo(Generic[T]):
     cls: Type[T]
     """The class of the singleton instance."""
 
-    frame: Any
+    frameinfo_codeline: Optional[str]
     """The frame where the singleton was created.
 
-    This is used for showing "already created" warnings.
+    This is used for showing "already created" warnings. This is intentionally
+    not the frame itself but a rendering of it to avoid maintaining references
+    to frames and all of the things a frame holds onto.
     """
 
     name: Optional[str] = None
@@ -981,7 +983,9 @@ class SingletonInfo(Generic[T]):
         self.val = val
         self.cls = val.__class__
         self.name = name
-        self.frameinfo = caller_frameinfo(offset=2)
+        self.frameinfo_codeline = code_line(
+            caller_frameinfo(offset=2), show_source=True
+        )
 
     def warning(self):
         """Issue warning that this singleton already exists."""
@@ -997,7 +1001,7 @@ class SingletonInfo(Generic[T]):
             """
             ),
             self.cls.__name__,
-            code_line(self.frameinfo, show_source=True),
+            self.frameinfo_codeline,
         )
 
 

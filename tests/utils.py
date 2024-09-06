@@ -2,22 +2,34 @@
 
 import builtins
 from collections import namedtuple
+import ctypes
+import gc
 import importlib
 import inspect
 import pkgutil
+from queue import Queue
 from types import ModuleType
 from typing import (
+    Any,
     ForwardRef,
+    Generic,
     Iterable,
     List,
     Optional,
     Set,
+    Tuple,
     TypeVar,
     Union,
     get_args,
 )
+import weakref
 
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils.text import format_size
+
+T = TypeVar("T")
+
 
 Member = namedtuple("Member", ["obj", "name", "qualname", "val", "typ"])
 """Class/module member information.
@@ -542,3 +554,168 @@ def get_module_members(
         api_highs=highs,
         api_lows=lows,
     )
+
+
+# Reference and garbage collection related utilities
+
+
+def deref(obj_id: int) -> Any:
+    """Derefence an object from its id.
+
+    Will crash the interpreter if the id is invalid.
+    """
+
+    return ctypes.cast(obj_id, ctypes.py_object).value
+
+
+class RefLike(Generic[T]):
+    """Container for objects that try to put them in a weakref if possible."""
+
+    def __init__(
+        self,
+        ref_id: Optional[int] = None,
+        obj: Optional[Union[weakref.ReferenceType[T], T]] = None,
+    ):
+        if ref_id is None:
+            assert obj is not None
+            ref_id = id(obj)
+
+        if obj is None:
+            ref_or_val = deref(ref_id)
+            assert ref_or_val is not None
+        else:
+            ref_or_val = obj
+
+        assert ref_or_val is not None
+        try:
+            self.ref_or_val = weakref.ref(obj)
+        except Exception:
+            self.ref_or_val = obj
+
+        self.ref_id = ref_id
+        self.ref_or_val = ref_or_val
+
+    def get(self) -> T:
+        if isinstance(self.ref_or_val, weakref.ReferenceType):
+            return self.ref_or_val()
+        else:
+            return self.ref_or_val
+
+
+class GetReferent(serial_utils.Step):
+    """A lens step which represents a GC referent which cannot be determined to
+    be an item/index/attribute yet is still a referent according to the garbage
+    collector.
+
+    This is only used for debugging purposes.
+    """
+
+    ref_id: int
+
+    def __hash__(self) -> int:
+        return hash(self.ref_id)
+
+    def get(self, obj: Any) -> Iterable[Any]:
+        yield ctypes.cast(self.ref_id, ctypes.py_object).value
+
+    def set(self, obj: Any, val: Any) -> Any:
+        raise NotImplementedError("Cannot set a reference.")
+
+    def __repr__(self) -> str:
+        return f"/@{self.ref_id:08x}"
+
+
+def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
+    """Find the reference path between two objects by their id.
+
+    Returns None if a path is not found.
+    """
+
+    visited: Set[int] = set()
+    queue: Queue[Tuple[serial_utils.Lens, List[RefLike]]] = Queue()
+
+    source_ref = RefLike(ref_id=source_id)
+
+    queue.put((serial_utils.Lens(), [source_ref]))
+
+    biggest_len: int = 0
+
+    gc.collect()
+
+    while not queue.empty():
+        lens, path = queue.get()
+
+        if len(path) > biggest_len:
+            print(len(lens), format_size(len(visited)))
+            biggest_len = len(path)
+
+        final_ref = path[-1]
+
+        if final_ref.ref_id == target_id:
+            return lens
+
+        final = final_ref.get()
+
+        if isinstance(final, dict) or False:
+            for key, value in list(final.items()):
+                if value is None:
+                    continue
+
+                value_ref = RefLike(obj=value)
+                if value_ref.ref_id not in visited:
+                    visited.add(value_ref.ref_id)
+                    if isinstance(key, str):
+                        queue.put((
+                            lens + serial_utils.GetItem(item=key),
+                            path + [value_ref],
+                        ))
+                    else:
+                        queue.put((
+                            lens + GetReferent(ref_id=value_ref.ref_id),
+                            path + [value_ref],
+                        ))
+
+        elif isinstance(final, (list, tuple)) or False:
+            for index, value in enumerate(final):
+                if value is None:
+                    continue
+
+                value_ref = RefLike(obj=value)
+                if value_ref.ref_id not in visited:
+                    visited.add(value_ref.ref_id)
+                    queue.put((
+                        lens + serial_utils.GetIndex(index=index),
+                        path + [value_ref],
+                    ))
+
+        else:
+            for value in gc.get_referents(final):
+                if value is None:
+                    continue
+
+                value_ref = RefLike(obj=value)
+                if value_ref.ref_id not in visited:
+                    visited.add(value_ref.ref_id)
+                    queue.put((
+                        lens + GetReferent(ref_id=value_ref.ref_id),
+                        path + [value_ref],
+                    ))
+
+    return None
+
+
+def print_lens(lens: Optional[serial_utils.Lens]) -> None:
+    """Print a lens that may contain GetReferent steps.
+
+    Prints part of the referent string representation.
+    """
+
+    if lens is None:
+        print("no path")
+
+    for step in lens.path:
+        if isinstance(step, GetReferent):
+            obj = step.get_sole_item(None)
+            print(repr(step), str(obj)[0:256])
+        else:
+            print(repr(step))

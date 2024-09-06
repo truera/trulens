@@ -23,7 +23,17 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from langchain.schema import Generation
 from langchain.schema import LLMResult
@@ -314,6 +324,9 @@ class OpenAIEndpoint(Endpoint):
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
+
+        if isinstance(response, Awaitable):
+            return response
 
         model_name = ""
         if "model" in bindings.kwargs:

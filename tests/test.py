@@ -10,6 +10,7 @@ import importlib
 import json
 import os
 from pathlib import Path
+import threading
 from typing import (
     Dict,
     Mapping,
@@ -49,6 +50,11 @@ def async_test(func):
     def wrapper(*args, **kwargs):
         loop = asyncio.new_event_loop()
         temp = loop.run_until_complete(func(*args, **kwargs))
+
+        for task in asyncio.all_tasks(loop):
+            print("Task still running:")
+            task.print_stack()
+
         loop.close()
         return temp
 
@@ -479,4 +485,19 @@ class JSONTestCase(WithJSONTestCase, TestCase):
     """TestCase subclass with JSON comparisons and test enable/disable flag
     handling."""
 
-    pass
+    @classmethod
+    def tearDownClass(cls):
+        print(f"Tearing down {cls.__name__}")
+        try:
+            loop = asyncio.get_event_loop()
+            print(f"  Loop still running: {loop}")
+            for task in asyncio.all_tasks(loop):
+                print("    Task still running:")
+                task.print_stack()
+
+        except Exception as e:
+            print(f"  No running loop? {e}")
+
+        print("  Threads:")
+        for thread in threading.enumerate():
+            print("    " + str(thread))

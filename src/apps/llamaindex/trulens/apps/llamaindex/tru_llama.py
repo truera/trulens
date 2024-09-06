@@ -52,7 +52,6 @@ if not legacy:
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
     from llama_index.core.chat_engine.types import BaseChatEngine
-    from llama_index.core.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.indices.base import BaseIndex
     from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.memory.types import BaseMemory
@@ -64,12 +63,16 @@ if not legacy:
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import BaseComponent
     from llama_index.core.schema import QueryBundle
+    from llama_index.core.service_context_elements.llm_predictor import (
+        BaseLLMPredictor,
+    )
+    from llama_index.core.service_context_elements.llm_predictor import (
+        LLMPredictor,
+    )
     from llama_index.core.tools.types import AsyncBaseTool
     from llama_index.core.tools.types import BaseTool
     from llama_index.core.tools.types import ToolMetadata
     from llama_index.core.vector_stores.types import VectorStore
-    from llama_index.legacy.llm_predictor import LLMPredictor
-    from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
 
     # These exist in the bridge but not here so define placeholders.
     RetrieverComponent = EmptyType
@@ -88,7 +91,6 @@ else:
 
     from llama_index.chat_engine.types import AgentChatResponse
     from llama_index.chat_engine.types import BaseChatEngine
-    from llama_index.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.base_query_engine import BaseQueryEngine
     from llama_index.core.base_query_engine import QueryEngineComponent
     from llama_index.core.base_retriever import BaseRetriever
@@ -321,11 +323,14 @@ class TruLlama(mod_app.App):
         print(python_utils.class_name(rets))
 
         if isinstance(rets, AsyncStreamingResponse):
-            rets.response_gen = python_utils.wrap_async_generator(
-                rets.response_gen, on_done=on_done
-            )
-            print("wrap async gen")
-            return rets
+            if rets.response_txt is None:
+                rets.response_gen = python_utils.wrap_async_generator(
+                    rets.response_gen, on_done=on_done
+                )
+                print("wrap async gen")
+                return rets
+            else:
+                return rets
 
         if isinstance(rets, StreamingResponse):
             rets.response_gen = python_utils.wrap_generator(
@@ -381,16 +386,23 @@ class TruLlama(mod_app.App):
         returned `ret`.
         """
 
+        return "placeholder"
+
         try:
             attr = self._main_output_attribute(ret)
 
             if attr is not None:
                 val = getattr(ret, attr)
-                if val is None and "txt" in attr:
-                    return (
-                        f"TruLens: this app produced a streaming response of type {python_utils.class_name(type(ret))}. "
-                        "The main output will not be available in TruLens."
-                    )
+                if attr == "response_txt":
+                    if val is None:
+                        print("stream not yet finished")
+                        return (
+                            f"TruLens: this app produced a streaming response of type {python_utils.class_name(type(ret))}. "
+                            "The main output will not be available in TruLens."
+                        )
+                    else:
+                        print(f"finished stream: |{val}|")
+
                 return val
 
             else:  # attr is None
@@ -400,8 +412,8 @@ class TruLlama(mod_app.App):
             return None
 
     def _main_output_attribute(self, ret: Any) -> Optional[str]:
-        """
-        Which attribute in ret contains the main output of this llama_index app.
+        """Which attribute in ret contains the main output of this llama_index
+        app.
         """
 
         if isinstance(ret, Response):  # query, aquery
@@ -414,7 +426,7 @@ class TruLlama(mod_app.App):
             ret,
             (
                 StreamingResponse,
-                StreamingAgentChatResponse,
+                # StreamingAgentChatResponse,
                 AsyncStreamingResponse,
             ),
         ):

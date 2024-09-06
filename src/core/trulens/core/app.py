@@ -3,12 +3,15 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
+import asyncio
+from contextlib import asynccontextmanager
 import contextvars
 import datetime
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
+from pprint import pprint
 import threading
 from threading import Lock
 from typing import (
@@ -28,6 +31,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import weakref
 
 import pydantic
 from trulens.core._utils import optional as optional_utils
@@ -608,8 +612,13 @@ class App(
         self._tru_post_init()
 
     def __del__(self):
-        # Can use to do things when this object is being garbage collected.
-        pass
+        print(f"__del__ {self.app_name}")
+
+        if self.manage_pending_feedback_results_thread is not None:
+            self.records_with_pending_feedback_results.shutdown()
+            self.manage_pending_feedback_results_thread.join()
+
+        print("finished thread")
 
     def _start_manage_pending_feedback_results(self) -> None:
         """Start the thread that manages the queue of records with
@@ -625,11 +634,16 @@ class App(
 
         self.manage_pending_feedback_results_thread = threading.Thread(
             target=self._manage_pending_feedback_results,
+            args=(weakref.proxy(self),),
             daemon=True,  # otherwise this thread will keep parent alive
+            name=f"manage_pending_feedback_results_thread(app_name={self.app_name}, app_version={self.app_version})",
         )
         self.manage_pending_feedback_results_thread.start()
 
-    def _manage_pending_feedback_results(self) -> None:
+    @staticmethod
+    def _manage_pending_feedback_results(
+        self_proxy: weakref.ProxyType[App],
+    ) -> None:
         """Manage the queue of records with pending feedback results.
 
         This is meant to be run permanently in a separate thread. It will
@@ -637,10 +651,20 @@ class App(
         their feedback results are computed.
         """
 
-        while True:
-            record = self.records_with_pending_feedback_results.peek()
-            record.wait_for_feedback_results()
-            self.records_with_pending_feedback_results.remove(record)
+        try:
+            while True:
+                record = self_proxy.records_with_pending_feedback_results.peek()
+                self_proxy.records_with_pending_feedback_results.remove(record)
+                record.wait_for_feedback_results()
+
+        except StopIteration:
+            pass
+            # Set has been shut down.
+        except ReferenceError:
+            pass
+            # self was unloaded, shut down as well.
+
+        print("Shutting down manage pending feedback results thread.")
 
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
@@ -1159,6 +1183,42 @@ class App(
 
         return
 
+    @asynccontextmanager
+    async def record(self):
+        ctx = RecordingContext(app=self)
+
+        pprint(["before set", self.recording_contexts.get(None)])
+
+        token = self.recording_contexts.set(ctx)
+        ctx.token = token
+
+        pprint([
+            "after set",
+            threading.current_thread(),
+            asyncio.current_task(),
+            token,
+            ctx,
+        ])
+
+        yield ctx
+
+        pprint([
+            "after yield",
+            threading.current_thread(),
+            asyncio.current_task(),
+            token,
+            ctx,
+        ])
+
+        self.recording_contexts.reset(token)
+
+        pprint([
+            "after reset",
+            threading.current_thread(),
+            asyncio.current_task(),
+            self.recording_contexts.get(None),
+        ])
+
     # For use as a context manager.
     async def __aenter__(self):
         ctx = RecordingContext(app=self)
@@ -1170,8 +1230,8 @@ class App(
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        # ctx = self.recording_contexts.get()
-        # self.recording_contexts.reset(ctx.token)
+        ctx = self.recording_contexts.get()
+        self.recording_contexts.reset(ctx.token)
 
         if exc_type is not None:
             raise exc_value

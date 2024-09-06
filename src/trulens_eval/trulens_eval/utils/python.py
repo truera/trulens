@@ -34,6 +34,8 @@ from trulens.core.utils.python import safe_issubclass
 from trulens.core.utils.python import safe_signature
 from trulens.core.utils.python import stack_with_tasks
 from trulens.core.utils.python import task_factory_with_stack
-from trulens.core.utils.python import tru_new_event_loop
+
+# REMOVED:
+# from trulens.core.utils.python import tru_new_event_loop
 from trulens.core.utils.python import wrap_awaitable
 from trulens.core.utils.python import wrap_generator

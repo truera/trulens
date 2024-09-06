@@ -1,7 +1,9 @@
 """Tests for TruChain."""
 
+import gc
 from typing import Optional
 from unittest import main
+import weakref
 
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -109,6 +111,18 @@ class TestTruChain(JSONTestCase):
 
         self._check_generation_costs(record.cost)
 
+        with self.subTest(part="garbage collection"):
+            # Check that recorder is garbage collected.
+
+            recorder_ref = weakref.ref(recorder)
+
+            del recorder, recording, record
+            gc.collect()
+
+            self.assertTrue(
+                recorder_ref() is None, "Recorder was not garbage collected."
+            )
+
     @async_test
     async def test_async(self):
         """Asyncronous (`ainvoke`) test."""
@@ -125,6 +139,18 @@ class TestTruChain(JSONTestCase):
         self.assertIn(result, expected_answers)
 
         self._check_generation_costs(record.cost)
+
+        with self.subTest(part="garbage collection"):
+            # Check that recorder is garbage collected.
+
+            recorder_ref = weakref.ref(recorder)
+
+            del recorder, recording, record
+            gc.collect()
+
+            self.assertTrue(
+                recorder_ref() is None, "Recorder was not garbage collected."
+            )
 
     def test_sync_stream(self):
         """Syncronous stream (`stream`) test."""
@@ -144,6 +170,18 @@ class TestTruChain(JSONTestCase):
 
         self._check_stream_generation_costs(record.cost)
 
+        with self.subTest(part="garbage collection"):
+            # Check that recorder is garbage collected.
+
+            recorder_ref = weakref.ref(recorder)
+
+            del recorder, recording, record
+            gc.collect()
+
+            self.assertTrue(
+                recorder_ref() is None, "Recorder was not garbage collected."
+            )
+
     @async_test
     async def test_async_stream(self):
         """Asyncronous stream (`astream`) test."""
@@ -162,6 +200,18 @@ class TestTruChain(JSONTestCase):
         self.assertIn(result, expected_answers)
 
         self._check_stream_generation_costs(record.cost)
+
+        with self.subTest(part="garbage collection"):
+            # Check that recorder is garbage collected.
+
+            recorder_ref = weakref.ref(recorder)
+
+            del recorder, recording, record
+            gc.collect()
+
+            self.assertTrue(
+                recorder_ref() is None, "Recorder was not garbage collected."
+            )
 
     def test_record_metadata_plain(self):
         """Test inclusion of metadata in records."""
