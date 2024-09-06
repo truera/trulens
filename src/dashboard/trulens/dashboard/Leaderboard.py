@@ -89,9 +89,9 @@ def _preprocess_df(
         .reset_index()
     )
 
-    if "_leaderboard.pinned" in app_versions_df:
-        app_versions_df["_leaderboard.pinned"] = app_versions_df[
-            "_leaderboard.pinned"
+    if "trulens.leaderboard.pinned" in app_versions_df:
+        app_versions_df["trulens.leaderboard.pinned"] = app_versions_df[
+            "trulens.leaderboard.pinned"
         ].astype(bool)
 
     df = app_agg_df.join(
@@ -128,7 +128,7 @@ def _build_grid_options(
     )
 
     gb.configure_column(
-        "_leaderboard.pinned",
+        "trulens.leaderboard.pinned",
         header_name="Leaderboard",
         hide=True,
     )
@@ -238,8 +238,8 @@ def _render_grid_tab(
         "Show Pinned",
         key=f"{page_name}.show_pinned",
     ):
-        if "_leaderboard.pinned" in df:
-            df = df[df["_leaderboard.pinned"]]
+        if "trulens.leaderboard.pinned" in df:
+            df = df[df["trulens.leaderboard.pinned"]]
         else:
             st.info(
                 "Pin an app version by selecting it and clicking the `Pin` button.",
@@ -266,7 +266,8 @@ def _render_grid_tab(
 
     # Add to Leaderboard
     on_leaderboard = any(
-        "_leaderboard.pinned" in app and app["_leaderboard.pinned"]
+        "trulens.leaderboard.pinned" in app
+        and app["trulens.leaderboard.pinned"]
         for _, app in selected_rows.iterrows()
     )
     if c2.button(

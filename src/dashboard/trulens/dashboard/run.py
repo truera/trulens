@@ -80,6 +80,10 @@ def run_dashboard(
             f.write('base="dark"\n')
             f.write('primaryColor="#E0735C"\n')
             f.write('font="sans serif"\n')
+            f.write("[client]\n")
+            f.write('toolbarMode = "viewer"\n')
+            f.write("[server]\n")
+            f.write('fileWatcherType="none"\n')
     else:
         print("Config file already exists. Skipping writing process.")
 
@@ -110,6 +114,9 @@ def run_dashboard(
         port = find_unused_port()
 
     args = ["streamlit", "run", "--server.headless=True"]
+    if _dev:
+        args.append("--server.fileWatcherType=auto")
+        args.append("--client.toolbarMode=auto")
     if port is not None:
         args.append(f"--server.port={port}")
     if address is not None:

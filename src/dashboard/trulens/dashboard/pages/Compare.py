@@ -341,6 +341,7 @@ def render_app_comparison(app_name: str):
     app_feedback_container = st.container()
     st.divider()
     record_selector_container = st.container()
+    record_header_container = st.container()
     record_feedback_graph_container = st.container()
     record_feedback_selector_container = st.container()
     trace_viewer_container = st.container()
@@ -365,6 +366,8 @@ def render_app_comparison(app_name: str):
         }
         for app_id, data in col_data.items()
     }
+    record_header_container.divider()
+    record_header_container.header("Record Comparison")
     with record_feedback_graph_container:
         _render_all_app_feedback_plot(record_data, feedback_col_names)
 

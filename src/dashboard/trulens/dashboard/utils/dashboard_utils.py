@@ -1,4 +1,6 @@
 import argparse
+from datetime import datetime
+from datetime import timedelta
 import sys
 from typing import Any, Callable, Dict, List, Optional
 
@@ -11,6 +13,7 @@ from trulens.core.session import TruSession
 from trulens.core.utils.imports import static_resource
 from trulens.dashboard import __package__ as dashboard_package
 from trulens.dashboard import __version__
+from trulens.dashboard.constants import CACHE_TTL
 
 ST_APP_NAME = "app_name"
 ST_APP_VERSION = "app_version"
@@ -25,9 +28,16 @@ def set_page_config(page_title: Optional[str] = None):
         layout="wide",
     )
 
-    logo = static_resource("dashboard", "ux/trulens_logo.svg")
+    if st.get_option("theme.base") == "dark":
+        logo = str(static_resource("dashboard", "ux/trulens_logo_light.svg"))
+        logo_small = str(
+            static_resource("dashboard", "ux/trulens_squid_light.svg")
+        )
+    else:
+        logo = str(static_resource("dashboard", "ux/trulens_logo.svg"))
+        logo_small = str(static_resource("dashboard", "ux/trulens_squid.svg"))
 
-    st.logo(str(logo), link="https://www.trulens.org/")
+    st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
 
 def add_query_param(param_name: str, param_value: str):
@@ -61,7 +71,7 @@ def read_query_params_into_session_state(
             st.session_state[param] = value
 
 
-@st.cache_resource
+@st.cache_resource(ttl=CACHE_TTL, show_spinner="Setting up TruLens session")
 def get_session() -> TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
@@ -84,12 +94,13 @@ def get_session() -> TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
+    st.session_state["cache.last_refreshed"] = datetime.now()
     return TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
 
 
-@st.cache_data
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting record data")
 def get_records_and_feedback(
     app_ids: Optional[List[str]] = None, limit: Optional[int] = None
 ):
@@ -103,7 +114,7 @@ def get_records_and_feedback(
     return records_df, feedback_col_names
 
 
-@st.cache_data
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app data")
 def get_apps():
     session = get_session()
     lms = session.connector.db
@@ -111,7 +122,7 @@ def get_apps():
     return list(lms.get_apps())
 
 
-@st.cache_data
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting feedback definitions")
 def get_feedback_defs():
     session = get_session()
     lms = session.connector.db
@@ -154,7 +165,21 @@ def render_sidebar():
 
         if st.sidebar.button("↻ Refresh Data", use_container_width=True):
             st.cache_data.clear()
+            st.session_state["cache.last_refreshed"] = datetime.now()
             st.rerun()
+        if "cache.last_refreshed" in st.session_state:
+            last_refreshed: datetime = st.session_state["cache.last_refreshed"]
+            tdelta: timedelta = datetime.now() - last_refreshed
+            if tdelta.seconds < 5 * 60:
+                last_refreshed_str = "just now"
+            elif tdelta.seconds < 60 * 60:
+                last_refreshed_str = f"{tdelta.seconds // 60} minutes ago"
+            elif tdelta.days == 0:
+                last_refreshed_str = last_refreshed.strftime("%H:%M:%S")
+            else:
+                last_refreshed_str = last_refreshed.strftime("%m-%d-%Y")
+
+            st.sidebar.text(f"Last refreshed {last_refreshed_str}")
 
     with st.sidebar.expander("Info"):
         st.text(f"{core_package}\nv{core_version}")
@@ -181,7 +206,7 @@ def _flatten_metadata(metadata: dict):
     return results
 
 
-@st.cache_data
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app versions")
 def get_app_versions(app_name: str):
     apps = get_apps()
     app_versions = [app for app in apps if app["app_name"] == app_name]
