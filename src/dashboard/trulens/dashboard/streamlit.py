@@ -1,10 +1,8 @@
 import asyncio
 import json
 import math
-import re
 from typing import List
 
-import pandas as pd
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
@@ -15,11 +13,12 @@ from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
+from trulens.dashboard.display import highlight
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata_and_tags
-from trulens.dashboard.ux.styles import CATEGORY
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -237,103 +236,28 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
-
-        def highlight(df):
-            if "distance" in selected_feedback:
-                return [f"background-color: {CATEGORY.DISTANCE.color}"] * len(
-                    df
-                )
-
-            result_value = df["ret"]  # Use the 'result' column's value
-            cat = CATEGORY.of_score(
-                result_value,
-                higher_is_better=feedback_directions.get(
-                    selected_feedback, default_direction
-                )
-                == default_direction,
-            )
-            # Apply the background color to the entire row
-            return [f"background-color: {cat.color}" for _ in df]
-
-        def highlight_groundedness(df):
-            if "distance" in selected_feedback:
-                return [f"background-color: {CATEGORY.UNKNOWN.color}"] * len(df)
-
-            result_value = df["Score"]  # Use the 'Score' column's value
-            cat = CATEGORY.of_score(
-                result_value,
-                higher_is_better=feedback_directions.get(
-                    selected_feedback, default_direction
-                )
-                == default_direction,
-            )
-            # Apply the background color to the entire row
-            return [f"background-color: {cat.color}" for _ in df]
-
         df = get_feedback_result(record, feedback_name=selected_feedback)
-
         if "groundedness" in selected_feedback.lower():
-            try:
-                # Split the reasons value into separate rows and columns
-                reasons = df["reasons"].iloc[0]
-                # Split the reasons into separate statements
-                statements = reasons.split("STATEMENT")
-                data = []
-                # Each reason has three components: statement, supporting evidence, and score
-                # Parse each reason into these components and add them to the data list
-                for statement in statements[1:]:
-                    try:
-                        criteria = statement.split("Criteria: ")[1].split(
-                            "Supporting Evidence: "
-                        )[0]
-                        supporting_evidence = statement.split(
-                            "Supporting Evidence: "
-                        )[1].split("Score: ")[0]
-                        score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
-                        score_split = statement.split("Score: ")[1]
-                        score_match = score_pattern.search(score_split)
-                        if score_match:
-                            score = float(score_match.group(1)) / 10
-                    except Exception:
-                        pass
-                    data.append({
-                        "Statement": criteria,
-                        "Supporting Evidence from Source": supporting_evidence,
-                        "Score": score,
-                    })
-                reasons_df = pd.DataFrame(data)
-                # Combine the original feedback data with the expanded reasons
-                df_expanded = pd.concat(
-                    [
-                        df.reset_index(drop=True),
-                        reasons_df.reset_index(drop=True),
-                    ],
-                    axis=1,
-                )
-                st.dataframe(
-                    df_expanded.style.apply(
-                        highlight_groundedness, axis=1
-                    ).format("{:.2f}", subset=["Score"]),
-                    hide_index=True,
-                    column_order=[
-                        "Statement",
-                        "Supporting Evidence from Source",
-                        "Score",
-                    ],
-                )
-            except Exception as e:
-                st.write(e)
-                st.dataframe(
-                    df.style.apply(highlight, axis=1),
-                    use_container_width=True,
-                    hide_index=True,
-                )
+            df = expand_groundedness_df(df)
         else:
-            st.dataframe(
-                df.style.apply(highlight, axis=1),
-                use_container_width=True,
-                hide_index=True,
-            )
+            pass
+
+        # Apply the highlight function row-wise
+        styled_df = df.style.apply(
+            lambda row: highlight(
+                row,
+                selected_feedback=selected_feedback,
+                feedback_directions=feedback_directions,
+                default_direction=default_direction,
+            ),
+            axis=1,
+        )
+
+        # Format only numeric columns
+        for col in df.select_dtypes(include=["number"]).columns:
+            styled_df = styled_df.format({col: "{:.2f}"})
+
+        st.dataframe(styled_df, hide_index=True)
 
 
 def trulens_trace(record: Record):
