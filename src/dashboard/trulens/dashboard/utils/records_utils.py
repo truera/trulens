@@ -124,6 +124,7 @@ def display_feedback_call(
                         "Supporting Evidence from Source",
                         "Score",
                     ],
+                    use_container_width=True,
                 )
                 return
             except Exception:

@@ -101,7 +101,8 @@ def _render_all_app_feedback_plot(
     df_tab.dataframe(
         _df.sort_values(diff_col, ascending=False)
         .style.apply(_highlight_variance, axis=1)
-        .format("{:.3f}")
+        .format("{:.3f}"),
+        use_container_width=True,
     )
 
     df = df.melt(
@@ -118,13 +119,10 @@ def _render_all_app_feedback_plot(
         histfunc="avg",
     )
     fig.update_layout(dragmode=False)
-
     fig.update_yaxes(fixedrange=True, range=[0, 1])
     fig.update_xaxes(fixedrange=True)
 
-    chart_tab.plotly_chart(
-        fig,
-    )
+    chart_tab.plotly_chart(fig, use_container_width=True)
 
 
 def _highlight_variance(row: pd.Series):
@@ -170,24 +168,39 @@ def _render_shared_records(
         return
     # Feedback difference
     diff_cols = []
+    if len(col_data) == 2:
+        col_suffix = "Diff"
+    else:
+        col_suffix = "Variance"
     for feedback_col_name in feedback_cols:
-        diff_col_name = feedback_col_name + " Variance"
-        query_col[diff_col_name] = query_col.iloc[
-            :, query_col.columns.str.startswith(feedback_col_name)
-        ].var(axis=1)
-
+        diff_col_name = f"{feedback_col_name} {col_suffix}"
         diff_cols.append(diff_col_name)
-    query_col["feedback_variance"] = query_col[diff_cols].sum(axis=1)
-    query_col.sort_values("feedback_variance", ascending=False, inplace=True)
-    query_col = query_col.set_index("input")
-    query_col["Mean Variance"] = query_col[diff_cols].mean(axis=1)
 
-    query_col = query_col.sort_values(by="Mean Variance", ascending=False)
+        if len(col_data) == 2:
+            query_col[diff_col_name] = np.abs(
+                query_col.iloc[
+                    :, query_col.columns.str.startswith(feedback_col_name)
+                ]
+                .diff(axis=1)
+                .iloc[:, 1]
+            )
+        else:
+            diff_col_name = feedback_col_name + " Variance"
+            query_col[diff_col_name] = query_col.iloc[
+                :, query_col.columns.str.startswith(feedback_col_name)
+            ].var(axis=1)
+
+    query_col = query_col.set_index("input")
+    agg_diff_col = f"Mean {col_suffix}"
+    query_col[agg_diff_col] = query_col[diff_cols].mean(axis=1)
+
+    query_col = query_col.sort_values(by=agg_diff_col, ascending=False)
     with st.expander("Shared Records Stats"):
         st.dataframe(
-            query_col[["Mean Variance"] + diff_cols]
+            query_col[[agg_diff_col] + diff_cols]
             .style.apply(_highlight_variance, axis=1)
-            .format("{:.3f}")
+            .format("{:.3f}"),
+            use_container_width=True,
         )
 
     selection = st.selectbox(
@@ -212,30 +225,9 @@ def _lookup_app_version(
         raise ValueError("Must pass one of `app_id` or `app_version`")
 
 
-def _version_selectors(
+def _render_version_selectors(
     versions_df: pd.DataFrame,
 ):
-    def _handle_selector_change(
-        selected_app_ids: List[Optional[str]], selector_key: str, idx: int
-    ):
-        new_app_version = st.session_state[selector_key]
-        new_app_id = _lookup_app_version(
-            versions_df, app_version=new_app_version
-        )["app_id"]
-        if new_app_id in selected_app_ids:
-            st.error("Cannot compare an app version with itself.")
-            prev_app_id = selected_app_ids[idx]
-            prev_app_version = _lookup_app_version(
-                versions_df, app_id=prev_app_id
-            )["app_version"]
-            st.session_state[selector_key] = prev_app_version
-            return
-        selected_app_ids[idx] = new_app_id
-        st.session_state[f"{page_name}.app_ids"] = selected_app_ids
-        st.query_params["app_ids"] = ",".join(
-            str(app_id) for app_id in selected_app_ids
-        )
-
     def _increment_comparators(selected_app_ids: List[Optional[str]]):
         if len(selected_app_ids) < MAX_COMPARATORS:
             selected_app_ids.append(None)
@@ -246,70 +238,104 @@ def _version_selectors(
             selected_app_ids.pop(-1)
             st.session_state[f"{page_name}.app_ids"] = selected_app_ids
 
-    col_data = {}
-    selected_app_ids = st.session_state.get(f"{page_name}.app_ids")[
-        :MAX_COMPARATORS
+    current_app_ids = [
+        app_id
+        for app_id in st.session_state.get(f"{page_name}.app_ids", [])[
+            :MAX_COMPARATORS
+        ]
     ]
-    selected_app_ids = [app_id for app_id in selected_app_ids]
-
-    app_selector_cols = st.columns(
-        [4] * len(selected_app_ids) + [1], gap="large", vertical_alignment="top"
-    )
 
     versions = versions_df["app_version"].tolist()
+    # pinned_versions = None
+    # if PINNED_COL_NAME in versions_df.columns:
+    #     pinned_versions = set(
+    #         versions_df[versions_df[PINNED_COL_NAME]]["app_version"].unique()
+    #     )
 
-    for i, app_id in enumerate(selected_app_ids):
-        if app_id and app_id in versions_df["app_id"].values:
-            version = _lookup_app_version(versions_df, app_id=app_id)[
-                "app_version"
-            ]
-            idx = versions.index(version)
-        else:
-            idx = i
-            app_id = versions_df.iloc[idx]["app_id"]
-            version = versions_df.iloc[idx]["app_version"]
-            selected_app_ids[i] = app_id
+    inc_col, dec_col, _ = st.columns([0.15, 0.15, 0.7])
+    inc_col.button(
+        "➕ Add App Version",
+        disabled=len(current_app_ids) >= MAX_COMPARATORS,
+        key="add_comparator",
+        use_container_width=True,
+        on_click=_increment_comparators,
+        args=(current_app_ids,),
+    )
 
-        selectbox_key = f"{page_name}.app_version_selector_{i}"
-        if version := app_selector_cols[i].selectbox(
-            f"App Version {i}",
-            key=selectbox_key,
-            options=versions,
-            index=idx,
-            on_change=_handle_selector_change,
-            args=(selected_app_ids, selectbox_key, i),
-        ):
-            app_id = _lookup_app_version(versions_df, app_version=version)[
-                "app_id"
-            ]
-            records, feedback_cols = get_records_and_feedback(app_ids=[app_id])
-            col_data[app_id] = {
-                "version": version,
-                "records": _preprocess_df(records),
-                "feedback_cols": feedback_cols,
+    dec_col.button(
+        "➖ Remove App Version",
+        disabled=len(current_app_ids) <= MIN_COMPARATORS,
+        key="remove_comparator",
+        use_container_width=True,
+        on_click=_decrement_comparators,
+        args=(current_app_ids,),
+    )
+
+    with st.form("app_version_selector_form", border=False):
+        app_selector_cols = st.columns(
+            len(current_app_ids),
+            gap="large",
+            vertical_alignment="top",
+        )
+
+        for i, app_id in enumerate(current_app_ids):
+            if app_id and app_id in versions_df["app_id"].values:
+                version = _lookup_app_version(versions_df, app_id=app_id)[
+                    "app_version"
+                ]
+                idx = versions.index(version)
+            else:
+                idx = i
+                app_id = versions_df.iloc[idx]["app_id"]
+                version = versions_df.iloc[idx]["app_version"]
+                current_app_ids[i] = app_id
+
+            select_container = app_selector_cols[i].container()
+            # filter_container = app_selector_cols[i].container()
+
+            select_options = versions
+            # if pinned_versions:
+            #     checkbox_key = (
+            #         f"{page_name}.app_version_selector_{i}.show_pinned"
+            #     )
+            #     if filter_container.checkbox(
+            #         "Only Show Pinned", key=checkbox_key
+            #     ):
+            #         select_options = list(pinned_versions)
+
+            selectbox_key = f"{page_name}.app_version_selector_{i}"
+            if version := select_container.selectbox(
+                f"App Version {i}",
+                key=selectbox_key,
+                options=select_options,
+                index=idx,
+            ):
+                app_id = _lookup_app_version(versions_df, app_version=version)[
+                    "app_id"
+                ]
+                current_app_ids[i] = app_id
+
+        if st.form_submit_button("Apply"):
+            st.session_state[f"{page_name}.app_ids"] = current_app_ids
+            st.query_params["app_ids"] = ",".join(
+                str(app_id) for app_id in current_app_ids
+            )
+            records, feedback_cols = get_records_and_feedback(
+                app_ids=current_app_ids
+            )
+            records = _preprocess_df(records)
+            col_data = {
+                app_id: {
+                    "version": app_df["app_version"].unique()[0],
+                    "records": app_df,
+                    "feedback_cols": [
+                        col for col in feedback_cols if col in app_df.columns
+                    ],
+                }
+                for app_id, app_df in records.groupby(by="app_id")
             }
 
-    app_selector_cols[-1].button(
-        "➕",
-        disabled=len(selected_app_ids) >= MAX_COMPARATORS,
-        key="add_comparator",
-        on_click=_increment_comparators,
-        args=(selected_app_ids,),
-    )
-
-    app_selector_cols[-1].button(
-        "➖",
-        disabled=len(selected_app_ids) <= MIN_COMPARATORS,
-        key="remove_comparator",
-        on_click=_decrement_comparators,
-        args=(selected_app_ids,),
-    )
-
-    st.session_state[f"{page_name}.app_ids"] = selected_app_ids
-    st.query_params["app_ids"] = ",".join(
-        str(app_id) for app_id in selected_app_ids
-    )
-    return col_data, selected_app_ids
+            st.session_state[f"{page_name}.col_data"] = col_data
 
 
 def render_app_comparison(app_name: str):
@@ -331,8 +357,11 @@ def render_app_comparison(app_name: str):
         )
 
     # get app version and record data
+    _render_version_selectors(versions_df)
+    col_data = st.session_state.get(f"{page_name}.col_data", None)
+    if not col_data:
+        return
 
-    col_data, selected_app_ids = _version_selectors(versions_df)
     st.divider()
     feedback_col_names = _feedback_cols_intersect(col_data)
     _, feedback_directions = get_feedback_defs()
@@ -378,9 +407,9 @@ def render_app_comparison(app_name: str):
             key_prefix="shared",
         ):
             feedback_selector_cols = record_feedback_selector_container.columns(
-                len(selected_app_ids), gap="large"
+                len(record_data), gap="large"
             )
-            for i, app_id in enumerate(selected_app_ids):
+            for i, app_id in enumerate(record_data):
                 with feedback_selector_cols[i]:
                     record_df = record_data[app_id]["records"]
                     selected_row = record_df.iloc[0]
@@ -390,9 +419,9 @@ def render_app_comparison(app_name: str):
 
     with trace_viewer_container:
         trace_cols = trace_viewer_container.columns(
-            len(selected_app_ids), gap="large"
+            len(record_data), gap="large"
         )
-        for i, app_id in enumerate(selected_app_ids):
+        for i, app_id in enumerate(record_data):
             with trace_cols[i]:
                 record_df = record_data[app_id]["records"]
                 selected_row = record_df.iloc[0]
