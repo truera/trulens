@@ -7,6 +7,7 @@ import plotly.express as px
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
+from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -245,13 +246,6 @@ def _render_version_selectors(
         ]
     ]
 
-    versions = versions_df["app_version"].tolist()
-    # pinned_versions = None
-    # if PINNED_COL_NAME in versions_df.columns:
-    #     pinned_versions = set(
-    #         versions_df[versions_df[PINNED_COL_NAME]]["app_version"].unique()
-    #     )
-
     inc_col, dec_col, _ = st.columns([0.15, 0.15, 0.7])
     inc_col.button(
         "➕ Add App Version",
@@ -271,6 +265,43 @@ def _render_version_selectors(
         args=(current_app_ids,),
     )
 
+    app_filter_cols = st.columns(
+        len(current_app_ids),
+        gap="large",
+        vertical_alignment="top",
+    )
+
+    # Get versions and pinned versions
+    versions = versions_df["app_version"].tolist()
+    pinned_versions = None
+    if PINNED_COL_NAME in versions_df.columns:
+        pinned_versions = list(
+            versions_df[versions_df[PINNED_COL_NAME]]["app_version"].unique()
+        )
+
+    # Determine which versions to show based on pinned versions checkbox
+    select_idxs = []
+    select_optionss = []
+    for i, app_id in enumerate(current_app_ids):
+        select_versions = versions
+        checkbox_key = f"{page_name}.app_version_selector_{i}.show_pinned"
+        if pinned_versions and app_filter_cols[i].checkbox(
+            "Only Show Pinned", key=checkbox_key
+        ):
+            select_versions = pinned_versions
+
+        if app_id and app_id in select_versions:
+            version = _lookup_app_version(versions_df, app_id=app_id)[
+                "app_version"
+            ]
+            idx = select_versions.index(version)
+        else:
+            idx = 0
+
+        select_optionss.append(select_versions)
+        select_idxs.append(idx)
+
+    # Render version selectors
     with st.form("app_version_selector_form", border=False):
         app_selector_cols = st.columns(
             len(current_app_ids),
@@ -278,37 +309,16 @@ def _render_version_selectors(
             vertical_alignment="top",
         )
 
-        for i, app_id in enumerate(current_app_ids):
-            if app_id and app_id in versions_df["app_id"].values:
-                version = _lookup_app_version(versions_df, app_id=app_id)[
-                    "app_version"
-                ]
-                idx = versions.index(version)
-            else:
-                idx = i
-                app_id = versions_df.iloc[idx]["app_id"]
-                version = versions_df.iloc[idx]["app_version"]
-                current_app_ids[i] = app_id
-
-            select_container = app_selector_cols[i].container()
-            # filter_container = app_selector_cols[i].container()
-
-            select_options = versions
-            # if pinned_versions:
-            #     checkbox_key = (
-            #         f"{page_name}.app_version_selector_{i}.show_pinned"
-            #     )
-            #     if filter_container.checkbox(
-            #         "Only Show Pinned", key=checkbox_key
-            #     ):
-            #         select_options = list(pinned_versions)
-
+        for i, (select_options, select_idx, app_id) in enumerate(
+            zip(select_optionss, select_idxs, current_app_ids)
+        ):
             selectbox_key = f"{page_name}.app_version_selector_{i}"
-            if version := select_container.selectbox(
+            if version := app_selector_cols[i].selectbox(
                 f"App Version {i}",
                 key=selectbox_key,
                 options=select_options,
-                index=idx,
+                index=select_idx,
+                format_func=lambda x: f"📌 {x}" if x in pinned_versions else x,
             ):
                 app_id = _lookup_app_version(versions_df, app_version=version)[
                     "app_id"
@@ -376,11 +386,11 @@ def render_app_comparison(app_name: str):
     trace_viewer_container = st.container()
 
     with app_feedback_container:
-        app_feedback_container.header("Shared Feedback Functions")
+        app_feedback_container.header("App Feedback Comparison")
         _render_all_app_feedback_plot(col_data, feedback_col_names)
 
     with record_selector_container:
-        record_selector_container.header("Shared Records")
+        record_selector_container.header("Overlapping Records")
         selected_input = _render_shared_records(col_data, feedback_col_names)
 
     if selected_input is None:
