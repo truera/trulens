@@ -221,9 +221,7 @@ def _render_grid(
     )
 
 
-def handle_add_to_leaderboard(
-    selected_app_ids: List[str], on_leaderboard: bool
-):
+def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
     # Create nested metadata dict
     metadata_keys = PINNED_COL_NAME.split(".")
     value = {}
@@ -322,10 +320,11 @@ def _render_grid_tab(
     )
 
     c2.button(
-        "Unpin" if on_leaderboard else "Pin",
+        "Unpin App" if on_leaderboard else "Pin App",
         key=f"{grid_key}_pin_button",
         disabled=selected_rows.empty,
-        on_click=handle_add_to_leaderboard,
+        on_click=handle_pin_toggle,
+        use_container_width=True,
         args=(selected_app_ids, on_leaderboard),
     )
 
@@ -389,8 +388,8 @@ def _render_list_tab(
         (
             n_records_col,
             latency_col,
-            cost_col,
             tokens_col,
+            cost_col,
             select_app_col,
         ) = st.columns([1, 1, 1, 1, 1])
         feedback_cols = st.columns(

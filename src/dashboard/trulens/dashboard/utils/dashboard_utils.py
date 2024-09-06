@@ -228,11 +228,12 @@ def get_app_versions(app_name: str):
         app_versions_df[metadata_key] = app_versions_df["metadata"].apply(
             lambda x: x.get(metadata_key, None)
         )
+
     app_versions_df = app_versions_df.replace({float("nan"): None})
     if PINNED_COL_NAME in app_versions_df.columns:
-        app_versions_df[PINNED_COL_NAME] = app_versions_df[
-            PINNED_COL_NAME
-        ].astype(bool)
+        app_versions_df[PINNED_COL_NAME] = (
+            app_versions_df[PINNED_COL_NAME] == "True"
+        )
     return app_versions_df, list(app_version_metadata_cols)
 
 
