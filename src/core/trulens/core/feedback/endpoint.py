@@ -31,6 +31,7 @@ import requests
 from trulens.core.schema.base import Cost
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import SingletonPerName
@@ -720,6 +721,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
+            print("tru_wrapper", func)
+
             logger.debug(
                 "Calling instrumented method %s of type %s, "
                 "iscoroutinefunction=%s, "
@@ -746,6 +749,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # will get None here and do nothing but return wrapped
             # function's response.
             if len(endpoints) == 0:
+                print("no endpoints!")
                 logger.debug("No endpoints found.")
                 return response
 
@@ -762,6 +766,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         continue
 
                     for endpoint, callback in endpoints[callback_class]:
+                        print("tru_wrapper.handle_wrapped_call", type(callback))
                         logger.debug("Handling endpoint %s.", endpoint.name)
                         response_ = endpoint.handle_wrapped_call(
                             func=func,
@@ -779,18 +784,9 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # classes. These are thus handled in
             # OpenAIEndpoint.handle_wrapped_call .
 
-            if inspect.isasyncgen(response) and True:
-                return wrap_async_generator(
-                    response,
-                    on_next=response_callback,
-                    on_done=response_callback,
-                )
-
-            elif inspect.isawaitable(response) and True:
-                return wrap_awaitable(response, on_done=response_callback)
-
-            elif isinstance(response, Generator) and True:
-                return wrap_generator(
+            if python_utils.is_lazy(response):
+                print("tru_wrapper.wrap_lazy", type(response))
+                return python_utils.wrap_lazy(
                     response,
                     on_next=response_callback,
                     on_done=response_callback,

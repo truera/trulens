@@ -371,8 +371,8 @@ class Instrument:
 
         # NOTE(piotrm): This is a weakref to prevent capturing a reference to
         # the app in method wrapper closures.
-        self.app: Optional[weakref.ReferenceType[WithInstrumentCallbacks]] = (
-            weakref.ref(app) if app is not None else None
+        self.app: Optional[weakref.ProxyType[WithInstrumentCallbacks]] = (
+            weakref.proxy(app) if app is not None else None
         )
 
     def tracked_method_wrapper(
@@ -399,18 +399,19 @@ class Instrument:
             # Instrument.INSTRUMENT of the wrapped variant.
             original_func = getattr(func, Instrument.INSTRUMENT)
 
-            self.app().on_method_instrumented(obj, original_func, path=query)
+            self.app.on_method_instrumented(obj, original_func, path=query)
 
             # Add self.app, the app requesting this method to be
             # instrumented, to the list of apps expecting to be notified of
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app())  # weakref set
+            # The __repr__.__self__ undoes weakref.proxy .
+            existing_apps.add(self.app.__repr__.__self__)  # weakref set
 
             return func
 
         # Notify the app instrumenting this method where it is located:
-        self.app().on_method_instrumented(obj, func, path=query)
+        self.app.on_method_instrumented(obj, func, path=query)
 
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
@@ -619,7 +620,8 @@ class Instrument:
 
                 # Handle app-specific lazy values (like llama_index StreamResponse):
                 # NOTE(piotrm): self.app is a weakref
-                rets = self.app().wrap_lazy_values(rets, on_done=handle_done)
+                if python_utils.WRAP_LAZY:
+                    rets = self.app.wrap_lazy_values(rets, on_done=handle_done)
 
                 # (re) generate end_time here because cases where the initial end_time was
                 # just to produce an awaitable/lazy before being awaited.
@@ -690,7 +692,9 @@ class Instrument:
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
         # recorder/app gets garbage collected, it will be evicted from this set.
-        apps = weakref.WeakSet([self.app()])
+
+        # NOTE(piotrm): __repr__.__self__ undoes weakref.proxy .
+        apps = weakref.WeakSet([self.app.__repr__.__self__])
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.

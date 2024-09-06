@@ -24,6 +24,7 @@ from typing import (
 )
 import weakref
 
+from tqdm.auto import tqdm
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.text import format_size
@@ -587,9 +588,12 @@ class RefLike(Generic[T]):
             ref_or_val = obj
 
         assert ref_or_val is not None
-        try:
-            self.ref_or_val = weakref.ref(obj)
-        except Exception:
+        if gc.is_tracked(obj):
+            try:
+                self.ref_or_val = weakref.ref(obj)
+            except Exception:
+                self.ref_or_val = obj
+        else:
             self.ref_or_val = obj
 
         self.ref_id = ref_id
@@ -642,11 +646,15 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
 
     gc.collect()
 
+    prog = tqdm(total=len(gc.get_objects()))
+
     while not queue.empty():
         lens, path = queue.get()
 
         if len(path) > biggest_len:
             print(len(lens), format_size(len(visited)))
+            prog.update(len(visited) - prog.n)
+
             biggest_len = len(path)
 
         final_ref = path[-1]
@@ -660,8 +668,11 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             for key, value in list(final.items()):
                 if value is None:
                     continue
+                if not gc.is_tracked(value):
+                    continue
 
                 value_ref = RefLike(obj=value)
+
                 if value_ref.ref_id not in visited:
                     visited.add(value_ref.ref_id)
                     if isinstance(key, str):
@@ -679,6 +690,8 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             for index, value in enumerate(final):
                 if value is None:
                     continue
+                if not gc.is_tracked(value):
+                    continue
 
                 value_ref = RefLike(obj=value)
                 if value_ref.ref_id not in visited:
@@ -691,6 +704,8 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         else:
             for value in gc.get_referents(final):
                 if value is None:
+                    continue
+                if not gc.is_tracked(value):
                     continue
 
                 value_ref = RefLike(obj=value)
@@ -713,9 +728,17 @@ def print_lens(lens: Optional[serial_utils.Lens]) -> None:
     if lens is None:
         print("no path")
 
+    print(lens)
+
     for step in lens.path:
         if isinstance(step, GetReferent):
             obj = step.get_sole_item(None)
-            print(repr(step), str(obj)[0:256])
+            print(
+                "  ",
+                type(step).__name__,
+                repr(step),
+                type(obj).__name__,
+                str(obj)[0:256],
+            )
         else:
-            print(repr(step))
+            print("  ", type(step).__name__, repr(step))

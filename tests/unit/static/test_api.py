@@ -18,7 +18,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.imports import is_dummy
 from trulens.core.utils.serial import Lens
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.utils import Member
 from tests.utils import get_class_members
@@ -29,7 +29,7 @@ from tests.utils import type_str
 _GOLDEN_DIRECTORY = "tests/unit/static/golden"
 
 
-class TestAPI(JSONTestCase):
+class TestAPI(TruTestCase):
     """API Tests."""
 
     def setUp(self):

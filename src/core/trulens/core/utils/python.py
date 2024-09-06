@@ -35,6 +35,8 @@ from typing import (
 
 T = TypeVar("T")
 
+WRAP_LAZY: bool = True
+
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
 
@@ -920,6 +922,9 @@ def wrap_lazy(
 
         on_done: The callback to call when the wrapped generator is exhausted.
     """
+
+    if not WRAP_LAZY:
+        return gen
 
     if inspect.isasyncgen(gen):
         return wrap_async_generator(

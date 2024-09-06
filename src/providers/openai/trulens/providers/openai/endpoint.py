@@ -20,6 +20,7 @@ the involved classes will need to be adapted here. The important classes are:
 
 """
 
+import functools
 import inspect
 import logging
 import pprint
@@ -325,8 +326,19 @@ class OpenAIEndpoint(Endpoint):
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
 
+        print("openai.handle_wrapped_call:", type(response))
+
         if isinstance(response, Awaitable):
-            return response
+            # TODO: Try to handle this somewhere else.
+            return python_utils.wrap_awaitable(
+                response,
+                on_done=functools.partial(
+                    self.handle_wrapped_call,
+                    func=func,
+                    bindings=bindings,
+                    callback=callback,
+                ),
+            )
 
         model_name = ""
         if "model" in bindings.kwargs:

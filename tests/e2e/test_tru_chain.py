@@ -1,6 +1,5 @@
 """Tests for TruChain."""
 
-import gc
 from typing import Optional
 from unittest import main
 import weakref
@@ -15,13 +14,13 @@ from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.record import Record
 from trulens.core.utils.keys import check_keys
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 from tests.test import async_test
 from tests.test import optional_test
 
 
 @optional_test  # all tests are optional as langchain is optional
-class TestTruChain(JSONTestCase):
+class TestTruChain(TruTestCase):
     """Test TruChain apps."""
 
     ANSWERS = {"What is 1+2?": set(["1+2 equals 3.", "The answer is 3."])}
@@ -111,17 +110,10 @@ class TestTruChain(JSONTestCase):
 
         self._check_generation_costs(record.cost)
 
-        with self.subTest(part="garbage collection"):
-            # Check that recorder is garbage collected.
-
-            recorder_ref = weakref.ref(recorder)
-
-            del recorder, recording, record
-            gc.collect()
-
-            self.assertTrue(
-                recorder_ref() is None, "Recorder was not garbage collected."
-            )
+        # Check that recorder is garbage collected.
+        recorder_ref = weakref.ref(recorder)
+        del recorder, recording, record
+        self.assertCollected(recorder_ref)
 
     @async_test
     async def test_async(self):
@@ -140,17 +132,10 @@ class TestTruChain(JSONTestCase):
 
         self._check_generation_costs(record.cost)
 
-        with self.subTest(part="garbage collection"):
-            # Check that recorder is garbage collected.
-
-            recorder_ref = weakref.ref(recorder)
-
-            del recorder, recording, record
-            gc.collect()
-
-            self.assertTrue(
-                recorder_ref() is None, "Recorder was not garbage collected."
-            )
+        # Check that recorder is garbage collected.
+        recorder_ref = weakref.ref(recorder)
+        del recorder, recording, record
+        self.assertCollected(recorder_ref)
 
     def test_sync_stream(self):
         """Syncronous stream (`stream`) test."""
@@ -170,17 +155,10 @@ class TestTruChain(JSONTestCase):
 
         self._check_stream_generation_costs(record.cost)
 
-        with self.subTest(part="garbage collection"):
-            # Check that recorder is garbage collected.
-
-            recorder_ref = weakref.ref(recorder)
-
-            del recorder, recording, record
-            gc.collect()
-
-            self.assertTrue(
-                recorder_ref() is None, "Recorder was not garbage collected."
-            )
+        # Check that recorder is garbage collected.
+        recorder_ref = weakref.ref(recorder)
+        del recorder, recording, record
+        self.assertCollected(recorder_ref)
 
     @async_test
     async def test_async_stream(self):
@@ -201,17 +179,10 @@ class TestTruChain(JSONTestCase):
 
         self._check_stream_generation_costs(record.cost)
 
-        with self.subTest(part="garbage collection"):
-            # Check that recorder is garbage collected.
-
-            recorder_ref = weakref.ref(recorder)
-
-            del recorder, recording, record
-            gc.collect()
-
-            self.assertTrue(
-                recorder_ref() is None, "Recorder was not garbage collected."
-            )
+        # Check that recorder is garbage collected.
+        recorder_ref = weakref.ref(recorder)
+        del recorder, recording, record
+        self.assertCollected(recorder_ref)
 
     def test_record_metadata_plain(self):
         """Test inclusion of metadata in records."""

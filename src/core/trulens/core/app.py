@@ -375,7 +375,9 @@ class RecordingContext:
         self.token: Optional[contextvars.Token] = None
         """Token for context management."""
 
-        self.app: mod_instruments.WithInstrumentCallbacks = app
+        self.app: weakref.ProxyType[mod_instruments.WithInstrumentCallbacks] = (
+            weakref.proxy(app)
+        )
         """App for which we are recording."""
 
         self.record_metadata = record_metadata
@@ -991,6 +993,13 @@ class App(
 
             ret: The return value of the function.
         """
+
+        if isinstance(ret, JSON_BASES):
+            return str(ret)
+
+        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
+            # Chunked/streamed outputs.
+            return "".join(ret)
 
         # Use _extract_content to get the content out of the return value
         content = self._extract_content(ret, content_keys=["content", "output"])

@@ -52,6 +52,7 @@ if not legacy:
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
     from llama_index.core.chat_engine.types import BaseChatEngine
+    from llama_index.core.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.indices.base import BaseIndex
     from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.memory.types import BaseMemory
@@ -323,14 +324,31 @@ class TruLlama(mod_app.App):
         print(python_utils.class_name(rets))
 
         if isinstance(rets, AsyncStreamingResponse):
-            if rets.response_txt is None:
-                rets.response_gen = python_utils.wrap_async_generator(
-                    rets.response_gen, on_done=on_done
+            # if rets.response_txt is None:
+            rets.response_gen = python_utils.wrap_async_generator(
+                rets.response_gen, on_done=on_done
+            )
+            print("wrap async gen")
+            return rets
+            # else:
+            #    return rets
+
+        if isinstance(rets, StreamingAgentChatResponse):
+            if rets.chat_stream is not None:
+                rets.chat_stream = python_utils.wrap_generator(
+                    rets.chat_stream, on_done=on_done
+                )
+                print("wrap sync gen")
+            if rets.achat_stream is not None:
+                rets.achat_stream = python_utils.wrap_async_generator(
+                    rets.achat_stream, on_done=on_done
                 )
                 print("wrap async gen")
-                return rets
-            else:
-                return rets
+
+            return rets
+
+        # Not lazy:
+        # if isinstance(rets, AgentChatResponse):
 
         if isinstance(rets, StreamingResponse):
             rets.response_gen = python_utils.wrap_generator(
@@ -386,7 +404,7 @@ class TruLlama(mod_app.App):
         returned `ret`.
         """
 
-        return "placeholder"
+        # return "placeholder"
 
         try:
             attr = self._main_output_attribute(ret)
@@ -401,11 +419,12 @@ class TruLlama(mod_app.App):
                             "The main output will not be available in TruLens."
                         )
                     else:
-                        print(f"finished stream: |{val}|")
+                        print("finished stream")
 
                 return val
 
             else:  # attr is None
+                # return f"unrecognized return type {type(ret).__name__}: {ret}"
                 return mod_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:

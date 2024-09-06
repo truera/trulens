@@ -8,10 +8,10 @@ from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 
-class TestTruCustomApp(JSONTestCase):
+class TestTruCustomApp(TruTestCase):
     @staticmethod
     def setUpClass():
         TruSession().reset_database()

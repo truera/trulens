@@ -6,6 +6,7 @@ from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import functools
+import gc
 import importlib
 import json
 import os
@@ -24,6 +25,7 @@ from typing import (
 )
 import unittest
 from unittest import TestCase
+import weakref
 
 import pydantic
 from pydantic import BaseModel
@@ -481,23 +483,81 @@ class WithJSONTestCase(TestCase):
             )
 
 
-class JSONTestCase(WithJSONTestCase, TestCase):
-    """TestCase subclass with JSON comparisons and test enable/disable flag
-    handling."""
+class TruTestCase(WithJSONTestCase, TestCase):
+    """TestCase subclass with several additions.
+
+    - JSON comparisons and golden-file handling.
+
+    - Dumps of remaining tasks/threads on tests completion.
+
+    - Garbage collection subtest.
+    """
+
+    def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
+        """Check that the object referenced by `ref` has been garbage
+        collected."""
+
+        gc.collect()
+
+        if msg is None:
+            msg = f"Object {ref} was not garbage collected."
+
+        with self.subTest(part="garbage collection"):
+            self.assertTrue(ref() is None, msg)
+
+    def tearDown(self):
+        """Check for running tasks and non-main threads after each test."""
+
+        # GC here to make sure we don't have any references to tasks or threads
+        # that are keeping them alive.
+        gc.collect()
+
+        running_tasks = []
+        try:
+            loop = asyncio.get_event_loop()
+            for task in asyncio.all_tasks(loop):
+                running_tasks.append(task)
+        except Exception:
+            # No event loop running?
+            pass
+
+        if running_tasks:
+            with self.subTest(part="running tasks"):
+                raise AssertionError(f"Tasks still running: {running_tasks}")
+
+        non_main_threads = []
+        for thread in threading.enumerate():
+            if thread != threading.main_thread():
+                non_main_threads.append(thread)
+
+        if non_main_threads:
+            with self.subTest(part="non-main threads"):
+                raise AssertionError(
+                    f"Non-main threads still running: {non_main_threads}"
+                )
 
     @classmethod
     def tearDownClass(cls):
+        """Show a final printout of remaining running tasks and threads upon
+        completion of all tests in this class."""
+
         print(f"Tearing down {cls.__name__}")
+        running_tasks = []
         try:
             loop = asyncio.get_event_loop()
             print(f"  Loop still running: {loop}")
+            print("   Remaining tasks:")
             for task in asyncio.all_tasks(loop):
-                print("    Task still running:")
+                running_tasks.append(task)
+                print("    " + str(task))
                 task.print_stack()
 
         except Exception as e:
             print(f"  No running loop? {e}")
 
-        print("  Threads:")
+        print("  Remaining threads:")
+        non_main_threads = []
         for thread in threading.enumerate():
-            print("    " + str(thread))
+            if thread != threading.main_thread():
+                non_main_threads.append(thread)
+                print("    " + str(thread))

@@ -12,10 +12,10 @@ from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 
-class TestDummy(JSONTestCase):
+class TestDummy(TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):

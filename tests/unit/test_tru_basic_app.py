@@ -9,12 +9,12 @@ from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.utils.keys import check_keys
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
-class TestTruBasicApp(JSONTestCase):
+class TestTruBasicApp(TruTestCase):
     def setUp(self):
         def custom_application(prompt: str) -> str:
             return "a response"
