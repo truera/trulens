@@ -84,6 +84,8 @@ def run_dashboard(
             f.write('toolbarMode = "viewer"\n')
             f.write("\n[server]\n")
             f.write('fileWatcherType="none"\n')
+            f.write("\n[global]\n")
+            f.write('disableWidgetStateDuplicationWarning="true"\n')
     else:
         print("Config file already exists. Skipping writing process.")
 
@@ -117,6 +119,7 @@ def run_dashboard(
     if _dev:
         args.append("--server.fileWatcherType=auto")
         args.append("--client.toolbarMode=auto")
+        args.append("--global.disableWidgetStateDuplicationWarning=false")
     if port is not None:
         args.append(f"--server.port={port}")
     if address is not None:

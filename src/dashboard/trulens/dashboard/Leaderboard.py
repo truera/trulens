@@ -29,8 +29,8 @@ from trulens.dashboard.utils.dashboard_utils import update_app_metadata
 from trulens.dashboard.ux.components import draw_metadata_and_tags
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import Category
+from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
-from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import stmetricdelta_hidearrow
 
@@ -117,41 +117,58 @@ def order_columns(
 
 def _build_grid_options(
     df: pd.DataFrame,
-    feedback_col_names: Sequence[str],
+    feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
     gb = GridOptionsBuilder.from_dataframe(df)
-    # gb.configure_default_column(resizable=True)
+    # gb.configure_default_column(
+    #     filter="agMultiColumnFilter",
+    # )
     gb.configure_column(
         "app_version",
         header_name="App Version",
         resizable=True,
         pinned="left",
+        filter="agMultiColumnFilter",
+    )
+
+    gb.configure_columns(APP_COLS, filter="agMultiColumnFilter")
+    gb.configure_columns(
+        feedback_col_names + ["records", "latency"],
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_columns(
+        version_metadata_col_names, filter="agMultiColumnFilter"
     )
 
     gb.configure_column(
         PINNED_COL_NAME,
         header_name="Pinned",
         hide=True,
+        filter="agSetColumnFilter",
     )
     gb.configure_column(
         "app_id",
         header_name="App ID",
         hide=True,
         resizable=True,
+        filter="agSetColumnFilter",
     )
     gb.configure_column(
         "app_name",
         header_name="App Name",
         hide=True,
         resizable=True,
+        filter="agMultiColumnFilter",
     )
 
     for feedback_col in feedback_col_names:
         if "distance" in feedback_col:
             gb.configure_column(
-                feedback_col, hide=feedback_col.endswith("_calls")
+                feedback_col,
+                hide=feedback_col.endswith("_calls"),
+                filter="agNumberColumnFilter",
             )
         else:
             # cell highlight depending on feedback direction
@@ -165,9 +182,10 @@ def _build_grid_options(
                 feedback_col,
                 cellClassRules=cell_rules[feedback_direction],
                 hide=feedback_col.endswith("_calls"),
+                filter="agNumberColumnFilter",
             )
 
-    gb.configure_grid_options(rowHeight=40)
+    gb.configure_grid_options(rowHeight=45, suppressContextMenu=True)
     gb.configure_selection(
         selection_mode="multiple",
         use_checkbox=True,
@@ -182,7 +200,7 @@ def _build_grid_options(
 
 def _render_grid(
     df: pd.DataFrame,
-    feedback_col_names: Sequence[str],
+    feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
     grid_key: Optional[str] = None,
@@ -190,14 +208,14 @@ def _render_grid(
     return AgGrid(
         df,
         key=grid_key,
-        height=600,
+        height=1500,
         gridOptions=_build_grid_options(
             df=df,
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
             version_metadata_col_names=version_metadata_col_names,
         ),
-        custom_css=cell_rules_styles,
+        custom_css=aggrid_css,
         update_on=["selectionChanged"],
         allow_unsafe_jscode=True,
     )
@@ -451,7 +469,7 @@ def _render_list_tab(
                 "Select App",
                 key=f"select_app_{app_id}",
             ):
-                st.session_state["Records_app_id"] = app_id
+                st.session_state[f"{records_page_name}.app_ids"] = [app_id]
                 st.switch_page("pages/Records.py")
 
         # with st.expander("Model metadata"):

@@ -123,6 +123,14 @@ cell_rules_styles = {
     for cat_name, styles in CATEGORY.styling.items()
 }
 
+aggrid_css = {
+    **cell_rules_styles,
+    ".ag-row .ag-cell": {
+        "display": "flex",
+        "align-items": "center",
+    },
+}
+
 cell_rules = {}
 for direction in valid_directions:
     categories: List[Category] = [

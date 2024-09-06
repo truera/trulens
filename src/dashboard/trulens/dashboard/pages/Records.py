@@ -24,8 +24,8 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
-from trulens.dashboard.ux.styles import cell_rules_styles
 from trulens.dashboard.ux.styles import default_direction
 
 
@@ -52,6 +52,13 @@ def init_page_state(app_name: str):
     st.session_state[f"{page_name}.initialized"] = True
 
 
+def _format_cost(cost: float, currency: str) -> str:
+    if currency == "USD":
+        return f"${cost:.2f}"
+    else:
+        return f"{cost:.3g} {currency}"
+
+
 def _render_record_metrics(
     records_df: pd.DataFrame, selected_row: pd.Series
 ) -> None:
@@ -64,29 +71,38 @@ def _render_record_metrics(
 
     num_tokens = selected_row["total_tokens"]
     with token_col.container(height=128, border=True):
-        st.metric(label="Total tokens (#)", value=num_tokens)
+        st.metric(
+            label="Total tokens (#)",
+            value=num_tokens,
+            help="Number of tokens generated for this record.",
+        )
 
     cost = selected_row["total_cost"]
-    average_cost = app_specific_df["total_cost"].mean()
-    delta_cost = f"{cost - average_cost:.3g}"
+    cost_currency = selected_row["cost_currency"]
+    average_cost = app_specific_df[
+        app_specific_df["cost_currency"] == cost_currency
+    ]["total_cost"].mean()
+    delta_cost = cost - average_cost
 
     with cost_col.container(height=128, border=True):
         st.metric(
-            label="Total cost (USD)",
-            value=selected_row["total_cost"],
-            delta=delta_cost,
+            label=f"Total cost ({cost_currency})",
+            value=_format_cost(cost, cost_currency),
+            delta=f"{delta_cost:3g}" if delta_cost != 0 else None,
             delta_color="inverse",
+            help=f"Cost of the app execution measured in {cost_currency}. Delta is relative to average cost for the app.",
         )
 
     latency = selected_row["latency"]
     average_latency = app_specific_df["latency"].mean()
-    delta_latency = f"{latency - average_latency:.3g}s"
+    delta_latency = latency - average_latency
     with latency_col.container(height=128, border=True):
         st.metric(
             label="Latency (s)",
-            value=selected_row["latency"],
-            delta=delta_latency,
+            value=f"{selected_row['latency']}s",
+            delta=f"{delta_latency:.3g}s" if delta_latency != 0 else None,
             delta_color="inverse",
+            help="Latency of the app execution. Delta is relative to average latency for the app.",
         )
 
 
@@ -168,6 +184,7 @@ def _preprocess_df(
             | records_df["input"].str.contains(record_query, case=False)
             | records_df["output"].str.contains(record_query, case=False)
         ]
+    records_df["ts"] = pd.to_datetime(records_df["ts"])
     return records_df
 
 
@@ -185,38 +202,105 @@ def _build_grid_options(
         resizable=True,
         pinned="left",
         flex=3,
+        filter="agMultiColumnFilter",
     )
     gb.configure_column(
         "app_name",
         header_name="App Name",
         hide=True,
+        filter="agMultiColumnFilter",
     )
-    gb.configure_column("app_id", header_name="App ID", hide=True)
     gb.configure_column(
-        "record_id", header_name="Record ID", pinned="left", hide=True
+        "app_id", header_name="App ID", hide=True, filter="agSetColumnFilter"
+    )
+    gb.configure_column(
+        "record_id",
+        header_name="Record ID",
+        pinned="left",
+        hide=True,
+        filter="agSetColumnFilter",
     )
 
     gb.configure_column(
-        "input", header_name="User Input", wrapText=True, autoHeight=True
+        "input",
+        header_name="User Input",
+        wrapText=True,
+        autoHeight=True,
+        filter="agMultiColumnFilter",
     )
     gb.configure_column(
-        "output", header_name="Response", wrapText=True, autoHeight=True
+        "output",
+        header_name="Response",
+        wrapText=True,
+        autoHeight=True,
+        filter="agMultiColumnFilter",
     )
-    gb.configure_column("record_metadata", header_name="Record Metadata")
+    gb.configure_column(
+        "record_metadata",
+        header_name="Record Metadata",
+        filter="agTextColumnFilter",
+    )
 
-    gb.configure_column("total_tokens", header_name="Total Tokens (#)")
-    gb.configure_column("total_cost", header_name="Total Cost (App)")
-    gb.configure_column("cost_currency", header_name="Cost Currency")
-    gb.configure_column("latency", header_name="Latency (Seconds)")
-    gb.configure_column("tags", header_name="Application Tag")
-    gb.configure_column("ts", header_name="Time Stamp", sort="desc")
+    gb.configure_column(
+        "total_tokens",
+        header_name="Total Tokens (#)",
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_column(
+        "total_cost",
+        header_name="Total Cost (App)",
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_column(
+        "cost_currency",
+        header_name="Cost Currency",
+        filter="agMultiColumnFilter",
+    )
+    gb.configure_column(
+        "latency",
+        header_name="Latency (Seconds)",
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_column(
+        "tags", header_name="Application Tag", filter="agSetColumnFilter"
+    )
+    gb.configure_column(
+        "ts", header_name="Time Stamp", sort="desc", filter="agDateColumnFilter"
+    )
 
-    gb.configure_column("feedback_id", header_name="Feedback ID", hide=True)
-    gb.configure_column("type", header_name="App Type", hide=True)
-    gb.configure_column("record_json", header_name="Record JSON", hide=True)
-    gb.configure_column("app_json", header_name="App JSON", hide=True)
-    gb.configure_column("cost_json", header_name="Cost JSON", hide=True)
-    gb.configure_column("perf_json", header_name="Perf. JSON", hide=True)
+    gb.configure_column(
+        "feedback_id",
+        header_name="Feedback ID",
+        hide=True,
+        filter="agMultiColumnFilter",
+    )
+    gb.configure_column(
+        "type", header_name="App Type", hide=True, filter="agMultiColumnFilter"
+    )
+    gb.configure_column(
+        "record_json",
+        header_name="Record JSON",
+        hide=True,
+        filter="agTextColumnFilter",
+    )
+    gb.configure_column(
+        "app_json",
+        header_name="App JSON",
+        hide=True,
+        filter="agTextColumnFilter",
+    )
+    gb.configure_column(
+        "cost_json",
+        header_name="Cost JSON",
+        hide=True,
+        filter="agTextColumnFilter",
+    )
+    gb.configure_column(
+        "perf_json",
+        header_name="Perf. JSON",
+        hide=True,
+        filter="agTextColumnFilter",
+    )
 
     for metadata_col in version_metadata_col_names:
         gb.configure_column(
@@ -272,7 +356,7 @@ def _render_grid(
     return AgGrid(
         df,
         key="records_data",
-        # height=1200,
+        height=1000,
         gridOptions=_build_grid_options(
             df=df,
             feedback_col_names=feedback_col_names,
@@ -280,7 +364,7 @@ def _render_grid(
             version_metadata_col_names=version_metadata_col_names,
         ),
         update_on=["selectionChanged"],
-        custom_css=cell_rules_styles,
+        custom_css=aggrid_css,
         columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
         data_return_mode=DataReturnMode.FILTERED,
         allow_unsafe_jscode=True,
@@ -350,8 +434,8 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
             yaxis["title"] = "# Records"
 
     fig.update_layout(
-        height=250 * rows,
-        width=250 * cols,
+        height=300 * rows,
+        width=200 * cols,
         dragmode=False,
         showlegend=False,
     )
