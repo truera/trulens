@@ -80,9 +80,9 @@ def run_dashboard(
             f.write('base="dark"\n')
             f.write('primaryColor="#E0735C"\n')
             f.write('font="sans serif"\n')
-            f.write("[client]\n")
+            f.write("\n[client]\n")
             f.write('toolbarMode = "viewer"\n')
-            f.write("[server]\n")
+            f.write("\n[server]\n")
             f.write('fileWatcherType="none"\n')
     else:
         print("Config file already exists. Skipping writing process.")
