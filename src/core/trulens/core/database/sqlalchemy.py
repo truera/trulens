@@ -377,6 +377,13 @@ class SQLAlchemyDB(DB):
     ) -> Optional[mod_app_schema.AppDefinition]:
         """See [DB.get_app_definition][trulens.core.database.base.DB.get_app_definition]."""
 
+        def nested_update(metadata: dict, update: dict):
+            for k, v in update.items():
+                if isinstance(v, dict) and k in metadata:
+                    nested_update(metadata[k], v)
+                else:
+                    metadata[k] = v
+
         with self.session.begin() as session:
             if (
                 _app := session.query(self.orm.AppDefinition)
@@ -386,7 +393,7 @@ class SQLAlchemyDB(DB):
                 app_json = json.loads(_app.app_json)
                 if "metadata" not in app_json:
                     app_json["metadata"] = {}
-                app_json["metadata"] |= metadata
+                nested_update(app_json["metadata"], metadata)
                 _app.app_json = json.dumps(app_json)
 
     def get_apps(self) -> Iterable[JSON]:

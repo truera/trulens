@@ -14,6 +14,7 @@ from trulens.core.utils.imports import static_resource
 from trulens.dashboard import __package__ as dashboard_package
 from trulens.dashboard import __version__
 from trulens.dashboard.constants import CACHE_TTL
+from trulens.dashboard.constants import PINNED_COL_NAME
 
 ST_APP_NAME = "app_name"
 ST_APP_VERSION = "app_version"
@@ -227,6 +228,10 @@ def get_app_versions(app_name: str):
             lambda x: x.get(metadata_key, None)
         )
     app_versions_df = app_versions_df.replace({float("nan"): None})
+    if PINNED_COL_NAME in app_versions_df.columns:
+        app_versions_df[PINNED_COL_NAME] = app_versions_df[
+            PINNED_COL_NAME
+        ].astype(bool)
     return app_versions_df, list(app_version_metadata_cols)
 
 

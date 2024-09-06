@@ -263,7 +263,6 @@ def _build_grid_options(
     return gb.build()
 
 
-# @st.fragment
 def _render_grid(
     df: pd.DataFrame,
     feedback_col_names: Sequence[str],

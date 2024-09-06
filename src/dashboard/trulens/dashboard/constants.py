@@ -7,3 +7,5 @@ COMPARE_PAGE_NAME = "Compare"
 RECORD_LIMIT = 1000
 
 CACHE_TTL = 60 * 15  # 15 minutes
+
+PINNED_COL_NAME = "trulens.leaderboard.pinned"

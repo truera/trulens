@@ -8,12 +8,15 @@ import streamlit as st
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as compare_page_name
 from trulens.dashboard.constants import LEADERBOARD_PAGE_NAME as page_name
+from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORD_LIMIT
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as records_page_name
 from trulens.dashboard.pages.Compare import MAX_COMPARATORS
 from trulens.dashboard.pages.Compare import MIN_COMPARATORS
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
+from trulens.dashboard.utils.dashboard_utils import get_app_versions
+from trulens.dashboard.utils.dashboard_utils import get_apps
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import (
@@ -89,9 +92,9 @@ def _preprocess_df(
         .reset_index()
     )
 
-    if "trulens.leaderboard.pinned" in app_versions_df:
-        app_versions_df["trulens.leaderboard.pinned"] = app_versions_df[
-            "trulens.leaderboard.pinned"
+    if PINNED_COL_NAME in app_versions_df:
+        app_versions_df[PINNED_COL_NAME] = app_versions_df[
+            PINNED_COL_NAME
         ].astype(bool)
 
     df = app_agg_df.join(
@@ -128,8 +131,8 @@ def _build_grid_options(
     )
 
     gb.configure_column(
-        "trulens.leaderboard.pinned",
-        header_name="Leaderboard",
+        PINNED_COL_NAME,
+        header_name="Pinned",
         hide=True,
     )
     gb.configure_column(
@@ -177,7 +180,6 @@ def _build_grid_options(
     return gb.build()
 
 
-# @st.fragment
 def _render_grid(
     df: pd.DataFrame,
     feedback_col_names: Sequence[str],
@@ -201,7 +203,34 @@ def _render_grid(
     )
 
 
-# @st.fragment
+def handle_add_to_leaderboard(
+    selected_app_ids: List[str], on_leaderboard: bool
+):
+    # Create nested metadata dict
+    metadata_keys = PINNED_COL_NAME.split(".")
+    value = {}
+    ptr = value
+    for i, key in enumerate(metadata_keys):
+        if i == len(metadata_keys) - 1:
+            ptr[key] = not on_leaderboard
+        else:
+            ptr[key] = {}
+            ptr = ptr[key]
+
+    for app_id in selected_app_ids:
+        update_app_metadata(app_id, value)
+    get_app_versions.clear()
+    get_apps.clear()
+    if on_leaderboard:
+        st.toast(
+            f"Successfully removed {len(selected_app_ids)} app(s) from Leaderboard"
+        )
+    else:
+        st.toast(
+            f"Successfully added {len(selected_app_ids)} app(s) to Leaderboard"
+        )
+
+
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -238,13 +267,14 @@ def _render_grid_tab(
         "Show Pinned",
         key=f"{page_name}.show_pinned",
     ):
-        if "trulens.leaderboard.pinned" in df:
-            df = df[df["trulens.leaderboard.pinned"]]
+        if PINNED_COL_NAME in df:
+            df = df[df[PINNED_COL_NAME]]
         else:
             st.info(
                 "Pin an app version by selecting it and clicking the `Pin` button.",
                 icon="📌",
             )
+            return
     st.query_params["show_pinned"] = str(show_pinned)
 
     grid_data = _render_grid(
@@ -258,37 +288,28 @@ def _render_grid_tab(
     selected_rows = pd.DataFrame(selected_rows)
 
     if selected_rows.empty:
-        st.info("Click an App Version's checkbox to view details.")
         selected_app_ids = []
     else:
         selected_app_ids = list(selected_rows.app_id.unique())
-        st.dataframe(selected_rows.set_index("app_id"))
+        st.header("Selected App Versions")
+        st.dataframe(
+            selected_rows.set_index("app_id"),
+            use_container_width=True,
+        )
 
     # Add to Leaderboard
     on_leaderboard = any(
-        "trulens.leaderboard.pinned" in app
-        and app["trulens.leaderboard.pinned"]
+        PINNED_COL_NAME in app and app[PINNED_COL_NAME]
         for _, app in selected_rows.iterrows()
     )
-    if c2.button(
+
+    c2.button(
         "Unpin" if on_leaderboard else "Pin",
         key=f"{grid_key}_pin_button",
         disabled=selected_rows.empty,
-    ):
-        for app_id in selected_app_ids:
-            update_app_metadata(
-                app_id, {"_leaderboard": {"pinned": not on_leaderboard}}
-            )
-        st.cache_data.clear()
-        if on_leaderboard:
-            st.toast(
-                f"Successfully removed {len(selected_app_ids)} app(s) from Leaderboard"
-            )
-        else:
-            st.toast(
-                f"Successfully added {len(selected_app_ids)} app(s) to Leaderboard"
-            )
-        st.rerun()
+        on_click=handle_add_to_leaderboard,
+        args=(selected_app_ids, on_leaderboard),
+    )
 
     # Examine Records
     if c3.button(
@@ -484,7 +505,7 @@ def render_leaderboard(app_name: str):
     with versions_tab:
         _render_grid_tab(
             df,
-            grid_key="leaderboard_grid",
+            grid_key=f"{page_name}.leaderboard_grid",
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
             version_metadata_col_names=version_metadata_col_names,
