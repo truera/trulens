@@ -194,7 +194,7 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    gb = GridOptionsBuilder.from_dataframe(df)
+    gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
         "app_version",

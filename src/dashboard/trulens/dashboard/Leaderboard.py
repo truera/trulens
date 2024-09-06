@@ -122,10 +122,7 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    gb = GridOptionsBuilder.from_dataframe(df)
-    # gb.configure_default_column(
-    #     filter="agMultiColumnFilter",
-    # )
+    gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
     gb.configure_column(
         "app_version",
         header_name="App Version",
