@@ -1,4 +1,5 @@
 import math
+import re
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
@@ -234,7 +235,6 @@ def _nest_metadata(
         if i == len(metadata_keys) - 1:
             ptr[key] = value
         else:
-            print(key)
             ptr[key] = {}
             ptr = ptr[key]
     return root_dict
@@ -285,6 +285,45 @@ def handle_table_edit(
     st.toast(f"Successfully updated metadata for app {app_id}")
 
 
+@st.dialog("Add/Edit Metadata")
+def handle_add_metadata(selected_rows: pd.DataFrame):
+    st.write("Add or edit metadata for selected app versions")
+    key = st.text_input("Metadata Key", placeholder="metadata.key")
+
+    if key and not re.match(r"^[A-Za-z0-9_.]+$", key):
+        st.error(
+            "`key` must contain only alphanumeric and underscore characters!"
+        )
+
+    existing_value = None
+    placeholder = None
+    print(selected_rows)
+    if key in selected_rows.columns:
+        existing_values = list(selected_rows[key].unique())
+        if len(existing_values) == 1:
+            existing_value = existing_values[0]
+        else:
+            placeholder = "<multiple existing values>"
+
+    val = st.text_input(
+        "Metadata Value",
+        placeholder=placeholder or "value",
+        value=existing_value,
+    )
+
+    if st.button("Submit"):
+        metadata = _nest_metadata(key, val)
+        for app_id in selected_rows["app_id"]:
+            update_app_metadata(app_id, metadata)
+
+        get_app_versions.clear()
+        get_apps.clear()
+        st.toast(
+            f"Successfully updated metadata for {len(selected_rows)} app(s)"
+        )
+        st.rerun()
+
+
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -293,8 +332,10 @@ def _render_grid_tab(
     grid_key: Optional[str] = None,
 ):
     container = st.container()
-    c1, c2, c3, c4 = container.columns(
-        [1, 1, 1, 1], gap="large", vertical_alignment="center"
+    c1, c2, c3, c4, c5 = container.columns(
+        [1, 1, 1, 1, 1],
+        gap="large",
+        vertical_alignment="center",
     )
     if metadata_to_front := c1.toggle(
         "Metadata to Front",
@@ -390,6 +431,7 @@ def _render_grid_tab(
     else:
         _compare_button_label = "Compare"
         _compare_button_disabled = False
+
     if c4.button(
         _compare_button_label,
         disabled=_compare_button_disabled,
@@ -397,6 +439,14 @@ def _render_grid_tab(
     ):
         st.session_state[f"{compare_page_name}.app_ids"] = selected_app_ids
         st.switch_page("pages/Compare.py")
+
+    # Add Metadata Col
+    if c5.button(
+        "Add/Edit Metadata",
+        disabled=selected_rows.empty,
+        use_container_width=True,
+    ):
+        handle_add_metadata(selected_rows)
 
 
 @st.fragment
