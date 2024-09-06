@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 from st_aggrid import AgGrid
@@ -139,7 +139,7 @@ def _build_grid_options(
         filter="agNumberColumnFilter",
     )
     gb.configure_columns(
-        version_metadata_col_names, filter="agMultiColumnFilter"
+        version_metadata_col_names, filter="agMultiColumnFilter", editable=True
     )
 
     gb.configure_column(
@@ -205,10 +205,13 @@ def _render_grid(
     version_metadata_col_names: Sequence[str],
     grid_key: Optional[str] = None,
 ):
+    columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+
     return AgGrid(
         df,
         key=grid_key,
         height=1500,
+        columns_state=columns_state,
         gridOptions=_build_grid_options(
             df=df,
             feedback_col_names=feedback_col_names,
@@ -216,22 +219,38 @@ def _render_grid(
             version_metadata_col_names=version_metadata_col_names,
         ),
         custom_css=aggrid_css,
-        update_on=["selectionChanged"],
+        update_on=["selectionChanged", "cellValueChanged"],
         allow_unsafe_jscode=True,
     )
 
 
-def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
-    # Create nested metadata dict
-    metadata_keys = PINNED_COL_NAME.split(".")
-    value = {}
-    ptr = value
+def _nest_metadata(
+    key: str, value: Union[Dict[str, Any], Any]
+) -> Dict[str, Any]:
+    metadata_keys = key.split(".")
+    root_dict = {}
+    ptr = root_dict
     for i, key in enumerate(metadata_keys):
         if i == len(metadata_keys) - 1:
-            ptr[key] = not on_leaderboard
+            ptr[key] = value
         else:
+            print(key)
             ptr[key] = {}
             ptr = ptr[key]
+    return root_dict
+
+
+def _nested_update(metadata: dict, update: dict):
+    for k, v in update.items():
+        if isinstance(v, dict) and k in metadata:
+            _nested_update(metadata[k], v)
+        else:
+            metadata[k] = v
+
+
+def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
+    # Create nested metadata dict
+    value = _nest_metadata(PINNED_COL_NAME, on_leaderboard)
 
     for app_id in selected_app_ids:
         update_app_metadata(app_id, value)
@@ -245,6 +264,25 @@ def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
         st.toast(
             f"Successfully added {len(selected_app_ids)} app(s) to Leaderboard"
         )
+
+
+def handle_table_edit(
+    df: pd.DataFrame,
+    event_data: Dict[str, Any],
+    version_metadata_col_names: List[str],
+):
+    app_id = event_data["data"]["app_id"]
+    app_df = df[df["app_id"] == app_id].iloc[0]
+    metadata = {}
+    for col in version_metadata_col_names:
+        if col in event_data["data"] and event_data["data"][col] != app_df[col]:
+            value = _nest_metadata(col, event_data["data"][col])
+            _nested_update(metadata, value)
+    update_app_metadata(app_id, metadata)
+
+    get_app_versions.clear()
+    get_apps.clear()
+    st.toast(f"Successfully updated metadata for app {app_id}")
 
 
 def _render_grid_tab(
@@ -300,9 +338,15 @@ def _render_grid_tab(
         version_metadata_col_names=version_metadata_col_names,
         grid_key=grid_key,
     )
+
+    if (
+        grid_data.event_data
+        and grid_data.event_data["type"] == "cellValueChanged"
+    ):
+        handle_table_edit(df, grid_data.event_data, version_metadata_col_names)
+
     selected_rows = grid_data.selected_rows
     selected_rows = pd.DataFrame(selected_rows)
-
     if selected_rows.empty:
         selected_app_ids = []
     else:
