@@ -184,13 +184,14 @@ def render_sidebar():
             st.sidebar.text(f"Last refreshed {last_refreshed_str}")
 
     with st.sidebar.expander("Info"):
-        st.text(f"{core_package}\nv{core_version}")
-        st.text(f"{dashboard_package}\nv{__version__}")
+        st.text(f"{core_package} {core_version}")
+        st.text(f"{dashboard_package} {__version__}")
 
         st.link_button(
             "Share Feedback",
             "https://forms.gle/HAc4HBk5nZRpgw7C6",
             help="Help us improve TruLens!",
+            use_container_width=True,
         )
     if app_name is None:
         st.error("No apps found in the database.")
