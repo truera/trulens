@@ -52,7 +52,7 @@ def init_page_state(app_name: str):
         page_name=page_name,
         transforms={
             "metadata_to_front": lambda x: x == "True",
-            "show_pinned": lambda x: x == "True",
+            "only_show_pinned": lambda x: x == "True",
         },
     )
     st.session_state[f"{page_name}.initialized"] = True
@@ -210,7 +210,7 @@ def _render_grid(
     return AgGrid(
         df,
         key=grid_key,
-        height=1500,
+        height=500,
         columns_state=columns_state,
         gridOptions=_build_grid_options(
             df=df,
@@ -249,8 +249,7 @@ def _nested_update(metadata: dict, update: dict):
 
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
     # Create nested metadata dict
-    value = _nest_metadata(PINNED_COL_NAME, on_leaderboard)
-
+    value = _nest_metadata(PINNED_COL_NAME, not on_leaderboard)
     for app_id in selected_app_ids:
         update_app_metadata(app_id, value)
     get_app_versions.clear()
@@ -271,6 +270,10 @@ def handle_table_edit(
     version_metadata_col_names: List[str],
 ):
     app_id = event_data["data"]["app_id"]
+    if app_id not in df["app_id"].values:
+        st.error(f"App with ID {app_id} not found in the leaderboard!")
+        return
+
     app_df = df[df["app_id"] == app_id].iloc[0]
     metadata = {}
     for col in version_metadata_col_names:
@@ -356,9 +359,9 @@ def _render_grid_tab(
         )
     st.query_params["metadata_to_front"] = str(metadata_to_front)
 
-    if show_pinned := c1.toggle(
-        "Show Pinned",
-        key=f"{page_name}.show_pinned",
+    if only_show_pinned := c1.toggle(
+        "Only Show Pinned",
+        key=f"{page_name}.only_show_pinned",
     ):
         if PINNED_COL_NAME in df:
             df = df[df[PINNED_COL_NAME]]
@@ -368,7 +371,7 @@ def _render_grid_tab(
                 icon="📌",
             )
             return
-    st.query_params["show_pinned"] = str(show_pinned)
+    st.query_params["only_show_pinned"] = str(only_show_pinned)
 
     grid_data = _render_grid(
         df,
@@ -401,7 +404,6 @@ def _render_grid_tab(
         PINNED_COL_NAME in app and app[PINNED_COL_NAME]
         for _, app in selected_rows.iterrows()
     )
-
     c2.button(
         "Unpin App" if on_leaderboard else "Pin App",
         key=f"{grid_key}_pin_button",
@@ -410,7 +412,6 @@ def _render_grid_tab(
         use_container_width=True,
         args=(selected_app_ids, on_leaderboard),
     )
-
     # Examine Records
     if c3.button(
         "Examine Records",
