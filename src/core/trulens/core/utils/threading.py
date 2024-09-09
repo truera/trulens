@@ -4,11 +4,8 @@
 
 from __future__ import annotations
 
-from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
-import contextvars
-from inspect import stack
 import logging
 import threading
 from threading import Thread as fThread
@@ -17,7 +14,6 @@ from typing import Callable, Optional, TypeVar
 from trulens.core.utils.python import Future
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import T
-from trulens.core.utils.python import _future_target_wrapper
 from trulens.core.utils.python import code_line
 from trulens.core.utils.python import safe_hasattr
 
@@ -27,14 +23,13 @@ DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
 A = TypeVar("A")
 
-
+'''
 class Thread(fThread):
     """Thread that wraps target with stack/context tracking.
 
     App components that do not use this thread class might not be properly
     tracked."""
 
-    """
     def __init__(
         self,
         name=None,
@@ -44,26 +39,24 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
-        present_stack = stack()
         present_context = contextvars.copy_context()
 
         fThread.__init__(
             self,
             name=name,
             group=group,
-            target=_future_target_wrapper,
-            args=(present_stack, present_context, target, *args),
+            target=present_context.run,
+            args=(target, *args),
             kwargs=kwargs,
             daemon=daemon,
         )
-    """
+
     pass
 
 
 # HACK007: Attempt to force other users of Thread to use our version instead.
 
 threading.Thread = Thread
-
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
     """A ThreadPoolExecutor that keeps track of the stack prior to each thread's
@@ -78,6 +71,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
     def submit(self, fn, /, *args, **kwargs):
         present_stack = stack()
         present_context = contextvars.copy_context()
+
         return super().submit(
             _future_target_wrapper,
             present_stack,
@@ -93,6 +87,8 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
 
 futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
+
+
 
 # HACK003: Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
 # seem to do the trick.
@@ -114,6 +110,11 @@ try:
 
 except Exception:
     pass
+'''
+
+# The overrides might not be necessary anymore.
+ThreadPoolExecutor = fThreadPoolExecutor
+Thread = fThread
 
 
 class TP(SingletonPerName):  # "thread processing"
@@ -148,7 +149,7 @@ class TP(SingletonPerName):  # "thread processing"
         # the tasks executed in the above pool. Keeping this separate to prevent
         # the deadlock whereas the wait thread waits for a tasks which will
         # never be run because the thread pool is filled with wait threads.
-        self.thread_pool_debug_tasks = ThreadPoolExecutor(
+        self.thread_pool_debug_tasks = fThreadPoolExecutor(
             max_workers=TP.MAX_THREADS,
             thread_name_prefix="TP.submit with debug timeout",
         )

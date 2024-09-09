@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from concurrent import futures
+from contextlib import asynccontextmanager
+from contextlib import contextmanager
 import contextvars
 import dataclasses
 import inspect
@@ -32,6 +34,8 @@ from typing import (
     TypeVar,
     Union,
 )
+
+from trulens.core._utils import debug as debug_utils
 
 T = TypeVar("T")
 
@@ -458,6 +462,9 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     stack.
     """
 
+    if "context" not in kwargs:
+        kwargs["context"] = contextvars.copy_context()
+
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
@@ -490,6 +497,7 @@ except Exception:
 # Instrument new_event_loop to set the above task_factory upon creation:
 original_new_event_loop = asyncio.new_event_loop
 
+
 def tru_new_event_loop():
     """Replacement for [new_event_loop][asyncio.new_event_loop] that sets
     the task factory to make tasks that copy the stack from their creators."""
@@ -498,7 +506,9 @@ def tru_new_event_loop():
     loop.set_task_factory(task_factory_with_stack)
     return loop
 
-asyncio.new_event_loop = tru_new_event_loop
+
+# asyncio.new_event_loop = tru_new_event_loop
+
 '''
 
 
@@ -568,10 +578,10 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
 
-    for var, value in context.items():
-        var.set(value)
+    debug_utils.iprint("_future_target_wrapper")
 
-    return func(*args, **kwargs)
+    with with_context(context):
+        return func(*args, **kwargs)
 
 
 def get_all_local_in_call_stack(
@@ -724,11 +734,89 @@ class OpaqueWrapper(Generic[T]):
         raise self._e
 
 
+ContextVarsOrValues = Union[
+    Iterable[contextvars.ContextVar],
+    contextvars.Context,
+    Dict[contextvars.ContextVar, Any],
+]
+
+
+def set_context_vars_or_values(
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> Dict[contextvars.ContextVar, contextvars.Token]:
+    """Get the tokens for the given context variables or values.
+
+    Args:
+        context_vars: The context variables or values to get tokens for.
+
+    Returns:
+        A dictionary of context variables to tokens.
+    """
+
+    if context_vars is None:
+        return {}
+
+    if isinstance(context_vars, (dict, contextvars.Context)):
+        return {cv: cv.set(v) for cv, v in context_vars.items()}
+
+    return {cv: cv.set(cv.get()) for cv in context_vars}
+
+
+@contextmanager
+def with_context(context_vars: Optional[ContextVarsOrValues] = None):
+    """Context manager to set context variables to given values.
+
+    Args:
+        context_vars: The context variables to set. If a dictionary is given,
+            the keys are the context variables and the values are the values to
+            set them to. If an iterable is given, it should be a list of context
+            variables to set to their current value.
+    """
+
+    tokens = set_context_vars_or_values(context_vars)
+
+    try:
+        yield
+
+    finally:
+        for cv, v in tokens.items():
+            try:
+                cv.reset(v)
+            except Exception:
+                # TODO: Figure out if this is bad.
+                pass
+
+
+@asynccontextmanager
+async def awith_context(context_vars: Optional[ContextVarsOrValues] = None):
+    """Context manager to set context variables to given values.
+
+    Args:
+        context_vars: The context variables to set. If a dictionary is given,
+            the keys are the context variables and the values are the values to
+            set them to. If an iterable is given, it should be a list of context
+            variables to set to their current value.
+    """
+
+    tokens = set_context_vars_or_values(context_vars)
+
+    try:
+        yield
+
+    finally:
+        for cv, v in tokens.items():
+            try:
+                cv.reset(v)
+            except Exception:
+                # TODO: Figure out if this is bad.
+                pass
+
+
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None,
-    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
@@ -746,35 +834,26 @@ def wrap_awaitable(
         on_await: The callback to call when the wrapper awaitable is awaited but
             before the wrapped awaitable is awaited.
 
-        on_done: The callback to call with the result of the wrapped awaitable
-            once it is ready.
+        wrap: The callback to call with the result of the wrapped awaitable
+            once it is ready. This should return the value or a wrapped version.
 
         context_vars: The context variables to copy over to the wrapped
             awaitable. If None, all context variables are copied.
     """
 
-    if context_vars is None:
-        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
-    else:
-        context_copy = {cv: cv.get() for cv in context_vars}
-
     async def wrapper(awaitable):
-        tokens = {}
-        for k, v in context_copy.items():
-            tokens[k] = k.set(v)
+        async with awith_context(context_vars):
+            if on_await is not None:
+                on_await()
 
-        if on_await is not None:
-            on_await()
+            val = await awaitable
 
-        val = await awaitable
+            if wrap is not None:
+                val = wrap(val)  # allow handlers to transform the value
 
-        if on_done is not None:
-            on_done(val)
+            return val
 
-        for k, v in tokens.items():
-            k.reset(v)
-
-        return val
+    wrapper.__name__ = f"tru_wrapped_{awaitable.__class__.__name__}"
 
     return wrapper(awaitable)
 
@@ -782,9 +861,9 @@ def wrap_awaitable(
 def wrap_generator(
     gen: Generator[T, None, None],
     on_iter: Optional[Callable[[], Any]] = None,
-    on_next: Optional[Callable[[T], Any]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
     on_done: Optional[Callable[[List[T]], Any]] = None,
-    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Generator[T, None, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -795,41 +874,31 @@ def wrap_generator(
         on_iter: The callback to call when the wrapper generator is created but
             before a first iteration is produced.
 
-        on_next: The callback to call with the result of each iteration of the
-            wrapped generator.
+        wrap: The callback to call with the result of each iteration of the
+            wrapped generator. This should return the value or a wrapped version.
 
         on_done: The callback to call when the wrapped generator is exhausted.
     """
 
-    if context_vars is None:
-        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
-    else:
-        context_copy = {cv: cv.get() for cv in context_vars}
-
     def wrapper(gen):
-        tokens = {}
-        for k, v in context_copy.items():
-            tokens[k] = k.set(v)
+        with with_context(context_vars):
+            if on_iter is not None:
+                on_iter()
 
-        if on_iter is not None:
-            on_iter()
+            vals = []
 
-        vals = []
+            for val in gen:
+                if wrap is not None:
+                    # Allow handlers to transform the value.
+                    val = wrap(val)
 
-        for val in gen:
-            vals.append(val)
-            if on_next is not None:
-                on_next(val)
-            yield val
+                vals.append(val)
+                yield val
 
-        if on_done is not None:
-            on_done(vals)
+            if on_done is not None:
+                on_done(vals)
 
-        for k, v in tokens.items():
-            try:
-                k.reset(v)
-            except Exception:
-                pass
+    wrapper.__name__ = f"tru_wrapped_{gen.__class__.__name__}"
 
     return wrapper(gen)
 
@@ -837,9 +906,9 @@ def wrap_generator(
 def wrap_async_generator(
     gen: AsyncGenerator[T, None],
     on_iter: Optional[Callable[[], Any]] = None,
-    on_next: Optional[Callable[[T], Any]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
     on_done: Optional[Callable[[List[T]], Any]] = None,
-    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> AsyncGenerator[T, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -850,41 +919,34 @@ def wrap_async_generator(
         on_iter: The callback to call when the wrapper generator is created but
             before a first iteration is produced.
 
-        on_next: The callback to call with the result of each iteration of the
+        wrap: The callback to call with the result of each iteration of the
             wrapped generator.
 
         on_done: The callback to call when the wrapped generator is exhausted.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their present values.
     """
 
-    if context_vars is None:
-        context_copy = {cv: cv.get() for cv in contextvars.copy_context()}
-    else:
-        context_copy = {cv: cv.get() for cv in context_vars}
-
     async def wrapper(gen):
-        tokens = {}
-        for k, v in context_copy.items():
-            tokens[k] = k.set(v)
+        with with_context(context_vars):
+            if on_iter is not None:
+                on_iter()
 
-        if on_iter is not None:
-            on_iter()
+            vals = []
 
-        vals = []
+            async for val in gen:
+                if wrap is not None:
+                    val = wrap(val)  # allow handlers to rewrap the value
 
-        async for val in gen:
-            vals.append(val)
-            if on_next is not None:
-                on_next(val)
-            yield val
+                vals.append(val)
 
-        if on_done is not None:
-            on_done(vals)
+                yield val
 
-        for k, v in tokens.items():
-            try:
-                k.reset(v)
-            except Exception:
-                pass
+            if on_done is not None:
+                on_done(vals)
+
+    wrapper.__name__ = f"tru_wrapped_{gen.__class__.__name__}"
 
     return wrapper(gen)
 
@@ -903,11 +965,11 @@ def is_lazy(obj):
 
 
 def wrap_lazy(
-    gen: Any,
+    obj: Any,
     on_start: Optional[Callable[[], None]] = None,
-    on_next: Optional[Callable[[T], None]] = None,
-    on_done: Optional[Callable[[Any], None]] = None,  # Any may be T or List[T]
-    context_vars: Optional[Iterable[contextvars.ContextVar]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[Any], Any]] = None,  # Any may be T or List[T]
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Any:
     """Wrap a lazy value in one that will call
     callbacks at various points in the generation process.
@@ -917,41 +979,77 @@ def wrap_lazy(
 
         on_start: The callback to call when the wrapper is created.
 
-        on_next: The callback to call with the result of each iteration of the
-            wrapped generator.
+        wrap: The callback to call with the result of each iteration of the
+            wrapped generator or the result of an awaitable. This should return
+            the value or a wrapped version.
 
-        on_done: The callback to call when the wrapped generator is exhausted.
+        on_done: The callback to call when the wrapped generator is exhausted or
+            awaitable is ready.
     """
 
     if not WRAP_LAZY:
-        return gen
+        return obj
 
-    if inspect.isasyncgen(gen):
+    if inspect.isasyncgen(obj):
         return wrap_async_generator(
-            gen,
+            obj,
             on_iter=on_start,
-            on_next=on_next,
+            wrap=wrap,
             on_done=on_done,
             context_vars=context_vars,
         )
 
-    if inspect.isgenerator(gen):
+    if inspect.isgenerator(obj):
         return wrap_generator(
-            gen,
+            obj,
             on_iter=on_start,
-            on_next=on_next,
+            wrap=wrap,
             on_done=on_done,
             context_vars=context_vars,
         )
 
-    if inspect.isawaitable(gen):
+    if inspect.isawaitable(obj):
+        # wrap_awaitable uses wrap for both wrap and on_done.
+        if wrap and on_done:
+
+            def finish(x):
+                return on_done(wrap(x))
+
+        elif wrap:
+            finish = wrap
+
+        elif on_done:
+            finish = on_done
+        else:
+            finish = None
+
         return wrap_awaitable(
-            gen, on_await=on_start, on_done=on_done, context_vars=context_vars
+            obj, on_await=on_start, wrap=finish, context_vars=context_vars
         )
 
-    raise ValueError(
-        f"Object of type {type(gen)} is not a generator or awaitable."
-    )
+    raise ValueError(f"Object of type {type(obj)} is not lazy.")
+
+
+def wrap_until_eager(
+    obj,
+    on_eager: Optional[Callable[[Any], T]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> T | Sequence[T]:
+    """Wrap a lazy value in one that will call callbacks one the final non-lazy
+    values."""
+
+    def rewrap(obj_):
+        if is_lazy(obj_):
+            return wrap_lazy(
+                obj_, wrap=rewrap, on_done=rewrap, context_vars=context_vars
+            )
+
+        if on_eager is not None:
+            return on_eager(obj_)
+
+        return obj_
+
+    return rewrap(obj)
 
 
 # Class utilities

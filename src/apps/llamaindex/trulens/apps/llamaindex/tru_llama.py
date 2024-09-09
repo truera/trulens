@@ -6,7 +6,15 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import llama_index
 from pydantic import Field
@@ -25,6 +33,8 @@ from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import EmptyType
 from trulens.core.utils.serial import Lens
+
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
@@ -169,9 +179,13 @@ class LlamaInstrument(Instrument):
             {
                 # LLM:
                 (
+                    "chat",
                     "complete",
+                    "stream_chat",
                     "stream_complete",
+                    "achat",
                     "acomplete",
+                    "astream_chat",
                     "astream_complete",
                 ): BaseLLM,
                 # BaseTool/AsyncBaseTool:
@@ -181,22 +195,29 @@ class LlamaInstrument(Instrument):
                 ("put"): BaseMemory,
                 # Misc.:
                 ("get_response"): Refine,
-                ("predict"): BaseLLMPredictor,
-                # BaseQueryEngine:
-                ("query", "aquery"): BaseQueryEngine,
-                # BaseChatEngine/LLM:
-                ("chat", "achat", "stream_chat", "astream_achat"): (
-                    BaseLLM,
-                    BaseChatEngine,
-                ),
+                ("predict", "apredict", "stream", "astream"): BaseLLMPredictor,
+                (
+                    "query",
+                    "aquery",
+                    "synthesize",
+                    "asynthesize",
+                ): BaseQueryEngine,
+                (
+                    "chat",
+                    "achat",
+                    "stream_chat",
+                    "astream_achat",
+                    "complete",
+                    "acomplete",
+                    "stream_complete",
+                    "astream_complete",
+                ): (BaseChatEngine,),
                 # BaseRetriever/BaseQueryEngine:
                 ("retrieve", "_retrieve", "_aretrieve"): (
                     BaseQueryEngine,
                     BaseRetriever,
                     WithFeedbackFilterNodes,
                 ),
-                # BaseQueryEngine:
-                ("synthesize"): BaseQueryEngine,
                 # BaseNodePostProcessor
                 ("_postprocess_nodes"): BaseNodePostprocessor,
                 # Components
@@ -319,31 +340,44 @@ class TruLlama(mod_app.App):
 
     # WithInstrumentCallbacks requirement:
     def wrap_lazy_values(
-        self, rets: Any, on_done: Callable[[Any], None]
+        self,
+        rets: Any,
+        wrap: Callable[[T], T],
+        context_vars: Optional[python_utils.ContextVarsOrValues] = None,
     ) -> Any:
-        print(python_utils.class_name(rets))
+        """Wrap any llamaindex specific lazy values with wrappers that have callback wrap."""
 
         if isinstance(rets, AsyncStreamingResponse):
-            # if rets.response_txt is None:
             rets.response_gen = python_utils.wrap_async_generator(
-                rets.response_gen, on_done=on_done
+                rets.response_gen,
+                wrap=wrap,
+                on_done=wrap,
+                context_vars=context_vars,
             )
-            print("wrap async gen")
+
             return rets
-            # else:
-            #    return rets
 
         if isinstance(rets, StreamingAgentChatResponse):
             if rets.chat_stream is not None:
                 rets.chat_stream = python_utils.wrap_generator(
-                    rets.chat_stream, on_done=on_done
+                    rets.chat_stream,
+                    wrap=wrap,
+                    on_done=wrap,
+                    context_vars=context_vars,
                 )
-                print("wrap sync gen")
+
             if rets.achat_stream is not None:
                 rets.achat_stream = python_utils.wrap_async_generator(
-                    rets.achat_stream, on_done=on_done
+                    rets.achat_stream,
+                    wrap=wrap,
+                    on_done=wrap,
+                    context_vars=context_vars,
                 )
-                print("wrap async gen")
+
+            if rets.chat_stream is None and rets.achat_stream is None:
+                raise RuntimeError(
+                    "Both chat_stream and achat_stream are None."
+                )
 
             return rets
 
@@ -352,9 +386,11 @@ class TruLlama(mod_app.App):
 
         if isinstance(rets, StreamingResponse):
             rets.response_gen = python_utils.wrap_generator(
-                rets.response_gen, on_done=on_done
+                rets.response_gen,
+                wrap=wrap,
+                on_done=wrap,
+                context_vars=context_vars,
             )
-            print("wrap gen")
             return rets
 
         return rets
@@ -404,8 +440,6 @@ class TruLlama(mod_app.App):
         returned `ret`.
         """
 
-        # return "placeholder"
-
         try:
             attr = self._main_output_attribute(ret)
 
@@ -413,18 +447,15 @@ class TruLlama(mod_app.App):
                 val = getattr(ret, attr)
                 if attr == "response_txt":
                     if val is None:
-                        print("stream not yet finished")
+                        # Return a placeholder value for now.
                         return (
                             f"TruLens: this app produced a streaming response of type {python_utils.class_name(type(ret))}. "
                             "The main output will not be available in TruLens."
                         )
-                    else:
-                        print("finished stream")
 
                 return val
 
             else:  # attr is None
-                # return f"unrecognized return type {type(ret).__name__}: {ret}"
                 return mod_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
@@ -445,11 +476,13 @@ class TruLlama(mod_app.App):
             ret,
             (
                 StreamingResponse,
-                # StreamingAgentChatResponse,
                 AsyncStreamingResponse,
             ),
         ):
             return "response_txt"  # note that this is only available after the stream has been iterated over
+
+        # Haven't seen this being produced yet but is in llamaindex:
+        # StreamingAgentChatResponse,
 
         return None
 

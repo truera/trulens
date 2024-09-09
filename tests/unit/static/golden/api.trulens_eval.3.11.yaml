@@ -1097,7 +1097,6 @@ trulens_eval.instruments.Instrument:
     APPS: builtins.str
     Default: builtins.type
     INSTRUMENT: builtins.str
-    instrument_bound_methods: builtins.function
     instrument_class: builtins.function
     instrument_method: builtins.function
     instrument_object: builtins.function

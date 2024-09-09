@@ -12,12 +12,9 @@ from time import sleep
 from types import ModuleType
 from typing import (
     Any,
-    AsyncGenerator,
-    Awaitable,
     Callable,
     ClassVar,
     Dict,
-    Generator,
     List,
     Optional,
     Sequence,
@@ -41,9 +38,6 @@ from trulens.core.utils.python import class_name
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
 from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.python import wrap_async_generator
-from trulens.core.utils.python import wrap_awaitable
-from trulens.core.utils.python import wrap_generator
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
@@ -615,25 +609,36 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # Push the endpoints into the contextvars for wrappers inside the
         # following call to retrieve.
-        endpoints_token = Endpoint._context_endpoints.set(endpoints)
+        # HACK: temporary workaround, see App._set_context_vars.
+        # endpoints_token = Endpoint._context_endpoints.set(endpoints)
+
+        # context_vars = contextvars.copy_context()
+        context_vars = {
+            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+        }
 
         # Call the function.
+        # context_vars = contextvars.copy_context()
+
         result: T = __func(*args, **kwargs)
 
-        if isinstance(result, AsyncGenerator):
-            # Copies contextvars:
-            result = wrap_async_generator(result)
+        def rewrap(result):
+            if python_utils.is_lazy(result):
+                return python_utils.wrap_lazy(
+                    result,
+                    wrap=rewrap,
+                    context_vars=context_vars,
+                )
 
-        elif isinstance(result, Awaitable):
-            # Copies contextvars:
-            result = wrap_awaitable(result)
+            return result
 
-        elif isinstance(result, Generator):
-            # Copies contextvars:
-            result = wrap_generator(result)
+        result = rewrap(result)
 
         # Pop the endpoints from the contextvars.
-        Endpoint._context_endpoints.reset(endpoints_token)
+        # HACK: temporary workaround, see App._set_context_vars.
+        # Endpoint._context_endpoints.reset(endpoints_token)
+
+        # iprint("_track_costs reset", __func)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
@@ -721,8 +726,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # If INSTRUMENT is not set, create a wrapper method and return it.
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
-            print("tru_wrapper", func)
-
             logger.debug(
                 "Calling instrumented method %s of type %s, "
                 "iscoroutinefunction=%s, "
@@ -735,8 +738,18 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
             endpoints = Endpoint._context_endpoints.get()
 
+            # Context vars as they are now before we reset them. They are
+            # captured in the closure of the below.
+            context_vars = {
+                Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+            }
+
             # Get the result of the wrapped function:
+            # response = context_vars.run(func, *args, **kwargs)
             response = func(*args, **kwargs)
+
+            # if len(Endpoint._context_endpoints.get()) == 0:
+            #    raise ValueError("No endpoints.")
 
             bindings = inspect.signature(func).bind(*args, **kwargs)
 
@@ -749,13 +762,18 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
             # will get None here and do nothing but return wrapped
             # function's response.
             if len(endpoints) == 0:
-                print("no endpoints!")
                 logger.debug("No endpoints found.")
                 return response
 
-            def response_callback(response):
+            def update_response(response):
+                if python_utils.is_lazy(response):
+                    return python_utils.wrap_lazy(
+                        response,
+                        wrap=update_response,
+                        context_vars=context_vars,
+                    )
+
                 for callback_class in registered_callback_classes:
-                    logger.debug("Handling callback_class: %s.", callback_class)
                     if callback_class not in endpoints:
                         logger.warning(
                             "Callback class %s is registered for handling %s"
@@ -766,35 +784,28 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
                         continue
 
                     for endpoint, callback in endpoints[callback_class]:
-                        print("tru_wrapper.handle_wrapped_call", type(callback))
                         logger.debug("Handling endpoint %s.", endpoint.name)
-                        response_ = endpoint.handle_wrapped_call(
-                            func=func,
-                            bindings=bindings,
-                            response=response,
-                            callback=callback,
-                        )
-                        if response_ is not None:
-                            # Handler is allowed to override the response in
-                            # case it wants to wrap some generators or similar
-                            # lazy structures.
-                            response = response_
+
+                        with python_utils.with_context(context_vars):
+                            response_ = endpoint.handle_wrapped_call(
+                                func=func,
+                                bindings=bindings,
+                                response=response,
+                                callback=callback,
+                            )
+                            if response_ is not None:
+                                # Handler is allowed to override the response in
+                                # case it wants to wrap some generators or similar
+                                # lazy structures.
+                                response = response_
+
+                return response
 
             # Problem here: OpenAI returns generators inside its own special
             # classes. These are thus handled in
-            # OpenAIEndpoint.handle_wrapped_call .
+            # OpenAIEndpoint.wrapped_call .
 
-            if python_utils.is_lazy(response):
-                print("tru_wrapper.wrap_lazy", type(response))
-                return python_utils.wrap_lazy(
-                    response,
-                    on_next=response_callback,
-                    on_done=response_callback,
-                )
-            else:
-                response_callback(response)
-
-                return response
+            return update_response(response)
 
         # Set our tracking attribute to tell whether something is already
         # instrumented onto both the sync and async version since either one

@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
-import asyncio
 from contextlib import asynccontextmanager
 import contextvars
 import datetime
@@ -11,7 +10,6 @@ import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-from pprint import pprint
 import threading
 from threading import Lock
 from typing import (
@@ -570,9 +568,13 @@ class App(
     selector_nocheck: bool = False
     """Ignore selector checks entirely.
 
-    This may be necessary if the expected record content cannot be determined
+    This may be necessary 1if the expected record content cannot be determined
     before it is produced.
     """
+
+    context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
+        pydantic.Field(default_factory=dict, exclude=True)
+    )  # pydantic.PrivateAttr({})
 
     def __init__(
         self,
@@ -614,13 +616,11 @@ class App(
         self._tru_post_init()
 
     def __del__(self):
-        print(f"__del__ {self.app_name}")
+        """Shut down anything associated with this app that might persist otherwise."""
 
         if self.manage_pending_feedback_results_thread is not None:
             self.records_with_pending_feedback_results.shutdown()
             self.manage_pending_feedback_results_thread.join()
-
-        print("finished thread")
 
     def _start_manage_pending_feedback_results(self) -> None:
         """Start the thread that manages the queue of records with
@@ -1180,12 +1180,16 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
+        self._set_context_vars()
+
         return ctx
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
+
+        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value
@@ -1196,37 +1200,34 @@ class App(
     async def record(self):
         ctx = RecordingContext(app=self)
 
-        pprint(["before set", self.recording_contexts.get(None)])
-
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
-        pprint([
-            "after set",
-            threading.current_thread(),
-            asyncio.current_task(),
-            token,
-            ctx,
-        ])
-
         yield ctx
-
-        pprint([
-            "after yield",
-            threading.current_thread(),
-            asyncio.current_task(),
-            token,
-            ctx,
-        ])
 
         self.recording_contexts.reset(token)
 
-        pprint([
-            "after reset",
-            threading.current_thread(),
-            asyncio.current_task(),
-            self.recording_contexts.get(None),
-        ])
+    def _set_context_vars(self):
+        # HACK: Setting/resetting all context vars used in trulens around the
+        # app context manangers due to bugs in trying to set/reset them where
+        # more appropriate.
+
+        from trulens.core.feedback.endpoint import Endpoint
+        from trulens.core.instruments import WithInstrumentCallbacks
+
+        CONTEXT_VARS = [
+            WithInstrumentCallbacks._stack_contexts,
+            WithInstrumentCallbacks._context_contexts,
+            Endpoint._context_endpoints,
+        ]
+
+        for var in CONTEXT_VARS:
+            self.context_vars_tokens[var] = var.set(var.get())
+
+    def _reset_context_vars(self):
+        # HACK: See _set_context_vars.
+        for var, token in self.context_vars_tokens.items():
+            var.reset(token)
 
     # For use as a context manager.
     async def __aenter__(self):
@@ -1235,12 +1236,16 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
+        self._set_context_vars()
+
         return ctx
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
+
+        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value

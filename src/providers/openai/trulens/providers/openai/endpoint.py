@@ -20,19 +20,18 @@ the involved classes will need to be adapted here. The important classes are:
 
 """
 
-import functools
 import inspect
 import logging
 import pprint
 from typing import (
     Any,
-    Awaitable,
     Callable,
     ClassVar,
     Dict,
     List,
     Optional,
     Tuple,
+    TypeVar,
     Union,
 )
 
@@ -60,6 +59,8 @@ from openai.types.create_embedding_response import CreateEmbeddingResponse
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+T = TypeVar("T")
 
 
 class OpenAIClient(SerialModel):
@@ -326,39 +327,44 @@ class OpenAIEndpoint(Endpoint):
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
 
-        print("openai.handle_wrapped_call:", type(response))
+        # Generic lazy value should have already been taken care of by base Endpoint class.
+        assert not python_utils.is_lazy(response)
 
-        if isinstance(response, Awaitable):
-            # TODO: Try to handle this somewhere else.
-            return python_utils.wrap_awaitable(
-                response,
-                on_done=functools.partial(
-                    self.handle_wrapped_call,
-                    func=func,
-                    bindings=bindings,
-                    callback=callback,
-                ),
-            )
+        context_vars = {
+            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+        }
+
+        if isinstance(response, (openai.AsyncStream, openai.Stream)):
+            # Don't bother processing these and instead wait for chunks to be processed.
+
+            def handle_chunk(chunk: T) -> T:
+                with python_utils.with_context(context_vars):
+                    self.global_callback.handle_generation_chunk(chunk)
+
+                    if callback is not None:
+                        callback.handle_generation_chunk(chunk)
+
+                    return chunk
+
+            if isinstance(response, openai.AsyncStream):
+                response._iterator = python_utils.wrap_async_generator(
+                    response._iterator,
+                    wrap=handle_chunk,
+                    context_vars=context_vars,
+                )
+                return response
+
+            if isinstance(response, openai.Stream):
+                response._iterator = python_utils.wrap_generator(
+                    response._iterator,
+                    wrap=handle_chunk,
+                    context_vars=context_vars,
+                )
+                return response
 
         model_name = ""
         if "model" in bindings.kwargs:
             model_name = bindings.kwargs["model"]
-
-        def handle_chunk(chunk):
-            self.global_callback.handle_generation_chunk(chunk)
-            if callback is not None:
-                callback.handle_generation_chunk(chunk)
-
-        if isinstance(response, openai.AsyncStream):
-            response._iterator = python_utils.wrap_async_generator(
-                response._iterator, on_next=handle_chunk
-            )
-            return response
-        if isinstance(response, openai.Stream):
-            response._iterator = python_utils.wrap_generator(
-                response._iterator, on_next=handle_chunk
-            )
-            return response
 
         results = None
         if "results" in response:
