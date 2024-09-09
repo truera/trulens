@@ -124,12 +124,12 @@ def get_records_and_feedback(
         else {}
     )
 
+    records_df, _ = _factor_out_metadata(records_df, "record_metadata")
+
     if HIDE_RECORD_COL_NAME in records_df.columns:
         records_df[HIDE_RECORD_COL_NAME] = (
             records_df[HIDE_RECORD_COL_NAME] == "True"
-        )
-
-    records_df, _ = _factor_out_metadata(records_df, "record_metadata")
+        ).astype(bool)
     records_df = records_df.replace({float("nan"): None})
     return records_df, feedback_col_names
 
@@ -251,7 +251,9 @@ def get_app_versions(app_name: str):
 
     for bool_col in [PINNED_COL_NAME, EXTERNAL_APP_COL_NAME]:
         if bool_col in app_versions_df.columns:
-            app_versions_df[bool_col] = app_versions_df[bool_col] == "True"
+            app_versions_df[bool_col] = (
+                app_versions_df[bool_col] == "True"
+            ).astype(bool)
     return app_versions_df, list(app_version_metadata_cols)
 
 

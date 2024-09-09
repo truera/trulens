@@ -108,9 +108,7 @@ def _preprocess_df(
     )
 
     if PINNED_COL_NAME in app_versions_df:
-        app_versions_df[PINNED_COL_NAME] = app_versions_df[
-            PINNED_COL_NAME
-        ].astype(bool)
+        app_versions_df[PINNED_COL_NAME] = app_versions_df[PINNED_COL_NAME]
 
     df = app_agg_df.join(
         app_versions_df.set_index(["app_id", "app_name", "app_version"])[
@@ -233,6 +231,12 @@ def _render_grid(
     grid_key: Optional[str] = None,
 ):
     columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+
+    pinned_df = df[df[PINNED_COL_NAME]]
+    pinned_df["app_version"] = pinned_df["app_version"].apply(
+        lambda x: f"📌 {x}"
+    )
+    df.loc[pinned_df.index] = pinned_df
 
     return AgGrid(
         df,
@@ -423,18 +427,21 @@ def _render_grid_tab(
     ]
 
     # Validate metadata_cols
-    st.session_state[f"{page_name}.metadata_cols"] = [
-        col_name
-        for col_name in st.session_state.get(f"{page_name}.metadata_cols", [])
-        if col_name in _metadata_options
-    ]
+    if metadata_cols := st.session_state.get(f"{page_name}.metadata_cols", []):
+        st.session_state[f"{page_name}.metadata_cols"] = [
+            col_name
+            for col_name in metadata_cols
+            if col_name in _metadata_options
+        ]
+
     metadata_cols = st.multiselect(
         label="Display Metadata Columns",
         key=f"{page_name}.metadata_cols",
         options=_metadata_options,
         default=_metadata_options,
     )
-    st.query_params["metadata_cols"] = ",".join(metadata_cols)
+    if len(metadata_cols) != len(_metadata_options):
+        st.query_params["metadata_cols"] = ",".join(metadata_cols)
     if EXTERNAL_APP_COL_NAME not in metadata_cols:
         metadata_cols.append(EXTERNAL_APP_COL_NAME)
     if PINNED_COL_NAME not in metadata_cols:
@@ -495,14 +502,15 @@ def _render_grid_tab(
         PINNED_COL_NAME in app and app[PINNED_COL_NAME]
         for _, app in selected_rows.iterrows()
     )
-    c2.button(
+    if c2.button(
         "Unpin App" if on_leaderboard else "Pin App",
         key=f"{page_name}.pin_button",
         disabled=selected_rows.empty,
         on_click=handle_pin_toggle,
         use_container_width=True,
         args=(selected_app_ids, on_leaderboard),
-    )
+    ):
+        st.rerun()
     # Examine Records
     if c3.button(
         "Examine Records",
@@ -686,7 +694,7 @@ def _render_list_tab(
 @st.fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     if HIDE_RECORD_COL_NAME in df.columns:
-        df = df[~df[HIDE_RECORD_COL_NAME].astype(bool)]
+        df = df[~df[HIDE_RECORD_COL_NAME]]
     cols = 4
     rows = len(feedback_col_names) // cols + 1
     fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)

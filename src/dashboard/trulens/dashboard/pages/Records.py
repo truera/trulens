@@ -161,7 +161,7 @@ def _preprocess_df(
     record_query: Optional[str] = None,
 ):
     if HIDE_RECORD_COL_NAME in records_df.columns:
-        records_df = records_df[~records_df[HIDE_RECORD_COL_NAME].astype(bool)]
+        records_df = records_df[~records_df[HIDE_RECORD_COL_NAME]]
     records_df = records_df.sort_values(by="ts", ascending=False)
     records_df["input"] = (
         records_df["input"].str.encode("utf-8").str.decode("unicode-escape")
@@ -463,8 +463,11 @@ def render_records(app_name: str):
         if record_query:
             st.error(f"No records found for search query `{record_query}`.")
         elif app_ids := st.session_state.get(f"{page_name}.app_ids", None):
-            ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
-            st.error(f"No records found for app IDs: {ids_str}.")
+            app_versions = versions_df[versions_df["app_id"].isin(app_ids)][
+                "app_version"
+            ].unique()
+            versions_str = "**`" + "`**, **`".join(app_versions) + "`**"
+            st.error(f"No records found for app version(s): {versions_str}.")
         else:
             st.error(f"No records found for app `{app_name}`.")
         return

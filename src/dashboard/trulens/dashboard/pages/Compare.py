@@ -8,6 +8,7 @@ import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
+from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
 from trulens.dashboard.utils.dashboard_utils import add_query_param
@@ -511,6 +512,8 @@ def _render_version_selectors(
                     current_app_ids[i] = app_id
 
         if st.form_submit_button("Apply"):
+            if len(current_app_ids) != len(set(current_app_ids)):
+                st.warning("Duplicate app versions selected.")
             st.session_state[f"{page_name}.app_ids"] = current_app_ids
             st.query_params["app_ids"] = ",".join(
                 str(app_id) for app_id in current_app_ids
@@ -522,7 +525,9 @@ def _render_version_selectors(
             col_data = {
                 app_id: {
                     "version": app_df["app_version"].unique()[0],
-                    "records": app_df,
+                    "records": app_df[~app_df[HIDE_RECORD_COL_NAME]]
+                    if HIDE_RECORD_COL_NAME in app_df.columns
+                    else app_df,
                     "feedback_cols": [
                         col for col in feedback_cols if col in app_df.columns
                     ],
@@ -548,7 +553,7 @@ def render_app_comparison(app_name: str):
         return
     elif len(versions_df) < MIN_COMPARATORS:
         st.error(
-            "Not enough App Versions found to compare. Try a different page instead."
+            "Not enough app versions found to compare. Try a different page instead."
         )
         return
 
