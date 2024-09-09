@@ -1,6 +1,6 @@
 import math
 import re
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,6 +15,7 @@ from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as compare_page_name
+from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import LEADERBOARD_PAGE_NAME as page_name
 from trulens.dashboard.constants import PINNED_COL_NAME
@@ -36,6 +37,9 @@ from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.dashboard_utils import update_app_metadata
+from trulens.dashboard.utils.metadata_utils import nest_dict
+from trulens.dashboard.utils.metadata_utils import nest_metadata
+from trulens.dashboard.utils.metadata_utils import nested_update
 from trulens.dashboard.ux.components import draw_metadata_and_tags
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import Category
@@ -60,6 +64,7 @@ def init_page_state(app_name: str):
         transforms={
             "metadata_to_front": lambda x: x == "True",
             "only_show_pinned": lambda x: x == "True",
+            "metadata_cols": lambda x: x.split(","),
         },
     )
     st.session_state[f"{page_name}.initialized"] = True
@@ -132,6 +137,7 @@ def _build_grid_options(
     version_metadata_col_names: Sequence[str],
 ):
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
+
     gb.configure_column(
         "app_version",
         header_name="App Version",
@@ -152,6 +158,12 @@ def _build_grid_options(
     gb.configure_column(
         PINNED_COL_NAME,
         header_name="Pinned",
+        hide=True,
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        EXTERNAL_APP_COL_NAME,
+        header_name="External App",
         hide=True,
         filter="agSetColumnFilter",
     )
@@ -192,7 +204,15 @@ def _build_grid_options(
                 filter="agNumberColumnFilter",
             )
 
-    gb.configure_grid_options(rowHeight=45, suppressContextMenu=True)
+    gb.configure_grid_options(
+        rowHeight=45,
+        suppressContextMenu=True,
+        rowClassRules={
+            # "external-app": f"data['{EXTERNAL_APP_COL_NAME}'] > 0",
+            "app-external": f"data['{EXTERNAL_APP_COL_NAME}']",
+            "app-pinned": f"data['{PINNED_COL_NAME}']",
+        },
+    )
     gb.configure_selection(
         selection_mode="multiple",
         use_checkbox=True,
@@ -231,40 +251,9 @@ def _render_grid(
     )
 
 
-def _nest_dict(d: Dict[str, Any]):
-    result = {}
-    for key, value in d.items():
-        nested_subdict = _nest_metadata(key, value)
-        _nested_update(result, nested_subdict)
-    return result
-
-
-def _nest_metadata(
-    key: str, value: Union[Dict[str, Any], Any]
-) -> Dict[str, Any]:
-    metadata_keys = key.split(".")
-    root_dict = {}
-    ptr = root_dict
-    for i, key in enumerate(metadata_keys):
-        if i == len(metadata_keys) - 1:
-            ptr[key] = value
-        else:
-            ptr[key] = {}
-            ptr = ptr[key]
-    return root_dict
-
-
-def _nested_update(metadata: dict, update: dict):
-    for k, v in update.items():
-        if isinstance(v, dict) and k in metadata:
-            _nested_update(metadata[k], v)
-        else:
-            metadata[k] = v
-
-
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
     # Create nested metadata dict
-    value = _nest_metadata(PINNED_COL_NAME, not on_leaderboard)
+    value = nest_metadata(PINNED_COL_NAME, not on_leaderboard)
     for app_id in selected_app_ids:
         update_app_metadata(app_id, value)
     get_app_versions.clear()
@@ -293,18 +282,20 @@ def handle_table_edit(
     metadata = {}
     for col in version_metadata_col_names:
         if col in event_data["data"] and event_data["data"][col] != app_df[col]:
-            value = _nest_metadata(col, event_data["data"][col])
-            _nested_update(metadata, value)
+            value = nest_metadata(col, event_data["data"][col])
+            nested_update(metadata, value)
     update_app_metadata(app_id, metadata)
 
     get_app_versions.clear()
     get_apps.clear()
-    st.toast(f"Successfully updated metadata for app {app_id}")
+    st.toast(f"Successfully updated metadata for `{app_df['app_version']}`")
 
 
 @st.dialog("Add/Edit Metadata")
 def handle_add_metadata(selected_rows: pd.DataFrame):
-    st.write("Add or edit metadata for selected app versions")
+    st.write(
+        f"Add or edit metadata for {len(selected_rows)} selected app version(s)"
+    )
     key = st.text_input("Metadata Key", placeholder="metadata.key")
 
     if key and not re.match(r"^[A-Za-z0-9_.]+$", key):
@@ -328,7 +319,7 @@ def handle_add_metadata(selected_rows: pd.DataFrame):
     )
 
     if st.button("Submit"):
-        metadata = _nest_metadata(key, val)
+        metadata = nest_metadata(key, val)
         for app_id in selected_rows["app_id"]:
             update_app_metadata(app_id, metadata)
 
@@ -347,8 +338,7 @@ def handle_add_virtual_app(
     feedback_defs: Any,
     metadata_col_names: List[str],
 ):
-    with st.form(f"{page_name}.add_virtual_app_form"):
-        st.write("Add a Virtual App")
+    with st.form(f"{page_name}.add_virtual_app_form", border=False):
         app_version = st.text_input(
             "App Version", placeholder="virtual_app_base"
         )
@@ -363,15 +353,15 @@ def handle_add_virtual_app(
             for col in feedback_col_names
             if col in feedback_defs["feedback_name"].values
         }
-        metadata_values = _nest_dict({
+        metadata_values = nest_dict({
             col: st.text_input(col)
             for col in metadata_col_names
             if not col.startswith("trulens.")
         })
 
         metadata_values = {k: v for k, v in metadata_values.items() if v}
+        metadata_values[EXTERNAL_APP_COL_NAME] = True
 
-        st.write(_nest_metadata(HIDE_RECORD_COL_NAME, True))
         if st.form_submit_button("Submit"):
             session = get_session()
             app = TruVirtual(
@@ -385,7 +375,7 @@ def handle_add_virtual_app(
                 calls={},
                 main_input="<autogenerated record>",
                 main_output="<autogenerated record>",
-                meta=_nest_metadata(HIDE_RECORD_COL_NAME, True),
+                meta=nest_metadata(HIDE_RECORD_COL_NAME, True),
             )
 
             app.add_record(virtual_record)
@@ -425,24 +415,36 @@ def _render_grid_tab(
         gap="large",
         vertical_alignment="center",
     )
+
+    _metadata_options = [
+        col
+        for col in version_metadata_col_names
+        if not col.startswith("trulens.")
+    ]
+    metadata_cols = st.multiselect(
+        label="Display Metadata Columns",
+        key=f"{page_name}.metadata_cols",
+        options=_metadata_options,
+        default=_metadata_options,
+    )
+    st.query_params["metadata_cols"] = ",".join(metadata_cols)
+    if EXTERNAL_APP_COL_NAME not in metadata_cols:
+        metadata_cols.append(EXTERNAL_APP_COL_NAME)
+    if PINNED_COL_NAME not in metadata_cols:
+        metadata_cols.append(PINNED_COL_NAME)
+
     if metadata_to_front := c1.toggle(
         "Metadata to Front",
         key=f"{page_name}.metadata_to_front",
     ):
         df = order_columns(
             df,
-            APP_COLS
-            + version_metadata_col_names
-            + APP_AGG_COLS
-            + feedback_col_names,
+            APP_COLS + metadata_cols + APP_AGG_COLS + feedback_col_names,
         )
     else:
         df = order_columns(
             df,
-            APP_COLS
-            + APP_AGG_COLS
-            + feedback_col_names
-            + version_metadata_col_names,
+            APP_COLS + APP_AGG_COLS + feedback_col_names + metadata_cols,
         )
     st.query_params["metadata_to_front"] = str(metadata_to_front)
 
@@ -480,11 +482,6 @@ def _render_grid_tab(
         selected_app_ids = []
     else:
         selected_app_ids = list(selected_rows.app_id.unique())
-        st.header("Selected App Versions")
-        st.dataframe(
-            selected_rows.set_index("app_id"),
-            use_container_width=True,
-        )
 
     # Add to Leaderboard
     on_leaderboard = any(
@@ -681,6 +678,8 @@ def _render_list_tab(
 
 @st.fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
+    if HIDE_RECORD_COL_NAME in df.columns:
+        df = df[~df[HIDE_RECORD_COL_NAME].astype(bool)]
     cols = 4
     rows = len(feedback_col_names) // cols + 1
     fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)

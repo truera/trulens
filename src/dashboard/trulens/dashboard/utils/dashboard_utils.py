@@ -15,8 +15,10 @@ from trulens.core.utils.imports import static_resource
 from trulens.dashboard import __package__ as dashboard_package
 from trulens.dashboard import __version__
 from trulens.dashboard.constants import CACHE_TTL
+from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
+from trulens.dashboard.utils.metadata_utils import flatten_metadata
 
 ST_APP_NAME = "app_name"
 ST_APP_VERSION = "app_version"
@@ -117,7 +119,7 @@ def get_records_and_feedback(
 
     record_json = records_df["record_json"].apply(json.loads)
     records_df["record_metadata"] = record_json.apply(
-        lambda x: _flatten_metadata(x["meta"])
+        lambda x: flatten_metadata(x["meta"])
         if isinstance(x["meta"], dict)
         else {}
     )
@@ -217,17 +219,6 @@ def render_sidebar():
     return app_name
 
 
-def _flatten_metadata(metadata: dict):
-    results = {}
-    for k, v in metadata.items():
-        if isinstance(v, dict):
-            for k2, v2 in _flatten_metadata(v).items():
-                results[f"{k}.{k2}"] = v2
-        else:
-            results[k] = str(v)
-    return results
-
-
 def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
     metadata_cols = set()
     for _, row in df.iterrows():
@@ -248,7 +239,7 @@ def get_app_versions(app_name: str):
 
     # Flatten metadata
     app_versions_df["metadata"] = app_versions_df["metadata"].apply(
-        lambda x: _flatten_metadata(x) if isinstance(x, dict) else {}
+        lambda x: flatten_metadata(x) if isinstance(x, dict) else {}
     )
 
     # Factor out metadata
@@ -257,10 +248,10 @@ def get_app_versions(app_name: str):
     )
 
     app_versions_df = app_versions_df.replace({float("nan"): None})
-    if PINNED_COL_NAME in app_versions_df.columns:
-        app_versions_df[PINNED_COL_NAME] = (
-            app_versions_df[PINNED_COL_NAME] == "True"
-        )
+
+    for bool_col in [PINNED_COL_NAME, EXTERNAL_APP_COL_NAME]:
+        if bool_col in app_versions_df.columns:
+            app_versions_df[bool_col] = app_versions_df[bool_col] == "True"
     return app_versions_df, list(app_version_metadata_cols)
 
 

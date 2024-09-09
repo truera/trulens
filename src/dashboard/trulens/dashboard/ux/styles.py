@@ -42,9 +42,9 @@ class CATEGORY:
     ]
 
     styling = {
-        "PASS": dict(color="#aaffaa44", icon="✅"),
-        "WARNING": dict(color="#ffffaa44", icon="⚠️"),
-        "FAIL": dict(color="#ffaaaa44", icon="🛑"),
+        "PASS": dict(color="#aaffaa70", icon="✅"),
+        "WARNING": dict(color="#ffffaa70", icon="⚠️"),
+        "FAIL": dict(color="#ffaaaa70", icon="🛑"),
     }
 
     PASS: dict[str, Category] = {}
@@ -124,13 +124,6 @@ cell_rules_styles = {
 }
 cell_rules_styles[".cat-unknown"] = {"background-color": "unset"}
 
-aggrid_css = {
-    **cell_rules_styles,
-    ".ag-row .ag-cell": {
-        "display": "flex",
-        "align-items": "center",
-    },
-}
 
 cell_rules = {}
 for direction in valid_directions:
@@ -157,6 +150,23 @@ for direction in valid_directions:
 
 cell_rules_styles[f".cat-{CATEGORY.UNKNOWN.name.lower()}"] = {
     "background-color": CATEGORY.UNKNOWN.color
+}
+
+app_rules_styles = {
+    ".app-external": {},  # no styling currently for external apps
+    ".app-pinned": {
+        "background-color": "#5f9fed26",
+        "font-weight": "bold",
+    },
+}
+
+aggrid_css = {
+    **app_rules_styles,
+    **cell_rules_styles,
+    ".ag-row .ag-cell": {
+        "display": "flex",
+        "align-items": "center",
+    },
 }
 
 cellstyle_jscode = {

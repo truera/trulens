@@ -9,4 +9,5 @@ RECORD_LIMIT = 1000
 CACHE_TTL = 60 * 15  # 15 minutes
 
 PINNED_COL_NAME = "trulens.dashboard.pinned"
+EXTERNAL_APP_COL_NAME = "trulens.dashboard.external_app"
 HIDE_RECORD_COL_NAME = "trulens.dashboard.hide_record"
