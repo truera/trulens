@@ -514,7 +514,7 @@ def _render_version_selectors(
                 if app_id:
                     current_app_ids[i] = app_id
 
-        if st.form_submit_button("Apply"):
+        if st.form_submit_button("Apply", type="primary"):
             if len(current_app_ids) != len(set(current_app_ids)):
                 st.warning("Duplicate app versions selected.")
             st.session_state[f"{page_name}.app_ids"] = current_app_ids

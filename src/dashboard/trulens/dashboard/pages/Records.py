@@ -354,7 +354,7 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    height = 1000 if len(df) > 30 else 500
+    height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
     return AgGrid(
         df,
