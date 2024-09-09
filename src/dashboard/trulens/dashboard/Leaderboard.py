@@ -237,7 +237,7 @@ def _render_grid(
         pinned_df["app_version"] = pinned_df["app_version"].apply(
             lambda x: f"📌 {x}"
         )
-        df.loc[pinned_df.index] = pinned_df
+        df.loc[pinned_df.index, :] = pinned_df
 
     height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
@@ -749,9 +749,11 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
         width=200 * cols,
         dragmode=False,
         showlegend=False,
+        barcornerradius=4,
+        bargap=0.05,
     )
-    fig.update_yaxes(fixedrange=True)
-    fig.update_xaxes(fixedrange=True, range=[0, 1])
+    fig.update_yaxes(fixedrange=True, showgrid=False)
+    fig.update_xaxes(fixedrange=True, showgrid=False, range=[0, 1])
     st.plotly_chart(fig, use_container_width=True)
 
 

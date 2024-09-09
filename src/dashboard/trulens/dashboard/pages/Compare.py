@@ -121,9 +121,9 @@ def _render_all_app_feedback_plot(
         barmode="group",
         histfunc="avg",
     )
-    fig.update_layout(dragmode=False)
-    fig.update_yaxes(fixedrange=True, range=[0, 1])
-    fig.update_xaxes(fixedrange=True)
+    fig.update_layout(dragmode=False, barcornerradius=4, bargroupgap=0.05)
+    fig.update_yaxes(fixedrange=True, showgrid=False, range=[0, 1])
+    fig.update_xaxes(fixedrange=True, showgrid=False)
 
     chart_tab.plotly_chart(fig, use_container_width=True)
 
