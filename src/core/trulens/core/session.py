@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 tqdm = None
 with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 

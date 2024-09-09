@@ -45,12 +45,15 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
+        present_stack = inspect.stack()
+        present_context = contextvars.copy_context()
+
         fThread.__init__(
             self,
             name=name,
             group=group,
             target=python_utils._future_target_wrapper,
-            args=(target, *args),
+            args=(present_stack, present_context, target, *args),
             kwargs=kwargs,
             daemon=daemon,
         )
@@ -104,7 +107,7 @@ class TP(SingletonPerName):  # "thread processing"
             return
 
         # Run tasks started with this class using this pool.
-        self.thread_pool = fThreadPoolExecutor(
+        self.thread_pool = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
@@ -112,7 +115,7 @@ class TP(SingletonPerName):  # "thread processing"
         # the tasks executed in the above pool. Keeping this separate to prevent
         # the deadlock whereas the wait thread waits for a tasks which will
         # never be run because the thread pool is filled with wait threads.
-        self.thread_pool_debug_tasks = fThreadPoolExecutor(
+        self.thread_pool_debug_tasks = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS,
             thread_name_prefix="TP.submit with debug timeout",
         )
@@ -139,15 +142,21 @@ class TP(SingletonPerName):  # "thread processing"
 
         except TimeoutError as e:
             logger.error(
-                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
-                f"{code_line(func)}"
+                "Run of %s in %s timed out after %s second(s).\n%s",
+                func.__name__,
+                threading.current_thread(),
+                TP.DEBUG_TIMEOUT,
+                code_line(func),
             )
 
             raise e
 
         except Exception as e:
             logger.warning(
-                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
+                "Run of %s in %s failed with: %s",
+                {func.__name__},
+                threading.current_thread(),
+                e,
             )
             raise e
 
@@ -158,6 +167,18 @@ class TP(SingletonPerName):  # "thread processing"
         timeout: Optional[float] = None,
         **kwargs,
     ) -> Future[T]:
+        """Submit a task to run.
+
+        Args:
+            func: Function to run.
+
+            *args: Positional arguments to pass to the function.
+
+            timeout: How long to wait for the task to complete before killing it.
+
+            **kwargs: Keyword arguments to pass to the function.
+        """
+
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
