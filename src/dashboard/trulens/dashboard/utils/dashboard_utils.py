@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime
 from datetime import timedelta
+import json
 import sys
 from typing import Any, Callable, Dict, List, Optional
 
@@ -14,6 +15,7 @@ from trulens.core.utils.imports import static_resource
 from trulens.dashboard import __package__ as dashboard_package
 from trulens.dashboard import __version__
 from trulens.dashboard.constants import CACHE_TTL
+from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 
 ST_APP_NAME = "app_name"
@@ -112,6 +114,20 @@ def get_records_and_feedback(
     records_df, feedback_col_names = lms.get_records_and_feedback(
         app_ids=app_ids, limit=limit
     )
+
+    record_json = records_df["record_json"].apply(json.loads)
+    records_df["record_metadata"] = record_json.apply(
+        lambda x: _flatten_metadata(x["meta"])
+        if isinstance(x["meta"], dict)
+        else {}
+    )
+
+    if HIDE_RECORD_COL_NAME in records_df.columns:
+        records_df[HIDE_RECORD_COL_NAME] = (
+            records_df[HIDE_RECORD_COL_NAME] == "True"
+        )
+
+    records_df, _ = _factor_out_metadata(records_df, "record_metadata")
     records_df = records_df.replace({float("nan"): None})
     return records_df, feedback_col_names
 
@@ -138,6 +154,9 @@ def get_feedback_defs():
         ): row.feedback_json.get("higher_is_better", True)
         for _, row in feedback_defs.iterrows()
     }
+    feedback_defs["feedback_name"] = feedback_defs["feedback_json"].map(
+        lambda x: x.get("supplied_name", "")
+    )
     return feedback_defs, feedback_directions
 
 
@@ -209,6 +228,18 @@ def _flatten_metadata(metadata: dict):
     return results
 
 
+def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
+    metadata_cols = set()
+    for _, row in df.iterrows():
+        metadata_cols.update(row[metadata_col_name].keys())
+
+    for metadata_key in metadata_cols:
+        df[metadata_key] = df[metadata_col_name].apply(
+            lambda x: x.get(metadata_key, None)
+        )
+    return df, metadata_cols
+
+
 @st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app versions")
 def get_app_versions(app_name: str):
     apps = get_apps()
@@ -221,14 +252,9 @@ def get_app_versions(app_name: str):
     )
 
     # Factor out metadata
-    app_version_metadata_cols = set()
-    for _, app in app_versions_df.iterrows():
-        app_version_metadata_cols.update(app["metadata"].keys())
-
-    for metadata_key in app_version_metadata_cols:
-        app_versions_df[metadata_key] = app_versions_df["metadata"].apply(
-            lambda x: x.get(metadata_key, None)
-        )
+    app_versions_df, app_version_metadata_cols = _factor_out_metadata(
+        app_versions_df, "metadata"
+    )
 
     app_versions_df = app_versions_df.replace({float("nan"): None})
     if PINNED_COL_NAME in app_versions_df.columns:

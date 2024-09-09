@@ -8,6 +8,7 @@ from st_aggrid.shared import ColumnsAutoSizeMode
 from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import RECORD_LIMIT
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
@@ -159,6 +160,8 @@ def _preprocess_df(
     records_df: pd.DataFrame,
     record_query: Optional[str] = None,
 ):
+    if HIDE_RECORD_COL_NAME in records_df.columns:
+        records_df = records_df[~records_df[HIDE_RECORD_COL_NAME].astype(bool)]
     records_df = records_df.sort_values(by="ts", ascending=False)
     records_df["input"] = (
         records_df["input"].str.encode("utf-8").str.decode("unicode-escape")
@@ -440,16 +443,6 @@ def render_records(app_name: str):
     records_df, feedback_col_names = get_records_and_feedback(
         app_ids, limit=RECORD_LIMIT
     )
-    if records_df.empty:
-        st.error(f"No records found for app `{app_name}`.")
-        return
-    elif len(records_df) == RECORD_LIMIT:
-        st.info(
-            f"Limiting to the latest {RECORD_LIMIT} records. Use the search bar and filters to narrow your search.",
-            icon="ℹ️",
-        )
-    else:
-        st.success(f"Found {len(records_df)} records.")
 
     feedback_col_names = list(feedback_col_names)
 
@@ -458,6 +451,24 @@ def render_records(app_name: str):
         records_df,
         record_query=record_query,
     )
+
+    if df.empty:
+        if record_query:
+            st.error(f"No records found for search query `{record_query}`.")
+        elif app_ids := st.session_state.get(f"{page_name}.app_ids", None):
+            ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
+            st.error(f"No records found for app IDs: {ids_str}.")
+        else:
+            st.error(f"No records found for app `{app_name}`.")
+        return
+    elif len(df) == RECORD_LIMIT:
+        st.info(
+            f"Limiting to the latest {RECORD_LIMIT} records. Use the search bar and filters to narrow your search.",
+            icon="ℹ️",
+        )
+    else:
+        st.success(f"Found {len(df)} records.")
+
     _, feedback_directions = get_feedback_defs()
 
     _render_grid_tab(
