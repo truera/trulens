@@ -35,7 +35,6 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core._utils.debug import iprint
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
@@ -467,10 +466,6 @@ class Instrument:
             if len(contexts) == 0:
                 # If no app wants this call recorded, run and return without
                 # instrumentation.
-                iprint(
-                    "!!! Instrument.tru_wrapper: no context found, not recording.",
-                    tabs=1,
-                )
                 logger.debug(
                     "%s: no record found or requested, not recording.", query
                 )

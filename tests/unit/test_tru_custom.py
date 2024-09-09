@@ -24,6 +24,14 @@ class TestTruCustomApp(TruTestCase):
             self.ca, app_name="custom_app", app_version="v1"
         )
 
+    def tearDown(self):
+        # Need these for the garbage collection and state threads check to pass.
+        del self.session
+        del self.ca
+        del self.ta_recorder
+
+        super().tearDown()
+
     def test_with_record(self):
         question = "What is the capital of Indonesia?"
 

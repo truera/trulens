@@ -13,7 +13,7 @@ def iprint(*args, tabs=0, **kwargs):
     """Print with thread and task info,"""
 
     thread = threading.current_thread()
-    thread_ident = thread.getName()
+    thread_ident = thread.name
 
     try:
         task = asyncio.current_task()
