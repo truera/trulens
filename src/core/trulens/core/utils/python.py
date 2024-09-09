@@ -571,8 +571,6 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
     the stack and need to do this to the frames prior to thread starts.
     """
 
-    # TODO: See if threading.stack_size([size]) can be used instead.
-
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
 
@@ -834,7 +832,8 @@ def wrap_awaitable(
             once it is ready. This should return the value or a wrapped version.
 
         context_vars: The context variables to copy over to the wrapped
-            awaitable. If None, all context variables are copied.
+            awaitable. If None, all context variables are copied. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     async def wrapper(awaitable):
@@ -871,9 +870,15 @@ def wrap_generator(
             before a first iteration is produced.
 
         wrap: The callback to call with the result of each iteration of the
-            wrapped generator. This should return the value or a wrapped version.
+            wrapped generator. This should return the value or a wrapped
+            version.
 
         on_done: The callback to call when the wrapped generator is exhausted.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     def wrapper(gen):
@@ -921,7 +926,9 @@ def wrap_async_generator(
         on_done: The callback to call when the wrapped generator is exhausted.
 
         context_vars: The context variables to copy over to the wrapped
-            generator. If None, all context variables are taken with their present values.
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     async def wrapper(gen):
@@ -981,6 +988,11 @@ def wrap_lazy(
 
         on_done: The callback to call when the wrapped generator is exhausted or
             awaitable is ready.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     if not WRAP_LAZY:
@@ -1032,7 +1044,20 @@ def wrap_until_eager(
     context_vars: Optional[ContextVarsOrValues] = None,
 ) -> T | Sequence[T]:
     """Wrap a lazy value in one that will call callbacks one the final non-lazy
-    values."""
+    values.
+
+    Arts:
+        obj: The lazy value.
+
+        on_eager: The callback to call with the final value of the wrapped
+            generator or the result of an awaitable. This should return the
+            value or a wrapped version.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
+    """
 
     def rewrap(obj_):
         if is_lazy(obj_):
