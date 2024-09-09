@@ -34,6 +34,9 @@ from trulens.core.utils.serial import JSON_BASES
 from trulens.core.utils.serial import Lens
 import yaml
 
+from tests.utils import find_path
+from tests.utils import print_lens
+
 OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
 """Env var that were to evaluate to true indicates that optional tests are to be
 run."""
@@ -502,8 +505,23 @@ class TruTestCase(WithJSONTestCase, TestCase):
         if msg is None:
             msg = f"Object {ref} was not garbage collected."
 
+        obj = ref()
+
         with self.subTest(part="garbage collection"):
-            self.assertTrue(ref() is None, msg)
+            self.assertTrue(obj is None, msg)
+
+        # Enable WITH_REF_PATH to see printout of why the given ref was not
+        # GC-ed.
+        if (
+            obj is not None
+            and os.environ.get("WITH_REF_PATH", None) is not None
+        ):
+            with self.subTest(part="reference path"):
+                # Show the reference path to the given ref.
+                print(f"Reference path from globals to {ref}:")
+                path = find_path(id(globals()), id(obj))
+                self.assertIsNotNone(path, "Couldn't find reference path.")
+                print_lens(path)
 
     def tearDown(self):
         """Check for running tasks and non-main threads after each test."""

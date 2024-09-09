@@ -1,5 +1,6 @@
 import inspect
 from typing import Any, Callable, List, Optional
+import weakref
 
 from trulens.apps.custom import instrument
 from trulens.core.utils.python import superstack
@@ -60,6 +61,13 @@ class DummyTool(Dummy):
         return self.imp(data)
 
 
+class WeakListWrapper:
+    """Wrap a list in an object which can be used in weakref.ref."""
+
+    def __init__(self, list):
+        self.list = list
+
+
 class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invoked."""
 
@@ -83,7 +91,10 @@ class DummyStackTool(DummyTool):
         # want to be able to take a look at those things which we didn't
         # serialize.
         current_stack = list(superstack())
-        DummyStackTool.last_stacks.append(current_stack)
+        DummyStackTool.last_stacks.append(
+            # Has to be a weakref to prevent GC test failures.
+            weakref.ref(WeakListWrapper(current_stack))
+        )
 
         ret = "<table>\n"
         for frame in current_stack:

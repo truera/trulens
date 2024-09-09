@@ -112,8 +112,10 @@ class TestTruChain(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        chain_ref = weakref.ref(chain)
+        del recorder, recording, record, chain
         self.assertCollected(recorder_ref)
+        self.assertCollected(chain_ref)
 
     @async_test
     async def test_async(self):
@@ -134,8 +136,10 @@ class TestTruChain(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        chain_ref = weakref.ref(chain)
+        del recorder, recording, record, chain
         self.assertCollected(recorder_ref)
+        self.assertCollected(chain_ref)
 
     def test_sync_stream(self):
         """Syncronous stream (`stream`) test."""
@@ -157,8 +161,10 @@ class TestTruChain(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        chain_ref = weakref.ref(chain)
+        del recorder, recording, record, chain
         self.assertCollected(recorder_ref)
+        self.assertCollected(chain_ref)
 
     @async_test
     async def test_async_stream(self):
@@ -181,8 +187,10 @@ class TestTruChain(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        chain_ref = weakref.ref(chain)
+        del recorder, recording, record, chain
         self.assertCollected(recorder_ref)
+        self.assertCollected(chain_ref)
 
     def test_record_metadata_plain(self):
         """Test inclusion of metadata in records."""

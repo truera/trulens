@@ -652,7 +652,10 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         lens, path = queue.get()
 
         if len(path) > biggest_len:
-            print(len(lens), format_size(len(visited)))
+            prog.set_description_str("length=" + str(len(lens)))
+            prog.set_postfix_str(
+                format_size(len(visited)) + " reference(s) visited"
+            )
             prog.update(len(visited) - prog.n)
 
             biggest_len = len(path)
@@ -662,44 +665,56 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         if final_ref.ref_id == target_id:
             return lens
 
-        final = final_ref.get()
+        try:
+            final = final_ref.get()
+        except Exception:
+            # Sometimes some overriding issues happen here.
+            continue
 
-        if isinstance(final, dict) or False:
-            for key, value in list(final.items()):
-                if value is None:
-                    continue
-                if not gc.is_tracked(value):
-                    continue
+        if isinstance(final, dict):
+            try:
+                for key, value in list(final.items()):
+                    if value is None:
+                        continue
+                    if not gc.is_tracked(value):
+                        continue
 
-                value_ref = RefLike(obj=value)
+                    value_ref = RefLike(obj=value)
 
-                if value_ref.ref_id not in visited:
-                    visited.add(value_ref.ref_id)
-                    if isinstance(key, str):
+                    if value_ref.ref_id not in visited:
+                        visited.add(value_ref.ref_id)
+                        if isinstance(key, str):
+                            queue.put((
+                                lens + serial_utils.GetItem(item=key),
+                                path + [value_ref],
+                            ))
+                        else:
+                            queue.put((
+                                lens + GetReferent(ref_id=value_ref.ref_id),
+                                path + [value_ref],
+                            ))
+            except Exception:
+                # Some objects will override dict methods and might fail above.
+                pass
+
+        elif isinstance(final, (list, tuple)):
+            try:
+                for index, value in enumerate(final):
+                    if value is None:
+                        continue
+                    if not gc.is_tracked(value):
+                        continue
+
+                    value_ref = RefLike(obj=value)
+                    if value_ref.ref_id not in visited:
+                        visited.add(value_ref.ref_id)
                         queue.put((
-                            lens + serial_utils.GetItem(item=key),
+                            lens + serial_utils.GetIndex(index=index),
                             path + [value_ref],
                         ))
-                    else:
-                        queue.put((
-                            lens + GetReferent(ref_id=value_ref.ref_id),
-                            path + [value_ref],
-                        ))
-
-        elif isinstance(final, (list, tuple)) or False:
-            for index, value in enumerate(final):
-                if value is None:
-                    continue
-                if not gc.is_tracked(value):
-                    continue
-
-                value_ref = RefLike(obj=value)
-                if value_ref.ref_id not in visited:
-                    visited.add(value_ref.ref_id)
-                    queue.put((
-                        lens + serial_utils.GetIndex(index=index),
-                        path + [value_ref],
-                    ))
+            except Exception:
+                # Some objects will override enumerate and related and might fail above.
+                pass
 
         else:
             for value in gc.get_referents(final):

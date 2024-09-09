@@ -143,8 +143,10 @@ class TestLlamaIndex(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        engine_ref = weakref.ref(query_engine)
+        del recorder, recording, record, query_engine
         self.assertCollected(recorder_ref)
+        self.assertCollected(engine_ref)
 
     async def _async_test(
         self, create_engine, engine_method_name: str, streaming: bool = False
@@ -181,8 +183,10 @@ class TestLlamaIndex(TruTestCase):
 
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
-        del recorder, recording, record
+        engine_ref = weakref.ref(query_engine)
+        del recorder, recording, record, query_engine
         self.assertCollected(recorder_ref)
+        self.assertCollected(engine_ref)
 
     # Query engine tests
 
