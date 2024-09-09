@@ -223,7 +223,7 @@ def _render_advanced_filters(
         out = None
 
         filters = []
-        c1, c2, c3, c4, _ = st.columns([0.1, 0.1, 0.1, 0.1, 0.6])
+        c1, c2, c3, c4, _ = st.columns([0.15, 0.15, 0.15, 0.15, 0.4])
 
         n_clauses = st.session_state.get(
             f"{page_name}.record_filter.n_clauses", 0
@@ -394,12 +394,17 @@ def _lookup_app_version(
 ):
     if app_version and app_id:
         raise ValueError("Can only pass one of `app_id` or `app_version`")
-    elif app_version:
-        return versions_df[versions_df["app_version"] == app_version].iloc[0]
-    elif app_id:
-        return versions_df[versions_df["app_id"] == app_id].iloc[0]
-    else:
-        raise ValueError("Must pass one of `app_id` or `app_version`")
+    try:
+        if app_version:
+            return versions_df[versions_df["app_version"] == app_version].iloc[
+                0
+            ]
+        elif app_id:
+            return versions_df[versions_df["app_id"] == app_id].iloc[0]
+        else:
+            raise ValueError("Must pass one of `app_id` or `app_version`")
+    except IndexError:
+        return None
 
 
 def _render_version_selectors(
@@ -467,9 +472,8 @@ def _render_version_selectors(
         ):
             select_versions = pinned_versions
         if app_id:
-            version = _lookup_app_version(versions_df, app_id=app_id)[
-                "app_version"
-            ]
+            app_row = _lookup_app_version(versions_df, app_id=app_id)
+            version = app_row["app_version"] if app_row is not None else None
         if app_id and version in select_versions:
             idx = select_versions.index(version)
         else:
@@ -501,10 +505,10 @@ def _render_version_selectors(
                 index=select_idx,
                 format_func=lambda x: f"📌 {x}" if x in pinned_versions else x,
             ):
-                app_id = _lookup_app_version(versions_df, app_version=version)[
-                    "app_id"
-                ]
-                current_app_ids[i] = app_id
+                app_row = _lookup_app_version(versions_df, app_version=version)
+                app_id = app_row["app_id"] if app_row is not None else None
+                if app_id:
+                    current_app_ids[i] = app_id
 
         if st.form_submit_button("Apply"):
             st.session_state[f"{page_name}.app_ids"] = current_app_ids
@@ -546,6 +550,7 @@ def render_app_comparison(app_name: str):
         st.error(
             "Not enough App Versions found to compare. Try a different page instead."
         )
+        return
 
     # get app version and record data
     _render_version_selectors(versions_df)

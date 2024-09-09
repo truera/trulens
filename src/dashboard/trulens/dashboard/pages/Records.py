@@ -405,6 +405,13 @@ def _reset_app_ids():
 def _render_app_id_args_filter(versions_df: pd.DataFrame):
     if app_ids := st.session_state.get(f"{page_name}.app_ids", None):
         # Reading session state from other pages
+        valid_app_ids = versions_df["app_id"].unique()
+        if not set(app_ids).issubset(valid_app_ids):
+            ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
+            st.error(f"Got invalid App IDs: {ids_str}")
+            _reset_app_ids()
+            return versions_df
+
         ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
         info_col, show_all_col = st.columns(
             [0.9, 0.1], vertical_alignment="center"

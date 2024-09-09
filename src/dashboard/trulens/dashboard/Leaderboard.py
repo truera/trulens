@@ -421,6 +421,13 @@ def _render_grid_tab(
         for col in version_metadata_col_names
         if not col.startswith("trulens.")
     ]
+
+    # Validate metadata_cols
+    st.session_state[f"{page_name}.metadata_cols"] = [
+        col_name
+        for col_name in st.session_state.get(f"{page_name}.metadata_cols", [])
+        if col_name in _metadata_options
+    ]
     metadata_cols = st.multiselect(
         label="Display Metadata Columns",
         key=f"{page_name}.metadata_cols",
