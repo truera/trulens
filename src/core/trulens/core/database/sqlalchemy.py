@@ -731,7 +731,9 @@ class SQLAlchemyDB(DB):
             # data. Ideally, though, we would be making some sort of lazy
             # DataFrame and then could use the lazy join feature of sqlalchemy.
 
-            stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
+            stmt = stmt.order_by(
+                self.orm.Record.ts.desc(), self.orm.Record.record_id
+            )
             # NOTE: feedback_results order is governed by the order_by on the
             # orm.FeedbackResult.record backref definition. Here, we need to
             # order Records as we did not use an auto join to retrieve them. If
