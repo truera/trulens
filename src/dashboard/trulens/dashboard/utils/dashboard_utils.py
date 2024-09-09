@@ -108,13 +108,15 @@ def get_session() -> TruSession:
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner="Getting record data")
 def get_records_and_feedback(
-    app_ids: Optional[List[str]] = None, limit: Optional[int] = None
+    app_name: str,
+    app_ids: Optional[List[str]] = None,
+    limit: Optional[int] = None,
 ):
     session = get_session()
     lms = session.connector.db
     assert lms
     records_df, feedback_col_names = lms.get_records_and_feedback(
-        app_ids=app_ids, limit=limit
+        app_name=app_name, app_ids=app_ids, limit=limit
     )
 
     record_json = records_df["record_json"].apply(json.loads)
@@ -135,11 +137,11 @@ def get_records_and_feedback(
 
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app data")
-def get_apps():
+def get_apps(app_name: Optional[str] = None):
     session = get_session()
     lms = session.connector.db
     assert lms
-    return list(lms.get_apps())
+    return list(lms.get_apps(app_name=app_name))
 
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner="Getting feedback definitions")
@@ -233,8 +235,7 @@ def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
 
 @st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app versions")
 def get_app_versions(app_name: str):
-    apps = get_apps()
-    app_versions = [app for app in apps if app["app_name"] == app_name]
+    app_versions = get_apps(app_name=app_name)
     app_versions_df = pd.DataFrame(app_versions)
 
     # Flatten metadata

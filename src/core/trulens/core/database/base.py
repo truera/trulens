@@ -304,7 +304,9 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSONized[AppDefinition]]:
+    def get_apps(
+        self, app_name: Optional[mod_types_schema.AppName] = None
+    ) -> Iterable[JSONized[AppDefinition]]:
         """Get all apps."""
 
         raise NotImplementedError()
@@ -318,6 +320,7 @@ class DB(SerialModel, abc.ABC):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_name: Optional[mod_types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:

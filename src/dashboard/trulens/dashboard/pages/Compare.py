@@ -409,6 +409,7 @@ def _lookup_app_version(
 
 
 def _render_version_selectors(
+    app_name: str,
     versions_df: pd.DataFrame,
 ):
     def _increment_comparators(selected_app_ids: List[Optional[str]]):
@@ -521,7 +522,7 @@ def _render_version_selectors(
                 str(app_id) for app_id in current_app_ids
             )
             records, feedback_cols = get_records_and_feedback(
-                app_ids=current_app_ids
+                app_name=app_name, app_ids=current_app_ids
             )
             records = _preprocess_df(records)
             col_data = {
@@ -560,7 +561,7 @@ def render_app_comparison(app_name: str):
         return
 
     # get app version and record data
-    _render_version_selectors(versions_df)
+    _render_version_selectors(app_name, versions_df)
     col_data = st.session_state.get(f"{page_name}.col_data", None)
     if not col_data:
         return

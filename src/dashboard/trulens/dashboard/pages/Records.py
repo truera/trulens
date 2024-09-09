@@ -450,7 +450,7 @@ def render_records(app_name: str):
 
     # Get records and feedback data
     records_df, feedback_col_names = get_records_and_feedback(
-        app_ids, limit=RECORD_LIMIT
+        app_name=app_name, app_ids=app_ids, limit=RECORD_LIMIT
     )
 
     feedback_col_names = list(feedback_col_names)

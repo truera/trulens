@@ -396,11 +396,17 @@ class SQLAlchemyDB(DB):
                 nested_update(app_json["metadata"], metadata)
                 _app.app_json = json.dumps(app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
+    def get_apps(
+        self, app_name: Optional[mod_types_schema.AppName] = None
+    ) -> Iterable[JSON]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:
-            for _app in session.query(self.orm.AppDefinition):
+            q = sa.select(self.orm.AppDefinition)
+            if app_name:
+                q = q.filter_by(app_name=app_name)
+            app_defs = (row[0] for row in session.execute(q))
+            for _app in app_defs:
                 yield json.loads(_app.app_json)
 
     def insert_app(
@@ -702,6 +708,7 @@ class SQLAlchemyDB(DB):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
+        app_name: Optional[mod_types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -719,6 +726,12 @@ class SQLAlchemyDB(DB):
 
             if app_ids:
                 stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
+
+            if app_name:
+                # stmt = stmt.options(joinedload(self.orm.Record.app))
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_name == app_name
+                )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
             # NOTE(piotrm): The joinedload here makes it so that the

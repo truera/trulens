@@ -772,7 +772,7 @@ def render_leaderboard(app_name: str):
 
     # Get records and feedback data
     records_df, feedback_col_names = get_records_and_feedback(
-        app_ids, limit=RECORD_LIMIT
+        app_name=app_name, app_ids=app_ids, limit=RECORD_LIMIT
     )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
