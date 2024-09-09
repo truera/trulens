@@ -199,18 +199,19 @@ def trulens_feedback(record: Record):
     lms = session.connector.db
     feedback_defs = lms.get_feedback_defs()
 
+    feedback_directions = {
+        (
+            row.feedback_json.get("supplied_name", "")
+            or row.feedback_json["implementation"]["name"]
+        ): (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True)
+            else "LOWER_IS_BETTER"
+        )
+        for _, row in feedback_defs.iterrows()
+    }
+
     for feedback, feedback_result in record.wait_for_feedback_results().items():
-        feedback_directions = {
-            (
-                row.feedback_json.get("supplied_name", "")
-                or row.feedback_json["implementation"]["name"]
-            ): (
-                "HIGHER_IS_BETTER"
-                if row.feedback_json.get("higher_is_better", True)
-                else "LOWER_IS_BETTER"
-            )
-            for _, row in feedback_defs.iterrows()
-        }
         call_data = {
             "feedback_definition": feedback,
             "feedback_name": feedback.name,
