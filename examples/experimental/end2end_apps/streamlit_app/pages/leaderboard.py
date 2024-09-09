@@ -1,3 +1,3 @@
-from trulens.dashboard.leaderboard import render_leaderboard
+from trulens.dashboard.streamlit import trulens_leaderboard
 
-render_leaderboard()
+trulens_leaderboard()
