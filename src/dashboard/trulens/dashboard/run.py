@@ -56,6 +56,7 @@ def run_dashboard(
 
     """
     session = session or TruSession()
+    session.connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:

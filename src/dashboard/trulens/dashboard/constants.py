@@ -8,4 +8,5 @@ RECORD_LIMIT = 1000
 
 CACHE_TTL = 60 * 15  # 15 minutes
 
-PINNED_COL_NAME = "trulens.leaderboard.pinned"
+PINNED_COL_NAME = "trulens.dashboard.pinned"
+HIDE_RECORD_COL_NAME = "trulens.dashboard.hide_record"
