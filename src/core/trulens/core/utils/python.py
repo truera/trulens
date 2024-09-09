@@ -35,8 +35,6 @@ from typing import (
     Union,
 )
 
-from trulens.core._utils import debug as debug_utils
-
 T = TypeVar("T")
 
 WRAP_LAZY: bool = True
@@ -577,8 +575,6 @@ def _future_target_wrapper(stack, context, func, *args, **kwargs):
 
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
-
-    debug_utils.iprint("_future_target_wrapper")
 
     with with_context(context):
         return func(*args, **kwargs)

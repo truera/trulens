@@ -610,7 +610,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         # Push the endpoints into the contextvars for wrappers inside the
         # following call to retrieve.
         # HACK: temporary workaround, see App._set_context_vars.
-        # endpoints_token = Endpoint._context_endpoints.set(endpoints)
+        endpoints_token = Endpoint._context_endpoints.set(endpoints)  # noqa: F841
 
         # context_vars = contextvars.copy_context()
         context_vars = {
