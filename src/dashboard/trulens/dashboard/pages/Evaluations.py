@@ -1,7 +1,6 @@
 import asyncio
 import json
 import pprint as pp
-import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +23,8 @@ from trulens.core.schema.select import Select
 from trulens.core.utils.json import jsonify_for_ui
 from trulens.core.utils.serial import Lens
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.display import expand_groundedness_df
+from trulens.dashboard.display import highlight
 from trulens.dashboard.streamlit_utils import init_from_args
 from trulens.dashboard.ux.components import draw_agent_info
 from trulens.dashboard.ux.components import draw_llm_info
@@ -421,34 +422,6 @@ else:
                     st.write("No feedback functions found.")
 
                 def display_feedback_call(call, feedback_name):
-                    def highlight(s):
-                        if "distance" in feedback_name:
-                            return [
-                                f"background-color: {CATEGORY.UNKNOWN.color}"
-                            ] * len(s)
-                        cat = CATEGORY.of_score(
-                            s.result,
-                            higher_is_better=feedback_directions.get(
-                                feedback_name, default_direction
-                            )
-                            == default_direction,
-                        )
-                        return [f"background-color: {cat.color}"] * len(s)
-
-                    def highlight_groundedness(s):
-                        if "distance" in feedback_name:
-                            return [
-                                f"background-color: {CATEGORY.UNKNOWN.color}"
-                            ] * len(s)
-                        cat = CATEGORY.of_score(
-                            s.Score,
-                            higher_is_better=feedback_directions.get(
-                                feedback_name, default_direction
-                            )
-                            == default_direction,
-                        )
-                        return [f"background-color: {cat.color}"] * len(s)
-
                     if call is not None and len(call) > 0:
                         # NOTE(piotrm for garett): converting feedback
                         # function inputs to strings here as other
@@ -466,7 +439,7 @@ else:
 
                         df = pd.DataFrame.from_records(c["args"] for c in call)
 
-                        df["result"] = pd.DataFrame([
+                        df["score"] = pd.DataFrame([
                             float(call[i]["ret"])
                             if call[i]["ret"] is not None
                             else -1
@@ -481,72 +454,25 @@ else:
 
                         # note: improve conditional to not rely on the feedback name
                         if "groundedness" in feedback_name.lower():
-                            try:
-                                # Split the reasons value into separate rows and columns
-                                reasons = df["reasons"].iloc[0]
-                                # Split the reasons into separate statements
-                                statements = reasons.split("STATEMENT")
-                                data = []
-                                # Each reason has three components: statement, supporting evidence, and score
-                                # Parse each reason into these components and add them to the data list
-                                for statement in statements[1:]:
-                                    try:
-                                        criteria = statement.split(
-                                            "Criteria: "
-                                        )[1].split("Supporting Evidence: ")[0]
-                                        supporting_evidence = statement.split(
-                                            "Supporting Evidence: "
-                                        )[1].split("Score: ")[0]
-                                        score_pattern = re.compile(
-                                            r"([0-9]+)(?=\D*$)"
-                                        )
-                                        score_split = statement.split(
-                                            "Score: "
-                                        )[1]
-                                        score_match = score_pattern.search(
-                                            score_split
-                                        )
-                                        if score_match:
-                                            score = (
-                                                float(score_match.group(1)) / 10
-                                            )
-                                    except Exception:
-                                        pass
-                                    data.append({
-                                        "Statement": criteria,
-                                        "Supporting Evidence from Source": supporting_evidence,
-                                        "Score": score,
-                                    })
-                                reasons_df = pd.DataFrame(data)
-                                # Combine the original feedback data with the expanded reasons
-                                df_expanded = pd.concat(
-                                    [
-                                        df.reset_index(drop=True),
-                                        reasons_df.reset_index(drop=True),
-                                    ],
-                                    axis=1,
-                                )
-                                st.dataframe(
-                                    df_expanded.style.apply(
-                                        highlight_groundedness, axis=1
-                                    ).format("{:.2f}", subset=["Score"]),
-                                    hide_index=True,
-                                    column_order=[
-                                        "Statement",
-                                        "Supporting Evidence from Source",
-                                        "Score",
-                                    ],
-                                )
-                            except Exception:
-                                st.dataframe(
-                                    df.style.apply(highlight, axis=1),
-                                    hide_index=True,
-                                )
+                            df = expand_groundedness_df(df)
                         else:
-                            st.dataframe(
-                                df.style.apply(highlight, axis=1),
-                                hide_index=True,
-                            )
+                            pass
+                        # Apply the highlight function row-wise
+                        styled_df = df.style.apply(
+                            lambda row: highlight(
+                                row,
+                                selected_feedback=selected_fcol,
+                                feedback_directions=feedback_directions,
+                                default_direction=default_direction,
+                            ),
+                            axis=1,
+                        )
+
+                        # Format only numeric columns
+                        for col in df.select_dtypes(include=["number"]).columns:
+                            styled_df = styled_df.format({col: "{:.2f}"})
+
+                        st.dataframe(styled_df, hide_index=True)
                     else:
                         st.text("No feedback details.")
 

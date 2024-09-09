@@ -13,8 +13,10 @@ from trulens.core.schema.record import Record
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.text import format_quantity
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import get_feedback_result
 from trulens.dashboard.display import get_icon
+from trulens.dashboard.display import highlight
 from trulens.dashboard.ux import styles
 from trulens.dashboard.ux.components import draw_metadata_and_tags
 
@@ -139,6 +141,9 @@ def trulens_leaderboard(app_ids: List[str] = None):
             higher_is_better = feedback_directions.get(col_name, True)
 
             if "distance" in col_name:
+                cat = styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better, is_distance=True
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
@@ -164,7 +169,7 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.experimental_fragment(run_every=2)
+@st.fragment(run_every=2)
 def trulens_feedback(record: Record):
     """
     Render clickable feedback pills for a given record.
@@ -189,6 +194,23 @@ def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
+    default_direction = "HIGHER_IS_BETTER"
+    session = TruSession()
+    lms = session.connector.db
+    feedback_defs = lms.get_feedback_defs()
+
+    feedback_directions = {
+        (
+            row.feedback_json.get("supplied_name", "")
+            or row.feedback_json["implementation"]["name"]
+        ): (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True)
+            else "LOWER_IS_BETTER"
+        )
+        for _, row in feedback_defs.iterrows()
+    }
+
     for feedback, feedback_result in record.wait_for_feedback_results().items():
         call_data = {
             "feedback_definition": feedback,
@@ -215,11 +237,28 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
-        st.dataframe(
-            get_feedback_result(record, feedback_name=selected_feedback),
-            use_container_width=True,
-            hide_index=True,
+        df = get_feedback_result(record, feedback_name=selected_feedback)
+        if "groundedness" in selected_feedback.lower():
+            df = expand_groundedness_df(df)
+        else:
+            pass
+
+        # Apply the highlight function row-wise
+        styled_df = df.style.apply(
+            lambda row: highlight(
+                row,
+                selected_feedback=selected_feedback,
+                feedback_directions=feedback_directions,
+                default_direction=default_direction,
+            ),
+            axis=1,
         )
+
+        # Format only numeric columns
+        for col in df.select_dtypes(include=["number"]).columns:
+            styled_df = styled_df.format({col: "{:.2f}"})
+
+        st.dataframe(styled_df, hide_index=True)
 
 
 def trulens_trace(record: Record):
