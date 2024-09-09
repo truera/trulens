@@ -232,16 +232,19 @@ def _render_grid(
 ):
     columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
-    pinned_df = df[df[PINNED_COL_NAME]]
-    pinned_df["app_version"] = pinned_df["app_version"].apply(
-        lambda x: f"📌 {x}"
-    )
-    df.loc[pinned_df.index] = pinned_df
+    if PINNED_COL_NAME in df:
+        pinned_df = df[df[PINNED_COL_NAME]]
+        pinned_df["app_version"] = pinned_df["app_version"].apply(
+            lambda x: f"📌 {x}"
+        )
+        df.loc[pinned_df.index] = pinned_df
+
+    height = 1000 if len(df) > 30 else 500
 
     return AgGrid(
         df,
         key=grid_key,
-        height=500,
+        height=height,
         columns_state=columns_state,
         gridOptions=_build_grid_options(
             df=df,
@@ -296,7 +299,9 @@ def handle_table_edit(
 
 
 @st.dialog("Add/Edit Metadata")
-def handle_add_metadata(selected_rows: pd.DataFrame):
+def handle_add_metadata(
+    selected_rows: pd.DataFrame, metadata_col_names: List[str]
+):
     st.write(
         f"Add or edit metadata for {len(selected_rows)} selected app version(s)"
     )
@@ -323,9 +328,15 @@ def handle_add_metadata(selected_rows: pd.DataFrame):
     )
 
     if st.button("Submit"):
+        if not key:
+            st.error("Metadata key cannot be empty!")
+            return
         metadata = nest_metadata(key, val)
         for app_id in selected_rows["app_id"]:
             update_app_metadata(app_id, metadata)
+
+        if key not in metadata_col_names:
+            metadata_col_names.append(key)
 
         get_app_versions.clear()
         get_apps.clear()
@@ -347,11 +358,6 @@ def handle_add_virtual_app(
             "App Version", placeholder="virtual_app_base"
         )
 
-        if app_version and not re.match(r"^[A-Za-z0-9_.]+$", app_version):
-            st.error(
-                "`app_version` must contain only alphanumeric and underscore characters!"
-            )
-
         feedback_values = {
             col: st.number_input(col)
             for col in feedback_col_names
@@ -367,6 +373,11 @@ def handle_add_virtual_app(
         metadata_values[EXTERNAL_APP_COL_NAME] = True
 
         if st.form_submit_button("Submit"):
+            if app_version and not re.match(r"^[A-Za-z0-9_.]+$", app_version):
+                st.error(
+                    "`app_version` must contain only alphanumeric and underscore characters!"
+                )
+                return
             session = get_session()
             app = TruVirtual(
                 app=VirtualApp(),
@@ -442,9 +453,12 @@ def _render_grid_tab(
     )
     if len(metadata_cols) != len(_metadata_options):
         st.query_params["metadata_cols"] = ",".join(metadata_cols)
-    if EXTERNAL_APP_COL_NAME not in metadata_cols:
+    if (
+        EXTERNAL_APP_COL_NAME in df
+        and EXTERNAL_APP_COL_NAME not in metadata_cols
+    ):
         metadata_cols.append(EXTERNAL_APP_COL_NAME)
-    if PINNED_COL_NAME not in metadata_cols:
+    if PINNED_COL_NAME in df and PINNED_COL_NAME not in metadata_cols:
         metadata_cols.append(PINNED_COL_NAME)
 
     if metadata_to_front := c1.toggle(
@@ -470,7 +484,7 @@ def _render_grid_tab(
             df = df[df[PINNED_COL_NAME]]
         else:
             st.info(
-                "Pin an app version by selecting it and clicking the `Pin` button.",
+                "Pin an app version by selecting it and clicking the `Pin App` button.",
                 icon="📌",
             )
             return
@@ -553,7 +567,7 @@ def _render_grid_tab(
         use_container_width=True,
         key=f"{page_name}.modify_metadata_button",
     ):
-        handle_add_metadata(selected_rows)
+        handle_add_metadata(selected_rows, version_metadata_col_names)
 
     # Add Virtual App
     if c6.button(
@@ -765,7 +779,7 @@ def render_leaderboard(app_name: str):
         return
     elif len(records_df) == RECORD_LIMIT:
         st.info(
-            f"Computed using latest {RECORD_LIMIT} records.",
+            f"Computed from the last {RECORD_LIMIT} records.",
             icon="ℹ️",
         )
 

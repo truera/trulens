@@ -354,10 +354,12 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    height = 1000 if len(df) > 30 else 500
+
     return AgGrid(
         df,
         key="records_data",
-        height=1000,
+        height=height,
         gridOptions=_build_grid_options(
             df=df,
             feedback_col_names=feedback_col_names,

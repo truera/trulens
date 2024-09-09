@@ -504,7 +504,9 @@ def _render_version_selectors(
                 key=selectbox_key,
                 options=select_options,
                 index=select_idx,
-                format_func=lambda x: f"📌 {x}" if x in pinned_versions else x,
+                format_func=lambda x: f"📌 {x}"
+                if pinned_versions and x in pinned_versions
+                else x,
             ):
                 app_row = _lookup_app_version(versions_df, app_version=version)
                 app_id = app_row["app_id"] if app_row is not None else None
