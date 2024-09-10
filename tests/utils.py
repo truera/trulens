@@ -630,7 +630,7 @@ class GetReferent(serial_utils.Step):
         return hash(self.ref_id)
 
     def get(self, obj: Any) -> Iterable[Any]:
-        yield ctypes.cast(self.ref_id, ctypes.py_object).value
+        yield deref(self.ref_id)
 
     def set(self, obj: Any, val: Any) -> Any:
         raise NotImplementedError("Cannot set a reference.")
