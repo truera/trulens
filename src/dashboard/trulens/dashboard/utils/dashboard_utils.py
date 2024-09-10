@@ -179,6 +179,26 @@ def _handle_app_selection(app_names: List[str]):
         st.session_state[ST_APP_NAME] = value
 
 
+def render_refresh_button():
+    if st.button("↻ Refresh Data", use_container_width=True):
+        st.cache_data.clear()
+        st.session_state["cache.last_refreshed"] = datetime.now()
+        st.rerun()
+    if last_refreshed := st.session_state.get("cache.last_refreshed", None):
+        tdelta: timedelta = datetime.now() - last_refreshed
+        if tdelta.seconds < 5 * 60:
+            last_refreshed_str = "just now"
+        elif tdelta.seconds < 60 * 60:
+            last_refreshed_str = f"{tdelta.seconds // 60} minutes ago"
+        elif tdelta.days == 0:
+            last_refreshed_str = last_refreshed.strftime("%H:%M:%S")
+        else:
+            last_refreshed_str = last_refreshed.strftime("%m-%d-%Y")
+    else:
+        last_refreshed_str = "never"
+    st.text(f"Last refreshed {last_refreshed_str}")
+
+
 def render_sidebar():
     apps = get_apps()
     app_name = st.session_state.get(ST_APP_NAME, None)
@@ -207,23 +227,7 @@ def render_sidebar():
         else:
             app_name = app_names[0]
 
-        if st.sidebar.button("↻ Refresh Data", use_container_width=True):
-            st.cache_data.clear()
-            st.session_state["cache.last_refreshed"] = datetime.now()
-            st.rerun()
-        if "cache.last_refreshed" in st.session_state:
-            last_refreshed: datetime = st.session_state["cache.last_refreshed"]
-            tdelta: timedelta = datetime.now() - last_refreshed
-            if tdelta.seconds < 5 * 60:
-                last_refreshed_str = "just now"
-            elif tdelta.seconds < 60 * 60:
-                last_refreshed_str = f"{tdelta.seconds // 60} minutes ago"
-            elif tdelta.days == 0:
-                last_refreshed_str = last_refreshed.strftime("%H:%M:%S")
-            else:
-                last_refreshed_str = last_refreshed.strftime("%m-%d-%Y")
-
-            st.sidebar.text(f"Last refreshed {last_refreshed_str}")
+    refresh_data_container = st.sidebar.container()
 
     with st.sidebar.expander("Info"):
         st.text(f"{core_package} {core_version}")
@@ -237,7 +241,7 @@ def render_sidebar():
         )
     if app_name is None:
         st.error("No apps found in the database.")
-    return app_name
+    return app_name, refresh_data_container
 
 
 def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
