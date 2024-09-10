@@ -173,6 +173,23 @@ app_rules_styles = {
     },
 }
 
+diff_cell_rules = {
+    "diff-xs": "x < .2",
+    "diff-s": "x >= .2 && x < .4",
+    "diff-m": "x >= .4 && x < .6",
+    "diff-l": "x >= .6 && x < .8",
+    "diff-xl": "x >= .8",
+}
+
+diff_cell_css = {}
+for i, key in enumerate(diff_cell_rules):
+    i *= 0.2
+    transparency = hex(int(i * 255))[2:]
+    if len(transparency) == 1:
+        transparency = "0" + transparency
+    diff_cell_css[f".{key}"] = {"background-color": f"#ffaaaa{transparency}"}
+
+
 radio_button_css = {
     ".ag-checkbox-input-wrapper:after": {"content": '"\\f127"'},
     ".ag-checkbox-input-wrapper.ag-checked:after": {"content": '"\\f128"'},

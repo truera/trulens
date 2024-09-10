@@ -4,6 +4,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from st_aggrid import AgGrid
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from trulens.dashboard.components.record_viewer import record_viewer
@@ -21,6 +23,10 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.ux.styles import aggrid_css
+from trulens.dashboard.ux.styles import diff_cell_css
+from trulens.dashboard.ux.styles import diff_cell_rules
+from trulens.dashboard.ux.styles import radio_button_css
 
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
@@ -127,7 +133,9 @@ def _render_all_app_feedback_plot(
 def _highlight_variance(row: pd.Series):
     colors = []
     for col_name, value in row.items():
-        if (
+        if col_name == "input":
+            colors.append("")
+        elif (
             not pd.isna(value)
             and isinstance(col_name, str)
             and (col_name.endswith("Variance") or col_name.endswith("Diff"))
@@ -309,31 +317,120 @@ def _render_advanced_filters(
         return query_col
 
 
+def _build_grid_options(
+    df: pd.DataFrame,
+    agg_diff_col: str,
+    diff_cols: List[str],
+    record_id_cols: List[str],
+):
+    gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50, flex=1)
+
+    gb.configure_column(
+        "input",
+        header_name="Input",
+        resizable=True,
+        pinned="left",
+        flex=3,
+        filter="agMultiColumnFilter",
+    )
+    gb.configure_columns(
+        record_id_cols,
+        hide=True,
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        agg_diff_col,
+        cellClassRules=diff_cell_rules,
+        filter="agNumberColumnFilter",
+    )
+    gb.configure_columns(
+        diff_cols,
+        cellClassRules=diff_cell_rules,
+        filter="agNumberColumnFilter",
+    )
+
+    gb.configure_grid_options(
+        rowHeight=45,
+        suppressContextMenu=True,
+    )
+    gb.configure_selection(
+        selection_mode="single",
+        use_checkbox=True,
+    )
+    gb.configure_pagination(enabled=True, paginationPageSize=25)
+    gb.configure_side_bar(filters_panel=False, columns_panel=False)
+    gb.configure_grid_options(
+        autoSizeStrategy={"type": "fitGridWidth", "skipHeader": False}
+    )
+    return gb.build()
+
+
+def _render_grid(
+    df: pd.DataFrame,
+    agg_diff_col: str,
+    diff_cols: List[str],
+    record_id_cols: List[str],
+    grid_key: Optional[str] = None,
+):
+    columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+
+    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+
+    return AgGrid(
+        df,
+        key=grid_key,
+        height=height,
+        columns_state=columns_state,
+        gridOptions=_build_grid_options(
+            df=df,
+            agg_diff_col=agg_diff_col,
+            diff_cols=diff_cols,
+            record_id_cols=record_id_cols,
+        ),
+        custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
+        update_on=["selectionChanged", "cellValueChanged"],
+        allow_unsafe_jscode=True,
+    )
+
+
 def _render_shared_records(
     col_data: Dict[str, Dict[str, pd.DataFrame]],
     feedback_cols: List[str],
 ):
     query_col = None
-    cols = ["input"] + feedback_cols
-    for app_id, data in col_data.items():
+    cols = ["input", "record_id"] + feedback_cols
+    app_versions = []
+    for _, data in col_data.items():
+        app_df = data["records"].drop_duplicates(
+            subset=["input"] + feedback_cols
+        )
+        version = data["version"]
+        app_versions.append(version)
+
         if query_col is None:
-            query_col = data["records"][cols].rename(
-                columns=lambda x: f"{x}_{col_data[app_id]['version']}"
-                if x in feedback_cols
+            query_col = app_df[cols].rename(
+                columns=lambda x: f"{x}_{version}"
+                if x in cols and x != "input"
                 else x
             )
         else:
             query_col = query_col.merge(
-                data["records"][cols],
+                app_df[cols],
                 how="inner",
                 on="input",
             ).rename(
-                columns=lambda x: f"{x}_{col_data[app_id]['version']}"
-                if x in feedback_cols
+                columns=lambda x: f"{x}_{version}"
+                if x in cols and x != "input"
                 else x
             )
-    # sort query_col columns
     assert query_col is not None
+
+    record_id_cols = [
+        f"record_id_{version}"
+        for version in app_versions
+        if f"record_id_{version}" in query_col.columns
+    ]
+    # sort query_col columns
     query_col = query_col[sorted(query_col.columns)].set_index("input")
 
     if query_col.empty:
@@ -367,21 +464,25 @@ def _render_shared_records(
 
     agg_diff_col = f"Mean {col_suffix}"
     query_col[agg_diff_col] = query_col[diff_cols].mean(axis=1)
+    query_col = query_col.sort_values(
+        by=[agg_diff_col], ascending=False
+    ).reset_index()
 
-    query_col = query_col.sort_values(by=agg_diff_col, ascending=False)
-    with st.expander("Shared Records Stats"):
-        st.dataframe(
-            query_col[[agg_diff_col] + diff_cols]
-            .style.apply(_highlight_variance, axis=1)
-            .format("{:.3f}"),
-            use_container_width=True,
-        )
+    st.subheader("Shared Records Stats")
 
-    selection = st.selectbox(
-        "Select record",
-        query_col.index,
+    grid_data = _render_grid(
+        query_col[["input", agg_diff_col] + diff_cols + record_id_cols],
+        agg_diff_col,
+        diff_cols,
+        record_id_cols,
+        grid_key="compare_grid",
     )
-    return selection
+
+    selected_rows = grid_data.selected_rows
+    selected_rows = pd.DataFrame(selected_rows)
+    if selected_rows.empty:
+        return None
+    return selected_rows[record_id_cols]
 
 
 def _lookup_app_version(
@@ -581,20 +682,23 @@ def render_app_comparison(app_name: str):
 
     with record_selector_container:
         record_selector_container.header("Overlapping Records")
-        selected_input = _render_shared_records(col_data, feedback_col_names)
+        selected_record_ids = _render_shared_records(
+            col_data, feedback_col_names
+        )
 
-    if selected_input is None:
+    if selected_record_ids is None:
         return
-
-    record_data = {
-        app_id: {
-            **data,
-            "records": data["records"][
-                data["records"]["input"] == selected_input
-            ],
-        }
-        for app_id, data in col_data.items()
-    }
+    record_data = {}
+    for app_id, data in col_data.items():
+        records = data["records"]
+        version = data["version"]
+        record_id_col = f"record_id_{version}"
+        if record_id_col in selected_record_ids:
+            selected = selected_record_ids[record_id_col].iloc[0]
+        else:
+            st.error("Missing record ID")
+        records = records[records["record_id"] == selected]
+        record_data[app_id] = {**data, "records": records}
     record_header_container.divider()
     record_header_container.header("Record Comparison")
     with record_feedback_graph_container:

@@ -1,6 +1,4 @@
 import argparse
-from datetime import datetime
-from datetime import timedelta
 import json
 import sys
 from typing import Any, Callable, Dict, List, Optional
@@ -102,7 +100,6 @@ def get_session() -> TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    st.session_state["cache.last_refreshed"] = datetime.now()
     return TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
@@ -182,21 +179,7 @@ def _handle_app_selection(app_names: List[str]):
 def render_refresh_button():
     if st.button("↻ Refresh Data", use_container_width=True):
         st.cache_data.clear()
-        st.session_state["cache.last_refreshed"] = datetime.now()
         st.rerun()
-    if last_refreshed := st.session_state.get("cache.last_refreshed", None):
-        tdelta: timedelta = datetime.now() - last_refreshed
-        if tdelta.seconds < 5 * 60:
-            last_refreshed_str = "just now"
-        elif tdelta.seconds < 60 * 60:
-            last_refreshed_str = f"{tdelta.seconds // 60} minutes ago"
-        elif tdelta.days == 0:
-            last_refreshed_str = last_refreshed.strftime("%H:%M:%S")
-        else:
-            last_refreshed_str = last_refreshed.strftime("%m-%d-%Y")
-    else:
-        last_refreshed_str = "never"
-    st.text(f"Last refreshed {last_refreshed_str}")
 
 
 def render_sidebar():
