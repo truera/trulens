@@ -1,12 +1,14 @@
+from functools import partial
 import hashlib
 import pprint as pp
-import re
 from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
+from trulens.dashboard.display import expand_groundedness_df
+from trulens.dashboard.display import highlight
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
@@ -34,22 +36,6 @@ def display_feedback_call(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
 ):
-    def highlight_groundedness(s: pd.Series):
-        return df_cell_highlight(
-            s.Score,
-            feedback_name=feedback_name,
-            feedback_directions=feedback_directions,
-            n_cells=len(s),
-        )
-
-    def highlight(s: pd.Series):
-        return df_cell_highlight(
-            s.result,
-            feedback_name=feedback_name,
-            feedback_directions=feedback_directions,
-            n_cells=len(s),
-        )
-
     if call is not None and len(call) > 0:
         # NOTE(piotrm for garett): converting feedback
         # function inputs to strings here as other
@@ -67,7 +53,7 @@ def display_feedback_call(
 
         df = pd.DataFrame.from_records(c["args"] for c in call)
 
-        df["result"] = pd.DataFrame([
+        df["score"] = pd.DataFrame([
             float(call[i]["ret"]) if call[i]["ret"] is not None else -1
             for i in range(len(call))
         ])
@@ -76,65 +62,23 @@ def display_feedback_call(
 
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
-            try:
-                # Split the reasons value into separate rows and columns
-                reasons = df["reasons"].iloc[0]
-                # Split the reasons into separate statements
-                statements = reasons.split("STATEMENT")
-                data = []
-                # Each reason has three components: statement, supporting evidence, and score
-                # Parse each reason into these components and add them to the data list
-                for statement in statements[1:]:
-                    try:
-                        criteria = statement.split("Criteria: ")[1].split(
-                            "Supporting Evidence: "
-                        )[0]
-                        supporting_evidence = statement.split(
-                            "Supporting Evidence: "
-                        )[1].split("Score: ")[0]
-                        score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
-                        score_split = statement.split("Score: ")[1]
-                        score_match = score_pattern.search(score_split)
-                        if score_match:
-                            score = float(score_match.group(1)) / 10
-                    except Exception:
-                        pass
-                    data.append({
-                        "Statement": criteria,
-                        "Supporting Evidence from Source": supporting_evidence,
-                        "Score": score,
-                    })
-                reasons_df = pd.DataFrame(data)
-                # Combine the original feedback data with the expanded reasons
-                df_expanded = pd.concat(
-                    [
-                        df.reset_index(drop=True),
-                        reasons_df.reset_index(drop=True),
-                    ],
-                    axis=1,
-                )
-                st.dataframe(
-                    df_expanded.style.apply(
-                        highlight_groundedness, axis=1
-                    ).format("{:.3f}", subset=["Score"]),
-                    hide_index=True,
-                    key=f"{record_id}_{feedback_name}",
-                    column_order=[
-                        "Statement",
-                        "Supporting Evidence from Source",
-                        "Score",
-                    ],
-                    use_container_width=True,
-                )
-                return
-            except Exception:
-                pass
-
-        st.dataframe(
-            df.style.apply(highlight, axis=1),
-            hide_index=True,
-            use_container_width=True,
+            df = expand_groundedness_df(df)
+        style_highlight_fn = partial(
+            highlight,
+            selected_feedback=feedback_name,
+            feedback_directions=feedback_directions,
+            default_direction=default_direction,
         )
+        styled_df = df.style.apply(
+            style_highlight_fn,
+            axis=1,
+        )
+
+        # Format only numeric columns
+        for col in df.select_dtypes(include=["number"]).columns:
+            styled_df = styled_df.format({col: "{:.2f}"})
+
+        st.dataframe(styled_df, hide_index=True)
     else:
         st.warning("No feedback details found.")
 

@@ -23,6 +23,7 @@ import warnings
 from alembic.ddl.impl import DefaultImpl
 import numpy as np
 import pandas as pd
+import pydantic
 from pydantic import Field
 import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
@@ -71,6 +72,10 @@ class SQLAlchemyDB(DB):
     See abstract class [DB][trulens.core.database.base.DB] for method reference.
     """
 
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
+
     table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
     """The prefix to use for all table names.
 
@@ -78,26 +83,43 @@ class SQLAlchemyDB(DB):
     """
 
     engine_params: dict = Field(default_factory=dict)
-    """Sqlalchemy-related engine params."""
+    """SQLAlchemy-related engine params."""
 
     session_params: dict = Field(default_factory=dict)
-    """Sqlalchemy-related session."""
+    """SQLAlchemy-related session."""
 
     engine: Optional[sa.Engine] = None
-    """Sqlalchemy engine."""
+    """SQLAlchemy engine."""
 
     session: Optional[sessionmaker] = None
-    """Sqlalchemy session(maker)."""
-
-    model_config: ClassVar[dict] = {"arbitrary_types_allowed": True}
+    """SQLAlchemy session(maker)."""
 
     orm: Type[mod_orm.ORM]
-    """
-    Container of all the ORM classes for this database.
+    """Container of all the ORM classes for this database.
 
     This should be set to a subclass of
     [ORM][trulens.core.database.orm.ORM] upon initialization.
     """
+
+    def __str__(self) -> str:
+        """Relatively concise identifier string for this instance."""
+
+        if self.engine is None:
+            return "SQLAlchemyDB(no engine)"
+
+        return f"SQLAlchemyDB({self.engine.url.database})"
+
+    # for DB's WithIdentString mixin
+    def _ident_str(self) -> str:
+        """Even more concise identifier string than __str__."""
+
+        if self.engine is None:
+            return "(no engine)"
+
+        if self.engine.url.database is None:
+            return f"{self.engine.url.drivername} db"
+
+        return self.engine.url.database
 
     def __init__(
         self,
