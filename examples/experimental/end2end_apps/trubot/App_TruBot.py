@@ -24,7 +24,7 @@ from trulens.providers.openai import OpenAI as fOpenAI
 check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
 # Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+model_name = "gpt-4o-mini"
 
 app_name = "TruBot"
 # app_name = "TruBot_langprompt"
@@ -64,7 +64,7 @@ f_context_relevance = (
 # @st.cache_data
 def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
-    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")  # 1536 dims
     docsearch = Pinecone.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )

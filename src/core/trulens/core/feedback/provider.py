@@ -54,7 +54,7 @@ class Provider(WithClassInfo, SerialModel):
 
         ```python
         from trulens.providers.openai import OpenAI
-        provider = OpenAI(model_engine="gpt-3.5-turbo")
+        provider = OpenAI(model_engine="gpt-4o-mini")
         provider.relevance(prompt, response)
         ```
     """

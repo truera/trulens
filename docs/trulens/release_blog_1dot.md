@@ -94,7 +94,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         retriever = vectorstore.as_retriever()
 
         prompt = hub.pull("rlm/rag-prompt")
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+        llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
 
         rag_chain = (
             {"context": retriever | format_docs, "question": RunnablePassthrough()}

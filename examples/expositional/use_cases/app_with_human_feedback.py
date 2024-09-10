@@ -31,8 +31,8 @@ dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)
 os.environ["OPENAI_API_KEY"] = "..."
 
-# Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+# Set up GPT-4o-mini model
+model_name = "gpt-4o-mini"
 session = TruSession()
 
 
@@ -70,11 +70,11 @@ if user_input:
     # Generate GPT-3 response
     prompt_input = user_input
     # add context manager to capture tokens and cost of the chain
-    gpt3_response, record = generate_response(prompt_input, tc)
+    response, record = generate_response(prompt_input, tc)
 
     # Display response
     st.write("Here's some help for you:")
-    st.write(gpt3_response["text"])
+    st.write(response["text"])
 
     # Allow user to rate the response with emojis
     col1, col2 = st.columns(2)
