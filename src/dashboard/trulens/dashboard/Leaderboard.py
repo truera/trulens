@@ -420,7 +420,6 @@ def _render_grid_tab(
     container = st.container()
     c1, c2, c3, c4, c5, c6 = container.columns(
         [1, 1, 1, 1, 1, 1],
-        gap="large",
         vertical_alignment="center",
     )
 
