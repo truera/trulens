@@ -24,12 +24,13 @@ from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
+from trulens.core.utils import text as text_utils
 from trulens.core.utils.python import Future  # code style exception
 
 logger = logging.getLogger(__name__)
 
 
-class DBConnector(ABC):
+class DBConnector(ABC, text_utils.WithIdentString):
     """Base class for DB connector implementations."""
 
     RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
@@ -38,6 +39,13 @@ class DBConnector(ABC):
     batch_record_queue = queue.Queue()
 
     batch_thread = None
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.db})"
+
+    # for WithIdentString:
+    def _ident_str(self) -> str:
+        return self.db._ident_str()
 
     @property
     @abstractmethod
