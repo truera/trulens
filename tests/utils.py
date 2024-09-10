@@ -459,6 +459,11 @@ def get_module_members(
         try:
             mod = importlib.import_module(mod)
         except Exception as e:
+            if mod == "trulens.core.database.migrations.env":
+                # This cannot be imported except by alembic. Skip this import
+                # error.
+                return None
+
             raise ValueError(f"Could not import module {mod}.") from e
 
     definitions: List[Member] = []
@@ -510,10 +515,8 @@ def get_module_members(
                 "__cached__",
                 "__builtins__",
                 "__warningregistry__",
+                "__path__",
             ]
-            and (
-                len(name) > 1 and not isinstance(val, TypeVar)
-            )  # skip generic type vars
         ):
             # Checking if name is in builtins filters out standard module
             # attributes like __package__. A few other standard attributes are
@@ -528,8 +531,15 @@ def get_module_members(
             group = friends
 
         else:
-            is_public = True
-            group = publics
+            if (
+                name not in ["TYPE_CHECKING"]  # skip this common value
+                and (len(name) > 1 or not isinstance(val, TypeVar))
+            ):  # skip generic type vars
+                is_public = True
+                group = publics
+            else:
+                is_public = False
+                group = privates
 
         group.append(member)
 
@@ -561,7 +571,7 @@ def get_module_members(
 
 
 def deref(obj_id: int) -> Any:
-    """Derefence an object from its id.
+    """Dereference an object from its id.
 
     Will crash the interpreter if the id is invalid.
     """

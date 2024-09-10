@@ -4,16 +4,14 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.0.1a1
+  __version__: 1.0.1
   highs: {}
   lows:
-    __path__: builtins.list
     __version__: builtins.str
 trulens.benchmark.benchmark_frameworks:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment:
   __class__: builtins.module
   highs: {}
@@ -38,8 +36,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.TruBenchmarkExpe
 trulens.benchmark.generate:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.benchmark.generate.generate_test_set:
   __class__: builtins.module
   highs: {}
@@ -63,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.0.1a2
+  __version__: 1.0.1
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -74,7 +71,6 @@ trulens.core:
     TruSession: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
     __version__: builtins.str
 trulens.core.app:
   __class__: builtins.module
@@ -119,6 +115,7 @@ trulens.core.app.App:
     awith_: builtins.function
     awith_record: builtins.function
     connector: trulens.core.database.connector.base.DBConnector
+    db: builtins.property
     dummy_record: builtins.function
     feedback_definitions: typing.Sequence[builtins.str]
     feedback_mode: trulens.core.schema.feedback.FeedbackMode
@@ -133,8 +130,7 @@ trulens.core.app.App:
     main_call: builtins.function
     main_input: builtins.function
     main_output: builtins.function
-    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
-      builtins.NoneType]
+    manage_pending_feedback_results_thread: typing.Optional[threading.Thread, builtins.NoneType]
     metadata: typing.Dict
     print_instrumented: builtins.function
     print_instrumented_components: builtins.function
@@ -147,6 +143,7 @@ trulens.core.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     tags: builtins.str
+    tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     wait_for_feedback_results: builtins.function
     with_: builtins.function
@@ -218,8 +215,7 @@ trulens.core.app.TrulensComponent:
 trulens.core.database:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.core.database.base:
   __class__: builtins.module
   highs: {}
@@ -233,6 +229,7 @@ trulens.core.database.base.DB:
   __bases__:
   - trulens.core.utils.serial.SerialModel
   - abc.ABC
+  - trulens.core.utils.text.WithIdentString
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     batch_insert_feedback: builtins.function
@@ -266,7 +263,6 @@ trulens.core.database.connector:
     DefaultDBConnector: abc.ABCMeta
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens.core.database.connector.base:
   __class__: builtins.module
   highs: {}
@@ -275,6 +271,7 @@ trulens.core.database.connector.base:
 trulens.core.database.connector.base.DBConnector:
   __bases__:
   - abc.ABC
+  - trulens.core.utils.text.WithIdentString
   __class__: abc.ABCMeta
   attributes:
     RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
@@ -321,8 +318,7 @@ trulens.core.database.exceptions.DatabaseVersionException:
 trulens.core.database.legacy:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.core.database.legacy.migration:
   __class__: builtins.module
   highs: {}
@@ -354,7 +350,6 @@ trulens.core.database.migrations:
   highs: {}
   lows:
     DbRevisions: pydantic._internal._model_construction.ModelMetaclass
-    __path__: builtins.list
     alembic_config: builtins.function
     downgrade_db: builtins.function
     get_current_db_revision: builtins.function
@@ -457,6 +452,20 @@ trulens.core.database.utils:
     copy_database: builtins.function
     is_legacy_sqlite: builtins.function
     is_memory_sqlite: builtins.function
+trulens.core.experimental:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Feature: enum.EnumType
+trulens.core.experimental.Feature:
+  __bases__:
+  - builtins.str
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    OTEL_TRACING: trulens.core.experimental.Feature
+    name: enum.property
+    value: enum.property
 trulens.core.feedback:
   __class__: builtins.module
   highs:
@@ -468,7 +477,6 @@ trulens.core.feedback:
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
@@ -517,6 +525,7 @@ trulens.core.feedback.endpoint.EndpointCallback:
     handle: builtins.function
     handle_chunk: builtins.function
     handle_classification: builtins.function
+    handle_embedding: builtins.function
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
 trulens.core.feedback.feedback:
@@ -527,7 +536,6 @@ trulens.core.feedback.feedback:
     InvalidSelector: builtins.type
     SkipEval: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
-    TYPE_CHECKING: builtins.bool
 trulens.core.feedback.feedback.Feedback:
   __bases__:
   - trulens.core.schema.feedback.FeedbackDefinition
@@ -617,8 +625,7 @@ trulens.core.feedback.provider.Provider:
 trulens.core.guardrails:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.core.guardrails.base:
   __class__: builtins.module
   highs: {}
@@ -635,7 +642,6 @@ trulens.core.instruments:
   lows:
     AddInstruments: builtins.type
     Instrument: builtins.type
-    TYPE_CHECKING: builtins.bool
     WithInstrumentCallbacks: builtins.type
     class_filter_disjunction: builtins.function
     class_filter_matches: builtins.function
@@ -673,6 +679,7 @@ trulens.core.instruments.WithInstrumentCallbacks:
     on_add_record: builtins.function
     on_method_instrumented: builtins.function
     on_new_record: builtins.function
+    wrap_lazy_values: builtins.function
 trulens.core.instruments.instrument:
   __bases__:
   - trulens.core.instruments.AddInstruments
@@ -689,14 +696,12 @@ trulens.core.schema:
     Select: builtins.type
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens.core.schema.app:
   __class__: builtins.module
   highs: {}
   lows:
     AppDefinition: pydantic._internal._model_construction.ModelMetaclass
     RecordIngestMode: enum.EnumType
-    TYPE_CHECKING: builtins.bool
 trulens.core.schema.app.AppDefinition:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
@@ -750,8 +755,12 @@ trulens.core.schema.base.Cost:
     cost: builtins.float
     cost_currency: builtins.str
     n_classes: builtins.int
+    n_classification_requests: builtins.int
+    n_completion_requests: builtins.int
     n_completion_tokens: builtins.int
     n_cortex_guardrails_tokens: builtins.int
+    n_embedding_requests: builtins.int
+    n_embeddings: builtins.int
     n_prompt_tokens: builtins.int
     n_requests: builtins.int
     n_stream_chunks: builtins.int
@@ -1000,6 +1009,7 @@ trulens.core.schema.select.Select:
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
+    context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
@@ -1018,15 +1028,23 @@ trulens.core.session:
     TruSession: pydantic._internal._model_construction.ModelMetaclass
 trulens.core.session.TruSession:
   __bases__:
+  - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
   - trulens.core.utils.python.SingletonPerName
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    App: builtins.function
+    Basic: builtins.function
+    Chain: builtins.function
+    Custom: builtins.function
     DEFERRED_NUM_RUNS: builtins.int
     GROUND_TRUTHS_BATCH_SIZE: builtins.int
+    Llama: builtins.function
     RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
     RETRY_FAILED_SECONDS: builtins.float
     RETRY_RUNNING_SECONDS: builtins.float
+    Rails: builtins.function
+    Virtual: builtins.function
     add_app: builtins.function
     add_feedback: builtins.function
     add_feedbacks: builtins.function
@@ -1035,6 +1053,7 @@ trulens.core.session.TruSession:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
+    find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
     get_ground_truth: builtins.function
@@ -1042,15 +1061,18 @@ trulens.core.session.TruSession:
     get_records_and_feedback: builtins.function
     migrate_database: builtins.function
     reset_database: builtins.function
+    run_dashboard: builtins.function
     run_evaluator: builtins.function
     run_feedback_functions: builtins.function
+    start_dashboard: builtins.function
     start_evaluator: builtins.function
+    stop_dashboard: builtins.function
     stop_evaluator: builtins.function
+    update_record: builtins.function
 trulens.core.utils:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.core.utils.asynchro:
   __class__: builtins.module
   highs: {}
@@ -1087,17 +1109,24 @@ trulens.core.utils.containers.BlockingSet:
   attributes:
     empty: builtins.function
     peek: builtins.function
+    shutdown: builtins.function
 trulens.core.utils.deprecation:
   __class__: builtins.module
   highs: {}
   lows:
     PACKAGES_MIGRATION_LINK: builtins.str
     class_moved: builtins.function
+    deprecated_property: builtins.function
+    deprecated_str: builtins.function
     function_moved: builtins.function
     has_deprecated: builtins.function
     has_moved: builtins.function
+    is_deprecated: builtins.function
+    method_renamed: builtins.function
+    module_getattr_override: builtins.function
     moved: builtins.function
     packages_dep_warn: builtins.function
+    staticmethod_renamed: builtins.function
 trulens.core.utils.imports:
   __class__: builtins.module
   highs: {}
@@ -1111,28 +1140,13 @@ trulens.core.utils.imports:
     MESSAGE_FRAGMENT_VERSION_MISMATCH_PIP: builtins.str
     MESSAGE_FRAGMENT_VERSION_MISMATCH_REQUIRED: builtins.str
     OptionalImports: builtins.type
-    REQUIREMENT_BERT_SCORE: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_EVALUATE: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_FEEDBACK: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_INSTRUMENT_LANGCHAIN: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_INSTRUMENT_LLAMA: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_INSTRUMENT_NEMO: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_NOTEBOOK: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_OPENAI: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_BEDROCK: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_CORTEX: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_HUGGINGFACE: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_LANGCHAIN: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_LITELLM: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_PROVIDER_OPENAI: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_SKLEARN: trulens.core.utils.imports.ImportErrorMessages
-    REQUIREMENT_SNOWFLAKE: trulens.core.utils.imports.ImportErrorMessages
     VersionConflict: builtins.type
     all_packages: builtins.dict
     check_imports: builtins.function
     format_import_errors: builtins.function
     get_package_version: builtins.function
     is_dummy: builtins.function
+    is_package_installed: builtins.function
     optional_packages: builtins.dict
     parse_version: builtins.function
     pin_spec: builtins.function
@@ -1169,7 +1183,6 @@ trulens.core.utils.json:
     CLASS_INFO: builtins.str
     ENCODERS_BY_TYPE: builtins.dict
     JSON_BASES: builtins.tuple
-    TYPE_CHECKING: builtins.bool
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
     json_default: builtins.function
@@ -1338,16 +1351,22 @@ trulens.core.utils.python:
     STACK: builtins.str
     SingletonInfo: builtins.type
     SingletonPerName: builtins.type
+    WRAP_LAZY: builtins.bool
+    awith_context: builtins.function
     callable_name: builtins.function
     caller_frame: builtins.function
     caller_frameinfo: builtins.function
+    caller_module: builtins.function
+    caller_module_name: builtins.function
     class_name: builtins.function
     code_line: builtins.function
+    external_caller_frame: builtins.function
     for_all_methods: builtins.function
     get_all_local_in_call_stack: builtins.function
     get_first_local_in_call_stack: builtins.function
     get_task_stack: builtins.function
     id_str: builtins.function
+    is_lazy: builtins.function
     is_really_coroutinefunction: builtins.function
     locals_except: builtins.function
     merge_stacks: builtins.function
@@ -1356,12 +1375,16 @@ trulens.core.utils.python:
     safe_hasattr: builtins.function
     safe_issubclass: builtins.function
     safe_signature: builtins.function
+    set_context_vars_or_values: builtins.function
     stack_with_tasks: builtins.function
     superstack: builtins.function
     task_factory_with_stack: builtins.function
-    tru_new_event_loop: builtins.function
+    with_context: builtins.function
+    wrap_async_generator: builtins.function
     wrap_awaitable: builtins.function
     wrap_generator: builtins.function
+    wrap_lazy: builtins.function
+    wrap_until_eager: builtins.function
 trulens.core.utils.python.EmptyType:
   __bases__:
   - builtins.type
@@ -1411,6 +1434,8 @@ trulens.core.utils.serial:
     StepItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
     all_objects: builtins.function
     all_queries: builtins.function
+    is_json: builtins.function
+    is_strict_json: builtins.function
     leaf_queries: builtins.function
     leafs: builtins.function
     matching_objects: builtins.function
@@ -1519,6 +1544,7 @@ trulens.core.utils.serial.Step:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     get: builtins.function
+    get_sole_item: builtins.function
     set: builtins.function
 trulens.core.utils.serial.StepItemOrAttribute:
   __bases__:
@@ -1537,10 +1563,17 @@ trulens.core.utils.text:
     UNICODE_SQUID: builtins.str
     UNICODE_STOP: builtins.str
     UNICODE_YIELD: builtins.str
+    WithIdentString: builtins.type
     format_quantity: builtins.function
     format_seconds: builtins.function
+    format_size: builtins.function
     make_retab: builtins.function
     retab: builtins.function
+trulens.core.utils.text.WithIdentString:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes: {}
 trulens.core.utils.threading:
   __class__: builtins.module
   highs: {}
@@ -1556,6 +1589,7 @@ trulens.core.utils.threading.TP:
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
+    shutdown: builtins.function
     submit: builtins.function
 trulens.core.utils.threading.Thread:
   __bases__:
@@ -1583,13 +1617,12 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.0.1a1
+  __version__: 1.0.1
   highs:
     run_dashboard: builtins.function
     stop_dashboard: builtins.function
   lows:
     __all__: builtins.list
-    __path__: builtins.list
     __version__: builtins.str
 trulens.dashboard.Leaderboard:
   __class__: builtins.module
@@ -1648,13 +1681,11 @@ trulens.dashboard.appui.SelectorValue:
 trulens.dashboard.components:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.dashboard.components.record_viewer:
   __class__: builtins.module
   highs: {}
   lows:
-    __path__: builtins.list
     build_dir: builtins.str
     parent_dir: builtins.str
     record_viewer: builtins.function
@@ -1662,8 +1693,10 @@ trulens.dashboard.display:
   __class__: builtins.module
   highs: {}
   lows:
+    expand_groundedness_df: builtins.function
     get_feedback_result: builtins.function
     get_icon: builtins.function
+    highlight: builtins.function
 trulens.dashboard.notebook_utils:
   __class__: builtins.module
   highs: {}
@@ -1703,25 +1736,7 @@ trulens.dashboard.streamlit_utils:
 trulens.dashboard.ux:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
-trulens.dashboard.ux.apps:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    ChatRecord: pydantic._internal._model_construction.ModelMetaclass
-trulens.dashboard.ux.apps.ChatRecord:
-  __bases__:
-  - pydantic.main.BaseModel
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    app: trulens.core.app.App
-    app_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
-      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    computer: typing.Optional[builtins.str, builtins.NoneType]
-    human: typing.Optional[builtins.str, builtins.NoneType]
-    record_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
-      builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
+  lows: {}
 trulens.dashboard.ux.components:
   __class__: builtins.module
   highs: {}
@@ -1743,7 +1758,7 @@ trulens.dashboard.ux.components:
     write_or_json: builtins.function
 trulens.dashboard.ux.page_config:
   __class__: builtins.module
-  __version__: 1.0.1a1
+  __version__: 1.0.1
   highs: {}
   lows:
     __version__: builtins.str
@@ -1770,6 +1785,7 @@ trulens.dashboard.ux.styles.CATEGORY:
   attributes:
     ALL: builtins.list
     Category: pydantic._internal._model_construction.ModelMetaclass
+    DISTANCE: trulens.dashboard.ux.styles.CATEGORY.Category
     FAIL: collections.defaultdict
     FeedbackDirection: builtins.type
     PASS: collections.defaultdict
@@ -1796,7 +1812,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.0.1a1
+  __version__: 1.0.1
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -1804,13 +1820,11 @@ trulens.feedback:
     LLMProvider: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
     __version__: builtins.str
 trulens.feedback.dummy:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.feedback.dummy.endpoint:
   __class__: builtins.module
   highs: {}
@@ -1854,11 +1868,18 @@ trulens.feedback.dummy.endpoint.DummyEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    alloc: builtins.property
     api: trulens.feedback.dummy.endpoint.DummyAPI
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
+    delay: builtins.property
+    error_prob: builtins.property
+    freeze_prob: builtins.property
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
+    loading_prob: builtins.property
+    loading_time: builtins.property
     name: builtins.str
+    overloaded_prob: builtins.property
     pace: trulens.core.utils.pace.Pace
     post_headers: typing.Dict[builtins.str, builtins.str]
     retries: builtins.int
@@ -1898,7 +1919,6 @@ trulens.feedback.embeddings:
   highs: {}
   lows:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
-    TYPE_CHECKING: builtins.bool
 trulens.feedback.embeddings.Embeddings:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
@@ -1921,6 +1941,7 @@ trulens.feedback.generated:
     ParseError: builtins.type
     re_0_10_rating: builtins.function
     re_configured_rating: builtins.function
+    validate_rating: builtins.function
 trulens.feedback.generated.ParseError:
   __bases__:
   - builtins.Exception
@@ -1969,6 +1990,7 @@ trulens.feedback.groundtruth.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    mae: builtins.property
     provider: trulens.feedback.llm_provider.LLMProvider
     rouge: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2014,6 +2036,8 @@ trulens.feedback.llm_provider.LLMProvider:
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
     model_engine: builtins.str
+    qs_relevance: builtins.function
+    qs_relevance_with_cot_reasons: builtins.function
     relevance: builtins.function
     relevance_with_cot_reasons: builtins.function
     sentiment: builtins.function
@@ -2029,8 +2053,8 @@ trulens.feedback.prompts:
     AGREEMENT_SYSTEM: builtins.str
     ANSWER_RELEVANCE_SYSTEM: builtins.str
     ANSWER_RELEVANCE_USER: builtins.str
-    COMPREHENSIVENESS_USER_PROMPT: builtins.str
     COMPREHENSIVENESS_SYSTEM_PROMPT: builtins.str
+    COMPREHENSIVENESS_USER_PROMPT: builtins.str
     CONTEXT_RELEVANCE_SYSTEM: builtins.str
     CONTEXT_RELEVANCE_USER: builtins.str
     CORRECT_SYSTEM: builtins.str
@@ -2056,6 +2080,7 @@ trulens.feedback.prompts:
     LLM_ANSWERABILITY_SYSTEM: builtins.str
     LLM_ANSWERABILITY_USER: builtins.str
     LLM_GROUNDEDNESS_FULL_PROMPT: builtins.str
+    LLM_GROUNDEDNESS_SENTENCES_SPLITTER: builtins.str
     LLM_GROUNDEDNESS_SYSTEM: builtins.str
     LLM_GROUNDEDNESS_USER: builtins.str
     LLM_TRIVIAL_SYSTEM: builtins.str
@@ -2070,8 +2095,7 @@ trulens.feedback.prompts:
 trulens.feedback.v2:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.feedback.v2.feedback:
   __class__: builtins.module
   highs: {}
@@ -2334,6 +2358,7 @@ trulens.feedback.v2.feedback.Groundedness:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    sentences_splitter_prompt: builtins.str
     system_prompt: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Harmfulness:
@@ -2536,8 +2561,7 @@ trulens.feedback.v2.feedback.WithPrompt:
 trulens.feedback.v2.provider:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens.feedback.v2.provider.base:
   __class__: builtins.module
   highs: {}

@@ -195,6 +195,7 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
+import pydantic
 from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
@@ -331,7 +332,9 @@ class TruCustomApp(App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     app: Any
 

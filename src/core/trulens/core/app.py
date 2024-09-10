@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
-from contextlib import asynccontextmanager
 import contextvars
 import datetime
 import inspect
@@ -485,10 +484,10 @@ class App(
         solely by a string-to-string method.
     """
 
-    model_config: ClassVar[dict] = {
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         # Tru, DB, most of the types on the excluded fields.
-        "arbitrary_types_allowed": True
-    }
+        arbitrary_types_allowed=True
+    )
 
     feedbacks: List[mod_feedback.Feedback] = pydantic.Field(
         exclude=True, default_factory=list
@@ -572,9 +571,9 @@ class App(
     before it is produced.
     """
 
-    context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
-        pydantic.Field(default_factory=dict, exclude=True)
-    )  # pydantic.PrivateAttr({})
+    _context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
+        pydantic.PrivateAttr(default_factory=dict)
+    )
 
     def __init__(
         self,
@@ -1196,17 +1195,6 @@ class App(
 
         return
 
-    @asynccontextmanager
-    async def record(self):
-        ctx = RecordingContext(app=self)
-
-        token = self.recording_contexts.set(ctx)
-        ctx.token = token
-
-        yield ctx
-
-        self.recording_contexts.reset(token)
-
     def _set_context_vars(self):
         # HACK: Setting/resetting all context vars used in trulens around the
         # app context manangers due to bugs in trying to set/reset them where
@@ -1222,11 +1210,11 @@ class App(
         ]
 
         for var in CONTEXT_VARS:
-            self.context_vars_tokens[var] = var.set(var.get())
+            self._context_vars_tokens[var] = var.set(var.get())
 
     def _reset_context_vars(self):
         # HACK: See _set_context_vars.
-        for var, token in self.context_vars_tokens.items():
+        for var, token in self._context_vars_tokens.items():
             var.reset(token)
 
     # For use as a context manager.
@@ -1631,6 +1619,14 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
+
+        try:
+            # Some odd interaction with pydantic.PrivateAttr causes this handler
+            # to be called for private attributes even though they exist. So we
+            # double check here with pydantic's getattr.
+            return pydantic.BaseModel.__getattr__(self, __name)
+        except AttributeError:
+            pass
 
         app = self.app
 
