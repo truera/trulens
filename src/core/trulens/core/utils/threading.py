@@ -16,6 +16,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils.python import Future
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import T
+from trulens.core.utils.python import WeakWrapper
 from trulens.core.utils.python import code_line
 from trulens.core.utils.python import safe_hasattr
 
@@ -46,7 +47,7 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
-        present_stack = inspect.stack()
+        present_stack = WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
 
         fThread.__init__(
@@ -76,7 +77,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         super().__init__(*args, **kwargs)
 
     def submit(self, fn, /, *args, **kwargs):
-        present_stack = inspect.stack()
+        present_stack = WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
 
         return super().submit(

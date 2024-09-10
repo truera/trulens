@@ -34,6 +34,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import weakref
 
 T = TypeVar("T")
 
@@ -396,7 +397,7 @@ def superstack() -> Iterator[FrameType]:
             assert (
                 "pre_start_stack" in locs
             ), "Pre thread start stack expected but not found."
-            for fi in locs["pre_start_stack"]:
+            for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 
             continue
@@ -567,6 +568,55 @@ def stack_with_tasks() -> Sequence[FrameType]:
         return ret
 
 
+class _Wrap(Generic[T]):
+    """Wrap an object.
+
+    See WeakWrapper for explanation.
+    """
+
+    def __init__(self, obj: T):
+        self.obj: T = obj
+
+    def get(self) -> T:
+        return self.obj
+
+
+@dataclasses.dataclass
+class WeakWrapper(Generic[T]):
+    """Wrap an object with a weak reference.
+
+    This is to be able to use weakref.ref on objects like lists which are
+    otherwise not weakly referencable. The goal of this class is to generalize
+    weakref.ref to work with any object."""
+
+    obj: weakref.ReferenceType[Union[_Wrap[T], T]]
+
+    def __init__(self, obj: Union[weakref.ReferenceType[T], WeakWrapper[T], T]):
+        if isinstance(obj, weakref.ReferenceType):
+            self.obj = obj
+
+        else:
+            if isinstance(obj, WeakWrapper):
+                obj = obj.get()
+
+            try:
+                # Try to make reference to obj directly.
+                self.obj = weakref.ref(obj)
+
+            except Exception:
+                # If its a list or other non-weakly referencable object, wrap it.
+                self.obj = weakref.ref(_Wrap(obj))
+
+    def get(self) -> T:
+        """Get the wrapped object."""
+
+        temp = self.obj()  # undo weakref.ref
+        if isinstance(temp, _Wrap):
+            return temp.get()  # undo _Wrap if needed
+        else:
+            return temp
+
+
 def _future_target_wrapper(stack, func, *args, **kwargs):
     """Wrapper for a function that is started by threads.
 
@@ -577,7 +627,7 @@ def _future_target_wrapper(stack, func, *args, **kwargs):
     """
 
     # Keep this for looking up via get_first_local_in_call_stack .
-    pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
+    pre_start_stack = WeakWrapper(stack)  # noqa: F841 # pylint: disable=W0612
 
     # with with_context(context):
     return func(*args, **kwargs)
@@ -637,7 +687,7 @@ def get_all_local_in_call_stack(
             assert (
                 "pre_start_stack" in locs
             ), "Pre thread start stack expected but not found."
-            for fi in locs["pre_start_stack"]:
+            for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 
             continue

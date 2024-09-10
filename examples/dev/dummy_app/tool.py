@@ -3,6 +3,7 @@ from typing import Callable, List, Optional
 import weakref
 
 from trulens.apps.custom import instrument
+from trulens.core.utils.python import WeakWrapper
 from trulens.core.utils.python import superstack
 
 from examples.dev.dummy_app.dummy import Dummy
@@ -61,17 +62,10 @@ class DummyTool(Dummy):
         return self.imp(data)
 
 
-class WeakListWrapper:
-    """Wrap a list in an object which can be used in weakref.ref."""
-
-    def __init__(self, list):
-        self.list = list
-
-
 class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invoked."""
 
-    last_stacks: List[weakref.ReferenceType[WeakListWrapper]] = []
+    last_stacks: List[weakref.ReferenceType[WeakWrapper]] = []
     """The stacks seen during save_stack invocations.
 
     You can use this to get the readout even if this tool is used deep in an app
@@ -93,7 +87,7 @@ class DummyStackTool(DummyTool):
         current_stack = list(superstack())
         DummyStackTool.last_stacks.append(
             # Has to be a weakref to prevent GC test failures.
-            weakref.ref(WeakListWrapper(current_stack))
+            weakref.ref(WeakWrapper(current_stack))
         )
 
         ret = "<table>\n"
