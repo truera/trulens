@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, List, Optional
+from typing import Callable, List, Optional
 import weakref
 
 from trulens.apps.custom import instrument
@@ -71,7 +71,7 @@ class WeakListWrapper:
 class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invoked."""
 
-    last_stacks: List[Any] = []  # Any = stack
+    last_stacks: List[weakref.ReferenceType[WeakListWrapper]] = []
     """The stacks seen during save_stack invocations.
 
     You can use this to get the readout even if this tool is used deep in an app
