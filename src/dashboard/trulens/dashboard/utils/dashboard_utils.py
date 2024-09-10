@@ -64,7 +64,7 @@ def read_query_params_into_session_state(
         prefix_page_name = True
         if param == ST_APP_NAME:
             prefix_page_name = False
-        if param.startswith("filter."):
+        elif param.startswith("filter."):
             prefix_page_name = False
             if param.endswith(".multiselect"):
                 value = value.split(",")
@@ -174,38 +174,38 @@ def update_app_metadata(app_id: str, metadata: dict):
 
 
 def _handle_app_selection(app_names: List[str]):
-    value = st.session_state.get(ST_APP_NAME, None)
+    value = st.session_state.get(f"{ST_APP_NAME}_selector", None)
     if value and value in app_names:
         st.session_state[ST_APP_NAME] = value
-        st.query_params[ST_APP_ID] = value
 
 
 def render_sidebar():
     apps = get_apps()
-    app_name = None
+    app_name = st.session_state.get(ST_APP_NAME, None)
 
     if apps:
-        app_names = sorted(list(set(app["app_name"] for app in apps)))
-        app_name = st.session_state.get(ST_APP_NAME, None)
+        app_names = sorted(
+            list(set(app["app_name"] for app in apps)), reverse=True
+        )
 
         if len(app_names) > 1:
             if not app_name or app_name not in app_names:
                 app_idx = 0
             else:
                 app_idx = app_names.index(app_name)
-            app_name = st.sidebar.selectbox(
+            if app_name := st.sidebar.selectbox(
                 "Select an app",
                 index=app_idx,
+                key=f"{ST_APP_NAME}_selector",
                 options=app_names,
                 on_change=_handle_app_selection,
                 args=(app_names,),
                 disabled=len(app_names) == 1,
-            )
+            ):
+                st.query_params[ST_APP_NAME] = app_name
+
         else:
             app_name = app_names[0]
-
-        # if app_name and app_name != st.session_state.get(ST_APP_NAME):
-        #     st.session_state[ST_APP_NAME] = app_name
 
         if st.sidebar.button("↻ Refresh Data", use_container_width=True):
             st.cache_data.clear()

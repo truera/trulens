@@ -10,8 +10,6 @@ from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
-from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
-from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
 from trulens.dashboard.utils.dashboard_utils import (
@@ -28,12 +26,9 @@ MIN_COMPARATORS = 2
 DEFAULT_COMPARATORS = MIN_COMPARATORS
 
 
-def init_page_state(app_name: str):
+def init_page_state():
     if st.session_state.get(f"{page_name}.initialized", False):
         return
-
-    if app_name:
-        add_query_param(ST_APP_NAME, app_name)
 
     # Read app_ids from query args if passed in
     read_query_params_into_session_state(
@@ -638,7 +633,7 @@ def render_app_comparison(app_name: str):
 
 if __name__ == "__main__":
     set_page_config(page_title=page_name)
+    init_page_state()
     app_name = render_sidebar()
     if app_name:
-        init_page_state(app_name)
         render_app_comparison(app_name)

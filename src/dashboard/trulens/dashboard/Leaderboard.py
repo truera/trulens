@@ -23,8 +23,6 @@ from trulens.dashboard.constants import RECORD_LIMIT
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as records_page_name
 from trulens.dashboard.pages.Compare import MAX_COMPARATORS
 from trulens.dashboard.pages.Compare import MIN_COMPARATORS
-from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
-from trulens.dashboard.utils.dashboard_utils import add_query_param
 from trulens.dashboard.utils.dashboard_utils import get_app_versions
 from trulens.dashboard.utils.dashboard_utils import get_apps
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -52,12 +50,9 @@ APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
 
 
-def init_page_state(app_name: str):
+def init_page_state():
     if st.session_state.get(f"{page_name}.initialized", False):
         return
-
-    if app_name:
-        add_query_param(ST_APP_NAME, app_name)
 
     read_query_params_into_session_state(
         page_name=page_name,
@@ -825,7 +820,7 @@ def render_leaderboard(app_name: str):
 
 if __name__ == "__main__":
     set_page_config(page_title=page_name)
+    init_page_state()
     app_name = render_sidebar()
     if app_name:
-        init_page_state(app_name)
         render_leaderboard(app_name)
