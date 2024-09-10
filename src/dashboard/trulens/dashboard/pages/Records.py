@@ -28,6 +28,7 @@ from trulens.dashboard.utils.records_utils import _render_feedback_pills
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
+from trulens.dashboard.ux.styles import radio_button_css
 
 
 def init_page_state(app_name: str):
@@ -109,7 +110,7 @@ def _render_record_metrics(
 
 @st.fragment
 def _render_trace(
-    selected_rows: pd.DataFrame,
+    selected_row: pd.Series,
     records_df: pd.DataFrame,
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
@@ -118,7 +119,6 @@ def _render_trace(
     st.divider()
 
     # Breadcrumbs
-    selected_row = selected_rows.iloc[0]
     st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
     st.markdown(f"#### {selected_row['record_id']}")
 
@@ -354,7 +354,10 @@ def _build_grid_options(
                 col,
                 hide=True,
             )
-    gb.configure_grid_options(rowHeight=40)
+    gb.configure_grid_options(
+        rowHeight=40,
+        suppressContextMenu=True,
+    )
     gb.configure_selection(
         selection_mode="single",
         use_checkbox=True,
@@ -374,7 +377,7 @@ def _render_grid(
 
     return AgGrid(
         df,
-        key="records_data",
+        # key="records_data",
         height=height,
         gridOptions=_build_grid_options(
             df=df,
@@ -383,14 +386,13 @@ def _render_grid(
             version_metadata_col_names=version_metadata_col_names,
         ),
         update_on=["selectionChanged"],
-        custom_css=aggrid_css,
+        custom_css={**aggrid_css, **radio_button_css},
         columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
         data_return_mode=DataReturnMode.FILTERED,
         allow_unsafe_jscode=True,
     )
 
 
-@st.fragment
 def _render_grid_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -404,14 +406,25 @@ def _render_grid_tab(
         version_metadata_col_names=version_metadata_col_names,
     )
     selected_rows = grid_data.selected_rows
-    if selected_rows is None or len(selected_rows) == 0:
+    selected_records = pd.DataFrame(selected_rows)
+    if selected_records.empty:
+        selected_record_id = st.session_state.get(
+            f"{page_name}.selected_record", None
+        )
+        selected_records = df[df["record_id"] == selected_record_id]
+
+    if selected_records.empty:
         st.info(
             "Click a record's checkbox to view details.",
             icon="ℹ️",
         )
         return
 
-    selected_record = pd.DataFrame(selected_rows)
+    selected_record = selected_records.iloc[0]
+    st.session_state[f"{page_name}.selected_record"] = selected_record[
+        "record_id"
+    ]
+    st.query_params["selected_record"] = selected_record["record_id"]
     _render_trace(selected_record, df, feedback_col_names, feedback_directions)
 
 

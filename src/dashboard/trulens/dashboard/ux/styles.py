@@ -173,6 +173,14 @@ app_rules_styles = {
     },
 }
 
+radio_button_css = {
+    ".ag-checkbox-input-wrapper:after": {"content": '"\\f127"'},
+    ".ag-checkbox-input-wrapper.ag-checked:after": {"content": '"\\f128"'},
+    ".ag-checkbox-input-wrapper:active, .ag-checkbox-input-wrapper:focus-within": {
+        "border-radius": "100%"
+    },
+}
+
 aggrid_css = {
     **app_rules_styles,
     **cell_rules_styles,
