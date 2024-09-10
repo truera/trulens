@@ -23,6 +23,7 @@ from typing import (
     TypeVar,
 )
 
+import pydantic
 from pydantic import Field
 import requests
 from trulens.core.schema.base import Cost
@@ -104,7 +105,9 @@ class EndpointCallback(SerialModel):
 class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     """API usage, pacing, and utilities for API endpoints."""
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     @dataclass
     class EndpointSetup:

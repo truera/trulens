@@ -52,8 +52,13 @@ class Thread(fThread):
             self,
             name=name,
             group=group,
-            target=python_utils._future_target_wrapper,
-            args=(present_stack, present_context, target, *args),
+            target=present_context.run,
+            args=(
+                python_utils._future_target_wrapper,
+                present_stack,
+                target,
+                *args,
+            ),
             kwargs=kwargs,
             daemon=daemon,
         )
@@ -74,9 +79,9 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         present_context = contextvars.copy_context()
 
         return super().submit(
+            present_context.run,
             python_utils._future_target_wrapper,
             present_stack,
-            present_context,
             fn,
             *args,
             **kwargs,
@@ -158,6 +163,7 @@ class TP(SingletonPerName):  # "thread processing"
                 threading.current_thread(),
                 e,
             )
+
             raise e
 
     def submit(
@@ -208,3 +214,9 @@ class TP(SingletonPerName):  # "thread processing"
         return self.thread_pool_debug_tasks.submit(
             self._run_with_timeout, func, *args, timeout=timeout, **kwargs
         )
+
+    def shutdown(self):
+        """Shutdown the pools."""
+
+        self.thread_pool.shutdown()
+        self.thread_pool_debug_tasks.shutdown()

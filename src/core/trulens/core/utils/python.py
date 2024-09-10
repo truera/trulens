@@ -563,19 +563,20 @@ def stack_with_tasks() -> Sequence[FrameType]:
         return ret
 
 
-def _future_target_wrapper(stack, context, func, *args, **kwargs):
-    """
-    Wrapper for a function that is started by threads. This is needed to
-    record the call stack prior to thread creation as in python threads do
-    not inherit the stack. Our instrumentation, however, relies on walking
-    the stack and need to do this to the frames prior to thread starts.
+def _future_target_wrapper(stack, func, *args, **kwargs):
+    """Wrapper for a function that is started by threads.
+
+    This is needed to record the call stack prior to thread creation as in
+    python threads do not inherit the stack. Our instrumentation, however,
+    relies on walking the stack and need to do this to the frames prior to
+    thread starts.
     """
 
     # Keep this for looking up via get_first_local_in_call_stack .
     pre_start_stack = stack  # noqa: F841 # pylint: disable=W0612
 
-    with with_context(context):
-        return func(*args, **kwargs)
+    # with with_context(context):
+    return func(*args, **kwargs)
 
 
 def get_all_local_in_call_stack(
