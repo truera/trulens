@@ -48,3 +48,43 @@ will occur at the introduction of the warning period.
     - Removed expected 2024-12-01 Installation of the latest version of
   	`trulens_eval` will be an error itself with a message that `trulens_eval` is
     no longer maintained.
+
+## Experimental Features
+
+Major new features are introduced to _TruLens_ first in the form of experimental
+previews. Such features are indicated by the prefix `experimental_`. For
+example, the OTEL exporter for `TruSession` is specified with the
+`experimental_otel_exporter` parameter. Some features require additionally
+setting a flag before they are enabled. This is controlled by the
+`TruSession.experimental_{enable,disable}_feature` method:
+
+```python
+from trulens.core.session import TruSession
+session = TruSession()
+session.experimental_enable_feature("otel_tracing")
+
+# or
+from trulens.core.experimental import Feature
+session.experimental_disable_feature(Feature.OTEL_TRACING)
+```
+
+If an experimental parameter like `experimental_otel_exporter` is used, some
+experimental flags may be set. For the OTEL exporter, the `OTEL_EXPORTER` flag
+is required and will be set.
+
+Some features cannot be changed after some stages in the typical _TruLens_
+use-cases. OTEL tracing, for example, cannot be disabled once an app has been
+instrumented. An error will result in an attempt to change the feature after it
+has been "locked" by irreversable steps like instrumentation.
+
+### Experimental Features Pipeline
+
+While in development, the experimental features may change in significant ways.
+Eventually experimental features get adopted or removed.
+
+For removal, experimental features do not have a deprecation period and will
+produce "deprecated" errors instead of warnings.
+
+For adoption, the feature will be integrated somewhere in the API without the
+`experimental_` prefix and use of that prefix/flag will instead raise an error
+indicating where in the stable API that feature relocated.

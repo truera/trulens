@@ -30,16 +30,29 @@ class DefaultDBConnector(DBConnector):
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
     ):
-        """Create a default DB connector backed by a database. To connect to an existing database, one of `database`, `database_url`, or `database_engine` must be provided.
+        """Create a default DB connector backed by a database.
+
+        To connect to an existing database, one of `database`, `database_url`,
+        or `database_engine` must be provided.
 
         Args:
-            database: (Optional[trulens.core.database.base.DB]): The database object to use.
-            database_url (Optional[str]): The database URL to connect to. To connect to a local file-based SQLite database, use `sqlite:///path/to/database.db`.
-            database_engine (Optional[sa.Engine]): The SQLAlchemy engine object to use.
-            database_redact_keys (bool): Whether to redact keys in the database.
-            database_prefix (Optional[str]): The database prefix to use to separate tables in the database.
-            database_args (Optional[Dict[str, Any]]): Additional arguments to pass to the database.
-            database_check_revision (bool): Whether to compare the database revision with the expected TruLens revision.
+            database: The database object to use.
+
+            database_url: The database URL to connect to. To connect to a local
+                file-based SQLite database, use `sqlite:///path/to/database.db`.
+
+            database_engine: The SQLAlchemy engine object to use.
+
+            database_redact_keys: Whether to redact keys in the database.
+
+            database_prefix: The database prefix to use to separate tables in
+                the database.
+
+            database_args: Additional arguments to pass to the database.
+
+            database_check_revision: Whether to compare the database revision
+                with the expected TruLens revision.
+
         """
 
         self._db: Union[DB, OpaqueWrapper]
