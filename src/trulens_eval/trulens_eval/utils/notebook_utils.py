@@ -11,5 +11,5 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.dashboard.notebook_utils import is_notebook
-from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
+from trulens.dashboard.utils.notebook_utils import is_notebook
+from trulens.dashboard.utils.notebook_utils import setup_widget_stdout_stderr

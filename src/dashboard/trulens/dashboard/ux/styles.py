@@ -1,4 +1,3 @@
-from collections import defaultdict
 from enum import Enum
 import operator
 from typing import Callable, List, NamedTuple, Optional
@@ -13,25 +12,27 @@ class ResultCategoryType(Enum):
     FAIL = 2
 
 
+class Category(SerialModel):
+    name: str
+    adjective: str
+    threshold: float
+    color: str
+    icon: str
+    direction: Optional[str] = None
+    compare: Optional[Callable[[float, float], bool]] = None
+
+
+class FeedbackDirection(NamedTuple):
+    name: str
+    ascending: bool
+    thresholds: List[float]
+
+
 class CATEGORY:
     """
     Feedback result categories for displaying purposes: pass, warning, fail, or
     unknown.
     """
-
-    class Category(SerialModel):
-        name: str
-        adjective: str
-        threshold: float
-        color: str
-        icon: str
-        direction: Optional[str] = None
-        compare: Optional[Callable[[float, float], bool]] = None
-
-    class FeedbackDirection(NamedTuple):
-        name: str
-        ascending: bool
-        thresholds: List[float]
 
     # support both directions by default
     # TODO: make this configurable (per feedback definition & per app?)
@@ -41,14 +42,14 @@ class CATEGORY:
     ]
 
     styling = {
-        "PASS": dict(color="#aaffaa44", icon="✅"),
-        "WARNING": dict(color="#ffffaa44", icon="⚠️"),
-        "FAIL": dict(color="#ffaaaa44", icon="🛑"),
+        "PASS": dict(color="#aaffaa70", icon="✅"),
+        "WARNING": dict(color="#ffffaa70", icon="⚠️"),
+        "FAIL": dict(color="#ffaaaa70", icon="🛑"),
     }
 
-    PASS: defaultdict = defaultdict(dict)
-    FAIL: defaultdict = defaultdict(dict)
-    WARNING: defaultdict = defaultdict(dict)
+    PASS: dict[str, Category] = {}
+    FAIL: dict[str, Category] = {}
+    WARNING: dict[str, Category] = {}
 
     for direction in directions:
         a = sorted(
@@ -129,6 +130,82 @@ stmetricdelta_hidearrow = """
     """
 
 valid_directions = ["HIGHER_IS_BETTER", "LOWER_IS_BETTER"]
+
+cell_rules_styles = {
+    f".cat-{cat_name.lower()}": {"background-color": styles["color"]}
+    for cat_name, styles in CATEGORY.styling.items()
+}
+cell_rules_styles[".cat-unknown"] = {"background-color": "unset"}
+
+
+cell_rules = {}
+for direction in valid_directions:
+    categories: List[Category] = [
+        CATEGORY.FAIL[direction],
+        CATEGORY.WARNING[direction],
+        CATEGORY.PASS[direction],
+    ]
+    thresholds = [cat.threshold for cat in categories]
+    direction_rules = {}
+    direction_rules[f"cat-{CATEGORY.UNKNOWN.name.lower()}"] = "x == null"
+    for i, cat in enumerate(categories):
+        op = ">=" if cat.compare is operator.ge else "<"
+        upper_op = "<" if cat.compare is operator.ge else ">="
+
+        css_class = f"cat-{cat.name}"
+        if i < len(categories) - 1:
+            direction_rules[css_class] = (
+                f"x {op} {cat.threshold} && x {upper_op} {categories[i + 1].threshold}"
+            )
+        else:
+            direction_rules[css_class] = f"x {op} {cat.threshold}"
+    cell_rules[direction] = direction_rules
+
+cell_rules_styles[f".cat-{CATEGORY.UNKNOWN.name.lower()}"] = {
+    "background-color": CATEGORY.UNKNOWN.color
+}
+
+app_rules_styles = {
+    ".app-external": {},  # no styling currently for external apps
+    ".app-pinned": {
+        "background-color": "#5f9fed26",
+        "font-weight": "bold",
+    },
+}
+
+diff_cell_rules = {
+    "diff-xs": "x < .2",
+    "diff-s": "x >= .2 && x < .4",
+    "diff-m": "x >= .4 && x < .6",
+    "diff-l": "x >= .6 && x < .8",
+    "diff-xl": "x >= .8",
+}
+
+diff_cell_css = {}
+for i, key in enumerate(diff_cell_rules):
+    i *= 0.2
+    transparency = hex(int(i * 255))[2:]
+    if len(transparency) == 1:
+        transparency = "0" + transparency
+    diff_cell_css[f".{key}"] = {"background-color": f"#ffaaaa{transparency}"}
+
+
+radio_button_css = {
+    ".ag-checkbox-input-wrapper:after": {"content": '"\\f127"'},
+    ".ag-checkbox-input-wrapper.ag-checked:after": {"content": '"\\f128"'},
+    ".ag-checkbox-input-wrapper:active, .ag-checkbox-input-wrapper:focus-within": {
+        "border-radius": "100%"
+    },
+}
+
+aggrid_css = {
+    **app_rules_styles,
+    **cell_rules_styles,
+    ".ag-row .ag-cell": {
+        "display": "flex",
+        "align-items": "center",
+    },
+}
 
 cellstyle_jscode = {
     k: """function(params) {

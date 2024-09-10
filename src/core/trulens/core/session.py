@@ -192,7 +192,7 @@ class TruSession(
             # any option was specified (not None) as it will be ignored.
             if connector is not None:
                 logger.warning(
-                    "Tru was already initialized. Cannot change database configuration after initialization."
+                    "TruSession was already initialized. Cannot change database configuration after initialization."
                 )
                 self.warning()
             return
