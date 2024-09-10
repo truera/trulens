@@ -36,23 +36,27 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     _dev: Optional[Path] = None,
+    _watch_changes: bool = False,
 ) -> Process:
     """Run a streamlit dashboard to view logged results and apps.
 
     Args:
-        port: Port number to pass to streamlit through `server.port`.
+        port (Optional[int]): Port number to pass to streamlit through `server.port`.
 
-        address: Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
+        address (Optional[str]): Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
 
-        force: Stop existing dashboard(s) first. Defaults to `False`. If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder.
+        force (bool): Stop existing dashboard(s) first. Defaults to `False`.
+
+        _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
+
+        _watch_changes (bool): If `True`, the dashboard will watch for changes in the code and update the dashboard accordingly. Defaults to `False`.
 
     Returns:
         The [Process][multiprocessing.Process] executing the streamlit
         dashboard.
 
     Raises:
-        RuntimeError: Dashboard is already running. Can be avoided if `force`
-            is set.
+        RuntimeError: Dashboard is already running. Can be avoided if `force` is set.
 
     """
     session = session or TruSession()
@@ -66,40 +70,6 @@ def run_dashboard(
         stop_dashboard(force=force)
 
     print("Starting dashboard ...")
-
-    # Create .streamlit directory if it doesn't exist
-    streamlit_dir = os.path.join(os.getcwd(), ".streamlit")
-    os.makedirs(streamlit_dir, exist_ok=True)
-
-    # Create config.toml file path
-    config_path = os.path.join(streamlit_dir, "config.toml")
-
-    # Check if the file already exists
-    if not os.path.exists(config_path):
-        with open(config_path, "w") as f:
-            f.write("[theme]\n")
-            f.write('base="dark"\n')
-            f.write('primaryColor="#E0735C"\n')
-            f.write('font="sans serif"\n')
-            f.write("\n[client]\n")
-            f.write('toolbarMode = "viewer"\n')
-            f.write("\n[server]\n")
-            f.write('fileWatcherType="none"\n')
-            f.write("\n[global]\n")
-            f.write('disableWidgetStateDuplicationWarning="true"\n')
-    else:
-        print("Config file already exists. Skipping writing process.")
-
-    # Create credentials.toml file path
-    cred_path = os.path.join(streamlit_dir, "credentials.toml")
-
-    # Check if the file already exists
-    if not os.path.exists(cred_path):
-        with open(cred_path, "w") as f:
-            f.write("[general]\n")
-            f.write('email=""\n')
-    else:
-        print("Credentials file already exists. Skipping writing process.")
 
     # run leaderboard with subprocess
     leaderboard_path = static_resource("dashboard", "Leaderboard.py")
@@ -116,11 +86,27 @@ def run_dashboard(
     if port is None:
         port = find_unused_port()
 
-    args = ["streamlit", "run", "--server.headless=True"]
-    if _dev:
-        args.append("--server.fileWatcherType=auto")
-        args.append("--client.toolbarMode=auto")
-        args.append("--global.disableWidgetStateDuplicationWarning=false")
+    args = [
+        "streamlit",
+        "run",
+        "--server.headless=True",
+        "--theme.base=dark",
+        "--theme.primaryColor=#E0735C",
+        "--theme.font=sans serif",
+    ]
+    if _watch_changes:
+        args.extend([
+            "--server.fileWatcherType=auto",
+            "--client.toolbarMode=auto",
+            "--global.disableWidgetStateDuplicationWarning=false",
+        ])
+    else:
+        args.extend([
+            "--server.fileWatcherType=none",
+            "--client.toolbarMode=viewer",
+            "--global.disableWidgetStateDuplicationWarning=true",
+        ])
+
     if port is not None:
         args.append(f"--server.port={port}")
     if address is not None:
