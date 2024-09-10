@@ -278,7 +278,7 @@ def _render_advanced_filters(
             kwargs={"remove_all": False},
         )
         c4.form_submit_button(
-            "Clear All",
+            "Remove All",
             use_container_width=True,
             on_click=handle_clear_clauses,
             kwargs={"remove_all": True},
@@ -311,9 +311,9 @@ def _render_advanced_filters(
             st.warning("Got 0 records after applying filter.")
         else:
             st.success(f"Filters applied and got {len(out)} record(s).")
-        return out
-    else:
-        return query_col
+        st.session_state[f"{page_name}.record_filter.result"] = out
+    # else:
+    # st.session_state[f"{page_name}.record_filter.result"] = query_col
 
 
 def _build_grid_options(
@@ -358,9 +358,7 @@ def _build_grid_options(
     )
     gb.configure_pagination(enabled=True, paginationPageSize=25)
     gb.configure_side_bar(filters_panel=False, columns_panel=False)
-    gb.configure_grid_options(
-        autoSizeStrategy={"type": "fitGridWidth", "skipHeader": False}
-    )
+    gb.configure_grid_options(autoSizeStrategy={"type": "fitCellContents"})
     return gb.build()
 
 
@@ -377,7 +375,7 @@ def _render_grid(
 
     return AgGrid(
         df,
-        key=grid_key,
+        # key=grid_key,
         height=height,
         columns_state=columns_state,
         gridOptions=_build_grid_options(
@@ -387,7 +385,7 @@ def _render_grid(
             record_id_cols=record_id_cols,
         ),
         custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
-        update_on=["selectionChanged", "cellValueChanged"],
+        update_on=["selectionChanged"],
         allow_unsafe_jscode=True,
     )
 
@@ -436,7 +434,10 @@ def _render_shared_records(
         st.warning("No shared records found.")
         return
 
-    query_col = _render_advanced_filters(query_col, feedback_cols)
+    _render_advanced_filters(query_col, feedback_cols)
+    query_col = st.session_state.get(
+        f"{page_name}.record_filter.result", query_col
+    )
     # Feedback difference
     diff_cols = []
     if len(col_data) == 2:
@@ -638,8 +639,15 @@ def _render_version_selectors(
 
 
 def _reset_page_state():
-    st.session_state[f"{page_name}.col_data"] = None
-    st.session_state[f"{page_name}.col_data_app_name"] = None
+    delete_keys = [
+        # f"{page_name}.app_ids",
+        f"{page_name}.col_data",
+        f"{page_name}.col_data_app_name",
+        f"{page_name}.record_filter.result",
+    ]
+    for key in delete_keys:
+        if key in st.session_state:
+            del st.session_state[key]
 
 
 def render_app_comparison(app_name: str):
