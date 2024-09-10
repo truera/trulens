@@ -257,6 +257,7 @@ trulens.core.database.base.DB:
     redact_keys: builtins.bool
     reset_database: builtins.function
     table_prefix: builtins.str
+    update_app_metadata: builtins.function
 trulens.core.database.connector:
   __class__: builtins.module
   highs:
@@ -1353,6 +1354,7 @@ trulens.core.utils.python:
     SingletonInfo: builtins.type
     SingletonPerName: builtins.type
     WRAP_LAZY: builtins.bool
+    WeakWrapper: builtins.type
     awith_context: builtins.function
     callable_name: builtins.function
     caller_frame: builtins.function
@@ -1380,6 +1382,7 @@ trulens.core.utils.python:
     stack_with_tasks: builtins.function
     superstack: builtins.function
     task_factory_with_stack: builtins.function
+    tru_new_event_loop: builtins.function
     with_context: builtins.function
     wrap_async_generator: builtins.function
     wrap_awaitable: builtins.function
@@ -1412,6 +1415,12 @@ trulens.core.utils.python.SingletonPerName:
     delete_singleton: builtins.function
     delete_singleton_by_name: builtins.staticmethod
     warning: builtins.function
+trulens.core.utils.python.WeakWrapper:
+  __bases__:
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    get: builtins.function
 trulens.core.utils.serial:
   __class__: builtins.module
   highs: {}
@@ -1629,8 +1638,28 @@ trulens.dashboard.Leaderboard:
   __class__: builtins.module
   highs: {}
   lows:
-    MIGRATION_UNKNOWN_STR: builtins.str
-    leaderboard: builtins.function
+    APP_AGG_COLS: builtins.list
+    APP_COLS: builtins.list
+    EXTERNAL_APP_COL_NAME: builtins.str
+    HIDE_RECORD_COL_NAME: builtins.str
+    MAX_COMPARATORS: builtins.int
+    MIN_COMPARATORS: builtins.int
+    PINNED_COL_NAME: builtins.str
+    RECORD_LIMIT: builtins.int
+    aggrid_css: builtins.dict
+    cell_rules: builtins.dict
+    compare_page_name: builtins.str
+    default_direction: builtins.str
+    handle_add_metadata: builtins.function
+    handle_add_virtual_app: builtins.function
+    handle_pin_toggle: builtins.function
+    handle_table_edit: builtins.function
+    init_page_state: builtins.function
+    order_columns: builtins.function
+    page_name: builtins.str
+    records_page_name: builtins.str
+    render_leaderboard: builtins.function
+    stmetricdelta_hidearrow: builtins.str
 trulens.dashboard.appui:
   __class__: builtins.module
   highs: {}
@@ -1690,6 +1719,18 @@ trulens.dashboard.components.record_viewer:
     build_dir: builtins.str
     parent_dir: builtins.str
     record_viewer: builtins.function
+trulens.dashboard.constants:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    CACHE_TTL: builtins.int
+    COMPARE_PAGE_NAME: builtins.str
+    EXTERNAL_APP_COL_NAME: builtins.str
+    HIDE_RECORD_COL_NAME: builtins.str
+    LEADERBOARD_PAGE_NAME: builtins.str
+    PINNED_COL_NAME: builtins.str
+    RECORDS_PAGE_NAME: builtins.str
+    RECORD_LIMIT: builtins.int
 trulens.dashboard.display:
   __class__: builtins.module
   highs: {}
@@ -1698,12 +1739,6 @@ trulens.dashboard.display:
     get_feedback_result: builtins.function
     get_icon: builtins.function
     highlight: builtins.function
-trulens.dashboard.notebook_utils:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    is_notebook: builtins.function
-    setup_widget_stdout_stderr: builtins.function
 trulens.dashboard.run:
   __class__: builtins.module
   highs: {}
@@ -1716,8 +1751,10 @@ trulens.dashboard.streamlit:
   __class__: builtins.module
   highs: {}
   lows:
+    DEFAULT_DATABASE_PREFIX: builtins.str
     FeedbackDisplay: pydantic._internal._model_construction.ModelMetaclass
     MIGRATION_UNKNOWN_STR: builtins.str
+    init_from_args: builtins.function
     trulens_feedback: builtins.function
     trulens_leaderboard: builtins.function
     trulens_trace: builtins.function
@@ -1729,11 +1766,6 @@ trulens.dashboard.streamlit.FeedbackDisplay:
     calls: typing.List[trulens.core.schema.feedback.FeedbackCall]
     icon: builtins.str
     score: builtins.float
-trulens.dashboard.streamlit_utils:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    init_from_args: builtins.function
 trulens.dashboard.ux:
   __class__: builtins.module
   highs: {}
@@ -1757,27 +1789,38 @@ trulens.dashboard.ux.components:
     render_call_frame: builtins.function
     render_selector_markdown: builtins.function
     write_or_json: builtins.function
-trulens.dashboard.ux.page_config:
-  __class__: builtins.module
-  __version__: 1.0.1
-  highs: {}
-  lows:
-    __version__: builtins.str
-    core_package: builtins.str
-    core_version: builtins.str
-    set_page_config: builtins.function
 trulens.dashboard.ux.styles:
   __class__: builtins.module
   highs: {}
   lows:
     CATEGORY: builtins.type
+    Category: pydantic._internal._model_construction.ModelMetaclass
+    FeedbackDirection: builtins.type
     ResultCategoryType: enum.EnumType
+    aggrid_css: builtins.dict
+    app_rules_styles: builtins.dict
+    cat: trulens.dashboard.ux.styles.Category
+    categories: builtins.list
+    cell_rules: builtins.dict
+    cell_rules_styles: builtins.dict
     cellstyle_jscode: builtins.dict
+    css_class: builtins.str
     default_direction: builtins.str
+    diff_cell_css: builtins.dict
+    diff_cell_rules: builtins.dict
+    direction: builtins.str
+    direction_rules: builtins.dict
     hide_table_row_index: builtins.str
+    i: builtins.float
+    key: builtins.str
+    op: builtins.str
+    radio_button_css: builtins.dict
     root_html: builtins.str
     root_js: builtins.str
     stmetricdelta_hidearrow: builtins.str
+    thresholds: builtins.list
+    transparency: builtins.str
+    upper_op: builtins.str
     valid_directions: builtins.list
 trulens.dashboard.ux.styles.CATEGORY:
   __bases__:
@@ -1785,22 +1828,41 @@ trulens.dashboard.ux.styles.CATEGORY:
   __class__: builtins.type
   attributes:
     ALL: builtins.list
-    Category: pydantic._internal._model_construction.ModelMetaclass
-    DISTANCE: trulens.dashboard.ux.styles.CATEGORY.Category
-    FAIL: collections.defaultdict
-    FeedbackDirection: builtins.type
-    PASS: collections.defaultdict
-    UNKNOWN: trulens.dashboard.ux.styles.CATEGORY.Category
-    WARNING: collections.defaultdict
+    DISTANCE: trulens.dashboard.ux.styles.Category
+    FAIL: builtins.dict
+    PASS: builtins.dict
+    UNKNOWN: trulens.dashboard.ux.styles.Category
+    WARNING: builtins.dict
     a: builtins.list
     adjective: builtins.str
     category_name: builtins.str
-    direction: trulens.dashboard.ux.styles.CATEGORY.FeedbackDirection
+    direction: trulens.dashboard.ux.styles.FeedbackDirection
     directions: builtins.list
     enum: builtins.int
     of_score: builtins.staticmethod
     styling: builtins.dict
     threshold: builtins.int
+trulens.dashboard.ux.styles.Category:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    adjective: builtins.str
+    color: builtins.str
+    compare: typing.Optional[typing.Callable[[<class 'float'>, <class 'float'>], builtins.bool],
+      builtins.NoneType]
+    direction: typing.Optional[builtins.str, builtins.NoneType]
+    icon: builtins.str
+    name: builtins.str
+    threshold: builtins.float
+trulens.dashboard.ux.styles.FeedbackDirection:
+  __bases__:
+  - builtins.tuple
+  __class__: builtins.type
+  attributes:
+    ascending: _collections._tuplegetter
+    name: _collections._tuplegetter
+    thresholds: _collections._tuplegetter
 trulens.dashboard.ux.styles.ResultCategoryType:
   __bases__:
   - enum.Enum
