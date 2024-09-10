@@ -634,8 +634,13 @@ def _render_version_selectors(
                 }
                 for app_id, app_df in records.groupby(by="app_id")
             }
-
             st.session_state[f"{page_name}.col_data"] = col_data
+            st.session_state[f"{page_name}.col_data_app_name"] = app_name
+
+
+def _reset_page_state():
+    st.session_state[f"{page_name}.col_data"] = None
+    st.session_state[f"{page_name}.col_data_app_name"] = None
 
 
 def render_app_comparison(app_name: str):
@@ -659,8 +664,12 @@ def render_app_comparison(app_name: str):
 
     # get app version and record data
     _render_version_selectors(app_name, versions_df)
+    if st.session_state.get(f"{page_name}.col_data_app_name", None) != app_name:
+        _reset_page_state()
+        return
     col_data = st.session_state.get(f"{page_name}.col_data", None)
     if not col_data:
+        _reset_page_state()
         return
 
     st.divider()
