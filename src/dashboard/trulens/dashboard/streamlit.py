@@ -1,12 +1,15 @@
+import argparse
 import asyncio
 import json
 import math
+import sys
 from typing import List
 
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import TruSession
+from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
 from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.core.schema.feedback import FeedbackCall
 from trulens.core.schema.record import Record
@@ -28,6 +31,31 @@ class FeedbackDisplay(BaseModel):
     score: float = 0
     calls: List[FeedbackCall]
     icon: str
+
+
+def init_from_args():
+    """Parse command line arguments and initialize Tru with them.
+
+    As Tru is a singleton, further TruSession() uses will get the same configuration.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--database-url", default=None)
+    parser.add_argument("--database-prefix", default=DEFAULT_DATABASE_PREFIX)
+
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        print(e)
+
+        # This exception will be raised if --help or invalid command line arguments
+        # are used. Currently, streamlit prevents the program from exiting normally,
+        # so we have to do a hard exit.
+        sys.exit(e.code)
+
+    TruSession(
+        database_url=args.database_url, database_prefix=args.database_prefix
+    )
 
 
 def trulens_leaderboard(app_ids: List[str] = None):
@@ -225,7 +253,7 @@ def trulens_feedback(record: Record):
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
-    st.write("**Feedback functions**")
+    st.header("Feedback Functions")
     selected_feedback = pills(
         "Feedback functions",
         feedback_cols,

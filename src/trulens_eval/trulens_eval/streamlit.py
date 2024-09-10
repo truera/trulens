@@ -9,7 +9,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.dashboard.streamlit import MIGRATION_UNKNOWN_STR
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
 from trulens.dashboard.streamlit import FeedbackDisplay
 from trulens.dashboard.streamlit import trulens_feedback
 from trulens.dashboard.streamlit import trulens_leaderboard

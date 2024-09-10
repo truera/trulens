@@ -285,7 +285,7 @@ class SQLAlchemyDB(DB):
 
                 else:
                     ## TODO Create backups here. This is not sqlalchemy's strong suit: https://stackoverflow.com/questions/56990946/how-to-backup-up-a-sqlalchmey-database
-                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `TruSession.migrate_database(backup_db_url="...")`)
+                    ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `TruSession().migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
                     upgrade_db(
@@ -394,11 +394,41 @@ class SQLAlchemyDB(DB):
             ):
                 return json.loads(_app.app_json)
 
-    def get_apps(self) -> Iterable[JSON]:
+    def update_app_metadata(
+        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
+    ) -> Optional[mod_app_schema.AppDefinition]:
+        """See [DB.get_app_definition][trulens.core.database.base.DB.get_app_definition]."""
+
+        def nested_update(metadata: dict, update: dict):
+            for k, v in update.items():
+                if isinstance(v, dict) and k in metadata:
+                    nested_update(metadata[k], v)
+                else:
+                    metadata[k] = v
+
+        with self.session.begin() as session:
+            if (
+                _app := session.query(self.orm.AppDefinition)
+                .filter_by(app_id=app_id)
+                .first()
+            ):
+                app_json = json.loads(_app.app_json)
+                if "metadata" not in app_json:
+                    app_json["metadata"] = {}
+                nested_update(app_json["metadata"], metadata)
+                _app.app_json = json.dumps(app_json)
+
+    def get_apps(
+        self, app_name: Optional[mod_types_schema.AppName] = None
+    ) -> Iterable[JSON]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:
-            for _app in session.query(self.orm.AppDefinition):
+            q = sa.select(self.orm.AppDefinition)
+            if app_name:
+                q = q.filter_by(app_name=app_name)
+            app_defs = (row[0] for row in session.execute(q))
+            for _app in app_defs:
                 yield json.loads(_app.app_json)
 
     def insert_app(
@@ -700,6 +730,7 @@ class SQLAlchemyDB(DB):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
+        app_name: Optional[mod_types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -718,6 +749,12 @@ class SQLAlchemyDB(DB):
             if app_ids:
                 stmt = stmt.where(self.orm.Record.app_id.in_(app_ids))
 
+            if app_name:
+                # stmt = stmt.options(joinedload(self.orm.Record.app))
+                stmt = stmt.join(self.orm.Record.app).filter(
+                    self.orm.AppDefinition.app_name == app_name
+                )
+
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
             # NOTE(piotrm): The joinedload here makes it so that the
             # feedback_results get loaded eagerly instead if lazily when
@@ -729,7 +766,9 @@ class SQLAlchemyDB(DB):
             # data. Ideally, though, we would be making some sort of lazy
             # DataFrame and then could use the lazy join feature of sqlalchemy.
 
-            stmt = stmt.order_by(self.orm.Record.ts, self.orm.Record.record_id)
+            stmt = stmt.order_by(
+                self.orm.Record.ts.desc(), self.orm.Record.record_id
+            )
             # NOTE: feedback_results order is governed by the order_by on the
             # orm.FeedbackResult.record backref definition. Here, we need to
             # order Records as we did not use an auto join to retrieve them. If

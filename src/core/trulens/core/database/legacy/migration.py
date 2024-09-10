@@ -259,13 +259,13 @@ def _check_needs_migration(version: str, warn=False) -> None:
         if _upgrade_possible(compat_version):
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release. "
-                f"You can either reset your db with `TruSession.reset_database()`, "
-                f"or you can initiate a db migration with `TruSession.migrate_database()`"
+                f"You can either reset your db with `TruSession().reset_database()`, "
+                f"or you can initiate a db migration with `TruSession().migrate_database()`"
             )
         else:
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. "
-                f"Reset your db with `TruSession.reset_database()`"
+                f"Reset your db with `TruSession().reset_database()`"
             )
         if warn:
             print(f"Warning! {msg}")
