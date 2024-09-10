@@ -281,6 +281,7 @@ class TruChain(mod_app.App):
         retriever = Select.RecordCalls + retrievers[0][0]
         if hasattr(retriever, "invoke"):
             return retriever.invoke.rets[:].page_content
+
         if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
 
