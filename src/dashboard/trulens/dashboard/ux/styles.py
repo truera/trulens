@@ -78,11 +78,24 @@ class CATEGORY:
         icon="?",
     )
 
+    DISTANCE = Category(
+        name="distance",
+        adjective="distance",
+        threshold=np.nan,
+        color="#808080",
+        icon="📏",
+    )
+
     # order matters here because `of_score` returns the first best category
     ALL = [PASS, WARNING, FAIL]  # not including UNKNOWN intentionally
 
     @staticmethod
-    def of_score(score: float, higher_is_better: bool = True) -> Category:
+    def of_score(
+        score: float, higher_is_better: bool = True, is_distance: bool = False
+    ) -> Category:
+        if is_distance:
+            return CATEGORY.DISTANCE
+
         direction_key = (
             "HIGHER_IS_BETTER" if higher_is_better else "LOWER_IS_BETTER"
         )
