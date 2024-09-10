@@ -458,14 +458,28 @@ def _render_app_id_args_filter(versions_df: pd.DataFrame):
     return versions_df
 
 
+def _handle_record_query_change():
+    value = st.session_state.get(f"{page_name}.record_search", None)
+    if value:
+        st.query_params["record_search"] = value
+    else:
+        st.query_params.pop("record_search")
+
+
 def render_records(app_name: str):
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
-    record_query = st.text_input("Search Records", key="record_search")
+    record_query = st.text_input(
+        "Search Records",
+        key=f"{page_name}.record_search",
+        on_change=_handle_record_query_change,
+    )
     versions_df, version_metadata_col_names = render_app_version_filters(
-        app_name
+        app_name,
+        {f"{page_name}.record_search": record_query},
+        page_name_keys=[f"{page_name}.record_search"],
     )
 
     st.divider()

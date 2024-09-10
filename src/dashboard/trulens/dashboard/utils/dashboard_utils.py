@@ -62,6 +62,8 @@ def read_query_params_into_session_state(
     assert not st.session_state.get(f"{page_name}.initialized", False)
     for param, value in st.query_params.to_dict().items():
         prefix_page_name = True
+        if param == ST_APP_NAME:
+            prefix_page_name = False
         if param.startswith("filter."):
             prefix_page_name = False
             if param.endswith(".multiselect"):
@@ -171,22 +173,39 @@ def update_app_metadata(app_id: str, metadata: dict):
     lms.update_app_metadata(app_id, metadata)
 
 
+def _handle_app_selection(app_names: List[str]):
+    value = st.session_state.get(ST_APP_NAME, None)
+    if value and value in app_names:
+        st.session_state[ST_APP_NAME] = value
+        st.query_params[ST_APP_ID] = value
+
+
 def render_sidebar():
     apps = get_apps()
     app_name = None
 
     if apps:
         app_names = sorted(list(set(app["app_name"] for app in apps)))
+        app_name = st.session_state.get(ST_APP_NAME, None)
 
         if len(app_names) > 1:
+            if not app_name or app_name not in app_names:
+                app_idx = 0
+            else:
+                app_idx = app_names.index(app_name)
             app_name = st.sidebar.selectbox(
-                "Select an app", options=app_names, disabled=len(app_names) == 1
+                "Select an app",
+                index=app_idx,
+                options=app_names,
+                on_change=_handle_app_selection,
+                args=(app_names,),
+                disabled=len(app_names) == 1,
             )
         else:
             app_name = app_names[0]
 
-        if app_name and app_name != st.session_state.get(ST_APP_NAME):
-            st.session_state[ST_APP_NAME] = app_name
+        # if app_name and app_name != st.session_state.get(ST_APP_NAME):
+        #     st.session_state[ST_APP_NAME] = app_name
 
         if st.sidebar.button("↻ Refresh Data", use_container_width=True):
             st.cache_data.clear()
@@ -291,11 +310,10 @@ def _handle_reset_filters(
     keys: List[str],
     tags: List[str],
     metadata_options: Dict[str, List[str]],
+    page_name_keys: Optional[List[str]] = None,
 ):
     for key in keys:
-        if key == "filter.search":
-            val = ""
-        elif key == "filter.tags.multiselect":
+        if key == "filter.tags.multiselect":
             val = tags
         elif key.startswith("filter.metadata.") and key.endswith(
             ".multiselect"
@@ -303,19 +321,30 @@ def _handle_reset_filters(
             metadata_key = key[16:-12]
             val = metadata_options[metadata_key]
         else:
-            raise ValueError(f"Invalid key found: {key}")
+            val = ""
+
         st.session_state[key] = val
-        del st.query_params[key]
+        query_param_key = key
+        if page_name_keys and key in page_name_keys:
+            query_param_key = ".".join(query_param_key.split(".")[1:])
+        del st.query_params[query_param_key]
 
 
-def render_app_version_filters(app_name: str):
+def render_app_version_filters(
+    app_name: str,
+    other_query_params_kv: Optional[dict[str, str]] = None,
+    page_name_keys: Optional[List[str]] = None,
+):
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
     col0, col1, col2 = st.columns(
         [0.7, 0.15, 0.15], vertical_alignment="bottom"
     )
-    active_adv_filters = []
+    if other_query_params_kv:
+        active_adv_filters = [k for k, v in other_query_params_kv.items() if v]
+    else:
+        active_adv_filters = []
     if version_str_query := col0.text_input(
         "Search App Version",
         key="filter.search",
@@ -390,7 +419,7 @@ def render_app_version_filters(app_name: str):
             use_container_width=True,
             type="primary",
             on_click=_handle_reset_filters,
-            args=(active_adv_filters, tags, metadata_options),
+            args=(active_adv_filters, tags, metadata_options, page_name_keys),
         )
 
     return filtered_app_versions, app_version_metadata_cols
