@@ -24,7 +24,6 @@ trulens_eval:
     TruVirtual: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
     __version__: builtins.str
     __version_info__: builtins.tuple
 trulens_eval.Leaderboard:
@@ -227,8 +226,7 @@ trulens_eval.appui.SelectorValue:
 trulens_eval.database:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens_eval.database.base:
   __class__: builtins.module
   highs: {}
@@ -278,7 +276,6 @@ trulens_eval.database.migrations:
   highs: {}
   lows:
     DbRevisions: pydantic._internal._model_construction.ModelMetaclass
-    __path__: builtins.list
     alembic_config: builtins.function
     downgrade_db: builtins.function
     get_current_db_revision: builtins.function
@@ -396,7 +393,6 @@ trulens_eval.feedback:
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens_eval.feedback.embeddings:
   __class__: builtins.module
   highs: {}
@@ -542,7 +538,6 @@ trulens_eval.feedback.provider:
     Provider: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens_eval.feedback.provider.base:
   __class__: builtins.module
   highs: {}
@@ -647,7 +642,6 @@ trulens_eval.feedback.provider.endpoint:
     OpenAIEndpoint: pydantic._internal._model_construction.ModelMetaclass
   lows:
     __all__: builtins.list
-    __path__: builtins.list
 trulens_eval.feedback.provider.endpoint.base:
   __class__: builtins.module
   highs: {}
@@ -1032,8 +1026,7 @@ trulens_eval.generate_test_set.GenerateTestSet:
 trulens_eval.guardrails:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens_eval.guardrails.base:
   __class__: builtins.module
   highs: {}
@@ -1147,8 +1140,7 @@ trulens_eval.keys.ApiKeyError:
 trulens_eval.schema:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens_eval.schema.app:
   __class__: builtins.module
   highs: {}
@@ -1609,18 +1601,10 @@ trulens_eval.tru_llama.TruLlama:
   - trulens_eval.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    achat: builtins.function
-    achat_with_record: builtins.function
     app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     app_id: builtins.str
-    aquery: builtins.function
-    aquery_with_record: builtins.function
-    astream_chat: builtins.function
-    astream_chat_with_record: builtins.function
-    chat: builtins.function
-    chat_with_record: builtins.function
     db: typing.Optional[trulens_eval.database.base.DB, builtins.NoneType]
     feedback_definitions: typing.Sequence[trulens_eval.schema.feedback.FeedbackDefinition]
     feedback_mode: trulens_eval.schema.feedback.FeedbackMode
@@ -1632,8 +1616,6 @@ trulens_eval.tru_llama.TruLlama:
     manage_pending_feedback_results_thread: typing.Optional[trulens_eval.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    query: builtins.function
-    query_with_record: builtins.function
     recording_contexts: _contextvars.ContextVar[trulens_eval.app.RecordingContext]
     records_with_pending_feedback_results: trulens_eval.utils.containers.BlockingSet[trulens_eval.schema.record.Record]
     root_callable: pydantic.fields.FieldInfo
@@ -1641,8 +1623,6 @@ trulens_eval.tru_llama.TruLlama:
     select_source_nodes: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
-    stream_chat: builtins.function
-    stream_chat_with_record: builtins.function
     tags: builtins.str
     tru: typing.Optional[trulens_eval.tru.Tru, builtins.NoneType]
     tru_class_info: trulens_eval.utils.pyschema.Class
@@ -1783,8 +1763,7 @@ trulens_eval.tru_virtual.VirtualRecord:
 trulens_eval.utils:
   __class__: builtins.module
   highs: {}
-  lows:
-    __path__: builtins.list
+  lows: {}
 trulens_eval.utils.asynchro:
   __class__: builtins.module
   highs: {}
