@@ -177,7 +177,7 @@ def _handle_app_selection(app_names: List[str]):
 
 
 def render_refresh_button():
-    if st.button("↻ Refresh Data", use_container_width=True):
+    if st.sidebar.button("↻ Refresh Data", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -210,7 +210,7 @@ def render_sidebar():
         else:
             app_name = app_names[0]
 
-    refresh_data_container = st.sidebar.container()
+    render_refresh_button()
 
     with st.sidebar.expander("Info"):
         st.text(f"{core_package} {core_version}")
@@ -224,7 +224,7 @@ def render_sidebar():
         )
     if app_name is None:
         st.error("No apps found in the database.")
-    return app_name, refresh_data_container
+    return app_name
 
 
 def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):

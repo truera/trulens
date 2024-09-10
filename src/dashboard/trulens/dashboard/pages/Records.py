@@ -19,7 +19,6 @@ from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
 from trulens.dashboard.utils.dashboard_utils import render_app_version_filters
-from trulens.dashboard.utils.dashboard_utils import render_refresh_button
 from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
@@ -533,8 +532,6 @@ def render_records(app_name: str):
 if __name__ == "__main__":
     set_page_config(page_title=page_name)
     init_page_state()
-    app_name, refresh_data_container = render_sidebar()
+    app_name = render_sidebar()
     if app_name:
         render_records(app_name)
-        with refresh_data_container:
-            render_refresh_button()
