@@ -47,6 +47,7 @@ from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema
+from trulens.core.utils import threading as threading_utils
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
 from trulens.core.utils.asynchro import sync
@@ -550,7 +551,7 @@ class App(
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
-    manage_pending_feedback_results_thread: Optional[threading.Thread] = (
+    manage_pending_feedback_results_thread: Optional[threading_utils.Thread] = (
         pydantic.Field(exclude=True, default=None)
     )
     """Thread for manager of pending feedback results queue.

@@ -130,7 +130,8 @@ trulens.core.app.App:
     main_call: builtins.function
     main_input: builtins.function
     main_output: builtins.function
-    manage_pending_feedback_results_thread: typing.Optional[threading.Thread, builtins.NoneType]
+    manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
+      builtins.NoneType]
     metadata: typing.Dict
     print_instrumented: builtins.function
     print_instrumented_components: builtins.function
