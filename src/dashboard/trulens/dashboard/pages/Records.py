@@ -8,7 +8,9 @@ from st_aggrid.shared import ColumnsAutoSizeMode
 from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
+from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
+from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORD_LIMIT
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import ST_APP_NAME
@@ -211,6 +213,20 @@ def _build_grid_options(
         hide=True,
         filter="agMultiColumnFilter",
     )
+
+    gb.configure_column(
+        PINNED_COL_NAME,
+        header_name="Pinned",
+        hide=True,
+        filter="agSetColumnFilter",
+    )
+    gb.configure_column(
+        EXTERNAL_APP_COL_NAME,
+        header_name="External App",
+        hide=True,
+        filter="agSetColumnFilter",
+    )
+
     gb.configure_column(
         "app_id", header_name="App ID", hide=True, filter="agSetColumnFilter"
     )

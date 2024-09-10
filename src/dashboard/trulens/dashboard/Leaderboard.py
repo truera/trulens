@@ -233,11 +233,9 @@ def _render_grid(
     columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
     if PINNED_COL_NAME in df:
-        pinned_df = df[df[PINNED_COL_NAME]]
-        pinned_df["app_version"] = pinned_df["app_version"].apply(
-            lambda x: f"📌 {x}"
-        )
-        df.loc[pinned_df.index, :] = pinned_df
+        df.loc[df[PINNED_COL_NAME], "app_version"] = df.loc[
+            df[PINNED_COL_NAME], "app_version"
+        ].apply(lambda x: f"📌 {x}")
 
     height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
