@@ -534,11 +534,11 @@ def _render_grid_tab(
         st.switch_page("pages/Records.py")
     # Compare App Versions
     if len(selected_app_ids) < MIN_COMPARATORS:
-        _compare_button_label = f"Min {MIN_COMPARATORS} Apps"
+        _compare_button_label = f"Min {MIN_COMPARATORS} App Versions"
         _compare_button_disabled = True
         help_msg = f"Select at least {MIN_COMPARATORS} app versions to compare."
     elif len(selected_app_ids) > MAX_COMPARATORS:
-        _compare_button_label = f"Max {MAX_COMPARATORS} Apps"
+        _compare_button_label = f"Max {MAX_COMPARATORS} App Versions"
         _compare_button_disabled = True
         help_msg = (
             f"Deselect to at most {MAX_COMPARATORS} app versions to compare."
