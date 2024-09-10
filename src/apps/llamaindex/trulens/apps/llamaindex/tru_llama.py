@@ -317,9 +317,8 @@ class TruLlama(mod_app.App):
 
     app: Union[BaseQueryEngine, BaseChatEngine]
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
-    )
+    # TODEP
+    root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
     def __init__(
         self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict

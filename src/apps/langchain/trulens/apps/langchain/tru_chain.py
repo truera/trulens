@@ -221,10 +221,8 @@ class TruChain(mod_app.App):
     app: Runnable
     """The langchain app to be instrumented."""
 
-    # TODO: what if _acall is being used instead?
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
-    )
+    # TODEP
+    root_callable: ClassVar[FunctionOrMethod] = Field(None)
     """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is

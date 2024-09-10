@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
@@ -86,6 +87,17 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
             *args,
             **kwargs,
         )
+
+
+# HACK007: Attempt to force other users of Thread to use our version instead.
+
+threading.Thread = Thread
+
+# HACK002: Attempt to make other users of ThreadPoolExecutor use our version
+# instead. TODO: this may be redundant with the thread override above.
+
+futures.ThreadPoolExecutor = ThreadPoolExecutor
+futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 
 class TP(SingletonPerName):  # "thread processing"

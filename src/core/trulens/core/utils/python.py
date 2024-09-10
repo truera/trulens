@@ -467,8 +467,7 @@ def caller_frameinfo(
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
-    """
-    A task factory that annotates created tasks with stacks of their parents.
+    """A task factory that annotates created tasks with stacks of their parents.
 
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
@@ -492,15 +491,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     return task
 
 
-# NOTE(piotrm): If this is found not necessary through 2025-01-01, lets remove
-# it.
-
-# NOTE(piotrm): The overriding of the task factory may no longer be necessary
-# due to changes in how instrumented methods are executed. It might be possible,
-# however, that some older libraries are not copying contexts into Tasks which
-# would make this neccessary.
-
-'''
+# If there is already a loop running, try to patch its task factory.
 try:
     loop = asyncio.get_running_loop()
     loop.set_task_factory(task_factory_with_stack)
@@ -520,9 +511,7 @@ def tru_new_event_loop():
     return loop
 
 
-# asyncio.new_event_loop = tru_new_event_loop
-
-'''
+asyncio.new_event_loop = tru_new_event_loop
 
 
 def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
