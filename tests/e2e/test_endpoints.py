@@ -10,7 +10,6 @@ from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
 
-import snowflake.connector
 from trulens.core.feedback import Endpoint
 from trulens.core.utils.keys import check_keys
 
@@ -233,6 +232,7 @@ class TestEndpoints(TestCase):
     @optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
+        import snowflake.connector
         from trulens.providers.cortex import Cortex
 
         snowflake_connection_parameters = {
