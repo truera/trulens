@@ -87,7 +87,7 @@ def get_feedback_result(
 def highlight(
     row: pd.Series,
     selected_feedback: str,
-    feedback_directions: Dict[str, str],
+    feedback_directions: Dict[str, bool],
     default_direction: str,
 ) -> List[str]:
     """
@@ -108,9 +108,8 @@ def highlight(
     cat = CATEGORY.of_score(
         row["score"],
         higher_is_better=feedback_directions.get(
-            selected_feedback, default_direction
-        )
-        == default_direction,
+            selected_feedback, default_direction == "HIGHER_IS_BETTER"
+        ),
     )
     # Apply the background color to the entire row
     return [f"background-color: {cat.color}"] * len(row)
