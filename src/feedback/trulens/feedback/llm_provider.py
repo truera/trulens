@@ -1341,7 +1341,7 @@ class LLMProvider(Provider):
         )
 
     def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str, use_sent_tokenize: bool = True
+        self, source: str, statement: str, use_sent_tokenize: bool = False
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1395,6 +1395,7 @@ class LLMProvider(Provider):
             source: The source that should support the statement.
             statement: The statement to check groundedness.
             use_sent_tokenize: Whether to split the statement into sentences using punkt sentence tokenizer. If False, use LLM to split the statement.
+            Default to False to use LLM to split the statement. Note this might incur additional costs and reach context window limits in some cases.
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
