@@ -784,6 +784,23 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         return stats.spearmanr(x, y).statistic
 
+    def pearson_correlation(self, scores: List[float]) -> float:
+        """
+        Calculate the Pearson correlation. Can be used for meta-evaluation.
+        The Pearson correlation coefficient is a measure of the linear relationship between two variables.
+
+        Args:
+            scores (List[float]): scores returned by feedback function
+
+        Returns:
+            float: Pearson correlation
+
+        """
+        x = np.array(scores)
+        y = np.array(self.true_labels)
+
+        return stats.pearsonr(x, y)[0]
+
     def brier_score(self, scores: List[float]) -> float:
         """
         assess both calibration and sharpness of the probability estimates

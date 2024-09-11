@@ -399,30 +399,32 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+        """You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
         Respond only as a number from {output_space_prompt}.
 
-        Criteria for evaluating relevance:
         {criteria}
+        Never elaborate."""
+    )
 
-        A few additional scoring guidelines:
+    user_prompt: ClassVar[str] = cleandoc(
+        """SOURCE: {premise}
 
-        - Long CONTEXTS should score equally well as short CONTEXTS.
+        Hypothesis: {hypothesis}
 
-        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
+        Please answer with the template below for all statement sentences:
 
-        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
-
-        - Never elaborate.
+        Criteria: <Statement Sentence>
+        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
+        Score: <Output a number based on the scoring output space / range>
         """
     )
 
     user_prompt: ClassVar[str] = cleandoc(
         """QUESTION: {question}
-        CONTEXT: {context}
 
-        RELEVANCE:
-        """
+        SOURCE: {source}
+
+        ANSWERABILITY:"""
     )
     verb_confidence_prompt: ClassVar[str] = cleandoc(
         """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
