@@ -19,10 +19,10 @@ from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import LEADERBOARD_PAGE_NAME as page_name
 from trulens.dashboard.constants import PINNED_COL_NAME
-from trulens.dashboard.constants import RECORD_LIMIT
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as records_page_name
 from trulens.dashboard.pages.Compare import MAX_COMPARATORS
 from trulens.dashboard.pages.Compare import MIN_COMPARATORS
+from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import get_app_versions
 from trulens.dashboard.utils.dashboard_utils import get_apps
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
@@ -765,16 +765,30 @@ def render_leaderboard(app_name: str):
     app_ids = versions_df["app_id"].tolist()
 
     # Get records and feedback data
+    records_limit = st.session_state.get(ST_RECORDS_LIMIT, None)
     records_df, feedback_col_names = get_records_and_feedback(
-        app_name=app_name, app_ids=app_ids, limit=RECORD_LIMIT
+        app_name=app_name, app_ids=app_ids, limit=records_limit
     )
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif len(records_df) == RECORD_LIMIT:
-        st.info(
-            f"Computed from the last {RECORD_LIMIT} records.",
+    elif len(records_df) == records_limit:
+        cols = st.columns([0.9, 0.1], vertical_alignment="center")
+        cols[0].info(
+            f"Computed from the last {records_limit} records.",
             icon="ℹ️",
+        )
+
+        def handle_show_all():
+            st.session_state[ST_RECORDS_LIMIT] = None
+            if ST_RECORDS_LIMIT in st.query_params:
+                del st.query_params[ST_RECORDS_LIMIT]
+
+        cols[1].button(
+            "Show all",
+            use_container_width=True,
+            on_click=handle_show_all,
+            help="Show all records. This may take a while.",
         )
 
     feedback_col_names = list(feedback_col_names)
