@@ -108,7 +108,7 @@ test-static:
 # API tests.
 test-api:
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
-write-api: env
+write-api: env-tests
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 test-write-api:
 	@echo "The 'test-write-api' target has been renamed to 'write-api'."
