@@ -30,6 +30,7 @@ from typing import (
 )
 
 import pydantic
+from trulens.core._utils import optional as optional_utils
 from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
@@ -43,6 +44,7 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
@@ -672,15 +674,24 @@ class App(
         if app is not None:
             mod = app.__class__.__module__
             if mod.startswith("langchain"):
-                from trulens.instrument.langchain import TruChain
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
+                ):
+                    from trulens.apps.langchain.tru_chain import TruChain
 
                 return TruChain.select_context(app=app)
             elif mod.startswith("llama_index"):
-                from trulens.instrument.llamaindex import TruLlama
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_APPS_LLAMA
+                ):
+                    from trulens.apps.llamaindex.tru_llama import TruLlama
 
                 return TruLlama.select_context(app=app)
             elif mod.startswith("nemoguardrails"):
-                from trulens.instrument.nemo import TruRails
+                with import_utils.OptionalImports(
+                    messages=optional_utils.REQUIREMENT_APPS_NEMO
+                ):
+                    from trulens.apps.nemo.tru_rails import TruRails
 
                 return TruRails.select_context(app=app)
             else:

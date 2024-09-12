@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from trulens.core import app as base_app
 
 tqdm = None
-with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
+with OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -212,7 +212,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         # Check for optional app types.
         if app.__module__.startswith("langchain"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+                messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
             ):
                 from trulens.apps.langchain import tru_chain
 
@@ -223,7 +223,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         elif app.__module__.startswith("llamaindex"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+                messages=optional_utils.REQUIREMENT_APPS_LLAMA
             ):
                 from trulens.apps.llamaindex import tru_llama
 
@@ -234,7 +234,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
 
         elif app.__module__.startswith("nemoguardrails"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+                messages=optional_utils.REQUIREMENT_APPS_NEMO
             ):
                 from trulens.apps.nemo import tru_rails
 
@@ -320,7 +320,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+            messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
         ):
             from trulens.apps.langchain import tru_chain
 
@@ -335,7 +335,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+            messages=optional_utils.REQUIREMENT_APPS_LLAMA
         ):
             from trulens.apps.llamaindex import tru_llama
 
@@ -350,7 +350,7 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+            messages=optional_utils.REQUIREMENT_APPS_NEMO
         ):
             from trulens.apps.nemo import tru_rails
 

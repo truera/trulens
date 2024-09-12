@@ -59,17 +59,17 @@ with imports_utils.OptionalImports(
     from trulens.providers.langchain.provider import Langchain
 
 with imports_utils.OptionalImports(
-    messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+    messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
 ):
     from trulens.apps.langchain.tru_chain import TruChain
 
 with imports_utils.OptionalImports(
-    messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+    messages=optional_utils.REQUIREMENT_APPS_LLAMA
 ):
     from trulens.apps.llamaindex.tru_llama import TruLlama
 
 with imports_utils.OptionalImports(
-    messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+    messages=optional_utils.REQUIREMENT_APPS_NEMO
 ):
     from trulens.apps.nemo.tru_rails import TruRails
 
