@@ -19,7 +19,7 @@ def _convert_message(message: Dict) -> BaseMessage:
     return AIMessage(content=message["content"])
 
 
-class Langchain(LLMProvider):
+class LangChain(LLMProvider):
     """Out of the box feedback functions using LangChain LLMs and ChatModels
 
     Create a LangChain Provider with out of the box feedback functions.
