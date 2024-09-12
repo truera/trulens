@@ -683,21 +683,21 @@ class App(
             mod = app.__class__.__module__
             if mod.startswith("langchain"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+                    messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
                 ):
                     from trulens.apps.langchain.tru_chain import TruChain
 
                 return TruChain.select_context(app=app)
             elif mod.startswith("llama_index"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+                    messages=optional_utils.REQUIREMENT_APPS_LLAMA
                 ):
                     from trulens.apps.llamaindex.tru_llama import TruLlama
 
                 return TruLlama.select_context(app=app)
             elif mod.startswith("nemoguardrails"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+                    messages=optional_utils.REQUIREMENT_APPS_NEMO
                 ):
                     from trulens.apps.nemo.tru_rails import TruRails
 
