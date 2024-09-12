@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import pydantic
 import scipy.stats as stats
+from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
@@ -817,6 +818,29 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         y = np.array(self.true_labels)
 
         return stats.pearsonr(x, y)[0]
+
+    def cohens_kappa(self, scores: List[float] | List[List]) -> float:
+        """
+        Computes Cohen's Kappa score between true labels and predicted scores.
+
+        Parameters:
+        - true_labels (list): A list of true labels.
+        - scores (list): A list of predicted labels or scores.
+
+        Returns:
+        - float: Cohen's Kappa score.
+        """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
+
+        if len(self.true_labels) != len(scores):
+            raise ValueError(
+                "The length of true_labels and scores must be the same."
+            )
+
+        # Compute Cohen's Kappa
+        kappa = cohen_kappa_score(self.true_labels, scores)
+        return kappa
 
     def brier_score(self, scores: List[float] | List[List]) -> float:
         """
