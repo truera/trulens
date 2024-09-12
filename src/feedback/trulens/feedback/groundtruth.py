@@ -1,5 +1,14 @@
 import logging
-from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import (
+    Callable,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 import warnings
 
 import numpy as np
@@ -749,9 +758,11 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Area under the ROC curve
         """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
         return roc_auc_score(self.true_labels, scores)
 
-    def kendall_tau(self, scores: List[float]) -> float:
+    def kendall_tau(self, scores: List[float] | List[List]) -> float:
         """
         Calculate Kendall's tau. Can be used for meta-evaluation.
         Kendall’s tau is a measure of the correspondence between two rankings. Values close to 1 indicate strong agreement, values close to -1 indicate strong disagreement. This is the tau-b version of Kendall’s tau which accounts for ties.
@@ -762,12 +773,14 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Kendall's tau
         """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
         tau, _p_value = stats.kendalltau(scores, self.true_labels).correlation
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
         # TODO: p_value is unused here
         return tau
 
-    def spearman_correlation(self, scores: List[float]) -> float:
+    def spearman_correlation(self, scores: List[float] | List[List]) -> float:
         """
         Calculate the Spearman correlation. Can be used for meta-evaluation.
         The Spearman correlation coefficient is a nonparametric measure of rank correlation (statistical dependence between the rankings of two variables).
@@ -779,12 +792,14 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Spearman correlation
 
         """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
 
         return stats.spearmanr(x, y).statistic
 
-    def pearson_correlation(self, scores: List[float]) -> float:
+    def pearson_correlation(self, scores: List[float] | List[List]) -> float:
         """
         Calculate the Pearson correlation. Can be used for meta-evaluation.
         The Pearson correlation coefficient is a measure of the linear relationship between two variables.
@@ -796,12 +811,14 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Pearson correlation
 
         """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
 
         return stats.pearsonr(x, y)[0]
 
-    def brier_score(self, scores: List[float]) -> float:
+    def brier_score(self, scores: List[float] | List[List]) -> float:
         """
         assess both calibration and sharpness of the probability estimates
         Args:
@@ -809,6 +826,8 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Brier score
         """
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
         brier_score = 0
 
@@ -866,7 +885,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
                 )
         return round(ece, 4)
 
-    def mae(self, scores: List[float]) -> float:
+    def mae(self, scores: List[float] | List[List]) -> float:
         """
         Calculate the mean absolute error. Can be used for meta-evaluation.
 
@@ -876,5 +895,12 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Mean absolute error
         """
+
+        print(f"MAE scores: {scores}")
+
+        # TODO: refactor this, this is to deal with COT type of response from feedback functions
+        if isinstance(scores[0], Iterable):
+            scores = [score for score, _ in scores]
+            print(f"flatten scores: {scores}")
 
         return np.mean(np.abs(np.array(scores) - np.array(self.true_labels)))
