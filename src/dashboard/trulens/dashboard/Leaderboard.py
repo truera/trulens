@@ -772,7 +772,7 @@ def render_leaderboard(app_name: str):
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif len(records_df) == records_limit:
+    elif records_limit is not None:
         cols = st.columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Computed from the last {records_limit} records.",

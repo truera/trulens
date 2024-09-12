@@ -512,7 +512,7 @@ def render_records(app_name: str):
         else:
             st.error(f"No records found for app `{app_name}`.")
         return
-    elif len(df) == records_limit:
+    elif records_limit is not None:
         cols = st.columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Limiting to the latest {records_limit} records. Use the search bar and filters to narrow your search.",
