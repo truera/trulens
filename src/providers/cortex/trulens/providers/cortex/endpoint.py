@@ -134,6 +134,8 @@ class CortexEndpoint(Endpoint):
                 response: dict = json.loads(response[0][0])
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
+            if isinstance(e, json.JSONDecodeError):
+                raise ValueError("Response is not a valid JSON object.") from e
             raise e
 
         if "usage" in response:
