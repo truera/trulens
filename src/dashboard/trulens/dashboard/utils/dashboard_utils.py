@@ -16,11 +16,11 @@ from trulens.dashboard.constants import CACHE_TTL
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
+from trulens.dashboard.constants import RECORDS_LIMIT
 from trulens.dashboard.utils.metadata_utils import flatten_metadata
 
 ST_APP_NAME = "app_name"
-ST_APP_VERSION = "app_version"
-ST_APP_ID = "app_id"
+ST_RECORDS_LIMIT = "records_limit"
 
 
 def set_page_config(page_title: Optional[str] = None):
@@ -41,6 +41,9 @@ def set_page_config(page_title: Optional[str] = None):
         logo_small = str(static_resource("dashboard", "ux/trulens_squid.svg"))
 
     st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
+
+    if ST_RECORDS_LIMIT not in st.session_state:
+        st.session_state[ST_RECORDS_LIMIT] = RECORDS_LIMIT
 
 
 def add_query_param(param_name: str, param_value: str):
