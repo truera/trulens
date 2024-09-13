@@ -469,6 +469,7 @@ class TruSession(
 
         See [DB.migrate_database][trulens.core.database.base.DB.migrate_database].
         """
+        print(f"{text_utils.UNICODE_SQUID} Migrating DB ...")
         self.connector.migrate_database(**kwargs)
 
     def add_record(
