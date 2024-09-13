@@ -52,6 +52,7 @@ mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
 codespell = "^2.3"
+snowflake-cli-labs = "^2.8.1" # NOTE: used to run zip_wheels.sh
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
