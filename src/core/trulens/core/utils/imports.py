@@ -5,8 +5,6 @@ Utilities for importing python modules and optional importing.
 
 import builtins
 from dataclasses import dataclass
-from importlib import metadata
-from importlib import resources
 import inspect
 from inspect import cleandoc
 import logging
@@ -29,6 +27,14 @@ import pkg_resources
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
+
+
+if sys.version_info >= (3, 9):
+    from importlib import metadata
+    from importlib import resources
+else:
+    import importlib_metadata as metadata
+    import importlib_resources as resources
 
 
 def safe_importlib_package_name(package_name: str) -> str:
