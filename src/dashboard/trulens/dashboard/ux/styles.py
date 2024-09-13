@@ -149,8 +149,8 @@ for direction in valid_directions:
     direction_rules = {}
     direction_rules[f"cat-{CATEGORY.UNKNOWN.name.lower()}"] = "x == null"
     for i, cat in enumerate(categories):
-        op = ">=" if cat.compare is operator.ge else "<"
-        upper_op = "<" if cat.compare is operator.ge else ">="
+        op = ">=" if cat.compare is operator.ge else "<="
+        upper_op = "<=" if cat.compare is operator.ge else ">="
 
         css_class = f"cat-{cat.name}"
         if i < len(categories) - 1:

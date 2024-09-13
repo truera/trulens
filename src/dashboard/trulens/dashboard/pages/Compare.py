@@ -618,8 +618,10 @@ def _render_version_selectors(
             st.query_params["app_ids"] = ",".join(
                 str(app_id) for app_id in current_app_ids
             )
+
             records, feedback_cols = get_records_and_feedback(
-                app_name=app_name, app_ids=current_app_ids
+                app_name=app_name,
+                app_ids=current_app_ids,
             )
             records = _preprocess_df(records)
             col_data = {

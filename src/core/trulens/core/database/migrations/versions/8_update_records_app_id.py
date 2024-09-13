@@ -9,6 +9,11 @@ from alembic import op
 from sqlalchemy.orm.session import Session
 from trulens.core.database.orm import make_orm_for_prefix
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 # revision identifiers, used by Alembic.
 revision = "8"
 down_revision = "7"
@@ -27,6 +32,8 @@ def upgrade(config) -> None:
         orm = make_orm_for_prefix(table_prefix=prefix)
 
         apps = session.query(orm.AppDefinition).all()
+        if tqdm is not None:
+            apps = tqdm(apps, desc="Updating app_id in records table")
         for app in apps:
             op.execute(
                 f"UPDATE {prefix + 'records'} SET app_id = '{app.app_id}' WHERE app_id = '{app.app_version}'"
