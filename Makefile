@@ -186,7 +186,7 @@ install-wheels:
 # Release Steps:
 ## Step: Clean repo:
 clean:
-	git clean --dry-run -fxdpoe
+	git clean --dry-run -fxd
 	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
