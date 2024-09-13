@@ -34,9 +34,9 @@ def upgrade(config) -> None:
                 continue
             app_json = json.loads(app.app_json)
             app_json["app_id"] = app.app_id
-            if "app_name" in app_json:
+            if "app_name" not in app_json:
                 app_json["app_name"] = app.app_name
-            if "app_version" in app_json:
+            if "app_version" not in app_json:
                 app_json["app_version"] = app.app_version
             app.app_json = json.dumps(app_json)
         session.commit()

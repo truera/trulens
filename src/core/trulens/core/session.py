@@ -15,6 +15,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     Optional,
     Sequence,
     Tuple,
@@ -24,6 +25,7 @@ import warnings
 
 import pandas
 import pydantic
+from trulens.core import experimental as mod_experimental
 from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
 from trulens.core.database.connector import DBConnector
@@ -54,7 +56,11 @@ with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
 logger = logging.getLogger(__name__)
 
 
-class TruSession(pydantic.BaseModel, python.SingletonPerName):
+class TruSession(
+    mod_experimental._WithExperimentalSettings,
+    pydantic.BaseModel,
+    python.SingletonPerName,
+):
     """TruSession is the main class that provides an entry points to trulens.
 
     TruSession lets you:
@@ -94,6 +100,9 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector]
             is created.
 
+        experimental_feature_flags: Experimental feature flags. See
+            [ExperimentalSettings][trulens.core.experimental.ExperimentalSettings].
+
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].
             Mutually exclusive with `connector`.
@@ -104,10 +113,11 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
     )
 
     RETRY_RUNNING_SECONDS: float = 60.0
-    """How long to wait (in seconds) before restarting a feedback function that has already started
+    """How long to wait (in seconds) before restarting a feedback function that
+    has already started
 
-    A feedback function execution that has started may have stalled or failed in a bad way that did not record the
-    failure.
+    A feedback function execution that has started may have stalled or failed in
+    a bad way that did not record the failure.
 
     See also:
         [start_evaluator][trulens.core.session.TruSession.start_evaluator]
@@ -155,13 +165,33 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
         assert isinstance(inst, TruSession)
         return inst
 
-    def __init__(self, connector: Optional[DBConnector] = None, **kwargs):
+    def __str__(self) -> str:
+        return f"TruSession({self.connector})"
+
+    # For WithExperimentalSetttings mixin's WithIdentString requirement
+    def _ident_str(self) -> str:
+        if self.connector is None:
+            return "TruSession(no connector)"
+
+        return self.connector._ident_str()
+
+    def __init__(
+        self,
+        connector: Optional[DBConnector] = None,
+        experimental_feature_flags: Optional[
+            Union[
+                Mapping[mod_experimental.Feature, bool],
+                Iterable[mod_experimental.Feature],
+            ]
+        ] = None,
+        **kwargs,
+    ):
         if python.safe_hasattr(self, "connector"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             if connector is not None:
                 logger.warning(
-                    "Tru was already initialized. Cannot change database configuration after initialization."
+                    "TruSession was already initialized. Cannot change database configuration after initialization."
                 )
                 self.warning()
             return
@@ -184,6 +214,10 @@ class TruSession(pydantic.BaseModel, python.SingletonPerName):
             connector=connector or DefaultDBConnector(**connector_args),
             **self_args,
         )
+
+        # for WithExperimentalSettings mixin
+        if experimental_feature_flags is not None:
+            self.experimental_set_features(experimental_feature_flags)
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing

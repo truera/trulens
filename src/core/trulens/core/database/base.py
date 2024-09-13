@@ -13,6 +13,7 @@ from trulens.core.schema.feedback import FeedbackResult
 from trulens.core.schema.feedback import FeedbackResultStatus
 from trulens.core.schema.groundtruth import GroundTruth
 from trulens.core.schema.record import Record
+from trulens.core.utils import text as text_utils
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.serial import JSONized
 from trulens.core.utils.serial import SerialModel
@@ -39,7 +40,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 """Default value for option to redact secrets before writing out data to database."""
 
 
-class DB(SerialModel, abc.ABC):
+class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     """Abstract definition of databases used by trulens.
 
     [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
@@ -54,6 +55,13 @@ class DB(SerialModel, abc.ABC):
 
     May be useful in some databases where trulens is not the only app.
     """
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}"
+
+    # WithIdentString requirement:
+    def _ident_str(self) -> str:
+        return f"{self.__class__.__name__}"
 
     def _json_str_of_obj(self, obj: Any) -> str:
         return json_str_of_obj(obj, redact_keys=self.redact_keys)
@@ -304,15 +312,23 @@ class DB(SerialModel, abc.ABC):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_apps(self) -> Iterable[JSONized[AppDefinition]]:
+    def get_apps(
+        self, app_name: Optional[mod_types_schema.AppName] = None
+    ) -> Iterable[JSONized[AppDefinition]]:
         """Get all apps."""
 
         raise NotImplementedError()
+
+    def update_app_metadata(
+        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
+    ) -> Optional[AppDefinition]:
+        """Update the metadata of an app."""
 
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_name: Optional[mod_types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
