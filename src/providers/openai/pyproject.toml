@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-openai"
-version = "1.0.1"
+version = "1.0.2a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -30,9 +30,8 @@ classifiers = [
 python = "^3.9"
 trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
-openai = "^1.37"
-langchain-openai = "^0.1.19"
-langchain-community = "^0.2.10"
+openai = "^1.0.0"
+langchain-community = ">=0.0.20"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
