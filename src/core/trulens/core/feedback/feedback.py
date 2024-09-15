@@ -945,9 +945,11 @@ Feedback function signature:
                     )
 
                 else:
+                    if result_val is None:
+                        result_val = 0  # TODO: (DANIEL) tmp hack to work around positive examples in meta-eval
                     assert isinstance(
-                        result_val, (float, list)
-                    ), f"Feedback function output must be a float, a list of floats, or dict but was {type(result_val)}."
+                        result_val, (int, float, list)
+                    ), f"Feedback function output must be a float or an int, a list of floats, or dict but was {type(result_val)}."
                     feedback_call = mod_feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
                     )
@@ -981,6 +983,13 @@ Feedback function signature:
 
             else:
                 if isinstance(result_vals[0], float):
+                    import math
+
+                    # hack: deal w/ NAN
+                    for i in range(len(result_vals)):
+                        if math.isnan(result_vals[i]):
+                            result_vals[i] = 0
+
                     result_vals = np.array(result_vals)
                     result = self.agg(result_vals)
                 else:

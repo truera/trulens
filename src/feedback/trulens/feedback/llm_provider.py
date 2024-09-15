@@ -1572,8 +1572,6 @@ class LLMProvider(Provider):
                 criteria, output_space
             )
 
-            print(Groundedness.system_prompt)
-
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)

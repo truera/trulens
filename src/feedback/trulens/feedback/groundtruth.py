@@ -3,7 +3,6 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
-    Iterable,
     List,
     Optional,
     Tuple,
@@ -722,7 +721,9 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
     )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""
 
-    true_labels: List[int]  # ground truth labels in [0, 1, 0, ...] format
+    true_labels: List[
+        int | float
+    ]  # ground truth labels in [0, 1, 0, ...] format
     custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
 
     k: Optional[int] = (
@@ -759,7 +760,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Area under the ROC curve
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         return roc_auc_score(self.true_labels, scores)
 
@@ -774,7 +775,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Kendall's tau
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         tau, _p_value = stats.kendalltau(scores, self.true_labels).correlation
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
@@ -793,7 +794,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Spearman correlation
 
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
@@ -812,7 +813,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Pearson correlation
 
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
@@ -830,7 +831,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
         - float: Cohen's Kappa score.
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
 
         if len(self.true_labels) != len(scores):
@@ -842,6 +843,110 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         kappa = cohen_kappa_score(self.true_labels, scores)
         return kappa
 
+    def recall(self, scores: List[float] | List[List], threshold=0.5):
+        """
+        Calculates recall given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The recall score.
+        """
+
+        try:
+            if isinstance(scores[0], List):
+                scores = [score for score, _ in scores]
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            logger.error(f"scores processing failed in Recall aggregator: {e}")
+            print(f"scores processing failed in Recall aggregator: {e}")
+        # Convert scores to binary predictions based on the threshold
+        predictions = [1 if score >= threshold else 0 for score in scores]
+
+        # Calculate true positives and false negatives
+        true_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 1
+        )
+        false_negatives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 0
+        )
+
+        # Handle the case where there are no actual positives to avoid division by zero
+        if true_positives + false_negatives == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate recall
+        recall = true_positives / (true_positives + false_negatives)
+        return recall
+
+    def precision(self, scores: List[float] | List[List], threshold=0.5):
+        """
+        Calculates precision given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The precision score.
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+
+        # Convert scores to binary predictions based on the threshold
+        predictions = [1 if score >= threshold else 0 for score in scores]
+
+        # Calculate true positives and false positives
+        true_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 1
+        )
+        false_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 0 and pred == 1
+        )
+
+        # Handle the case where there are no predicted positives to avoid division by zero
+        if true_positives + false_positives == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate precision
+        precision = true_positives / (true_positives + false_positives)
+        return precision
+
+    def f1_score(self, scores: List[float] | List[List], threshold=0.5):
+        """
+        Calculates the F1 score given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The F1 score.
+        """
+        # Calculate precision and recall
+        precision = self.precision(scores, threshold)
+        recall = self.recall(scores, threshold)
+
+        # Handle the case where both precision and recall are zero to avoid division by zero
+        if precision + recall == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate F1 score
+        f1 = 2 * (precision * recall) / (precision + recall)
+        return f1
+
     def brier_score(self, scores: List[float] | List[List]) -> float:
         """
         assess both calibration and sharpness of the probability estimates
@@ -850,7 +955,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Brier score
         """
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
         brier_score = 0
@@ -920,10 +1025,8 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Mean absolute error
         """
 
-        print(f"MAE scores: {scores}")
-
         # TODO: refactor this, this is to deal with COT type of response from feedback functions
-        if isinstance(scores[0], Iterable):
+        if isinstance(scores[0], List):
             scores = [score for score, _ in scores]
             print(f"flatten scores: {scores}")
 

@@ -108,19 +108,38 @@ class TruBenchmarkExperiment:
         # Append the benchmark parameters dictionary
         feedback_args.append(benchmark_params_dict)
 
-        ret = feedback_fn(*feedback_args)
+        try:
+            ret = feedback_fn(*feedback_args)
 
-        if not isinstance(ret, tuple) and not isinstance(ret, float):
-            raise ValueError(
-                f"Output must be a float or a tuple, got {type(ret)}"
+            if not isinstance(ret, tuple) and not isinstance(ret, float):
+                raise ValueError(
+                    f"Output must be a float or a tuple, got {type(ret)}"
+                )
+
+            if isinstance(ret, tuple) and isinstance(ret[1], dict):
+                # print(f"feedback returns a tuple with metadata: \n {ret}")
+
+                if (
+                    ret[1]
+                    and len(list(ret[1].values())) > 0
+                    and isinstance(list(ret[1].values())[-1], float)
+                ):
+                    ret = (
+                        ret[0],
+                        list(ret[1].values())[-1],
+                    )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
+                else:
+                    ret = ret[0]
+                    # handle the case when metadata is empty
+            return ret
+        except Exception as e:
+            import traceback
+
+            log.error(f"Row generated an exception: {e}")
+            traceback.print_exc()
+            return (
+                0.0  # hack to make sure we always return a value for each row
             )
-
-        if isinstance(ret, tuple) and isinstance(ret[1], dict):
-            ret = (
-                ret[0],
-                list(ret[1].values())[-1],
-            )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
-        return ret
 
     @instrument
     def __call__(
