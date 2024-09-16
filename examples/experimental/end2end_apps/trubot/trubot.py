@@ -116,7 +116,7 @@ def get_or_make_app(
     pp.pprint(f"Starting a new conversation with {app_version}.")
 
     # Embedding needed for Pinecone vector db.
-    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")  # 1536 dims
     docsearch = Pinecone.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )

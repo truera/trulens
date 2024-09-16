@@ -64,7 +64,7 @@ f_context_relevance = (
 # @st.cache_data
 def generate_response(prompt):
     # Embedding needed for Pinecone vector db.
-    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")  # 1536 dims
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")  # 1536 dims
     docsearch = Pinecone.from_existing_index(
         index_name="llmdemo", embedding=embedding
     )
