@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/trulens_providers_cortex-{{ version }}.tar.gz
-  sha256: 0d6be2ea0c0e578b54e90305974cf05d01480f5df2be6b1c09a80c02630e169b
+  sha256: a86031b067c7659e713612939092f0a8ece92c6edb27cde381a11feceec700c9
 
 build:
   noarch: python

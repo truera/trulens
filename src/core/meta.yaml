@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/trulens_core-{{ version }}.tar.gz
-  sha256: 3d262120d24f62d75c197f13ef42465583e5c4b6340316a904be659803912c80
+  sha256: 0386adecf1dde23a469bbfcb93b460b45f1891fba7f0b2bc14a685724340544a
 
 build:
   noarch: python
@@ -55,3 +55,4 @@ extra:
   recipe-maintainers:
     - sfc-gh-srudenko
     - sfc-gh-chu
+
