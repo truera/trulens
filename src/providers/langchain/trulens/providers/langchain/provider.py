@@ -66,7 +66,20 @@ class Langchain(LLMProvider):
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.invoke(messages, **kwargs).content
+            predict = self.endpoint.chain.invoke(messages, **kwargs)
+            if isinstance(self.endpoint.chain, BaseChatModel):
+                if not isinstance(predict, BaseMessage):
+                    raise ValueError(
+                        "`chain.invoke` did not return a `langchain_core.messages.BaseMessage` as expected!"
+                    )
+                predict = predict.content
+            elif isinstance(self.endpoint.chain, BaseLLM):
+                if not isinstance(predict, str):
+                    raise ValueError(
+                        "`chain.invoke` did not return a `str` as expected!"
+                    )
+            else:
+                raise ValueError("Unexpected `chain` type!")
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
