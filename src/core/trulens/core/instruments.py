@@ -711,7 +711,8 @@ class Instrument:
 
                 return rets
 
-            # HACK: temporary workaround, see App._set_context_vars.
+            # HACK: disable these to debug context issues. See
+            # App._set_context_vars .
             WithInstrumentCallbacks._stack_contexts.reset(stacks_token)
             WithInstrumentCallbacks._context_contexts.reset(context_token)
 

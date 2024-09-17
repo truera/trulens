@@ -1197,9 +1197,11 @@ class App(
         return
 
     def _set_context_vars(self):
-        # HACK: Setting/resetting all context vars used in trulens around the
-        # app context manangers due to bugs in trying to set/reset them where
-        # more appropriate.
+        # HACK: For debugging purposes, try setting/resetting all context vars
+        # used in trulens around the app context manangers due to bugs in trying
+        # to set/reset them where more appropriate. This is not ideal as not
+        # resetting context vars where appropriate will result possibly in
+        # incorrect tracing information.
 
         from trulens.core.feedback.endpoint import Endpoint
         from trulens.core.instruments import WithInstrumentCallbacks
@@ -1217,6 +1219,8 @@ class App(
         # HACK: See _set_context_vars.
         for var, token in self._context_vars_tokens.items():
             var.reset(token)
+
+        del self._context_vars_tokens[var]
 
     # For use as a context manager.
     async def __aenter__(self):

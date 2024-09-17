@@ -612,7 +612,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
         # Push the endpoints into the contextvars for wrappers inside the
         # following call to retrieve.
-        # HACK: temporary workaround, see App._set_context_vars.
         endpoints_token = Endpoint._context_endpoints.set(endpoints)  # noqa: F841
 
         # context_vars = contextvars.copy_context()
@@ -621,8 +620,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         }
 
         # Call the function.
-        # context_vars = contextvars.copy_context()
-
         result: T = __func(*args, **kwargs)
 
         def rewrap(result):
@@ -638,10 +635,8 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         result = rewrap(result)
 
         # Pop the endpoints from the contextvars.
-        # HACK: temporary workaround, see App._set_context_vars.
-        # Endpoint._context_endpoints.reset(endpoints_token)
-
-        # iprint("_track_costs reset", __func)
+        # Optionally disable to debug context issues. See App._set_context_vars.
+        Endpoint._context_endpoints.reset(endpoints_token)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
@@ -649,7 +644,7 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
 
     def track_cost(
         self,
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[T],
+        __func: mod_asynchro_utils.CallableMaybeAwaitable[..., T],
         *args,
         **kwargs,
     ) -> Tuple[T, EndpointCallback]:

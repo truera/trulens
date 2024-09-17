@@ -61,8 +61,9 @@ def _format_unit(
 
 
 def format_size(size: int) -> str:
-    """Format a quantity into a human-readable string. This will use SI prefixes.
-    Implementation details are largely copied from [millify](https://github.com/azaitsev/millify).
+    """Format a size (in bytes) into a human-readable string. This will use SI
+    prefixes. Implementation details are largely copied from
+    [millify](https://github.com/azaitsev/millify).
 
     Args:
         size: The quantity to format.
@@ -70,7 +71,8 @@ def format_size(size: int) -> str:
     Returns:
         str: The formatted quantity.
     """
-    units = ["", "k", "M", "B", "T", "P", "E", "Z", "Y"]
+
+    units = ["", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     unit_idx = max(
         0,
         min(
