@@ -38,7 +38,7 @@ import yaml
 from tests.utils import find_path
 from tests.utils import print_referent_lens
 
-OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
+OPTIONAL_VAR = "TEST_OPTIONAL"
 """Env var that were to evaluate to true indicates that optional tests are to be
 run."""
 
@@ -91,9 +91,9 @@ def optional_test(testmethodorclass):
     all optional packages have been installed.
     """
 
-    return unittest.skipIf(
-        not os.environ.get(OPTIONAL_ENV_VAR), "optional test"
-    )(testmethodorclass)
+    return unittest.skipIf(not os.environ.get(OPTIONAL_VAR), "optional test")(
+        testmethodorclass
+    )
 
 
 def requiredonly_test(testmethodorclass):
@@ -105,7 +105,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
+        os.environ.get(OPTIONAL_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
         "not an optional test",
     )(testmethodorclass)
 
