@@ -31,7 +31,6 @@ from trulens.core.utils.text import format_size
 
 T = TypeVar("T")
 
-
 Member = namedtuple("Member", ["obj", "name", "qualname", "val", "typ"])
 """Class/module member information.
 
@@ -640,9 +639,12 @@ class GetReferent(serial_utils.Step):
 
 
 def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
-    """Find the reference path between two objects by their id.
+    """Find the reference path between two python objects by their id.
 
-    Returns None if a path is not found.
+    Returns None if a path is not found. Tries to describe the path in terms of
+    dictionary or array lookups but may fall back to referents which only
+    indicate that an object is linked to another as per python's GC but how the
+    link is represented is not known to us.
     """
 
     visited: Set[int] = set()
@@ -678,7 +680,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         try:
             final = final_ref.get()
         except Exception:
-            # Sometimes some overriding issues happen here.
+            # Sometimes some overrided object method issues happen here.
             continue
 
         if isinstance(final, dict):
@@ -732,6 +734,12 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
                     continue
                 if not gc.is_tracked(value):
                     continue
+                try:
+                    if isinstance(value, weakref.ReferenceType):
+                        continue
+                except Exception:
+                    # Here to avoid issues with overridden __instancecheck__.
+                    continue
 
                 value_ref = RefLike(obj=value)
                 if value_ref.ref_id not in visited:
@@ -744,7 +752,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
     return None
 
 
-def print_lens(lens: Optional[serial_utils.Lens]) -> None:
+def print_referent_lens(lens: Optional[serial_utils.Lens]) -> None:
     """Print a lens that may contain GetReferent steps.
 
     Prints part of the referent string representation.
