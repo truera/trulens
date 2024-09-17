@@ -11,13 +11,13 @@ from trulens.apps.llamaindex import TruLlama
 from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 from tests.test import optional_test
 
 
 # All tests require optional packages.
 @optional_test
-class TestLlamaIndex(JSONTestCase):
+class TestLlamaIndex(TruTestCase):
     # TODO: Figure out why use of async test cases causes "more than one record
     # collected"
     # Need to use this:

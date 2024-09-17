@@ -22,12 +22,12 @@ from trulens.feedback.dummy.provider import DummyProvider
 from trulens.providers.huggingface.provider import Dummy
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 _GOLDEN_PATH = Path("tests") / "e2e" / "golden"
 
 
-class TestSerial(JSONTestCase):
+class TestSerial(TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):

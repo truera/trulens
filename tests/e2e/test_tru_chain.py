@@ -20,12 +20,12 @@ from trulens.core.schema.record import Record
 from trulens.core.utils.asynchro import sync
 from trulens.core.utils.keys import check_keys
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 from tests.test import async_test
 from tests.test import optional_test
 
 
-class TestTruChainAsync(JSONTestCase):
+class TestTruChainAsync(TruTestCase):
     """Test async in the TruChain class."""
 
     @classmethod
@@ -42,7 +42,7 @@ class TestTruChainAsync(JSONTestCase):
         )
 
 
-class TestTruChain(JSONTestCase):
+class TestTruChain(TruTestCase):
     """Test TruChain class."""
 
     # TODO: See problem in TestTruLlama.

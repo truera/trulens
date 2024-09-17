@@ -7,15 +7,16 @@ DummyAPI for its requests.
 
 from pathlib import Path
 from unittest import main
+import weakref
 
 from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 
-class TestDummy(JSONTestCase):
+class TestDummy(TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
@@ -55,6 +56,11 @@ class TestDummy(JSONTestCase):
             ]),
             unordereds=set(["calls"]),
         )
+
+        # Test for memory leaks.
+        ca_ref = weakref.ref(ca)
+        del ca, ta, recorder, rec
+        self.assertCollected(ca_ref)
 
 
 if __name__ == "__main__":
