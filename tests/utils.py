@@ -670,10 +670,10 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         try:
             final = final_ref.get()
         except Exception:
-            # Sometimes some overriding issues happen here.
+            # Sometimes some overrided object method issues happen here.
             continue
 
-        if isinstance(final, dict):
+        if isinstance(final, dict) and False:
             try:
                 for key, value in list(final.items()):
                     if value is None:
@@ -699,7 +699,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
                 # Some objects will override dict methods and might fail above.
                 pass
 
-        elif isinstance(final, (list, tuple)):
+        elif isinstance(final, (list, tuple)) and False:
             try:
                 for index, value in enumerate(final):
                     if value is None:
@@ -723,6 +723,12 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
                 if value is None:
                     continue
                 if not gc.is_tracked(value):
+                    continue
+                try:
+                    if isinstance(value, weakref.ReferenceType):
+                        continue
+                except Exception:
+                    # Here to avoid issues with overridden __instancecheck__.
                     continue
 
                 value_ref = RefLike(obj=value)

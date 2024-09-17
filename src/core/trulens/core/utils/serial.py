@@ -1,5 +1,4 @@
-"""
-Serialization utilities.
+"""Serialization utilities.
 
 TODO: Lens class: can we store just the python AST instead of building up our
 own "Step" classes to hold the same data? We are already using AST for parsing.
@@ -159,6 +158,15 @@ class Step(pydantic.BaseModel, Hashable):
         """
         raise NotImplementedError()
 
+    def get_sole_item(self, obj: Any) -> Any:
+        all_objects = list(self.get(obj))
+
+        assert (
+            len(all_objects) == 1
+        ), f"Step {self} did not address exactly a single object."
+
+        return all_objects[0]
+
 
 class Collect(Step):
     # Need something for `Step.validate` to tell that it is looking at Collect.
@@ -188,6 +196,8 @@ class StepItemOrAttribute(Step):
 
 
 class GetAttribute(StepItemOrAttribute):
+    """An attribute lookup step as in `someobject.someattribute`."""
+
     attribute: str
 
     # Hashable requirement.
@@ -228,6 +238,8 @@ class GetAttribute(StepItemOrAttribute):
 
 
 class GetIndex(Step):
+    """An index lookup step as in `someobject[5]`."""
+
     index: int
 
     # Hashable requirement
@@ -266,6 +278,8 @@ class GetIndex(Step):
 
 
 class GetItem(StepItemOrAttribute):
+    """An item lookup step as in `someobject["somestring"]`."""
+
     item: str
 
     # Hashable requirement
@@ -928,8 +942,11 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: "Lens"):
-        return Lens(path=self.path + other.path)
+    def __add__(self, other: Union[Lens, Step]) -> Lens:
+        if isinstance(other, Step):
+            return Lens(path=self.path + (other,))
+        else:
+            return Lens(path=self.path + other.path)
 
     def is_immediate_prefix_of(self, other: "Lens"):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(

@@ -29,6 +29,7 @@ import weakref
 
 import pydantic
 from pydantic import BaseModel
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSON_BASES
 from trulens.core.utils.serial import Lens
@@ -45,7 +46,20 @@ WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 """Env var for indicating whether golden expected results are to be written (if
 true) or read and compared (if false/undefined)."""
 
+TEST_TASKS_CLEANUP_VAR = "TEST_TASKS_CLEANUP"
+"""Env var that when set to true will cause tests to fail if there are any
+running tasks after the test completes."""
+
+TEST_THREADS_CLEANUP_VAR = "TEST_THREADS_CLEANUP"
+"""Env var that when set to true will cause tests to fail if there are any
+non-main threads running after the test completes."""
+
 ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
+"""Env var that when set to true will allow optional tests to be run."""
+
+WITH_REF_PATH_ENV_VAR = "WITH_REF_PATH"
+"""Env var that when set to true will print out the reference path to the given
+object that was not garbage collected in the `assertCollected` test."""
 
 
 def async_test(func):
@@ -528,12 +542,15 @@ class TruTestCase(WithJSONTestCase, TestCase):
         # GC-ed.
         if (
             obj is not None
-            and os.environ.get("WITH_REF_PATH", None) is not None
+            and os.environ.get(WITH_REF_PATH_ENV_VAR, None) is not None
         ):
+            caller_locals = python_utils.caller_frame(offset=1).f_globals
+
             with self.subTest(part="reference path"):
                 # Show the reference path to the given ref.
                 print(f"Reference path from globals to {ref}:")
-                path = find_path(id(globals()), id(obj))
+                print(caller_locals)
+                path = find_path(id(caller_locals), id(obj))
                 self.assertIsNotNone(path, "Couldn't find reference path.")
                 print_referent_lens(path)
 
@@ -562,7 +579,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             pass
 
         if running_tasks:
-            if os.environ.get("TEST_TASKS_CLEANUP", None) is not None:
+            if os.environ.get(TEST_TASKS_CLEANUP_VAR, None) is not None:
                 with self.subTest(part="running tasks"):
                     raise AssertionError(
                         f"Tasks still running: {running_tasks}"
@@ -576,7 +593,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
                 non_main_threads.append(thread)
 
         if non_main_threads:
-            if os.environ.get("TEST_THREADS_CLEANUP", None) is not None:
+            if os.environ.get(TEST_THREADS_CLEANUP_VAR, None) is not None:
                 with self.subTest(part="non-main threads"):
                     raise AssertionError(
                         f"Non-main threads still running: {non_main_threads}"
@@ -600,7 +617,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
         try:
             loop = asyncio.get_event_loop()
             print(f"  Loop still running: {loop}")
-            print("   Remaining tasks:")
+            print("  Remaining tasks:")
             for task in asyncio.all_tasks(loop):
                 running_tasks.append(task)
                 print("    " + str(task))
