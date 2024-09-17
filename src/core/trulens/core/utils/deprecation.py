@@ -27,8 +27,8 @@ def module_getattr_override(
     This expects deprecated names to be prefixed with `DEP_` followed by their
     original pre-deprecation name.
 
-    Example:
-        === Before deprecation
+    !!! example
+        === "Before deprecation"
             ```python
             # issue module import warning:
             package_dep_warn()
@@ -37,7 +37,7 @@ def module_getattr_override(
             something = ... actual working implementation or alias
             ```
 
-        === After deprecation
+        === "After deprecation"
             ```python
             # define deprecated attribute with None/any value but name with "DEP_"
             # prefix:
