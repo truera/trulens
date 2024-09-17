@@ -56,7 +56,7 @@ with imports_utils.OptionalImports(
 with imports_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
-    from trulens.providers.langchain.provider import Langchain
+    from trulens.providers.langchain.provider import LangChain
 
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
@@ -92,7 +92,7 @@ __all__ = [
     "Provider",
     "AzureOpenAI",
     "OpenAI",
-    "Langchain",
+    "LangChain",
     "LiteLLM",
     "Bedrock",
     "Huggingface",

@@ -9,7 +9,7 @@ trulens_eval:
     FeedbackMode: enum.EnumType
     Huggingface: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
-    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LangChain: pydantic._internal._model_construction.ModelMetaclass
     LiteLLM: pydantic._internal._model_construction.ModelMetaclass
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
@@ -391,7 +391,7 @@ trulens_eval.feedback:
     GroundTruthAgreement: pydantic._internal._model_construction.ModelMetaclass
     Huggingface: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
-    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LangChain: pydantic._internal._model_construction.ModelMetaclass
     LiteLLM: pydantic._internal._model_construction.ModelMetaclass
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
   lows:
@@ -536,7 +536,7 @@ trulens_eval.feedback.provider:
     Cortex: pydantic._internal._model_construction.ModelMetaclass
     Huggingface: pydantic._internal._model_construction.ModelMetaclass
     HuggingfaceLocal: pydantic._internal._model_construction.ModelMetaclass
-    Langchain: pydantic._internal._model_construction.ModelMetaclass
+    LangChain: pydantic._internal._model_construction.ModelMetaclass
     LiteLLM: pydantic._internal._model_construction.ModelMetaclass
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
@@ -960,8 +960,8 @@ trulens_eval.feedback.provider.langchain:
   __class__: builtins.module
   highs: {}
   lows:
-    Langchain: pydantic._internal._model_construction.ModelMetaclass
-trulens_eval.feedback.provider.langchain.Langchain:
+    LangChain: pydantic._internal._model_construction.ModelMetaclass
+trulens_eval.feedback.provider.langchain.LangChain:
   __bases__:
   - trulens_eval.feedback.provider.base.LLMProvider
   __class__: pydantic._internal._model_construction.ModelMetaclass

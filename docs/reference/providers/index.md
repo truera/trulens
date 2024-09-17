@@ -12,7 +12,7 @@ some derive from [LLMProvider][trulens.feedback.llm_provider.LLMProvider].
     pip install trulens-providers-cortex
     ```
 
-- [Langchain][trulens.providers.langchain.provider.Langchain] in package
+- [LangChain][trulens.providers.langchain.provider.LangChain] in package
   `trulens-providers-langchain`.
 
     ```bash

@@ -31,7 +31,7 @@ Providers which use large language models for feedback evaluation:
   [AzureOpenAI provider][trulens.providers.openai.AzureOpenAI]
 - [Bedrock provider][trulens.providers.bedrock.Bedrock]
 - [LiteLLM provider][trulens.providers.litellm.LiteLLM]
-- [_LangChain_ provider][trulens.providers.langchain.Langchain]
+- [_LangChain_ provider][trulens.providers.langchain.LangChain]
 
 Feedback functions in common across these providers are in their abstract class
 [LLMProvider][trulens.feedback.LLMProvider].

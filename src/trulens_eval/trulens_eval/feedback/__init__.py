@@ -45,7 +45,7 @@ with imports_utils.OptionalImports(
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
-    from trulens.providers.langchain.provider import Langchain
+    from trulens.providers.langchain.provider import LangChain
 
 with imports_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_PROVIDER_CORTEX
@@ -62,7 +62,7 @@ __all__ = [
     "HuggingfaceLocal",
     "LiteLLM",
     "Bedrock",
-    "Langchain",
+    "LangChain",
     "Cortex",
 ]
 

@@ -14,11 +14,11 @@
 from importlib.metadata import version
 
 from trulens.core.utils.imports import safe_importlib_package_name
-from trulens.providers.langchain.provider import Langchain
+from trulens.providers.langchain.provider import LangChain
 
 __version__ = version(safe_importlib_package_name(__package__ or __name__))
 
 
 __all__ = [
-    "Langchain",
+    "LangChain",
 ]

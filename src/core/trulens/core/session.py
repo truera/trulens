@@ -75,7 +75,7 @@ class TruSession(
     referred to by `database_url`.
 
     Supported App Types:
-        [TruChain][trulens.apps.langchain.TruChain]: Langchain
+        [TruChain][trulens.apps.langchain.TruChain]: LangChain
             apps.
 
         [TruLlama][trulens.apps.llamaindex.TruLlama]: Llama Index
