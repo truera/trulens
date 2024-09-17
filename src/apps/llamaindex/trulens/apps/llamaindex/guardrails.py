@@ -65,9 +65,8 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
         3. Filter out nodes that do not meet the minimum threshold.
         4. Synthesize with only the filtered nodes.
 
-        Parameters:
-            query: QueryBundle - the query bundle to search for relevant nodes.
-
+        Args:
+            query (QueryBundle): The query bundle to search for relevant nodes.
             **kwargs: additional keyword arguments.
 
         Returns:
