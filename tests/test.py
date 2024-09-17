@@ -54,10 +54,10 @@ TEST_THREADS_CLEANUP_VAR = "TEST_THREADS_CLEANUP"
 """Env var that when set to true will cause tests to fail if there are any
 non-main threads running after the test completes."""
 
-ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
+ALLOW_OPTIONAL_VAR = "ALLOW_OPTIONALS"
 """Env var that when set to true will allow optional tests to be run."""
 
-WITH_REF_PATH_ENV_VAR = "WITH_REF_PATH"
+WITH_REF_PATH_VAR = "WITH_REF_PATH"
 """Env var that when set to true will print out the reference path to the given
 object that was not garbage collected in the `assertCollected` test."""
 
@@ -105,8 +105,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR)
-        or os.environ.get(ALLOW_OPTIONAL_ENV_VAR),
+        os.environ.get(OPTIONAL_ENV_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
         "not an optional test",
     )(testmethodorclass)
 
@@ -542,7 +541,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
         # GC-ed.
         if (
             obj is not None
-            and os.environ.get(WITH_REF_PATH_ENV_VAR, None) is not None
+            and os.environ.get(WITH_REF_PATH_VAR, None) is not None
         ):
             caller_globals = python_utils.caller_frame(offset=1).f_globals
 
