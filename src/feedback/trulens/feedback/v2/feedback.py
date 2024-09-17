@@ -546,9 +546,7 @@ class Harmfulness(Moderation, WithPrompt):
 class Insensitivity(Semantics, WithPrompt):  # categorize
     # openai.insensitivity
     # openai.insensitivity_with_cot_reasons
-    """
-    Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf .
-    """
+    """Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf ."""
 
     # langchain Criteria.INSENSITIVITY
     system_prompt: ClassVar[str] = cleandoc(

@@ -383,16 +383,17 @@ def check_keys(*keys: str) -> None:
     Check that all keys named in `*args` are set as env vars. Will fail with a
     message on how to set missing key if one is missing. If all are provided
     somewhere, they will be set in the env var as the canonical location where
-    we should expect them subsequently. Example:
+    we should expect them subsequently.
 
-    ```python
-    from trulens.core.utils.keys import check_keys
+    Example:
+        ```python
+        from trulens.core.utils.keys import check_keys
 
-    check_keys(
-        "OPENAI_API_KEY",
-        "HUGGINGFACE_API_KEY"
-    )
-    ```
+        check_keys(
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY"
+        )
+        ```
     """
 
     kvals = _collect_keys(*keys)
@@ -416,7 +417,6 @@ def check_or_set_keys(*args: str, **kwargs: Dict[str, str]) -> None:
     env variables for each of them. We use env variables as the canonical
     storage of these keys, regardless of how they were specified. Values can
     also be specified explicitly to this method. Example:
-
     ```python
     from trulens.core.utils.keys import check_or_set_keys
 

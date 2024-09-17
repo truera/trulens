@@ -4,7 +4,6 @@ This wrapper is the most flexible option for instrumenting an application, and
 can be used to instrument any custom python class.
 
 Example:
-
     Consider a mock question-answering app with a context retriever component coded
     up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
@@ -55,25 +54,24 @@ The owner classes of any decorated method is then viewed as an app component. In
 this example, case `CustomApp` and `CustomRetriever` are components.
 
     Example:
+        ### `example.py`
 
-    ### `example.py`
+        ```python
+        from custom_app import CustomApp
+        from trulens.apps.custom import TruCustomApp
 
-    ```python
-    from custom_app import CustomApp
-    from trulens.apps.custom import TruCustomApp
+        custom_app = CustomApp()
 
-    custom_app = CustomApp()
+        # Normal app Usage:
+        response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-    # Normal app Usage:
-    response = custom_app.respond_to_query("What is the capital of Indonesia?")
+        # Wrapping app with `TruCustomApp`:
+        tru_recorder = TruCustomApp(ca)
 
-    # Wrapping app with `TruCustomApp`:
-    tru_recorder = TruCustomApp(ca)
-
-    # Tracked usage:
-    with tru_recorder:
-        custom_app.respond_to_query, input="What is the capital of Indonesia?")
-    ```
+        # Tracked usage:
+        with tru_recorder:
+            custom_app.respond_to_query, input="What is the capital of Indonesia?")
+        ```
 
     `TruCustomApp` constructor arguments are like in those higher-level
 apps as well including the feedback functions, metadata, etc.
