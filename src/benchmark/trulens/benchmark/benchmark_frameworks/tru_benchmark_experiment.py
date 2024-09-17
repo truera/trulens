@@ -25,34 +25,34 @@ class BenchmarkParams(BaseModel):
 
 class TruBenchmarkExperiment:
     """
-    Example usage:
+    !!! example
+        ``` python
+        snowflake_connection_parameters = {
+            "account": os.environ["SNOWFLAKE_ACCOUNT"],
+            "user": os.environ["SNOWFLAKE_USER"],
+            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+            "database": os.environ["SNOWFLAKE_DATABASE"],
+            "schema": os.environ["SNOWFLAKE_SCHEMA"],
+            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+        }
+        cortex = Cortex(
+            snowflake.connector.connect(**snowflake_connection_parameters)
+            model_engine="snowflake-arctic",
+        )
 
-    snowflake_connection_parameters = {
-        "account": os.environ["SNOWFLAKE_ACCOUNT"],
-        "user": os.environ["SNOWFLAKE_USER"],
-        "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-        "database": os.environ["SNOWFLAKE_DATABASE"],
-        "schema": os.environ["SNOWFLAKE_SCHEMA"],
-        "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
-    }
-    cortex = Cortex(
-        snowflake.connector.connect(**snowflake_connection_parameters)
-        model_engine="snowflake-arctic",
-    )
+        def context_relevance_ff_to_score(input, output, temperature=0):
+            return cortex.context_relevance(question=input, context=output, temperature=temperature)
 
-    def context_relevance_ff_to_score(input, output, temperature=0):
-        return cortex.context_relevance(question=input, context=output, temperature=temperature)
+        tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
+        mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
 
-
-    tru_labels = [1, 0, 0, ...] # ground truth labels collected from ground truth data collection
-    mae_agg_func = GroundTruthAggregator(true_labels=true_labels).mae
-
-    tru_benchmark_artic = session.BenchmarkExperiment(
-        app_name="MAE",
-        feedback_fn=context_relevance_ff_to_score,
-        agg_funcs=[mae_agg_func],
-        benchmark_params=BenchmarkParams(temperature=0.5),
-    )
+        tru_benchmark_arctic = session.BenchmarkExperiment(
+            app_name="MAE",
+            feedback_fn=context_relevance_ff_to_score,
+            agg_funcs=[mae_agg_func],
+            benchmark_params=BenchmarkParams(temperature=0.5),
+        )
+        ```
     """
 
     def __init__(
@@ -63,10 +63,12 @@ class TruBenchmarkExperiment:
     ):
         """Create a benchmark experiment class which defines custom
         feedback functions and aggregators to evaluate the feedback function on a ground truth dataset.
+
         Args:
             feedback_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
             agg_funcs (List[AggCallable]): list of aggregation functions to compute metrics on the feedback scores
             benchmark_params (BenchmarkParams): benchmark configuration parameters
+
         """
 
         self.feedback_fn = feedback_fn
@@ -129,7 +131,10 @@ class TruBenchmarkExperiment:
     ]:
         """Collect the list of generated feedback scores as input to the benchmark aggregation functions
         Note the order of generated scores must be preserved to match the order of the true labels.
-        ground_truth pd.DataFrame: ground truth dataset / collection to evaluate the feedback function on
+
+        Args:
+            ground_truth (pd.DataFrame): ground truth dataset / collection to evaluate the feedback function on
+
         Returns:
             List[float]: feedback scores after running the benchmark on all entries in ground truth data
         """
@@ -186,7 +191,6 @@ class TruBenchmarkExperiment:
             return scores
 
 
-@staticmethod
 def create_benchmark_experiment_app(
     app_name: str,
     app_version: str,

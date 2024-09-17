@@ -12,13 +12,10 @@ class Bedrock(LLMProvider):
     """
     A set of AWS Feedback Functions.
 
-    Parameters:
-
-    - model_id (str, optional): The specific model id. Defaults to
-        "amazon.titan-text-express-v1".
-
-    - All other args/kwargs passed to BedrockEndpoint and subsequently
-        to boto3 client constructor.
+    Args:
+        **args: args passed to BedrockEndpoint and subsequently to boto3 client constructor.
+        model_id (str, optional): The specific model id. Defaults to "amazon.titan-text-express-v1".
+        **kwargs: kwargs passed to BedrockEndpoint and subsequently to boto3 client constructor.
     """
 
     DEFAULT_MODEL_ID: ClassVar[str] = "amazon.titan-text-express-v1"

@@ -82,8 +82,7 @@ ATTRIBUTE_ERROR_MESSAGE = """
 {class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
 you are calling a {app_class_name} method, retrieve it from that app instead of from
 {class_name}. If you need to record your app's behavior, use {class_name} as a context
-manager as in this example:
-
+manager as in this Example:
 ```python
     app: {app_class_name} = ...  # your app
     truapp: {class_name} = {class_name}(app, ...)  # the truera recorder

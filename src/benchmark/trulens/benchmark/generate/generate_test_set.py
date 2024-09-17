@@ -15,8 +15,8 @@ class GenerateTestSet:
         """
         Initialize the GenerateTestSet class.
 
-        Parameters:
-        app_callable (Callable): The application callable to be used for generating the test set.
+        Args:
+            app_callable (Callable): The application callable to be used for generating the test set.
         """
         self.app_callable = app_callable
 
@@ -25,11 +25,11 @@ class GenerateTestSet:
         Generates themes of the context available using a RAG application.
         These themes, which comprise the test breadth, will be used as categories for test set generation.
 
-        Parameters:
-        test_breadth (int): The breadth of the test.
+        Args:
+            test_breadth (int): The breadth of the test.
 
         Returns:
-        list: A list of test categories.
+            list: A list of test categories.
         """
         logger.info("Generating test categories...")
         # generate categories of questions to test based on context provided.
@@ -46,11 +46,11 @@ class GenerateTestSet:
         """
         Formats the themes into a python list using an LLM.
 
-        Parameters:
-        themes (str): The themes to be formatted.
+        Args:
+            themes (str): The themes to be formatted.
 
         Returns:
-        list: A list of formatted themes.
+            list: A list of formatted themes.
         """
         theme_format = [f"theme {i + 1}" for i in range(test_breadth)]
         response = self.app_callable(
@@ -79,13 +79,13 @@ class GenerateTestSet:
         """
         Generate raw test prompts for a given category, optionally using few shot examples.
 
-        Parameters:
-        test_category (str): The category for which to generate test prompts.
-        test_depth (int): The depth of the test prompts.
-        examples (Optional[list]): An optional list of examples to guide the style of the questions.
+        Args:
+            test_category (str): The category for which to generate test prompts.
+            test_depth (int): The depth of the test prompts.
+            examples (Optional[list]): An optional list of examples to guide the style of the questions.
 
         Returns:
-        str: A string containing test prompts.
+            str: A string containing test prompts.
         """
         logger.info("Generating test prompts...")
         if examples:
@@ -110,11 +110,11 @@ class GenerateTestSet:
         """
         Format the raw test prompts into a python list using an LLM.
 
-        Parameters:
-        raw_test_prompts (str): The raw test prompts to be formatted.
+        Args:
+            raw_test_prompts (str): The raw test prompts to be formatted.
 
         Returns:
-        list: A list of formatted test prompts.
+            list: A list of formatted test prompts.
         """
         logger.info("Formatting test prompts...")
         formatted_prompt = (
@@ -138,13 +138,13 @@ class GenerateTestSet:
         """
         Generate test prompts for a given category, optionally using few shot examples.
 
-        Parameters:
-        test_category (str): The category for which to generate test prompts.
-        test_depth (int): The depth of the test prompts.
-        examples (Optional[list]): An optional list of examples to guide the style of the questions.
+        Args:
+            test_category (str): The category for which to generate test prompts.
+            test_depth (int): The depth of the test prompts.
+            examples (Optional[list]): An optional list of examples to guide the style of the questions.
 
         Returns:
-        list: A list of test prompts.
+            list: A list of test prompts.
         """
         test_prompts = self._generate_test_prompts(
             test_category, test_depth, examples
@@ -161,23 +161,26 @@ class GenerateTestSet:
         """
         Generate a test set, optionally using few shot examples provided.
 
-        Parameters:
-        test_breadth (int): The breadth of the test set.
-        test_depth (int): The depth of the test set.
-        examples (Optional[list]): An optional list of examples to guide the style of the questions.
+        Args:
+            test_breadth (int): The breadth of the test set.
+            test_depth (int): The depth of the test set.
+            examples (Optional[list]): An optional list of examples to guide the style of the questions.
 
         Returns:
-        dict: A dictionary containing the test set.
+            dict: A dictionary containing the test set.
 
-        Usage example:
+        Example:
+            ```python
+            # Instantiate GenerateTestSet with your app callable, in this case: rag_chain.invoke
+            test = GenerateTestSet(app_callable = rag_chain.invoke)
 
-        # Instantiate GenerateTestSet with your app callable, in this case: rag_chain.invoke
-        test = GenerateTestSet(app_callable = rag_chain.invoke)
-        # Generate the test set of a specified breadth and depth without examples
-        test_set = test.generate_test_set(test_breadth = 3, test_depth = 2)
-        # Generate the test set of a specified breadth and depth with examples
-        examples = ["Why is it hard for AI to plan very far into the future?", "How could letting AI reflect on what went wrong help it improve in the future?"]
-        test_set_with_examples = test.generate_test_set(test_breadth = 3, test_depth = 2, examples = examples)
+            # Generate the test set of a specified breadth and depth without examples
+            test_set = test.generate_test_set(test_breadth = 3, test_depth = 2)
+
+            # Generate the test set of a specified breadth and depth with examples
+            examples = ["Why is it hard for AI to plan very far into the future?", "How could letting AI reflect on what went wrong help it improve in the future?"]
+            test_set_with_examples = test.generate_test_set(test_breadth = 3, test_depth = 2, examples = examples)
+            ```
         """
         logger.info("Generating test set...")
         retry_count = 0

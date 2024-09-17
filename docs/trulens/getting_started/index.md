@@ -22,10 +22,3 @@
 ## 😍 Community
 
 * 🙋 [Slack](https://communityinviter.com/apps/aiqualityforum/josh).
-
-## 🏁 Releases
-
-{%
-   include-markdown "../../../RELEASES.md"
-   heading-offset=2
-%}
