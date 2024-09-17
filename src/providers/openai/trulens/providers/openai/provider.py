@@ -21,7 +21,6 @@ class OpenAI(LLMProvider):
     Create an OpenAI Provider with out of the box feedback functions.
 
     Example:
-
         ```python
         from trulens.providers.openai import OpenAI
         openai_provider = OpenAI()
@@ -119,7 +118,6 @@ class OpenAI(LLMProvider):
         speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -146,7 +144,6 @@ class OpenAI(LLMProvider):
         threatening speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -174,7 +171,6 @@ class OpenAI(LLMProvider):
         self harm.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -202,7 +198,6 @@ class OpenAI(LLMProvider):
         speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -230,7 +225,6 @@ class OpenAI(LLMProvider):
         sexual minors.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -259,7 +253,6 @@ class OpenAI(LLMProvider):
         violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -287,7 +280,6 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -315,7 +307,6 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -342,7 +333,6 @@ class OpenAI(LLMProvider):
         graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI

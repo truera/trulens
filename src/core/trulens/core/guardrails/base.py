@@ -19,7 +19,6 @@ class context_filter:
         keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
 
     Example:
-
         ```python
         feedback = Feedback(provider.context_relevance, name="Context Relevance")
         class RAG_from_scratch:

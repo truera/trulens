@@ -324,7 +324,6 @@ class LLMProvider(Provider):
         check the relevance of the context to the question.
 
         Example:
-
             ```python
             from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
@@ -382,7 +381,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
@@ -445,7 +443,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             from trulens.apps.llamaindex import TruLlama
             context = TruLlama.select_context(llamaindex_rag_app)
@@ -501,7 +498,6 @@ class LLMProvider(Provider):
         template to check the relevance of the response to a prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
@@ -536,7 +532,6 @@ class LLMProvider(Provider):
         thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = (
                 Feedback(provider.relevance_with_cot_reasons)
@@ -568,7 +563,6 @@ class LLMProvider(Provider):
         check the sentiment of some text.
 
         Example:
-
             ```python
             feedback = Feedback(provider.sentiment).on_output()
             ```
@@ -591,7 +585,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output()
             ```
@@ -616,7 +609,6 @@ class LLMProvider(Provider):
         correct, and measures whether previous chat completion response is similar.
 
         Example:
-
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output()
             ```
@@ -700,7 +692,6 @@ class LLMProvider(Provider):
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.conciseness).on_output()
             ```
@@ -722,7 +713,6 @@ class LLMProvider(Provider):
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.conciseness).on_output()
             ```
@@ -742,7 +732,6 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.correctness).on_output()
             ```
@@ -764,7 +753,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output()
             ```
@@ -785,7 +773,6 @@ class LLMProvider(Provider):
         template to check the coherence of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.coherence).on_output()
             ```
@@ -807,7 +794,6 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output()
             ```
@@ -828,7 +814,6 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.harmfulness).on_output()
             ```
@@ -850,7 +835,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
             ```
@@ -872,7 +856,6 @@ class LLMProvider(Provider):
         check the maliciousness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.maliciousness).on_output()
             ```
@@ -895,7 +878,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output()
             ```
@@ -916,7 +898,6 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.helpfulness).on_output()
             ```
@@ -938,7 +919,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output()
             ```
@@ -960,7 +940,6 @@ class LLMProvider(Provider):
         Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.controversiality).on_output()
             ```
@@ -985,7 +964,6 @@ class LLMProvider(Provider):
         Eval. Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output()
             ```
@@ -1006,7 +984,6 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.misogyny).on_output()
             ```
@@ -1028,7 +1005,6 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output()
             ```
@@ -1049,7 +1025,6 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
@@ -1072,7 +1047,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
@@ -1093,7 +1067,6 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
@@ -1115,7 +1088,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
@@ -1211,7 +1183,6 @@ class LLMProvider(Provider):
         in function assessment.
 
         Example:
-
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
             ```
@@ -1262,7 +1233,6 @@ class LLMProvider(Provider):
         prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
@@ -1290,7 +1260,6 @@ class LLMProvider(Provider):
         prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
@@ -1353,7 +1322,6 @@ class LLMProvider(Provider):
         Abstentions will be considered as grounded.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -1491,7 +1459,6 @@ class LLMProvider(Provider):
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI

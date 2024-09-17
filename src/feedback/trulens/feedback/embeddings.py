@@ -58,7 +58,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -106,7 +105,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -153,7 +151,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
