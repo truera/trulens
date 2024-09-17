@@ -58,7 +58,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -80,7 +79,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -106,7 +105,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -127,7 +125,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -153,7 +151,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -174,7 +171,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(

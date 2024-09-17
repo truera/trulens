@@ -20,7 +20,3 @@
   text-align: center;
   background-color: color-accent;
 }
-
-.md-header {
-  top: 12px;          /* This setting prevents the Material header from imposing into the space of the banner! */
-}

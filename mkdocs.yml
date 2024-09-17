@@ -287,6 +287,7 @@ nav:
       - 💣 Tech Debt: trulens/contributing/techdebt.md
       - ⛅ Optional Pckages: trulens/contributing/optional.md
       - ✨ Database Migration: trulens/contributing/migration.md
+      - 🏁 Release History: trulens/contributing/release_history.md
 
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
