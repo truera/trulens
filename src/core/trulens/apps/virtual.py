@@ -205,9 +205,10 @@ from concurrent import futures
 import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, ClassVar, Dict, Optional, Sequence, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 from pydantic import Field
+from trulens.core import Select
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
@@ -569,6 +570,57 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
+
+    def add_dataframe(
+        self,
+        df,
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
+    ) -> List[mod_record_schema.Record]:
+        """Add the given dataframe as records to the database and evaluate any pre-specified
+        feedbacks on them.
+
+        The class `VirtualRecord` may be useful for creating records for virtual models.
+
+        If `feedback_mode` is specified, will use that mode for these records only.
+        """
+
+        data_dict = df.to_dict("records")
+        records = []
+
+        for record in data_dict:
+            if "context" in record:
+                retriever = Select.RecordCalls.retriever
+                if retriever not in self.app:
+                    self.app[retriever] = None
+                self.app[retriever] = record["context"]
+
+                context_rets = (
+                    record["context"]
+                    if isinstance(record["context"], list)
+                    else [record["context"]]
+                )
+
+                rec = VirtualRecord(
+                    calls={
+                        retriever.get_context: dict(
+                            args=[record["prompt"]], rets=context_rets
+                        )
+                    },
+                    main_input=record["prompt"],
+                    main_output=record["response"],
+                )
+            else:
+                rec = VirtualRecord(
+                    main_input=record["prompt"],
+                    main_output=record["response"],
+                    calls={},
+                )
+            records.append(rec)
+
+        for record in records:
+            self.add_record(record, feedback_mode=feedback_mode)
+
+        return records
 
 
 TruVirtual.model_rebuild()
