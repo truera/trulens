@@ -1,4 +1,6 @@
+import re
 import time
+from typing import Dict, List
 
 import pandas as pd
 from trulens.core.schema.feedback import FeedbackDefinition
@@ -11,11 +13,8 @@ def get_icon(fdef: FeedbackDefinition, result: float) -> str:
     Get the icon for a given feedback definition and result.
 
     Args:
-
-    fdef : FeedbackDefinition
-        The feedback definition
-    result : float
-        The result of the feedback
+        fdef (FeedbackDefinition): The feedback definition
+        result (float): The result of the feedback
 
     Returns:
         str: The icon for the feedback
@@ -37,12 +36,11 @@ def get_feedback_result(
 
     Args:
         tru_record: The record containing feedback and future results.
-
         feedback_name: The name of the feedback to retrieve results for.
 
     Returns:
         pd.DataFrame: A DataFrame containing the feedback results. If no feedback
-                      results are found, an empty DataFrame is returned.
+            results are found, an empty DataFrame is returned.
     """
     start_time = time.time()
     feedback_calls = None
@@ -74,3 +72,84 @@ def get_feedback_result(
         for call in feedback_calls.calls
     ]
     return pd.DataFrame(feedback_result)
+
+
+def highlight(
+    row: pd.Series,
+    selected_feedback: str,
+    feedback_directions: Dict[str, bool],
+    default_direction: str,
+) -> List[str]:
+    """
+    Apply background color to the rows of a DataFrame based on the selected feedback.
+
+    Args:
+        row (pandas.Series): A row of the DataFrame to be highlighted.
+        selected_feedback (str): The selected feedback to determine the background color.
+        feedback_directions (dict): A dictionary mapping feedback names to their directions.
+        default_direction (str): The default direction for feedback.
+
+    Returns:
+        list: A list of CSS styles representing the background color for each cell in the row.
+    """
+    if "distance" in selected_feedback:
+        return [f"background-color: {CATEGORY.DISTANCE.color}"] * len(row)
+
+    cat = CATEGORY.of_score(
+        row["score"],
+        higher_is_better=feedback_directions.get(
+            selected_feedback, default_direction == "HIGHER_IS_BETTER"
+        ),
+    )
+    # Apply the background color to the entire row
+    return [f"background-color: {cat.color}"] * len(row)
+
+
+def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Expand the groundedness DataFrame by splitting the reasons column into separate rows and columns.
+
+    Args:
+        df (pd.DataFrame): The groundedness DataFrame.
+
+    Returns:
+        pd.DataFrame: The expanded DataFrame.
+    """
+    # Split the reasons value into separate rows and columns
+    reasons = df["reasons"].iloc[0]
+    # Split the reasons into separate statements
+    statements = reasons.split("STATEMENT")
+    data = []
+    # Each reason has three components: statement, supporting evidence, and score
+    # Parse each reason into these components and add them to the data list
+    for statement in statements[1:]:
+        try:
+            criteria = statement.split("Criteria: ")[1].split(
+                "Supporting Evidence: "
+            )[0]
+            supporting_evidence = statement.split("Supporting Evidence: ")[
+                1
+            ].split("Score: ")[0]
+            score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
+            score_split = statement.split("Score: ")[1]
+            score_match = score_pattern.search(score_split)
+            if score_match:
+                score = float(score_match.group(1)) / 10
+            else:
+                score = None
+        except IndexError:
+            # Handle cases where the expected substrings are not found
+            criteria = None
+            supporting_evidence = None
+            score = None
+        data.append({
+            "Statement": criteria,
+            "Supporting Evidence from Source": supporting_evidence,
+            "Groundedness Score": score,
+        })
+    reasons_df = pd.DataFrame(data)
+
+    reasons_df.rename(columns={"Groundedness Score": "score"}, inplace=True)
+
+    # Return only the expanded reasons DataFrame
+    return reasons_df.reset_index(drop=True)

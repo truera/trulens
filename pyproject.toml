@@ -56,7 +56,7 @@ codespell = "^2.3"
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
 mkdocstrings-python = "^1.10"
-mkdocstrings = "^0.25"
+mkdocstrings = "^0.26.1"
 mkdocs-material = "^9.5"
 mkdocs-material-extensions = "^1.3"
 mkdocs-autorefs = "^1.0"

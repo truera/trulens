@@ -47,8 +47,7 @@ def run_dashboard(
         force: Stop existing dashboard(s) first. Defaults to `False`. If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder.
 
     Returns:
-        The [Process][multiprocessing.Process] executing the streamlit
-        dashboard.
+        The [Process][multiprocessing.Process] executing the streamlit dashboard.
 
     Raises:
         RuntimeError: Dashboard is already running. Can be avoided if `force`

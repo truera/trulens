@@ -37,7 +37,6 @@ def trulens_leaderboard(app_ids: List[str] = None):
         app_ids List[str]: A list of application IDs (default is None)
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
@@ -174,7 +173,6 @@ def trulens_feedback(record: Record):
         record (Record): A trulens record.
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
@@ -231,7 +229,6 @@ def trulens_trace(record: Record):
         record (Record): A trulens record.
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
