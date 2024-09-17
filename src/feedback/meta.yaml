@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/trulens_feedback-{{ version }}.tar.gz
-  sha256: f4811f14c2f040af652aef868a0525245ef6c2f713e1717d2cb3df099fd972fb
+  sha256: 60aa6dfdcc3baa9870208a845b6ca35dd121784f019ae54cfcce8cdaa6f1af14
 
 build:
   noarch: python

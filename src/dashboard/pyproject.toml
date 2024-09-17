@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-dashboard"
-version = "1.0.1"
+version = "1.0.2a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -34,7 +34,7 @@ python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0" }
 ipywidgets = "^8.1.3"
 jupyter = "^1"
-pandas = "^1.0.0"
+pandas = ">=1.0.0"
 psutil = "^5.9"
 rich = "^13.6"
 plotly = "^5.24.0"

@@ -84,8 +84,7 @@ ATTRIBUTE_ERROR_MESSAGE = """
 {class_name} has no attribute `{attribute_name}` but the wrapped app {app_class_name} does. If
 you are calling a {app_class_name} method, retrieve it from that app instead of from
 {class_name}. If you need to record your app's behavior, use {class_name} as a context
-manager as in this example:
-
+manager as in this Example:
 ```python
     app: {app_class_name} = ...  # your app
     truapp: {class_name} = {class_name}(app, ...)  # the truera recorder
@@ -709,21 +708,21 @@ class App(
             mod = app.__class__.__module__
             if mod.startswith("langchain"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+                    messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
                 ):
                     from trulens.apps.langchain.tru_chain import TruChain
 
                 return TruChain.select_context(app=app)
             elif mod.startswith("llama_index"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+                    messages=optional_utils.REQUIREMENT_APPS_LLAMA
                 ):
                     from trulens.apps.llamaindex.tru_llama import TruLlama
 
                 return TruLlama.select_context(app=app)
             elif mod.startswith("nemoguardrails"):
                 with import_utils.OptionalImports(
-                    messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+                    messages=optional_utils.REQUIREMENT_APPS_NEMO
                 ):
                     from trulens.apps.nemo.tru_rails import TruRails
 

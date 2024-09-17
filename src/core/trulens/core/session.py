@@ -51,7 +51,7 @@ if TYPE_CHECKING:
     from trulens.core import app as base_app
 
 tqdm = None
-with OptionalImports(messages=optional_utils.REQUIREMENT_SNOWFLAKE):
+with OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
@@ -247,7 +247,7 @@ class TruSession(
         # Check for optional app types.
         if app.__module__.startswith("langchain"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+                messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
             ):
                 from trulens.apps.langchain import tru_chain
 
@@ -258,7 +258,7 @@ class TruSession(
 
         elif app.__module__.startswith("llamaindex"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+                messages=optional_utils.REQUIREMENT_APPS_LLAMA
             ):
                 from trulens.apps.llamaindex import tru_llama
 
@@ -269,7 +269,7 @@ class TruSession(
 
         elif app.__module__.startswith("nemoguardrails"):
             with import_utils.OptionalImports(
-                messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+                messages=optional_utils.REQUIREMENT_APPS_NEMO
             ):
                 from trulens.apps.nemo import tru_rails
 
@@ -355,7 +355,7 @@ class TruSession(
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_LANGCHAIN
+            messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
         ):
             from trulens.apps.langchain import tru_chain
 
@@ -370,7 +370,7 @@ class TruSession(
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_LLAMA
+            messages=optional_utils.REQUIREMENT_APPS_LLAMA
         ):
             from trulens.apps.llamaindex import tru_llama
 
@@ -385,7 +385,7 @@ class TruSession(
             instead.
         """
         with import_utils.OptionalImports(
-            messages=optional_utils.REQUIREMENT_INSTRUMENT_NEMO
+            messages=optional_utils.REQUIREMENT_APPS_NEMO
         ):
             from trulens.apps.nemo import tru_rails
 
@@ -470,6 +470,7 @@ class TruSession(
 
         See [DB.migrate_database][trulens.core.database.base.DB.migrate_database].
         """
+        print(f"{text_utils.UNICODE_SQUID} Migrating DB ...")
         self.connector.migrate_database(**kwargs)
 
     def add_record(

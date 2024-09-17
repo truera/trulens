@@ -652,7 +652,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     Lenses into python objects.
 
     Example:
-
         ```python
         path = Lens().record[5]['somekey']
 

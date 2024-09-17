@@ -129,25 +129,27 @@ class CortexEndpoint(Endpoint):
         # response is a snowflake dataframe instance or a list if the response is from cursor.fetchall()
         try:
             if isinstance(response, DataFrame):
-                response: dict = json.loads(response.collect()[0][0])
+                response_dict = json.loads(response.collect()[0][0])
             elif isinstance(response, list):
-                response: dict = json.loads(response[0][0])
+                response_dict = json.loads(response[0][0])
+        except json.JSONDecodeError:
+            response_dict = response
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
             raise e
 
-        if "usage" in response:
+        if isinstance(response_dict, dict) and "usage" in response_dict:
             counted_something = True
 
-            self.global_callback.handle_generation(response=response)
+            self.global_callback.handle_generation(response=response_dict)
 
             if callback is not None:
-                callback.handle_generation(response=response)
+                callback.handle_generation(response=response_dict)
 
         if not counted_something:
             logger.warning(
                 "Unrecognized Cortex response format. It did not have usage information:\n%s",
-                pp.pformat(response),
+                pp.pformat(response_dict),
             )
 
         return response
