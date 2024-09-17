@@ -236,6 +236,11 @@ class VirtualApp(dict):
     under `VirtualApp.root`
     """
 
+    @classmethod
+    def select_context(cls):
+        """Select the context of the virtual app. This is fixed to return the default path."""
+        return Select.RecordCalls.retriever.get_context.rets[:]
+
     def __setitem__(
         self, __name: Union[str, serial.Lens], __value: Any
     ) -> None:
