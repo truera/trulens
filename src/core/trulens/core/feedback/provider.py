@@ -34,7 +34,6 @@ class Provider(WithClassInfo, SerialModel):
     to generate an evaluation score.
 
     Example:
-
         ```python
         from trulens.providers.huggingface import Huggingface
         huggingface_provider = Huggingface()
@@ -51,7 +50,6 @@ class Provider(WithClassInfo, SerialModel):
     This means that the base model selected is combined with specific prompting for `relevance` to generate feedback.
 
     Example:
-
         ```python
         from trulens.providers.openai import OpenAI
         provider = OpenAI(model_engine="gpt-3.5-turbo")
