@@ -47,26 +47,14 @@ else:
 def record_viewer(record_json, app_json, key=None):
     """Create a new instance of "record_viewer", which produces a timeline
 
-    Parameters
-    ----------
-    record_json: obj
-        JSON of the record serialized by `json.loads`.
+    Args:
+        record_json (object): JSON of the record serialized by `json.loads`.
+        app_json (object): JSON of the app serialized by `json.loads`.
 
-    app_json: obj
-        JSON of the app serialized by `json.loads`.
-
-    key: str or None
-        An optional key that uniquely identifies this component. If this is
-        None, and the component's arguments are changed, the component will
-        be re-mounted in the Streamlit frontend and lose its current state.
-
-    Returns
-    -------
-    string
-        Start time of the selected component in the application. If the whole app is selected,
-        this returns a JavaScript null, which is interpreted in python as a 0.
-
+    Returns:
+        string: Start time of the selected component in the application. If the whole app is selected,
     """
+
     # Call through to our private component function. Arguments we pass here
     # will be sent to the frontend, where they'll be available in an "args"
     # dictionary.

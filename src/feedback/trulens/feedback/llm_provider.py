@@ -513,14 +513,12 @@ class LLMProvider(Provider):
             ).aggregate(np.mean)
             ```
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent.
-
             response (str): The agent's response to the prompt.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being
-                "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
         return self.generate_score(
             system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,

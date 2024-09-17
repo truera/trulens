@@ -80,7 +80,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -127,7 +127,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -174,7 +174,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
