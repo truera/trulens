@@ -673,7 +673,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             # Sometimes some overrided object method issues happen here.
             continue
 
-        if isinstance(final, dict) and False:
+        if isinstance(final, dict):
             try:
                 for key, value in list(final.items()):
                     if value is None:
@@ -699,7 +699,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
                 # Some objects will override dict methods and might fail above.
                 pass
 
-        elif isinstance(final, (list, tuple)) and False:
+        elif isinstance(final, (list, tuple)):
             try:
                 for index, value in enumerate(final):
                     if value is None:

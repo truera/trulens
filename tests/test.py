@@ -544,13 +544,12 @@ class TruTestCase(WithJSONTestCase, TestCase):
             obj is not None
             and os.environ.get(WITH_REF_PATH_ENV_VAR, None) is not None
         ):
-            caller_locals = python_utils.caller_frame(offset=1).f_globals
+            caller_globals = python_utils.caller_frame(offset=1).f_globals
 
             with self.subTest(part="reference path"):
                 # Show the reference path to the given ref.
                 print(f"Reference path from globals to {ref}:")
-                print(caller_locals)
-                path = find_path(id(caller_locals), id(obj))
+                path = find_path(id(caller_globals), id(obj))
                 self.assertIsNotNone(path, "Couldn't find reference path.")
                 print_referent_lens(path)
 
