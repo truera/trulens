@@ -593,31 +593,31 @@ class TruVirtual(App):
         records = []
 
         for record in data_dict:
-            if "context" in record:
+            if "contexts" in record:
                 retriever = Select.RecordCalls.retriever
                 if retriever not in self.app:
                     self.app[retriever] = None
-                self.app[retriever] = record["context"]
+                self.app[retriever] = record["contexts"]
 
                 context_rets = (
-                    record["context"]
-                    if isinstance(record["context"], list)
-                    else [record["context"]]
+                    record["contexts"]
+                    if isinstance(record["contexts"], list)
+                    else [record["contexts"]]
                 )
 
                 rec = VirtualRecord(
                     calls={
                         retriever.get_context: dict(
-                            args=[record["prompt"]], rets=context_rets
+                            args=[record["question"]], rets=context_rets
                         )
                     },
-                    main_input=record["prompt"],
-                    main_output=record["response"],
+                    main_input=record["question"],
+                    main_output=record["answer"],
                 )
             else:
                 rec = VirtualRecord(
-                    main_input=record["prompt"],
-                    main_output=record["response"],
+                    main_input=record["question"],
+                    main_output=record["answer"],
                     calls={},
                 )
             records.append(rec)
