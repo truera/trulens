@@ -278,7 +278,10 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(len(records_and_feedback), 2)
         self.assertEqual(len(records_and_feedback[1]), 0)
         self.assertEqual(records_and_feedback[0].shape[0], 1)
-        ssesp.run(self.get_snowpark_session_with_schema(self._schema))
+        with self.get_snowpark_session_with_schema(
+            self._schema
+        ) as snowpark_session:
+            ssesp.run(snowpark_session)
         records_and_feedback = session.get_records_and_feedback()
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
