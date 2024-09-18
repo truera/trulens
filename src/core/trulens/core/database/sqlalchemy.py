@@ -357,14 +357,7 @@ class SQLAlchemyDB(DB):
 
         _rec = self.orm.Record.parse(record, redact_keys=self.redact_keys)
         with self.session.begin() as session:
-            if (
-                session.query(self.orm.Record)
-                .filter_by(record_id=record.record_id)
-                .first()
-            ):
-                session.merge(_rec)  # update existing
-            else:
-                session.merge(_rec)  # add new record # .add was not thread safe
+            session.merge(_rec)  # update existing
 
             logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
 
