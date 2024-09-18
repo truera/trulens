@@ -404,7 +404,7 @@ def caller_module_name(offset=0) -> str:
     Get the caller's (of this function) module name.
     """
 
-    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+    return inspect.stack(0)[offset + 1].frame.f_globals["__name__"]
 
 
 def caller_module(offset=0) -> ModuleType:
@@ -421,7 +421,7 @@ def caller_frame(offset=0) -> FrameType:
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
     """
 
-    return inspect.stack()[offset + 1].frame
+    return inspect.stack(0)[offset + 1].frame
 
 
 def external_caller_frame(offset=0) -> FrameType:
@@ -432,7 +432,7 @@ def external_caller_frame(offset=0) -> FrameType:
         RuntimeError: If no such frame is found.
     """
 
-    for finfo in inspect.stack()[offset + 1 :]:
+    for finfo in inspect.stack(0)[offset + 1 :]:
         if not finfo.frame.f_globals["__name__"].startswith("trulens"):
             return finfo.frame
 
@@ -452,7 +452,7 @@ def caller_frameinfo(
         skip_module: Skip frames from the given module. Default is "trulens".
     """
 
-    for finfo in inspect.stack()[offset + 1 :]:
+    for finfo in inspect.stack(0)[offset + 1 :]:
         if skip_module is None:
             return finfo
         if not finfo.frame.f_globals["__name__"].startswith(skip_module):
@@ -473,7 +473,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
-    stack = [fi.frame for fi in inspect.stack()[2:]]
+    stack = [fi.frame for fi in inspect.stack(0)[2:]]
 
     if parent_task is not None:
         stack = merge_stacks(stack, parent_task.get_stack()[::-1])
@@ -555,8 +555,10 @@ def stack_with_tasks() -> Sequence[FrameType]:
     Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
-
-    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
+    # TODO: Improve performance
+    ret = [
+        fi.frame for fi in inspect.stack(0)[1:]
+    ]  # skip stack_with_task_stack
 
     try:
         task_stack = get_task_stack(asyncio.current_task())
