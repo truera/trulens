@@ -523,11 +523,19 @@ class TruTestCase(WithJSONTestCase, TestCase):
     def env_true(var: str) -> bool:
         """Determine whether the given environment variable is "true".
 
+        As env vars are strings, "true" means the string is one of a few set of
+        values, case-insensitive:
+            - "1"
+            - "true"
+            - "yes"
+            - "y"
+            - "on"
+
         Args:
             var: The environment variable to check.
 
         Returns:
-            bool: Whether the environment variable evaluates to true.
+            bool: Whether the environment variable is "true".
         """
 
         return os.environ.get(var, "").lower() in [
