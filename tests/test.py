@@ -105,7 +105,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_VAR)
+        os.environ.get(OPTIONAL_VAR, False)
         or os.environ.get(ALLOW_OPTIONAL_VAR, False),
         "not an optional test",
     )(testmethodorclass)
