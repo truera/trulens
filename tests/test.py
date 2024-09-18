@@ -92,7 +92,7 @@ def optional_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        not os.environ.get(OPTIONAL_VAR, False), "optional test"
+        not TruTestCase.env_true(OPTIONAL_VAR), "optional test"
     )(testmethodorclass)
 
 
@@ -105,8 +105,8 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_VAR, False)
-        or os.environ.get(ALLOW_OPTIONAL_VAR, False),
+        TruTestCase.env_true(OPTIONAL_VAR)
+        or TruTestCase.env_true(ALLOW_OPTIONAL_VAR),
         "not an optional test",
     )(testmethodorclass)
 
@@ -276,7 +276,7 @@ class WithJSONTestCase(TestCase):
     def writing_golden(self) -> bool:
         """Return whether the golden files are to be written."""
 
-        return bool(os.environ.get(WRITE_GOLDEN_VAR, False))
+        return TruTestCase.env_true(WRITE_GOLDEN_VAR)
 
     def assertGoldenJSONEqual(
         self,
@@ -519,6 +519,25 @@ class TruTestCase(WithJSONTestCase, TestCase):
       with the `WITH_REF_PATH` environment variable.
     """
 
+    @staticmethod
+    def env_true(var: str) -> bool:
+        """Determine whether the given environment variable is "true".
+
+        Args:
+            var: The environment variable to check.
+
+        Returns:
+            bool: Whether the environment variable evaluates to true.
+        """
+
+        return os.environ.get(var, "").lower() in [
+            "1",
+            "true",
+            "yes",
+            "y",
+            "on",
+        ]
+
     def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
         """Check that the object referenced by `ref` has been garbage
         collected.
@@ -540,7 +559,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
 
         # Enable WITH_REF_PATH to see printout of why the given ref was not
         # GC-ed.
-        if obj is not None and os.environ.get(WITH_REF_PATH_VAR, False):
+        if obj is not None and self.env_true(WITH_REF_PATH_VAR):
             caller_globals = python_utils.caller_frame(offset=1).f_globals
 
             with self.subTest(part="reference path"):
@@ -575,7 +594,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             pass
 
         if running_tasks:
-            if os.environ.get(TEST_TASKS_CLEANUP_VAR, False):
+            if self.env_true(TEST_TASKS_CLEANUP_VAR):
                 with self.subTest(part="running tasks"):
                     raise AssertionError(
                         f"Tasks still running: {running_tasks}"
@@ -590,7 +609,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
         ]
 
         if non_main_threads:
-            if os.environ.get(TEST_THREADS_CLEANUP_VAR, False):
+            if self.env_true(TEST_THREADS_CLEANUP_VAR):
                 with self.subTest(part="non-main threads"):
                     raise AssertionError(
                         f"Non-main threads still running: {non_main_threads}"
