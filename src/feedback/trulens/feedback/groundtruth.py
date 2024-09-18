@@ -820,7 +820,9 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         return stats.pearsonr(x, y)[0]
 
-    def cohens_kappa(self, scores: List[float] | List[List]) -> float:
+    def cohens_kappa(
+        self, scores: List[float] | List[List], threshold=0.5
+    ) -> float:
         """
         Computes Cohen's Kappa score between true labels and predicted scores.
 
@@ -838,8 +840,16 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             raise ValueError(
                 "The length of true_labels and scores must be the same."
             )
+        #  convert to categorical if necessary
+        if any(isinstance(score, float) for score in scores):
+            # threshold at 0.5 for binary classification
+            scores = [1 if score >= threshold else 0 for score in scores]
 
-        # Compute Cohen's Kappa
+        if any(isinstance(label, float) for label in self.true_labels):
+            self.true_labels = [
+                1 if label >= threshold else 0 for label in self.true_labels
+            ]
+
         kappa = cohen_kappa_score(self.true_labels, scores)
         return kappa
 
