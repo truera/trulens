@@ -161,9 +161,10 @@ class Step(pydantic.BaseModel, Hashable):
     def get_sole_item(self, obj: Any) -> Any:
         all_objects = list(self.get(obj))
 
-        assert (
-            len(all_objects) == 1
-        ), f"Step {self} did not address exactly a single object."
+        if len(all_objects) != 1:
+            raise ValueError(
+                f"Step {self} did not address exactly a single object."
+            )
 
         return all_objects[0]
 

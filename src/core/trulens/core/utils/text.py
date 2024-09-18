@@ -101,7 +101,7 @@ def format_size(size: int) -> str:
         str: The formatted quantity.
     """
 
-    units = ["", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     unit_idx = max(
         0,
         min(

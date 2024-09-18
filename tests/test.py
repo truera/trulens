@@ -91,9 +91,9 @@ def optional_test(testmethodorclass):
     all optional packages have been installed.
     """
 
-    return unittest.skipIf(not os.environ.get(OPTIONAL_VAR), "optional test")(
-        testmethodorclass
-    )
+    return unittest.skipIf(
+        not os.environ.get(OPTIONAL_VAR, False), "optional test"
+    )(testmethodorclass)
 
 
 def requiredonly_test(testmethodorclass):
@@ -105,7 +105,8 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
+        os.environ.get(OPTIONAL_VAR)
+        or os.environ.get(ALLOW_OPTIONAL_VAR, False),
         "not an optional test",
     )(testmethodorclass)
 
@@ -275,7 +276,7 @@ class WithJSONTestCase(TestCase):
     def writing_golden(self) -> bool:
         """Return whether the golden files are to be written."""
 
-        return bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
+        return bool(os.environ.get(WRITE_GOLDEN_VAR, False))
 
     def assertGoldenJSONEqual(
         self,
@@ -539,10 +540,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
 
         # Enable WITH_REF_PATH to see printout of why the given ref was not
         # GC-ed.
-        if (
-            obj is not None
-            and os.environ.get(WITH_REF_PATH_VAR, None) is not None
-        ):
+        if obj is not None and os.environ.get(WITH_REF_PATH_VAR, False):
             caller_globals = python_utils.caller_frame(offset=1).f_globals
 
             with self.subTest(part="reference path"):
@@ -577,7 +575,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             pass
 
         if running_tasks:
-            if os.environ.get(TEST_TASKS_CLEANUP_VAR, None) is not None:
+            if os.environ.get(TEST_TASKS_CLEANUP_VAR, False):
                 with self.subTest(part="running tasks"):
                     raise AssertionError(
                         f"Tasks still running: {running_tasks}"
@@ -585,19 +583,22 @@ class TruTestCase(WithJSONTestCase, TestCase):
             else:
                 print(f"Tasks still running: {running_tasks}")
 
-        non_main_threads = []
-        for thread in threading.enumerate():
-            if thread != threading.main_thread():
-                non_main_threads.append(thread)
+        non_main_threads = [
+            thread
+            for thread in threading.enumerate()
+            if thread != threading.main_thread()
+        ]
 
         if non_main_threads:
-            if os.environ.get(TEST_THREADS_CLEANUP_VAR, None) is not None:
+            if os.environ.get(TEST_THREADS_CLEANUP_VAR, False):
                 with self.subTest(part="non-main threads"):
                     raise AssertionError(
                         f"Non-main threads still running: {non_main_threads}"
                     )
             else:
                 print(f"Non-main threads still running: {non_main_threads}")
+
+        super().tearDown()
 
     @classmethod
     def tearDownClass(cls):
@@ -625,8 +626,12 @@ class TruTestCase(WithJSONTestCase, TestCase):
             print(f"  No running loop? {e}")
 
         print("  Remaining non-main threads:")
-        non_main_threads = []
-        for thread in threading.enumerate():
-            if thread != threading.main_thread():
-                non_main_threads.append(thread)
-                print("    " + str(thread))
+        non_main_threads = [
+            thread
+            for thread in threading.enumerate()
+            if thread != threading.main_thread()
+        ]
+        for thread in non_main_threads:
+            print("    " + str(thread))
+
+        super().tearDownClass()
