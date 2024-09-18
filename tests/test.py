@@ -1,5 +1,4 @@
-"""TestCase subclass with JSON comparisons and test enable/disable flag
-handling."""
+"""TestCase extension and utilities."""
 
 import asyncio
 from dataclasses import fields
@@ -527,7 +526,15 @@ class TruTestCase(WithJSONTestCase, TestCase):
         variable.
         """
 
+        # caller_frame = inspect.currentframe()
+        caller_frame = python_utils.caller_frame(offset=1)  # .f_globals
+        alls = [caller_frame.f_globals, caller_frame.f_locals]
+
         gc.collect()
+        gc.collect()
+        gc.collect()
+        # gc.freeze()
+        # gc.disable()
 
         if msg is None:
             msg = f"Object {ref} was not garbage collected."
@@ -543,14 +550,18 @@ class TruTestCase(WithJSONTestCase, TestCase):
             obj is not None
             and os.environ.get(WITH_REF_PATH_VAR, None) is not None
         ):
-            caller_globals = python_utils.caller_frame(offset=1).f_globals
-
             with self.subTest(part="reference path"):
                 # Show the reference path to the given ref.
-                print(f"Reference path from globals to {ref}:")
-                path = find_path(id(caller_globals), id(obj))
+                print(f"Reference path from test frame to {ref}:")
+                path = find_path(id(alls), id(obj))
                 self.assertIsNotNone(path, "Couldn't find reference path.")
-                print_referent_lens(path)
+                print_referent_lens(origin=alls, lens=path)
+
+        # print("unfreezing")
+        # gc.unfreeze()
+        # print("enabling")
+        # gc.enable()
+        # print("done")
 
     def tearDown(self):
         """Check for running tasks and non-main threads after each test.
@@ -565,7 +576,9 @@ class TruTestCase(WithJSONTestCase, TestCase):
 
         # GC here to make sure we don't have any references to tasks or threads
         # that are keeping them alive.
+        print("collecting")
         gc.collect()
+        print("done")
 
         running_tasks = []
         try:

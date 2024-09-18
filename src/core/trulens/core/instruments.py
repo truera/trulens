@@ -534,7 +534,10 @@ class Instrument:
                     stack = stacks[ctx]
 
                 frame_ident = mod_record_schema.RecordAppCallMethod(
-                    path=path, method=Method.of_method(func, obj=obj, cls=cls)
+                    path=path,
+                    method=Method.of_method(
+                        func, obj=args[0], cls=cls
+                    ),  # important: don't use obj here as that would capture obj in closure of this wrapper
                 )
 
                 stack = stack + (frame_ident,)

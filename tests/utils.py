@@ -11,6 +11,7 @@ from queue import Queue
 from types import ModuleType
 from typing import (
     Any,
+    Callable,
     ForwardRef,
     Generic,
     Iterable,
@@ -609,10 +610,13 @@ class RefLike(Generic[T]):
         self.ref_or_val = ref_or_val
 
     def get(self) -> T:
-        if isinstance(self.ref_or_val, weakref.ReferenceType):
-            return self.ref_or_val()
-        else:
-            return self.ref_or_val
+        try:
+            if weakref.ReferenceType.__instancecheck__(self.ref_or_val):
+                return self.ref_or_val()
+        except Exception:
+            return None
+
+        return self.ref_or_val
 
 
 class GetReferent(serial_utils.Step):
@@ -635,7 +639,9 @@ class GetReferent(serial_utils.Step):
         raise NotImplementedError("Cannot set a reference.")
 
     def __repr__(self) -> str:
-        return f"/@{self.ref_id:08x}"
+        val = deref(self.ref_id)
+        typ = type(val).__name__
+        return f"/{typ}@{self.ref_id:08x}"
 
 
 def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
@@ -651,108 +657,122 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
     queue: Queue[Tuple[serial_utils.Lens, List[RefLike]]] = Queue()
 
     source_ref = RefLike(ref_id=source_id)
-
     queue.put((serial_utils.Lens(), [source_ref]))
 
-    biggest_len: int = 0
-
-    gc.collect()
-
     prog = tqdm(total=len(gc.get_objects()))
+
+    def skip_val(val):
+        if val is None:
+            return True
+        # if not gc.is_tracked(val):
+        #     return True
+        # if gc.is_finalized(val):
+        #    return True
+        # try:
+        # if weakref.ReferenceType.__instancecheck__(val):
+        #    return True
+        # except Exception:
+        # Here to avoid issues with overridden __instancecheck__.
+        #    return True
+        # try:
+        # if weakref.ProxyType.__instancecheck__(val): # isinstance(val, weakref.ProxyTypes):
+        #    return True
+        # except Exception:
+        # Here to avoid issues with overridden __instancecheck__.
+        #    return True
+
+        if id(val) in visited:
+            return True
+
+        return False
+
+    biggest_len = 0
 
     while not queue.empty():
         lens, path = queue.get()
 
+        prog.update(len(visited) - prog.n)
+
         if len(path) > biggest_len:
-            prog.set_description_str("length=" + str(len(lens)))
+            biggest_len = len(path)
+
+            prog.set_description_str(str(lens))
             prog.set_postfix_str(
                 format_size(len(visited)) + " reference(s) visited"
             )
-            prog.update(len(visited) - prog.n)
-
-            biggest_len = len(path)
 
         final_ref = path[-1]
-
         if final_ref.ref_id == target_id:
             return lens
 
-        try:
-            final = final_ref.get()
-        except Exception:
-            # Sometimes some overrided object method issues happen here.
-            continue
+        final = final_ref.get()
 
         if isinstance(final, dict):
             try:
                 for key, value in list(final.items()):
-                    if value is None:
-                        continue
-                    if not gc.is_tracked(value):
+                    if skip_val(value):
                         continue
 
                     value_ref = RefLike(obj=value)
+                    visited.add(value_ref.ref_id)
 
-                    if value_ref.ref_id not in visited:
-                        visited.add(value_ref.ref_id)
-                        if isinstance(key, str):
-                            queue.put((
-                                lens + serial_utils.GetItem(item=key),
-                                path + [value_ref],
-                            ))
-                        else:
-                            queue.put((
-                                lens + GetReferent(ref_id=value_ref.ref_id),
-                                path + [value_ref],
-                            ))
-            except Exception:
+                    if isinstance(key, str):
+                        queue.put((
+                            lens + serial_utils.GetItem(item=key),
+                            path + [value_ref],
+                        ))
+                    else:
+                        queue.put((
+                            lens + GetReferent(ref_id=value_ref.ref_id),
+                            path + [value_ref],
+                        ))
+
+            except Exception as e:
                 # Some objects will override dict methods and might fail above.
-                pass
+                # print(e)
+                raise e
+                # pass
 
         elif isinstance(final, (list, tuple)):
             try:
                 for index, value in enumerate(final):
-                    if value is None:
-                        continue
-                    if not gc.is_tracked(value):
+                    if skip_val(value):
                         continue
 
                     value_ref = RefLike(obj=value)
-                    if value_ref.ref_id not in visited:
-                        visited.add(value_ref.ref_id)
-                        queue.put((
-                            lens + serial_utils.GetIndex(index=index),
-                            path + [value_ref],
-                        ))
-            except Exception:
+                    visited.add(value_ref.ref_id)
+
+                    queue.put((
+                        lens + serial_utils.GetIndex(index=index),
+                        path + [value_ref],
+                    ))
+
+                    del value
+
+            except Exception as e:
                 # Some objects will override enumerate and related and might fail above.
+                raise e
                 pass
 
         else:
             for value in gc.get_referents(final):
-                if value is None:
-                    continue
-                if not gc.is_tracked(value):
-                    continue
-                try:
-                    if isinstance(value, weakref.ReferenceType):
-                        continue
-                except Exception:
-                    # Here to avoid issues with overridden __instancecheck__.
+                if skip_val(value):
                     continue
 
                 value_ref = RefLike(obj=value)
-                if value_ref.ref_id not in visited:
-                    visited.add(value_ref.ref_id)
-                    queue.put((
-                        lens + GetReferent(ref_id=value_ref.ref_id),
-                        path + [value_ref],
-                    ))
+                visited.add(value_ref.ref_id)
+
+                queue.put((
+                    lens + GetReferent(ref_id=value_ref.ref_id),
+                    path + [value_ref],
+                ))
+
+                del value
 
     return None
 
 
-def print_referent_lens(lens: Optional[serial_utils.Lens]) -> None:
+def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
     """Print a lens that may contain GetReferent steps.
 
     Prints part of the referent string representation.
@@ -763,15 +783,33 @@ def print_referent_lens(lens: Optional[serial_utils.Lens]) -> None:
 
     print(lens)
 
+    obj = origin
+
     for step in lens.path:
+        obj = step.get_sole_item(obj)
+
+        obj_ident = (
+            type(obj).__module__ + "." + python_utils.class_name(type(obj))
+        )
+
+        if isinstance(obj, Callable):
+            obj_ident += (
+                " = " + obj.__module__ + "." + python_utils.callable_name(obj)
+            )
+
         if isinstance(step, GetReferent):
-            obj = step.get_sole_item(None)
+            # obj = subpath.get_sole_item(None)
             print(
                 "  ",
                 type(step).__name__,
                 repr(step),
-                type(obj).__name__,
-                str(obj)[0:256],
+                obj_ident,
+                str(obj)[0:1024],
             )
         else:
-            print("  ", type(step).__name__, repr(step))
+            # try:
+            #    obj = step.get_sole_item(origin)
+            print("  ", type(step).__name__, repr(step), obj_ident)
+        # except Exception as e:
+        #     print("  ", type(step).__name__, repr(step), "ERR:" + repr(e))
+        #     if isinstance(e, KeyError):

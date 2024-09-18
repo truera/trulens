@@ -966,18 +966,19 @@ nltk = ">3.8.1"
 
 [[package]]
 name = "llama-index-agent-openai"
-version = "0.3.1"
+version = "0.3.2"
 description = "llama-index agent openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_agent_openai-0.3.1-py3-none-any.whl", hash = "sha256:21886081ae74574d8cad1ec4886f2d4b082284b9364adb46fff87aba1a25e9b9"},
-    {file = "llama_index_agent_openai-0.3.1.tar.gz", hash = "sha256:41c9aa5b7cebc5043adddb3442e3167e97971589466e36448e04e0a767f5b9aa"},
+    {file = "llama_index_agent_openai-0.3.2-py3-none-any.whl", hash = "sha256:9e0ecae8f105dac2557282d8b5ca6a2795a8d2cbd5ff4996ddaef5eaa10afcc8"},
+    {file = "llama_index_agent_openai-0.3.2.tar.gz", hash = "sha256:ffd6228e02714e0ea3bd71ca47dc948b3ccc04525937e91218267d19a22aec16"},
 ]
 
 [package.dependencies]
 llama-index-core = ">=0.11.0,<0.12.0"
 llama-index-llms-openai = ">=0.2.0,<0.3.0"
+llama-index-utils-openai = ">=0.1.0,<0.2.0"
 openai = ">=1.14.0"
 
 [[package]]
@@ -1101,18 +1102,18 @@ query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "l
 
 [[package]]
 name = "llama-index-llms-openai"
-version = "0.2.7"
+version = "0.2.8"
 description = "llama-index llms openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_llms_openai-0.2.7-py3-none-any.whl", hash = "sha256:bd94b56957eb1a24b14e3bae44bdb0bd247ffbdcc9b8e2f7d90bac55e61a4e18"},
-    {file = "llama_index_llms_openai-0.2.7.tar.gz", hash = "sha256:a709a26b32f8270ce862131941372abf764cc0f81b0713133848c7effc7d30fb"},
+    {file = "llama_index_llms_openai-0.2.8-py3-none-any.whl", hash = "sha256:a0dd54b88334cefe726a6c06c1db3c3c260b10e38d39e6a6818149b8564e2351"},
+    {file = "llama_index_llms_openai-0.2.8.tar.gz", hash = "sha256:7af5d0900db70d4ada46d2959d03dabdd7a772119eb0ae92367b5ad48ca18fe1"},
 ]
 
 [package.dependencies]
-llama-index-agent-openai = ">=0.3.1,<0.4.0"
 llama-index-core = ">=0.11.7,<0.12.0"
+llama-index-utils-openai = ">=0.1.0,<0.2.0"
 openai = ">=1.40.0,<2.0.0"
 
 [[package]]
@@ -1197,6 +1198,17 @@ files = [
 [package.dependencies]
 llama-index-core = ">=0.11.0,<0.12.0"
 llama-parse = ">=0.5.0"
+
+[[package]]
+name = "llama-index-utils-openai"
+version = "0.1.0"
+description = "llama-index utils openai"
+optional = false
+python-versions = "<4.0,>=3.8.1"
+files = [
+    {file = "llama_index_utils_openai-0.1.0-py3-none-any.whl", hash = "sha256:ca6ff0d3afef0be365a10e8111e191260acca56958856bebaa0df15cd82de061"},
+    {file = "llama_index_utils_openai-0.1.0.tar.gz", hash = "sha256:5bc9282c9f8d0de55bddd2ac98c7806acbe1993c6673c3b61c15d8e8e93c90b1"},
+]
 
 [[package]]
 name = "llama-parse"

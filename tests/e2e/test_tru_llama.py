@@ -123,6 +123,7 @@ class TestLlamaIndex(TruTestCase):
 
         with recorder as recording:
             response = getattr(query_engine, engine_method_name)(question)
+            # E.g. response = query_engine.query(question)
 
         if isinstance(response, Response):
             response = response.response
@@ -184,7 +185,7 @@ class TestLlamaIndex(TruTestCase):
         # Check that recorder is garbage collected.
         recorder_ref = weakref.ref(recorder)
         engine_ref = weakref.ref(query_engine)
-        del recorder, recording, record, query_engine
+        del recorder, recording, record, query_engine, method
         self.assertCollected(recorder_ref)
         self.assertCollected(engine_ref)
 
