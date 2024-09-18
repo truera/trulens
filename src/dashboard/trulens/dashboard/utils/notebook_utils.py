@@ -51,7 +51,7 @@ if not isinstance(register_line_cell_magic, Dummy) and is_notebook():
 
     @register_line_cell_magic
     def writefileinterpolated(line, cell):
-        caller_frame = inspect.stack()[2]
+        caller_frame = inspect.stack(0)[2]
         caller_globals = caller_frame.frame.f_globals
 
         with open(line, "w") as f:
