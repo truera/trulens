@@ -19,6 +19,17 @@ def df_cell_highlight(
     feedback_directions: Dict[str, bool],
     n_cells: int = 1,
 ):
+    """Returns the background color for a cell in a DataFrame based on the score and feedback name.
+
+    Args:
+        score (float): The score value to determine the background color.
+        feedback_name (str): The feedback name to determine the background color.
+        feedback_directions (dict): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
+        n_cells (int, optional): The number of cells to apply the background color. Defaults to 1.
+
+    Returns:
+        list: A list of CSS styles representing the background color.
+    """
     if "distance" in feedback_name:
         return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells
     cat = CATEGORY.of_score(
@@ -36,6 +47,14 @@ def display_feedback_call(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
 ):
+    """Display the feedback call details in a DataFrame.
+
+    Args:
+        record_id (str): The record ID.
+        call (List[Dict[str, Any]]): The feedback call details, including call metadata.
+        feedback_name (str): The feedback name.
+        feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
+    """
     if call is not None and len(call) > 0:
         # NOTE(piotrm for garett): converting feedback
         # function inputs to strings here as other
@@ -89,6 +108,17 @@ def _render_feedback_pills(
     selected_row: Optional[pd.Series] = None,
     key_prefix: str = "",
 ):
+    """Render each feedback as pills.
+
+    Args:
+        feedback_col_names (Sequence[str]): The name of the feedback function columns.
+        feedback_directions (Dict[str, bool): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
+        selected_row (Optional[pd.Series], optional): The selected row (if any). If provided, renders the feedback values. Defaults to None.
+        key_prefix (str, optional): A prefix for the streamlit component key. Defaults to "".
+
+    Returns:
+        Any: The feedback pills streamlit component.
+    """
     if len(feedback_col_names) == 0:
         st.warning("No feedback details found.")
         return
