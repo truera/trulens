@@ -241,10 +241,10 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             )
 
             @classmethod
-            def parse(
+            def parse_dict(
                 cls, obj: mod_record_schema.Record, redact_keys: bool = False
-            ) -> ORM.Record:
-                return cls(
+            ) -> dict:
+                return dict(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
                     input=json_str_of_obj(
@@ -263,6 +263,12 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
                         obj.perf, redact_keys=redact_keys
                     ),
                 )
+
+            @classmethod
+            def parse(
+                cls, obj: mod_record_schema.Record, redact_keys: bool = False
+            ):
+                return cls(**cls.parse_dict(obj, redact_keys=redact_keys))
 
         class FeedbackResult(base):
             """

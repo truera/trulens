@@ -26,6 +26,7 @@ import pandas as pd
 import pydantic
 from pydantic import Field
 import sqlalchemy as sa
+from sqlalchemy import insert
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
@@ -375,13 +376,16 @@ class SQLAlchemyDB(DB):
         """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
-                self.orm.Record.parse(r, redact_keys=self.redact_keys)
+                self.orm.Record.parse_dict(r, redact_keys=self.redact_keys)
                 for r in records
             ]
-            session.bulk_save_objects(records_list)
+            session.execute(
+                insert(self.orm.Record),
+                records_list,
+            )
             logger.info(f"{UNICODE_CHECK} added record batch")
             # return record ids from orm objects
-            return [r.record_id for r in records_list]
+        return [r["record_id"] for r in records_list]
 
     def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
         """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
