@@ -37,7 +37,7 @@ class TestDeprecation(TestCase):
                 "Provider",
                 "AzureOpenAI",
                 "OpenAI",
-                "Langchain",
+                "LangChain",
                 "LiteLLM",
                 "Bedrock",
                 "Huggingface",
@@ -55,7 +55,7 @@ class TestDeprecation(TestCase):
                 "HuggingfaceLocal",
                 "LiteLLM",
                 "Bedrock",
-                "Langchain",
+                "LangChain",
                 "Cortex",
             ],
             "trulens_eval.feedback.provider.endpoint": [
@@ -79,7 +79,7 @@ class TestDeprecation(TestCase):
                 "HuggingfaceLocal",
                 "LiteLLM",
                 "Bedrock",
-                "Langchain",
+                "LangChain",
                 "Cortex",
             ],
             "trulens_eval.schema": [],  # no names

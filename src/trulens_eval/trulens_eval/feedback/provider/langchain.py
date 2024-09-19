@@ -9,4 +9,4 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.providers.langchain.provider import Langchain
+from trulens.providers.langchain.provider import LangChain

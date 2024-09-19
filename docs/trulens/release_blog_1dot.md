@@ -79,7 +79,7 @@ To see the core re-architecture changes in action, we've included some usage exa
         ca = CustomApp()
         ```
 
-    === "Langchain"
+    === "LangChain"
 
         ```bash
         pip install trulens-apps-langchain

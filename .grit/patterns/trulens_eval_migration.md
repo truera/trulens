@@ -74,9 +74,9 @@ any {
       ),
       py_find_replace_import(
         from_package=`trulens_eval.feedback.provider.langchain`,
-        from_name=`Langchain`,
+        from_name=`LangChain`,
         to_package=`trulens.providers.langchain.provider`,
-        to_name=`Langchain`
+        to_name=`LangChain`
       ),
       py_find_replace_import(
         from_package=`trulens_eval.feedback.provider.litellm`,
@@ -350,15 +350,15 @@ any {
       ),
       py_find_replace_import(
           from_package=`trulens_eval.feedback.provider.langchain`,
-          from_name=`Langchain`,
+          from_name=`LangChain`,
           to_package=`trulens.providers.langchain.provider`,
-          to_name=`Langchain`
+          to_name=`LangChain`
       ),
       py_find_replace_import(
           from_package=`trulens_eval`,
-          from_name=`Langchain`,
+          from_name=`LangChain`,
           to_package=`trulens.providers.langchain.provider`,
-          to_name=`Langchain`
+          to_name=`LangChain`
       ),
       py_find_replace_import(
           from_package=`trulens_eval.feedback.provider.litellm`,
@@ -476,9 +476,9 @@ any {
       ),
       py_find_replace_import(
         from_package=`trulens_eval.feedback.provider.langchain`,
-        from_name=`Langchain`,
+        from_name=`LangChain`,
         to_package=`trulens.providers.langchain.provider`,
-        to_name=`Langchain`
+        to_name=`LangChain`
       ),
       py_find_replace_import(
         from_package=`trulens_eval.feedback.provider.litellm`,
@@ -562,7 +562,7 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.basic import TruBasicApp
 ```
 
-## Updates to working with Langchain
+## Updates to working with LangChain
 
 ```python
 from trulens_eval import TruChain
@@ -680,7 +680,7 @@ from trulens_eval.feedback.provider.cortex import Cortex
 from trulens.providers.cortex.provider import Cortex
 ```
 
-## Using Langchain Provider
+## Using LangChain Provider
 ```python
 from trulens_eval import Cortex
 ```
@@ -688,10 +688,10 @@ from trulens_eval import Cortex
 from trulens.providers.cortex.provider import Cortex
 ```
 
-## Using Langchain Provider Full Import Path
+## Using LangChain Provider Full Import Path
 ```python
-from trulens_eval.feedback.provider.langchain import Langchain
+from trulens_eval.feedback.provider.langchain import LangChain
 ```
 ```python
-from trulens.providers.langchain.provider import Langchain
+from trulens.providers.langchain.provider import LangChain
 ```

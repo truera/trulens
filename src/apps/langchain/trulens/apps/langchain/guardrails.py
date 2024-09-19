@@ -20,7 +20,7 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
 
         threshold (float): and keep documents only if their feedback value is at least this threshold.
 
-    Example: "Using TruLens guardrail context filters with Langchain"
+    Example: "Using TruLens guardrail context filters with LangChain"
 
         ```python
         from trulens.apps.langchain import WithFeedbackFilterDocuments

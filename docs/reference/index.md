@@ -34,8 +34,8 @@ types and providers:
     - 📦 [Cortex][trulens.providers.cortex.provider.Cortex] in the package
         `trulens-providers-cortex` for using Snowflake Cortex models.
 
-    - 📦 [Langchain][trulens.providers.langchain.provider.Langchain] in the package
-        `trulens-providers-langchain` for using models via Langchain.
+    - 📦 [LangChain][trulens.providers.langchain.provider.LangChain] in the package
+        `trulens-providers-langchain` for using models via LangChain.
 
     - 📦 [Bedrock][trulens.providers.bedrock.provider.Bedrock] in the package
         `trulens-providers-bedrock` for using Amazon Bedrock models.

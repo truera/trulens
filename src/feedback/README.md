@@ -70,7 +70,7 @@ The components of this specifications are:
 
 ### langchain-specific selectors
 
-  - `Langchain.select_context()` -- outputs the selector for retrieved context
+  - `LangChain.select_context()` -- outputs the selector for retrieved context
     from the app's internal `get_relevant_documents` method.
 
 ### NeMo-specific selectors

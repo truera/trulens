@@ -32,7 +32,7 @@ class LLMProvider(Provider):
     interface to a [wide range of
     models](https://docs.litellm.ai/docs/providers).
 
-    * [Langchain][trulens.providers.langchain.Langchain].
+    * [LangChain][trulens.providers.langchain.LangChain].
 
     """
 
@@ -642,7 +642,7 @@ class LLMProvider(Provider):
     def _langchain_evaluate(self, text: str, criteria: str) -> float:
         """
         Uses chat completion model. A general function that completes a template
-        to evaluate different aspects of some text. Prompt credit to Langchain.
+        to evaluate different aspects of some text. Prompt credit to LangChain.
 
         Args:
             text (str): A prompt to an agent.
@@ -667,7 +667,7 @@ class LLMProvider(Provider):
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
-        to evaluate different aspects of some text. Prompt credit to Langchain.
+        to evaluate different aspects of some text. Prompt credit to LangChain.
 
         Args:
             text (str): A prompt to an agent.
@@ -936,7 +936,7 @@ class LLMProvider(Provider):
     def controversiality(self, text: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
-        check the controversiality of some text. Prompt credit to Langchain
+        check the controversiality of some text. Prompt credit to LangChain
         Eval.
 
         Example:
@@ -960,7 +960,7 @@ class LLMProvider(Provider):
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
-        check the controversiality of some text. Prompt credit to Langchain
+        check the controversiality of some text. Prompt credit to LangChain
         Eval. Also uses chain of thought methodology and emits the reasons.
 
         Example:
