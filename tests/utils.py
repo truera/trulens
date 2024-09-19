@@ -664,23 +664,19 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
     def skip_val(val):
         if val is None:
             return True
-        # if not gc.is_tracked(val):
-        #     return True
-        # if gc.is_finalized(val):
-        #    return True
-        # try:
-        # if weakref.ReferenceType.__instancecheck__(val):
-        #    return True
+        if not gc.is_tracked(val):
+            return True
+        if gc.is_finalized(val):
+            return True
+        if weakref.CallableProxyType.__instancecheck__(val):
+            return True
+        if weakref.ReferenceType.__instancecheck__(val):
+            return True
+        if weakref.ProxyType.__instancecheck__(val):
+            return True
         # except Exception:
         # Here to avoid issues with overridden __instancecheck__.
         #    return True
-        # try:
-        # if weakref.ProxyType.__instancecheck__(val): # isinstance(val, weakref.ProxyTypes):
-        #    return True
-        # except Exception:
-        # Here to avoid issues with overridden __instancecheck__.
-        #    return True
-
         if id(val) in visited:
             return True
 
@@ -696,7 +692,10 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         if len(path) > biggest_len:
             biggest_len = len(path)
 
-            prog.set_description_str(str(lens))
+            if len(path) < 15:
+                prog.set_description_str(str(lens))
+            else:
+                prog.set_description_str(f"lens with {len(path)} steps")
             prog.set_postfix_str(
                 format_size(len(visited)) + " reference(s) visited"
             )
@@ -708,51 +707,38 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
         final = final_ref.get()
 
         if isinstance(final, dict):
-            try:
-                for key, value in list(final.items()):
-                    if skip_val(value):
-                        continue
+            for key, value in list(final.items()):
+                if skip_val(value):
+                    continue
 
-                    value_ref = RefLike(obj=value)
-                    visited.add(value_ref.ref_id)
+                value_ref = RefLike(obj=value)
+                visited.add(value_ref.ref_id)
 
-                    if isinstance(key, str):
-                        queue.put((
-                            lens + serial_utils.GetItem(item=key),
-                            path + [value_ref],
-                        ))
-                    else:
-                        queue.put((
-                            lens + GetReferent(ref_id=value_ref.ref_id),
-                            path + [value_ref],
-                        ))
-
-            except Exception as e:
-                # Some objects will override dict methods and might fail above.
-                # print(e)
-                raise e
-                # pass
-
-        elif isinstance(final, (list, tuple)):
-            try:
-                for index, value in enumerate(final):
-                    if skip_val(value):
-                        continue
-
-                    value_ref = RefLike(obj=value)
-                    visited.add(value_ref.ref_id)
-
+                if isinstance(key, str):
                     queue.put((
-                        lens + serial_utils.GetIndex(index=index),
+                        lens + serial_utils.GetItem(item=key),
+                        path + [value_ref],
+                    ))
+                else:
+                    queue.put((
+                        lens + GetReferent(ref_id=value_ref.ref_id),
                         path + [value_ref],
                     ))
 
-                    del value
+        elif isinstance(final, (list, tuple)):
+            for index, value in enumerate(final):
+                if skip_val(value):
+                    continue
 
-            except Exception as e:
-                # Some objects will override enumerate and related and might fail above.
-                raise e
-                pass
+                value_ref = RefLike(obj=value)
+                visited.add(value_ref.ref_id)
+
+                queue.put((
+                    lens + serial_utils.GetIndex(index=index),
+                    path + [value_ref],
+                ))
+
+                del value
 
         else:
             for value in gc.get_referents(final):
@@ -798,7 +784,6 @@ def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
             )
 
         if isinstance(step, GetReferent):
-            # obj = subpath.get_sole_item(None)
             print(
                 "  ",
                 type(step).__name__,
@@ -807,9 +792,4 @@ def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
                 str(obj)[0:1024],
             )
         else:
-            # try:
-            #    obj = step.get_sole_item(origin)
             print("  ", type(step).__name__, repr(step), obj_ident)
-        # except Exception as e:
-        #     print("  ", type(step).__name__, repr(step), "ERR:" + repr(e))
-        #     if isinstance(e, KeyError):

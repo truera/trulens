@@ -12,7 +12,7 @@ lives.
 
 See `instruments.py` docstring for discussion why these are done.
 
-- __Stack walking removed in favor of contextvars in 1.0.2__. We inspect the
+- __Stack walking removed in favor of contextvars in 1.0.3__. We inspect the
   call stack in process of tracking method invocation. It may be possible to
   replace this with `contextvars`.
 
