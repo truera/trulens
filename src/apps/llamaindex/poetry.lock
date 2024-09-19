@@ -169,13 +169,13 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.4.0"
+version = "4.5.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "anyio-4.4.0-py3-none-any.whl", hash = "sha256:c1b2d8f46a8a812513012e1107cb0e68c17159a7a594208005a57dc776e1bdc7"},
-    {file = "anyio-4.4.0.tar.gz", hash = "sha256:5aadc6a1bbb7cdb0bede386cac5e2940f5e2ff3aa20277e991cf028e0585ce94"},
+    {file = "anyio-4.5.0-py3-none-any.whl", hash = "sha256:fdeb095b7cc5a5563175eedd926ec4ae55413bb4be5770c424af0ba46ccb4a78"},
+    {file = "anyio-4.5.0.tar.gz", hash = "sha256:c5a275fe5ca0afd788001f58fca1e69e29ce706d746e317d660e21f70c530ef9"},
 ]
 
 [package.dependencies]
@@ -185,9 +185,9 @@ sniffio = ">=1.1"
 typing-extensions = {version = ">=4.1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
-test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17)"]
-trio = ["trio (>=0.23)"]
+doc = ["Sphinx (>=7.4,<8.0)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
+test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.21.0b1)"]
+trio = ["trio (>=0.26.1)"]
 
 [[package]]
 name = "async-timeout"
@@ -841,26 +841,26 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.2.16"
+version = "0.3.0"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain-0.2.16-py3-none-any.whl", hash = "sha256:8f59ee8b45f268df4b924ea3b9c63e49286efa756d16b3f6a9de5c6e502c36e1"},
-    {file = "langchain-0.2.16.tar.gz", hash = "sha256:ffb426a76a703b73ac69abad77cd16eaf03dda76b42cff55572f592d74944166"},
+    {file = "langchain-0.3.0-py3-none-any.whl", hash = "sha256:59a75a6a1eb7bfd2a6bf0c7a5816409a8fdc9046187b07af287b23b9899617af"},
+    {file = "langchain-0.3.0.tar.gz", hash = "sha256:a7c23892440bd1f5b9e029ff0dd709dd881ae927c4c0a3210ac64dba9bbf3f7f"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
-langchain-core = ">=0.2.38,<0.3.0"
-langchain-text-splitters = ">=0.2.0,<0.3.0"
+langchain-core = ">=0.3.0,<0.4.0"
+langchain-text-splitters = ">=0.3.0,<0.4.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
     {version = ">=1,<2", markers = "python_version < \"3.12\""},
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
 ]
-pydantic = ">=1,<3"
+pydantic = ">=2.7.4,<3.0.0"
 PyYAML = ">=5.3"
 requests = ">=2,<3"
 SQLAlchemy = ">=1.4,<3"
@@ -868,21 +868,21 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.40"
+version = "0.3.2"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.2.40-py3-none-any.whl", hash = "sha256:71fff5cafa4b9c82a3a716e985f071383be452c35d8cc3169b3a393e6857fc99"},
-    {file = "langchain_core-0.2.40.tar.gz", hash = "sha256:c838ea0c0b73475a8e58ced3e306b6d926ef063721abd164f237c8664916f502"},
+    {file = "langchain_core-0.3.2-py3-none-any.whl", hash = "sha256:23616795c7667cfd2c915e2ddc42eebeb162352a749623c1b22721c01c040036"},
+    {file = "langchain_core-0.3.2.tar.gz", hash = "sha256:92bbf67c6e4104c132de1150a753a458bb46e81aae6a4bc2ead91a5d3ccdd528"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.112,<0.2.0"
+langsmith = ">=0.1.117,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
-    {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
+    {version = ">=2.5.2,<3.0.0", markers = "python_full_version < \"3.12.4\""},
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
 ]
 PyYAML = ">=5.3"
@@ -891,27 +891,27 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.2.4"
+version = "0.3.0"
 description = "LangChain text splitting utilities"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_text_splitters-0.2.4-py3-none-any.whl", hash = "sha256:2702dee5b7cbdd595ccbe43b8d38d01a34aa8583f4d6a5a68ad2305ae3e7b645"},
-    {file = "langchain_text_splitters-0.2.4.tar.gz", hash = "sha256:f7daa7a3b0aa8309ce248e2e2b6fc8115be01118d336c7f7f7dfacda0e89bf29"},
+    {file = "langchain_text_splitters-0.3.0-py3-none-any.whl", hash = "sha256:e84243e45eaff16e5b776cd9c81b6d07c55c010ebcb1965deb3d1792b7358e83"},
+    {file = "langchain_text_splitters-0.3.0.tar.gz", hash = "sha256:f9fe0b4d244db1d6de211e7343d4abc4aa90295aa22e1f0c89e51f33c55cd7ce"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.38,<0.3.0"
+langchain-core = ">=0.3.0,<0.4.0"
 
 [[package]]
 name = "langsmith"
-version = "0.1.121"
+version = "0.1.123"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.121-py3-none-any.whl", hash = "sha256:fdb1ac8a671d3904201bfeea197d87bded46a10d08f1034af464211872e29893"},
-    {file = "langsmith-0.1.121.tar.gz", hash = "sha256:e9381b82a5bd484af9a51c3e96faea572746b8d617b070c1cda40cbbe48e33df"},
+    {file = "langsmith-0.1.123-py3-none-any.whl", hash = "sha256:ee30c96e69038af92487c6229870b9ccc1fba43eb1b84fb4132a013af7212c6e"},
+    {file = "langsmith-0.1.123.tar.gz", hash = "sha256:5d4ad7bb57351f0fc492debf2d7d0b96f2eed41b5545cd36f3043c5f4d42aa6b"},
 ]
 
 [package.dependencies]
@@ -940,21 +940,21 @@ pydantic = ">=1.10"
 
 [[package]]
 name = "llama-index"
-version = "0.10.68"
+version = "0.11.10"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index-0.10.68-py3-none-any.whl", hash = "sha256:e2a1919707260c07f9c10a239a576a399e8c50b2ddcd8d0ad8b4ffb4ad5c5c60"},
-    {file = "llama_index-0.10.68.tar.gz", hash = "sha256:89f79e7ece951f40d753ee6e5a2273ca3728d800cbb2213f65b7e1d58abff0e5"},
+    {file = "llama_index-0.11.10-py3-none-any.whl", hash = "sha256:5f5ef55e14c2f670a855abb4d24bf626333ef33dd630a90ec61c3b36635b2cf7"},
+    {file = "llama_index-0.11.10.tar.gz", hash = "sha256:1733f23bfb5afcea97a594d356994d379e6fb0da4e85d5adcb49757559f113e6"},
 ]
 
 [package.dependencies]
-llama-index-agent-openai = ">=0.1.4,<0.3.0"
-llama-index-cli = ">=0.1.2,<0.2.0"
-llama-index-core = ">=0.10.68,<0.11.0"
-llama-index-embeddings-openai = ">=0.1.5,<0.2.0"
-llama-index-indices-managed-llama-cloud = ">=0.2.0"
+llama-index-agent-openai = ">=0.3.1,<0.4.0"
+llama-index-cli = ">=0.3.1,<0.4.0"
+llama-index-core = ">=0.11.10,<0.12.0"
+llama-index-embeddings-openai = ">=0.2.4,<0.3.0"
+llama-index-indices-managed-llama-cloud = ">=0.3.0"
 llama-index-legacy = ">=0.9.48,<0.10.0"
 llama-index-llms-openai = ">=0.1.27,<0.2.0"
 llama-index-multi-modal-llms-openai = ">=0.1.3,<0.2.0"
@@ -965,18 +965,18 @@ llama-index-readers-llama-parse = ">=0.1.2"
 
 [[package]]
 name = "llama-index-agent-openai"
-version = "0.2.9"
+version = "0.3.4"
 description = "llama-index agent openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_agent_openai-0.2.9-py3-none-any.whl", hash = "sha256:d7f0fd4c87124781acd783be603871f8808b1a3969e876a9c96e2ed0844d46ac"},
-    {file = "llama_index_agent_openai-0.2.9.tar.gz", hash = "sha256:debe86da6d9d983db32b445ddca7c798ac140fe59573bafded73595b3995f3d5"},
+    {file = "llama_index_agent_openai-0.3.4-py3-none-any.whl", hash = "sha256:3720ce9bb12417a99a3fe84e52cce23e762b13f88a2dfc4292c76f4df9b26b4a"},
+    {file = "llama_index_agent_openai-0.3.4.tar.gz", hash = "sha256:80e3408d97121bebca3fa3ffd14b51285870c1c3c73d4ee04d3d18cfe6040466"},
 ]
 
 [package.dependencies]
-llama-index-core = ">=0.10.41,<0.11.0"
-llama-index-llms-openai = ">=0.1.5,<0.2.0"
+llama-index-core = ">=0.11.0,<0.12.0"
+llama-index-llms-openai = ">=0.2.9,<0.3.0"
 openai = ">=1.14.0"
 
 [[package]]
@@ -997,13 +997,13 @@ llama-index-llms-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-core"
-version = "0.10.68.post1"
+version = "0.11.10"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_core-0.10.68.post1-py3-none-any.whl", hash = "sha256:1befe1324f0fa1c3a2cfc1e4d38adb0cd0c3b2948badfb2be826da048a3bdbaf"},
-    {file = "llama_index_core-0.10.68.post1.tar.gz", hash = "sha256:1215106973f2fb7651c10827c27ca3f47c03ccfae3b8653c5476d454d5ba8cd0"},
+    {file = "llama_index_core-0.11.10-py3-none-any.whl", hash = "sha256:2dddd7cb4ccee89fdbbddd62e5fe3c7ae7fc431130e0a0a7155daee052874191"},
+    {file = "llama_index_core-0.11.10.tar.gz", hash = "sha256:9929b11cfb24a3581620466660ab11a6360fde8c2441caa3660e0127df65c1b9"},
 ]
 
 [package.dependencies]
@@ -1032,13 +1032,13 @@ wrapt = "*"
 
 [[package]]
 name = "llama-index-embeddings-openai"
-version = "0.1.11"
+version = "0.2.5"
 description = "llama-index embeddings openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_embeddings_openai-0.1.11-py3-none-any.whl", hash = "sha256:e20806fc4baff6b8f5274decf2c1ca7c5c737648e01865475ffada164e32e173"},
-    {file = "llama_index_embeddings_openai-0.1.11.tar.gz", hash = "sha256:6025e229e375201788a9b14d6ebe470329907576cba5f6b7b832c3d68f39db30"},
+    {file = "llama_index_embeddings_openai-0.2.5-py3-none-any.whl", hash = "sha256:823c8311e556349ba19dda408a64a314fa3dafe0e5759709c54d33a0269aa6ba"},
+    {file = "llama_index_embeddings_openai-0.2.5.tar.gz", hash = "sha256:0047dd71d747068645ed728c29312aa91b65bbe4c6142180034c64dfc5c6f6e8"},
 ]
 
 [package.dependencies]
@@ -1046,13 +1046,13 @@ llama-index-core = ">=0.10.1,<0.11.0"
 
 [[package]]
 name = "llama-index-indices-managed-llama-cloud"
-version = "0.2.7"
+version = "0.3.1"
 description = "llama-index indices llama-cloud integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_indices_managed_llama_cloud-0.2.7-py3-none-any.whl", hash = "sha256:94335504eab2a6baf7361bbd8bda3ae20a68c7d0111587c9a0793440e9edff21"},
-    {file = "llama_index_indices_managed_llama_cloud-0.2.7.tar.gz", hash = "sha256:d7e9b4cc50214b3cfcd75ea63cacce4ee36092cb672c003f15fd23ba31c49ec0"},
+    {file = "llama_index_indices_managed_llama_cloud-0.3.1-py3-none-any.whl", hash = "sha256:ba0089d42b1cc3f3d1e7155847e479e9370ab4ce1ff8f3dda920a113cd8b4721"},
+    {file = "llama_index_indices_managed_llama_cloud-0.3.1.tar.gz", hash = "sha256:f627f102d15905f15618522b6ec28958cd86d7b9b379b9972daed89105342d1d"},
 ]
 
 [package.dependencies]
@@ -1100,28 +1100,28 @@ query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "l
 
 [[package]]
 name = "llama-index-llms-openai"
-version = "0.1.31"
+version = "0.2.9"
 description = "llama-index llms openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_llms_openai-0.1.31-py3-none-any.whl", hash = "sha256:800815b1b964b7d8dddd0e02a09fb57ac5f2ec6f80db92cd704dae718846023f"},
-    {file = "llama_index_llms_openai-0.1.31.tar.gz", hash = "sha256:c235493f453b92903722054a8dfb1452ea850eac47a68a38bab3b823988d56fe"},
+    {file = "llama_index_llms_openai-0.2.9-py3-none-any.whl", hash = "sha256:5f36e8cbca2c3c657380c711bd3974fe7e2344d3b6a8dde6c263e56868d01e27"},
+    {file = "llama_index_llms_openai-0.2.9.tar.gz", hash = "sha256:56376f39e3a40253b5c4fb90d0fb6af093f21bb2935925615f0c28a28d028187"},
 ]
 
 [package.dependencies]
-llama-index-core = ">=0.10.57,<0.11.0"
+llama-index-core = ">=0.11.7,<0.12.0"
 openai = ">=1.40.0,<2.0.0"
 
 [[package]]
 name = "llama-index-multi-modal-llms-openai"
-version = "0.1.9"
+version = "0.2.1"
 description = "llama-index multi-modal-llms openai integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_multi_modal_llms_openai-0.1.9-py3-none-any.whl", hash = "sha256:614f40427a4671e72742780be8fda77297dbf2942519bffcb2c9de8696a9edff"},
-    {file = "llama_index_multi_modal_llms_openai-0.1.9.tar.gz", hash = "sha256:dbacf44d5c2cca07ca424eacd1337583002d70387a3c1868cf8ae743b1dbec4a"},
+    {file = "llama_index_multi_modal_llms_openai-0.2.1-py3-none-any.whl", hash = "sha256:1c79e6af88d0838f258be412fa1c8bf7e5d9b2740e1bda6315bd3fa86876c7df"},
+    {file = "llama_index_multi_modal_llms_openai-0.2.1.tar.gz", hash = "sha256:1b5be691d5fa2861fd4b5a071883dc94d82db3e1c7ff686d84dd84048a354c7b"},
 ]
 
 [package.dependencies]
@@ -1162,13 +1162,13 @@ llama-index-program-openai = ">=0.1.1,<0.2.0"
 
 [[package]]
 name = "llama-index-readers-file"
-version = "0.1.33"
+version = "0.2.2"
 description = "llama-index readers file integration"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_index_readers_file-0.1.33-py3-none-any.whl", hash = "sha256:c968308497c1355acf61fe7e3f05ad8e308bb6487dddd3bd2a60e102225d0b38"},
-    {file = "llama_index_readers_file-0.1.33.tar.gz", hash = "sha256:247a4d5bfabc7d1022027adf58064bc16c224d006db142abb0d182ac5574a887"},
+    {file = "llama_index_readers_file-0.2.2-py3-none-any.whl", hash = "sha256:ffec878771c1e7575afb742887561059bcca77b97a81c1c1be310ebb73f10f46"},
+    {file = "llama_index_readers_file-0.2.2.tar.gz", hash = "sha256:48459f90960b863737147b66ed83afec9ce8984f8eda2561b6d2500214365db2"},
 ]
 
 [package.dependencies]
@@ -1197,13 +1197,13 @@ llama-parse = ">=0.4.0"
 
 [[package]]
 name = "llama-parse"
-version = "0.4.9"
+version = "0.5.6"
 description = "Parse files into RAG-Optimized formats."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "llama_parse-0.4.9-py3-none-any.whl", hash = "sha256:71974a57a73d642608cc406942bee4e7fc1a713fa410f51df67da509479ba544"},
-    {file = "llama_parse-0.4.9.tar.gz", hash = "sha256:657f8fa5f7d399f14c0454fc05cae6034da0373f191df6cfca17a1b4a704ef87"},
+    {file = "llama_parse-0.5.6-py3-none-any.whl", hash = "sha256:b0924202b0c077d2f70139b82640396e761da0d3bd3606ec50c8d5bab229d55e"},
+    {file = "llama_parse-0.5.6.tar.gz", hash = "sha256:3c74da1246c9bdd61d63b7fc212040ea2dbd218d47fc986a18e3974e64591b80"},
 ]
 
 [package.dependencies]
@@ -1585,13 +1585,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.46.0"
+version = "1.46.1"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.46.0-py3-none-any.whl", hash = "sha256:8e423690b121d0268c7bb83b552e14f339b0ba250e1d0f70d145c194e79c4e1b"},
-    {file = "openai-1.46.0.tar.gz", hash = "sha256:0c5a783530d7cd90e2370dbd52d9239d2d53dc7a0badf9ee1e2e23d3f148969b"},
+    {file = "openai-1.46.1-py3-none-any.whl", hash = "sha256:7517f07117cf66012bbc55c49fd6b983eaac0f3d2a09c90cba1140d4455e4290"},
+    {file = "openai-1.46.1.tar.gz", hash = "sha256:e5cf7f268bf516de23686d496c9dae7f0dcdcd0e87af4d288deeab8329fcbbaf"},
 ]
 
 [package.dependencies]
@@ -2484,11 +2484,10 @@ files = []
 develop = false
 
 [package.dependencies]
-langchain = "^0.2.10,!=0.2.12"
-langchain-core = "^0.2.24,!=0.2.27"
+langchain = ">=0.2.10,!=0.2.12"
+langchain-core = ">=0.2.24,!=0.2.27"
 pydantic = "^2"
 trulens-core = "^1.0.0"
-typing-inspect = "^0.8"
 
 [package.source]
 type = "directory"
@@ -2530,21 +2529,6 @@ files = [
     {file = "typing_extensions-4.12.2-py3-none-any.whl", hash = "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d"},
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
 ]
-
-[[package]]
-name = "typing-inspect"
-version = "0.8.0"
-description = "Runtime inspection utilities for typing module."
-optional = false
-python-versions = "*"
-files = [
-    {file = "typing_inspect-0.8.0-py3-none-any.whl", hash = "sha256:5fbf9c1e65d4fa01e701fe12a5bca6c6e08a4ffd5bc60bfac028253a447c5188"},
-    {file = "typing_inspect-0.8.0.tar.gz", hash = "sha256:8b1ff0c400943b6145df8119c41c244ca8207f1f10c9c057aeed1560e4806e3d"},
-]
-
-[package.dependencies]
-mypy-extensions = ">=0.3.0"
-typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "typing-inspect"
@@ -2776,4 +2760,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "5494a9295de1eb62af446d63c071f8ff04b7ca288c2166cc2d62654a2b07537b"
+content-hash = "0950feb2550bb3027c8e30c870f855db4ed9106187cd6f21c39294878157560b"

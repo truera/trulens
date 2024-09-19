@@ -32,13 +32,13 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.4.0"
+version = "4.5.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "anyio-4.4.0-py3-none-any.whl", hash = "sha256:c1b2d8f46a8a812513012e1107cb0e68c17159a7a594208005a57dc776e1bdc7"},
-    {file = "anyio-4.4.0.tar.gz", hash = "sha256:5aadc6a1bbb7cdb0bede386cac5e2940f5e2ff3aa20277e991cf028e0585ce94"},
+    {file = "anyio-4.5.0-py3-none-any.whl", hash = "sha256:fdeb095b7cc5a5563175eedd926ec4ae55413bb4be5770c424af0ba46ccb4a78"},
+    {file = "anyio-4.5.0.tar.gz", hash = "sha256:c5a275fe5ca0afd788001f58fca1e69e29ce706d746e317d660e21f70c530ef9"},
 ]
 
 [package.dependencies]
@@ -48,9 +48,9 @@ sniffio = ">=1.1"
 typing-extensions = {version = ">=4.1", markers = "python_version < \"3.11\""}
 
 [package.extras]
-doc = ["Sphinx (>=7)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
-test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.17)"]
-trio = ["trio (>=0.23)"]
+doc = ["Sphinx (>=7.4,<8.0)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
+test = ["anyio[trio]", "coverage[toml] (>=7)", "exceptiongroup (>=1.2.0)", "hypothesis (>=4.0)", "psutil (>=5.9)", "pytest (>=7.0)", "pytest-mock (>=3.6.1)", "trustme", "uvloop (>=0.21.0b1)"]
+trio = ["trio (>=0.26.1)"]
 
 [[package]]
 name = "certifi"
@@ -404,20 +404,21 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.2.40"
+version = "0.3.2"
 description = "Building applications with LLMs through composability"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.2.40-py3-none-any.whl", hash = "sha256:71fff5cafa4b9c82a3a716e985f071383be452c35d8cc3169b3a393e6857fc99"},
-    {file = "langchain_core-0.2.40.tar.gz", hash = "sha256:c838ea0c0b73475a8e58ced3e306b6d926ef063721abd164f237c8664916f502"},
+    {file = "langchain_core-0.3.2-py3-none-any.whl", hash = "sha256:23616795c7667cfd2c915e2ddc42eebeb162352a749623c1b22721c01c040036"},
+    {file = "langchain_core-0.3.2.tar.gz", hash = "sha256:92bbf67c6e4104c132de1150a753a458bb46e81aae6a4bc2ead91a5d3ccdd528"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.112,<0.2.0"
+langsmith = ">=0.1.117,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
+    {version = ">=2.5.2,<3.0.0", markers = "python_full_version < \"3.12.4\""},
     {version = ">=2.7.4,<3.0.0", markers = "python_full_version >= \"3.12.4\""},
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
 ]
@@ -427,13 +428,13 @@ typing-extensions = ">=4.7"
 
 [[package]]
 name = "langsmith"
-version = "0.1.121"
+version = "0.1.123"
 description = "Client library to connect to the LangSmith LLM Tracing and Evaluation Platform."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langsmith-0.1.121-py3-none-any.whl", hash = "sha256:fdb1ac8a671d3904201bfeea197d87bded46a10d08f1034af464211872e29893"},
-    {file = "langsmith-0.1.121.tar.gz", hash = "sha256:e9381b82a5bd484af9a51c3e96faea572746b8d617b070c1cda40cbbe48e33df"},
+    {file = "langsmith-0.1.123-py3-none-any.whl", hash = "sha256:ee30c96e69038af92487c6229870b9ccc1fba43eb1b84fb4132a013af7212c6e"},
+    {file = "langsmith-0.1.123.tar.gz", hash = "sha256:5d4ad7bb57351f0fc492debf2d7d0b96f2eed41b5545cd36f3043c5f4d42aa6b"},
 ]
 
 [package.dependencies]
@@ -1538,4 +1539,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "55d4ad7197b388bcac426ad1c679866dfefceef5414c40e5d137175714fc7949"
+content-hash = "be3fdb026473486f287bbee54ed4282ba5a727d7c8d2d9acc27c14d1d9fa6aa9"
