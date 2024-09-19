@@ -342,6 +342,7 @@ class TruLlama(mod_app.App):
         self,
         rets: Any,
         wrap: Callable[[T], T],
+        on_done: Optional[Callable[[T], Any]],
         context_vars: Optional[python_utils.ContextVarsOrValues] = None,
     ) -> Any:
         """Wrap any llamaindex specific lazy values with wrappers that have callback wrap."""
@@ -350,7 +351,7 @@ class TruLlama(mod_app.App):
             rets.response_gen = python_utils.wrap_async_generator(
                 rets.response_gen,
                 wrap=wrap,
-                on_done=wrap,
+                on_done=on_done,
                 context_vars=context_vars,
             )
 
@@ -361,7 +362,7 @@ class TruLlama(mod_app.App):
                 rets.chat_stream = python_utils.wrap_generator(
                     rets.chat_stream,
                     wrap=wrap,
-                    on_done=wrap,
+                    on_done=on_done,
                     context_vars=context_vars,
                 )
 
@@ -369,7 +370,7 @@ class TruLlama(mod_app.App):
                 rets.achat_stream = python_utils.wrap_async_generator(
                     rets.achat_stream,
                     wrap=wrap,
-                    on_done=wrap,
+                    on_done=on_done,
                     context_vars=context_vars,
                 )
 
@@ -387,7 +388,7 @@ class TruLlama(mod_app.App):
             rets.response_gen = python_utils.wrap_generator(
                 rets.response_gen,
                 wrap=wrap,
-                on_done=wrap,
+                on_done=on_done,
                 context_vars=context_vars,
             )
             return rets

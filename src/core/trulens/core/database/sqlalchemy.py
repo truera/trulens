@@ -928,7 +928,9 @@ class SQLAlchemyDB(DB):
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
-no_perf = mod_base_schema.Perf.min().model_dump()
+def make_no_perf():
+    # Def to avoid circular imports.
+    return mod_base_schema.Perf.min().model_dump()
 
 
 def _extract_feedback_results(
@@ -951,7 +953,7 @@ def _extract_feedback_results(
             _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
             if _result.record.perf_json != MIGRATION_UNKNOWN_STR
-            else no_perf,
+            else make_no_perf(),
             json.loads(_result.calls_json)["calls"],
             json.loads(_result.feedback_definition.feedback_json)
             if _result.feedback_definition is not None

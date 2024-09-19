@@ -19,16 +19,17 @@ import os
 import threading as th
 import traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
     Iterable,
+    List,
     Optional,
     Sequence,
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 import weakref
@@ -53,13 +54,13 @@ from trulens.core.utils.python import id_str
 from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import safe_signature
+from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
 
-if TYPE_CHECKING:
-    from trulens.core.app import RecordingContext
-
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class WithInstrumentCallbacks:
@@ -118,7 +119,8 @@ class WithInstrumentCallbacks:
     def wrap_lazy_values(
         self,
         rets: Any,
-        wrap: Callable[[Any], None],
+        wrap: Callable[[T], T],
+        on_done: Callable[[T], T],
         context_vars: Optional[python_utils.ContextVarsOrValues],
     ) -> Any:
         """Wrap any lazy values in the return value of a method call to invoke
@@ -134,14 +136,19 @@ class WithInstrumentCallbacks:
             wrap: A callback to be called when the lazy value is ready. Should
                 return the input value or a wrapped version of it.
 
-            context_vars: The contextvars to be captured by the lazy value. If not
-                given, all contexts are captured.
+            on_done: Called when the lazy values is done and is no longer lazy.
+                This as opposed to a lazy value that evaluates to another lazy
+                values. Should return the value or wrapper.
+
+            context_vars: The contextvars to be captured by the lazy value. If
+                not given, all contexts are captured.
 
         Returns:
             The return value with lazy values wrapped.
         """
 
-        return rets
+        # In the default case, assume the given result is already ready.
+        return on_done(rets)
 
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
@@ -170,7 +177,7 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: "RecordingContext",
+        ctx: RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -179,10 +186,11 @@ class WithInstrumentCallbacks:
         perf: mod_base_schema.Perf,
         cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
+        final: bool = True,
     ):
         """
-        Called by instrumented methods if they are root calls (first instrumented
-        methods in a call stack).
+        Called by instrumented methods if they are root calls (first
+        instrumented methods in a call stack).
 
         Args:
             ctx: The context of the recording.
@@ -204,9 +212,155 @@ class WithInstrumentCallbacks:
             existing_record: If the record has already been produced (i.e.
                 because it was an awaitable), it can be passed here to avoid
                 re-creating it.
+
+            final: Whether this is record is final in that it is ready for
+                feedback evaluation.
         """
 
         raise NotImplementedError
+
+
+class RecordingContext:
+    """Manager of the creation of records from record calls.
+
+    An instance of this class is produced when using an
+    [App][trulens.core.app.App] as a context manager, i.e.:
+
+    Example:
+        ```python
+        app = ...  # your app
+        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
+
+        with truapp as recorder:
+            app.invoke(...) # use your app
+
+        recorder: RecordingContext
+        ```
+
+    Each instance of this class produces a record for every "root" instrumented
+    method called. Root method here means the first instrumented method in a
+    call stack. Note that there may be more than one of these contexts in play
+    at the same time due to:
+
+    - More than one wrapper of the same app.
+    - More than one context manager ("with" statement) surrounding calls to the
+      same app.
+    - Calls to "with_record" on methods that themselves contain recording.
+    - Calls to apps that use trulens internally to track records in any of the
+      supported ways.
+    - Combinations of the above.
+    """
+
+    def __init__(
+        self, app: WithInstrumentCallbacks, record_metadata: JSON = None
+    ):
+        self.calls: Dict[
+            mod_types_schema.CallID, mod_record_schema.RecordAppCall
+        ] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
+
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
+        """
+
+        self.records: List[mod_record_schema.Record] = []
+        """Completed records."""
+
+        self.lock: th.Lock = th.Lock()
+        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
+
+        self.token: Optional[contextvars.Token] = None
+        """Token for context management."""
+
+        self.app: weakref.ProxyType[WithInstrumentCallbacks] = weakref.proxy(
+            app
+        )
+        """App for which we are recording."""
+
+        self.record_metadata = record_metadata
+        """Metadata to attach to all records produced in this context."""
+
+    def __iter__(self):
+        return iter(self.records)
+
+    def get(self) -> mod_record_schema.Record:
+        """
+        Get the single record only if there was exactly one. Otherwise throw an error.
+        """
+
+        if len(self.records) == 0:
+            raise RuntimeError("Recording context did not record any records.")
+
+        if len(self.records) > 1:
+            raise RuntimeError(
+                "Recording context recorded more than 1 record. "
+                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
+            )
+
+        return self.records[0]
+
+    def __getitem__(self, idx: int) -> mod_record_schema.Record:
+        return self.records[idx]
+
+    def __len__(self):
+        return len(self.records)
+
+    def __hash__(self) -> int:
+        # The same app can have multiple recording contexts.
+        return hash(id(self.app)) + hash(id(self.records))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
+
+    def add_call(self, call: mod_record_schema.RecordAppCall):
+        """
+        Add the given call to the currently tracked call list.
+        """
+        with self.lock:
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
+
+    def finish_record(
+        self,
+        calls_to_record: Callable[
+            [
+                List[mod_record_schema.RecordAppCall],
+                mod_types_schema.Metadata,
+                Optional[mod_record_schema.Record],
+            ],
+            mod_record_schema.Record,
+        ],
+        existing_record: Optional[mod_record_schema.Record] = None,
+    ):
+        """
+        Run the given function to build a record from the tracked calls and any
+        pre-specified metadata.
+
+        If existing_record is provided, updates that record with new data.
+        """
+
+        with self.lock:
+            current_calls = dict(self.calls)  # copy
+            self.calls = {}
+
+            if existing_record is not None:
+                for call in existing_record.calls:
+                    current_calls[call.call_id] = call
+
+            record = calls_to_record(
+                current_calls.values(), self.record_metadata, existing_record
+            )
+
+            if existing_record is None:
+                # If existing record was given, we assume it was already
+                # inserted into this list.
+                self.records.append(record)
+
+        return record
 
 
 ClassFilter = Union[Type, Tuple[Type, ...]]
@@ -605,8 +759,13 @@ class Instrument:
             # method are of the same type. We use some classmethods of that
             # app type below.
 
-            def update_call_info(rets):
-                """Notify the app of the call and let it update the record if needed."""
+            def update_call_info(rets, final=True):
+                """Notify the app of the call and let it update the record if
+                needed.
+
+                `final` is passed to the new record handler in the app and tells
+                it whether to the record is ready to run feedback.
+                """
 
                 # (re) generate end_time here because cases where the
                 # initial end_time was just to produce an awaitable/lazy
@@ -662,6 +821,7 @@ class Instrument:
                             ),
                             cost=cost,
                             existing_record=existing_record,
+                            final=final,
                         )
 
                 if error is not None:
@@ -691,7 +851,7 @@ class Instrument:
     """
 
                     # Will add placeholder to the record:
-                    update_call_info(temp_rets)
+                    update_call_info(temp_rets, final=False)
 
                     return python_utils.wrap_lazy(
                         rets,
@@ -707,10 +867,11 @@ class Instrument:
                     rets = self.app.wrap_lazy_values(
                         rets,
                         wrap=rewrap,
+                        on_done=update_call_info,
                         context_vars=context_vars,
                     )
-
-                update_call_info(rets)
+                else:
+                    update_call_info(rets, final=True)
 
                 return rets
 

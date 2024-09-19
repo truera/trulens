@@ -10,6 +10,8 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Sequence
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
+from langchain_core.messages.ai import AIMessage
+from langchain_core.messages.ai import AIMessageChunk
 from langchain_core.runnables.base import Runnable
 from langchain_core.runnables.base import RunnableSerializable
 
@@ -342,12 +344,22 @@ class TruChain(mod_app.App):
         returned `ret`.
         """
 
+        if isinstance(ret, (AIMessage, AIMessageChunk)):
+            return ret.content
+
         if isinstance(ret, Sequence) and all(
             isinstance(x, Dict) and "content" in x for x in ret
         ):
             # Streaming outputs for some internal methods are lists of dicts
             # with each having "content".
             return "".join(x["content"] for x in ret)
+
+        if isinstance(ret, Sequence) and all(
+            isinstance(x, (AIMessage, AIMessageChunk)) for x in ret
+        ):
+            # Streaming outputs for some internal methods are lists of dicts
+            # with each having "content".
+            return "".join(x.content for x in ret)
 
         if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
             # Streaming outputs of main stream methods like Runnable.stream are

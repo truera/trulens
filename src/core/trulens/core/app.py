@@ -10,7 +10,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 import threading
-from threading import Lock
 from typing import (
     Any,
     Awaitable,
@@ -42,7 +41,6 @@ from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
 from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
@@ -320,147 +318,6 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
-class RecordingContext:
-    """Manager of the creation of records from record calls.
-
-    An instance of this class is produced when using an
-    [App][trulens.core.app.App] as a context manager, i.e.:
-
-    Example:
-        ```python
-        app = ...  # your app
-        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
-
-        with truapp as recorder:
-            app.invoke(...) # use your app
-
-        recorder: RecordingContext
-        ```
-
-    Each instance of this class produces a record for every "root" instrumented
-    method called. Root method here means the first instrumented method in a
-    call stack. Note that there may be more than one of these contexts in play
-    at the same time due to:
-
-    - More than one wrapper of the same app.
-    - More than one context manager ("with" statement) surrounding calls to the
-      same app.
-    - Calls to "with_record" on methods that themselves contain recording.
-    - Calls to apps that use trulens internally to track records in any of the
-      supported ways.
-    - Combinations of the above.
-    """
-
-    def __init__(self, app: App, record_metadata: JSON = None):
-        self.calls: Dict[
-            mod_types_schema.CallID, mod_record_schema.RecordAppCall
-        ] = {}
-        """A record (in terms of its RecordAppCall) in process of being created.
-
-        Storing as a map as we want to override calls with the same id which may
-        happen due to methods producing awaitables or generators. These result
-        in calls before the awaitables are awaited and then get updated after
-        the result is ready.
-        """
-
-        self.records: List[mod_record_schema.Record] = []
-        """Completed records."""
-
-        self.lock: Lock = Lock()
-        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
-
-        self.token: Optional[contextvars.Token] = None
-        """Token for context management."""
-
-        self.app: weakref.ProxyType[mod_instruments.WithInstrumentCallbacks] = (
-            weakref.proxy(app)
-        )
-        """App for which we are recording."""
-
-        self.record_metadata = record_metadata
-        """Metadata to attach to all records produced in this context."""
-
-    def __iter__(self):
-        return iter(self.records)
-
-    def get(self) -> mod_record_schema.Record:
-        """
-        Get the single record only if there was exactly one. Otherwise throw an error.
-        """
-
-        if len(self.records) == 0:
-            raise RuntimeError("Recording context did not record any records.")
-
-        if len(self.records) > 1:
-            raise RuntimeError(
-                "Recording context recorded more than 1 record. "
-                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
-            )
-
-        return self.records[0]
-
-    def __getitem__(self, idx: int) -> mod_record_schema.Record:
-        return self.records[idx]
-
-    def __len__(self):
-        return len(self.records)
-
-    def __hash__(self) -> int:
-        # The same app can have multiple recording contexts.
-        return hash(id(self.app)) + hash(id(self.records))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
-
-    def add_call(self, call: mod_record_schema.RecordAppCall):
-        """
-        Add the given call to the currently tracked call list.
-        """
-        with self.lock:
-            # NOTE: This might override existing call record which happens when
-            # processing calls with awaitable or generator results.
-            self.calls[call.call_id] = call
-
-    def finish_record(
-        self,
-        calls_to_record: Callable[
-            [
-                List[mod_record_schema.RecordAppCall],
-                mod_types_schema.Metadata,
-                Optional[mod_record_schema.Record],
-            ],
-            mod_record_schema.Record,
-        ],
-        existing_record: Optional[mod_record_schema.Record] = None,
-    ):
-        """
-        Run the given function to build a record from the tracked calls and any
-        pre-specified metadata.
-
-        If existing_record is provided, updates that record with new data.
-        """
-
-        with self.lock:
-            current_calls = dict(self.calls)  # copy
-            self.calls = {}
-
-            if existing_record is not None:
-                for call in existing_record.calls:
-                    current_calls[call.call_id] = call
-
-            record = calls_to_record(
-                current_calls.values(), self.record_metadata, existing_record
-            )
-
-            if existing_record is None:
-                # If existing record was given, we assume it was already
-                # inserted into this list.
-                self.records.append(record)
-
-        return record
-
-
 class App(
     mod_app_schema.AppDefinition,
     mod_instruments.WithInstrumentCallbacks,
@@ -529,9 +386,9 @@ class App(
     included in the json representation of this app.
     """
 
-    recording_contexts: contextvars.ContextVar[RecordingContext] = (
-        pydantic.Field(None, exclude=True)
-    )
+    recording_contexts: contextvars.ContextVar[
+        mod_instruments.RecordingContext
+    ] = pydantic.Field(None, exclude=True)
     """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
@@ -1174,7 +1031,7 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
-        ctx = RecordingContext(app=self)
+        ctx = mod_instruments.RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1223,7 +1080,7 @@ class App(
 
     # For use as a context manager.
     async def __aenter__(self):
-        ctx = RecordingContext(app=self)
+        ctx = mod_instruments.RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1245,7 +1102,7 @@ class App(
         return
 
     # WithInstrumentCallbacks requirement
-    def on_new_record(self, func) -> Iterable[RecordingContext]:
+    def on_new_record(self, func) -> Iterable[mod_instruments.RecordingContext]:
         """Called at the start of record creation.
 
         See
@@ -1260,7 +1117,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def on_add_record(
         self,
-        ctx: RecordingContext,
+        ctx: mod_instruments.RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -1269,6 +1126,7 @@ class App(
         perf: mod_base_schema.Perf,
         cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
+        final: bool = False,
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a
         "record call list.
@@ -1296,7 +1154,10 @@ class App(
 
             if error is None:
                 assert bindings is not None, "No bindings despite no error."
-                main_out = self.main_output(func, sig, bindings, ret)
+                if final:
+                    main_out = self.main_output(func, sig, bindings, ret)
+                else:
+                    main_out = "TruLens: Record not yet finalized."
             else:
                 main_out = None
 
@@ -1328,6 +1189,10 @@ class App(
             # May block on DB.
             self._handle_error(record=record, error=error)
             raise error
+
+        # Only continue with the feedback steps if the record is final.
+        if not final:
+            return record
 
         # Will block on DB, but not on feedback evaluation, depending on
         # FeedbackMode:
