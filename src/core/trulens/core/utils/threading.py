@@ -137,7 +137,7 @@ class TP(SingletonPerName):  # "thread processing"
             return
 
         # Run tasks started with this class using this pool.
-        self.thread_pool = fThreadPoolExecutor(
+        self.thread_pool = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
