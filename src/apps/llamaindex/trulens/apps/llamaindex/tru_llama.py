@@ -4,13 +4,16 @@
 
 from inspect import BoundArguments
 from inspect import Signature
+from inspect import getmembers_static
 import logging
 from pprint import PrettyPrinter
 from typing import (
     Any,
+    AsyncGenerator,
     Callable,
     ClassVar,
     Dict,
+    Generator,
     Optional,
     TypeVar,
     Union,
@@ -62,7 +65,6 @@ if not legacy:
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
     from llama_index.core.chat_engine.types import BaseChatEngine
-    from llama_index.core.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.indices.base import BaseIndex
     from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.memory.types import BaseMemory
@@ -206,7 +208,7 @@ class LlamaInstrument(Instrument):
                     "chat",
                     "achat",
                     "stream_chat",
-                    "astream_achat",
+                    "astream_chat",
                     "complete",
                     "acomplete",
                     "stream_complete",
@@ -342,58 +344,73 @@ class TruLlama(mod_app.App):
         self,
         rets: Any,
         wrap: Callable[[T], T],
-        on_done: Optional[Callable[[T], Any]],
+        on_done: Optional[Callable[[T], T]],
         context_vars: Optional[python_utils.ContextVarsOrValues] = None,
     ) -> Any:
         """Wrap any llamaindex specific lazy values with wrappers that have callback wrap."""
 
-        if isinstance(rets, AsyncStreamingResponse):
-            rets.response_gen = python_utils.wrap_async_generator(
-                rets.response_gen,
+        was_lazy = False
+
+        members = {
+            k: v
+            for k, v in getmembers_static(rets)
+            if not isinstance(v, property)
+        }
+
+        if hasattr(rets, "is_done") and rets.is_done:
+            return on_done(rets)
+
+        if "async_response_gen" in members and isinstance(
+            rets.async_response_gen, AsyncGenerator
+        ):
+            rets.async_response_gen = python_utils.wrap_async_generator(
+                rets.async_response_gen,
                 wrap=wrap,
                 on_done=on_done,
                 context_vars=context_vars,
             )
+            was_lazy = True
 
-            return rets
+        if "achat_stream" in members and isinstance(
+            rets.achat_stream, AsyncGenerator
+        ):
+            rets.achat_stream = python_utils.wrap_async_generator(
+                rets.achat_stream,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            was_lazy = True
 
-        if isinstance(rets, StreamingAgentChatResponse):
-            if rets.chat_stream is not None:
-                rets.chat_stream = python_utils.wrap_generator(
-                    rets.chat_stream,
-                    wrap=wrap,
-                    on_done=on_done,
-                    context_vars=context_vars,
-                )
+        if "chat_stream" in members and isinstance(rets.chat_stream, Generator):
+            rets.chat_stream = python_utils.wrap_generator(
+                rets.chat_stream,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            was_lazy = True
 
-            if rets.achat_stream is not None:
-                rets.achat_stream = python_utils.wrap_async_generator(
-                    rets.achat_stream,
-                    wrap=wrap,
-                    on_done=on_done,
-                    context_vars=context_vars,
-                )
-
-            if rets.chat_stream is None and rets.achat_stream is None:
-                raise RuntimeError(
-                    "Both chat_stream and achat_stream are None."
-                )
-
-            return rets
-
-        # Not lazy:
-        # if isinstance(rets, AgentChatResponse):
-
-        if isinstance(rets, StreamingResponse):
+        # NOTE(piotrm): problem here as this is a property in StramingAgentChatResponse so we cannot set it
+        # need to figure out how to change a property attribute to a non-property in pydantic.
+        if "response_gen" in members and isinstance(
+            rets.response_gen, Generator
+        ):
             rets.response_gen = python_utils.wrap_generator(
                 rets.response_gen,
                 wrap=wrap,
                 on_done=on_done,
                 context_vars=context_vars,
             )
-            return rets
+            was_lazy = True
 
-        return rets
+        if was_lazy:
+            on_done(
+                f"Lazy value of type {python_utils.class_name(type(rets))} is incomplete."
+            )
+            return rets
+        else:
+            return on_done(rets)
 
     # App override:
     @classmethod
@@ -414,6 +431,13 @@ class TruLlama(mod_app.App):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if "messages" in bindings.arguments:
+            if len(bindings.arguments["messages"]) == 0:
+                raise NotImplementedError(
+                    "Cannot handle no messages in TruLens."
+                )
+            return str(bindings.arguments["messages"])
 
         if "str_or_query_bundle" in bindings.arguments:
             # llama_index specific

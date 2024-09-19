@@ -194,21 +194,25 @@ class OpenAICallback(EndpointCallback):
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
 
-        if hasattr(response, "choices"):
-            choices = response.choices
-            for choice in choices:
-                if choice.finish_reason == "stop":
-                    llm_result = LLMResult(
-                        llm_output=dict(
-                            token_usage={}, model_name=response.model
-                        ),
-                        generations=[self.chunks],
-                    )
-                    self.chunks = []
-                    self.handle_generation(response=llm_result)
-                else:
-                    if hasattr(choice, "delta"):
-                        self.chunks.append({"text": choice.delta.content})
+        try:
+            if hasattr(response, "choices"):
+                choices = response.choices
+                for choice in choices:
+                    if choice.finish_reason == "stop":
+                        llm_result = LLMResult(
+                            llm_output=dict(
+                                token_usage={}, model_name=response.model
+                            ),
+                            generations=[self.chunks],
+                        )
+                        self.chunks = []
+                        self.handle_generation(response=llm_result)
+                    else:
+                        if hasattr(choice, "delta"):
+                            self.chunks.append({"text": choice.delta.content})
+
+        finally:
+            return response
 
     def handle_generation(self, response: LLMResult) -> None:
         super().handle_generation(response)

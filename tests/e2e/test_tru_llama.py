@@ -207,7 +207,7 @@ class TestLlamaIndex(TruTestCase):
 
         self._sync_test(self._create_query_engine, "query", streaming=True)
 
-    @skip("Failing")
+    # @skip("Failing")
     @async_test
     async def test_query_engine_async_stream(self):
         """Asynchronous streaming query engine test."""

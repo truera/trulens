@@ -806,7 +806,7 @@ class App(
         logger.warning(
             "Unsure what the main input string is for the call to %s with args %s.",
             callable_name(func),
-            all_args,
+            bindings,
         )
 
         # After warning, just take the first item in each container until a
@@ -1144,11 +1144,11 @@ class App(
 
             assert len(calls) > 0, "No information recorded in call."
 
-            # if existing_record is not None:
-            #    calls = existing_record.calls
-
             if bindings is not None:
-                main_in = self.main_input(func, sig, bindings)
+                if existing_record is None:
+                    main_in = jsonify(self.main_input(func, sig, bindings))
+                else:
+                    main_in = existing_record.main_input
             else:
                 main_in = None
 
@@ -1157,12 +1157,12 @@ class App(
                 if final:
                     main_out = self.main_output(func, sig, bindings, ret)
                 else:
-                    main_out = "TruLens: Record not yet finalized."
+                    main_out = f"TruLens: Record not yet finalized: {ret}"
             else:
                 main_out = None
 
             updates = dict(
-                main_input=jsonify(main_in),
+                main_input=main_in,
                 main_output=jsonify(main_out),
                 main_error=jsonify(error),
                 calls=calls,

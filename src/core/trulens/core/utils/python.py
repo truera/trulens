@@ -865,6 +865,7 @@ def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
     wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[T], T]] = None,
     context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
@@ -886,6 +887,8 @@ def wrap_awaitable(
         wrap: The callback to call with the result of the wrapped awaitable
             once it is ready. This should return the value or a wrapped version.
 
+        on_done: For compatibility with generators, this is called after wrap.
+
         context_vars: The context variables to copy over to the wrapped
             awaitable. If None, all context variables are copied. See
             [with_context][trulens.core.utils.python.with_context].
@@ -900,6 +903,9 @@ def wrap_awaitable(
 
             if wrap is not None:
                 val = wrap(val)  # allow handlers to transform the value
+
+            if on_done is not None:
+                val = on_done(val)
 
             return val
 
@@ -1072,22 +1078,12 @@ def wrap_lazy(
         )
 
     if inspect.isawaitable(obj):
-        # wrap_awaitable uses wrap for both wrap and on_done.
-        if wrap and on_done:
-
-            def finish(x):
-                return on_done(wrap(x))
-
-        elif wrap:
-            finish = wrap
-
-        elif on_done:
-            finish = on_done
-        else:
-            finish = None
-
         return wrap_awaitable(
-            obj, on_await=on_start, wrap=finish, context_vars=context_vars
+            obj,
+            on_await=on_start,
+            wrap=wrap,
+            on_done=on_done,
+            context_vars=context_vars,
         )
 
     raise ValueError(f"Object of type {type(obj)} is not lazy.")
