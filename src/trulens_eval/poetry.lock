@@ -2131,13 +2131,13 @@ yaml = ["PyYAML (>=5.1.0)"]
 
 [[package]]
 name = "narwhals"
-version = "1.8.2"
+version = "1.8.1"
 description = "Extremely lightweight compatibility layer between dataframe libraries"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "narwhals-1.8.2-py3-none-any.whl", hash = "sha256:08554e9e46411b9dba0deffe8510b948baad603270697414aebd2e5694e35a52"},
-    {file = "narwhals-1.8.2.tar.gz", hash = "sha256:82bc3c630dd48c30dd87e3762e785bd0ae07a6b9039fff8a8004bb452f8c7db6"},
+    {file = "narwhals-1.8.1-py3-none-any.whl", hash = "sha256:91a3af813733df39a74f590fdd1bb0d2d6d8a33e32aa409f56d941c0a29f8cdd"},
+    {file = "narwhals-1.8.1.tar.gz", hash = "sha256:97527778e11f39a1e5e2113b8fbb9ead788be41c0337f21852e684e378f583e8"},
 ]
 
 [package.extras]
