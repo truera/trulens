@@ -24,7 +24,6 @@ from typing import (
 )
 
 from pydantic import Field
-import requests
 from trulens.core.schema.base import Cost
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
@@ -39,9 +38,7 @@ from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.python import wrap_awaitable
-from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import SerialModel
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -249,45 +246,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         """
 
         return self.pace.mark()
-
-    def post(
-        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
-    ) -> Any:
-        self.pace_me()
-        ret = requests.post(
-            url, json=payload, timeout=timeout, headers=self.post_headers
-        )
-
-        j = ret.json()
-
-        # Huggingface public api sometimes tells us that a model is loading and
-        # how long to wait:
-        if "estimated_time" in j:
-            wait_time = j["estimated_time"]
-            logger.error("Waiting for %s (%s) second(s).", j, wait_time)
-            sleep(wait_time + 2)
-            return self.post(url, payload)
-
-        elif isinstance(j, Dict) and "error" in j:
-            error = j["error"]
-            logger.error("API error: %s.", j)
-
-            if error == "overloaded":
-                logger.error("Waiting for overloaded API before trying again.")
-                sleep(10.0)
-                return self.post(url, payload)
-            else:
-                raise RuntimeError(error)
-
-        assert (
-            isinstance(j, Sequence) and len(j) > 0
-        ), f"Post did not return a sequence: {j}"
-
-        if len(j) == 1:
-            return j[0]
-
-        else:
-            return j
 
     def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
         """
