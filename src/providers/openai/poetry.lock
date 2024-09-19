@@ -837,22 +837,6 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 typing-extensions = ">=4.7"
 
 [[package]]
-name = "langchain-openai"
-version = "0.1.25"
-description = "An integration package connecting OpenAI and LangChain"
-optional = false
-python-versions = "<4.0,>=3.8.1"
-files = [
-    {file = "langchain_openai-0.1.25-py3-none-any.whl", hash = "sha256:f0b34a233d0d9cb8fce6006c903e57085c493c4f0e32862b99063b96eaedb109"},
-    {file = "langchain_openai-0.1.25.tar.gz", hash = "sha256:eb116f744f820247a72f54313fb7c01524fba0927120d4e899e5e4ab41ad3928"},
-]
-
-[package.dependencies]
-langchain-core = ">=0.2.40,<0.3.0"
-openai = ">=1.40.0,<2.0.0"
-tiktoken = ">=0.7,<1"
-
-[[package]]
 name = "langchain-text-splitters"
 version = "0.3.0"
 description = "LangChain text splitting utilities"
