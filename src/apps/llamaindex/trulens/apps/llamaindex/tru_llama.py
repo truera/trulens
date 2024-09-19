@@ -4,7 +4,6 @@
 
 from inspect import BoundArguments
 from inspect import Signature
-from inspect import getmembers_static
 import logging
 from pprint import PrettyPrinter
 from typing import (
@@ -35,6 +34,7 @@ from trulens.core.utils.imports import parse_version
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import EmptyType
+from trulens.core.utils.python import getmembers_static
 from trulens.core.utils.serial import Lens
 
 T = TypeVar("T")
@@ -351,14 +351,7 @@ class TruLlama(mod_app.App):
 
         was_lazy = False
 
-        members = {
-            k: v
-            for k, v in getmembers_static(rets)
-            if not isinstance(v, property)
-        }
-
-        if hasattr(rets, "is_done") and rets.is_done:
-            return on_done(rets)
+        members = {k: v for k, v in getmembers_static(rets)}
 
         if "async_response_gen" in members and isinstance(
             rets.async_response_gen, AsyncGenerator
@@ -391,23 +384,37 @@ class TruLlama(mod_app.App):
             )
             was_lazy = True
 
-        # NOTE(piotrm): problem here as this is a property in StramingAgentChatResponse so we cannot set it
-        # need to figure out how to change a property attribute to a non-property in pydantic.
         if "response_gen" in members and isinstance(
             rets.response_gen, Generator
         ):
-            rets.response_gen = python_utils.wrap_generator(
+            wrapped_response_gen = python_utils.wrap_generator(
                 rets.response_gen,
                 wrap=wrap,
                 on_done=on_done,
                 context_vars=context_vars,
             )
+            if isinstance(members["response_gen"], property):
+                # NOTE(piotrm): problem here as this is a property in
+                # StramingAgentChatResponse so we cannot set it. Instead we override the
+                # class which has an overridden property.
+
+                # TODO(piotrm): Figure out if there is an easier way to override
+                # an attribute which is a property.
+
+                class Wrappable(rets.__class__):
+                    @property
+                    def response_gen(self):
+                        return wrapped_response_gen
+
+                Wrappable.__name__ = rets.__class__.__name__
+                rets.__class__ = Wrappable
+
+            else:
+                rets.response_gen = wrapped_response_gen
+
             was_lazy = True
 
         if was_lazy:
-            on_done(
-                f"Lazy value of type {python_utils.class_name(type(rets))} is incomplete."
-            )
             return rets
         else:
             return on_done(rets)
