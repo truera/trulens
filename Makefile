@@ -106,7 +106,7 @@ test-static:
 # are part of only the less frequently run release tests.
 
 # API tests.
-test-api:
+test-api: env-tests
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
 write-api: env-tests
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true

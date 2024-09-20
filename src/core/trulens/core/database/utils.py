@@ -22,6 +22,8 @@ def is_legacy_sqlite(engine: Engine) -> bool:
     This database was removed since trulens 0.29.0 .
     """
 
+    if engine.url.get_dialect().name != "sqlite":
+        return False
     inspector = sql_inspect(engine)
     tables = list(inspector.get_table_names())
 
