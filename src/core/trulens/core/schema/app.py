@@ -352,6 +352,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         tp = TP()
 
         for ffunc in feedback_functions:
+            ffunc.run(app=app, record=record)
+
             # Run feedback function and the on_done callback. This makes sure
             # that Future.result() returns only after on_done has finished.
             def run_and_call_callback(
