@@ -674,9 +674,6 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             return True
         if weakref.ProxyType.__instancecheck__(val):
             return True
-        # except Exception:
-        # Here to avoid issues with overridden __instancecheck__.
-        #    return True
         if id(val) in visited:
             return True
 
