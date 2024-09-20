@@ -200,10 +200,6 @@ def jsonify(
 
     # These are here because we cannot iterate them or await them without
     # breaking the instrumented apps. Instead we return a placeholder value:
-
-    if "Stream" in obj.__class__.__name__:
-        return "TruLens: Cannot jsonify a stream object."
-
     if inspect.isawaitable(obj):
         return "TruLens: Cannot jsonify an awaitable object."
     if isinstance(obj, typing.Iterator):
