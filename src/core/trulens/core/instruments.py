@@ -147,7 +147,9 @@ class WithInstrumentCallbacks:
             The return value with lazy values wrapped.
         """
 
-        # In the default case, assume the given result is already ready.
+        if python_utils.is_lazy(rets):
+            return rets
+
         return on_done(rets)
 
     # WithInstrumentCallbacks requirement
@@ -855,7 +857,7 @@ class Instrument:
 
                     return python_utils.wrap_lazy(
                         rets,
-                        wrap=rewrap,
+                        wrap=None,
                         on_done=rewrap,
                         context_vars=context_vars,
                     )
@@ -867,7 +869,7 @@ class Instrument:
                     for ctx in contexts:
                         rets = ctx.app.wrap_lazy_values(
                             rets,
-                            wrap=rewrap,
+                            wrap=None,
                             on_done=update_call_info,
                             context_vars=context_vars,
                         )

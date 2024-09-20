@@ -505,26 +505,6 @@ class TruCustomApp(App):
 
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
 
-    """
-    # Async work ongoing:
-    async def main_acall(self, human: str):
-        # TODO: work in progress
-
-        # must return an async generator of tokens/pieces that can be appended to create the full response
-
-        if self.main_async_method is None:
-            raise RuntimeError(
-                "`main_async_method` was not specified so we do not know how to run this app."
-            )
-
-        sig = signature(self.main_async_method)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
-
-        generator = await self.main_async_method(*bindings.args, **bindings.kwargs)
-
-        return generator
-    """
-
 
 class instrument(base_instrument):
     """

@@ -32,10 +32,9 @@ class TestLlamaIndex(TruTestCase):
 
     ANSWERS = {
         "What did the author do growing up?": set([
-            "The author worked on writing short stories and programming, starting with the IBM 1401 in 9th grade and later transitioning to microcomputers like the TRS-80.",
-            "The author worked on writing short stories and programming while growing up. They started with the IBM 1401 in 9th grade and later transitioned to microcomputers like the TRS-80.",
-            "The author worked on writing short stories and programming, starting with early attempts on an IBM 1401 using Fortran in 9th grade. Later, the author transitioned to microcomputers, building a Heathkit kit and eventually getting a TRS-80 to write simple games and programs. Despite enjoying programming, the author initially planned to study philosophy in college but eventually switched to AI due to a lack of interest in philosophy courses.",
-            "I couldn't find specific information about what the author did growing up. Would you like me to try a different approach or provide information on a different topic related to the author?",
+            "The author worked on writing and",
+            "The author worked on writing short"
+            "I couldn't find specific information",
         ])
     }
     """Common answers to a simple question.

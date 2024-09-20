@@ -522,8 +522,6 @@ class App(
             pass
             # self was unloaded, shut down as well.
 
-        print("Shutting down manage pending feedback results thread.")
-
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
     ) -> List[mod_record_schema.Record]:

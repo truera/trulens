@@ -197,6 +197,7 @@ class OpenAICallback(EndpointCallback):
         try:
             if hasattr(response, "choices"):
                 choices = response.choices
+
                 for choice in choices:
                     if choice.finish_reason == "stop":
                         llm_result = LLMResult(
