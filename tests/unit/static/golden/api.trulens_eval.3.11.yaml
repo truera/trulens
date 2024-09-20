@@ -696,7 +696,6 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     name: builtins.str
     pace: trulens_eval.utils.pace.Pace
     pace_me: builtins.function
-    post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
     print_instrumented: builtins.classmethod
     retries: builtins.int
@@ -800,6 +799,7 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     global_callback: trulens_eval.feedback.provider.endpoint.base.EndpointCallback
     name: builtins.str
     pace: trulens_eval.utils.pace.Pace
+    post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
     retries: builtins.int
     rpm: builtins.float

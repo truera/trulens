@@ -4,7 +4,7 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
-from typing import Dict
+from typing import Dict, Optional
 from unittest import TestCase
 from unittest import main
 import uuid
@@ -71,13 +71,27 @@ class SnowflakeTestCase(TestCase):
         snowflake_connection_parameters["schema"] = schema
         return Session.builder.configs(snowflake_connection_parameters).create()
 
-    def get_session(self, app_base_name: str) -> TruSession:
-        app_name = app_base_name
-        app_name += "__"
-        app_name += str(uuid.uuid4()).replace("-", "_")
-        self._schema = app_name.upper()
-        self.assertNotIn(self._schema, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(self._schema)
+    def get_session(
+        self,
+        app_base_name: Optional[str] = None,
+        schema_name: Optional[str] = None,
+        schema_already_exists: bool = False,
+    ) -> TruSession:
+        if bool(app_base_name) == bool(schema_name):
+            raise ValueError(
+                "Exactly one of `app_base_name` and `schema_name` must be supplied!"
+            )
+        if app_base_name:
+            app_name = app_base_name
+            app_name += "__"
+            app_name += str(uuid.uuid4()).replace("-", "_")
+            self._schema = app_name
+        else:
+            self._schema = schema_name
+        self._schema = self._schema.upper()
+        if not schema_already_exists:
+            self.assertNotIn(self._schema, self.list_schemas())
+            self._snowflake_schemas_to_delete.append(self._schema)
         connector = SnowflakeConnector(
             schema=self._schema,
             **self._snowflake_connection_parameters,
@@ -85,6 +99,9 @@ class SnowflakeTestCase(TestCase):
         session = TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
         return session
+
+    def run_query(self, q: str) -> None:
+        self._snowflake_session.sql(q).collect()
 
 
 if __name__ == "__main__":

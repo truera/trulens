@@ -495,7 +495,6 @@ trulens.core.feedback.endpoint.Endpoint:
     name: builtins.str
     pace: trulens.core.utils.pace.Pace
     pace_me: builtins.function
-    post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
     print_instrumented: builtins.classmethod
     retries: builtins.int
