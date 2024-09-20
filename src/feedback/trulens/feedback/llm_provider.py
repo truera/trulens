@@ -13,6 +13,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 from trulens.feedback import prompts
 from trulens.feedback.generated import re_configured_rating
 from trulens.feedback.v2.feedback import ContextRelevance
+from trulens.feedback.v2.feedback import Groundedness
 from trulens.feedback.v2.feedback import OutputSpace
 from trulens.feedback.v2.feedback import PromptResponseRelevance
 
@@ -350,13 +351,18 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
+        if criteria or output_space:
+            system_prompt = ContextRelevance.override_criteria_and_output_space(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
             )
+        else:
+            system_prompt = ContextRelevance.system_prompt
 
         return self.generate_score(
-            system_prompt=ContextRelevance.system_prompt,
+            system_prompt=system_prompt,
             user_prompt=str.format(
                 prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
@@ -416,13 +422,18 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
+        if criteria or output_space:
+            system_prompt = ContextRelevance.override_criteria_and_output_space(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
             )
+        else:
+            system_prompt = ContextRelevance.system_prompt
 
         return self.generate_score_and_reasons(
-            system_prompt=ContextRelevance.system_prompt,
+            system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
@@ -471,14 +482,19 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
+        if criteria or output_space:
+            system_prompt = ContextRelevance.override_criteria_and_output_space(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
             )
+        else:
+            system_prompt = ContextRelevance.system_prompt
 
         try:
             return self.generate_confidence_score(
-                verb_confidence_prompt=ContextRelevance.system_prompt
+                verb_confidence_prompt=system_prompt
                 + ContextRelevance.verb_confidence_prompt,
                 user_prompt=str.format(
                     prompts.CONTEXT_RELEVANCE_USER,
@@ -534,13 +550,17 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            PromptResponseRelevance.override_criteria_and_output_space(
-                criteria, output_space
+        if criteria or output_space:
+            system_prompt = (
+                PromptResponseRelevance.override_criteria_and_output_space(
+                    criteria, output_space
+                )
             )
+        else:
+            system_prompt = PromptResponseRelevance.system_prompt
 
         return self.generate_score(
-            system_prompt=PromptResponseRelevance.system_prompt,
+            system_prompt=system_prompt,
             user_prompt=str.format(
                 prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
             ),
@@ -587,11 +607,17 @@ class LLMProvider(Provider):
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
-
-        if criteria and output_space:
-            PromptResponseRelevance.override_criteria_and_output_space(
-                criteria, output_space
+        if criteria or output_space:
+            system_prompt = (
+                PromptResponseRelevance.override_criteria_and_output_space(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    output_space=output_space,
+                )
             )
+        else:
+            system_prompt = PromptResponseRelevance.system_prompt
 
         user_prompt = str.format(
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
@@ -600,8 +626,8 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(
-            PromptResponseRelevance.system_prompt,
-            user_prompt,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
             temperature=temperature,
@@ -1428,6 +1454,7 @@ class LLMProvider(Provider):
         self,
         source: str,
         statement: str,
+        criteria: Optional[str] = None,
         use_sent_tokenize: bool = False,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1483,6 +1510,7 @@ class LLMProvider(Provider):
         Args:
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
+            criteria (str): The specific criteria for evaluation. Defaults to None.
             use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1521,15 +1549,27 @@ class LLMProvider(Provider):
                 f"Error removing trivial statements: {e}. Proceeding with all statements."
             )
 
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        if criteria or output_space:
+            system_prompt = Groundedness.override_criteria_and_output_space(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+            )
+        else:
+            system_prompt = Groundedness.system_prompt
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(
-                system_prompt,
-                user_prompt,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
                 min_score_val=min_score_val,
                 max_score_val=max_score_val,
                 temperature=temperature,
@@ -1584,6 +1624,7 @@ class LLMProvider(Provider):
         source: str,
         statement: str,
         question: str,
+        criteria: Optional[str] = None,
         use_sent_tokenize: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
@@ -1621,6 +1662,7 @@ class LLMProvider(Provider):
             source (str): The source that should support the statement.
             statement (str): The statement to check groundedness.
             question (str): The question to check answerability.
+            criteria (str): The specific criteria for evaluation. Defaults to None.
             use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
@@ -1671,7 +1713,19 @@ class LLMProvider(Provider):
 
         hypotheses = self._remove_trivial_statements(hypotheses)
 
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        if criteria or output_space:
+            system_prompt = Groundedness.override_criteria_and_output_space(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+            )
+        else:
+            system_prompt = Groundedness.system_prompt
 
         def evaluate_hypothesis(index, hypothesis):
             abstention_score = evaluate_abstention(hypothesis)
