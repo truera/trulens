@@ -41,7 +41,7 @@ class SnowflakeConnector(DBConnector):
         schema: str,
         warehouse: str,
         role: str,
-        init_server_side: bool = True,
+        init_server_side: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
