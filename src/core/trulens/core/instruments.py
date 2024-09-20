@@ -538,7 +538,30 @@ class Instrument:
             weakref.proxy(app) if app is not None else None
         )
 
-    def tracked_method_wrapper(
+    def tracked_method_wrapper(self, *args, **kwargs):
+        """Dispatch either the otel-based or original record-based method
+        wrapper method."""
+
+        assert self.app is not None
+
+        from trulens.core import session as mod_session
+        from trulens.core.experimental import Feature
+
+        if self.app.session is None:
+            session = mod_session.TruSession()
+        else:
+            session = self.app.session
+
+        if session.experimental_feature(Feature.OTEL_TRACING, lock=True):
+            from trulens.experimental.otel_tracing.core.instruments import (
+                _OTELInstrument,
+            )
+
+            return _OTELInstrument.tracked_method_wrapper(self, *args, **kwargs)
+        else:
+            return self._tracked_method_wrapper(*args, **kwargs)
+
+    def _tracked_method_wrapper(
         self,
         query: Lens,
         func: Callable,

@@ -240,6 +240,39 @@ def safe_signature(func_or_obj: Any):
             raise e
 
 
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
+
+
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
 

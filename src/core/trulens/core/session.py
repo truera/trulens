@@ -161,6 +161,16 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
+    _experimental_otel_exporter: Optional[
+        Any
+    ] = (  # Any = otel_export_sdk.SpanExporter
+        pydantic.PrivateAttr(None)
+    )
+    """OpenTelemetry SpanExporter to send spans to.
+
+    Only works if the trulens.core.experimental.Feature.OTEL_TRACING flag is set.
+    """
+
     def __new__(cls, *args, **kwargs: Any) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
         assert isinstance(inst, TruSession)
@@ -185,6 +195,9 @@ class TruSession(
                 Iterable[mod_experimental.Feature],
             ]
         ] = None,
+        _experimental_otel_exporter: Optional[
+            Any
+        ] = None,  # Any = otel_export_sdk.SpanExporter
         **kwargs,
     ):
         if python.safe_hasattr(self, "connector"):
@@ -219,6 +232,13 @@ class TruSession(
         # for WithExperimentalSettings mixin
         if experimental_feature_flags is not None:
             self.experimental_set_features(experimental_feature_flags)
+
+        if _experimental_otel_exporter is not None:
+            from trulens.experimental.otel_tracing.core.session import (
+                _TruSession,
+            )
+
+            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
