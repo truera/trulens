@@ -864,12 +864,13 @@ class Instrument:
                 # NOTE(piotrm): self.app is a weakref
 
                 if python_utils.WRAP_LAZY:
-                    rets = self.app.wrap_lazy_values(
-                        rets,
-                        wrap=rewrap,
-                        on_done=update_call_info,
-                        context_vars=context_vars,
-                    )
+                    for ctx in contexts:
+                        rets = ctx.app.wrap_lazy_values(
+                            rets,
+                            wrap=rewrap,
+                            on_done=update_call_info,
+                            context_vars=context_vars,
+                        )
                 else:
                     update_call_info(rets, final=True)
 

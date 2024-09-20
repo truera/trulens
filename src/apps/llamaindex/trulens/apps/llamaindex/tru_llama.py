@@ -349,9 +349,22 @@ class TruLlama(mod_app.App):
     ) -> Any:
         """Wrap any llamaindex specific lazy values with wrappers that have callback wrap."""
 
+        # NOTE(piotrm): This is all very frail. We need to make sure we call
+        # on_done on things which are not lazy and wrap things which are lazy.
+        # It is not easy to tell which is which sometimes in llamaindex.
+
         was_lazy = False
 
         members = {k: v for k, v in getmembers_static(rets)}
+
+        if hasattr(rets, "is_done") and rets.is_done:
+            return on_done(rets)
+
+        if isinstance(rets, (Response)):
+            return on_done(rets)
+
+        if isinstance(rets, (AgentChatResponse)):
+            return on_done(rets)
 
         if "async_response_gen" in members and isinstance(
             rets.async_response_gen, AsyncGenerator
@@ -416,6 +429,7 @@ class TruLlama(mod_app.App):
 
         if was_lazy:
             return rets
+
         else:
             return on_done(rets)
 
