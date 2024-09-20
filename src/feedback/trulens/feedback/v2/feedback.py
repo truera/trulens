@@ -390,23 +390,8 @@ class ContextRelevance(Relevance, WithPrompt):
         """
     )
 
-    system_prompt = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from {output_space_prompt}.
-
-        Criteria for evaluating relevance:
-        {criteria}
-
-        A few additional scoring guidelines:
-
-        - Long CONTEXTS should score equally well as short CONTEXTS.
-
-        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
-
-        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
-
-        - Never elaborate.
-        """.format(output_space_prompt=output_space_prompt, criteria=criteria)
+    system_prompt = system_prompt_template.format(
+        output_space_prompt=output_space_prompt, criteria=criteria
     )
 
 
@@ -478,6 +463,10 @@ class PromptResponseRelevance(Relevance, WithPrompt):
         RESPONSE: {response}
 
         RELEVANCE: """
+    )
+
+    system_prompt = system_prompt_template.format(
+        output_space_prompt=output_space_prompt, criteria=criteria
     )
 
 
