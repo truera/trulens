@@ -107,6 +107,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             self.batch_thread.start()
         self.batch_record_queue.put(record)
 
+    def _batch_loop(self):
         apps = {}
         while True:
             time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
