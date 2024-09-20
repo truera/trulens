@@ -6,10 +6,13 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional, Sequence
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
+from langchain_core.messages.ai import AIMessage
+from langchain_core.messages.ai import AIMessageChunk
+from langchain_core.runnables.base import Runnable
 from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
@@ -84,16 +87,26 @@ class LangChainInstrument(Instrument):
         METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
             {},
             {
-                ("invoke", "ainvoke"): RunnableSerializable,
+                (
+                    "invoke",
+                    "ainvoke",
+                    "stream",
+                    "astream",
+                ): Runnable,
                 ("save_context", "clear"): BaseMemory,
-                ("run", "arun", "_call", "__call__", "_acall", "acall"): Chain,
+                (
+                    "run",
+                    "arun",
+                    "_call",
+                    "__call__",
+                    "_acall",
+                    "acall",
+                ): Chain,
                 (
                     "_get_relevant_documents",
                     "get_relevant_documents",
                     "aget_relevant_documents",
                     "_aget_relevant_documents",
-                    "invoke",
-                    "ainvoke",
                 ): RunnableSerializable,
                 # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
                 # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
@@ -207,18 +220,16 @@ class TruChain(mod_app.App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition].
     """
 
-    app: Any  # Chain
+    app: Runnable
     """The langchain app to be instrumented."""
 
-    # TODO: what if _acall is being used instead?
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruChain._call)
-    )
+    # TODEP
+    root_callable: ClassVar[FunctionOrMethod] = Field(None)
     """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Chain, **kwargs: dict):
+    def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
         # TruChain specific:
         kwargs["app"] = app
         kwargs["root_class"] = Class.of_object(app)
@@ -274,8 +285,7 @@ class TruChain(mod_app.App):
         if hasattr(retriever, "_get_relevant_documents"):
             return retriever._get_relevant_documents.rets[:].page_content
 
-        else:
-            raise ValueError("Cannot find a retriever component in app.")
+        raise RuntimeError("Could not find a retriever component in app.")
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
@@ -333,6 +343,28 @@ class TruChain(mod_app.App):
         signature `sig` after it is called with the given `bindings` and has
         returned `ret`.
         """
+
+        if isinstance(ret, (AIMessage, AIMessageChunk)):
+            return ret.content
+
+        if isinstance(ret, Sequence) and all(
+            isinstance(x, Dict) and "content" in x for x in ret
+        ):
+            # Streaming outputs for some internal methods are lists of dicts
+            # with each having "content".
+            return "".join(x["content"] for x in ret)
+
+        if isinstance(ret, Sequence) and all(
+            isinstance(x, (AIMessage, AIMessageChunk)) for x in ret
+        ):
+            # Streaming outputs for some internal methods are lists of dicts
+            # with each having "content".
+            return "".join(x.content for x in ret)
+
+        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
+            # Streaming outputs of main stream methods like Runnable.stream are
+            # bundled by us into a sequence of strings.
+            return "".join(ret)
 
         if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
             # langchain specific:
