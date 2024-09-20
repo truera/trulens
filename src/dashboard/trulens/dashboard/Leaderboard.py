@@ -613,7 +613,7 @@ def _render_list_tab(
             select_app_col,
         ) = st.columns([1, 1, 1, 1, 1])
         feedback_cols = st.columns(
-            min(len(app_feedback_col_names), max_feedback_cols)
+            max(min(len(app_feedback_col_names), max_feedback_cols), 1)
         )
 
         n_records_col.metric("Records", app_row["Records"])
