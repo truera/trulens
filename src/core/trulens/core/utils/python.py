@@ -23,6 +23,7 @@ from typing import (
     Generator,
     Generic,
     Hashable,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -403,8 +404,8 @@ def caller_module_name(offset=0) -> str:
     """
     Get the caller's (of this function) module name.
     """
-
-    return inspect.stack(0)[offset + 1].frame.f_globals["__name__"]
+    frame = caller_frame(offset=offset + 1)
+    return frame.f_globals["__name__"]
 
 
 def caller_module(offset=0) -> ModuleType:
@@ -420,8 +421,13 @@ def caller_frame(offset=0) -> FrameType:
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
     """
+    caller_frame = inspect.currentframe()
+    for _ in range(offset + 1):
+        if caller_frame is None:
+            raise RuntimeError("No current frame found.")
+        caller_frame = caller_frame.f_back
 
-    return inspect.stack(0)[offset + 1].frame
+    return caller_frame
 
 
 def external_caller_frame(offset=0) -> FrameType:
@@ -431,10 +437,10 @@ def external_caller_frame(offset=0) -> FrameType:
     Raises:
         RuntimeError: If no such frame is found.
     """
-
-    for finfo in inspect.stack(0)[offset + 1 :]:
-        if not finfo.frame.f_globals["__name__"].startswith("trulens"):
-            return finfo.frame
+    gen = list(stack_generator(offset + 2))
+    for finfo in gen:
+        if not finfo.f_globals["__name__"].startswith("trulens"):
+            return finfo
 
     raise RuntimeError("No external caller frame found.")
 
@@ -473,7 +479,7 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
-    stack = [fi.frame for fi in inspect.stack(0)[2:]]
+    stack = list(stack_generator(offset=3))
 
     if parent_task is not None:
         stack = merge_stacks(stack, parent_task.get_stack()[::-1])
@@ -524,7 +530,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
 
 
 def merge_stacks(
-    s1: Sequence[FrameType], s2: Sequence[FrameType]
+    s1: Iterable[FrameType], s2: Sequence[FrameType]
 ) -> Sequence[FrameType]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
@@ -533,40 +539,43 @@ def merge_stacks(
 
     ret = []
 
-    while len(s1) > 1:
-        f = s1[0]
-        s1 = s1[1:]
-
+    for f in s1:
         ret.append(f)
         try:
             s2i = s2.index(f)
             for _ in range(s2i):
                 ret.append(s2[0])
                 s2 = s2[1:]
-
         except Exception:
             pass
 
     return ret
 
 
-def stack_with_tasks() -> Sequence[FrameType]:
+def stack_generator(offset: int = 0) -> Iterable[FrameType]:
+    frame = inspect.currentframe()
+    for _ in range(offset):
+        assert frame is not None
+        frame = frame.f_back
+    while frame is not None:
+        yield frame
+        frame = frame.f_back
+
+
+def stack_with_tasks() -> Iterable[FrameType]:
     """
     Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
-    # TODO: Improve performance
-    ret = [
-        fi.frame for fi in inspect.stack(0)[1:]
-    ]  # skip stack_with_task_stack
+    frame_gen = list(stack_generator(offset=2))
 
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        return merge_stacks(ret, task_stack)
+        return merge_stacks(frame_gen, task_stack)
 
     except Exception:
-        return ret
+        return frame_gen
 
 
 def _future_target_wrapper(stack, context, func, *args, **kwargs):
@@ -625,13 +634,16 @@ def get_all_local_in_call_stack(
     [TP][trulens.core.utils.threading.TP].
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames_gen = stack_with_tasks()
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = queue.Queue()
-    for f in frames:
+    for i, f in enumerate(frames_gen):
+        if i == 0:
+            # skip this method itself
+            continue
         q.put(f)
 
     while not q.empty():
