@@ -105,7 +105,7 @@ class DummyAPI(pydantic.BaseModel):
     deviation, in seconds. Any delay sample below 0 is replaced with 0.
     """
 
-    ndt: NonDeterminism = Field(default_factory=NonDeterminism)
+    ndt: NonDeterminism = Field(default_factory=NonDeterminism, exclude=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -458,7 +458,7 @@ class DummyEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
@@ -487,3 +487,5 @@ class DummyEndpoint(Endpoint):
                 "Could not find usage information in DummyAPI response:\n%s",
                 pformat(response),
             )
+
+            return response
