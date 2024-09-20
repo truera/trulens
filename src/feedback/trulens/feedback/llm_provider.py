@@ -14,6 +14,7 @@ from trulens.feedback import prompts
 from trulens.feedback.generated import re_configured_rating
 from trulens.feedback.v2.feedback import ContextRelevance
 from trulens.feedback.v2.feedback import OutputSpace
+from trulens.feedback.v2.feedback import PromptResponseRelevance
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +315,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -338,7 +339,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -370,7 +371,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -395,7 +396,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -432,7 +433,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -457,7 +458,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -492,7 +493,15 @@ class LLMProvider(Provider):
             logger.error(e)
             return None, None
 
-    def relevance(self, prompt: str, response: str) -> float:
+    def relevance(
+        self,
+        prompt: str,
+        response: str,
+        criteria: Optional[str] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
@@ -512,21 +521,39 @@ class LLMProvider(Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        if criteria and output_space:
+            PromptResponseRelevance.override_criteria_and_output_space(
+                criteria, output_space
+            )
+
         return self.generate_score(
-            system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,
+            system_prompt=PromptResponseRelevance.system_prompt,
             user_prompt=str.format(
                 prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
             ),
+            max_score_val=max_score_val,
+            min_score_val=min_score_val,
+            temperature=temperature,
         )
 
     def relevance_with_cot_reasons(
         self,
         prompt: str,
         response: str,
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -547,6 +574,7 @@ class LLMProvider(Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
             max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -555,7 +583,15 @@ class LLMProvider(Provider):
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
                 "relevant".
         """
-        system_prompt = prompts.ANSWER_RELEVANCE_SYSTEM
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        if criteria and output_space:
+            PromptResponseRelevance.override_criteria_and_output_space(
+                criteria, output_space
+            )
 
         user_prompt = str.format(
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
@@ -564,7 +600,7 @@ class LLMProvider(Provider):
             "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(
-            system_prompt,
+            PromptResponseRelevance.system_prompt,
             user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,

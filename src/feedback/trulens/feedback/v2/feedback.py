@@ -411,33 +411,63 @@ class ContextRelevance(Relevance, WithPrompt):
 
 
 class PromptResponseRelevance(Relevance, WithPrompt):
-    system_prompt: ClassVar[str] = cleandoc(
+    system_prompt: ClassVar[str]
+
+    user_prompt: ClassVar[str]
+    verb_confidence_prompt: ClassVar[str]
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+
+    criteria: str = """
+        - RESPONSE that is IRRELEVANT to the PROMPT should score 0.
+        - RESPONSE that is RELEVANT to some of the PROMPT should score of 1.
+        - RESPONSE that is RELEVANT to most of the PROMPT should get a score of 2.
+        - RESPONSE that is RELEVANT to the entirety of the PROMPT should get a score of 3, which is the full mark.
+        - RESPONSE must be relevant and helpful for answering the entire PROMPT to get a score of 3.
+        """
+    output_space: str = OutputSpace.LIKERT_0_3.name
+
+    @staticmethod
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
+        validated = EvalSchema(criteria=criteria, output_space=output_space)
+        return validated
+
+    @classmethod
+    def override_criteria_and_output_space(
+        cls, criteria: str, output_space: str
+    ):
+        validated = cls.validate_criteria_and_output_space(
+            criteria, output_space
+        )
+        cls.output_space_prompt = validated.get_output_scale_prompt()
+        cls.system_prompt = cleandoc(
+            cls.system_prompt_template.format(
+                criteria=validated.criteria,
+                output_space_prompt=cls.output_space_prompt,
+            )
+        )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
-        Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating relevance:
+        {criteria}
 
         A few additional scoring guidelines:
 
         - Long RESPONSES should score equally well as short RESPONSES.
 
-        - RESPONSE must be relevant to the entire PROMPT to get a score of 10.
+        - RESPONSE must be relevant to the entire PROMPT to get a maximum score.
 
         - RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
 
-        - RESPONSE that is RELEVANT to none of the PROMPT should get a score of 0.
+        - RESPONSE that is RELEVANT and answers the entire PROMPT completely should be counted as the most RELEVANT and get a maximum score.
 
-        - RESPONSE that is RELEVANT to some of the PROMPT should get as score of 2, 3, or 4. Higher score indicates more RELEVANCE.
+        - RESPONSE that confidently FALSE should get a minimum score.
 
-        - RESPONSE that is RELEVANT to most of the PROMPT should get a score between a 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
+        - RESPONSE that is only seemingly RELEVANT should get a minimum score.
 
-        - RESPONSE that is RELEVANT to the entire PROMPT should get a score of 9 or 10.
-
-        - RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of 10.
-
-        - RESPONSE that confidently FALSE should get a score of 0.
-
-        - RESPONSE that is only seemingly RELEVANT should get a score of 0.
-
-        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of 0.
+        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a minimum score.
 
         - Never elaborate.
         """
