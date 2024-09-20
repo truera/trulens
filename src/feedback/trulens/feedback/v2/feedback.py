@@ -245,7 +245,7 @@ class CriteriaOutputSpaceMixin:
         return validated
 
     @classmethod
-    def override_criteria_and_output_space(
+    def generate_system_prompt(
         cls,
         min_score: int,
         max_score: int,
