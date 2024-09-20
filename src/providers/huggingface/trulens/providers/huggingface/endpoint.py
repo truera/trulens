@@ -1,6 +1,14 @@
 import inspect
 import json
-from typing import Callable, Optional
+import logging
+from time import sleep
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Sequence,
+)
 
 import requests
 from trulens.core.feedback import Endpoint
@@ -8,6 +16,10 @@ from trulens.core.feedback import EndpointCallback
 from trulens.core.utils.keys import _check_key
 from trulens.core.utils.keys import get_huggingface_headers
 from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils.serial import JSON
+from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+
+logger = logging.getLogger(__name__)
 
 
 class HuggingfaceCallback(EndpointCallback):
@@ -33,6 +45,23 @@ class HuggingfaceEndpoint(Endpoint):
     Instruments the requests.post method for requests to
     "https://api-inference.huggingface.co".
     """
+
+    def __init__(self, *args, **kwargs):
+        if safe_hasattr(self, "name"):
+            # Already created with SingletonPerName mechanism
+            return
+
+        kwargs["name"] = "huggingface"
+        kwargs["callback_class"] = HuggingfaceCallback
+
+        # Returns true in "warn" mode to indicate that key is set. Does not
+        # print anything even if key not set.
+        if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
+            kwargs["post_headers"] = get_huggingface_headers()
+
+        super().__init__(*args, **kwargs)
+
+        self._instrument_class(requests, "post")
 
     def __new__(cls, *args, **kwargs):
         return super(Endpoint, cls).__new__(cls, name="huggingface")
@@ -64,19 +93,41 @@ class HuggingfaceEndpoint(Endpoint):
 
         return response
 
-    def __init__(self, *args, **kwargs):
-        if safe_hasattr(self, "name"):
-            # Already created with SingletonPerName mechanism
-            return
+    def post(
+        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
+    ) -> Any:
+        self.pace_me()
+        ret = requests.post(
+            url, json=payload, timeout=timeout, headers=self.post_headers
+        )
 
-        kwargs["name"] = "huggingface"
-        kwargs["callback_class"] = HuggingfaceCallback
+        j = ret.json()
 
-        # Returns true in "warn" mode to indicate that key is set. Does not
-        # print anything even if key not set.
-        if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
-            kwargs["post_headers"] = get_huggingface_headers()
+        # Huggingface public api sometimes tells us that a model is loading and
+        # how long to wait:
+        if "estimated_time" in j:
+            wait_time = j["estimated_time"]
+            logger.error("Waiting for %s (%s) second(s).", j, wait_time)
+            sleep(wait_time + 2)
+            return self.post(url, payload)
 
-        super().__init__(*args, **kwargs)
+        elif isinstance(j, Dict) and "error" in j:
+            error = j["error"]
+            logger.error("API error: %s.", j)
 
-        self._instrument_class(requests, "post")
+            if error == "overloaded":
+                logger.error("Waiting for overloaded API before trying again.")
+                sleep(10.0)
+                return self.post(url, payload)
+            else:
+                raise RuntimeError(error)
+
+        assert (
+            isinstance(j, Sequence) and len(j) > 0
+        ), f"Post did not return a sequence: {j}"
+
+        if len(j) == 1:
+            return j[0]
+
+        else:
+            return j
