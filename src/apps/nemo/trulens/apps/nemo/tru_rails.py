@@ -382,9 +382,8 @@ class TruRails(mod_app.App):
 
     app: LLMRails
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(LLMRails.generate)
-    )
+    # TODEP
+    root_callable: ClassVar[FunctionOrMethod] = Field(None)
 
     def __init__(self, app: LLMRails, **kwargs):
         # TruLlama specific:

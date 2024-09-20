@@ -1200,8 +1200,8 @@
   "app_name": "customapp",
   "app_version": "base",
   "feedback_definitions": [
-    "feedback_definition_hash_20c3e2eefb055286f8928839149ae773",
-    "feedback_definition_hash_a7593c564dfec4bb148fa890c9842671"
+    "feedback_definition_hash_2f7a538a5032fd2dda658b087a782fa7",
+    "feedback_definition_hash_a66c23cfbea2ec277303b0817bddcb2f"
   ],
   "feedback_mode": "with_app_thread",
   "initial_app_loader_dump": null,
