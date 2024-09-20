@@ -1,4 +1,4 @@
-"""Utilities for generating user-facing text."""
+"""Utilities for user-facing text generation."""
 
 import logging
 import math
@@ -58,6 +58,31 @@ def _format_unit(
         # This is a simple heuristic that works for most cases.
         return f"{value} {unit}s"
     return f"{value} {unit}"
+
+
+def format_size(size: int) -> str:
+    """Format a size (in bytes) into a human-readable string. This will use SI
+    prefixes. Implementation details are largely copied from
+    [millify](https://github.com/azaitsev/millify).
+
+    Args:
+        size: The quantity to format.
+
+    Returns:
+        str: The formatted quantity.
+    """
+
+    units = ["", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    unit_idx = max(
+        0,
+        min(
+            len(units) - 1,
+            int(math.floor(0 if size == 0 else math.log10(abs(size)) / 3)),
+        ),
+    )
+    result = f"{int(size / 10 ** (3 * unit_idx)):d}"
+
+    return f"{result}{units[unit_idx]}"
 
 
 def format_quantity(quantity: float, precision: int = 2) -> str:

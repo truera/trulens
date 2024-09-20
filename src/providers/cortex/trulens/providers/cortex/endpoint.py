@@ -123,7 +123,7 @@ class CortexEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         counted_something = False
 
         # response is a snowflake dataframe instance or a list if the response is from cursor.fetchall()
@@ -151,3 +151,5 @@ class CortexEndpoint(Endpoint):
                 "Unrecognized Cortex response format. It did not have usage information:\n%s",
                 pp.pformat(response_dict),
             )
+
+        return response

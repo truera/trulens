@@ -116,14 +116,20 @@ optional = true
 
 [tool.poetry.group.tests-optional.dependencies]
 llama-index-embeddings-huggingface = "^0.3"
+
+faiss-cpu = "^1.7" # langchain notebooks
+ipytree = "^0.2"   # notebooks
+
+# test_tru_llama.py and notebooks:
+llama-index-readers-web = "^0.2"
+llama-index = "^0.11"
+llama-index-llms-openai = "^0.2"
 llama-index-embeddings-openai = "^0.2"
-faiss-cpu = "^1.7"                          # some example notebooks
-ipytree = "^0.2"                            # some example notebooks
-chromadb = "^0.4"                           # some example notebooks
-unstructured = "^0.10"                      # some example notebooks
-llama-index-readers-web = "^0.2"            # some example notebooks
-llama-index = "^0.11"                       # some example notebooks
-llama-index-llms-openai = "^0.2"            # some example notebooks
+
+# test_tru_chain.py and notebooks
+langchain-openai = "^0.0"
+unstructured = "^0.10"
+chromadb = "^0.4"
 
 [tool.ruff]
 line-length = 80

@@ -10,7 +10,6 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 import threading
-from threading import Lock
 from typing import (
     Any,
     Awaitable,
@@ -28,6 +27,7 @@ from typing import (
     TypeVar,
     Union,
 )
+import weakref
 
 import pydantic
 from trulens.core._utils import optional as optional_utils
@@ -41,11 +41,11 @@ from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
 from trulens.core.session import TruSession
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema
+from trulens.core.utils import threading as threading_utils
 from trulens.core.utils.asynchro import CallableMaybeAwaitable
 from trulens.core.utils.asynchro import desync
 from trulens.core.utils.asynchro import sync
@@ -318,145 +318,6 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
-class RecordingContext:
-    """Manager of the creation of records from record calls.
-
-    An instance of this class is produced when using an
-    [App][trulens.core.app.App] as a context manager, i.e.:
-
-    Example:
-        ```python
-        app = ...  # your app
-        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
-
-        with truapp as recorder:
-            app.invoke(...) # use your app
-
-        recorder: RecordingContext
-        ```
-
-    Each instance of this class produces a record for every "root" instrumented
-    method called. Root method here means the first instrumented method in a
-    call stack. Note that there may be more than one of these contexts in play
-    at the same time due to:
-
-    - More than one wrapper of the same app.
-    - More than one context manager ("with" statement) surrounding calls to the
-      same app.
-    - Calls to "with_record" on methods that themselves contain recording.
-    - Calls to apps that use trulens internally to track records in any of the
-      supported ways.
-    - Combinations of the above.
-    """
-
-    def __init__(self, app: App, record_metadata: JSON = None):
-        self.calls: Dict[
-            mod_types_schema.CallID, mod_record_schema.RecordAppCall
-        ] = {}
-        """A record (in terms of its RecordAppCall) in process of being created.
-
-        Storing as a map as we want to override calls with the same id which may
-        happen due to methods producing awaitables or generators. These result
-        in calls before the awaitables are awaited and then get updated after
-        the result is ready.
-        """
-
-        self.records: List[mod_record_schema.Record] = []
-        """Completed records."""
-
-        self.lock: Lock = Lock()
-        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
-
-        self.token: Optional[contextvars.Token] = None
-        """Token for context management."""
-
-        self.app: mod_instruments.WithInstrumentCallbacks = app
-        """App for which we are recording."""
-
-        self.record_metadata = record_metadata
-        """Metadata to attach to all records produced in this context."""
-
-    def __iter__(self):
-        return iter(self.records)
-
-    def get(self) -> mod_record_schema.Record:
-        """
-        Get the single record only if there was exactly one. Otherwise throw an error.
-        """
-
-        if len(self.records) == 0:
-            raise RuntimeError("Recording context did not record any records.")
-
-        if len(self.records) > 1:
-            raise RuntimeError(
-                "Recording context recorded more than 1 record. "
-                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
-            )
-
-        return self.records[0]
-
-    def __getitem__(self, idx: int) -> mod_record_schema.Record:
-        return self.records[idx]
-
-    def __len__(self):
-        return len(self.records)
-
-    def __hash__(self) -> int:
-        # The same app can have multiple recording contexts.
-        return hash(id(self.app)) + hash(id(self.records))
-
-    def __eq__(self, other):
-        return hash(self) == hash(other)
-        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
-
-    def add_call(self, call: mod_record_schema.RecordAppCall):
-        """
-        Add the given call to the currently tracked call list.
-        """
-        with self.lock:
-            # NOTE: This might override existing call record which happens when
-            # processing calls with awaitable or generator results.
-            self.calls[call.call_id] = call
-
-    def finish_record(
-        self,
-        calls_to_record: Callable[
-            [
-                List[mod_record_schema.RecordAppCall],
-                mod_types_schema.Metadata,
-                Optional[mod_record_schema.Record],
-            ],
-            mod_record_schema.Record,
-        ],
-        existing_record: Optional[mod_record_schema.Record] = None,
-    ):
-        """
-        Run the given function to build a record from the tracked calls and any
-        pre-specified metadata.
-
-        If existing_record is provided, updates that record with new data.
-        """
-
-        with self.lock:
-            current_calls = dict(self.calls)  # copy
-            self.calls = {}
-
-            if existing_record is not None:
-                for call in existing_record.calls:
-                    current_calls[call.call_id] = call
-
-            record = calls_to_record(
-                current_calls.values(), self.record_metadata, existing_record
-            )
-
-            if existing_record is None:
-                # If existing record was given, we assume it was already
-                # inserted into this list.
-                self.records.append(record)
-
-        return record
-
-
 class App(
     mod_app_schema.AppDefinition,
     mod_instruments.WithInstrumentCallbacks,
@@ -480,10 +341,10 @@ class App(
         solely by a string-to-string method.
     """
 
-    model_config: ClassVar[dict] = {
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         # Tru, DB, most of the types on the excluded fields.
-        "arbitrary_types_allowed": True
-    }
+        arbitrary_types_allowed=True
+    )
 
     feedbacks: List[mod_feedback.Feedback] = pydantic.Field(
         exclude=True, default_factory=list
@@ -525,9 +386,9 @@ class App(
     included in the json representation of this app.
     """
 
-    recording_contexts: contextvars.ContextVar[RecordingContext] = (
-        pydantic.Field(None, exclude=True)
-    )
+    recording_contexts: contextvars.ContextVar[
+        mod_instruments._RecordingContext
+    ] = pydantic.Field(None, exclude=True)
     """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
 
@@ -546,7 +407,7 @@ class App(
     """Records produced by this app which might have yet to finish
     feedback runs."""
 
-    manage_pending_feedback_results_thread: Optional[threading.Thread] = (
+    manage_pending_feedback_results_thread: Optional[threading_utils.Thread] = (
         pydantic.Field(exclude=True, default=None)
     )
     """Thread for manager of pending feedback results queue.
@@ -563,9 +424,13 @@ class App(
     selector_nocheck: bool = False
     """Ignore selector checks entirely.
 
-    This may be necessary if the expected record content cannot be determined
+    This may be necessary 1if the expected record content cannot be determined
     before it is produced.
     """
+
+    _context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
+        pydantic.PrivateAttr(default_factory=dict)
+    )
 
     def __init__(
         self,
@@ -607,8 +472,11 @@ class App(
         self._tru_post_init()
 
     def __del__(self):
-        # Can use to do things when this object is being garbage collected.
-        pass
+        """Shut down anything associated with this app that might persist otherwise."""
+
+        if self.manage_pending_feedback_results_thread is not None:
+            self.records_with_pending_feedback_results.shutdown()
+            self.manage_pending_feedback_results_thread.join()
 
     def _start_manage_pending_feedback_results(self) -> None:
         """Start the thread that manages the queue of records with
@@ -624,11 +492,16 @@ class App(
 
         self.manage_pending_feedback_results_thread = threading.Thread(
             target=self._manage_pending_feedback_results,
+            args=(weakref.proxy(self),),
             daemon=True,  # otherwise this thread will keep parent alive
+            name=f"manage_pending_feedback_results_thread(app_name={self.app_name}, app_version={self.app_version})",
         )
         self.manage_pending_feedback_results_thread.start()
 
-    def _manage_pending_feedback_results(self) -> None:
+    @staticmethod
+    def _manage_pending_feedback_results(
+        self_proxy: weakref.ProxyType[App],
+    ) -> None:
         """Manage the queue of records with pending feedback results.
 
         This is meant to be run permanently in a separate thread. It will
@@ -636,10 +509,18 @@ class App(
         their feedback results are computed.
         """
 
-        while True:
-            record = self.records_with_pending_feedback_results.peek()
-            record.wait_for_feedback_results()
-            self.records_with_pending_feedback_results.remove(record)
+        try:
+            while True:
+                record = self_proxy.records_with_pending_feedback_results.peek()
+                self_proxy.records_with_pending_feedback_results.remove(record)
+                record.wait_for_feedback_results()
+
+        except StopIteration:
+            pass
+            # Set has been shut down.
+        except ReferenceError:
+            pass
+            # self was unloaded, shut down as well.
 
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
@@ -875,10 +756,7 @@ class App(
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> JSON:
-        """
-        Determine the main input string for the given function `func` with
-        signature `sig` if it is to be called with the given bindings
-        `bindings`.
+        """Determine (guess) the main input string for a main app call.
 
         Args:
             func: The main function we are targetting in this determination.
@@ -897,7 +775,11 @@ class App(
             )
 
         # ignore self
-        all_args = list(v for k, v in bindings.arguments.items() if k != "self")
+        all_args = list(
+            v
+            for k, v in bindings.arguments.items()
+            if k not in ["self", "_self"]
+        )  # llama_index is using "_self" in some places
 
         # If there is only one string arg, it is a pretty good guess that it is
         # the main input.
@@ -922,7 +804,7 @@ class App(
         logger.warning(
             "Unsure what the main input string is for the call to %s with args %s.",
             callable_name(func),
-            all_args,
+            bindings,
         )
 
         # After warning, just take the first item in each container until a
@@ -943,16 +825,35 @@ class App(
             "Could not determine main input/output of %s.", str(all_args)
         )
 
-        return "Could not determine main input from " + str(all_args)
+        return "TruLens: Could not determine main input from " + str(all_args)
 
     def main_output(
-        self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
+        self,
+        func: Callable,  # pylint: disable=W0613
+        sig: Signature,  # pylint: disable=W0613
+        bindings: BoundArguments,  # pylint: disable=W0613
+        ret: Any,
     ) -> JSON:
+        """Determine (guess) the "main output" string for a given main app call.
+
+        This is for functions whose output is not a string.
+
+        Args:
+            func: The main function whose main output we are guessing.
+
+            sig: The signature of the above function.
+
+            bindings: The arguments that were passed to that function.
+
+            ret: The return value of the function.
         """
-        Determine the main out string for the given function `func` with
-        signature `sig` after it is called with the given `bindings` and has
-        returned `ret`.
-        """
+
+        if isinstance(ret, JSON_BASES):
+            return str(ret)
+
+        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
+            # Chunked/streamed outputs.
+            return "".join(ret)
 
         # Use _extract_content to get the content out of the return value
         content = self._extract_content(ret, content_keys=["content", "output"])
@@ -970,14 +871,25 @@ class App(
             if len(content) > 0:
                 return str(content[0])
             else:
-                return "Could not determine main output from " + str(content)
+                return (
+                    f"Could not determine main output of {func.__name__}"
+                    f" from {class_name(type(content))} value {content}."
+                )
 
         else:
-            logger.warning("Could not determine main output from %s.", content)
+            logger.warning(
+                "Could not determine main output of %s from %s value %s.",
+                func.__name__,
+                class_name(type(content)),
+                content,
+            )
             return (
                 str(content)
                 if content is not None
-                else "Could not determine main output from " + str(content)
+                else (
+                    f"TruLens: could not determine main output of {func.__name__} "
+                    f"from {class_name(type(content))} value {content}."
+                )
             )
 
     # WithInstrumentCallbacks requirement
@@ -1117,10 +1029,12 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
-        ctx = RecordingContext(app=self)
+        ctx = mod_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
+
+        self._set_context_vars()
 
         return ctx
 
@@ -1129,24 +1043,56 @@ class App(
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
 
+        # self._reset_context_vars()
+
         if exc_type is not None:
             raise exc_value
 
         return
 
+    def _set_context_vars(self):
+        # HACK: For debugging purposes, try setting/resetting all context vars
+        # used in trulens around the app context manangers due to bugs in trying
+        # to set/reset them where more appropriate. This is not ideal as not
+        # resetting context vars where appropriate will result possibly in
+        # incorrect tracing information.
+
+        from trulens.core.feedback.endpoint import Endpoint
+        from trulens.core.instruments import WithInstrumentCallbacks
+
+        CONTEXT_VARS = [
+            WithInstrumentCallbacks._stack_contexts,
+            WithInstrumentCallbacks._context_contexts,
+            Endpoint._context_endpoints,
+        ]
+
+        for var in CONTEXT_VARS:
+            self._context_vars_tokens[var] = var.set(var.get())
+
+    def _reset_context_vars(self):
+        # HACK: See _set_context_vars.
+        for var, token in self._context_vars_tokens.items():
+            var.reset(token)
+
+        del self._context_vars_tokens[var]
+
     # For use as a context manager.
     async def __aenter__(self):
-        ctx = RecordingContext(app=self)
+        ctx = mod_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
+
+        self._set_context_vars()
 
         return ctx
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        # ctx = self.recording_contexts.get()
-        # self.recording_contexts.reset(ctx.token)
+        ctx = self.recording_contexts.get()
+        self.recording_contexts.reset(ctx.token)
+
+        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value
@@ -1154,7 +1100,9 @@ class App(
         return
 
     # WithInstrumentCallbacks requirement
-    def on_new_record(self, func) -> Iterable[RecordingContext]:
+    def on_new_record(
+        self, func
+    ) -> Iterable[mod_instruments._RecordingContext]:
         """Called at the start of record creation.
 
         See
@@ -1169,7 +1117,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def on_add_record(
         self,
-        ctx: RecordingContext,
+        ctx: mod_instruments._RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -1178,6 +1126,7 @@ class App(
         perf: mod_base_schema.Perf,
         cost: mod_base_schema.Cost,
         existing_record: Optional[mod_record_schema.Record] = None,
+        final: bool = False,
     ) -> mod_record_schema.Record:
         """Called by instrumented methods if they use _new_record to construct a
         "record call list.
@@ -1195,22 +1144,25 @@ class App(
 
             assert len(calls) > 0, "No information recorded in call."
 
-            # if existing_record is not None:
-            #    calls = existing_record.calls
-
             if bindings is not None:
-                main_in = self.main_input(func, sig, bindings)
+                if existing_record is None:
+                    main_in = jsonify(self.main_input(func, sig, bindings))
+                else:
+                    main_in = existing_record.main_input
             else:
                 main_in = None
 
             if error is None:
                 assert bindings is not None, "No bindings despite no error."
-                main_out = self.main_output(func, sig, bindings, ret)
+                if final:
+                    main_out = self.main_output(func, sig, bindings, ret)
+                else:
+                    main_out = f"TruLens: Record not yet finalized: {ret}"
             else:
                 main_out = None
 
             updates = dict(
-                main_input=jsonify(main_in),
+                main_input=main_in,
                 main_output=jsonify(main_out),
                 main_error=jsonify(error),
                 calls=calls,
@@ -1237,6 +1189,10 @@ class App(
             # May block on DB.
             self._handle_error(record=record, error=error)
             raise error
+
+        # Only continue with the feedback steps if the record is final.
+        if not final:
+            return record
 
         # Will block on DB, but not on feedback evaluation, depending on
         # FeedbackMode:
@@ -1532,6 +1488,14 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def __getattr__(self, __name: str) -> Any:
         # A message for cases where a user calls something that the wrapped app
         # contains. We do not support this form of pass-through calls anymore.
+
+        try:
+            # Some odd interaction with pydantic.PrivateAttr causes this handler
+            # to be called for private attributes even though they exist. So we
+            # double check here with pydantic's getattr.
+            return pydantic.BaseModel.__getattr__(self, __name)
+        except AttributeError:
+            pass
 
         app = self.app
 

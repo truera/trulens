@@ -5,10 +5,12 @@ from __future__ import annotations
 import dataclasses
 from enum import Enum
 import hashlib
+import inspect
 import json
 import logging
 from pathlib import Path
 from pprint import PrettyPrinter
+import typing
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -195,24 +197,28 @@ def jsonify(
     # NOTE(piotrm): We might need to do something special for the below types as
     # they are stateful if iterated. That is, they might be iterable only once
     # and iterating will break their user's interfaces.
-    """
-    if isinstance(obj, typing.Iterator):
-        raise ValueError("Cannot jsonify an iterator object.")
+
+    # These are here because we cannot iterate them or await them without
+    # breaking the instrumented apps. Instead we return a placeholder value:
     if inspect.isawaitable(obj):
-        raise ValueError("Cannot jsonify an awaitable object.")
+        return "TruLens: Cannot jsonify an awaitable object."
+    if isinstance(obj, typing.Iterator):
+        return "TruLens: Cannot jsonify an iterator object."
     if inspect.isgenerator(obj):
-        raise ValueError("Cannot jsonify a generator object.")
-    if inspect.iscoroutine(obj):
-        raise ValueError("Cannot jsonify a coroutine object.")
+        return "TruLens: Cannot jsonify a generator object."
     if inspect.isasyncgen(obj):
-        raise ValueError("Cannot jsonify an async generator object.")
+        return "TruLens: Cannot jsonify an async generator object."
+
+    # These may be necessary to prevent inadvertently stealing some items from
+    # the awaitables/generators.
+    if inspect.iscoroutine(obj):
+        return "TruLens: Cannot jsonify a coroutine object."
     if inspect.isasyncgenfunction(obj):
-        raise ValueError("Cannot jsonify an async generator function.")
+        return "TruLens: Cannot jsonify an async generator function."
     if inspect.iscoroutinefunction(obj):
-        raise ValueError("Cannot jsonify a coroutine function.")
+        return "TruLens: Cannot jsonify a coroutine function."
     if inspect.isgeneratorfunction(obj):
-        raise ValueError("Cannot jsonify a generator function.")
-    """
+        return "TruLens: Cannot jsonify a generator function."
 
     if depth > max_depth:
         logger.debug(

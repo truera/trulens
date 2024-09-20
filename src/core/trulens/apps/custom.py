@@ -193,6 +193,7 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
+import pydantic
 from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
@@ -329,7 +330,9 @@ class TruCustomApp(App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     app: Any
 
@@ -501,26 +504,6 @@ class TruCustomApp(App):
         bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
-
-    """
-    # Async work ongoing:
-    async def main_acall(self, human: str):
-        # TODO: work in progress
-
-        # must return an async generator of tokens/pieces that can be appended to create the full response
-
-        if self.main_async_method is None:
-            raise RuntimeError(
-                "`main_async_method` was not specified so we do not know how to run this app."
-            )
-
-        sig = signature(self.main_async_method)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
-
-        generator = await self.main_async_method(*bindings.args, **bindings.kwargs)
-
-        return generator
-    """
 
 
 class instrument(base_instrument):

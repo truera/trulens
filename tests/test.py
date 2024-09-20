@@ -1,15 +1,16 @@
-"""TestCase subclass with JSON comparisons and test enable/disable flag
-handling."""
+"""TestCase extension and utilities."""
 
 import asyncio
 from dataclasses import fields
 from dataclasses import is_dataclass
 from datetime import datetime
 import functools
+import gc
 import importlib
 import json
 import os
 from pathlib import Path
+import threading
 from typing import (
     Dict,
     Mapping,
@@ -23,15 +24,20 @@ from typing import (
 )
 import unittest
 from unittest import TestCase
+import weakref
 
 import pydantic
 from pydantic import BaseModel
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSON_BASES
 from trulens.core.utils.serial import Lens
 import yaml
 
-OPTIONAL_ENV_VAR = "TEST_OPTIONAL"
+from tests.utils import find_path
+from tests.utils import print_referent_lens
+
+OPTIONAL_VAR = "TEST_OPTIONAL"
 """Env var that were to evaluate to true indicates that optional tests are to be
 run."""
 
@@ -39,16 +45,37 @@ WRITE_GOLDEN_VAR = "WRITE_GOLDEN"
 """Env var for indicating whether golden expected results are to be written (if
 true) or read and compared (if false/undefined)."""
 
-ALLOW_OPTIONAL_ENV_VAR = "ALLOW_OPTIONALS"
+TEST_TASKS_CLEANUP_VAR = "TEST_TASKS_CLEANUP"
+"""Env var that when set to true will cause tests to fail if there are any
+running tasks after the test completes."""
+
+TEST_THREADS_CLEANUP_VAR = "TEST_THREADS_CLEANUP"
+"""Env var that when set to true will cause tests to fail if there are any
+non-main threads running after the test completes."""
+
+ALLOW_OPTIONAL_VAR = "ALLOW_OPTIONALS"
+"""Env var that when set to true will allow optional tests to be run."""
+
+WITH_REF_PATH_VAR = "WITH_REF_PATH"
+"""Env var that when set to true will print out the reference path to the given
+object that was not garbage collected in the `assertCollected` test."""
 
 
 def async_test(func):
-    """Decorator for running async tests."""
+    """Decorator for running async tests.
+
+    Prints out tasks that are still running after the test completes.
+    """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         temp = loop.run_until_complete(func(*args, **kwargs))
+
+        for task in asyncio.all_tasks(loop):
+            print("Task still running:")
+            task.print_stack()
+
         loop.close()
         return temp
 
@@ -63,9 +90,9 @@ def optional_test(testmethodorclass):
     all optional packages have been installed.
     """
 
-    return unittest.skipIf(
-        not os.environ.get(OPTIONAL_ENV_VAR), "optional test"
-    )(testmethodorclass)
+    return unittest.skipIf(not os.environ.get(OPTIONAL_VAR), "optional test")(
+        testmethodorclass
+    )
 
 
 def requiredonly_test(testmethodorclass):
@@ -77,8 +104,7 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_ENV_VAR)
-        or os.environ.get(ALLOW_OPTIONAL_ENV_VAR),
+        os.environ.get(OPTIONAL_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
         "not an optional test",
     )(testmethodorclass)
 
@@ -475,8 +501,148 @@ class WithJSONTestCase(TestCase):
             )
 
 
-class JSONTestCase(WithJSONTestCase, TestCase):
-    """TestCase subclass with JSON comparisons and test enable/disable flag
-    handling."""
+class TruTestCase(WithJSONTestCase, TestCase):
+    """TestCase subclass with several additions.
 
-    pass
+    - JSON comparisons and golden-file handling.
+
+    - Dumps of remaining tasks on completion of each test. This can optionally
+      result in test failures if `TEST_TASKS_CLEANUP` is set.
+
+    - Dumps non-main running threads after test completion. This can be made to
+      result in test failure if `TEST_THREADS_CLEANUP` is set.
+
+    - Garbage collection subtest. This test optionally prints out the reference
+      path to the given object that was not garbage collected. This is enabled
+      with the `WITH_REF_PATH` environment variable.
+    """
+
+    def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
+        """Check that the object referenced by `ref` has been garbage
+        collected.
+
+        Optionally prints out the reference path to the object if it was not
+        garbage collected. This is enabled with the `WITH_REF_PATH` environment
+        variable.
+        """
+
+        caller_frame = python_utils.caller_frame(offset=0)
+        alls = [
+            caller_frame.f_builtins,
+            caller_frame.f_globals,
+            caller_frame.f_locals,
+        ]
+
+        gc.collect()
+
+        if msg is None:
+            msg = f"Object {ref} was not garbage collected."
+
+        # obj = ref()
+
+        with self.subTest(part="garbage collection"):
+            self.assertTrue(ref() is None, msg)
+
+        # Enable WITH_REF_PATH to see printout of why the given ref was not
+        # GC-ed.
+        if (
+            ref() is not None
+            and os.environ.get(WITH_REF_PATH_VAR, None) is not None
+        ):
+            with self.subTest(part="reference path"):
+                print("Trying to find path to non-collected object.")
+                path = find_path(id(alls), id(ref()))
+
+                if path is None:
+                    print(
+                        "Couldn't find reference path. Looking at immediate referrers instead:"
+                    )
+                    for referent in gc.get_referrers(ref()):
+                        print(
+                            "  ",
+                            python_utils.class_name(type(referent)),
+                            str(referent)[0:128],
+                        )
+
+                else:
+                    print(f"Reference path from test frame to {ref}:")
+                    print_referent_lens(origin=alls, lens=path)
+
+    def tearDown(self):
+        """Check for running tasks and non-main threads after each test.
+
+        Raises:
+            AssertionError: If there are any running tasks running and the
+                environment variable `TEST_TASKS_CLEANUP` is set.
+
+            AssertionError: If there are any non-main threads running and the
+                environment variable `TEST_THREADS_CLEANUP` is set.
+        """
+
+        # GC here to make sure we don't have any references to tasks or threads
+        # that are keeping them alive.
+        gc.collect()
+
+        running_tasks = []
+        try:
+            loop = asyncio.get_event_loop()
+            for task in asyncio.all_tasks(loop):
+                running_tasks.append(task)
+        except Exception:
+            # No event loop running?
+            pass
+
+        if running_tasks:
+            if os.environ.get(TEST_TASKS_CLEANUP_VAR, None) is not None:
+                with self.subTest(part="running tasks"):
+                    raise AssertionError(
+                        f"Tasks still running: {running_tasks}"
+                    )
+            else:
+                print(f"Tasks still running: {running_tasks}")
+
+        non_main_threads = []
+        for thread in threading.enumerate():
+            if thread != threading.main_thread():
+                non_main_threads.append(thread)
+
+        if non_main_threads:
+            if os.environ.get(TEST_THREADS_CLEANUP_VAR, None) is not None:
+                with self.subTest(part="non-main threads"):
+                    raise AssertionError(
+                        f"Non-main threads still running: {non_main_threads}"
+                    )
+            else:
+                print(f"Non-main threads still running: {non_main_threads}")
+
+    @classmethod
+    def tearDownClass(cls):
+        """Show a final printout of remaining running tasks and threads upon
+        completion of all tests in this class.
+
+        Note that these are not meant to result in test failures. This is only
+        executed after all the tests in a test class are done.
+        """
+
+        print(f"Tearing down {cls.__name__}")
+
+        running_tasks = []
+
+        try:
+            loop = asyncio.get_event_loop()
+            print(f"  Loop still running: {loop}")
+            print("  Remaining tasks:")
+            for task in asyncio.all_tasks(loop):
+                running_tasks.append(task)
+                print("    " + str(task))
+                task.print_stack()
+
+        except Exception as e:
+            print(f"  No running loop? {e}")
+
+        print("  Remaining non-main threads:")
+        non_main_threads = []
+        for thread in threading.enumerate():
+            if thread != threading.main_thread():
+                non_main_threads.append(thread)
+                print("    " + str(thread))
