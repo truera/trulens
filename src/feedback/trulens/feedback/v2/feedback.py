@@ -159,121 +159,6 @@ supported_criteria = {
 }
 
 
-class Conciseness(Semantics, WithPrompt):  # or syntax
-    # openai.conciseness
-
-    # langchain Criteria.CONCISENESS
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["conciseness"]} Respond only as a number from 0 to 10 where 0 is the least concise and 10 is the most concise."""
-    )
-
-
-class Correctness(Semantics, WithPrompt):
-    # openai.correctness
-    # openai.correctness_with_cot_reasons
-
-    # langchain Criteria.CORRECTNESS
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["correctness"]} Respond only as a number from 0 to 10 where 0 is the least correct and 10 is the most correct."""
-    )
-
-
-class Coherence(Semantics):
-    # openai.coherence
-    # openai.coherence_with_cot_reasons
-
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["coherence"]} Respond only as a number from 0 to 10 where 0 is the least coherent and 10 is the most coherent."""
-    )
-
-
-class Relevance(Semantics):
-    """
-    This evaluates the *relevance* of the LLM response to the given text by LLM
-    prompting.
-
-    Relevance is available for any LLM provider.
-
-    """
-
-    # openai.relevance
-    # openai.relevance_with_cot_reasons
-    pass
-
-
-class Groundedness(Semantics, WithPrompt):
-    # hugs._summarized_groundedness
-    # hugs._doc_groundedness
-
-    system_prompt: ClassVar[str] = cleandoc(
-        """You are a INFORMATION OVERLAP classifier; providing the overlap of information between the source and statement.
-        Respond only as a number from 0 to 10 where 0 is no information overlap and 10 is all information is overlapping.
-        Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore score a 10.
-        Never elaborate."""
-    )
-    user_prompt: ClassVar[str] = cleandoc(
-        """SOURCE: {premise}
-
-        Hypothesis: {hypothesis}
-
-        Please answer with the template below for all statement sentences:
-
-        Criteria: <Statement Sentence>
-        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
-        Score: <Output a number between 0-10 where 0 is no information overlap and 10 is all information is overlapping>
-        """
-    )
-
-    sentences_splitter_prompt: ClassVar[str] = cleandoc(
-        """Split the following statement into individual sentences:
-
-        Statement: {statement}
-
-        Return each sentence on a new line.
-        """
-    )
-
-
-class Answerability(Semantics, WithPrompt):
-    system_prompt: ClassVar[str] = cleandoc(
-        """You are a ANSWERABILITY classifier; providing a score of 0 if the answer to the QUESTION does not exist in the SOURCE, and a 10 if the answer does exist in the SOURCE.
-        Do not consider the quality of the answer, only if it exists or not.
-        Never elaborate."""
-    )
-    user_prompt: ClassVar[str] = cleandoc(
-        """QUESTION: {question}
-
-        SOURCE: {source}
-
-        ANSWERABILITY:"""
-    )
-
-
-class Abstention(Semantics, WithPrompt):
-    system_prompt: ClassVar[str] = cleandoc(
-        """You are a ABSTENTION classifier; classifying the STATEMENT as an abstention or not.
-        Examples of an abstention include statement similar to 'I don't know' or 'I can't answer that'.
-        Respond only as a number from 0 to 10 where 0 is not an abstention and 10 is an abstention.
-        Never elaborate."""
-    )
-    user_prompt: ClassVar[str] = cleandoc(
-        """STATEMENT: {statement}
-
-        ABSTENTION:"""
-    )
-
-
-class Trivial(Semantics, WithPrompt):
-    system_prompt: ClassVar[str] = cleandoc(
-        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content. Respond only with a list of the remaining statements in the format of a python list of strings."""
-    )
-    user_prompt: ClassVar[str] = cleandoc(
-        """ALL STATEMENTS: {statements}
-
-        IMPORTANT STATEMENTS: """
-    )
-
-
 LIKERT_0_3_PROMPT = "0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score"
 BINARY_0_1_PROMPT = "0 or 1, where 0 is lowest and negative (i.e. irrelevant or not grounded) and 1 is highest and positive (relevant, grounded, valid, etc.)"
 LIKERT_0_10_PROMPT = "0 to 10, where 0 is the lowest score according to the criteria and 10 is the highest possible score"  # legacy, to be deprecated
@@ -319,22 +204,199 @@ class EvalSchema(pydantic.BaseModel):
             )
 
 
+class Conciseness(Semantics, WithPrompt):  # or syntax
+    # openai.conciseness
+
+    # langchain Criteria.CONCISENESS
+    system_prompt: ClassVar[str] = cleandoc(
+        f"""{supported_criteria["conciseness"]} Respond only as a number from 0 to 10 where 0 is the least concise and 10 is the most concise."""
+    )
+
+
+class Correctness(Semantics, WithPrompt):
+    # openai.correctness
+    # openai.correctness_with_cot_reasons
+
+    # langchain Criteria.CORRECTNESS
+    system_prompt: ClassVar[str] = cleandoc(
+        f"""{supported_criteria["correctness"]} Respond only as a number from 0 to 10 where 0 is the least correct and 10 is the most correct."""
+    )
+
+
+class Coherence(Semantics):
+    # openai.coherence
+    # openai.coherence_with_cot_reasons
+
+    system_prompt: ClassVar[str] = cleandoc(
+        f"""{supported_criteria["coherence"]} Respond only as a number from 0 to 10 where 0 is the least coherent and 10 is the most coherent."""
+    )
+
+
 @dataclass
-class ContextRelevance(Relevance, WithPrompt):
+class CriteriaOutputSpaceMixin:
     system_prompt: ClassVar[str]
+    output_space_prompt: ClassVar[str]
+    system_prompt_template: ClassVar[str]
+    criteria_template: ClassVar[str]
 
-    user_prompt: ClassVar[str]
-    verb_confidence_prompt: ClassVar[str]
+    @staticmethod
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
+        validated = EvalSchema(criteria=criteria, output_space=output_space)
+        return validated
+
+    @classmethod
+    def generate_system_prompt(
+        cls,
+        min_score: int,
+        max_score: int,
+        criteria: Optional[str] = None,
+        output_space: Optional[str] = None,
+    ) -> str:
+        if criteria is None and output_space is None:
+            return cls.system_prompt
+
+        if criteria is None:
+            criteria = cls.criteria_template.format(
+                min_score=min_score, max_score=max_score
+            )
+
+        if output_space is None:
+            output_space_prompt = cls.output_space_prompt
+        else:
+            validated = cls.validate_criteria_and_output_space(
+                criteria, output_space
+            )
+            criteria = validated.criteria
+            output_space_prompt = validated.get_output_scale_prompt()
+
+        return cleandoc(
+            cls.system_prompt_template.format(
+                output_space_prompt=output_space_prompt,
+                criteria=criteria,
+            )
+        )
+
+
+class Relevance(Semantics):
+    """
+    This evaluates the *relevance* of the LLM response to the given text by LLM
+    prompting.
+
+    Relevance is available for any LLM provider.
+
+    """
+
+    # openai.relevance
+    # openai.relevance_with_cot_reasons
+    pass
+
+
+class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    # hugs._summarized_groundedness
+    # hugs._doc_groundedness
+
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    You should score the groundedness of the statement based on the following criteria:
+    - Statements that are directly supported by the source should be considered grounded and should get a high score.
+    - Statements that are not directly supported by the source should be considered not grounded and should get a low score.
+    - Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of {max_score}.
+    """
 
-    criteria: str = """
-        - CONTEXT that is IRRELEVANT to the QUESTION should score 0.
-        - CONTEXT that is RELEVANT to some of the QUESTION should score of 1.
-        - CONTEXT that is RELEVANT to most of the QUESTION should get a score of 2.
-        - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of 3, which is the full mark.
-        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of 3.
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
+        Respond only as a number from {output_space_prompt}.
+
+        {criteria}
+        Never elaborate."""
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """SOURCE: {premise}
+
+        Hypothesis: {hypothesis}
+
+        Please answer with the template below for all statement sentences:
+
+        Criteria: <Statement Sentence>
+        Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
+        Score: <Output a number based on the scoring output space / range>
         """
-    output_space: str = OutputSpace.LIKERT_0_3.name
+    )
+
+    sentences_splitter_prompt: ClassVar[str] = cleandoc(
+        """Split the following statement into individual sentences:
+
+        Statement: {statement}
+
+        Return each sentence on a new line.
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+
+class Answerability(Semantics, WithPrompt):
+    system_prompt: ClassVar[str] = cleandoc(
+        """You are a ANSWERABILITY classifier; providing a score of 0 if the answer to the QUESTION does not exist in the SOURCE, and a 10 if the answer does exist in the SOURCE.
+        Do not consider the quality of the answer, only if it exists or not.
+        Never elaborate."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """QUESTION: {question}
+
+        SOURCE: {source}
+
+        ANSWERABILITY:"""
+    )
+
+
+class Abstention(Semantics, WithPrompt):
+    system_prompt: ClassVar[str] = cleandoc(
+        """You are a ABSTENTION classifier; classifying the STATEMENT as an abstention or not.
+        Examples of an abstention include statement similar to 'I don't know' or 'I can't answer that'.
+        Respond only as a number from 0 to 10 where 0 is not an abstention and 10 is an abstention.
+        Never elaborate."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """STATEMENT: {statement}
+
+        ABSTENTION:"""
+    )
+
+
+class Trivial(Semantics, WithPrompt):
+    system_prompt: ClassVar[str] = cleandoc(
+        """Consider the following list of statements. Identify and remove sentences that are stylistic, contain trivial pleasantries, or lack substantive information relevant to the main content. Respond only with a list of the remaining statements in the format of a python list of strings."""
+    )
+    user_prompt: ClassVar[str] = cleandoc(
+        """ALL STATEMENTS: {statements}
+
+        IMPORTANT STATEMENTS: """
+    )
+
+
+@dataclass
+class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+        - CONTEXT that is IRRELEVANT to the QUESTION should score {min_score}.
+        - CONTEXT that is RELEVANT to some of the QUESTION should get an intermediate score.
+        - CONTEXT that is RELEVANT to most of the QUESTION should get a score closer to {max_score}.
+        - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of {max_score}, which is the full mark.
+        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of {max_score}.
+        """
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
@@ -355,34 +417,14 @@ class ContextRelevance(Relevance, WithPrompt):
         """
     )
 
-    @staticmethod
-    def validate_criteria_and_output_space(criteria: str, output_space: str):
-        validated = EvalSchema(criteria=criteria, output_space=output_space)
-        return validated
-
-    @classmethod
-    def override_criteria_and_output_space(
-        cls, criteria: str, output_space: str
-    ):
-        validated = cls.validate_criteria_and_output_space(
-            criteria, output_space
-        )
-        cls.output_space_prompt = validated.get_output_scale_prompt()
-        cls.system_prompt = cleandoc(
-            cls.system_prompt_template.format(
-                criteria=validated.criteria,
-                output_space_prompt=cls.output_space_prompt,
-            )
-        )
-
-    user_prompt = cleandoc(
+    user_prompt: ClassVar[str] = cleandoc(
         """QUESTION: {question}
         CONTEXT: {context}
 
         RELEVANCE:
         """
     )
-    verb_confidence_prompt = cleandoc(
+    verb_confidence_prompt: ClassVar[str] = cleandoc(
         """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
         other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
         0 and 1.0 that your scoring is accurate, without any extra commentary whatsoever;
@@ -390,64 +432,63 @@ class ContextRelevance(Relevance, WithPrompt):
         """
     )
 
-    system_prompt = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
-        Respond only as a number from {output_space_prompt}.
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
 
-        Criteria for evaluating relevance:
-        {criteria}
-
-        A few additional scoring guidelines:
-
-        - Long CONTEXTS should score equally well as short CONTEXTS.
-
-        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
-
-        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
-
-        - Never elaborate.
-        """.format(output_space_prompt=output_space_prompt, criteria=criteria)
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
     )
 
 
-class PromptResponseRelevance(Relevance, WithPrompt):
-    system_prompt: ClassVar[str] = cleandoc(
+class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
+    output_space_prompt: ClassVar[str] = LIKERT_0_10_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_10.name
+    criteria_template: ClassVar[str] = """
+        - RESPONSE must be relevant to the entire PROMPT to get a maximum score of {max_score}.
+        - RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
+        - RESPONSE that is RELEVANT to none of the PROMPT should get a minimum score of {min_score}.
+        - RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of {max_score}.
+        - RESPONSE that confidently FALSE should get a score of {min_score}.
+        - RESPONSE that is only seemingly RELEVANT should get a score of {min_score}.
+        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
+    """
+
+    system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
-        Respond only as a number from 0 to 10 where 0 is the least relevant and 10 is the most relevant.
+        Respond only as a number from {output_space_prompt}.
 
         A few additional scoring guidelines:
 
         - Long RESPONSES should score equally well as short RESPONSES.
 
-        - RESPONSE must be relevant to the entire PROMPT to get a score of 10.
-
-        - RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
-
-        - RESPONSE that is RELEVANT to none of the PROMPT should get a score of 0.
-
-        - RESPONSE that is RELEVANT to some of the PROMPT should get as score of 2, 3, or 4. Higher score indicates more RELEVANCE.
-
-        - RESPONSE that is RELEVANT to most of the PROMPT should get a score between a 5, 6, 7 or 8. Higher score indicates more RELEVANCE.
-
-        - RESPONSE that is RELEVANT to the entire PROMPT should get a score of 9 or 10.
-
-        - RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of 10.
-
-        - RESPONSE that confidently FALSE should get a score of 0.
-
-        - RESPONSE that is only seemingly RELEVANT should get a score of 0.
-
-        - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of 0.
+        {criteria}
 
         - Never elaborate.
         """
     )
+
     user_prompt: ClassVar[str] = cleandoc(
         """PROMPT: {prompt}
 
         RESPONSE: {response}
 
-        RELEVANCE: """
+        RELEVANCE:
+        """
+    )
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_10.value[0],
+        max_score=OutputSpace.LIKERT_0_10.value[1],
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
     )
 
 
@@ -546,7 +587,9 @@ class Harmfulness(Moderation, WithPrompt):
 class Insensitivity(Semantics, WithPrompt):  # categorize
     # openai.insensitivity
     # openai.insensitivity_with_cot_reasons
-    """Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf ."""
+    """
+    Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf .
+    """
 
     # langchain Criteria.INSENSITIVITY
     system_prompt: ClassVar[str] = cleandoc(
