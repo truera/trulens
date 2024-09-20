@@ -1126,7 +1126,9 @@ class LLMProvider(Provider):
             + response,
         )
 
-    def _generate_key_points(self, source: str):
+    def _generate_key_points(
+        self, source: str, temperature: float = 0.0
+    ) -> str:
         """
         Uses chat completion model. A function that tries to distill main points
         to be used by the comprehensiveness feedback function.
@@ -1137,14 +1139,28 @@ class LLMProvider(Provider):
         Returns:
             (str) key points of the source text.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+        llm_messages = [
+            {
+                "role": "system",
+                "content": prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": str.format(
+                    prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source
+                ),
+            },
+        ]
 
-        return self._create_chat_completion(
-            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT
-            + str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature,
         )
 
     def _assess_key_point_inclusion(
-        self, key_points: str, summary: str
+        self, key_points: str, summary: str, temperature: float = 0.0
     ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
@@ -1156,6 +1172,7 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
         key_points_list = key_points.split("\n")
 
         system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
@@ -1166,8 +1183,16 @@ class LLMProvider(Provider):
                 key_point=key_point,
                 summary=summary,
             )
-            inclusion_assessment = self._create_chat_completion(
-                prompt=system_prompt + user_prompt
+
+            llm_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+
+            inclusion_assessment = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
             )
             inclusion_assessments.append(inclusion_assessment)
 
@@ -1291,7 +1316,7 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of statements with trivial statements removed.
         """
-
+        assert self.endpoint is not None, "Endpoint is not set."
         system_prompt = prompts.LLM_TRIVIAL_SYSTEM
 
         user_prompt = prompts.LLM_TRIVIAL_USER.format(
@@ -1308,7 +1333,11 @@ class LLMProvider(Provider):
         )
 
     def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str, use_sent_tokenize: bool = False
+        self,
+        source: str,
+        statement: str,
+        use_sent_tokenize: bool = False,
+        temperature: float = 0.0,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1366,6 +1395,8 @@ class LLMProvider(Provider):
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
 
+        assert self.endpoint is not None, "Endpoint is not set."
+
         groundedness_scores = {}
         reasons_str = ""
 
@@ -1373,9 +1404,18 @@ class LLMProvider(Provider):
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
         else:
-            hypotheses = self._create_chat_completion(
-                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
-                messages=[{"role": "user", "content": statement}],
+            llm_messages = [
+                {
+                    "role": "system",
+                    "content": prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                },
+                {"role": "user", "content": statement},
+            ]
+
+            hypotheses = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
             ).split("\n")
         try:
             hypotheses = self._remove_trivial_statements(hypotheses)
@@ -1444,6 +1484,7 @@ class LLMProvider(Provider):
         statement: str,
         question: str,
         use_sent_tokenize: bool = True,
+        temperature: float = 0.0,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1481,13 +1522,23 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
         else:
-            hypotheses = self._create_chat_completion(
-                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
-                messages=[{"role": "user", "content": statement}],
+            llm_messages = [
+                {
+                    "role": "system",
+                    "content": prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                },
+                {"role": "user", "content": statement},
+            ]
+
+            hypotheses = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
             ).split("\n")
 
         groundedness_scores = {}

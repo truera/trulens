@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
@@ -61,8 +62,6 @@ class Bedrock(LLMProvider):
     ) -> str:
         assert self.endpoint is not None
 
-        import json
-
         if messages:
             messages_str = " ".join([
                 f"{message['role']}: {message['content']}"
@@ -84,11 +83,21 @@ class Bedrock(LLMProvider):
                 },
             })
         elif self.model_id.startswith("anthropic"):
+            if not messages:
+                raise ValueError(
+                    "`messages` argument must be supplied for Anthropic Bedrock models."
+                )
+            if messages[0]["role"] == "system":
+                system_prompt = messages[0]["content"]
+            _messages = messages[1:] if len(messages) > 1 else []
+
             body = json.dumps({
-                "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
+                "system": system_prompt,
+                "messages": _messages,
                 "temperature": 0,
                 "top_p": 1,
-                "max_tokens_to_sample": 4095,
+                "max_tokens": 4095,
+                "anthropic_version": "bedrock-2023-05-31",
             })
         elif self.model_id.startswith("cohere"):
             body = json.dumps({
@@ -122,7 +131,7 @@ class Bedrock(LLMProvider):
             })
         else:
             raise NotImplementedError(
-                f"The model selected, {self.model_id}, is not yet implemented as a feedback provider"
+                f"The Bedrock model selected, `{self.model_id}`, is not yet implemented as a feedback provider"
             )
 
         # TODO: make textGenerationConfig available for user
@@ -141,25 +150,25 @@ class Bedrock(LLMProvider):
                 "results"
             )[0]["outputText"]
 
-        if self.model_id.startswith("anthropic"):
+        elif self.model_id.startswith("anthropic"):
             response_body = json.loads(response.get("body").read()).get(
-                "completion"
-            )
+                "content"
+            )[0]["text"]
 
-        if self.model_id.startswith("cohere"):
+        elif self.model_id.startswith("cohere"):
             response_body = json.loads(response.get("body").read()).get(
                 "generations"
             )[0]["text"]
 
-        if self.model_id.startswith("mistral"):
+        elif self.model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
                 "output"
             )[0]["text"]
-        if self.model_id.startswith("meta"):
+        elif self.model_id.startswith("meta"):
             response_body = json.loads(response.get("body").read()).get(
                 "generation"
             )
-        if self.model_id.startswith("ai21"):
+        elif self.model_id.startswith("ai21"):
             response_body = (
                 json.loads(response.get("body").read())
                 .get("completions")[0]
