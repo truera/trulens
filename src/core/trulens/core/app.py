@@ -387,7 +387,7 @@ class App(
     """
 
     recording_contexts: contextvars.ContextVar[
-        mod_instruments.RecordingContext
+        mod_instruments._RecordingContext
     ] = pydantic.Field(None, exclude=True)
     """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
@@ -1031,7 +1031,7 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
-        ctx = mod_instruments.RecordingContext(app=self)
+        ctx = mod_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1080,7 +1080,7 @@ class App(
 
     # For use as a context manager.
     async def __aenter__(self):
-        ctx = mod_instruments.RecordingContext(app=self)
+        ctx = mod_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1102,7 +1102,9 @@ class App(
         return
 
     # WithInstrumentCallbacks requirement
-    def on_new_record(self, func) -> Iterable[mod_instruments.RecordingContext]:
+    def on_new_record(
+        self, func
+    ) -> Iterable[mod_instruments._RecordingContext]:
         """Called at the start of record creation.
 
         See
@@ -1117,7 +1119,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def on_add_record(
         self,
-        ctx: mod_instruments.RecordingContext,
+        ctx: mod_instruments._RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,

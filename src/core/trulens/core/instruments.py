@@ -177,7 +177,7 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: RecordingContext,
+        ctx: _RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -220,7 +220,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-class RecordingContext:
+class _RecordingContext:
     """Manager of the creation of records from record calls.
 
     An instance of this class is produced when using an

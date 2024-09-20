@@ -18,7 +18,7 @@ trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment:
   lows:
     BenchmarkParams: pydantic._internal._model_construction.ModelMetaclass
     TruBenchmarkExperiment: builtins.type
-    create_benchmark_experiment_app: builtins.staticmethod
+    create_benchmark_experiment_app: builtins.function
 trulens.benchmark.benchmark_frameworks.tru_benchmark_experiment.BenchmarkParams:
   __bases__:
   - pydantic.main.BaseModel
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.0.1
+  __version__: 1.0.2a0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -88,7 +88,6 @@ trulens.core.app:
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
-    RecordingContext: builtins.type
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
@@ -137,7 +136,7 @@ trulens.core.app.App:
     print_instrumented_components: builtins.function
     print_instrumented_methods: builtins.function
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
-    recording_contexts: _contextvars.ContextVar[trulens.core.app.RecordingContext]
+    recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     root_class: trulens.core.utils.pyschema.Class
     select_context: builtins.classmethod
@@ -194,14 +193,6 @@ trulens.core.app.Prompt:
   __class__: trulens.core.app.ComponentViewMeta
   attributes:
     template: builtins.property
-trulens.core.app.RecordingContext:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    add_call: builtins.function
-    finish_record: builtins.function
-    get: builtins.function
 trulens.core.app.Tool:
   __bases__:
   - trulens.core.app.ComponentView
@@ -412,7 +403,6 @@ trulens.core.database.sqlalchemy:
     UNICODE_HOURGLASS: builtins.str
     UNICODE_STOP: builtins.str
     flatten: builtins.function
-    no_perf: builtins.dict
 trulens.core.database.sqlalchemy.AppsExtractor:
   __bases__:
   - builtins.object
@@ -483,7 +473,6 @@ trulens.core.feedback.endpoint:
   __class__: builtins.module
   highs: {}
   lows:
-    DEFAULT_NETWORK_TIMEOUT: builtins.float
     DEFAULT_RPM: builtins.int
     Endpoint: pydantic._internal._model_construction.ModelMetaclass
     EndpointCallback: pydantic._internal._model_construction.ModelMetaclass
@@ -1626,7 +1615,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.0.1
+  __version__: 1.0.2a0
   highs:
     run_dashboard: builtins.function
     stop_dashboard: builtins.function
@@ -1644,7 +1633,7 @@ trulens.dashboard.Leaderboard:
     MAX_COMPARATORS: builtins.int
     MIN_COMPARATORS: builtins.int
     PINNED_COL_NAME: builtins.str
-    RECORD_LIMIT: builtins.int
+    ST_RECORDS_LIMIT: builtins.str
     aggrid_css: builtins.dict
     cell_rules: builtins.dict
     compare_page_name: builtins.str
@@ -1728,8 +1717,8 @@ trulens.dashboard.constants:
     HIDE_RECORD_COL_NAME: builtins.str
     LEADERBOARD_PAGE_NAME: builtins.str
     PINNED_COL_NAME: builtins.str
+    RECORDS_LIMIT: builtins.int
     RECORDS_PAGE_NAME: builtins.str
-    RECORD_LIMIT: builtins.int
 trulens.dashboard.display:
   __class__: builtins.module
   highs: {}
@@ -1765,6 +1754,60 @@ trulens.dashboard.streamlit.FeedbackDisplay:
     calls: typing.List[trulens.core.schema.feedback.FeedbackCall]
     icon: builtins.str
     score: builtins.float
+trulens.dashboard.utils:
+  __class__: builtins.module
+  highs: {}
+  lows: {}
+trulens.dashboard.utils.dashboard_utils:
+  __class__: builtins.module
+  __version__: 1.0.2a0
+  highs: {}
+  lows:
+    CACHE_TTL: builtins.int
+    EXTERNAL_APP_COL_NAME: builtins.str
+    HIDE_RECORD_COL_NAME: builtins.str
+    PINNED_COL_NAME: builtins.str
+    RECORDS_LIMIT: builtins.int
+    ST_APP_NAME: builtins.str
+    ST_RECORDS_LIMIT: builtins.str
+    __version__: builtins.str
+    add_query_param: builtins.function
+    core_package: builtins.str
+    core_version: builtins.str
+    dashboard_package: builtins.str
+    get_app_versions: streamlit.runtime.caching.cache_utils.CachedFunc
+    get_apps: streamlit.runtime.caching.cache_utils.CachedFunc
+    get_feedback_defs: streamlit.runtime.caching.cache_utils.CachedFunc
+    get_records_and_feedback: streamlit.runtime.caching.cache_utils.CachedFunc
+    get_session: streamlit.runtime.caching.cache_utils.CachedFunc
+    read_query_params_into_session_state: builtins.function
+    render_app_version_filters: builtins.function
+    render_refresh_button: builtins.function
+    render_sidebar: builtins.function
+    set_page_config: builtins.function
+    update_app_metadata: builtins.function
+trulens.dashboard.utils.metadata_utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    flatten_metadata: builtins.function
+    nest_dict: builtins.function
+    nest_metadata: builtins.function
+    nested_update: builtins.function
+trulens.dashboard.utils.notebook_utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    is_notebook: builtins.function
+    setup_widget_stdout_stderr: builtins.function
+trulens.dashboard.utils.records_utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    MULTI_CALL_NAME_DELIMITER: builtins.str
+    default_direction: builtins.str
+    df_cell_highlight: builtins.function
+    display_feedback_call: builtins.function
 trulens.dashboard.ux:
   __class__: builtins.module
   highs: {}
@@ -1943,6 +1986,7 @@ trulens.feedback.dummy.endpoint.DummyEndpoint:
     name: builtins.str
     overloaded_prob: builtins.property
     pace: trulens.core.utils.pace.Pace
+    post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
     retries: builtins.int
     rpm: builtins.float
