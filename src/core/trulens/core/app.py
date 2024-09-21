@@ -34,6 +34,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
+from trulens.core.experimental import Feature
 import trulens.core.feedback as mod_feedback
 import trulens.core.instruments as mod_instruments
 from trulens.core.schema import Select
@@ -54,9 +55,9 @@ from trulens.core.utils.containers import BlockingSet
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Class
-from trulens.core.utils.python import Future
 
 # can take type args with python < 3.9
+from trulens.core.utils.python import Future
 from trulens.core.utils.python import T
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name
@@ -351,20 +352,21 @@ class App(
     )
     """Feedback functions to evaluate on each record."""
 
-    connector: DBConnector = pydantic.Field(
-        default_factory=lambda: TruSession().connector, exclude=True
+    session: TruSession = pydantic.Field(
+        default_factory=TruSession, exclude=True
     )
-    """Database connector.
+    """Session for this app."""
 
-    If this is not provided, a
-    [DefaultDBConnector][trulens.core.database.connector.DefaultDBConnector]
-    will be made (if not already) and used.
-    """
+    @property
+    def connector(self) -> DBConnector:
+        """Database connector."""
 
-    @deprecation_utils.deprecated_property(
-        "The `App.db` property is deprecated. Use `App.connector.db` instead."
-    )
+        return self.session.connector
+
+    @property
     def db(self) -> mod_base_db.DB:
+        """Database used by this app."""
+
         return self.connector.db
 
     @deprecation_utils.deprecated_property(
@@ -892,6 +894,25 @@ class App(
                 )
             )
 
+    # Experimental OTEL WithInstrumentCallbacks requirement
+    def on_new_recording_span(
+        self,
+        recording_span: Any,  # Any = mod_trace.Span,
+    ):
+        from trulens.experimental.otel_tracing.core.app import _App
+
+        return _App.on_new_recording_span(self, recording_span)
+
+    # Experimental OTEL WithInstrumentCallbacks requirement
+    def on_new_root_span(
+        self,
+        recording: mod_instruments._RecordingContext,
+        root_span: Any,  # Any = mod_trace.Span,
+    ) -> mod_record_schema.Record:
+        from trulens.experimental.otel_tracing.core.app import _App
+
+        return _App.on_new_root_span(self, recording, root_span)
+
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
         """
@@ -1029,6 +1050,11 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
+        if self.session.experimental_feature(Feature.OTEL_TRACING):
+            from trulens.experimental.otel_tracing.core.app import _App
+
+            return _App.__enter__(self)
+
         ctx = mod_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
@@ -1040,6 +1066,44 @@ class App(
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.session.experimental_feature(Feature.OTEL_TRACING):
+            from trulens.experimental.otel_tracing.core.app import _App
+
+            return _App.__exit__(self, exc_type, exc_value, exc_tb)
+
+        ctx = self.recording_contexts.get()
+        self.recording_contexts.reset(ctx.token)
+
+        # self._reset_context_vars()
+
+        if exc_type is not None:
+            raise exc_value
+
+        return
+
+    # For use as a context manager.
+    async def __aenter__(self):
+        if self.session.experimental_feature(Feature.OTEL_TRACING):
+            from trulens.experimental.otel_tracing.core.app import _App
+
+            return await _App.__aenter__(self)
+
+        ctx = mod_instruments._RecordingContext(app=self)
+
+        token = self.recording_contexts.set(ctx)
+        ctx.token = token
+
+        self._set_context_vars()
+
+        return ctx
+
+    # For use as a context manager.
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        if self.session.feature_enabled(Feature.OTEL_TRACING):
+            from trulens.experimental.otel_tracing.core.app import _App
+
+            return await _App.__aexit__(self, exc_type, exc_value, exc_tb)
+
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
 
@@ -1075,29 +1139,6 @@ class App(
             var.reset(token)
 
         del self._context_vars_tokens[var]
-
-    # For use as a context manager.
-    async def __aenter__(self):
-        ctx = mod_instruments._RecordingContext(app=self)
-
-        token = self.recording_contexts.set(ctx)
-        ctx.token = token
-
-        self._set_context_vars()
-
-        return ctx
-
-    # For use as a context manager.
-    async def __aexit__(self, exc_type, exc_value, exc_tb):
-        ctx = self.recording_contexts.get()
-        self.recording_contexts.reset(ctx.token)
-
-        # self._reset_context_vars()
-
-        if exc_type is not None:
-            raise exc_value
-
-        return
 
     # WithInstrumentCallbacks requirement
     def on_new_record(

@@ -14,8 +14,14 @@ from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 logger = logging.getLogger(__name__)
 
 
-class _OTELInstrument(mod_instruments.Instrument):
-    def _tracked_method_wrapper(
+def deproxy(obj):
+    """Return the deproxied object."""
+
+    return obj.__init__.__self__
+
+
+class _Instrument(mod_instruments.Instrument):
+    def tracked_method_wrapper(
         self,
         query: serial_utils.Lens,
         func: Callable,
@@ -43,5 +49,5 @@ class _OTELInstrument(mod_instruments.Instrument):
             func=func,
             callback_class=mod_trace.AppTracingCallbacks,
             func_name=method_name,
-            app=self.app,
+            app=deproxy(self.app),
         )

@@ -36,6 +36,7 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
+from trulens.core.experimental import Feature
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
@@ -538,30 +539,7 @@ class Instrument:
             weakref.proxy(app) if app is not None else None
         )
 
-    def tracked_method_wrapper(self, *args, **kwargs):
-        """Dispatch either the otel-based or original record-based method
-        wrapper method."""
-
-        assert self.app is not None
-
-        from trulens.core import session as mod_session
-        from trulens.core.experimental import Feature
-
-        if self.app.session is None:
-            session = mod_session.TruSession()
-        else:
-            session = self.app.session
-
-        if session.experimental_feature(Feature.OTEL_TRACING, lock=True):
-            from trulens.experimental.otel_tracing.core.instruments import (
-                _OTELInstrument,
-            )
-
-            return _OTELInstrument.tracked_method_wrapper(self, *args, **kwargs)
-        else:
-            return self._tracked_method_wrapper(*args, **kwargs)
-
-    def _tracked_method_wrapper(
+    def tracked_method_wrapper(
         self,
         query: Lens,
         func: Callable,
@@ -573,6 +551,22 @@ class Instrument:
 
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
+
+        if self.app.session.experimental_feature(
+            Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.instruments import (
+                _Instrument,
+            )
+
+            return _Instrument.tracked_method_wrapper(
+                self,
+                query=query,
+                func=func,
+                method_name=method_name,
+                cls=cls,
+                obj=obj,
+            )
 
         if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")

@@ -6,6 +6,7 @@ import datetime
 from typing import Optional
 
 import pydantic
+from trulens.core.utils import containers as container_utils
 from trulens.core.utils.serial import SerialModel
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
@@ -18,8 +19,23 @@ class Cost(SerialModel, pydantic.BaseModel):
     n_requests: int = 0
     """Number of requests."""
 
+    n_responses: int = 0
+    """EXPERIMENTAL: otel-tracing
+
+    Number of respones, successful or not."""
+
     n_successful_requests: int = 0
     """Number of successful requests."""
+
+    n_generations: int = 0
+    """EXPERIMENTAL: otel-tracing
+
+    Number of successful generations."""
+
+    n_classifications: int = 0
+    """EXPERIMENTAL: otel-tracing
+
+    Number of successful classifications."""
 
     n_completion_requests: int = 0
     """Number of completion requests."""
@@ -116,6 +132,40 @@ class Perf(SerialModel, pydantic.BaseModel):
     def latency(self):
         """Latency in seconds."""
         return self.end_time - self.start_time
+
+    @staticmethod
+    def of_ns_timestamps(
+        start_ns_timestamp: int, end_ns_timestamp: Optional[int] = None
+    ) -> Perf:
+        """EXPERIMENTAL: otel-tracing
+
+        Create a `Perf` instance from start and end times in nanoseconds
+        since the epoch."""
+
+        return Perf(
+            start_time=container_utils.datetime_of_ns_timestamp(
+                start_ns_timestamp
+            ),
+            end_time=container_utils.datetime_of_ns_timestamp(end_ns_timestamp)
+            if end_ns_timestamp is not None
+            else datetime.datetime.max,
+        )
+
+    @property
+    def start_ns_timestamp(self) -> int:
+        """EXPERIMENTAL: otel-tracing
+
+        Start time in number of nanoseconds since the epoch."""
+
+        return container_utils.ns_timestamp_of_datetime(self.start_time)
+
+    @property
+    def end_ns_timestamp(self) -> int:
+        """EXPERIMENTAL: otel-tracing
+
+        End time in number of nanoseconds since the epoch."""
+
+        return container_utils.ns_timestamp_of_datetime(self.end_time)
 
 
 # HACK013: Need these if using __future__.annotations .

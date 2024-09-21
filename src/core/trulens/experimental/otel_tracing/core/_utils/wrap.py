@@ -387,7 +387,7 @@ def wrap_callable(
     if python_utils.safe_hasattr(func, CALLBACKS):
         # If CALLBACKS is set, it was already a wrapper.
 
-        logger.warning("Function %s is already wrapped.", func)
+        # logger.warning("Function %s is already wrapped.", func)
 
         return func
 

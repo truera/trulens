@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import contextvars
+import time
+from typing import (
+    Iterable,
+)
+
+from trulens.core import app as mod_app
+from trulens.core import experimental as mod_experimental
+from trulens.core import instruments as mod_instruments
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as mod_record_schema
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import text as text_utils
+from trulens.experimental.otel_tracing.core import trace as mod_trace
+
+
+class _App(mod_app.App):
+    # WithInstrumentCallbacks requirement
+    def get_active_contexts(
+        self,
+    ) -> Iterable[mod_instruments._RecordingContext]:
+        """Get all active recording contexts."""
+
+        recording = self.recording_contexts.get(contextvars.Token.MISSING)
+
+        while recording is not contextvars.Token.MISSING:
+            yield recording
+            recording = recording.token.old_value
+
+    # WithInstrumentCallbacks requirement
+    def on_new_recording_span(
+        self,
+        recording_span: mod_trace.Span,
+    ):
+        if self.session._experimental_otel_exporter is not None:
+            # Export to otel exporter if exporter was set in workspace.
+            to_export = []
+            for span in recording_span.iter_family(include_phantom=True):
+                e_span = span.otel_freeze()
+                to_export.append(e_span)
+                print(e_span.name, "->", e_span.__class__.__name__)
+
+            print(
+                f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {python_utils.class_name(self.session._experimental_otel_exporter)}."
+            )
+            self.session._experimental_otel_exporter.export(to_export)
+
+    # WithInstrumentCallbacks requirement
+    def on_new_root_span(
+        self,
+        recording: mod_instruments._RecordingContext,
+        root_span: mod_trace.Span,
+    ) -> mod_record_schema.Record:
+        tracer = root_span.context.tracer
+
+        record = tracer.record_of_root_span(
+            root_span=root_span, recording=recording
+        )
+        recording.records.append(record)
+        # need to jsonify?
+
+        error = root_span.error
+
+        if error is not None:
+            # May block on DB.
+            self._handle_error(record=record, error=error)
+            raise error
+
+        # Will block on DB, but not on feedback evaluation, depending on
+        # FeedbackMode:
+        record.feedback_and_future_results = self._handle_record(record=record)
+        if record.feedback_and_future_results is not None:
+            record.feedback_results = [
+                tup[1] for tup in record.feedback_and_future_results
+            ]
+
+        if record.feedback_and_future_results is None:
+            return record
+
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
+            # Add the record to ones with pending feedback.
+
+            self.records_with_pending_feedback_results.add(record)
+
+        elif self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP:
+            # If in blocking mode ("WITH_APP"), wait for feedbacks to finished
+            # evaluating before returning the record.
+
+            record.wait_for_feedback_results()
+
+        return record
+
+    # For use as a context manager.
+    def __enter__(self):
+        # EXPERIMENTAL otel replacement to recording context manager.
+
+        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+
+        recording_span_ctx = tracer.recording()
+        recording_span: mod_trace.PhantomSpanRecordingContext = (
+            recording_span_ctx.__enter__()
+        )
+        recording = mod_trace._RecordingContext(
+            app=self,
+            tracer=tracer,
+            span=recording_span,
+            span_ctx=recording_span_ctx,
+        )
+        recording_span.recording = recording
+        recording_span.start_timestamp = time.time_ns()
+
+        # recording.ctx = ctx
+
+        token = self.recording_contexts.set(recording)
+        recording.token = token
+
+        return recording
+
+    # For use as a context manager.
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        # EXPERIMENTAL otel replacement to recording context manager.
+
+        recording: mod_trace._RecordingContext = self.recording_contexts.get()
+
+        assert recording is not None, "Not in a tracing context."
+        assert recording.tracer is not None, "Not in a tracing context."
+
+        recording.span.end_timestamp = time.time_ns()
+
+        self.recording_contexts.reset(recording.token)
+        return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)
+
+    # For use as an async context manager.
+    async def __aenter__(self):
+        # EXPERIMENTAL: otel-tracing
+
+        self.session._experimental_assert_feature(
+            mod_experimental.Feature.OTEL_TRACING,
+            purpose="async recording context managers",
+        )
+
+        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+
+        recording_span_ctx = await tracer.arecording()
+        recording_span: mod_trace.PhantomSpanRecordingContext = (
+            await recording_span_ctx.__aenter__()
+        )
+        recording = mod_trace._RecordingContext(
+            app=self,
+            tracer=tracer,
+            span=recording_span,
+            span_ctx=recording_span_ctx,
+        )
+        recording_span.recording = recording
+        recording_span.start_timestamp = time.time_ns()
+
+        # recording.ctx = ctx
+
+        token = self.recording_contexts.set(recording)
+        recording.token = token
+
+        return recording
+
+    # For use as a context manager.
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        # EXPERIMENTAL: otel-tracing
+
+        self.session._experimental_feature_assert(
+            mod_experimental.Feature.OTEL_TRACING,
+            purpose="async recording context managers",
+        )
+
+        recording: mod_trace._RecordingContext = self.recording_contexts.get()
+
+        assert recording is not None, "Not in a tracing context."
+        assert recording.tracer is not None, "Not in a tracing context."
+
+        recording.span.end_timestamp = time.time_ns()
+
+        self.recording_contexts.reset(recording.token)
+        return await recording.span_ctx.__aexit__(exc_type, exc_value, exc_tb)
