@@ -15,7 +15,6 @@ steps:
       # Show python version
       echo "Using $(python --version) ($(which python))"
       poetry config virtualenvs.create false
-
       # NOTE: workaround for langchain typecheck error
       # https://github.com/truera/trulens/issues/1308
       poetry run pip install pip==24.1.2
