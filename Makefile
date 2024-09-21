@@ -34,7 +34,7 @@ env-tests-required:
 	make env-tests
 
 env-tests-optional: env env-tests
-	poetry run pip llama-index-embeddings-huggingface llama-index-embeddings-openai
+	poetry run pip install llama-index-embeddings-huggingface llama-index-embeddings-openai
 
 env-tests-db: env-tests
 	poetry run pip install cryptography psycopg2-binary pymysql
