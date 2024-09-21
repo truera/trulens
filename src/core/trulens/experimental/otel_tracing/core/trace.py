@@ -60,6 +60,14 @@ APPS: str = "__tru_apps"
 """Attribute name for storing apps that expect to be notified of calls."""
 
 
+TTimestamp = int
+"""Type of timestamps in spans.
+
+64 bit int representing nanoseconds since epoch as per OpenTelemetry.
+"""
+NUM_TIMESTAMP_BITS = 64
+
+
 class Context(pydantic.BaseModel):
     """Identifiers for a span."""
 
@@ -97,19 +105,143 @@ class Context(pydantic.BaseModel):
 ContextLike = Union[Context, ot_span.SpanContext]
 
 
-class Span(pydantic.BaseModel):
+class Span(pydantic.BaseModel, ot_span.Span):
     """An OTEL-compatible span.
 
     See [Span][opentelemetry.trace.Span].
+
+    See also [OpenTelemetry
+    Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
+    [OpenTelemetry Span
+    specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
     """
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
+    # for opentelemetry.trace.Span requirement
+    name: str = "unnamed"
+
+    def update_name(self, name: str) -> None:
+        """See [update_name][opentelemetry.trace.span.Span.update_name]."""
+
+        self.name = name
+
+    # for opentelemetry.trace.Span requirement
+    kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL
+    """Kind of span."""
+
+    # for opentelemetry.trace.Span requirement
+    status: trace_status.StatusCode = trace_status.StatusCode.UNSET
+    """Status of the span as per OpenTelemetry Span requirements."""
+
+    def set_status(
+        self,
+        status: Union[ot_span.Status, ot_span.StatusCode],
+        description: Optional[str] = None,
+    ) -> None:
+        """See [set_status][opentelemetry.trace.span.Span.set_status]."""
+
+        if isinstance(status, ot_span.Status):
+            if description is not None:
+                raise ValueError(
+                    "Ambiguous status description provided both in `status.description` and in `description`."
+                )
+
+            self.status = status.status_code
+            self.status_description = status.description
+        else:
+            self.status = status
+            self.status_description = description
+
+    # for opentelemetry.trace.Span requirement
+    status_description: Optional[str] = None
+    """Status description as per OpenTelemetry Span requirements."""
+
+    # for opentelemetry.trace.Span requirement
+    events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = pydantic.Field(
+        default_factory=list
+    )
+    """Events recorded in the span.
+
+    !!! Warning
+
+        Events in OpenTelemetry seem to be synonymous to logs. Do not store
+        anything we want to query or process in events.
+    """
+
+    def add_event(
+        self,
+        name: str,
+        attributes: ot_types.Attributes = None,
+        timestamp: Optional[TTimestamp] = None,
+    ) -> None:
+        """See [add_event][opentelemetry.trace.span.Span.add_event]."""
+
+        self.events.append((name, attributes, timestamp or time.time_ns()))
+
+    # for opentelemetry.trace.Span requirement
+    links: Dict[Context, ot_types.Attributes] = pydantic.Field(
+        default_factory=dict
+    )
+    """Relationships to other spans with attributes on each link."""
+
+    def add_link(
+        self,
+        context: ot_span.SpanContext,
+        attributes: ot_types.Attributes = None,
+    ) -> None:
+        """See [add_link][opentelemetry.trace.span.Span.add_link]."""
+
+        if attributes is None:
+            attributes = {}
+
+        self.links[context] = attributes
+
+    def is_recording(self) -> bool:
+        """See [is_recording][opentelemetry.trace.span.Span.is_recording]."""
+
+        return self.status == trace_status.StatusCode.UNSET
+
+    # for opentelemetry.trace.Span requirement
+    attributes: Dict[str, Any] = {}
+
+    def set_attributes(
+        self, attributes: Dict[str, ot_types.AttributeValue]
+    ) -> None:
+        """See [set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
+
+        self.attributes.update(attributes)
+
+    def set_attribute(self, key: str, value: ot_types.AttributeValue) -> None:
+        """See [set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
+
+        self.attributes[key] = value
+
+    # for opentelemetry.trace.Span requirement
     context: Context = pydantic.Field(exclude=True)
     """Identifiers."""
 
+    def get_span_context(self) -> ot_span.SpanContext:
+        """See [get_span_context][opentelemetry.trace.span.Span.get_span_context]."""
+
+        return self.context
+
+    # for opentelemetry.trace.Span requirement
     parent: Optional[Context] = pydantic.Field(None, exclude=True)
     """Optional parent identifier."""
+
+    def record_exception(
+        self,
+        exception: Exception,
+        attributes: ot_types.Attributes = None,
+        timestamp: Optional[TTimestamp] = None,
+        escaped: bool = False,
+    ) -> None:
+        """See [record_exception][opentelemetry.trace.span.Span.record_exception]."""
+
+        self.status = trace_status.StatusCode.ERROR
+
+        self.add_event(self.vendor_attr("exception"), attributes, timestamp)
 
     error: Optional[Exception] = pydantic.Field(None, exclude=True)
     """Optional error if the observed computation raised an exception."""
@@ -121,6 +253,16 @@ class Span(pydantic.BaseModel):
     """End time in nanoseconds since epoch.
 
     None if not yet finished."""
+
+    def end(self, end_time: Optional[TTimestamp] = None):
+        """See [end][opentelemetry.trace.span.Span.end]"""
+
+        if end_time:
+            self.end_timestamp = end_time
+        else:
+            self.end_timestamp = time.time_ns()
+
+        self.status = trace_status.StatusCode.OK
 
     def __str__(self):
         return f"{type(self).__name__} {self.context} -> {self.parent}"
@@ -211,11 +353,11 @@ class OTELExportable(Span):
             return None
         return self.otel_context_of_context(self.parent)
 
-    def attributes(self):
-        return self.model_dump()
+    # def attributes(self):
+    #     return self.model_dump()
 
     def otel_attributes(self) -> ot_types.Attributes:
-        return mod_otel.flatten_lensed_attributes(self.attributes())
+        return mod_otel.flatten_lensed_attributes(self.attributes)
 
     def otel_kind(self) -> ot_types.SpanKind:
         return ot_trace.SpanKind.INTERNAL
@@ -361,7 +503,7 @@ class SpanCall(OTELExportable):
 
     def otel_attributes(self) -> ot_types.Attributes:
         # temp = {f"trulens_eval@{k}": v for k, v in self.attributes().items()}
-        return mod_otel.flatten_lensed_attributes(self.attributes())
+        return mod_otel.flatten_lensed_attributes(self.attributes)
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
         ret = super().otel_resource_attributes()
@@ -517,6 +659,7 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         yield span
 
         self.context.reset(token)
+        span.finish()
 
     @staticmethod
     def _fill_stacks(

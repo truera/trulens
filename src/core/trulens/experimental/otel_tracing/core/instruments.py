@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import (
-    Callable,
-)
+from typing import Callable, TypeVar
+import weakref
 
 from trulens.core import instruments as mod_instruments
 from trulens.core.utils import python as python_utils
@@ -13,11 +12,13 @@ from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-def deproxy(obj):
-    """Return the deproxied object."""
 
-    return obj.__init__.__self__
+def deproxy(proxy: weakref.ProxyType[T]) -> T:
+    """Return the object being proxied."""
+
+    return proxy.__init__.__self__
 
 
 class _Instrument(mod_instruments.Instrument):

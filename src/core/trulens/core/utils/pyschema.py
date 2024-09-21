@@ -192,7 +192,7 @@ class Class(SerialModel):
     def __str__(self):
         return f"{self.name}({self.module.module_name if self.module is not None else 'no module'})"
 
-    def base_class(self) -> "Class":
+    def base_class(self) -> Class:
         """
         Get the deepest base class in the same module as this class.
         """
