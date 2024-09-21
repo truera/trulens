@@ -321,7 +321,7 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
 
     if isinstance(func, inspect.FrameInfo):
         ret = f"{func.filename}:{func.lineno}"
-        if show_source:
+        if show_source and func.code_context is not None:
             ret += "\n"
             for line in func.code_context:
                 ret += "\t" + line

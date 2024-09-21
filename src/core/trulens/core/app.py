@@ -1081,6 +1081,32 @@ class App(
 
         return
 
+    def _set_context_vars(self):
+        # HACK: For debugging purposes, try setting/resetting all context vars
+        # used in trulens around the app context manangers due to bugs in trying
+        # to set/reset them where more appropriate. This is not ideal as not
+        # resetting context vars where appropriate will result possibly in
+        # incorrect tracing information.
+
+        from trulens.core.feedback.endpoint import Endpoint
+        from trulens.core.instruments import WithInstrumentCallbacks
+
+        CONTEXT_VARS = [
+            WithInstrumentCallbacks._stack_contexts,
+            WithInstrumentCallbacks._context_contexts,
+            Endpoint._context_endpoints,
+        ]
+
+        for var in CONTEXT_VARS:
+            self._context_vars_tokens[var] = var.set(var.get())
+
+    def _reset_context_vars(self):
+        # HACK: See _set_context_vars.
+        for var, token in self._context_vars_tokens.items():
+            var.reset(token)
+
+        del self._context_vars_tokens[var]
+
     # For use as a context manager.
     async def __aenter__(self):
         if self.session.experimental_feature(Feature.OTEL_TRACING):
