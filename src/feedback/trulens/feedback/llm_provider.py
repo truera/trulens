@@ -1454,6 +1454,7 @@ class LLMProvider(Provider):
             # Try to locate the 'punkt' directory in the configured NLTK data path
             find("tokenizers/punkt_tab")
         except LookupError:
+            logger.warning("Punkt tokenizer not found. Attempting to download.")
             nltk.download("punkt_tab", quiet=False, download_dir=download_dir)
 
     def groundedness_measure_with_cot_reasons(
