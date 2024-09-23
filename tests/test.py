@@ -90,9 +90,9 @@ def optional_test(testmethodorclass):
     all optional packages have been installed.
     """
 
-    return unittest.skipIf(not os.environ.get(OPTIONAL_VAR), "optional test")(
-        testmethodorclass
-    )
+    return unittest.skipIf(
+        not TruTestCase.env_true(OPTIONAL_VAR), "optional test"
+    )(testmethodorclass)
 
 
 def requiredonly_test(testmethodorclass):
@@ -104,7 +104,8 @@ def requiredonly_test(testmethodorclass):
     """
 
     return unittest.skipIf(
-        os.environ.get(OPTIONAL_VAR) or os.environ.get(ALLOW_OPTIONAL_VAR),
+        TruTestCase.env_true(OPTIONAL_VAR)
+        or TruTestCase.env_true(ALLOW_OPTIONAL_VAR),
         "not an optional test",
     )(testmethodorclass)
 
@@ -274,7 +275,7 @@ class WithJSONTestCase(TestCase):
     def writing_golden(self) -> bool:
         """Return whether the golden files are to be written."""
 
-        return bool(os.environ.get(WRITE_GOLDEN_VAR, ""))
+        return TruTestCase.env_true(WRITE_GOLDEN_VAR)
 
     def assertGoldenJSONEqual(
         self,
@@ -517,6 +518,33 @@ class TruTestCase(WithJSONTestCase, TestCase):
       with the `WITH_REF_PATH` environment variable.
     """
 
+    @staticmethod
+    def env_true(var: str) -> bool:
+        """Determine whether the given environment variable is "true".
+
+        As env vars are strings, "true" means the string is one of a few set of
+        values, case-insensitive:
+            - "1"
+            - "true"
+            - "yes"
+            - "y"
+            - "on"
+
+        Args:
+            var: The environment variable to check.
+
+        Returns:
+            bool: Whether the environment variable is "true".
+        """
+
+        return os.environ.get(var, "").lower() in [
+            "1",
+            "true",
+            "yes",
+            "y",
+            "on",
+        ]
+
     def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
         """Check that the object referenced by `ref` has been garbage
         collected.
@@ -593,7 +621,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             pass
 
         if running_tasks:
-            if os.environ.get(TEST_TASKS_CLEANUP_VAR, None) is not None:
+            if self.env_true(TEST_TASKS_CLEANUP_VAR):
                 with self.subTest(part="running tasks"):
                     raise AssertionError(
                         f"Tasks still running: {running_tasks}"
@@ -601,19 +629,22 @@ class TruTestCase(WithJSONTestCase, TestCase):
             else:
                 print(f"Tasks still running: {running_tasks}")
 
-        non_main_threads = []
-        for thread in threading.enumerate():
-            if thread != threading.main_thread():
-                non_main_threads.append(thread)
+        non_main_threads = [
+            thread
+            for thread in threading.enumerate()
+            if thread != threading.main_thread()
+        ]
 
         if non_main_threads:
-            if os.environ.get(TEST_THREADS_CLEANUP_VAR, None) is not None:
+            if self.env_true(TEST_THREADS_CLEANUP_VAR):
                 with self.subTest(part="non-main threads"):
                     raise AssertionError(
                         f"Non-main threads still running: {non_main_threads}"
                     )
             else:
                 print(f"Non-main threads still running: {non_main_threads}")
+
+        super().tearDown()
 
     @classmethod
     def tearDownClass(cls):
@@ -641,8 +672,12 @@ class TruTestCase(WithJSONTestCase, TestCase):
             print(f"  No running loop? {e}")
 
         print("  Remaining non-main threads:")
-        non_main_threads = []
-        for thread in threading.enumerate():
-            if thread != threading.main_thread():
-                non_main_threads.append(thread)
-                print("    " + str(thread))
+        non_main_threads = [
+            thread
+            for thread in threading.enumerate()
+            if thread != threading.main_thread()
+        ]
+        for thread in non_main_threads:
+            print("    " + str(thread))
+
+        super().tearDownClass()
