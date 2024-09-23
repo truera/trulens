@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import logging
+import os
 import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
@@ -1451,7 +1452,7 @@ class LLMProvider(Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
-        use_sent_tokenize: bool = False,
+        use_sent_tokenize: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1516,14 +1517,16 @@ class LLMProvider(Provider):
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
 
-        def ensure_punkt_installed():
+        def ensure_punkt_installed(download_dir):
             from nltk.data import find
 
             try:
-                # Try to find the 'punkt' tokenizer in the local NLTK data
+                # Try to locate the 'punkt' directory in the configured NLTK data path
                 find("tokenizers/punkt_tab")
             except LookupError:
-                nltk.download("punkt_tab", quiet=True)
+                nltk.download(
+                    "punkt_tab", quiet=False, download_dir=download_dir
+                )
 
         assert self.endpoint is not None, "Endpoint is not set."
 
@@ -1531,8 +1534,10 @@ class LLMProvider(Provider):
         reasons_str = ""
 
         if use_sent_tokenize:
-            nltk.data.path.append("./nltk_data")
-            ensure_punkt_installed()
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            nltk_dir = os.path.join(current_dir, "nltk_data")
+            nltk.data.path = [nltk_dir]
+            ensure_punkt_installed(download_dir=nltk_dir)
 
             hypotheses = sent_tokenize(statement)
         else:
@@ -1638,45 +1643,46 @@ class LLMProvider(Provider):
         temperature: float = 0.0,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
-        the statement using an LLM provider.
+                the statement using an LLM provider.
 
-        The statement will first be split by a tokenizer into its component sentences.
+                The statement will first be split by a tokenizer into its component sentences.
 
-        Then, trivial statements are eliminated so as to not delete the evaluation.
+                Then, trivial statements are eliminated so as to not delete the evaluation.
 
-        The LLM will process each statement, using chain of thought methodology to emit the reasons.
+                The LLM will process each statement, using chain of thought methodology to emit the reasons.
 
-        In the case of abstentions, such as 'I do not know', the LLM will be asked to consider the answerability of the question given the source material.
+                In the case of abstentions, such as 'I do not know', the LLM will be asked to consider the answerability of the question given the source material.
 
-        If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
+                If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
-        Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.openai import OpenAI
+                Example:
+                    ```python
+                    from trulens.core import Feedback
+                    from trulens.providers.openai import OpenAI
+        import os
 
-            provider = OpenAI()
+                    provider = OpenAI()
 
-            f_groundedness = (
-                Feedback(provider.groundedness_measure_with_cot_reasons)
-                .on(context.collect()
-                .on_output()
-                .on_input()
-                )
-            ```
+                    f_groundedness = (
+                        Feedback(provider.groundedness_measure_with_cot_reasons)
+                        .on(context.collect()
+                        .on_output()
+                        .on_input()
+                        )
+                    ```
 
-        Args:
-            source (str): The source that should support the statement.
-            statement (str): The statement to check groundedness.
-            question (str): The question to check answerability.
-            criteria (str): The specific criteria for evaluation. Defaults to None.
-            use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
-            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
-            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
-            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+                Args:
+                    source (str): The source that should support the statement.
+                    statement (str): The statement to check groundedness.
+                    question (str): The question to check answerability.
+                    criteria (str): The specific criteria for evaluation. Defaults to None.
+                    use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
+                    min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+                    max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+                    temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
-        Returns:
-            Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
+                Returns:
+                    Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
         assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
