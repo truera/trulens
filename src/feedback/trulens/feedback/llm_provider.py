@@ -1516,13 +1516,24 @@ class LLMProvider(Provider):
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
 
+        def ensure_punkt_installed():
+            from nltk.data import find
+
+            try:
+                # Try to find the 'punkt' tokenizer in the local NLTK data
+                find("tokenizers/punkt_tab")
+            except LookupError:
+                nltk.download("punkt_tab", quiet=True)
+
         assert self.endpoint is not None, "Endpoint is not set."
 
         groundedness_scores = {}
         reasons_str = ""
 
         if use_sent_tokenize:
-            nltk.download("punkt_tab", quiet=True)
+            nltk.data.path.append("./nltk_data")
+            ensure_punkt_installed()
+
             hypotheses = sent_tokenize(statement)
         else:
             llm_messages = [
