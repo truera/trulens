@@ -65,14 +65,14 @@ if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
 
-    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+    In python < 3.9, a subclass of [concurrent.futures.Future][] with
     `Generic[A]` is used instead.
     """
 
     Queue = queue.Queue
     """Alias for [queue.Queue][] .
 
-    In python < 3.9, a sublcass of [queue.Queue][] with
+    In python < 3.9, a subclass of [queue.Queue][] with
     `Generic[A]` is used instead.
     """
 
@@ -87,7 +87,7 @@ else:
     class Future(Generic[A], futures.Future):
         """Alias for [concurrent.futures.Future][].
 
-        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+        In python < 3.9, a subclass of [concurrent.futures.Future][] with
         `Generic[A]` is used instead.
         """
 
@@ -95,7 +95,7 @@ else:
     class Queue(Generic[A], queue.Queue):
         """Alias for [queue.Queue][] .
 
-        In python < 3.9, a sublcass of [queue.Queue][] with
+        In python < 3.9, a subclass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
 
@@ -586,7 +586,7 @@ class WeakWrapper(Generic[T]):
     """Wrap an object with a weak reference.
 
     This is to be able to use weakref.ref on objects like lists which are
-    otherwise not weakly referencable. The goal of this class is to generalize
+    otherwise not weakly referenceable. The goal of this class is to generalize
     weakref.ref to work with any object."""
 
     obj: weakref.ReferenceType[Union[_Wrap[T], T]]
@@ -604,7 +604,7 @@ class WeakWrapper(Generic[T]):
                 self.obj = weakref.ref(obj)
 
             except Exception:
-                # If its a list or other non-weakly referencable object, wrap it.
+                # If its a list or other non-weakly referenceable object, wrap it.
                 self.obj = weakref.ref(_Wrap(obj))
 
     def get(self) -> T:
