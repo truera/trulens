@@ -1531,11 +1531,6 @@ class LLMProvider(Provider):
         groundedness_scores = {}
         reasons_str = ""
 
-        assert self.endpoint is not None, "Endpoint is not set."
-
-        groundedness_scores = {}
-        reasons_str = ""
-
         if use_sent_tokenize:
             current_dir = os.path.dirname(os.path.abspath(__file__))
             nltk_dir = os.path.join(current_dir, "nltk_data")
