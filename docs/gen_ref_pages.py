@@ -33,6 +33,7 @@ _SPECIAL_FORMATTING = {
     "basic": f"{mod_symbol} basic",
     "custom": f"{mod_symbol} custom",
     "virtual": f"{mod_symbol} virtual",
+    "benchmark": f"{mod_symbol} benchmark",
 }
 
 

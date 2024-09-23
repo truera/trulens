@@ -8,7 +8,6 @@ import os
 import sys
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 from unittest import main
-from unittest import skip
 from unittest import skipIf
 
 from jsondiff import SymmetricJsonDiffSyntax
@@ -225,7 +224,6 @@ class TestAPI(TruTestCase):
         if fh:
             fh.close()
 
-    @skip("skipping for now")
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens(self):

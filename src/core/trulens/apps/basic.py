@@ -108,11 +108,8 @@ class TruBasicApp(App):
     app: TruWrapperApp
     """The app to be instrumented."""
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(
-            TruWrapperApp._call
-        )
-    )
+    # TODEP
+    root_callable: ClassVar[FunctionOrMethod] = Field(None)
     """The root callable to be instrumented.
 
     This is the method that will be called by the main_input method."""

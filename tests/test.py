@@ -1,5 +1,4 @@
-"""TestCase subclass with JSON comparisons and test enable/disable flag
-handling."""
+"""TestCase extension and utilities."""
 
 import asyncio
 from dataclasses import fields
@@ -555,27 +554,47 @@ class TruTestCase(WithJSONTestCase, TestCase):
         variable.
         """
 
+        caller_frame = python_utils.caller_frame(offset=0)
+        alls = [
+            caller_frame.f_builtins,
+            caller_frame.f_globals,
+            caller_frame.f_locals,
+        ]
+
         gc.collect()
 
         if msg is None:
             msg = f"Object {ref} was not garbage collected."
 
-        obj = ref()
+        # obj = ref()
 
         with self.subTest(part="garbage collection"):
-            self.assertTrue(obj is None, msg)
+            self.assertTrue(ref() is None, msg)
 
         # Enable WITH_REF_PATH to see printout of why the given ref was not
         # GC-ed.
-        if obj is not None and self.env_true(WITH_REF_PATH_VAR):
-            caller_globals = python_utils.caller_frame(offset=1).f_globals
-
+        if (
+            ref() is not None
+            and os.environ.get(WITH_REF_PATH_VAR, None) is not None
+        ):
             with self.subTest(part="reference path"):
-                # Show the reference path to the given ref.
-                print(f"Reference path from globals to {ref}:")
-                path = find_path(id(caller_globals), id(obj))
-                self.assertIsNotNone(path, "Couldn't find reference path.")
-                print_referent_lens(path)
+                print("Trying to find path to non-collected object.")
+                path = find_path(id(alls), id(ref()))
+
+                if path is None:
+                    print(
+                        "Couldn't find reference path. Looking at immediate referrers instead:"
+                    )
+                    for referent in gc.get_referrers(ref()):
+                        print(
+                            "  ",
+                            python_utils.class_name(type(referent)),
+                            str(referent)[0:128],
+                        )
+
+                else:
+                    print(f"Reference path from test frame to {ref}:")
+                    print_referent_lens(origin=alls, lens=path)
 
     def tearDown(self):
         """Check for running tasks and non-main threads after each test.

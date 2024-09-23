@@ -3,6 +3,7 @@ Tests for TruCustomApp.
 """
 
 from unittest import main
+import weakref
 
 from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
@@ -16,23 +17,29 @@ class TestTruCustomApp(TruTestCase):
     def setUpClass():
         TruSession().reset_database()
 
+    def _create_app(self):
+        app = DummyApp()
+        recorder = TruCustomApp(app, app_name="custom_app", app_version="v1")
+
+        return app, recorder
+
     def setUp(self):
         self.session = TruSession()
 
-        self.ca = DummyApp()
-        self.ta_recorder = TruCustomApp(
-            self.ca, app_name="custom_app", app_version="v1"
-        )
+    def tearDown(self):
+        super().tearDown()
 
     def test_with_record(self):
+        app, recorder = self._create_app()
+
         question = "What is the capital of Indonesia?"
 
         # Normal usage:
-        response_normal = self.ca.respond_to_query(query=question)
+        response_normal = app.respond_to_query(query=question)
 
         # Instrumented usage:
-        response_wrapped, record = self.ta_recorder.with_record(
-            self.ca.respond_to_query, query=question, record_metadata="meta1"
+        response_wrapped, record = recorder.with_record(
+            app.respond_to_query, query=question, record_metadata="meta1"
         )
 
         self.assertEqual(response_normal, response_wrapped)
@@ -41,35 +48,53 @@ class TestTruCustomApp(TruTestCase):
 
         self.assertEqual(record.meta, "meta1")
 
+        # Check GC.
+        app_ref = weakref.ref(app)
+        recorder_ref = weakref.ref(recorder)
+        del app, recorder
+        self.assertCollected(app_ref)
+        self.assertCollected(recorder_ref)
+
     def test_context_manager(self):
+        app, recorder = self._create_app()
+
         question = "What is the capital of Indonesia?"
 
         # Normal usage:
-        response_normal = self.ca.respond_to_query(query=question)
+        response_normal = app.respond_to_query(query=question)
 
         # Instrumented usage:
-        with self.ta_recorder as recording:
-            response_wrapped = self.ca.respond_to_query(query=question)
+        with recorder as recording:
+            response_wrapped = app.respond_to_query(query=question)
 
         self.assertEqual(response_normal, response_wrapped)
 
         self.assertIsNotNone(recording.get())
 
+        # Check GC.
+        app_ref = weakref.ref(app)
+        recorder_ref = weakref.ref(recorder)
+        del app, recorder
+        self.assertCollected(app_ref)
+        self.assertCollected(recorder_ref)
+
     def test_nested_context_manager(self):
+        app, recorder = self._create_app()
+
         question1 = "What is the capital of Indonesia?"
         question2 = "What is the capital of Poland?"
 
         # Normal usage:
-        response_normal1 = self.ca.respond_to_query(query=question1)
-        response_normal2 = self.ca.respond_to_query(query=question2)
+        response_normal1 = app.respond_to_query(query=question1)
+        response_normal2 = app.respond_to_query(query=question2)
 
         # Instrumented usage:
-        with self.ta_recorder as recording1:
+        with recorder as recording1:
             recording1.record_metadata = "meta1"
-            response_wrapped1 = self.ca.respond_to_query(query=question1)
-            with self.ta_recorder as recording2:
+            response_wrapped1 = app.respond_to_query(query=question1)
+            with recorder as recording2:
                 recording2.record_metadata = "meta2"
-                response_wrapped2 = self.ca.respond_to_query(query=question2)
+                response_wrapped2 = app.respond_to_query(query=question2)
 
         self.assertEqual(response_normal1, response_wrapped1)
         self.assertEqual(response_normal2, response_wrapped2)
@@ -88,6 +113,13 @@ class TestTruCustomApp(TruTestCase):
         self.assertEqual(recording1[1].meta, "meta1")
 
         self.assertEqual(recording2[0].meta, "meta2")
+
+        # Check GC.
+        app_ref = weakref.ref(app)
+        recorder_ref = weakref.ref(recorder)
+        del app, recorder
+        self.assertCollected(app_ref)
+        self.assertCollected(recorder_ref)
 
 
 if __name__ == "__main__":

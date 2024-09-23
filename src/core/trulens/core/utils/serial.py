@@ -653,7 +653,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     Lenses into python objects.
 
     Example:
-
         ```python
         path = Lens().record[5]['somekey']
 
@@ -949,12 +948,12 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
         else:
             return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: "Lens"):
+    def is_immediate_prefix_of(self, other: Lens):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: "Lens"):
+    def is_prefix_of(self, other: Lens):
         p = self.path
         pother = other.path
 
@@ -1069,7 +1068,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
     def __getitem__(
         self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
-    ) -> "Lens":
+    ) -> Lens:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -1092,7 +1091,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> "Lens":
+    def __getattr__(self, attr: str) -> Lens:
         if attr == "_ipython_canary_method_should_not_exist_":
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it

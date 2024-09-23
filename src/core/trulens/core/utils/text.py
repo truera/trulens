@@ -1,4 +1,4 @@
-"""Utilities for generating user-facing text."""
+"""Utilities for user-facing text generation."""
 
 import logging
 import math

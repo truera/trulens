@@ -148,7 +148,6 @@ class HuggingfaceBase(Provider):
         probit_language_text1(text2))`
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -199,7 +198,6 @@ class HuggingfaceBase(Provider):
         First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
         Example:
-
             ```
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -250,7 +248,6 @@ class HuggingfaceBase(Provider):
         The model can be found at https://huggingface.co/truera/context_relevance.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -285,7 +282,6 @@ class HuggingfaceBase(Provider):
         function that uses a sentiment classifier on `text`.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -312,7 +308,6 @@ class HuggingfaceBase(Provider):
         uses a toxic comment classifier on `text`.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -357,7 +352,6 @@ class HuggingfaceBase(Provider):
         NER model to detect PII.
 
         Example:
-
             ```python
             hugs = Huggingface()
 
@@ -400,7 +394,6 @@ class HuggingfaceBase(Provider):
         NER model to detect PII, with reasons.
 
         Example:
-
             ```python
             hugs = Huggingface()
 
@@ -450,7 +443,6 @@ class HuggingfaceBase(Provider):
         less than 0.5 the statement is evaluated as a hallucination.
 
         Example:
-
             ```python
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
@@ -490,7 +482,6 @@ class Huggingface(HuggingfaceBase):
         Create a Huggingface Provider with out of the box feedback functions.
 
         Example:
-
             ```python
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
@@ -752,9 +743,11 @@ class Dummy(Huggingface):
     def __init__(
         self,
         name: str = "dummyhugs",
-        error_prob: float = 1 / 100,
+        error_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
+        freeze_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
         rpm: float = 600,

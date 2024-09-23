@@ -24,7 +24,7 @@ from trulens.core.app import CustomComponent
 from trulens.core.app import Memory
 from trulens.core.app import Other
 from trulens.core.app import Prompt
-from trulens.core.app import RecordingContext
 from trulens.core.app import Tool
 from trulens.core.app import TrulensComponent
 from trulens.core.app import instrumented_component_views
+from trulens.core.instruments import _RecordingContext as RecordingContext

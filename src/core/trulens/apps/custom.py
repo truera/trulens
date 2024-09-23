@@ -4,7 +4,6 @@ This wrapper is the most flexible option for instrumenting an application, and
 can be used to instrument any custom python class.
 
 Example:
-
     Consider a mock question-answering app with a context retriever component coded
     up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
@@ -55,25 +54,24 @@ The owner classes of any decorated method is then viewed as an app component. In
 this example, case `CustomApp` and `CustomRetriever` are components.
 
     Example:
+        ### `example.py`
 
-    ### `example.py`
+        ```python
+        from custom_app import CustomApp
+        from trulens.apps.custom import TruCustomApp
 
-    ```python
-    from custom_app import CustomApp
-    from trulens.apps.custom import TruCustomApp
+        custom_app = CustomApp()
 
-    custom_app = CustomApp()
+        # Normal app Usage:
+        response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-    # Normal app Usage:
-    response = custom_app.respond_to_query("What is the capital of Indonesia?")
+        # Wrapping app with `TruCustomApp`:
+        tru_recorder = TruCustomApp(ca)
 
-    # Wrapping app with `TruCustomApp`:
-    tru_recorder = TruCustomApp(ca)
-
-    # Tracked usage:
-    with tru_recorder:
-        custom_app.respond_to_query, input="What is the capital of Indonesia?")
-    ```
+        # Tracked usage:
+        with tru_recorder:
+            custom_app.respond_to_query, input="What is the capital of Indonesia?")
+        ```
 
     `TruCustomApp` constructor arguments are like in those higher-level
 apps as well including the feedback functions, metadata, etc.
@@ -195,6 +193,7 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
 
+import pydantic
 from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
@@ -331,7 +330,9 @@ class TruCustomApp(App):
             and [AppDefinition][trulens.core.schema.app.AppDefinition]
     """
 
-    model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     app: Any
 
@@ -503,26 +504,6 @@ class TruCustomApp(App):
         bindings = sig.bind(self.app, human)  # self.app is app's "self"
 
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
-
-    """
-    # Async work ongoing:
-    async def main_acall(self, human: str):
-        # TODO: work in progress
-
-        # must return an async generator of tokens/pieces that can be appended to create the full response
-
-        if self.main_async_method is None:
-            raise RuntimeError(
-                "`main_async_method` was not specified so we do not know how to run this app."
-            )
-
-        sig = signature(self.main_async_method)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
-
-        generator = await self.main_async_method(*bindings.args, **bindings.kwargs)
-
-        return generator
-    """
 
 
 class instrument(base_instrument):

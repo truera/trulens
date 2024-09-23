@@ -17,5 +17,7 @@ from trulens.core.database.sqlalchemy import UNICODE_STOP
 from trulens.core.database.sqlalchemy import AppsExtractor
 from trulens.core.database.sqlalchemy import SnowflakeImpl
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
+from trulens.core.database.sqlalchemy import _make_no_perf
 from trulens.core.database.sqlalchemy import flatten
-from trulens.core.database.sqlalchemy import no_perf
+
+no_perf = _make_no_perf()

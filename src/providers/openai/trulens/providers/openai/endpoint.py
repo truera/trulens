@@ -23,7 +23,17 @@ the involved classes will need to be adapted here. The important classes are:
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Union
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from langchain.schema import Generation
 from langchain.schema import LLMResult
@@ -32,23 +42,29 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
+from trulens.core.schema import base as base_schema
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.constants import CLASS_INFO
 from trulens.core.utils.pace import Pace
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import SerialModel
 
-import openai as oai
+import openai
+from openai import resources
+from openai.resources import chat
+from openai.types.chat.chat_completion import ChatCompletion
+from openai.types.create_embedding_response import CreateEmbeddingResponse
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
+T = TypeVar("T")
+
 
 class OpenAIClient(SerialModel):
-    """
-    A wrapper for openai clients.
+    """A wrapper for openai clients.
 
     This class allows wrapped clients to be serialized into json. Does not
     serialize API key though. You can access openai.OpenAI under the `client`
@@ -63,7 +79,9 @@ class OpenAIClient(SerialModel):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    client: Union[oai.OpenAI, oai.AzureOpenAI] = pydantic.Field(exclude=True)
+    client: Union[openai.OpenAI, openai.AzureOpenAI] = pydantic.Field(
+        exclude=True
+    )
     """Deserialized representation."""
 
     client_cls: Class
@@ -74,7 +92,7 @@ class OpenAIClient(SerialModel):
 
     def __init__(
         self,
-        client: Optional[Union[oai.OpenAI, oai.AzureOpenAI]] = None,
+        client: Optional[Union[openai.OpenAI, openai.AzureOpenAI]] = None,
         client_cls: Optional[Class] = None,
         client_kwargs: Optional[dict] = None,
     ):
@@ -84,14 +102,15 @@ class OpenAIClient(SerialModel):
             for rkey in OpenAIClient.REDACTED_KEYS:
                 if rkey in client_kwargs:
                     logger.warning(
-                        f"OpenAI parameter {rkey} is not serialized for DEFERRED feedback mode. "
-                        f"If you are not using DEFERRED, you do not need to do anything. "
-                        f"If you are using DEFERRED, try to specify this parameter through env variable or another mechanism."
+                        "OpenAI parameter %s is not serialized for DEFERRED feedback mode. "
+                        "If you are not using DEFERRED, you do not need to do anything. "
+                        "If you are using DEFERRED, try to specify this parameter through env variable or another mechanism.",
+                        rkey,
                     )
 
         if client is None:
             if client_kwargs is None and client_cls is None:
-                client = oai.OpenAI()
+                client = openai.OpenAI()
 
             elif client_kwargs is None or client_cls is None:
                 raise ValueError(
@@ -108,7 +127,7 @@ class OpenAIClient(SerialModel):
 
                 timeout = client_kwargs.get("timeout")
                 if timeout is not None:
-                    client_kwargs["timeout"] = oai.Timeout(**timeout)
+                    client_kwargs["timeout"] = openai.Timeout(**timeout)
 
                 client = cls(**client_kwargs)
 
@@ -129,7 +148,7 @@ class OpenAIClient(SerialModel):
                     # default_headers contains the api_key.
                     continue
 
-                if safe_hasattr(client, k):
+                if python_utils.safe_hasattr(client, k):
                     client_kwargs[k] = safe_getattr(client, k)
 
             # Create serializable class description.
@@ -142,7 +161,7 @@ class OpenAIClient(SerialModel):
     def __getattr__(self, k):
         # Pass through attribute lookups to `self.client`, the openai.OpenAI
         # instance.
-        if safe_hasattr(self.client, k):
+        if python_utils.safe_hasattr(self.client, k):
             return safe_getattr(self.client, k)
 
         raise AttributeError(
@@ -162,42 +181,69 @@ class OpenAICallback(EndpointCallback):
         exclude=True,
     )
 
+    _FIELDS_MAP: ClassVar[List[Tuple[str, str]]] = [
+        ("cost", "total_cost"),
+        ("n_tokens", "total_tokens"),
+        ("n_successful_requests", "successful_requests"),
+        ("n_prompt_tokens", "prompt_tokens"),
+        ("n_completion_tokens", "completion_tokens"),
+    ]
+    """Pairs where first element is the cost attribute name and second is
+    attribute of langchain.OpenAICallbackHandler that corresponds to it."""
+
     def handle_generation_chunk(self, response: Any) -> None:
         super().handle_generation_chunk(response=response)
 
-        self.chunks.append(response)
+        try:
+            if hasattr(response, "choices"):
+                choices = response.choices
 
-        if response.choices[0].finish_reason == "stop":
-            llm_result = LLMResult(
-                llm_output=dict(token_usage=dict(), model_name=response.model),
-                generations=[self.chunks],
-            )
-            self.chunks = []
-            self.handle_generation(response=llm_result)
+                for choice in choices:
+                    if choice.finish_reason == "stop":
+                        llm_result = LLMResult(
+                            llm_output=dict(
+                                token_usage={}, model_name=response.model
+                            ),
+                            generations=[self.chunks],
+                        )
+                        self.chunks = []
+                        self.handle_generation(response=llm_result)
+                    else:
+                        if hasattr(choice, "delta"):
+                            self.chunks.append({"text": choice.delta.content})
+
+        finally:
+            return response
 
     def handle_generation(self, response: LLMResult) -> None:
         super().handle_generation(response)
 
         self.langchain_handler.on_llm_end(response)
 
-        for cost_field, langchain_field in [
-            ("cost", "total_cost"),
-            ("n_tokens", "total_tokens"),
-            ("n_successful_requests", "successful_requests"),
-            ("n_prompt_tokens", "prompt_tokens"),
-            ("n_completion_tokens", "completion_tokens"),
-        ]:
-            setattr(
-                self.cost,
+        addl_cost = base_schema.Cost(**{
+            cost_field: getattr(self.langchain_handler, langchain_field)
+            for (
                 cost_field,
-                getattr(self.cost, cost_field, 0)
-                + getattr(self.langchain_handler, langchain_field, 0),
-            )
+                langchain_field,
+            ) in OpenAICallback._FIELDS_MAP
+        })
+
+        # n_successful_requests comes from langchain handler.
+
+        self.cost += addl_cost
+
+    def handle_embedding(self, response: Any) -> None:
+        super().handle_embedding(response)
+
+        self.cost.n_successful_requests += 1
+        self.cost.n_embeddings += len(response.data)
+        # TODO: there seems to be usage info in these responses sometimes as well
 
 
 class OpenAIEndpoint(Endpoint):
-    """
-    OpenAI endpoint. Instruments "create" methods in openai client.
+    """OpenAI endpoint.
+
+    Instruments "create" methods in openai client.
 
     Args:
         client: openai client to use. If not provided, a new client will be
@@ -214,13 +260,13 @@ class OpenAIEndpoint(Endpoint):
         self,
         name: str = "openai",
         client: Optional[
-            Union[oai.OpenAI, oai.AzureOpenAI, OpenAIClient]
+            Union[openai.OpenAI, openai.AzureOpenAI, OpenAIClient]
         ] = None,
         rpm: Optional[int] = None,
         pace: Optional[Pace] = None,
         **kwargs: dict,
     ):
-        if safe_hasattr(self, "name") and client is not None:
+        if python_utils.safe_hasattr(self, "name") and client is not None:
             # Already created with SingletonPerName mechanism
             if len(kwargs) != 0:
                 logger.warning(
@@ -244,7 +290,7 @@ class OpenAIEndpoint(Endpoint):
 
         if client is None:
             # Pass kwargs to client.
-            client = oai.OpenAI(**kwargs)
+            client = openai.OpenAI(**kwargs)
             self_kwargs["client"] = OpenAIClient(client=client)
 
         else:
@@ -257,7 +303,7 @@ class OpenAIEndpoint(Endpoint):
             # Convert openai client to our wrapper if needed.
             if not isinstance(client, OpenAIClient):
                 assert isinstance(
-                    client, (oai.OpenAI, oai.AzureOpenAI)
+                    client, (openai.OpenAI, openai.AzureOpenAI)
                 ), "OpenAI client expected"
 
                 client = OpenAIClient(client=client)
@@ -267,10 +313,7 @@ class OpenAIEndpoint(Endpoint):
         # for pydantic.BaseModel
         super().__init__(**self_kwargs)
 
-        # Instrument various methods for usage/cost tracking.
-        from openai import resources
-        from openai.resources import chat
-
+        self._instrument_module_members(openai, "create")
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
 
@@ -283,31 +326,50 @@ class OpenAIEndpoint(Endpoint):
         bindings: inspect.BoundArguments,
         response: Any,
         callback: Optional[EndpointCallback],
-    ) -> None:
+    ) -> Any:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
         # types of calls being handled here, we need to make various checks to
         # see what sort of data to process based on the call made.
 
-        logger.debug(
-            "Handling openai instrumented call to func: %s,\n"
-            "\tbindings: %s,\n"
-            "\tresponse: %s",
-            func,
-            bindings,
-            response,
-        )
+        # Generic lazy value should have already been taken care of by base Endpoint class.
+        assert not python_utils.is_lazy(response)
+
+        context_vars = {
+            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+        }
+
+        if isinstance(response, (openai.AsyncStream, openai.Stream)):
+            # Don't bother processing these and instead wait for chunks to be processed.
+
+            def handle_chunk(chunk: T) -> T:
+                with python_utils.with_context(context_vars):
+                    self.global_callback.handle_generation_chunk(chunk)
+
+                    if callback is not None:
+                        callback.handle_generation_chunk(chunk)
+
+                    return chunk
+
+            if isinstance(response, openai.AsyncStream):
+                response._iterator = python_utils.wrap_async_generator(
+                    response._iterator,
+                    wrap=handle_chunk,
+                    context_vars=context_vars,
+                )
+                return response
+
+            if isinstance(response, openai.Stream):
+                response._iterator = python_utils.wrap_generator(
+                    response._iterator,
+                    wrap=handle_chunk,
+                    context_vars=context_vars,
+                )
+                return response
 
         model_name = ""
         if "model" in bindings.kwargs:
             model_name = bindings.kwargs["model"]
-
-        if isinstance(response, oai.Stream):
-            # NOTE(piotrm): Merely checking membership in these will exhaust internal
-            # generators or iterators which will break users' code. While we work
-            # out something, I'm disabling any cost-tracking for these streams.
-            logger.warning("Cannot track costs from a OpenAI Stream.")
-            return
 
         results = None
         if "results" in response:
@@ -326,28 +388,47 @@ class OpenAIEndpoint(Endpoint):
             else:
                 usage = None
 
-            # See how to construct in langchain.llms.openai.OpenAIChat._generate
-            llm_res = LLMResult(
-                generations=[[]],
-                llm_output=dict(token_usage=usage, model_name=model_name),
-                run=None,
-            )
+            if isinstance(response, ChatCompletion):
+                # See how to construct in langchain.llms.openai.OpenAIChat._generate
+                llm_res = LLMResult(
+                    generations=[[]],
+                    llm_output=dict(token_usage=usage, model_name=model_name),
+                    run=None,
+                )
 
-            self.global_callback.handle_generation(response=llm_res)
+                self.global_callback.handle_generation(response=llm_res)
 
-            if callback is not None:
-                callback.handle_generation(response=llm_res)
+                if callback is not None:
+                    callback.handle_generation(response=llm_res)
 
-        if "choices" in response and "delta" in response.choices[0]:
-            # Streaming data.
-            content = response.choices[0].delta.content
+            elif isinstance(response, CreateEmbeddingResponse):
+                self.global_callback.handle_embedding(response=response)
 
-            gen = Generation(text=content or "", generation_info=response)
-            self.global_callback.handle_generation_chunk(gen)
-            if callback is not None:
-                callback.handle_generation_chunk(gen)
+                if callback is not None:
+                    callback.handle_embedding(response=response)
 
-            counted_something = True
+            else:
+                logger.warning(
+                    "Unknown openai response type with usage information:\n%s",
+                    pp.pformat(response),
+                )
+
+        if "choices" in response:
+            if "delta" in response.choices[0]:
+                # Streaming data.
+                content = response.choices[0].delta.content
+
+                gen = Generation(text=content or "", generation_info=response)
+                self.global_callback.handle_generation_chunk(gen)
+                if callback is not None:
+                    callback.handle_generation_chunk(gen)
+
+                counted_something = True
+
+            else:
+                pass
+                # Async responses that are not streams are like this. Should
+                # already be handled by the "usage" above.
 
         if results is not None:
             for res in results:
@@ -363,3 +444,5 @@ class OpenAIEndpoint(Endpoint):
                 "Could not find usage information in openai response:\n%s",
                 pp.pformat(response),
             )
+
+        return response
