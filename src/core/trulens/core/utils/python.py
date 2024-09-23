@@ -378,7 +378,8 @@ def superstack() -> Iterator[FrameType]:
     across Tasks and threads.
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames = stack_with_tasks()
+    next(iter(frames))  # skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
