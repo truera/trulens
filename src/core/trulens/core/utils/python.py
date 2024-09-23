@@ -445,7 +445,8 @@ def external_caller_frame(offset=0) -> FrameType:
     Raises:
         RuntimeError: If no such frame is found.
     """
-    gen = list(stack_generator(offset + 2))
+    frame = inspect.currentframe()
+    gen = stack_generator(frame=frame, offset=offset + 2)
     for f_info in gen:
         if not f_info.f_globals["__name__"].startswith("trulens"):
             return f_info
@@ -489,7 +490,8 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
-    stack = list(stack_generator(offset=3))
+    frame = inspect.currentframe()
+    stack = stack_generator(frame=frame, offset=3)
 
     if parent_task is not None:
         stack = merge_stacks(stack, parent_task.get_stack()[::-1])
@@ -556,10 +558,14 @@ def merge_stacks(
     return ret
 
 
-def stack_generator(offset: int = 0) -> Iterable[FrameType]:
-    frame = inspect.currentframe()
+def stack_generator(
+    frame: Optional[FrameType] = None, offset: int = 0
+) -> Iterable[FrameType]:
+    if frame is None:
+        frame = inspect.currentframe()
     for _ in range(offset):
-        assert frame is not None
+        if frame is None:
+            raise ValueError("No frame found.")
         frame = frame.f_back
     while frame is not None:
         yield frame
@@ -570,9 +576,8 @@ def stack_with_tasks() -> Iterable[FrameType]:
     """Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
-
-    frame_gen = list(stack_generator(offset=2))
-
+    frame = inspect.currentframe()
+    frame_gen = stack_generator(frame=frame, offset=1)
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
