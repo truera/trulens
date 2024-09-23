@@ -100,6 +100,7 @@ class DBConnector(ABC):
         self.batch_record_queue.put(record)
 
     def _batch_loop(self):
+        apps = {}
         while True:
             time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
             records = []
@@ -121,10 +122,12 @@ class DBConnector(ABC):
                     )
                     continue
                 feedback_results = []
-                apps = {}
                 for record in records:
                     app_id = record.app_id
-                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    if app_id not in apps:
+                        apps[app_id] = self.get_app(app_id=app_id)
+                    app = apps[app_id]
+
                     feedback_definitions = app.get("feedback_definitions", [])
                     # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:

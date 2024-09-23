@@ -1356,6 +1356,8 @@ trulens.core.utils.python:
     safe_hasattr: builtins.function
     safe_issubclass: builtins.function
     safe_signature: builtins.function
+    set_context_vars_or_values: builtins.function
+    stack_generator: builtins.function
     stack_with_tasks: builtins.function
     superstack: builtins.function
     task_factory_with_stack: builtins.function
