@@ -173,7 +173,7 @@ theme:
         name: Switch to light mode
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: trulens
+      scheme: trulens-light
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
