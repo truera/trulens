@@ -699,6 +699,9 @@ def _render_list_tab(
 
 @st.fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
+    if len(feedback_col_names) == 0:
+        st.warning("No feedback functions found.")
+        return
     if HIDE_RECORD_COL_NAME in df.columns:
         df = df[~df[HIDE_RECORD_COL_NAME]]
     cols = 4
@@ -772,7 +775,7 @@ def render_leaderboard(app_name: str):
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif records_limit is not None:
+    elif records_limit is not None and len(records_df) >= records_limit:
         cols = st.columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Computed from the last {records_limit} records.",
