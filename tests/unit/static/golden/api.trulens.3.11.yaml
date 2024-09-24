@@ -1367,6 +1367,7 @@ trulens.core.utils.python:
     safe_issubclass: builtins.function
     safe_signature: builtins.function
     set_context_vars_or_values: builtins.function
+    stack_generator: builtins.function
     stack_with_tasks: builtins.function
     superstack: builtins.function
     task_factory_with_stack: builtins.function
@@ -2221,6 +2222,7 @@ trulens.feedback.v2.feedback:
     Correctness: pydantic._internal._model_construction.ModelMetaclass
     Criminality: pydantic._internal._model_construction.ModelMetaclass
     Criteria: enum.EnumType
+    CriteriaOutputSpaceMixin: builtins.type
     DigitalOutputType: pydantic._internal._model_construction.ModelMetaclass
     EvalSchema: pydantic._internal._model_construction.ModelMetaclass
     Explained: pydantic._internal._model_construction.ModelMetaclass
@@ -2341,17 +2343,17 @@ trulens.feedback.v2.feedback.ContextRelevance:
   __bases__:
   - trulens.feedback.v2.feedback.Relevance
   - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
+    criteria_template: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    override_criteria_and_output_space: builtins.classmethod
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
-    validate_criteria_and_output_space: builtins.staticmethod
     verb_confidence_prompt: builtins.str
 trulens.feedback.v2.feedback.Controversiality:
   __bases__:
@@ -2398,6 +2400,13 @@ trulens.feedback.v2.feedback.Criteria:
     RELEVANCE: trulens.feedback.v2.feedback.Criteria
     name: enum.property
     value: enum.property
+trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    generate_system_prompt: builtins.classmethod
+    validate_criteria_and_output_space: builtins.staticmethod
 trulens.feedback.v2.feedback.DigitalOutputType:
   __bases__:
   - trulens.feedback.v2.feedback.FeedbackOutputType
@@ -2461,11 +2470,17 @@ trulens.feedback.v2.feedback.Groundedness:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
   - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     sentences_splitter_prompt: builtins.str
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Harmfulness:
   __bases__:
@@ -2579,10 +2594,16 @@ trulens.feedback.v2.feedback.PromptResponseRelevance:
   __bases__:
   - trulens.feedback.v2.feedback.Relevance
   - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Relevance:
   __bases__:
