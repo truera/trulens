@@ -378,7 +378,7 @@ class SQLAlchemyDB(DB):
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
                 for r in records
             ]
-            session.bulk_save_objects(records_list)
+            session.add_all(records_list)
             logger.info(f"{UNICODE_CHECK} added record batch")
             # return record ids from orm objects
             return [r.record_id for r in records_list]
@@ -583,7 +583,7 @@ class SQLAlchemyDB(DB):
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
                 for f in feedback_results
             ]
-            session.bulk_save_objects(feedback_results_list)
+            session.add_all(feedback_results_list)
             return [f.feedback_result_id for f in feedback_results_list]
 
     def _feedback_query(
@@ -849,7 +849,7 @@ class SQLAlchemyDB(DB):
                     )
                     ground_truths_to_insert.append(new_ground_truth)
 
-            session.bulk_save_objects(ground_truths_to_insert)
+            session.add_all(ground_truths_to_insert)
             return [gt.ground_truth_id for gt in ground_truths]
 
     def get_ground_truth(
@@ -928,7 +928,9 @@ class SQLAlchemyDB(DB):
 
 # Use this Perf for missing Perfs.
 # TODO: Migrate the database instead.
-no_perf = mod_base_schema.Perf.min().model_dump()
+def _make_no_perf():
+    # Def to avoid circular imports.
+    return mod_base_schema.Perf.min().model_dump()
 
 
 def _extract_feedback_results(
@@ -951,7 +953,7 @@ def _extract_feedback_results(
             _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
             if _result.record.perf_json != MIGRATION_UNKNOWN_STR
-            else no_perf,
+            else _make_no_perf(),
             json.loads(_result.calls_json)["calls"],
             json.loads(_result.feedback_definition.feedback_json)
             if _result.feedback_definition is not None

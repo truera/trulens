@@ -52,8 +52,7 @@ def run_dashboard(
         _watch_changes (bool): If `True`, the dashboard will watch for changes in the code and update the dashboard accordingly. Defaults to `False`.
 
     Returns:
-        The [Process][multiprocessing.Process] executing the streamlit
-        dashboard.
+        The [Process][multiprocessing.Process] executing the streamlit dashboard.
 
     Raises:
         RuntimeError: Dashboard is already running. Can be avoided if `force` is set.

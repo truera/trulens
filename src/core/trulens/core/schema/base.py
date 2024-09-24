@@ -21,8 +21,20 @@ class Cost(SerialModel, pydantic.BaseModel):
     n_successful_requests: int = 0
     """Number of successful requests."""
 
+    n_completion_requests: int = 0
+    """Number of completion requests."""
+
+    n_classification_requests: int = 0
+    """Number of classification requests."""
+
     n_classes: int = 0
     """Number of class scores retrieved."""
+
+    n_embedding_requests: int = 0
+    """Number of embedding requests."""
+
+    n_embeddings: int = 0
+    """Number of embeddings retrieved."""
 
     n_tokens: int = 0
     """Total tokens processed."""

@@ -18,13 +18,13 @@ expected. In the subsequent deprecated period of no less than _6 weeks_, the
 use of that component will produce an error after the deprecation message. After
 these two periods, the deprecated capability will be completely removed.
 
-!!! Info "Deprecation process"
+!!! Info "Deprecation Process"
 
-    - 6 weeks: deprecation warning
+    - 0-6 weeks: Deprecation warning
 
-    - 6 weeks: deprecation message __and error__
+    - 6-12 weeks: Deprecation message __and error__
 
-    - removal
+    - 12+ weeks: Removal
 
 Changes that result in non-backwards compatible functionality are also reflected
 in the version numbering. In such cases, the appropriate level version change
@@ -75,7 +75,7 @@ is required and will be set.
 Some features cannot be changed after some stages in the typical _TruLens_
 use-cases. OTEL tracing, for example, cannot be disabled once an app has been
 instrumented. An error will result in an attempt to change the feature after it
-has been "locked" by irreversable steps like instrumentation.
+has been "locked" by irreversible steps like instrumentation.
 
 ### Experimental Features Pipeline
 

@@ -13,13 +13,12 @@ class context_filter:
     """
     Provides a decorator to filter contexts based on a given feedback and threshold.
 
-    Parameters:
-    feedback (Feedback): The feedback object to use for filtering.
-    threshold (float): The minimum feedback value required for a context to be included.
-    keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
+    Args:
+        feedback (Feedback): The feedback object to use for filtering.
+        threshold (float): The minimum feedback value required for a context to be included.
+        keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
 
     Example:
-
         ```python
         feedback = Feedback(provider.context_relevance, name="Context Relevance")
         class RAG_from_scratch:

@@ -8,7 +8,6 @@ import os
 import sys
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
 from unittest import main
-from unittest import skip
 from unittest import skipIf
 
 from jsondiff import SymmetricJsonDiffSyntax
@@ -18,7 +17,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils.imports import is_dummy
 from trulens.core.utils.serial import Lens
 
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.utils import Member
 from tests.utils import get_class_members
@@ -29,7 +28,7 @@ from tests.utils import type_str
 _GOLDEN_DIRECTORY = "tests/unit/static/golden"
 
 
-class TestAPI(JSONTestCase):
+class TestAPI(TruTestCase):
     """API Tests."""
 
     def setUp(self):
@@ -225,7 +224,6 @@ class TestAPI(JSONTestCase):
         if fh:
             fh.close()
 
-    @skip("skipping for now")
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
     @optional_test
     def test_api_trulens(self):

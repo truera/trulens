@@ -1,13 +1,13 @@
 {% set name = "trulens-core" %}
-{% set version = "1.0.1" %}
+{% set version = "1.0.2" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/trulens_core-{{ version }}.tar.gz
-  sha256: 3d262120d24f62d75c197f13ef42465583e5c4b6340316a904be659803912c80
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: b95cf21327242824fccf8c10e9b8d579f8f0f85e195087295a442be3f232b665
 
 build:
   noarch: python
@@ -55,3 +55,4 @@ extra:
   recipe-maintainers:
     - sfc-gh-srudenko
     - sfc-gh-chu
+
