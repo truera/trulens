@@ -205,9 +205,10 @@ from concurrent import futures
 import datetime
 import logging
 from pprint import PrettyPrinter
-from typing import Any, ClassVar, Dict, Optional, Sequence, Union
+from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 from pydantic import Field
+from trulens.core import Select
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.schema import base as mod_base_schema
@@ -234,6 +235,11 @@ class VirtualApp(dict):
     `TruVirtual` will refer to this class as the wrapped app. All calls will be
     under `VirtualApp.root`
     """
+
+    @classmethod
+    def select_context(cls):
+        """Select the context of the virtual app. This is fixed to return the default path."""
+        return Select.RecordCalls.retriever.get_context.rets[:]
 
     def __setitem__(
         self, __name: Union[str, serial.Lens], __value: Any
@@ -569,6 +575,57 @@ class TruVirtual(App):
             futures.wait(futs)
 
         return record
+
+    def add_dataframe(
+        self,
+        df,
+        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
+    ) -> List[mod_record_schema.Record]:
+        """Add the given dataframe as records to the database and evaluate any pre-specified
+        feedbacks on them.
+
+        The class `VirtualRecord` may be useful for creating records for virtual models.
+
+        If `feedback_mode` is specified, will use that mode for these records only.
+        """
+
+        data_dict = df.to_dict("records")
+        records = []
+
+        for record in data_dict:
+            if "contexts" in record:
+                retriever = Select.RecordCalls.retriever
+                if retriever not in self.app:
+                    self.app[retriever] = None
+                self.app[retriever] = record["contexts"]
+
+                context_rets = (
+                    record["contexts"]
+                    if isinstance(record["contexts"], list)
+                    else [record["contexts"]]
+                )
+
+                rec = VirtualRecord(
+                    calls={
+                        retriever.get_context: dict(
+                            args=[record["query"]], rets=context_rets
+                        )
+                    },
+                    main_input=record["query"],
+                    main_output=record["response"],
+                )
+            else:
+                rec = VirtualRecord(
+                    main_input=record["query"],
+                    main_output=record["response"],
+                    calls={},
+                )
+            records.append(rec)
+
+        for record in records:
+            self.add_record(record, feedback_mode=feedback_mode)
+
+        return records
 
 
 TruVirtual.model_rebuild()
