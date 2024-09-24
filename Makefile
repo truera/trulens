@@ -212,7 +212,6 @@ build: $(POETRY_DIRS)
 
 ## Step: Build zip files to upload to Snowflake staging
 zip-wheels:
-	poetry run ./download_nltk_punkt.sh
 	poetry run ./zip_wheels.sh
 
 
