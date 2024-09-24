@@ -103,10 +103,20 @@
   --jp-mirror-editor-punctuation-color: var(--md-code-hl-punctuation-color);
 }
 
+[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper .highlight pre {
+  background-color: var(--md-code-bg-color);
+}
+
+
 .jupyter-wrapper .jp-InputArea-editor {
+  --jp-code-font-size: .75em;
   border-radius: 6px !important;
   padding: 10px !important;
   --jp-cell-editor-border-color: none !important;
+}
+
+.md-typeset code {
+  font-size: .75em;
 }
 
 .jupyter-wrapper .jp-InputPrompt {
