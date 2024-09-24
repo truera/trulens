@@ -10,6 +10,7 @@ from trulens.apps.basic import TruBasicApp
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
 from trulens.core import Feedback
+from trulens.core import Select
 from trulens.core import SnowflakeFeedback
 from trulens.core import TruSession
 from trulens.core.schema.feedback import FeedbackMode
@@ -63,6 +64,21 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             ).relevance
         ).on_input_output()
 
+    def _get_cortex_groundedness_feedback_function(
+        self,
+    ) -> SnowflakeFeedback:
+        return (
+            SnowflakeFeedback(
+                Cortex(
+                    snowflake.connector.connect(
+                        **self._snowflake_connection_parameters
+                    )
+                ).groundedness_measure_with_cot_reasons
+            )
+            .on(Select.Record.calls[0].args.args[1])
+            .on_output()
+        )
+
     def _start_evaluator_as_snowflake(self, session: TruSession):
         try:
             cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
@@ -110,6 +126,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self._suspend_task()
         f_local = Feedback(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
+
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
@@ -152,6 +169,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self._suspend_task()
         f_local = Feedback(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
+
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
             feedbacks=[f_local, f_snowflake],
@@ -256,20 +274,31 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     @optional_test
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
         self._get_cortex_relevance_feedback_function()  # no error
+        self._get_cortex_groundedness_feedback_function()  # no error
         with self.assertRaisesRegex(
             ValueError,
             "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
         ):
             SnowflakeFeedback(OpenAI().relevance)
 
+        with self.assertRaisesRegex(
+            ValueError,
+            "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
+        ):
+            SnowflakeFeedback(OpenAI().groundedness_measure_with_cot_reasons)
+
     @optional_test
     def test_stored_procedure(self) -> None:
         session = self.get_session("test_stored_procedure")
         self._suspend_task()
-        f_snowflake = self._get_cortex_relevance_feedback_function()
+        f_snowflake_relevance = self._get_cortex_relevance_feedback_function()
+        f_snowflake_groundedness = (
+            self._get_cortex_groundedness_feedback_function()
+        )
+
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
-            feedbacks=[f_snowflake],
+            feedbacks=[f_snowflake_relevance, f_snowflake_groundedness],
         )
         with tru_app:
             tru_app.main_call("What is the capital of Japan?")
