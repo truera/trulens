@@ -5,6 +5,7 @@ import os
 import re
 from typing import ClassVar, Dict, List, Optional, Sequence, Tuple
 import warnings
+import zipfile
 
 import nltk
 from nltk.tokenize import sent_tokenize
@@ -1452,9 +1453,17 @@ class LLMProvider(Provider):
 
         try:
             # Try to locate the 'punkt' directory in the configured NLTK data path
+            punkt_zip_path = os.path.join(
+                download_dir, "tokenizers/punkt_tab.zip"
+            )
+            if os.path.exists(punkt_zip_path):
+                logger.info("Punkt tokenizer zip file found. Extracting.")
+                with zipfile.ZipFile(punkt_zip_path, "r") as zip_ref:
+                    zip_ref.extractall(os.path.join(download_dir, "tokenizers"))
             find("tokenizers/punkt_tab")
         except LookupError:
             logger.warning("Punkt tokenizer not found. Attempting to download.")
+            # Check if the punkt tokenizer zip file exists
             nltk.download("punkt_tab", quiet=False, download_dir=download_dir)
 
     def groundedness_measure_with_cot_reasons(
@@ -1462,7 +1471,7 @@ class LLMProvider(Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
-        use_sent_tokenize: bool = False,
+        use_sent_tokenize: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,

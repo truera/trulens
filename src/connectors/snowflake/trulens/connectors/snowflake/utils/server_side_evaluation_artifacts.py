@@ -20,6 +20,7 @@ _ZIPS_TO_UPLOAD = [
     "trulens_core.zip",
     "trulens_feedback.zip",
     "trulens_providers_cortex.zip",
+    "nltk_data/tokenizers/punkt_tab.zip",
 ]
 
 
