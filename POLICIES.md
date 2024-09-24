@@ -75,7 +75,7 @@ is required and will be set.
 Some features cannot be changed after some stages in the typical _TruLens_
 use-cases. OTEL tracing, for example, cannot be disabled once an app has been
 instrumented. An error will result in an attempt to change the feature after it
-has been "locked" by irreversable steps like instrumentation.
+has been "locked" by irreversible steps like instrumentation.
 
 ### Experimental Features Pipeline
 
