@@ -1448,23 +1448,28 @@ class LLMProvider(Provider):
             )
         )
 
-    def _ensure_punkt_installed(self, download_dir: str):
+    def _ensure_punkt_installed(self):
         from nltk.data import find
 
         try:
             # Try to locate the 'punkt' directory in the configured NLTK data path
+            home_path = os.path.expanduser("~")
+            nltk_data_dir = os.path.join(home_path, "nltk_data")
+            nltk.data.path.append(nltk_data_dir)
             punkt_zip_path = os.path.join(
-                download_dir, "tokenizers/punkt_tab.zip"
+                nltk_data_dir, "tokenizers/punkt_tab.zip"
             )
             if os.path.exists(punkt_zip_path):
                 logger.info("Punkt tokenizer zip file found. Extracting.")
                 with zipfile.ZipFile(punkt_zip_path, "r") as zip_ref:
-                    zip_ref.extractall(os.path.join(download_dir, "tokenizers"))
+                    zip_ref.extractall(
+                        os.path.join(nltk_data_dir, "tokenizers")
+                    )
             find("tokenizers/punkt_tab")
         except LookupError:
             logger.warning("Punkt tokenizer not found. Attempting to download.")
             # Check if the punkt tokenizer zip file exists
-            nltk.download("punkt_tab", quiet=False, download_dir=download_dir)
+            nltk.download("punkt_tab", quiet=False, download_dir=nltk_data_dir)
 
     def groundedness_measure_with_cot_reasons(
         self,
@@ -1542,11 +1547,7 @@ class LLMProvider(Provider):
         reasons_str = ""
 
         if use_sent_tokenize:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            nltk_dir = os.path.join(current_dir, "nltk_data")
-            nltk.data.path = [nltk_dir]
-            self._ensure_punkt_installed(download_dir=nltk_dir)
-
+            self._ensure_punkt_installed()
             hypotheses = sent_tokenize(statement)
         else:
             llm_messages = [
@@ -1693,11 +1694,7 @@ class LLMProvider(Provider):
         """
         assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            nltk_dir = os.path.join(current_dir, "nltk_data")
-            nltk.data.path = [nltk_dir]
-            self._ensure_punkt_installed(download_dir=nltk_dir)
-
+            self._ensure_punkt_installed()
             hypotheses = sent_tokenize(statement)
         else:
             llm_messages = [
