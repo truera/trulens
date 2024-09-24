@@ -759,7 +759,7 @@ class App(
         """Determine (guess) the main input string for a main app call.
 
         Args:
-            func: The main function we are targetting in this determination.
+            func: The main function we are targeting in this determination.
 
             sig: The signature of the above.
 
@@ -1052,7 +1052,7 @@ class App(
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
-        # used in trulens around the app context manangers due to bugs in trying
+        # used in trulens around the app context managers due to bugs in trying
         # to set/reset them where more appropriate. This is not ideal as not
         # resetting context vars where appropriate will result possibly in
         # incorrect tracing information.

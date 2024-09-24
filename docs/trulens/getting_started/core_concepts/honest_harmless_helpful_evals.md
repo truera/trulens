@@ -11,7 +11,7 @@ functions) in TruLens that fall into each category, shown below. These feedback
 functions provide a starting point for ensuring your LLM app is performant and
 aligned.
 
-![Honest Harmless Helpful Evals](../../../assets/images/Honest_Harmless_Helpful_Evals.jpg)
+![Honest Harmless Helpful Evals](../../../assets/images/Honest_Harmless_Helpful_Evals.png)
 
 ## Honest
 
