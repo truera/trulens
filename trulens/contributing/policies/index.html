@@ -51,6 +51,16 @@
     <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-VE9D0QFFKD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-VE9D0QFFKD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-VE9D0QFFKD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -9377,7 +9387,7 @@ is required and will be set.</p>
 <p>Some features cannot be changed after some stages in the typical <em>TruLens</em>
 use-cases. OTEL tracing, for example, cannot be disabled once an app has been
 instrumented. An error will result in an attempt to change the feature after it
-has been "locked" by irreversable steps like instrumentation.</p>
+has been "locked" by irreversible steps like instrumentation.</p>
 <h5 id="experimental-features-pipeline">Experimental Features Pipeline<a class="headerlink" href="#experimental-features-pipeline" title="Permanent link">&para;</a></h5>
 <p>While in development, the experimental features may change in significant ways.
 Eventually experimental features get adopted or removed.</p>
@@ -9395,6 +9405,8 @@ indicating where in the stable API that feature relocated.</p>
 
 
 
+
+  
 
 
 

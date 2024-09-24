@@ -51,6 +51,16 @@
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-VE9D0QFFKD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-VE9D0QFFKD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-VE9D0QFFKD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -9331,7 +9341,7 @@
 <ul>
 <li><code>trulens-core</code> holds core abstractions for database operations, app instrumentation, guardrails and evaluation.</li>
 <li><code>trulens-dashboard</code> gives you the required capabilities to run and operate the TruLens dashboard.</li>
-<li><code>trulens-apps-</code> prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities inlcuding tracing, logging and guardrailing. These include <code>trulens-apps-langchain</code> and <code>trulens-apps-llamaindex</code> which hold our popular <code>TruChain</code> and <code>TruLlama</code> wrappers that seamlessly instrument <em>LangChain</em> and <em>Llama-Index</em> apps.</li>
+<li><code>trulens-apps-</code> prefixed packages give you tools for interacting with LLM apps built with other frameworks, giving you capabilities including tracing, logging and guardrailing. These include <code>trulens-apps-langchain</code> and <code>trulens-apps-llamaindex</code> which hold our popular <code>TruChain</code> and <code>TruLlama</code> wrappers that seamlessly instrument <em>LangChain</em> and <em>Llama-Index</em> apps.</li>
 <li><code>trulens-feedback</code> gives you access to out of the box feedback functions required for running feedback functions. Feedback function implementations must be combined with a selected provider integration.</li>
 <li><code>trulens-providers-</code> prefixed package describes a set of integrations with other libraries for running feedback functions. Today, we offer an extensive set of integrations that allow you to run feedback functions on top of virtually any LLM. These integrations can be installed as standalone packages, and include: <code>trulens-providers-openai</code>, <code>trulens-providers-huggingface</code>, <code>trulens-providers-litellm</code>, <code>trulens-providers-langchain</code>, <code>trulens-providers-bedrock</code>, <code>trulens-providers-cortex</code>.</li>
 <li><code>trulens-connectors-</code> provide ways to log <em>TruLens</em> traces and evaluations to other databases. In addition to connect to any <code>sqlalchemy</code> database with <code>trulens-core</code>, we've added with <code>trulens-connectors-snowflake</code> tailored specifically to connecting to Snowflake. We plan to add more connectors over time.</li>
@@ -9613,6 +9623,8 @@
 
 
 
+
+  
 
 
 

@@ -12,15 +12,15 @@
   --penn: #06023B;
 
   --flash-white: #F3F7F6;
-  --azure: #D5E2E1;
+  --azure: #c1d2d0;
   --ash-grey: #C3D5D4;
 
-  --teal: #9dddcc;
+  --teal: #b0eadb;
   --zomp: #64A694;
   --viridian: #528E7E;
   --brunswick: #2D4E45;
 
-  --cerulean: #499ec3;
+  --cerulean: #5e899c;
   --indigo: #124F69;
   --gunmetal: #0A2C37;
   --rich-black: #061B22;
@@ -82,11 +82,16 @@
   --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
   --md-admonition-fg-color: var(--md-default-fg-color);
   --md-admonition-bg-color: var(--md-default-bg-color);
-
 }
-[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper {
+
+[data-md-color-scheme=slate][data-md-color-primary=indigo] .clipboard-copy-icon {
+  color: var(--ash-grey) !important;
+}
+
+[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper .jp-InputArea-editor {
+
+  --jp-cell-editor-background: var(--md-code-bg-color);
   --jp-mirror-editor-keyword-color: var(--md-code-hl-keyword-color);
-  /* --jp-mirror-editor-property-color:  */
   --jp-mirror-editor-operator-color: var(--md-code-hl-operator-color);
   --jp-mirror-editor-variable-color: var(--md-code-hl-variable-color);
   --jp-mirror-editor-variable-2-color: var(--md-code-hl-variable-color);
@@ -95,4 +100,33 @@
   --jp-mirror-editor-number-color: var(--md-code-hl-number-color);
   --jp-mirror-editor-string-color: var(--md-code-hl-string-color);
   --jp-mirror-editor-comment-color: var(--md-code-hl-comment-color);
+  --jp-mirror-editor-punctuation-color: var(--md-code-hl-punctuation-color);
+}
+
+[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper .highlight pre {
+  background-color: var(--md-code-bg-color);
+}
+
+
+.jupyter-wrapper .jp-InputArea-editor {
+  --jp-code-font-size: .75em;
+  border-radius: 6px !important;
+  padding: 10px !important;
+  --jp-cell-editor-border-color: none !important;
+}
+
+.md-typeset code {
+  font-size: .75em;
+}
+
+.jupyter-wrapper .jp-InputPrompt {
+  display: none !important;
+}
+
+.jupyter-wrapper .jp-Collapser {
+  display: none !important;
+}
+
+.jupyter-wrapper .jp-OutputPrompt {
+  display: none !important;
 }

@@ -55,6 +55,16 @@
     <script>__md_scope=new URL("../../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-VE9D0QFFKD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-VE9D0QFFKD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-VE9D0QFFKD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -10704,7 +10714,7 @@
 
 
         <p>Alias for <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future">concurrent.futures.Future</a>.</p>
-<p>In python &lt; 3.9, a sublcass of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future">concurrent.futures.Future</a> with
+<p>In python &lt; 3.9, a subclass of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future">concurrent.futures.Future</a> with
 <code>Generic[A]</code> is used instead.</p>
 
 
@@ -10729,7 +10739,7 @@
 
 
         <p>Alias for <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/queue.html#queue.Queue">queue.Queue</a> .</p>
-<p>In python &lt; 3.9, a sublcass of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/queue.html#queue.Queue">queue.Queue</a> with
+<p>In python &lt; 3.9, a subclass of <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/queue.html#queue.Queue">queue.Queue</a> with
 <code>Generic[A]</code> is used instead.</p>
 
 
@@ -10798,7 +10808,7 @@
 
         <p>Wrap an object with a weak reference.</p>
 <p>This is to be able to use weakref.ref on objects like lists which are
-otherwise not weakly referencable. The goal of this class is to generalize
+otherwise not weakly referenceable. The goal of this class is to generalize
 weakref.ref to work with any object.</p>
 
 
@@ -11806,7 +11816,7 @@ the task factory to make tasks that copy the stack from their creators.</p>
 
 <a href="#trulens.core.utils.python.merge_stacks" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">merge_stacks</span><span class="p">(</span>
-    <span class="n">s1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">],</span> <span class="n">s2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">]</span>
+    <span class="n">s1</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">],</span> <span class="n">s2</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">]</span>
 </code></pre></div>
 
@@ -11827,7 +11837,7 @@ order.</p>
 
 
 <a href="#trulens.core.utils.python.stack_with_tasks" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stack_with_tasks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stack_with_tasks</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="types.FrameType" href="https://docs.python.org/3/library/types.html#types.FrameType">FrameType</a></span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12811,6 +12821,8 @@ values.</p>
 
 
 
+
+  
 
 
 

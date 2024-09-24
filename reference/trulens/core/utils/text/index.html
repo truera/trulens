@@ -55,6 +55,16 @@
     <script>__md_scope=new URL("../../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-VE9D0QFFKD"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-VE9D0QFFKD",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-VE9D0QFFKD",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -5204,18 +5214,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.text.format_size" class="md-nav__link">
+  <a href="#trulens.core.utils.text.format_quantity" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_size
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_quantity
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.text.format_quantity" class="md-nav__link">
+  <a href="#trulens.core.utils.text.format_size" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_quantity
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_size
     </span>
   </a>
   
@@ -9415,18 +9425,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.text.format_size" class="md-nav__link">
+  <a href="#trulens.core.utils.text.format_quantity" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_size
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_quantity
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#trulens.core.utils.text.format_quantity" class="md-nav__link">
+  <a href="#trulens.core.utils.text.format_size" class="md-nav__link">
     <span class="md-ellipsis">
-      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_quantity
+      <code class="doc-symbol doc-symbol-toc doc-symbol-function"></code>&nbsp;format_size
     </span>
   </a>
   
@@ -9535,81 +9545,6 @@
 <div class="doc doc-object doc-function">
 
 
-<h4 id="trulens.core.utils.text.format_size" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">format_size</span>
-
-
-<a href="#trulens.core.utils.text.format_size" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">format_size</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Format a size (in bytes) into a human-readable string. This will use SI
-prefixes. Implementation details are largely copied from
-<a href="https://github.com/azaitsev/millify">millify</a>.</p>
-
-
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">PARAMETER</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>size</code></td>
-            <td class="doc-param-details">
-              <div class="doc-md-description">
-                <p>The quantity to format.</p>
-              </div>
-              <p>
-                  <span class="doc-param-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
-                  </span>
-              </p>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<table>
-      <thead>
-        <tr>
-          <th><span class="doc-section-title">RETURNS</span></th>
-          <th><span>DESCRIPTION</span></th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>str</code>
-            </td>
-            <td class="doc-returns-details">
-              <div class="doc-md-description">
-                <p>The formatted quantity.</p>
-              </div>
-                <p>
-                  <span class="doc-returns-annotation">
-                    <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
-                  </span>
-                </p>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h4 id="trulens.core.utils.text.format_quantity" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">format_quantity</span>
 
@@ -9660,6 +9595,81 @@ Implementation details are largely copied from <a href="https://github.com/azait
                   <span class="doc-param-default">
                     <b>DEFAULT:</b>
                       <code>2</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>str</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The formatted quantity.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="trulens.core.utils.text.format_size" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">format_size</span>
+
+
+<a href="#trulens.core.utils.text.format_size" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">format_size</span><span class="p">(</span><span class="n">size</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Format a size (in bytes) into a human-readable string. This will use SI
+prefixes. Implementation details are largely copied from
+<a href="https://github.com/azaitsev/millify">millify</a>.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>size</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The quantity to format.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
                   </span>
               </p>
             </td>
@@ -9805,6 +9815,8 @@ Implementation details are largely copied from <a href="https://github.com/azait
 
 
 
+
+  
 
 
 
