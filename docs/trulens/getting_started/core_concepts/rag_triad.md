@@ -8,7 +8,7 @@ even retrieves irrelevant context that is then weaved into the LLM’s response.
 TruEra has innovated the RAG triad to evaluate for hallucinations along each
 edge of the RAG architecture, shown below:
 
-![RAG Triad](../../../assets/images/RAG_Triad.jpg)
+![RAG Triad](../../../assets/images/RAG_Triad.png)
 
 The RAG triad is made up of 3 evaluations: context relevance, groundedness and
 answer relevance. Satisfactory evaluations on each provides us confidence that
