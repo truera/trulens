@@ -292,6 +292,9 @@ nav:
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 extra:
+  analytics:
+      provider: google
+      property: G-VE9D0QFFKD
   generator: false
 
 extra_css:
