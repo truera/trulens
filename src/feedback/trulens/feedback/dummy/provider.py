@@ -10,7 +10,7 @@ class DummyProvider(LLMProvider):
     """Fake LLM provider.
 
     Does not make any networked requests but pretends to. Uses
-    [DummyEndpoint][trulens_eval.feedback.provider.endpoint.dummy.DummyEndpoint].
+    [DummyEndpoint][trulens.feedback.dummy.endpoint.DummyEndpoint].
     """
 
     model_engine: str = "dummymodel"

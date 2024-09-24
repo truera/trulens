@@ -751,6 +751,11 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
 
 
 def render_leaderboard(app_name: str):
+    """Renders the Leaderboard page.
+
+    Args:
+        app_name (str): The app name to render the leaderboard for.
+    """
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
