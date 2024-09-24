@@ -608,16 +608,16 @@ class TruVirtual(App):
                 rec = VirtualRecord(
                     calls={
                         retriever.get_context: dict(
-                            args=[record["question"]], rets=context_rets
+                            args=[record["query"]], rets=context_rets
                         )
                     },
-                    main_input=record["question"],
-                    main_output=record["answer"],
+                    main_input=record["query"],
+                    main_output=record["response"],
                 )
             else:
                 rec = VirtualRecord(
-                    main_input=record["question"],
-                    main_output=record["answer"],
+                    main_input=record["query"],
+                    main_output=record["response"],
                     calls={},
                 )
             records.append(rec)
