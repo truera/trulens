@@ -3168,6 +3168,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.VirtualApp.select_context" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;select_context
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.apps.virtual.VirtualApp.__setitem__" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__setitem__
@@ -3900,6 +3909,15 @@
   <a href="#trulens.apps.virtual.TruVirtual.add_record" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;add_record
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.TruVirtual.add_dataframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;add_dataframe
     </span>
   </a>
   
@@ -10274,6 +10292,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.VirtualApp.select_context" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;select_context
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.apps.virtual.VirtualApp.__setitem__" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;__setitem__
@@ -11011,6 +11038,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#trulens.apps.virtual.TruVirtual.add_dataframe" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-method"></code>&nbsp;add_dataframe
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11417,6 +11453,29 @@ under <code>VirtualApp.root</code></p>
 
 
 <h5 id="trulens.apps.virtual.VirtualApp-functions">Functions<a href="#trulens.apps.virtual.VirtualApp-functions" class="headerlink" title="Permanent link">&para;</a></h5>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="trulens.apps.virtual.VirtualApp.select_context" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">select_context</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#trulens.apps.virtual.VirtualApp.select_context" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">select_context</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Select the context of the virtual app. This is fixed to return the default path.</p>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -13815,6 +13874,30 @@ feedbacks on it.</p>
 <p>The class <code>VirtualRecord</code> may be useful for creating
 records for virtual models. If <code>feedback_mode</code> is specified, will use
 that mode for this record only.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h6 id="trulens.apps.virtual.TruVirtual.add_dataframe" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">add_dataframe</span>
+
+
+<a href="#trulens.apps.virtual.TruVirtual.add_dataframe" class="headerlink" title="Permanent link">&para;</a></h6>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">add_dataframe</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">,</span> <span class="n">feedback_mode</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackMode" href="../../core/schema/feedback/#trulens.core.schema.feedback.FeedbackMode">FeedbackMode</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../core/schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Add the given dataframe as records to the database and evaluate any pre-specified
+feedbacks on them.</p>
+<p>The class <code>VirtualRecord</code> may be useful for creating records for virtual models.</p>
+<p>If <code>feedback_mode</code> is specified, will use that mode for these records only.</p>
 
     </div>
 
