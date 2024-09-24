@@ -10,7 +10,7 @@ from trulens.core import app as mod_app
 from trulens.core import experimental as mod_experimental
 from trulens.core import instruments as mod_instruments
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core import trace as mod_trace
@@ -38,9 +38,12 @@ class _App(mod_app.App):
             # Export to otel exporter if exporter was set in workspace.
             to_export = []
             for span in recording_span.iter_family(include_phantom=True):
-                e_span = span.otel_freeze()
-                to_export.append(e_span)
-                print(e_span.name, "->", e_span.__class__.__name__)
+                if isinstance(span, mod_trace.OTELExportable):
+                    e_span = span.otel_freeze()
+                    to_export.append(e_span)
+                    print(e_span.name, "->", e_span.__class__.__name__)
+                else:
+                    print(f"Warning, span {span.name} is not exportable.")
 
             print(
                 f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {python_utils.class_name(self.session._experimental_otel_exporter)}."
@@ -52,7 +55,7 @@ class _App(mod_app.App):
         self,
         recording: mod_instruments._RecordingContext,
         root_span: mod_trace.Span,
-    ) -> mod_record_schema.Record:
+    ) -> record_schema.Record:
         tracer = root_span.context.tracer
 
         record = tracer.record_of_root_span(
@@ -96,7 +99,7 @@ class _App(mod_app.App):
     def __enter__(self):
         # EXPERIMENTAL otel replacement to recording context manager.
 
-        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+        tracer: mod_trace.Tracer = mod_trace.trulens_tracer()
 
         recording_span_ctx = tracer.recording()
         recording_span: mod_trace.PhantomSpanRecordingContext = (
@@ -109,7 +112,7 @@ class _App(mod_app.App):
             span_ctx=recording_span_ctx,
         )
         recording_span.recording = recording
-        recording_span.start_timestamp = time.time_ns()
+        recording_span.start_timestamp = time.time_ns()  # move to trace
 
         # recording.ctx = ctx
 
@@ -127,7 +130,7 @@ class _App(mod_app.App):
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
 
-        recording.span.end_timestamp = time.time_ns()
+        recording.span.end_timestamp = time.time_ns()  # move to trace
 
         self.recording_contexts.reset(recording.token)
         return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)

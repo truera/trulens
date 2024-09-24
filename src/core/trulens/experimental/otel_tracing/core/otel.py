@@ -44,7 +44,7 @@ TTraceID = int
 NUM_TRACEID_BITS = 128
 """Number of bits in a trace identifier."""
 
-TLensedBaseType = Union[str, int, float, bool, python_utils.NoneType]
+TLensedBaseType = Union[str, int, float, bool]
 """Type of base types in span attributes.
 !!! Warning
     OpenTelemetry does not allow None as an attribute value. However, we allow
@@ -83,6 +83,9 @@ def flatten_value(
     # OpenTelemetry does not allow None as an attribute value. Unsure what
     # is best to do here. Returning "None" for now.
     #    yield (path, "None")
+
+    elif v is None:
+        pass
 
     elif isinstance(v, TLensedBaseType):
         yield (path, v)

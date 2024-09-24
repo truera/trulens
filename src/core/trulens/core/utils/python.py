@@ -1187,7 +1187,7 @@ class SingletonInfo(Generic[T]):
     for each unique name (and class).
     """
 
-    def __init__(self, name: str, val: Any):
+    def __init__(self, val: Any, name: Optional[str] = None):
         self.val = val
         self.cls = val.__class__
         self.name = name
@@ -1254,7 +1254,7 @@ class SingletonPerName:
 
         if k not in cls._instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )
@@ -1306,4 +1306,65 @@ class SingletonPerName:
             del SingletonPerName._id_to_name_map[id_]
             del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
-            logger.warning("Instance %s not found in our records.", self)
+            logger.warning(
+                "Instance %s not found among existing singletons.", self
+            )
+
+
+class Singleton:
+    """Class for creating singleton instances."""
+
+    # Hold singleton instances here.
+    _instances: Dict[Hashable, SingletonInfo[Singleton]] = {}
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        k = self.__class__.__name__
+        if k in Singleton._instances:
+            Singleton._instances[k].warning()
+        else:
+            raise RuntimeError(
+                f"Instance of singleton type {k} does not exist."
+            )
+
+    def __new__(
+        cls: Type[Singleton],
+        *args,
+        **kwargs,
+    ) -> Singleton:
+        """Create the singleton instance if it doesn't already exist and return it."""
+
+        k = cls.__name__
+
+        if k not in cls._instances:
+            logger.debug(
+                "Creating new %s singleton instance.",
+                cls.__name__,
+            )
+            # If exception happens here, the instance should not be added to
+            # _instances.
+            instance = super().__new__(cls)
+
+            info: SingletonInfo = SingletonInfo(val=instance)
+            Singleton._instances[k] = info
+        else:
+            info = Singleton._instances[k]
+
+        obj = info.val
+        assert isinstance(obj, cls)
+        return obj
+
+    def delete_singleton(self):
+        """
+        Delete the singleton instance. Can be used for testing to create another
+        singleton.
+        """
+        k = self.__class__.__name__
+
+        if k in Singleton._instances:
+            del Singleton._instances[k]
+        else:
+            logger.warning(
+                "Instance %s not found among existing singletons.", self
+            )

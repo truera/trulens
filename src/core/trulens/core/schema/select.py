@@ -52,6 +52,12 @@ class Select:
     RecordRets: Query = RecordCall.rets
     """Selector for the whole output of the first called / last returned method call."""
 
+    RecordSpans: Query = Record.spans
+    """EXPERIMENTAL(otel-tracing): OTEL spans produced during tracing of a record.
+
+    This can include spans not created by trulens.
+    """
+
     @staticmethod
     def path_and_method(select: Select.Query) -> Tuple[Select.Query, str]:
         """
