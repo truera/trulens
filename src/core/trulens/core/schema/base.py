@@ -19,23 +19,8 @@ class Cost(SerialModel, pydantic.BaseModel):
     n_requests: int = 0
     """Number of requests."""
 
-    n_responses: int = 0
-    """EXPERIMENTAL: otel-tracing
-
-    Number of respones, successful or not."""
-
     n_successful_requests: int = 0
     """Number of successful requests."""
-
-    n_generations: int = 0
-    """EXPERIMENTAL: otel-tracing
-
-    Number of successful generations."""
-
-    n_classifications: int = 0
-    """EXPERIMENTAL: otel-tracing
-
-    Number of successful classifications."""
 
     n_completion_requests: int = 0
     """Number of completion requests."""
