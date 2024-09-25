@@ -666,6 +666,11 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
 
         # with c.capture() as cap:
         for k, q in self.selectors.items():
+            if q.path[0:2] == Select.RecordSpans.path[0:2]:
+                # Skip checking for RecordSpans as they are not known ahead of
+                # producing a record.
+                continue
+
             if q.exists(source_data):
                 continue
 

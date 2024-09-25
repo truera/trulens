@@ -128,6 +128,11 @@ class Select:
         if query.path[0:2] == Select.RecordInput.path:
             ret = "Select.RecordInput"
             rest = query.path[2:]
+
+        if query.path[0:2] == Select.RecordSpans.path:
+            ret = "Select.RecordSpans"
+            rest = query.path[2:]
+
         elif query.path[0:2] == Select.RecordOutput.path:
             ret = "Select.RecordOutput"
             rest = query.path[2:]
@@ -135,6 +140,7 @@ class Select:
         elif query.path[0:4] == Select.RecordArgs.path:
             ret = "Select.RecordArgs"
             rest = query.path[4:]
+
         elif query.path[0:4] == Select.RecordRets.path:
             ret = "Select.RecordRets"
             rest = query.path[4:]

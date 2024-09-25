@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 import logging
 from typing import (
-    TYPE_CHECKING,
+    Any,
     ClassVar,
     Dict,
     Hashable,
@@ -31,59 +31,6 @@ from trulens.core.utils.python import Future
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
-if TYPE_CHECKING:
-    from trulens.experimental.otel_tracing.core import trace as mod_trace
-
-
-class SpanContext(serial_utils.SerialModel):
-    """EXPERIMENTAL(otel-tracing) Context/identifier of a span."""
-
-    span_id: int
-    trace_id: int
-
-
-class RecordAppSpan(serial_utils.SerialModel):
-    """EXPERIMENTAL(otel-tracing) Transitional class to store OTEL spans inside Records."""
-
-    name: str
-    """OTEL name,"""
-
-    kind: Optional[str] = None
-    """OTEL kind."""
-
-    perf: mod_base_schema.Perf
-    """Trulens encoding of OTEL span start/end."""
-
-    context: SpanContext
-    """OTEL span identifier."""
-
-    parent: Optional[SpanContext] = None
-    """OTEL parent span identifier."""
-
-    attributes: serial_utils.JSON = {}
-    """OTEL span attributes."""
-
-    @staticmethod
-    def of_span(span: mod_trace.OTELExportable) -> RecordAppSpan:
-        """Create a RecordAppSpan from a mod_trace.Span."""
-
-        return RecordAppSpan(
-            name=span.name,
-            kind=span.kind,
-            perf=mod_base_schema.Perf.of_ns_timestamps(
-                span.start_timestamp, span.end_timestamp
-            ),
-            context=SpanContext(
-                span_id=span.context.span_id, trace_id=span.context.trace_id
-            ),
-            parent=SpanContext(
-                span_id=span.parent.span_id, trace_id=span.parent.trace_id
-            )
-            if span.parent is not None
-            else None,
-            attributes=span.otel_attributes(),
-        )
 
 
 class RecordAppCallMethod(serial_utils.SerialModel):
@@ -235,7 +182,9 @@ class Record(serial_utils.SerialModel, Hashable):
                 self.calls.insert(i, call)
                 return
 
-    experimental_otel_spans: List[RecordAppSpan] = []
+    experimental_otel_spans: List[
+        Any
+    ] = []  # actually trulens.experimental.otel_tracing.core.trace.Span
     """EXPERIMENTAL(otel-tracing): OTEL spans representation of this record.
 
     This will be filled in only if the otel-tracing experimental feature is enabled.
@@ -382,7 +331,6 @@ class Record(serial_utils.SerialModel, Hashable):
                 ret = path.set(obj=ret, val=[call])
 
         ret.spans = {}
-        spans = ret.spans
         spans_path = serial_utils.Lens() + serial_utils.GetItemOrAttribute(
             item_or_attribute="spans"
         )
@@ -394,8 +342,8 @@ class Record(serial_utils.SerialModel, Hashable):
             ):  # interpret dots in name as elements of a path
                 path += serial_utils.GetItemOrAttribute(item_or_attribute=step)
 
-            if path.exists(obj=spans):
-                existing = path.get_sole_item(obj=spans)
+            if path.exists(obj=ret):
+                existing = path.get_sole_item(obj=ret)
                 ret = path.set(obj=ret, val=existing + [span])
             else:
                 ret = path.set(obj=ret, val=[span])

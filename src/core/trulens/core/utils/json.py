@@ -323,11 +323,11 @@ def jsonify(
 
         content = forward_value
 
+    elif isinstance(obj, Lens):  # special handling of paths
+        return obj.model_dump()
+
     elif isinstance(obj, pydantic.BaseModel):
         # Not even trying to use pydantic.dict here.
-
-        if isinstance(obj, Lens):  # special handling of paths
-            return obj.model_dump()
 
         forward_value = {}
         new_dicted[id(obj)] = forward_value
@@ -336,6 +336,10 @@ def jsonify(
             for k, v in obj.model_fields.items()
             if (not skip_excluded or not v.exclude) and recur_key(k)
         })
+
+        for k, _ in obj.model_computed_fields.items():
+            if recur_key(k):
+                forward_value[k] = recur(safe_getattr(obj, k))
 
         # Redact possible secrets based on key name and value.
         if redact_keys:

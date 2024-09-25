@@ -426,8 +426,30 @@ class Bindings(SerialModel):
     kwargs: Dict[str, Any]
 
     @staticmethod
-    def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
-        return Bindings(args=b.args, kwargs=b.kwargs)
+    def of_bound_arguments(
+        b: inspect.BoundArguments,
+        skip_self: bool = True,
+        arguments_only: bool = False,
+    ) -> Bindings:
+        if arguments_only:
+            return Bindings(
+                args=(),
+                kwargs={
+                    k: v
+                    for k, v in b.arguments.items()
+                    if (not skip_self or k != "self")
+                },
+            )
+
+        if skip_self:
+            if "self" in b.arguments:
+                args = b.args[1:]
+            else:
+                args = b.args
+        else:
+            args = b.args
+
+        return Bindings(args=args, kwargs=b.kwargs)
 
     def _handle_providers_load(self):
         # HACK004: A Hack: reason below
