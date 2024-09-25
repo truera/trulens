@@ -315,12 +315,16 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(len(records_and_feedback), 2)
         self.assertListEqual(
             records_and_feedback[1],
-            ["relevance"],
+            ["relevance", "groundedness"],
         )
         self.assertEqual(records_and_feedback[0].shape[0], 1)
         self.assertGreaterEqual(
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
+        )
+        self.assertLessEqual(
+            records_and_feedback[0]["groundedness"].iloc[0],
+            0.7,
         )
 
 

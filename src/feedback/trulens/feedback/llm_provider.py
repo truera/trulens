@@ -1453,9 +1453,10 @@ class LLMProvider(Provider):
 
         try:
             # Try to locate the 'punkt' directory in the configured NLTK data path
-            home_path = os.path.expanduser("~")
-            nltk_data_dir = os.path.join(home_path, "nltk_data")
+            current_path = os.path.dirname(os.path.abspath(__file__))
+            nltk_data_dir = os.path.join(current_path, "nltk_data")
             nltk.data.path.append(nltk_data_dir)
+
             punkt_zip_path = os.path.join(
                 nltk_data_dir, "tokenizers/punkt_tab.zip"
             )
