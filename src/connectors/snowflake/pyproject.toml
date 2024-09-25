@@ -23,7 +23,7 @@ include = [
   ] },
 ]
 homepage = "https://trulens.org/"
-documentation = "https://trulens.org/trulens/getting_started/"
+documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",

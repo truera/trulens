@@ -18,7 +18,7 @@ def df_cell_highlight(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
     n_cells: int = 1,
-):
+) -> list[str]:
     """Returns the background color for a cell in a DataFrame based on the score and feedback name.
 
     Args:
@@ -28,7 +28,7 @@ def df_cell_highlight(
         n_cells (int, optional): The number of cells to apply the background color. Defaults to 1.
 
     Returns:
-        list: A list of CSS styles representing the background color.
+        A list of CSS styles representing the background color.
     """
     if "distance" in feedback_name:
         return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells

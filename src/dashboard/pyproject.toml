@@ -17,7 +17,7 @@ packages = [
   { include = "trulens" },
 ]
 homepage = "https://trulens.org/"
-documentation = "https://trulens.org/trulens/getting_started/"
+documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -32,13 +32,13 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
 trulens-core = { version = "^1.0.0" }
-ipywidgets = "^8.1.3"
+ipywidgets = "^8.1.2"
 jupyter = "^1"
 pandas = ">=1.0.0"
 psutil = "^5.9"
 rich = "^13.6"
-plotly = "^5.24.0"
-streamlit = "^1.38"
+plotly = "^5.22.0"
+streamlit = "^1.37"
 streamlit-aggrid = "^1.0.5"
 streamlit-extras = ">=0.4"
 streamlit-pills = ">=0.3"
