@@ -45,6 +45,7 @@ watch:
   - src
 
 plugins:
+  - blog
   - include-markdown:
       preserve_includer_indent: false
       dedent: false
@@ -149,16 +150,17 @@ plugins:
         # NOTE: Even though both the source and target in these maps refer to
         # ".md", the get interpreted (or maybe generated as) urls without ".md".
         # hack: old .ipynb files are set has .md because .ipynb not supported for old link
-        trulens/install.md: trulens/getting_started/install.md
-        trulens/core_concepts_feedback_functions.md: trulens/getting_started/core_concepts/feedback_functions.md
-        trulens/core_concepts_rag_triad.md: trulens/getting_started/core_concepts/rag_triad.md
-        trulens/core_concepts_honest_harmless_helpful_evals.md: trulens/getting_started/core_concepts/honest_harmless_helpful_evals.md
-        trulens/quickstart.md: trulens/getting_started/quickstarts/quickstart.ipynb
-        trulens/langchain_quickstart.md: trulens/getting_started/quickstarts/langchain_quickstart.ipynb
-        trulens/llama_index_quickstart.md: trulens/getting_started/quickstarts/llama_index_quickstart.ipynb
-        trulens/text2text_quickstart.md: trulens/getting_started/quickstarts/text2text_quickstart.ipynb
-        trulens/groundtruth_evals.md: trulens/getting_started/quickstarts/groundtruth_evals.ipynb
-        trulens/human_feedback.md: trulens/getting_started/quickstarts/human_feedback.ipynb
+        trulens/install.md: getting_started/install.md
+        trulens/core_concepts_feedback_functions.md: getting_started/core_concepts/feedback_functions.md
+        trulens/core_concepts_rag_triad.md: getting_started/core_concepts/rag_triad.md
+        trulens/core_concepts_honest_harmless_helpful_evals.md: getting_started/core_concepts/honest_harmless_helpful_evals.md
+        trulens/quickstart.md: getting_started/quickstarts/quickstart.ipynb
+        trulens/langchain_quickstart.md: getting_started/quickstarts/langchain_quickstart.ipynb
+        trulens/llama_index_quickstart.md: getting_started/quickstarts/llama_index_quickstart.ipynb
+        trulens/text2text_quickstart.md: getting_started/quickstarts/text2text_quickstart.ipynb
+        trulens/groundtruth_evals.md: getting_started/quickstarts/groundtruth_evals.ipynb
+        trulens/human_feedback.md: getting_started/quickstarts/human_feedback.ipynb
+        trulens/release_blog_1dot.md: blog/posts/release_blog_1dot.md
 
 theme:
   name: material
@@ -210,84 +212,79 @@ theme:
 nav:
   - 🏠 Home: index.md
   - 🚀 Getting Started:
-      - trulens/getting_started/index.md
+      - getting_started/index.md
       - 📓 Quickstarts:
-          # - trulens/getting_started/quickstarts/index.md
+          # - getting_started/quickstarts/index.md
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
-          - trulens/getting_started/quickstarts/quickstart.ipynb
-          - trulens/getting_started/quickstarts/existing_data_quickstart.ipynb
-          - trulens/getting_started/quickstarts/langchain_quickstart.ipynb
-          - trulens/getting_started/quickstarts/llama_index_quickstart.ipynb
-          - trulens/getting_started/quickstarts/text2text_quickstart.ipynb
-          - trulens/getting_started/quickstarts/groundtruth_evals.ipynb
-          - trulens/getting_started/quickstarts/human_feedback.ipynb
+          - getting_started/quickstarts/quickstart.ipynb
+          - getting_started/quickstarts/existing_data_quickstart.ipynb
+          - getting_started/quickstarts/langchain_quickstart.ipynb
+          - getting_started/quickstarts/llama_index_quickstart.ipynb
+          - getting_started/quickstarts/text2text_quickstart.ipynb
+          - getting_started/quickstarts/groundtruth_evals.ipynb
+          - getting_started/quickstarts/human_feedback.ipynb
       - ⭐ Core Concepts:
-          - trulens/getting_started/core_concepts/index.md
-          - ☔ Feedback Functions: trulens/getting_started/core_concepts/feedback_functions.md
-          - ⟁ RAG Triad: trulens/getting_started/core_concepts/rag_triad.md
-          - 🏆 Honest, Harmless, Helpful Evals: trulens/getting_started/core_concepts/honest_harmless_helpful_evals.md
+          - getting_started/core_concepts/index.md
+          - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
+          - ⟁ RAG Triad: getting_started/core_concepts/rag_triad.md
+          - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
-          - trulens/getting_started/dashboard/index.md
+          - getting_started/dashboard/index.md
   - Component Guides:
     - Instrumentation:
-        - trulens/tracking/instrumentation/index.md
+        - component_guides/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provider here.
-        - trulens/tracking/instrumentation/langchain.md
-        - trulens/tracking/instrumentation/llama_index.md
-        - trulens/tracking/instrumentation/nemo.md
+        - component_guides/instrumentation/langchain.md
+        - component_guides/instrumentation/llama_index.md
+        - component_guides/instrumentation/nemo.md
     - Logging:
-        - trulens/tracking/logging/where_to_log/index.md
-        - ❄️ Logging in Snowflake: trulens/tracking/logging/where_to_log/log_in_snowflake.md
-        - Logging Methods: trulens/tracking/logging/logging.ipynb
+        - component_guides/logging/where_to_log/index.md
+        - ❄️ Logging in Snowflake: component_guides/logging/where_to_log/log_in_snowflake.md
+        - Logging Methods: component_guides/logging/logging.ipynb
     - 🎯 Evaluation:
-        - trulens/evaluation/feedback_functions/index.md
-        # PLACEHOLDER: - trulens/evaluation/index.md
-        - Anatomy of a Feedback Function: trulens/evaluation/feedback_functions/anatomy.md
+        - component_guides/evaluation/index.md
+        - Anatomy of a Feedback Function: component_guides/evaluation/feedback_anatomy.md
         - Feedback Implementations:
-            - trulens/evaluation/feedback_implementations/index.md
-            - Stock Feedback Functions: trulens/evaluation/feedback_implementations/stock.md
-            - trulens/evaluation/feedback_implementations/custom_feedback_functions.ipynb
+            - component_guides/evaluation/feedback_implementations/index.md
+            - Stock Feedback Functions: component_guides/evaluation/feedback_implementations/stock.md
+            - component_guides/evaluation/feedback_implementations/custom_feedback_functions.ipynb
         - Feedback Selectors:
-            - trulens/evaluation/feedback_selectors/index.md
-            - Selecting Components: trulens/evaluation/feedback_selectors/selecting_components.md
-            - Selector Shortcuts: trulens/evaluation/feedback_selectors/selector_shortcuts.md
+            - component_guides/evaluation/feedback_selectors/index.md
+            - Selecting Components: component_guides/evaluation/feedback_selectors/selecting_components.md
+            - Selector Shortcuts: component_guides/evaluation/feedback_selectors/selector_shortcuts.md
         - Feedback Aggregation:
-            - trulens/evaluation/feedback_aggregation/index.md
+            - component_guides/evaluation/feedback_aggregation.md
         - Running Feedback Functions:
-            # PLACEHOLDER: - trulens/evaluation/running_feedback_functions/index.md
-            - Running with your app: trulens/evaluation/running_feedback_functions/with_app.md
-            - Running on existing data: trulens/evaluation/running_feedback_functions/existing_data.md
+            # PLACEHOLDER: - evaluation/running_feedback_functions/index.md
+            - Running with your app: component_guides/evaluation/running_feedback_functions/with_app.md
+            - Running on existing data: component_guides/evaluation/running_feedback_functions/existing_data.md
         - Generating Test Cases:
-            - trulens/evaluation/generate_test_cases/index.md
+            - component_guides/evaluation/generate_test_cases.md
     - 📊 Evaluation Benchmarks:
-        - trulens/evaluation_benchmarks/index.md
-        - Answer Relevance Benchmark (small): trulens/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
-        - Comprehensiveness Benchmark: trulens/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
-        - Context Relevance Benchmark (small): trulens/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
-        - Context Relevance Benchmark (large): trulens/evaluation_benchmarks/context_relevance_benchmark.ipynb
-        - Groundedness Benchmark: trulens/evaluation_benchmarks/groundedness_benchmark.ipynb
+        - component_guides/evaluation_benchmarks/index.md
+        - Answer Relevance Benchmark (small): component_guides/evaluation_benchmarks/answer_relevance_benchmark_small.ipynb
+        - Comprehensiveness Benchmark: component_guides/evaluation_benchmarks/comprehensiveness_benchmark.ipynb
+        - Context Relevance Benchmark (small): component_guides/evaluation_benchmarks/context_relevance_benchmark_small.ipynb
+        - Context Relevance Benchmark (large): component_guides/evaluation_benchmarks/context_relevance_benchmark.ipynb
+        - Groundedness Benchmark: component_guides/evaluation_benchmarks/groundedness_benchmark.ipynb
     - 🛡️ Guardrails:
-        - trulens/guardrails/index.md
+        - component_guides/guardrails/index.md
     - Other:
-      - Moving from TruLens Eval: trulens/guides/trulens_eval_migration.md
-      - Uninstalling TruLens: trulens/guides/uninstalling.md
-  # - 🔍 Guides:
-  #     # PLACEHOLDER: - trulens/guides/index.md
-  #     - Any LLM App: trulens/guides/use_cases_any.md
-  #     - RAGs: trulens/guides/use_cases_rag.md
-  #     - LLM Agents: trulens/guides/use_cases_agent.md
-  #     - Dev to Prod: trulens/guides/use_cases_production.md
+      - Moving from TruLens Eval: component_guides/other/trulens_eval_migration.md
+      - Uninstalling TruLens: component_guides/other/uninstalling.md
   - API Reference: reference/
-  - 🧑‍🍳 Cookbook: examples/
+  - 🧑‍🍳 Cookbook: cookbook/
   - 🤝 Contributing:
-      - trulens/contributing/index.md
-      - 🧭 Design: trulens/contributing/design.md
-      - ✅ Standards: trulens/contributing/standards.md
-      - 💣 Tech Debt: trulens/contributing/techdebt.md
-      - ⛅ Optional Pckages: trulens/contributing/optional.md
-      - ✨ Database Migration: trulens/contributing/migration.md
-      - 🏁 Release History: trulens/contributing/release_history.md
+      - contributing/index.md
+      - 🧭 Design: contributing/design.md
+      - ✅ Standards: contributing/standards.md
+      - 💣 Tech Debt: contributing/techdebt.md
+      - ⛅ Optional Packages: contributing/optional.md
+      - ✨ Database Migration: contributing/migration.md
+      - 🏁 Release History: contributing/release_history.md
+  - Blog:
+      - blog/index.md
 
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
