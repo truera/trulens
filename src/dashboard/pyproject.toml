@@ -40,8 +40,8 @@ rich = "^13.6"
 plotly = "^5.22.0"
 streamlit = "^1.37"
 streamlit-aggrid = "^1.0.5"
-streamlit-extras = "^0.4"
-streamlit-pills = "^0.3"
+streamlit-extras = ">=0.4"
+streamlit-pills = ">=0.3"
 traitlets = "^5.0.5"
 
 [tool.poetry.group.dev.dependencies]
