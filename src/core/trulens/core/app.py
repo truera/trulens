@@ -901,7 +901,7 @@ class App(
     ):
         from trulens.experimental.otel_tracing.core.app import _App
 
-        return _App.on_new_recording_span(self, recording_span)
+        return _App._on_new_recording_span(self, recording_span)
 
     # Experimental OTEL WithInstrumentCallbacks requirement
     def _on_new_root_span(
@@ -911,7 +911,7 @@ class App(
     ) -> mod_record_schema.Record:
         from trulens.experimental.otel_tracing.core.app import _App
 
-        return _App.on_new_root_span(self, recording, root_span)
+        return _App._on_new_root_span(self, recording, root_span)
 
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
@@ -1060,7 +1060,7 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
-        self._set_context_vars()
+        # self._set_context_vars()
 
         return ctx
 
@@ -1081,32 +1081,6 @@ class App(
 
         return
 
-    def _set_context_vars(self):
-        # HACK: For debugging purposes, try setting/resetting all context vars
-        # used in trulens around the app context manangers due to bugs in trying
-        # to set/reset them where more appropriate. This is not ideal as not
-        # resetting context vars where appropriate will result possibly in
-        # incorrect tracing information.
-
-        from trulens.core.feedback.endpoint import Endpoint
-        from trulens.core.instruments import WithInstrumentCallbacks
-
-        CONTEXT_VARS = [
-            WithInstrumentCallbacks._stack_contexts,
-            WithInstrumentCallbacks._context_contexts,
-            Endpoint._context_endpoints,
-        ]
-
-        for var in CONTEXT_VARS:
-            self._context_vars_tokens[var] = var.set(var.get())
-
-    def _reset_context_vars(self):
-        # HACK: See _set_context_vars.
-        for var, token in self._context_vars_tokens.items():
-            var.reset(token)
-
-        del self._context_vars_tokens[var]
-
     # For use as a context manager.
     async def __aenter__(self):
         if self.session.experimental_feature(Feature.OTEL_TRACING):
@@ -1119,13 +1093,13 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
-        self._set_context_vars()
+        # self._set_context_vars()
 
         return ctx
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        if self.session.feature_enabled(Feature.OTEL_TRACING):
+        if self.session.experimental_feature(Feature.OTEL_TRACING):
             from trulens.experimental.otel_tracing.core.app import _App
 
             return await _App.__aexit__(self, exc_type, exc_value, exc_tb)

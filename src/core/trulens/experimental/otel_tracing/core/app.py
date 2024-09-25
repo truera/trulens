@@ -7,7 +7,6 @@ from typing import (
 )
 
 from trulens.core import app as mod_app
-from trulens.core import experimental as mod_experimental
 from trulens.core import instruments as mod_instruments
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -30,7 +29,7 @@ class _App(mod_app.App):
             recording = recording.token.old_value
 
     # WithInstrumentCallbacks requirement
-    def on_new_recording_span(
+    def _on_new_recording_span(
         self,
         recording_span: mod_trace.Span,
     ):
@@ -50,7 +49,7 @@ class _App(mod_app.App):
             self.session._experimental_otel_exporter.export(to_export)
 
     # WithInstrumentCallbacks requirement
-    def on_new_root_span(
+    def _on_new_root_span(
         self,
         recording: mod_instruments._RecordingContext,
         root_span: mod_trace.Span,
@@ -138,12 +137,7 @@ class _App(mod_app.App):
     async def __aenter__(self):
         # EXPERIMENTAL: otel-tracing
 
-        self.session._experimental_assert_feature(
-            mod_experimental.Feature.OTEL_TRACING,
-            purpose="async recording context managers",
-        )
-
-        tracer: mod_trace.Tracer = mod_trace.get_tracer()
+        tracer: mod_trace.Tracer = mod_trace.trulens_tracer()
 
         recording_span_ctx = await tracer.arecording()
         recording_span: mod_trace.PhantomSpanRecordingContext = (
@@ -168,11 +162,6 @@ class _App(mod_app.App):
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         # EXPERIMENTAL: otel-tracing
-
-        self.session._experimental_feature_assert(
-            mod_experimental.Feature.OTEL_TRACING,
-            purpose="async recording context managers",
-        )
 
         recording: mod_trace._RecordingContext = self.recording_contexts.get()
 

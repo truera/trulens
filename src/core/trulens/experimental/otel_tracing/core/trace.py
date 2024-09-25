@@ -503,9 +503,9 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
         for span in Tracer.find_each_child(
             span=self, span_filter=lambda s: isinstance(s, LiveSpanCall)
         ):
-            app.on_new_root_span(recording=self.recording, root_span=span)
+            app._on_new_root_span(recording=self.recording, root_span=span)
 
-        app.on_new_recording_span(recording_span=self)
+        app._on_new_recording_span(recording_span=self)
 
     def otel_name(self) -> str:
         return "trulens.recording"
@@ -1450,7 +1450,7 @@ class _WithInstrumentCallbacks:
         raise NotImplementedError
 
     # Called after recording of an invocation.
-    def on_new_root_span(
+    def _on_new_root_span(
         self,
         ctx: _RecordingContext,
         root_span: LiveSpanCall,
