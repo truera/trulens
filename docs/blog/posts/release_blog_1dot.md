@@ -2,10 +2,6 @@
 categories:
   - General
 date: 2024-08-30
-links:
-  - component_guides/other/trulens_eval_migration.md
-  - reference/index.md
-
 ---
 
 
