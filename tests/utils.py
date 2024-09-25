@@ -668,12 +668,15 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             return True
         if gc.is_finalized(val):
             return True
-        if weakref.CallableProxyType.__instancecheck__(val):
-            return True
-        if weakref.ReferenceType.__instancecheck__(val):
-            return True
-        if weakref.ProxyType.__instancecheck__(val):
-            return True
+        try:
+            if weakref.CallableProxyType.__instancecheck__(val):
+                return True
+            if weakref.ReferenceType.__instancecheck__(val):
+                return True
+            if weakref.ProxyType.__instancecheck__(val):
+                return True
+        except Exception:
+            return False
         if id(val) in visited:
             return True
 
