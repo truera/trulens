@@ -201,6 +201,7 @@ radio_button_css = {
 aggrid_css = {
     **app_rules_styles,
     **cell_rules_styles,
+    ".ag-root-wrapper .ag-opacity-zero": {"display": "none !important"},
     ".ag-row .ag-cell": {
         "display": "flex",
         "align-items": "center",
