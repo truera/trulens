@@ -375,7 +375,7 @@ class SQLAlchemyDB(DB):
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
                 for r in records
             ]
-            session.add_all(records_list)
+            session.bulk_save_objects(records_list)
             logger.info(f"{UNICODE_CHECK} added record batch")
             # return record ids from orm objects
             return [r.record_id for r in records_list]
@@ -550,7 +550,7 @@ class SQLAlchemyDB(DB):
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
                 for f in feedback_results
             ]
-            session.add_all(feedback_results_list)
+            session.bulk_save_objects(feedback_results_list)
             return [f.feedback_result_id for f in feedback_results_list]
 
     def _feedback_query(
@@ -807,7 +807,7 @@ class SQLAlchemyDB(DB):
                     )
                     ground_truths_to_insert.append(new_ground_truth)
 
-            session.add_all(ground_truths_to_insert)
+            session.bulk_save_objects(ground_truths_to_insert)
             return [gt.ground_truth_id for gt in ground_truths]
 
     def get_ground_truth(
