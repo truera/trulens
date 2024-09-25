@@ -243,8 +243,6 @@ class TruSession(
 
             _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
 
-        print("OpenTelemetry exporter set.", self._experimental_otel_exporter)
-
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
         which app type they refer to.

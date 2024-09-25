@@ -869,12 +869,6 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
 
         spans = [root_span]
 
-        print(
-            f"root span {root_span.name} {root_span.context} has",
-            len(root_span.live_children_spans),
-            "children",
-        )
-
         for span in root_span.iter_children(include_phantom=True):
             if isinstance(span, LiveSpanCall):
                 calls.append(self._call_of_spancall(span))

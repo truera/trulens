@@ -41,7 +41,6 @@ class _App(mod_app.App):
                 if isinstance(span, mod_trace.OTELExportable):
                     e_span = span.otel_freeze()
                     to_export.append(e_span)
-                    # print(e_span.name, "->", e_span.__class__.__name__)
                 else:
                     print(f"Warning, span {span.name} is not exportable.")
 
