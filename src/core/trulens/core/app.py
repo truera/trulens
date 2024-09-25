@@ -895,7 +895,7 @@ class App(
             )
 
     # Experimental OTEL WithInstrumentCallbacks requirement
-    def on_new_recording_span(
+    def _on_new_recording_span(
         self,
         recording_span: Any,  # Any = mod_trace.Span,
     ):
@@ -904,7 +904,7 @@ class App(
         return _App.on_new_recording_span(self, recording_span)
 
     # Experimental OTEL WithInstrumentCallbacks requirement
-    def on_new_root_span(
+    def _on_new_root_span(
         self,
         recording: mod_instruments._RecordingContext,
         root_span: Any,  # Any = mod_trace.Span,
