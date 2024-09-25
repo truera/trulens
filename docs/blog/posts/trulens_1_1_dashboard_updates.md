@@ -16,7 +16,7 @@ An overhaul of the TruLens dashboard has been released with major features and i
 
 ### Global Enhancements
 
-![The New TruLens Dashboard](../assets/dashboard_global_features.gif)
+![The New TruLens Dashboard](../assets/trulens_1_1_dashboard_updates/dashboard_global_features.gif)
 
 #### Global app selector
 
@@ -34,7 +34,7 @@ Furthermore, all record and app data is now cached locally, reducing network lat
 
 ### Leaderboard
 
-![Leaderboard enhancements](../assets/leaderboard_metadata.gif)
+![Leaderboard enhancements](../assets/trulens_1_1_dashboard_updates/leaderboard_metadata.gif)
 
 The leaderboard is now displayed in a tabular format, with each row representing a different application version. The grid data can be sorted and filtered.
 
@@ -58,19 +58,19 @@ This update introduces a brand-new comparison page that enables the comparison o
 
 #### App-level comparison
 
-![App-level comparison](../assets/compare_app.png)
+![App-level comparison](../assets/trulens_1_1_dashboard_updates/compare_app.png)
 
 The comparison view allows performance comparisons across different app versions side by side. The aggregate feedback function results for each app version is plotted across each of the shared feedback functions, making it easy to see how the performance  has changed.
 
 #### Record-level comparison
 
-![Record-level comparison](../assets/compare_record.png)
+![Record-level comparison](../assets/trulens_1_1_dashboard_updates/compare_record.png)
 
 To deep dive into the performance of individual records, the comparison view also allows comparison of overlapping records side by side. The dashboard computes a diff or variance score (depending on the number of apps compared against) to identify interesting or anomalous records which have the most significant performance differences. In addition to viewing the distribution of feedback scores, this page also displays the trace data of each record side by side.
 
 ### Records Page
 
-![Records Page Flow](../assets/record_page.gif)
+![Records Page Flow](../assets/trulens_1_1_dashboard_updates/record_page.gif)
 
 The records page has been updated to include a more intuitive flow for viewing and comparing records. The page now includes a search bar to quickly find specific records as well as matching app metadata filters.
 
