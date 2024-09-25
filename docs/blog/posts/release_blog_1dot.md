@@ -1,15 +1,21 @@
 ---
 categories:
   - General
-  - Release
 date: 2024-08-30
+links:
+  - component_guides/other/trulens_eval_migration.md
+  - reference/index.md
+
 ---
 
 
 # Moving to TruLens v1: Reliable and Modular Logging and Evaluation
 
-It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (`trulens-explain`) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint. Today we’re announcing an extensive re-architecture of TruLens that aims to give developers a stable, modular platform for logging and evaluation they can rely on.
+It has always been our goal to make it easy to build trustworthy LLM applications. Since we launched last May, the package has grown up before our eyes, morphing from a hacked-together addition to an existing project (`trulens-explain`) to a thriving, agnostic standard for tracking and evaluating LLM apps. Along the way, we’ve experienced growing pains and discovered inefficiencies in the way TruLens was built. We’ve also heard that the reasons people use TruLens today are diverse, and many of its use cases do not require its full footprint.
 
+Today we’re announcing an extensive re-architecture of TruLens that aims to give developers a stable, modular platform for logging and evaluation they can rely on.
+
+<!-- more -->
 
 ## **Split off trulens-eval from trulens-explain**
 
