@@ -1,5 +1,6 @@
 from trulens.core import experimental as mod_experimental
 from trulens.core.session import TruSession
+from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
 
@@ -20,7 +21,7 @@ class _TruSession(TruSession):
         ), "otel_exporter must be an OpenTelemetry SpanExporter."
 
         print(
-            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {_experimental_otel_exporter.__class__.__name__}"
+            f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {python_utils.class_name(_experimental_otel_exporter.__class__)}"
         )
 
         self._experimental_otel_exporter = _experimental_otel_exporter

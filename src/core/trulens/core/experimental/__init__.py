@@ -275,6 +275,8 @@ class _WithExperimentalSettings(
         # NOTE(piotrm): The printouts are important as we want to make sure the
         # user is aware that they are using a experimental feature.
 
+        flag = Feature(flag)
+
         was_locked = self._experimental_feature_flags.is_locked(flag)
 
         val = self._experimental_feature_flags.set(flag, value=value, lock=lock)

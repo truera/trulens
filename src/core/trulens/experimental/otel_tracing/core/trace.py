@@ -17,7 +17,6 @@ import inspect
 import logging
 import os
 import random
-import threading
 import threading as th
 from threading import Lock
 import time
@@ -729,10 +728,6 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         if name is None:
             name = python_utils.class_name(cls)
 
-        print(
-            f'{threading.current_thread()} {self} creating span "{name}" {parent_context} -> {new_context}'
-        )
-
         new_span = cls(
             name=name,
             context=new_context,
@@ -1130,7 +1125,6 @@ class TracerProvider(
         schema_url: Optional[str] = None,
         attributes: Optional[ot_types.Attributes] = None,
     ):
-        print("get_tracer", instrumenting_module_name)
         if instrumenting_module_name in self.tracers:
             return self.tracers[instrumenting_module_name]
 
