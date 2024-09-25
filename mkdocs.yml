@@ -173,7 +173,7 @@ theme:
         name: Switch to light mode
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      scheme: trulens
+      scheme: trulens-light
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
@@ -292,6 +292,9 @@ nav:
 #  - Resources:
 #    - NeurIPS Demo: https://truera.github.io/neurips-demo-2021/
 extra:
+  analytics:
+      provider: google
+      property: G-VE9D0QFFKD
   generator: false
 
 extra_css:

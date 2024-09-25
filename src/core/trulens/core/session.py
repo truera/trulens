@@ -41,6 +41,7 @@ from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python
 from trulens.core.utils import serial
 from trulens.core.utils import text as text_utils
+from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.python import Future  # code style exception
@@ -51,7 +52,7 @@ if TYPE_CHECKING:
 
 tqdm = None
 with OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -1044,7 +1045,7 @@ class TruSession(
             if fork:
                 proc = Process(target=runloop)
             else:
-                proc = Thread(target=runloop)
+                proc = threading_utils.Thread(target=runloop)
                 proc.daemon = True
             # Start a persistent thread or process that evaluates feedback functions.
             self._evaluator_proc = proc

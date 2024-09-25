@@ -18,20 +18,28 @@ from unittest import main
 
 from trulens.apps.custom import TruCustomApp
 from trulens.core import Feedback
+from trulens.core.utils.threading import TP
 from trulens.feedback.dummy.provider import DummyProvider
 from trulens.providers.huggingface.provider import Dummy
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests.test import TruTestCase
 
 _GOLDEN_PATH = Path("tests") / "e2e" / "golden"
 
 
-class TestSerial(JSONTestCase):
+class TestSerial(TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
         pass
+
+    def tearDown(self):
+        # Need to shutdown threading pools as otherwise the thread cleanup
+        # checks will fail.
+        TP().shutdown()
+
+        super().tearDown()
 
     def test_app_serial(self):
         """Check that the custom app and products are serialized consistently."""
@@ -110,8 +118,10 @@ class TestSerial(JSONTestCase):
             )
 
         feedbacks = record.wait_for_feedback_results()
+
         for fdef, fres in feedbacks.items():
             name = fdef.name
+
             with self.subTest(step=f"feedback definition {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fdef.model_dump(),
@@ -121,6 +131,7 @@ class TestSerial(JSONTestCase):
                         "id",
                     ]),
                 )
+
             with self.subTest(step=f"feedback result {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fres.model_dump(),

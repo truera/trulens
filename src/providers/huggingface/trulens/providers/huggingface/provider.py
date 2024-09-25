@@ -743,9 +743,11 @@ class Dummy(Huggingface):
     def __init__(
         self,
         name: str = "dummyhugs",
-        error_prob: float = 1 / 100,
+        error_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
+        freeze_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
         rpm: float = 600,

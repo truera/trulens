@@ -50,18 +50,28 @@ class BlockingSet(set, Generic[T]):
         # TODO: unsure if these 2 locks are sufficient to prevent all deadlocks
         self.read_lock = RLock()
         self.write_lock = RLock()
-        self.nonempty = Event()
-        self.nonfull = Event()
+        self.event_nonempty = Event()
+        self.event_nonfull = Event()
+        self.event_shutdown = Event()
 
         if len(self.content) > 0:
-            self.nonempty.set()
+            self.event_nonempty.set()
 
         if len(self.content) < self.max_size:
-            self.nonfull.set()
+            self.event_nonfull.set()
 
     def empty(self) -> bool:
         """Check if the set is empty."""
         return len(self.content) == 0
+
+    def __del__(self):
+        self.shutdown()
+
+    def shutdown(self):
+        """Shutdown the set."""
+
+        self.event_shutdown.set()
+        self.event_nonempty.set()  # Unblock any waiting threads
 
     def peek(self) -> T:
         """Get an item from the set.
@@ -70,7 +80,10 @@ class BlockingSet(set, Generic[T]):
         """
 
         with self.read_lock:
-            self.nonempty.wait()
+            self.event_nonempty.wait()
+            if self.event_shutdown.is_set():
+                raise StopIteration("Set is shutdown.")
+
             return next(iter(self.content))
 
     def remove(self, item: T):
@@ -78,10 +91,10 @@ class BlockingSet(set, Generic[T]):
         with self.write_lock:
             self.content.remove(item)
 
-            self.nonfull.set()
+            self.event_nonfull.set()
 
             if len(self.content) == 0:
-                self.nonempty.clear()
+                self.event_nonempty.clear()
 
     def pop(self) -> T:
         """Get and remove an item from the set.
@@ -90,13 +103,16 @@ class BlockingSet(set, Generic[T]):
         """
 
         with self.read_lock:
-            self.nonempty.wait()
+            self.event_nonempty.wait()
+
+            if self.event_shutdown.is_set():
+                raise StopIteration("Set is shutdown.")
 
             item = next(iter(self.content))
             self.content.remove(item)
 
             if len(self.content) == 0:
-                self.nonempty.clear()
+                self.event_nonempty.clear()
 
         return item
 
@@ -107,12 +123,12 @@ class BlockingSet(set, Generic[T]):
         """
 
         with self.write_lock:
-            self.nonfull.wait()
+            self.event_nonfull.wait()
             self.content.add(item)
 
-            self.nonempty.set()
+            self.event_nonempty.set()
             if len(self.content) >= self.max_size:
-                self.nonfull.clear()
+                self.event_nonfull.clear()
 
 
 # Collection utilities
