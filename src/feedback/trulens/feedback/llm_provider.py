@@ -1451,7 +1451,7 @@ class LLMProvider(Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
-        use_sent_tokenize: bool = False,
+        use_sent_tokenize: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
