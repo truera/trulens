@@ -380,7 +380,7 @@ class _WithExperimentalSettings(
     # Enable for this instance when creating it:
     val = {self.__class__.__name__}(experimental_feature_flags=[{flag}]
 
-    # Enable for this instance after it has been crated (for features that allows this):
+    # Enable for this instance after it has been created (for features that allows this):
     val.experimental_enable_feature({flag})
     ```
 """

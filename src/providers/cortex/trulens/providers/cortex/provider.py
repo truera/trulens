@@ -14,7 +14,7 @@ class Cortex(
 ):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
 
     model_engine: str
     endpoint: CortexEndpoint

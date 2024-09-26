@@ -411,13 +411,13 @@ files = [
 
 [[package]]
 name = "langchain-core"
-version = "0.3.5"
+version = "0.3.6"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "langchain_core-0.3.5-py3-none-any.whl", hash = "sha256:2b5f86c1101beb013cb264c5722ad21931641493b4dc86e6f0575da698bf5cff"},
-    {file = "langchain_core-0.3.5.tar.gz", hash = "sha256:67e5510559454f3f7a0526e7ef91fd0f12b45c0cdc70720e44909f62b5becf5a"},
+    {file = "langchain_core-0.3.6-py3-none-any.whl", hash = "sha256:7bb3df0117bdc628b18b6c8748de72c6f537d745d47566053ce6650d5712281c"},
+    {file = "langchain_core-0.3.6.tar.gz", hash = "sha256:eb190494a5483f1965f693bb2085edb523370b20fc52dc294d3bd425773cd076"},
 ]
 
 [package.dependencies]
@@ -1480,7 +1480,7 @@ develop = false
 
 [package.dependencies]
 alembic = "^1.8.1"
-dill = "^0.3.8"
+dill = ">=0.3.8"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = ">=1.23"

@@ -65,14 +65,14 @@ if sys.version_info >= (3, 9):
     Future = futures.Future
     """Alias for [concurrent.futures.Future][].
 
-    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+    In python < 3.9, a subclass of [concurrent.futures.Future][] with
     `Generic[A]` is used instead.
     """
 
     Queue = queue.Queue
     """Alias for [queue.Queue][] .
 
-    In python < 3.9, a sublcass of [queue.Queue][] with
+    In python < 3.9, a subclass of [queue.Queue][] with
     `Generic[A]` is used instead.
     """
 
@@ -87,7 +87,7 @@ else:
     class Future(Generic[A], futures.Future):
         """Alias for [concurrent.futures.Future][].
 
-        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
+        In python < 3.9, a subclass of [concurrent.futures.Future][] with
         `Generic[A]` is used instead.
         """
 
@@ -95,7 +95,7 @@ else:
     class Queue(Generic[A], queue.Queue):
         """Alias for [queue.Queue][] .
 
-        In python < 3.9, a sublcass of [queue.Queue][] with
+        In python < 3.9, a subclass of [queue.Queue][] with
         `Generic[A]` is used instead.
         """
 
@@ -411,7 +411,8 @@ def superstack() -> Iterator[FrameType]:
     across Tasks and threads.
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames = stack_with_tasks()
+    next(iter(frames))  # skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
@@ -442,8 +443,8 @@ def caller_module_name(offset=0) -> str:
     """
     Get the caller's (of this function) module name.
     """
-
-    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+    frame = caller_frame(offset=offset + 1)
+    return frame.f_globals["__name__"]
 
 
 def caller_module(offset=0) -> ModuleType:
@@ -459,8 +460,16 @@ def caller_frame(offset=0) -> FrameType:
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
     """
+    caller_frame = inspect.currentframe()
+    for _ in range(offset + 1):
+        if caller_frame is None:
+            raise RuntimeError("No current frame found.")
+        caller_frame = caller_frame.f_back
 
-    return inspect.stack()[offset + 1].frame
+    if caller_frame is None:
+        raise RuntimeError("No caller frame found.")
+
+    return caller_frame
 
 
 def external_caller_frame(offset=0) -> FrameType:
@@ -470,10 +479,11 @@ def external_caller_frame(offset=0) -> FrameType:
     Raises:
         RuntimeError: If no such frame is found.
     """
-
-    for finfo in inspect.stack()[offset + 1 :]:
-        if not finfo.frame.f_globals["__name__"].startswith("trulens"):
-            return finfo.frame
+    frame = inspect.currentframe()
+    gen = stack_generator(frame=frame, offset=offset + 2)
+    for f_info in gen:
+        if not f_info.f_globals["__name__"].startswith("trulens"):
+            return f_info
 
     raise RuntimeError("No external caller frame found.")
 
@@ -491,11 +501,11 @@ def caller_frameinfo(
         skip_module: Skip frames from the given module. Default is "trulens".
     """
 
-    for finfo in inspect.stack()[offset + 1 :]:
+    for f_info in inspect.stack(0)[offset + 1 :]:
         if skip_module is None:
-            return finfo
-        if not finfo.frame.f_globals["__name__"].startswith(skip_module):
-            return finfo
+            return f_info
+        if not f_info.frame.f_globals["__name__"].startswith(skip_module):
+            return f_info
 
     return None
 
@@ -514,7 +524,8 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
-    stack = [fi.frame for fi in inspect.stack()[2:]]
+    frame = inspect.currentframe()
+    stack = stack_generator(frame=frame, offset=3)
 
     if parent_task is not None:
         stack = merge_stacks(stack, parent_task.get_stack()[::-1])
@@ -559,7 +570,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
 
 
 def merge_stacks(
-    s1: Sequence[FrameType], s2: Sequence[FrameType]
+    s1: Iterable[FrameType], s2: Sequence[FrameType]
 ) -> Sequence[FrameType]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
@@ -568,37 +579,46 @@ def merge_stacks(
 
     ret = []
 
-    while len(s1) > 1:
-        f = s1[0]
-        s1 = s1[1:]
-
+    for f in s1:
         ret.append(f)
         try:
             s2i = s2.index(f)
             for _ in range(s2i):
                 ret.append(s2[0])
                 s2 = s2[1:]
-
         except Exception:
             pass
 
     return ret
 
 
-def stack_with_tasks() -> Sequence[FrameType]:
+def stack_generator(
+    frame: Optional[FrameType] = None, offset: int = 0
+) -> Iterable[FrameType]:
+    if frame is None:
+        frame = inspect.currentframe()
+    for _ in range(offset):
+        if frame is None:
+            raise ValueError("No frame found.")
+        frame = frame.f_back
+    while frame is not None:
+        yield frame
+        frame = frame.f_back
+
+
+def stack_with_tasks() -> Iterable[FrameType]:
     """Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
-
-    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_tasks
-
+    frame = inspect.currentframe()
+    frame_gen = stack_generator(frame=frame, offset=1)
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        return merge_stacks(ret, task_stack)
+        return merge_stacks(frame_gen, task_stack)
 
     except Exception:
-        return ret
+        return frame_gen
 
 
 class _Wrap(Generic[T]):
@@ -619,7 +639,7 @@ class WeakWrapper(Generic[T]):
     """Wrap an object with a weak reference.
 
     This is to be able to use weakref.ref on objects like lists which are
-    otherwise not weakly referencable. The goal of this class is to generalize
+    otherwise not weakly referenceable. The goal of this class is to generalize
     weakref.ref to work with any object."""
 
     obj: weakref.ReferenceType[Union[_Wrap[T], T]]
@@ -637,7 +657,7 @@ class WeakWrapper(Generic[T]):
                 self.obj = weakref.ref(obj)
 
             except Exception:
-                # If its a list or other non-weakly referencable object, wrap it.
+                # If its a list or other non-weakly referenceable object, wrap it.
                 self.obj = weakref.ref(_Wrap(obj))
 
     def get(self) -> T:
@@ -703,13 +723,16 @@ def get_all_local_in_call_stack(
     [TP][trulens.core.utils.threading.TP].
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames_gen = stack_with_tasks()
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = queue.Queue()
-    for f in frames:
+    for i, f in enumerate(frames_gen):
+        if i == 0:
+            # skip this method itself
+            continue
         q.put(f)
 
     while not q.empty():
@@ -1072,7 +1095,7 @@ def wrap_lazy(
     callbacks at various points in the generation process.
 
     Args:
-        gen: The lazy value.
+        obj: The lazy value.
 
         on_start: The callback to call when the wrapper is created.
 

@@ -727,13 +727,13 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "faker"
-version = "29.0.0"
+version = "30.0.0"
 description = "Faker is a Python package that generates fake data for you."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "Faker-29.0.0-py3-none-any.whl", hash = "sha256:32d0ee7d42925ff06e4a7d906ee7efbf34f5052a41a2a1eb8bb174a422a5498f"},
-    {file = "faker-29.0.0.tar.gz", hash = "sha256:34e89aec594cad9773431ca479ee95c7ce03dd9f22fda2524e2373b880a2fa77"},
+    {file = "Faker-30.0.0-py3-none-any.whl", hash = "sha256:f0a60009150736c1c033bea31aa19ae63071c9dcf10adfaf9f1a87a3add84bc8"},
+    {file = "faker-30.0.0.tar.gz", hash = "sha256:bf0207af5777950054a2a3b43f4b5bdc33b585918d2b28f1dab52ac0ffe2bac0"},
 ]
 
 [package.dependencies]
@@ -2719,13 +2719,13 @@ twisted = ["twisted"]
 
 [[package]]
 name = "prompt-toolkit"
-version = "3.0.47"
+version = "3.0.48"
 description = "Library for building powerful interactive command lines in Python"
 optional = false
 python-versions = ">=3.7.0"
 files = [
-    {file = "prompt_toolkit-3.0.47-py3-none-any.whl", hash = "sha256:0d7bfa67001d5e39d02c224b663abc33687405033a8c422d0d675a5a13361d10"},
-    {file = "prompt_toolkit-3.0.47.tar.gz", hash = "sha256:1e1b29cb58080b1e69f207c893a1a7bf16d127a5c30c9d17a25a5d77792e5360"},
+    {file = "prompt_toolkit-3.0.48-py3-none-any.whl", hash = "sha256:f49a827f90062e411f1ce1f854f2aedb3c23353244f8108b89283587397ac10e"},
+    {file = "prompt_toolkit-3.0.48.tar.gz", hash = "sha256:d6623ab0477a80df74e646bdbc93621143f5caf104206aa29294d53de1a03d90"},
 ]
 
 [package.dependencies]
@@ -4309,13 +4309,13 @@ url = "../.."
 
 [[package]]
 name = "trulens-core"
-version = "1.0.3"
+version = "1.0.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "trulens_core-1.0.3-py3-none-any.whl", hash = "sha256:68a13cc3ef0d6a1403cc887b963977fa82eb60a7ef5bc9d23a4f65f548a8ea51"},
-    {file = "trulens_core-1.0.3.tar.gz", hash = "sha256:8c19ed883c448053a65b72847dc2181e48d9e3404b8e7b91fd9b0e3b08e51899"},
+    {file = "trulens_core-1.0.4-py3-none-any.whl", hash = "sha256:623a960d32b1f5385c1ad34355a3ce05027da871a22cc754ddc223794c7ff035"},
+    {file = "trulens_core-1.0.4.tar.gz", hash = "sha256:9c1b2966036f3f85a5e28ddd1840349a47cf1e714ee16cb851ddea8e6333232e"},
 ]
 
 [package.dependencies]
@@ -4333,13 +4333,13 @@ typing_extensions = ">=4.9,<5.0"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.0.3"
+version = "1.0.4"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,!=3.8.*,>=3.9"
 files = [
-    {file = "trulens_dashboard-1.0.3-py3-none-any.whl", hash = "sha256:f3cbfdba6cb46e6e7be3843be648609d89724cebe9b69e87a8ff0a6146f2a707"},
-    {file = "trulens_dashboard-1.0.3.tar.gz", hash = "sha256:b3ba2c3c0b4142163a28f7ff0b2b9cf4675326eef7482dbf275676b1ca618594"},
+    {file = "trulens_dashboard-1.0.4-py3-none-any.whl", hash = "sha256:5ac80c41441169bc057b2622a2fcfac886620696d3b6e7954139a7c19bf01d2e"},
+    {file = "trulens_dashboard-1.0.4.tar.gz", hash = "sha256:07da7d1e8142da2bf6dd31eabac2a3436e9fcc09a1e37374c4ab6c4127b9868b"},
 ]
 
 [package.dependencies]
@@ -4357,13 +4357,13 @@ trulens-core = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.3"
+version = "1.0.4"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "trulens_feedback-1.0.3-py3-none-any.whl", hash = "sha256:b145b6be453f2896c685ba57795af5f093e013d3d4ae5f9acb72bdcf90f57c2c"},
-    {file = "trulens_feedback-1.0.3.tar.gz", hash = "sha256:803723d9dfbe497921cf4dba1281038aacfe13858f4082af02b3e66e3a0dec2d"},
+    {file = "trulens_feedback-1.0.4-py3-none-any.whl", hash = "sha256:2da8684a6bcfa300ba4b4baea17cbc8c187eca801c9154102ec601652161a652"},
+    {file = "trulens_feedback-1.0.4.tar.gz", hash = "sha256:033696014ac95e762f3b4dd41771874f6f21a8ac8c985be65e56947045d8c592"},
 ]
 
 [package.dependencies]

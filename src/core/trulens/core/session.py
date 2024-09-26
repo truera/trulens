@@ -101,8 +101,7 @@ class TruSession(
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector]
             is created.
 
-        experimental_feature_flags: Experimental feature flags. See
-            [ExperimentalSettings][trulens.core.experimental.ExperimentalSettings].
+        experimental_feature_flags: Experimental feature flags.
 
         **kwargs: All other arguments are used to initialize
             [DefaultDBConnector][trulens.core.database.connector.default.DefaultDBConnector].

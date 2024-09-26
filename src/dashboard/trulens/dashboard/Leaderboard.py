@@ -612,10 +612,6 @@ def _render_list_tab(
             cost_col,
             select_app_col,
         ) = st.columns([1, 1, 1, 1, 1])
-        feedback_cols = st.columns(
-            min(len(app_feedback_col_names), max_feedback_cols)
-        )
-
         n_records_col.metric("Records", app_row["Records"])
 
         latency_mean = app_row["Average Latency"]
@@ -647,41 +643,43 @@ def _render_list_tab(
             ),
         )
 
-        col_counter = 0
-        for col_name in app_feedback_col_names:
-            mean = app_row[col_name]
-            if mean is None or pd.isna(mean):
-                continue
-            col = feedback_cols[col_counter % max_feedback_cols]
-            col_counter += 1
-            feedback_container = col.container(border=True)
+        if len(app_feedback_col_names) > 0:
+            feedback_cols = st.columns(
+                min(len(app_feedback_col_names), max_feedback_cols)
+            )
+            for i, col_name in enumerate(app_feedback_col_names):
+                mean = app_row[col_name]
+                if mean is None or pd.isna(mean):
+                    continue
+                col = feedback_cols[i % max_feedback_cols]
+                feedback_container = col.container(border=True)
 
-            higher_is_better = feedback_directions.get(col_name, True)
+                higher_is_better = feedback_directions.get(col_name, True)
 
-            if "distance" in col_name:
-                feedback_container.metric(
-                    label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta_color="normal",
-                )
-            else:
-                cat: Category = CATEGORY.of_score(
-                    mean, higher_is_better=higher_is_better
-                )
-                feedback_container.metric(
-                    label=col_name,
-                    value=f"{round(mean, 2)}",
-                    delta=f"{cat.icon} {cat.adjective}",
-                    delta_color=(
-                        "normal"
-                        if cat.compare
-                        and cat.direction
-                        and cat.compare(
-                            mean, CATEGORY.PASS[cat.direction].threshold
-                        )
-                        else "inverse"
-                    ),
-                )
+                if "distance" in col_name:
+                    feedback_container.metric(
+                        label=col_name,
+                        value=f"{round(mean, 2)}",
+                        delta_color="normal",
+                    )
+                else:
+                    cat: Category = CATEGORY.of_score(
+                        mean, higher_is_better=higher_is_better
+                    )
+                    feedback_container.metric(
+                        label=col_name,
+                        value=f"{round(mean, 2)}",
+                        delta=f"{cat.icon} {cat.adjective}",
+                        delta_color=(
+                            "normal"
+                            if cat.compare
+                            and cat.direction
+                            and cat.compare(
+                                mean, CATEGORY.PASS[cat.direction].threshold
+                            )
+                            else "inverse"
+                        ),
+                    )
 
         with select_app_col:
             if st.button(
@@ -699,6 +697,9 @@ def _render_list_tab(
 
 @st.fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
+    if len(feedback_col_names) == 0:
+        st.warning("No feedback functions found.")
+        return
     if HIDE_RECORD_COL_NAME in df.columns:
         df = df[~df[HIDE_RECORD_COL_NAME]]
     cols = 4
@@ -750,6 +751,11 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
 
 
 def render_leaderboard(app_name: str):
+    """Renders the Leaderboard page.
+
+    Args:
+        app_name (str): The app name to render the leaderboard for.
+    """
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
@@ -772,7 +778,7 @@ def render_leaderboard(app_name: str):
     if records_df.empty:
         st.error(f"No records found for app `{app_name}`.")
         return
-    elif records_limit is not None:
+    elif records_limit is not None and len(records_df) >= records_limit:
         cols = st.columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Computed from the last {records_limit} records.",
