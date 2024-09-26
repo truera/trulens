@@ -1062,7 +1062,7 @@ def wrap_lazy(
     callbacks at various points in the generation process.
 
     Args:
-        gen: The lazy value.
+        obj: The lazy value.
 
         on_start: The callback to call when the wrapper is created.
 
