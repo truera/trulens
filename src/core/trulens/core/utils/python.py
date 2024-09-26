@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from concurrent import futures
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
@@ -35,6 +36,8 @@ from typing import (
     Union,
 )
 import weakref
+
+import pydantic
 
 T = TypeVar("T")
 
@@ -1297,3 +1300,84 @@ class SingletonPerName:
             del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
             logger.warning("Instance %s not found in our records.", self)
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, name: Optional[str] = None, **kwargs):
+        """
+        Create the singleton instance if it doesn't already exist and return it.
+        """
+        k = cls.__name__, name
+
+        if k not in cls._instances:
+            logger.debug(
+                "*** Creating new %s singleton instance for name = %s ***",
+                cls.__name__,
+                name,
+            )
+            cls._instances[cls] = super(Singleton, cls).__call__(
+                *args, **kwargs
+            )
+        return cls._instances[cls]
+
+    @staticmethod
+    def delete_singleton_by_name(
+        name: str, cls: Optional[Type[Singleton]] = None
+    ):
+        """
+        Delete the singleton instance with the given name.
+
+        This can be used for testing to create another singleton.
+
+        Args:
+            name: The name of the singleton instance to delete.
+
+            cls: The class of the singleton instance to delete. If not given, all
+                instances with the given name are deleted.
+        """
+
+        for k, v in list(Singleton._instances.items()):
+            if k[1] == name:
+                if cls is not None and v.cls != cls:
+                    continue
+
+                del Singleton._instances[k]
+
+    @staticmethod
+    def delete_singleton(obj: Type[Singleton], name: Optional[str] = None):
+        """
+        Delete the singleton instance. Can be used for testing to create another
+        singleton.
+        """
+        cls_name = (
+            getattr(obj.__class__, "__name__")
+            if hasattr(obj.__class__, "__name__")
+            else None
+        )
+        k = cls_name, name
+        if k in Singleton._instances:
+            del Singleton._instances[k]
+        else:
+            logger.warning("Instance %s not found:", obj)
+
+
+class PydanticSingleton(type(pydantic.BaseModel), Singleton):
+    pass
+
+
+class InstanceTrackerMixin:
+    _instances: Dict[
+        Type, List[weakref.ReferenceType[InstanceTrackerMixin]]
+    ] = defaultdict(list)
+
+    def __init__(self):
+        self._instances[self.__class__].append(weakref.ref(self))
+
+    @classmethod
+    def get_instances(cls):
+        for inst_ref in cls._instances[cls]:
+            inst = inst_ref()
+            if inst is not None:
+                yield inst

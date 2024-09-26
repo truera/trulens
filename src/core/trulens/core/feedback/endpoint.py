@@ -31,7 +31,6 @@ from trulens.core.utils import pace as mod_pace
 from trulens.core.utils import python as python_utils
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import Thunk
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name
@@ -99,7 +98,7 @@ class EndpointCallback(SerialModel):
         self.cost.n_embedding_requests += 1
 
 
-class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
+class Endpoint(WithClassInfo, SerialModel):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
@@ -206,10 +205,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
     )
     _context_endpoints.set({})
 
-    def __new__(cls, *args, name: Optional[str] = None, **kwargs):
-        name = name or cls.__name__
-        return super().__new__(cls, *args, name=name, **kwargs)
-
     def __str__(self):
         # Have to override str/repr due to pydantic issue with recursive models.
         return f"Endpoint({self.name})"
@@ -226,10 +221,6 @@ class Endpoint(WithClassInfo, SerialModel, SingletonPerName):
         callback_class: Optional[Any] = None,
         **kwargs,
     ):
-        if safe_hasattr(self, "rpm"):
-            # already initialized via the SingletonPerName mechanism
-            return
-
         if callback_class is None:
             # Some old databases do not have this serialized so lets set it to
             # the parent of callbacks and hope it never gets used.

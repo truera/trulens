@@ -144,9 +144,6 @@ class BedrockEndpoint(Endpoint):
     # class not statically known
     client: Any = pydantic.Field(None, exclude=True)
 
-    def __new__(cls, *args, **kwargs):
-        return super().__new__(cls, *args, name="bedrock", **kwargs)
-
     def __str__(self) -> str:
         return f"BedrockEndpoint(region_name={self.region_name})"
 

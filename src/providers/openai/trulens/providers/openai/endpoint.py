@@ -266,16 +266,6 @@ class OpenAIEndpoint(Endpoint):
         pace: Optional[Pace] = None,
         **kwargs: dict,
     ):
-        if python_utils.safe_hasattr(self, "name") and client is not None:
-            # Already created with SingletonPerName mechanism
-            if len(kwargs) != 0:
-                logger.warning(
-                    "OpenAIClient singleton already made, ignoring arguments %s",
-                    kwargs,
-                )
-                self.warning()  # issue info about where the singleton was originally created
-            return
-
         self_kwargs = {
             "name": name,  # for SingletonPerName
             "rpm": rpm,
@@ -316,9 +306,6 @@ class OpenAIEndpoint(Endpoint):
         self._instrument_module_members(openai, "create")
         self._instrument_module_members(resources, "create")
         self._instrument_module_members(chat, "create")
-
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
         self,
