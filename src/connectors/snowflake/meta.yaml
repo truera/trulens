@@ -22,10 +22,10 @@ requirements:
   run:
     - python >=3.9,<3.12
     - trulens-core >=1.0.0,<2.0.0
-    - snowflake-core >=1.0.0,<0.10.0
     - snowflake-connector-python >=3.11.0,<4.0.0
     - snowflake-snowpark-python >=1.18.0,<2.0.0
     - snowflake-sqlalchemy >=1.6.0,<2.0.0
+    - snowflake.core >=1.0.0,<0.10.0
 
 test:
   imports:
