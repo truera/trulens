@@ -15,6 +15,7 @@ import pandas as pd
 import pydantic
 import scipy.stats as stats
 from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
@@ -819,6 +820,25 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         y = np.array(self.true_labels)
 
         return stats.pearsonr(x, y)[0]
+
+    def matthews_correlation(self, scores: List[float] | List[List]) -> float:
+        """
+        Calculate the Matthews correlation coefficient. Can be used for meta-evaluation.
+        The Matthews correlation coefficient is used in machine learning as a measure of the quality of binary and multiclass classifications.
+
+        Args:
+            scores (List[float]): scores returned by feedback function
+
+        Returns:
+            float: Matthews correlation coefficient
+
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+        x = np.array(scores)
+        y = np.array(self.true_labels)
+
+        return matthews_corrcoef(y, x)
 
     def cohens_kappa(
         self, scores: List[float] | List[List], threshold=0.5
