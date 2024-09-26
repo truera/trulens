@@ -13,7 +13,7 @@ These packages are installed when installing the main `trulens` package.
 
 - `trulens-dashboard` installs [dashboard][trulens.dashboard].
 
-- `trulens_eval` installs [trulens_eval](trulens_eval), a temporary package for backwards compatibility.
+- `trulens_eval` installs [trulens_eval](trulens_eval/index.md), a temporary package for backwards compatibility.
 
 Three categories of optional packages contain integrations with 3rd party app
 types and providers:

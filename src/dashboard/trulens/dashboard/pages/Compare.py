@@ -653,6 +653,11 @@ def _reset_page_state():
 
 
 def render_app_comparison(app_name: str):
+    """Render the Compare page.
+
+    Args:
+        app_name (str): The name of the app to display app versions for comparison.
+    """
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
