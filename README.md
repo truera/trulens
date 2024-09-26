@@ -3,7 +3,7 @@
 ![GitHub](https://img.shields.io/github/license/truera/trulens)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/trulens)
 [![Slack](https://img.shields.io/badge/slack-join-green?logo=slack)](https://communityinviter.com/apps/aiqualityforum/josh)
-[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/trulens/getting_started/)
+[![Docs](https://img.shields.io/badge/docs-trulens.org-blue)](https://www.trulens.org/getting_started/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/truera/trulens/blob/main/examples/quickstart/langchain_quickstart.ipynb)
 
 # 🦑 Welcome to TruLens!
@@ -19,9 +19,9 @@ Fine-grained, stack-agnostic instrumentation and comprehensive evaluations help
 you to identify failure modes & systematically iterate to improve your
 application.
 
-Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/trulens/getting_started/core_concepts/feedback_functions/),
-[The RAG Triad](https://www.trulens.org/trulens/getting_started/core_concepts/rag_triad/),
-and [Honest, Harmless and Helpful Evals](https://www.trulens.org/trulens/getting_started/core_concepts/honest_harmless_helpful_evals/).
+Read more about the core concepts behind TruLens including [Feedback Functions](https://www.trulens.org/getting_started/core_concepts/feedback_functions/),
+[The RAG Triad](https://www.trulens.org/getting_started/core_concepts/rag_triad/),
+and [Honest, Harmless and Helpful Evals](https://www.trulens.org/getting_started/core_concepts/honest_harmless_helpful_evals/).
 
 ## TruLens in the development workflow
 
