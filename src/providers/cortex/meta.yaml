@@ -1,5 +1,5 @@
 {% set name = "trulens-providers-cortex" %}
-{% set version = "1.0.3" %}
+{% set version = "1.0.6" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: a332d85922abe1a70329c1441c0a6048b60bd9528006f3e77d417b53a0e0d9eb
+  sha256: fe5b9bb8e1042183baadf366e8410356acd331901112a272c2961f7af0352ace
 
 build:
   noarch: python
