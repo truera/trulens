@@ -328,6 +328,7 @@ def _build_grid_options(
         "input",
         header_name="Input",
         resizable=True,
+        wrapText=True,
         pinned="left",
         flex=3,
         filter="agMultiColumnFilter",
