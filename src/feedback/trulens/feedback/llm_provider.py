@@ -1615,6 +1615,10 @@ class LLMProvider(Provider):
                 temperature=temperature,
             )
 
+            normalized_score = (score - min_score_val) / (
+                max_score_val - min_score_val
+            )
+
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
             match = score_pattern.search(reason["reason"])
             if match:
@@ -1631,7 +1635,7 @@ class LLMProvider(Provider):
                     "reason"
                 ].replace(original_string, replacement_string)
 
-            return index, score, normalized_reason
+            return index, normalized_score, normalized_reason
 
         results = []
 
@@ -1659,6 +1663,8 @@ class LLMProvider(Provider):
         average_groundedness_score = float(
             np.mean(list(groundedness_scores.values()))
         )
+
+        print(reasons_str)
 
         return average_groundedness_score, {"reasons": reasons_str}
 
