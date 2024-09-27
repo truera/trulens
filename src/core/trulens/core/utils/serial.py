@@ -1109,10 +1109,10 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 Lens.model_rebuild()
 
 
-class LensedDict(dict):
+class LensedDict(dict, Generic[T]):
     """A dictionary which can be accessed using lenses."""
 
-    def __setitem__(self, __name: Union[str, Lens], __value: Any) -> None:
+    def __setitem__(self, __name: Union[str, Lens], __value: T) -> None:
         """Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
         if a lens is given."""
 
@@ -1124,7 +1124,7 @@ class LensedDict(dict):
 
         return super().__setitem__(__name, __value)
 
-    def __getitem__(self, __name: Union[Any, Lens]) -> Any:
+    def __getitem__(self, __name: Union[Any, Lens]) -> T:
         if isinstance(__name, Lens):
             return __name.get_sole_item(self)
 

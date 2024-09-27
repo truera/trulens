@@ -12,6 +12,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
+from trulens.experimental.otel_tracing.core import trace as mod_otel
 from trulens.experimental.otel_tracing.core import trace as mod_trace
 
 
@@ -37,7 +38,7 @@ class _App(mod_app.App):
             # Export to otel exporter if exporter was set in workspace.
             to_export = []
             for span in recording_span.iter_family(include_phantom=True):
-                if isinstance(span, mod_trace.OTELExportable):
+                if isinstance(span, mod_otel.Span):
                     e_span = span.otel_freeze()
                     to_export.append(e_span)
                 else:
@@ -110,7 +111,7 @@ class _App(mod_app.App):
             span_ctx=recording_span_ctx,
         )
         recording_span.recording = recording
-        recording_span.start_timestamp = time.time_ns()  # move to trace
+        recording_span._start_timestamp = time.time_ns()  # move to trace
 
         # recording.ctx = ctx
 
@@ -127,8 +128,9 @@ class _App(mod_app.App):
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
+        assert recording.span is not None, "Not in a tracing context."
 
-        recording.span.end_timestamp = time.time_ns()  # move to trace
+        recording.span._end_timestamp = time.time_ns()  # move to trace
 
         self.recording_contexts.reset(recording.token)
         return recording.span_ctx.__exit__(exc_type, exc_value, exc_tb)

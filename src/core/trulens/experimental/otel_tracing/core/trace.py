@@ -16,14 +16,14 @@ import functools
 import inspect
 import logging
 import os
-import random
 import threading as th
 from threading import Lock
-import time
+from types import TracebackType
 from typing import (
     Any,
     Callable,
     Dict,
+    Hashable,
     Iterable,
     List,
     Optional,
@@ -34,14 +34,9 @@ from typing import (
 )
 import uuid
 
-from opentelemetry import context as ot_context
-from opentelemetry.sdk import trace as otsdk_trace
-from opentelemetry.sdk.resources import Resource
 from opentelemetry.semconv.resource import ResourceAttributes
-import opentelemetry.trace as ot_trace
-from opentelemetry.trace import status as trace_status
-import opentelemetry.trace.span as ot_span
-from opentelemetry.util import types as ot_types
+from opentelemetry.trace import span as span_api
+from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as mod_record_schema
@@ -62,67 +57,11 @@ APPS: str = "__tru_apps"
 """Attribute name for storing apps that expect to be notified of calls."""
 
 
-TTimestamp = int
-"""Type of timestamps in spans.
-
-64 bit int representing nanoseconds since epoch as per OpenTelemetry.
-"""
-NUM_TIMESTAMP_BITS = 64
-
-
-def lens_of_flat_key(key: str) -> serial_utils.Lens:
-    """Convert a flat dict key to a lens."""
-    lens = serial_utils.Lens()
-    for step in key.split("."):
-        lens = lens[step]
-
-    return lens
-
-
-class TraceState(serial_utils.SerialModel, ot_span.TraceState):
-    # Hackish: ot_span.TraceState uses _dict internally.
-    _dict: Dict[str, str] = pydantic.PrivateAttr(default_factory=dict)
-
-
-class SpanContext(
-    serial_utils.SerialModel
-):  # should be compatible with ot_span.SpanContext
-    """Identifiers for a span."""
+class SpanContext(mod_otel.SpanContext, Hashable):
+    """TruLens additions on top of OTEL SpanContext to add Hashable and
+    reference to tracer that made the span."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    @staticmethod
-    def new_trace_id():
-        return int(random.getrandbits(128) & ot_span._TRACE_ID_MAX_VALUE)
-
-    # otel requirement
-    trace_id: int = pydantic.Field(default_factory=new_trace_id)
-    """Unique identifier for the trace.
-
-    Each root span has a unique trace id."""
-
-    # otel requirement
-    span_id: int = pydantic.Field(
-        default_factory=lambda: int(
-            random.getrandbits(64) & ot_span._SPAN_ID_MAX_VALUE
-        )
-    )
-    """Identifier for the span.
-
-    Meant to be at least unique within the same trace_id.
-    """
-
-    # otel requirement
-    trace_flags: ot_trace.TraceFlags = ot_trace.TraceFlags(0)
-
-    # otel requirement
-    trace_state: TraceState = pydantic.Field(default_factory=TraceState)
-
-    # otel requirement
-    is_remote: bool = False
-
-    tracer: Tracer = pydantic.Field(exclude=True)
-    """Reference to the tracer that created this span."""
 
     def __str__(self):
         return f"{self.trace_id % 0xFF:02x}/{self.span_id % 0xFF:02x}"
@@ -133,32 +72,40 @@ class SpanContext(
     def __hash__(self):
         return self.trace_id + self.span_id
 
-    def __eq__(self, other):
+    def __eq__(self, other: SpanContextLike):
         if other is None:
             return False
+
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
+    @staticmethod
+    def of_spancontextlike(span_context: SpanContextLike) -> SpanContext:
+        if isinstance(span_context, SpanContext):
+            return span_context
 
-ContextLike = Union[SpanContext, ot_span.SpanContext]
+        elif isinstance(span_context, mod_otel.SpanContext):
+            return SpanContext(
+                trace_id=span_context.trace_id,
+                span_id=span_context.span_id,
+                is_remote=span_context.is_remote,
+            )
+        elif isinstance(span_context, span_api.SpanContext):
+            return SpanContext(
+                trace_id=span_context.trace_id,
+                span_id=span_context.span_id,
+                is_remote=span_context.is_remote,
+            )
+        else:
+            raise ValueError(f"Unrecognized span context type: {span_context}")
 
 
-class Span(
-    serial_utils.SerialModel, ot_span.Span
-):  # ot_span.Span is mostly abstract
-    """An OTEL-compatible span.
+SpanContextLike = Union[SpanContext, mod_otel.SpanContext, span_api.SpanContext]
 
-    See [Span][opentelemetry.trace.Span].
 
-    See also [OpenTelemetry
-    Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
-    [OpenTelemetry Span
-    specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
-    """
+class Span(mod_otel.Span):
+    """TruLens additions on top of OTEL spans."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    # for opentelemetry.trace.Span requirement
-    name: str = "unnamed"
 
     def __str__(self):
         return (
@@ -168,173 +115,44 @@ class Span(
     def __repr__(self):
         return str(self)
 
-    def update_name(self, name: str) -> None:
-        """See [update_name][opentelemetry.trace.span.Span.update_name]."""
-
-        self.name = name
-
-    # for opentelemetry.trace.Span requirement
-    kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL
-    """Kind of span."""
-
-    # for opentelemetry.trace.Span requirement
-    status: trace_status.StatusCode = trace_status.StatusCode.UNSET
-    """Status of the span as per OpenTelemetry Span requirements."""
-
-    def set_status(
-        self,
-        status: Union[ot_span.Status, ot_span.StatusCode],
-        description: Optional[str] = None,
-    ) -> None:
-        """See [set_status][opentelemetry.trace.span.Span.set_status]."""
-
-        if isinstance(status, ot_span.Status):
-            if description is not None:
-                raise ValueError(
-                    "Ambiguous status description provided both in `status.description` and in `description`."
-                )
-
-            self.status = status.status_code
-            self.status_description = status.description
-        else:
-            self.status = status
-            self.status_description = description
-
-    # for opentelemetry.trace.Span requirement
-    status_description: Optional[str] = None
-    """Status description as per OpenTelemetry Span requirements."""
-
-    # for opentelemetry.trace.Span requirement
-    events: List[Tuple[str, ot_types.Attributes, TTimestamp]] = pydantic.Field(
-        default_factory=list
-    )
-    """Events recorded in the span.
-
-    !!! Warning
-
-        Events in OpenTelemetry seem to be synonymous to logs. Do not store
-        anything we want to query or process in events.
-    """
-
-    def add_event(
-        self,
-        name: str,
-        attributes: ot_types.Attributes = None,
-        timestamp: Optional[TTimestamp] = None,
-    ) -> None:
-        """See [add_event][opentelemetry.trace.span.Span.add_event]."""
-
-        self.events.append((name, attributes, timestamp or time.time_ns()))
-
-    # for opentelemetry.trace.Span requirement
-    links: Dict[SpanContext, ot_types.Attributes] = pydantic.Field(
-        default_factory=dict
-    )
-    """Relationships to other spans with attributes on each link."""
-
-    def add_link(
-        self,
-        context: ot_span.SpanContext,
-        attributes: ot_types.Attributes = None,
-    ) -> None:
-        """See [add_link][opentelemetry.trace.span.Span.add_link]."""
-
-        if attributes is None:
-            attributes = {}
-
-        self.links[context] = attributes
-
-    def is_recording(self) -> bool:
-        """See [is_recording][opentelemetry.trace.span.Span.is_recording]."""
-
-        return self.status == trace_status.StatusCode.UNSET
-
-    # for opentelemetry.trace.Span requirement
-    _attributes: Dict[str, Any] = pydantic.PrivateAttr(
+    _lensed_attributes: serial_utils.LensedDict[Any] = pydantic.PrivateAttr(
         default_factory=serial_utils.LensedDict
     )
 
-    @pydantic.computed_field
     @property
-    def attributes(self) -> Dict[str, ot_types.AttributeValue]:
-        return self._attributes
+    def lensed_attributes(self) -> serial_utils.LensedDict[Any]:
+        return self._lensed_attributes
 
-    def set_attributes(
-        self, attributes: Dict[str, ot_types.AttributeValue]
-    ) -> None:
-        """See [set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
+    @property
+    def parent_span(self) -> Optional[Span]:
+        if self.parent is None:
+            return None
 
-        for key, value in attributes.items():
-            self.set_attribute(key, value)
+        if (span := self._tracer.spans.get(self.parent)) is None:
+            return None
 
-    def set_attribute(self, key: str, value: ot_types.AttributeValue) -> None:
-        """See [set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
+        return span
 
-        self.attributes[lens_of_flat_key(key)] = value
+    _children_spans: List[Span] = pydantic.PrivateAttr(default_factory=list)
 
-    # for opentelemetry.trace.Span requirement
-    context: SpanContext = pydantic.Field()
-    """Identifiers."""
-
-    def get_span_context(self) -> ot_span.SpanContext:
-        """See [get_span_context][opentelemetry.trace.span.Span.get_span_context]."""
-
-        return self.context
-
-    # for opentelemetry.trace.Span requirement
-    parent: Optional[SpanContext] = pydantic.Field(None)
-    """Optional parent identifier."""
-
-    live_parent_span: Optional[Span] = pydantic.Field(None, exclude=True)
-    live_children_spans: List[Span] = pydantic.Field(
-        default_factory=list, exclude=True
-    )
-
-    def record_exception(
-        self,
-        exception: Exception,
-        attributes: ot_types.Attributes = None,
-        timestamp: Optional[TTimestamp] = None,
-        escaped: bool = False,
-    ) -> None:
-        """See [record_exception][opentelemetry.trace.span.Span.record_exception]."""
-
-        self.status = trace_status.StatusCode.ERROR
-
-        self.add_event(self.vendor_attr("exception"), attributes, timestamp)
+    @property
+    def children_spans(self) -> List[Span]:
+        return self._children_spans
 
     error: Optional[Exception] = pydantic.Field(None)
     """Optional error if the observed computation raised an exception."""
 
-    start_timestamp: Optional[int] = pydantic.Field(
-        default_factory=time.time_ns
-    )
-    """Start time in nanoseconds since epoch."""
+    def __init__(self, **kwargs):
+        # Convert any contexts to our hashable context class:
+        if (context := kwargs["_context"]) is not None:
+            kwargs["_context"] = SpanContext.of_spancontextlike(context)
+        if (parent := kwargs.get("_parent", None)) is not None:
+            kwargs["_parent"] = SpanContext.of_spancontextlike(parent)
 
-    end_timestamp: Optional[int] = pydantic.Field(None)
-    """End time in nanoseconds since epoch.
+        super().__init__(**kwargs)
 
-    None if not yet finished."""
-
-    def end(self, end_time: Optional[TTimestamp] = None):
-        """See [end][opentelemetry.trace.span.Span.end]"""
-
-        if end_time:
-            self.end_timestamp = end_time
-        else:
-            self.end_timestamp = time.time_ns()
-
-        self.status = trace_status.StatusCode.OK
-
-    @property
-    def tracer(self):
-        return self.context.tracer
-
-    def finish(self):
-        self.end_timestamp = time.time_ns()
-
-    async def afinish(self):
-        self.finish()
+        if (parent_span := self.parent_span) is not None:
+            parent_span.children_spans.append(self)
 
     def iter_children(
         self, transitive: bool = True, include_phantom: bool = False
@@ -349,7 +167,7 @@ class Span(
                 transitive is false.
         """
 
-        for child_span in self.live_children_spans:
+        for child_span in self.children_spans:
             if isinstance(child_span, PhantomSpan) and not include_phantom:
                 # Note that transitive being false is ignored if phantom is skipped.
                 yield from child_span.iter_children(
@@ -384,74 +202,16 @@ class Span(
 
         return total
 
+    async def __aenter__(self) -> Span:
+        return self.__enter__()
 
-class OTELExportable(Span):
-    """Methods for converting a span to an OTEL span."""
-
-    @staticmethod
-    def otel_context_of_context(context: SpanContext) -> ot_span.SpanContext:
-        return ot_span.SpanContext(
-            trace_id=context.trace_id,
-            span_id=context.span_id,
-            is_remote=False,
-        )
-
-    def otel_name(self) -> str:
-        return self.name
-
-    def otel_context(self) -> ot_types.SpanContext:
-        return self.otel_context_of_context(self.context)
-
-    def otel_parent_context(self) -> Optional[ot_types.SpanContext]:
-        if self.parent is None:
-            return None
-        return self.otel_context_of_context(self.parent)
-
-    def otel_attributes(self) -> ot_types.Attributes:
-        return mod_otel.flatten_lensed_attributes(self.attributes)
-
-    def otel_kind(self) -> ot_types.SpanKind:
-        return ot_trace.SpanKind.INTERNAL
-
-    def otel_status(self) -> trace_status.Status:
-        if self.error is not None:
-            return trace_status.Status(
-                status_code=trace_status.StatusCode.ERROR,
-                description=str(self.error),
-            )
-
-        return trace_status.Status(status_code=trace_status.StatusCode.OK)
-
-    def otel_resource_attributes(self) -> Dict[str, Any]:
-        return {
-            "service.namespace": "trulens",
-        }
-
-    def otel_resource(self) -> Resource:
-        return Resource(attributes=self.otel_resource_attributes())
-
-    def otel_freeze(self) -> otsdk_trace.ReadableSpan:
-        """Convert span to an OTEL compatible span for exporting to OTEL collectors.
-
-        !!! Warning
-            This is an experimental feature. OTEL integration is ongoing.
-        """
-
-        return otsdk_trace.ReadableSpan(
-            name=self.otel_name(),
-            context=self.otel_context(),
-            parent=self.otel_parent_context(),
-            resource=self.otel_resource(),
-            attributes=self.otel_attributes(),
-            events=[],
-            links=[],
-            kind=self.otel_kind(),
-            instrumentation_info=None,
-            status=self.otel_status(),
-            start_time=self.start_timestamp,
-            end_time=self.end_timestamp,
-            instrumentation_scope=None,
-        )
+    async def __aexit__(
+        self,
+        exc_type: Optional[BaseException],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        return self.__exit__(exc_type, exc_val, exc_tb)
 
 
 class PhantomSpan(Span):
@@ -470,7 +230,7 @@ class LiveSpan(Span):
     """
 
 
-class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
+class PhantomSpanRecordingContext(PhantomSpan):
     """Tracks the context of an app used as a context manager."""
 
     recording: Optional[Any] = pydantic.Field(None, exclude=True)
@@ -485,13 +245,21 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
 
         return ret
 
-    def finish(self):
-        super().finish()
+    # override
+    def end(self, *args, **kwargs):
+        super().end(*args, **kwargs)
 
         self._finalize_recording()
 
-    async def afinish(self):
-        await super().afinish()
+    # override
+    def record_exception(
+        self,
+        exception: BaseException,
+        attributes: types_api.Attributes = None,
+        timestamp: int | None = None,
+        escaped: bool = False,
+    ) -> None:
+        super().record_exception(exception, attributes, timestamp, escaped)
 
         self._finalize_recording()
 
@@ -511,7 +279,7 @@ class PhantomSpanRecordingContext(PhantomSpan, OTELExportable):
         return "trulens.recording"
 
 
-class SpanCall(OTELExportable):
+class SpanCall(Span):
     """Non-live fields of a function call span."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
@@ -536,8 +304,8 @@ class SpanCall(OTELExportable):
     tid: Optional[int] = None
     """Thread id."""
 
-    def finish(self):
-        super().finish()
+    def end(self):
+        super().end()
 
         self.set_attribute(ResourceAttributes.PROCESS_PID, self.pid)
         self.set_attribute("thread.id", self.tid)  # TODO: semconv
@@ -555,7 +323,6 @@ class LiveSpanCall(LiveSpan, SpanCall):
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    # call: Optional[mod_record_schema.RecordAppCall] = None
     live_obj: Optional[Any] = pydantic.Field(None, exclude=True)
     """Self object if method call."""
 
@@ -588,8 +355,8 @@ class LiveSpanCall(LiveSpan, SpanCall):
     Exclusive with `ret`.
     """
 
-    def finish(self):
-        super().finish()
+    def end(self):
+        super().end()
 
         if self.live_cls is not None:
             self.set_attribute(
@@ -604,14 +371,6 @@ class LiveSpanCall(LiveSpan, SpanCall):
                     self.live_func
                 ).model_dump(),
             )
-
-        """
-        # Redundant with bindings
-        if self.live_args is not None:
-            self.set_attribute("trulens.args", json_utils.jsonify(self.live_args))
-        if self.live_kwargs is not None:
-            self.set_attribute("trulens.kwargs", json_utils.jsonify(self.live_kwargs))
-        """
 
         if self.live_ret is not None:
             self.set_attribute("trulens.ret", json_utils.jsonify(self.live_ret))
@@ -639,8 +398,8 @@ class WithCost(LiveSpan):
     endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
     """Endpoint handling cost extraction for this span/call."""
 
-    def finish(self):
-        super().finish()
+    def end(self):
+        super().end()
 
         self.set_attribute("trulens.cost", self.cost.model_dump())
 
@@ -655,24 +414,23 @@ class LiveSpanCallWithCost(LiveSpanCall, WithCost):
     pass
 
 
-class Tracer(pydantic.BaseModel, ot_trace.Tracer):
-    """OTEL-compatible Tracer.
-
-    See [Tracer][opentelemetry.trace.Tracer].
-    """
+class Tracer(mod_otel.Tracer):
+    """TruLens additions on top of [OTEL Tracer][opentelemetry.trace.Tracer]."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    tracer_provider: TracerProvider
+    # Overrides mod_otel.Tracer._span_class
+    _span_class: Type[Span] = pydantic.PrivateAttr(Span)
 
-    instrumenting_module_name: Optional[str] = None
-    """Name of the library/module that is instrumenting the code."""
+    # Overrides mod_otel.Tracer._span_context_class
+    _span_context_class: Type[SpanContext] = pydantic.PrivateAttr(SpanContext)
 
-    instrumenting_library_version: Optional[str] = None
-    """Version of the library that is instrumenting the code."""
+    @property
+    def spans(self) -> Dict[SpanContext, Span]:
+        return self._tracer_provider.spans
 
-    def __init__(self, tracer_provider: TracerProvider, **kwargs):
-        super().__init__(tracer_provider=tracer_provider, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def __str__(self):
         return f"{type(self).__name__} {self.instrumenting_module_name} {self.instrumenting_library_version}"
@@ -680,103 +438,12 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
     def __repr__(self):
         return str(self)
 
-    @property
-    def context(self):
-        return self.tracer_provider.context
+    def start_span(self, *args, **kwargs):
+        new_span = super().start_span(*args, **kwargs)
 
-    @property
-    def trace_id(self):
-        return self.tracer_provider.trace_id
-
-    @property
-    def spans(self):
-        return self.tracer_provider.spans
-
-    # opentelemetry.trace.Tracer requirement
-    def start_span(
-        self,
-        name: Optional[str] = None,
-        *,
-        context: Optional[ot_context.context.Context] = None,
-        kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL,
-        attributes: ot_trace.types.Attributes = None,
-        links: ot_trace._Links = None,
-        start_time: Optional[int] = None,
-        record_exception: bool = True,
-        set_status_on_exception: bool = True,
-        cls: Optional[Type[Span]] = OTELExportable,  # non-standard attribute
-        **kwargs,  # non-standard attributes
-    ) -> Span:
-        if context is None:
-            parent_context = self.context.get()
-        else:
-            if len(context) != 1:
-                raise ValueError("Only one context span is allowed.")
-            parent_span_encoding = next(iter(context.values()))
-
-            parent_context = SpanContext(
-                trace_id=parent_span_encoding.trace_id,
-                span_id=parent_span_encoding.span_id,
-                tracer=self,
-            )
-
-        new_context = SpanContext(trace_id=self.trace_id, tracer=self)
-
-        if cls is None:
-            cls = OTELExportable
-
-        if name is None:
-            name = python_utils.class_name(cls)
-
-        new_span = cls(
-            name=name,
-            context=new_context,
-            tracer=self,
-            parent=parent_context,
-            **kwargs,
-        )
-
-        self.spans[new_context] = new_span
-
-        if parent_context in self.spans:
-            parent_span = self.spans[parent_context]
-            parent_span.live_children_spans.append(new_span)
-            new_span.live_parent_span = parent_span
+        self.spans[new_span.context] = new_span
 
         return new_span
-
-    # opentelemetry.trace.Tracer requirement
-    @contextlib.contextmanager
-    def start_as_current_span(
-        self,
-        name: Optional[str] = None,
-        *,
-        context: Optional[ot_context.context.Context] = None,
-        kind: ot_trace.SpanKind = ot_trace.SpanKind.INTERNAL,
-        attributes: ot_types.Attributes = None,
-        links: ot_trace._Links = None,
-        start_time: Optional[int] = None,
-        record_exception: bool = True,
-        set_status_on_exception: bool = True,
-        end_on_exit: bool = True,
-    ):
-        span = self.start_span(
-            name=name,
-            context=context,
-            kind=kind,
-            attributes=attributes,
-            links=links,
-            start_time=start_time,
-            record_exception=record_exception,
-            set_status_on_exception=set_status_on_exception,
-        )
-
-        token = self.context.set(span.context)
-
-        yield span
-
-        self.context.reset(token)
-        span.finish()
 
     @staticmethod
     def _fill_stacks(
@@ -919,7 +586,7 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
         """For each family rooted at each child of this span, find the top-most
         span that satisfies the filter."""
 
-        for child_span in span.live_children_spans:
+        for child_span in span.children_spans:
             if span_filter(child_span):
                 yield child_span
             else:
@@ -940,43 +607,25 @@ class Tracer(pydantic.BaseModel, ot_trace.Tracer):
 
     @contextlib.contextmanager
     def _span(self, cls, **kwargs):
-        span = self.start_span(cls=cls, **kwargs)
+        with self.start_span(cls=cls, **kwargs) as span:
+            token = self.context_cvar.set(span.context)
 
-        token = self.context.set(span.context)
+            try:
+                yield span
 
-        try:
-            yield span
-        except BaseException as e:
-            span.error = e
-        finally:
-            self.context.reset(token)
-            span.finish()
-            if span.error is None:
-                span.status = ot_trace.status.StatusCode.OK
-            else:
-                span.status = ot_trace.status.StatusCode.ERROR
-                span.status_description = str(span.error)
-                raise span.error
+            finally:
+                self.context_cvar.reset(token)
 
     @contextlib.asynccontextmanager
     async def _aspan(self, cls, **kwargs):
-        span = self.start_span(cls=cls, **kwargs)
+        async with self.start_span(cls=cls, **kwargs) as span:
+            token = self.context_cvar.set(span.context)
 
-        token = self.context.set(span.context)
+            try:
+                yield span
 
-        try:
-            yield span
-        except BaseException as e:
-            span.error = e
-        finally:
-            self.context.reset(token)
-            await span.afinish()
-            if span.error is None:
-                span.status = ot_trace.status.StatusCode.OK
-            else:
-                span.status = ot_trace.status.StatusCode.ERROR
-                span.status_description = str(span.error)
-                raise span.error
+            finally:
+                self.context_cvar.reset(token)
 
     # context manager
     def recording(self):
@@ -1069,67 +718,58 @@ class NullTracer(Tracer):
         return []
 
 
-class TracerProvider(
-    pydantic.BaseModel, ot_trace.TracerProvider, python_utils.Singleton
-):
-    """OTEL-compatible TracerProvider.
-
-    See [TracerProvider][opentelemetry.trace.TracerProvider].
-    """
+class TracerProvider(mod_otel.TracerProvider, python_utils.Singleton):
+    """TruLens additions on top of [OTEL TracerProvider][opentelemetry.trace.TracerProvider]."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    spans: Dict[SpanContext, Span] = pydantic.Field(
-        default_factory=dict, exclude=True
-    )
-    """Spans are shared across all Tracers."""
-
-    tracers: Dict[str, Tracer] = pydantic.Field(
-        default_factory=dict, exclude=True
-    )
-
-    _context: contextvars.ContextVar[SpanContext] = pydantic.PrivateAttr(
-        default_factory=lambda: contextvars.ContextVar("context", default=None)
-    )
-
-    trace_id: int = pydantic.Field(
-        default_factory=SpanContext.new_trace_id, exclude=True
-    )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        pass
+    _trace_id: int = pydantic.PrivateAttr(default_factory=mod_otel.new_trace_id)
 
     @property
-    def context(self):
-        return self._context
+    def trace_id(self):
+        return self._trace_id
 
-    @contextlib.contextmanager
-    def trace(self):
-        with trulens_tracer().recording() as root:
-            tok = self.context.set(root.context)
-            yield root
+    # Overrides mod_otel.TracerProvider._tracer_class
+    _tracer_class: Type[Tracer] = pydantic.PrivateAttr(default=Tracer)
 
-        self.context.reset(tok)
+    _tracers: Dict[str, Tracer] = pydantic.PrivateAttr(default_factory=dict)
+
+    _spans: Dict[SpanContext, Span] = pydantic.PrivateAttr(default_factory=dict)
+
+    @property
+    def spans(self) -> Dict[SpanContext, Span]:
+        return self._spans
 
     def get_tracer(
         self,
         instrumenting_module_name: str,
         instrumenting_library_version: Optional[str] = None,
         schema_url: Optional[str] = None,
-        attributes: Optional[ot_types.Attributes] = None,
+        attributes: Optional[types_api.Attributes] = None,
     ):
-        if instrumenting_module_name in self.tracers:
-            return self.tracers[instrumenting_module_name]
+        if instrumenting_module_name in self._tracers:
+            return self._tracers[instrumenting_module_name]
 
-        temp = Tracer(
+        tracer = super().get_tracer(
             instrumenting_module_name=instrumenting_module_name,
             instrumenting_library_version=instrumenting_library_version,
-            tracer_provider=self,
+            attributes=attributes,
+            schema_url=schema_url,
         )
 
-        self.tracers[instrumenting_module_name] = temp
-        return temp
+        self._tracers[instrumenting_module_name] = tracer
+
+        return tracer
+
+    """
+    @contextlib.contextmanager
+    def trace(self):
+        with trulens_tracer().recording() as root:
+            tok = self.context_cvar.set(root.context)
+            yield root
+
+        self.context_cvar.reset(tok)
+    """
 
 
 tracer_provider = TracerProvider()
@@ -1143,7 +783,8 @@ def trulens_tracer():
     from trulens.core import __version__
 
     return tracer_provider.get_tracer(
-        "trulens.experimental.otel_tracing.core.trace", __version__
+        instrumenting_module_name="trulens.experimental.otel_tracing.core.trace",
+        instrumenting_library_version=__version__,
     )
 
 
@@ -1198,8 +839,6 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         span.pid = os.getpid()
         span.tid = th.get_native_id()
 
-        span.start_timestamp = time.time_ns()
-
         return temp
 
     def on_callable_end(self):
@@ -1209,8 +848,6 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         span.call_id = self.call_id
         span.func_name = self.func_name
         span.sig = self.sig
-
-        span.end_timestamp = time.time_ns()
 
         # LiveSpanCall attributes
         span.live_obj = self.obj
