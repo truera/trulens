@@ -365,7 +365,7 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info(f"{UNICODE_CHECK} added record %s", _rec.record_id)
+            logger.info(f"{UNICODE_CHECK} added record {_rec.record_id}")
 
             return _rec.record_id
 
