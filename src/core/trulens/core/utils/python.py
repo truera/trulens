@@ -43,6 +43,11 @@ WRAP_LAZY: bool = True
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
 
+if sys.version_info >= (3, 12):
+    pass
+else:
+    pass
+
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static
 else:
