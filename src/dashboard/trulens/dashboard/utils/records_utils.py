@@ -81,22 +81,25 @@ def display_feedback_call(
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
             df = expand_groundedness_df(df)
-        style_highlight_fn = partial(
-            highlight,
-            selected_feedback=feedback_name,
-            feedback_directions=feedback_directions,
-            default_direction=default_direction,
-        )
-        styled_df = df.style.apply(
-            style_highlight_fn,
-            axis=1,
-        )
+        if df.empty:
+            st.warning("No feedback details found.")
+        else:
+            style_highlight_fn = partial(
+                highlight,
+                selected_feedback=feedback_name,
+                feedback_directions=feedback_directions,
+                default_direction=default_direction,
+            )
+            styled_df = df.style.apply(
+                style_highlight_fn,
+                axis=1,
+            )
 
-        # Format only numeric columns
-        for col in df.select_dtypes(include=["number"]).columns:
-            styled_df = styled_df.format({col: "{:.2f}"})
+            # Format only numeric columns
+            for col in df.select_dtypes(include=["number"]).columns:
+                styled_df = styled_df.format({col: "{:.2f}"})
 
-        st.dataframe(styled_df, hide_index=True)
+            st.dataframe(styled_df, hide_index=True)
     else:
         st.warning("No feedback details found.")
 
@@ -105,7 +108,6 @@ def _render_feedback_pills(
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
     selected_row: Optional[pd.Series] = None,
-    key_prefix: str = "",
 ):
     """Render each feedback as pills.
 
@@ -118,11 +120,8 @@ def _render_feedback_pills(
     Returns:
         Any: The feedback pills streamlit component.
     """
-
     if selected_row is not None:
         # Initialize session state for selected feedback if not already set
-        if "selected_feedback" not in st.session_state:
-            st.session_state.selected_feedback = None
 
         def get_icon(feedback_name: str):
             cat = CATEGORY.of_score(
