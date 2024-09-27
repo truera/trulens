@@ -1,5 +1,4 @@
 from functools import partial
-import hashlib
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -112,18 +111,18 @@ def _render_feedback_pills(
 
     Args:
         feedback_col_names (Sequence[str]): The name of the feedback function columns.
-        feedback_directions (Dict[str, bool): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
+        feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
         selected_row (Optional[pd.Series], optional): The selected row (if any). If provided, renders the feedback values. Defaults to None.
         key_prefix (str, optional): A prefix for the streamlit component key. Defaults to "".
 
     Returns:
         Any: The feedback pills streamlit component.
     """
-    if len(feedback_col_names) == 0:
-        st.warning("No feedback details found.")
-        return
 
     if selected_row is not None:
+        # Initialize session state for selected feedback if not already set
+        if "selected_feedback" not in st.session_state:
+            st.session_state.selected_feedback = None
 
         def get_icon(feedback_name: str):
             cat = CATEGORY.of_score(
@@ -146,14 +145,11 @@ def _render_feedback_pills(
         st.warning("No feedback functions found.")
         return
 
-    hash = hashlib.md5(str(feedback_with_valid_results).encode()).hexdigest()
     if selected_row is None:
         return pills(
             "Feedback Functions (click to learn more)",
             feedback_with_valid_results,
             index=None,
-            format_func=lambda fcol: f"{fcol}",
-            key=f"{key_prefix}_pills_{hash}",
         )
 
     return pills(
@@ -162,7 +158,6 @@ def _render_feedback_pills(
         index=None,
         format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
         icons=icons,
-        key=f"{key_prefix}_pills_{selected_row['app_id']}_{hash}",
     )
 
 
