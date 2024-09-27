@@ -115,7 +115,6 @@ def _render_feedback_pills(
         feedback_col_names (Sequence[str]): The name of the feedback function columns.
         feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
         selected_row (Optional[pd.Series], optional): The selected row (if any). If provided, renders the feedback values. Defaults to None.
-        key_prefix (str, optional): A prefix for the streamlit component key. Defaults to "".
 
     Returns:
         Any: The feedback pills streamlit component.
