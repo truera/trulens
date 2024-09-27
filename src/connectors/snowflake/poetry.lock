@@ -1167,19 +1167,20 @@ secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
 name = "snowflake-core"
-version = "0.8.1"
+version = "0.12.1"
 description = "Snowflake Python API for Resource Management"
 optional = false
 python-versions = "<3.12,>=3.8"
 files = [
-    {file = "snowflake_core-0.8.1-py3-none-any.whl", hash = "sha256:ad065847f52773166bdf2962138fe1acbfe1f2220b16c69e4f72d567639fe4e8"},
-    {file = "snowflake_core-0.8.1.tar.gz", hash = "sha256:ab273abd1e3ee3a9336198cc2e1c7f1c39f865026f4d171e4632cadff12b2e6c"},
+    {file = "snowflake_core-0.12.1-py3-none-any.whl", hash = "sha256:14eb7af8d39b405c72b81bb9cbf78d9ff6e30a6df22469112f04e502ab436556"},
+    {file = "snowflake_core-0.12.1.tar.gz", hash = "sha256:e2ce9f23580fda79ba4d14fb3646f4f09bb5fa47ef488b66095e482e4ac45656"},
 ]
 
 [package.dependencies]
 atpublic = ">=4"
 pydantic = ">=2"
 python-dateutil = ">=2.8.2"
+requests = "*"
 snowflake-snowpark-python = ">=1.5.0,<2.0.0"
 urllib3 = "*"
 
@@ -1353,7 +1354,7 @@ develop = true
 
 [package.dependencies]
 alembic = "^1.8.1"
-dill = "^0.3.8"
+dill = ">=0.3.8"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = ">=1.23"
@@ -1423,4 +1424,4 @@ test = ["pytest (>=6.0.0)", "setuptools (>=65)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "14af287086e8879d5845bf3094fe8b12a236931d5317e1df80a511ed4633f307"
+content-hash = "cc0722e31966a2160a55e11a9e524ccdcc629429a4c70a1c7d79a37bb1687585"

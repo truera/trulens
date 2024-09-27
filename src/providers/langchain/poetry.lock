@@ -1480,7 +1480,7 @@ develop = false
 
 [package.dependencies]
 alembic = "^1.8.1"
-dill = "^0.3.8"
+dill = ">=0.3.8"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = ">=1.23"

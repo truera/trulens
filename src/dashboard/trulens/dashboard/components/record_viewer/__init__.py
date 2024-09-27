@@ -44,7 +44,7 @@ else:
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer(record_json, app_json, key=None):
+def record_viewer(record_json, app_json, key=None) -> str:
     """Create a new instance of "record_viewer", which produces a timeline
 
     Args:
@@ -52,7 +52,7 @@ def record_viewer(record_json, app_json, key=None):
         app_json (object): JSON of the app serialized by `json.loads`.
 
     Returns:
-        string: Start time of the selected component in the application. If the whole app is selected,
+        Start time of the selected component in the application. If the whole app is selected,
     """
 
     # Call through to our private component function. Arguments we pass here

@@ -26,12 +26,21 @@ env:
 env-%:
 	poetry install --with $*
 
-env-required:
-	poetry install --only required,tests --sync
+env-tests:
+	poetry run pip install pytest nbconvert nbformat pytest-subtests pytest-azurepipelines ruff pre-commit pytest-cov jsondiff
 
-env-optional:
-	poetry install --with tests,tests-optional --sync --verbose
+env-tests-required:
+	poetry install --only required
+	make env-tests
 
+env-tests-optional: env env-tests
+	poetry run pip install llama-index-embeddings-huggingface llama-index-embeddings-openai
+
+env-tests-db: env-tests
+	poetry run pip install cryptography psycopg2-binary pymysql
+
+env-tests-notebook: env-tests
+	poetry run pip install faiss-cpu ipytree chromadb unstructured llama-index-readers-web
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -156,7 +165,7 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-required
+test-%-required: env-tests-required
 	make test-$*
 
 # Runs required tests, but allows optional dependencies to be installed.
@@ -164,7 +173,7 @@ test-%-allow-optional: env
 	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
-test-%-optional: env-optional
+test-%-optional: env-tests-optional
 	TEST_OPTIONAL=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline

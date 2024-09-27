@@ -372,7 +372,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_record(
         self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
-        """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
+        """See [DB.batch_insert_record][trulens.core.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
@@ -397,7 +397,7 @@ class SQLAlchemyDB(DB):
     def update_app_metadata(
         self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
     ) -> Optional[mod_app_schema.AppDefinition]:
-        """See [DB.get_app_definition][trulens.core.database.base.DB.get_app_definition]."""
+        """See [DB.update_app_metadata][trulens.core.database.base.DB.update_app_metadata]."""
 
         def nested_update(metadata: dict, update: dict):
             for k, v in update.items():
@@ -577,7 +577,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_feedback(
         self, feedback_results: List[mod_feedback_schema.FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
-        """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
+        """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
             feedback_results_list = [
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
@@ -816,7 +816,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_ground_truth(
         self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
     ) -> List[mod_types_schema.GroundTruthID]:
-        """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
+        """See [DB.batch_insert_ground_truth][trulens.core.database.base.DB.batch_insert_ground_truth]."""
         with self.session.begin() as session:
             ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
 

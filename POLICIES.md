@@ -34,13 +34,13 @@ will occur at the introduction of the warning period.
 
 - Starting 1.0, the `trulens_eval` package is being deprecated in favor of
   `trulens` and several associated required and optional packages. See
-  [trulens_eval migration](/trulens/guides/trulens_eval_migration) for details.
+  [trulens_eval migration](/component_guides/other/trulens_eval_migration/) for details.
 
     - Warning period: 2024-09-01 (`trulens-eval==1.0.1`) to 2024-10-14.
     Backwards compatibility during the warning period is provided by the new
     content of the `trulens_eval` package which provides aliases to the features
     in their new locations. See
-    [trulens_eval](trulens/api/trulens_eval/index.md).
+    [trulens_eval](/reference/trulens_eval/index.md).
 
     - Deprecated period: 2024-10-14 to 2025-12-01. Usage of `trulens_eval` will
   	produce errors indicating deprecation.
