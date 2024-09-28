@@ -761,20 +761,11 @@ class TracerProvider(mod_otel.TracerProvider, python_utils.Singleton):
 
         return tracer
 
-    """
-    @contextlib.contextmanager
-    def trace(self):
-        with trulens_tracer().recording() as root:
-            tok = self.context_cvar.set(root.context)
-            yield root
-
-        self.context_cvar.reset(tok)
-    """
-
 
 tracer_provider = TracerProvider()
 """Global tracer provider.
-All traces are mady by this provider.
+All trulens tracers are made by this provider even if a different one is
+configured for OTEL.
 """
 
 

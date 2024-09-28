@@ -29,21 +29,25 @@ from examples.dev.dummy_app.app import DummyApp  # noqa: E402
 
 dotenv.load_dotenv()
 
+print("Initial tracer_provider =", trace.get_tracer_provider())
+
 # Sets the global default tracer provider to be the trulens one.
 trace.set_tracer_provider(TracerProvider())
+
+print("Current tracer_provider =", trace.get_tracer_provider())
 
 # Creates a tracer for custom spans below.
 tracer = trace.get_tracer(__name__)
 
 # Setup zipkin exporter
-exporter = ZipkinExporter(endpoint="http://localhost:9411/api/v2/spans")
+# exporter = ZipkinExporter(endpoint="http://localhost:9411/api/v2/spans")
 
 # Setup session with exporter.
-session = TruSession(_experimental_otel_exporter=exporter)
+# session = TruSession(_experimental_otel_exporter=exporter)
 
 # If not using the exporter, manually enable the otel experimental feature:
-# session = TruSession()
-# session.experimental_enable_feature("otel_tracing")
+session = TruSession()
+session.experimental_enable_feature("otel_tracing")
 
 # Create dummy endpoint for a dummy feedback function:
 dummy_provider = DummyProvider()

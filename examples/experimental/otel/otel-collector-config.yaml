@@ -1,0 +1,29 @@
+# https://opentelemetry.io/docs/languages/python/getting-started/
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+exporters:
+  # NOTE: Prior to v0.86.0 use `logging` instead of `debug`.
+  debug:
+    verbosity: detailed
+processors:
+  batch:
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [batch]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [batch]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
+      processors: [batch]
