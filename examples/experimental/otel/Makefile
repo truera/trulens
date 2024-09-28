@@ -1,11 +1,12 @@
 PYTHON:=python3
 PIP:=pip3
 OTEL_AUTO:=opentelemetry-instrument
+TRULENS_PROVIDER:=trulens.experimental.otel_tracing.core.trace.TracerProvider
 
 # Configure OTEL with environment variables:
 # https://opentelemetry.io/docs/languages/sdk-configuration/general/
 run_with_otel_env:
-	OTEL_PYTHON_TRACER_PROVIDER=trulens.experimenta.otel_tracing.core.trace.TracerProvider \
+	OTEL_PYTHON_TRACER_PROVIDER=$(TRULENS_PROVIDER) \
 		OTEL_SERVICE_NAME=trulens_otel_test_env \
 		OTEL_TRACES_EXPORTER=zipkin \
 		OTEL_METRICS_EXPORTER=none \
@@ -15,10 +16,10 @@ run_with_otel_env:
 # https://opentelemetry.io/docs/zero-code/python/configuration/
 run_with_otel_cmd:
 	$(OTEL_AUTO) \
-		--tracer_provider=trulens.experimenta.otel_tracing.core.trace.TracerProvider \
-		--service_name=trulens_otel_test_cmd \
-		--traces_exporter=zipkin \
-		--metrics_exporter=none \
+		--tracer_provider $(TRULENS_PROVIDER) \
+		--service_name trulens_otel_test_cmd \
+		--traces_exporter zipkin \
+		--metrics_exporter none \
 		$(PYTHON) dummy.py
 
 run_without_otel:

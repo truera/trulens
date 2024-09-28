@@ -154,14 +154,14 @@ def new_span_id():
 
 
 class TraceState(serial_utils.SerialModel, trace_api.span.TraceState):
-    """OTEL [TraceState][opentelemetry.trace.TraceState] requirements."""
+    """[OTEL TraceState][opentelemetry.trace.TraceState] requirements."""
 
     # Hackish: trace_api.span.TraceState uses _dict internally.
     _dict: Dict[str, str] = pydantic.PrivateAttr(default_factory=dict)
 
 
 class SpanContext(serial_utils.SerialModel):
-    """OTEL [SpanContext][opentelemetry.trace.SpanContext] requirements."""
+    """[OTEL SpanContext][opentelemetry.trace.SpanContext] requirements."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
@@ -210,7 +210,7 @@ def lens_of_flat_key(key: str) -> serial_utils.Lens:
 
 
 class Span(serial_utils.SerialModel, trace_api.Span):
-    """OTEL [Span][opentelemetry.trace.Span] requirements.
+    """[OTEL Span][opentelemetry.trace.Span] requirements.
 
     See also [OpenTelemetry
     Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
@@ -305,6 +305,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
 
     @property
     def attributes(self) -> trace_api.types.Attributes:
+        """Data fields."""
         return self._attributes
 
     _start_timestamp: int = pydantic.PrivateAttr(default_factory=time.time_ns)
@@ -324,10 +325,13 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         return self._end_timestamp
 
     _record_exception: bool = pydantic.PrivateAttr(True)
+    """Whether to record exceptions in the span."""
 
     _set_status_on_exception: bool = pydantic.PrivateAttr(True)
+    """Whether to set status to ERROR on exception."""
 
     _tracer: Tracer = pydantic.PrivateAttr(None)
+    """NON-STANDARD: The Tracer that produced this span."""
 
     @property
     def tracer(self) -> Tracer:
@@ -471,7 +475,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
 
         self.end()
 
-    # Rest of these methods are for exporting spans to ReadableSpan
+    # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.
 
     @staticmethod
     def otel_context_of_context(context: SpanContext) -> trace_api.SpanContext:
@@ -519,11 +523,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         return self.links
 
     def otel_freeze(self) -> trace_sdk.ReadableSpan:
-        """Convert span to an OTEL compatible span for exporting to OTEL collectors.
-
-        !!! Warning
-            This is an experimental feature. OTEL integration is ongoing.
-        """
+        """Convert span to an OTEL compatible span for exporting to OTEL collectors."""
 
         return trace_sdk.ReadableSpan(
             name=self.otel_name(),
@@ -543,7 +543,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
 
 
 class Tracer(serial_utils.SerialModel, trace_api.Tracer):
-    """OTEL [Tracer][opentelemetry.trace.Tracer] requirements."""
+    """[OTEL Tracer][opentelemetry.trace.Tracer] requirements."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
@@ -553,17 +553,22 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     _instrumenting_library_version: Optional[str] = pydantic.PrivateAttr(None)
     """Version of the library that is instrumenting the code."""
 
-    _tracer_provider: TracerProvider = pydantic.PrivateAttr(None)
-
-    _span_class: Type[Span] = pydantic.PrivateAttr(Span)
-
-    _span_context_class: Type[SpanContext] = pydantic.PrivateAttr(SpanContext)
-
     _attributes: Optional[trace_api.types.Attributes] = pydantic.PrivateAttr(
         None
     )
+    """Common attributes to add to all spans."""
 
     _schema_url: Optional[str] = pydantic.PrivateAttr(None)
+    """Use unknown."""
+
+    _tracer_provider: TracerProvider = pydantic.PrivateAttr(None)
+    """NON-STANDARD: The TracerProvider that made this tracer."""
+
+    _span_class: Type[Span] = pydantic.PrivateAttr(Span)
+    """NON-STANDARD: The default span class to use when creating spans."""
+
+    _span_context_class: Type[SpanContext] = pydantic.PrivateAttr(SpanContext)
+    """NON-STANDARD: The default span context class to use when creating spans."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -683,12 +688,13 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
 
 
 class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
-    """OTEL See [TracerProvider][opentelemetry.trace.TracerProvider]
+    """[OTEL TracerProvider][opentelemetry.trace.TracerProvider]
     requirements."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     _tracer_class: Type[Tracer] = pydantic.PrivateAttr(Tracer)
+    """NON-STANDARD: The default tracer class to use when creating tracers."""
 
     _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
         pydantic.PrivateAttr(
@@ -702,12 +708,16 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
     def context_cvar(
         self,
     ) -> contextvars.ContextVar[context_api.context.Context]:
+        """NON-STANDARD: The context variable to store the current span context."""
+
         return self._context_cvar
 
     _trace_id: int = pydantic.PrivateAttr(default_factory=new_trace_id)
 
     @property
     def trace_id(self) -> int:
+        """NON-STANDARD: The current trace id."""
+
         return self._trace_id
 
     def get_tracer(

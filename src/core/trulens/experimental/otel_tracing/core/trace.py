@@ -806,8 +806,6 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         self.obj_cls: Optional[Type] = None
         self.obj_id: Optional[int] = None
 
-        # tracer = get_tracer()
-
         if not issubclass(span_type, LiveSpanCall):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
 
@@ -922,26 +920,20 @@ class _RecordingContext:
         """Metadata to attach to all records produced in this context."""
 
         self.tracer: Optional[Tracer] = tracer
-        """EXPERIMENTAL: otel-tracing
-
-        OTEL-like tracer for recording.
+        """EXPERIMENTAL(otel-tracing): OTEL-like tracer for recording.
         """
 
         self.span: Optional[PhantomSpanRecordingContext] = span
-        """EXPERIMENTAL: otel-tracing
-
-        Span that represents a recording context (the with block)."""
+        """EXPERIMENTAL(otel-tracing): Span that represents a recording context
+        (the with block)."""
 
         self.span_ctx = span_ctx
-        """EXPERIMENTAL: otel-tracing
-
-        The context manager for the above span.
+        """EXPERIMENTAL(otel-tracing): The context manager for the above span.
         """
 
     @property
     def spans(self) -> Dict[SpanContext, Span]:
-        """Get the spans of the tracer in this context."""
-        # EXPERIMENTAL: otel-tracing
+        """EXPERIMENTAL(otel-tracing): Get the spans of the tracer in this context."""
 
         if self.tracer is None:
             return {}
@@ -978,7 +970,6 @@ class _RecordingContext:
 
     def __eq__(self, other):
         return hash(self) == hash(other)
-        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
 
     def add_call(self, call: mod_record_schema.RecordAppCall):
         """Add the given call to the currently tracked call list."""
@@ -1068,9 +1059,9 @@ class _WithInstrumentCallbacks:
     def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
-        """
-        Get the methods (rather the inner functions) matching the given `func`
-        and the path of each.
+        """EXPERIMENTAL(otel-tracing): Get the methods (rather the inner
+        functions) matching the given `func` and the path of each.
+
         Args:
             func: The function to match.
         """
@@ -1083,8 +1074,8 @@ class _WithInstrumentCallbacks:
         ctx: _RecordingContext,
         root_span: LiveSpanCall,
     ) -> mod_record_schema.Record:
-        """Called by instrumented methods if they are root calls (first instrumned
-        methods in a call stack).
+        """EXPERIMENTAL(otel-tracing): Called by instrumented methods if they
+        are root calls (first instrumented methods in a call stack).
 
         Args:
             ctx: The context of the recording.
