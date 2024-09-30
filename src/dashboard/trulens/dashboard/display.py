@@ -136,11 +136,11 @@ def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
             supporting_evidence = statement.split("Supporting Evidence: ")[
                 1
             ].split("Score: ")[0]
-            score_pattern = re.compile(r"([0-9]+)(?=\D*$)")
+            score_pattern = re.compile(r"([0-9]*\.?[0-9]+)(?=\D*$)")
             score_split = statement.split("Score: ")[1]
             score_match = score_pattern.search(score_split)
             if score_match:
-                score = float(score_match.group(1)) / 10
+                score = float(score_match.group(1))
             else:
                 score = None
         except IndexError:
