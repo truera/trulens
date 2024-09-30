@@ -156,10 +156,6 @@ class BedrockEndpoint(Endpoint):
         region_name: str = "us-east-1",
         **kwargs,
     ):
-        # SingletonPerName behavior but only if client not provided.
-        if hasattr(self, "region_name") and "client" not in kwargs:
-            return
-
         # For constructing BedrockClient below:
         client_kwargs = {k: v for k, v in kwargs.items()}  # copy
         client_kwargs["region_name"] = region_name
