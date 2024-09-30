@@ -46,7 +46,6 @@ class HuggingfaceEndpoint(Endpoint):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs["name"] = "huggingface"
         kwargs["callback_class"] = HuggingfaceCallback
 
         # Returns true in "warn" mode to indicate that key is set. Does not

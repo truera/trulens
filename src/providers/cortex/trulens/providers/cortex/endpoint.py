@@ -94,7 +94,6 @@ class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)

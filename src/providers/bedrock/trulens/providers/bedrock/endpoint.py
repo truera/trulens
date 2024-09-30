@@ -153,7 +153,6 @@ class BedrockEndpoint(Endpoint):
     def __init__(
         self,
         *args,
-        name: str = "bedrock",
         region_name: str = "us-east-1",
         **kwargs,
     ):
@@ -167,8 +166,7 @@ class BedrockEndpoint(Endpoint):
 
         kwargs["region_name"] = region_name
 
-        # for Endpoint, SingletonPerName:
-        kwargs["name"] = name
+        # for Endpoint
         kwargs["callback_class"] = BedrockCallback
 
         super().__init__(*args, **kwargs)

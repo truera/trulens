@@ -71,7 +71,6 @@ class LiteLLMEndpoint(Endpoint):
     """
 
     def __init__(self, litellm_provider: str = "openai", **kwargs):
-        kwargs["name"] = "litellm"
         kwargs["callback_class"] = LiteLLMCallback
 
         super().__init__(litellm_provider=litellm_provider, **kwargs)

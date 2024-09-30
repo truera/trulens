@@ -217,7 +217,7 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
     def __init__(
         self,
         *args,
-        name: str,
+        name: Optional[str] = None,
         rpm: Optional[float] = None,
         callback_class: Optional[Any] = None,
         _register_instance: bool = True,
@@ -235,6 +235,8 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
 
         if rpm is None:
             rpm = DEFAULT_RPM
+        if name is None:
+            name = self.__class__.__name__
 
         kwargs["name"] = name
         kwargs["callback_class"] = callback_class

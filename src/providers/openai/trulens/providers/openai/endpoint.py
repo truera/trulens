@@ -258,7 +258,6 @@ class OpenAIEndpoint(Endpoint):
 
     def __init__(
         self,
-        name: str = "openai",
         client: Optional[
             Union[openai.OpenAI, openai.AzureOpenAI, OpenAIClient]
         ] = None,
@@ -267,7 +266,6 @@ class OpenAIEndpoint(Endpoint):
         **kwargs: dict,
     ):
         self_kwargs = {
-            "name": name,  # for SingletonPerName
             "rpm": rpm,
             "pace": pace,
             **kwargs,
