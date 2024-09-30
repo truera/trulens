@@ -14,11 +14,10 @@ from typing import Callable, Optional, TypeVar
 
 from trulens.core.utils import python as python_utils
 from trulens.core.utils.python import Future
-from trulens.core.utils.python import SingletonPerName
+from trulens.core.utils.python import Singleton
 from trulens.core.utils.python import T
 from trulens.core.utils.python import WeakWrapper
 from trulens.core.utils.python import code_line
-from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 
-class TP(SingletonPerName):  # "thread processing"
+class TP(metaclass=Singleton):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.
@@ -113,17 +112,7 @@ class TP(SingletonPerName):  # "thread processing"
     DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
     """How long to wait (seconds) for any task before restarting it."""
 
-    def __new__(cls) -> TP:
-        """Override __new__ of SingletonPerName to ensure valid typing of the TP object."""
-        inst = super().__new__(cls)
-        assert isinstance(inst, TP)
-        return inst
-
     def __init__(self):
-        if safe_hasattr(self, "thread_pool"):
-            # Already initialized as per SingletonPerName mechanism.
-            return
-
         # Run tasks started with this class using this pool.
         self.thread_pool = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
