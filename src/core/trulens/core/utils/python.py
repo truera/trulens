@@ -1340,7 +1340,7 @@ class Singleton(type):
 
         for k, v in list(Singleton._singleton_instances.items()):
             if k[1] == name:
-                if cls is not None and v.cls != cls:
+                if cls is not None and v.__class__ is not cls:
                     continue
 
                 del Singleton._singleton_instances[k]

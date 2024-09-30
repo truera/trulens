@@ -161,11 +161,6 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    def __new__(cls, *args, **kwargs: Any) -> TruSession:
-        inst = super().__new__(cls, *args, **kwargs)
-        assert isinstance(inst, TruSession)
-        return inst
-
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
 
