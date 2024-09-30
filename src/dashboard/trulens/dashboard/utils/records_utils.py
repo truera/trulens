@@ -1,5 +1,4 @@
 from functools import partial
-import hashlib
 import pprint as pp
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -18,7 +17,7 @@ def df_cell_highlight(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
     n_cells: int = 1,
-):
+) -> list[str]:
     """Returns the background color for a cell in a DataFrame based on the score and feedback name.
 
     Args:
@@ -28,7 +27,7 @@ def df_cell_highlight(
         n_cells (int, optional): The number of cells to apply the background color. Defaults to 1.
 
     Returns:
-        list: A list of CSS styles representing the background color.
+        A list of CSS styles representing the background color.
     """
     if "distance" in feedback_name:
         return [f"background-color: {CATEGORY.UNKNOWN.color}"] * n_cells
@@ -82,22 +81,25 @@ def display_feedback_call(
         # note: improve conditional to not rely on the feedback name
         if "groundedness" in feedback_name.lower():
             df = expand_groundedness_df(df)
-        style_highlight_fn = partial(
-            highlight,
-            selected_feedback=feedback_name,
-            feedback_directions=feedback_directions,
-            default_direction=default_direction,
-        )
-        styled_df = df.style.apply(
-            style_highlight_fn,
-            axis=1,
-        )
+        if df.empty:
+            st.warning("No feedback details found.")
+        else:
+            style_highlight_fn = partial(
+                highlight,
+                selected_feedback=feedback_name,
+                feedback_directions=feedback_directions,
+                default_direction=default_direction,
+            )
+            styled_df = df.style.apply(
+                style_highlight_fn,
+                axis=1,
+            )
 
-        # Format only numeric columns
-        for col in df.select_dtypes(include=["number"]).columns:
-            styled_df = styled_df.format({col: "{:.2f}"})
+            # Format only numeric columns
+            for col in df.select_dtypes(include=["number"]).columns:
+                styled_df = styled_df.format({col: "{:.2f}"})
 
-        st.dataframe(styled_df, hide_index=True)
+            st.dataframe(styled_df, hide_index=True)
     else:
         st.warning("No feedback details found.")
 
@@ -106,24 +108,19 @@ def _render_feedback_pills(
     feedback_col_names: Sequence[str],
     feedback_directions: Dict[str, bool],
     selected_row: Optional[pd.Series] = None,
-    key_prefix: str = "",
 ):
     """Render each feedback as pills.
 
     Args:
         feedback_col_names (Sequence[str]): The name of the feedback function columns.
-        feedback_directions (Dict[str, bool): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
+        feedback_directions (Dict[str, bool]): A dictionary mapping feedback names to their directions. True if higher is better, False otherwise.
         selected_row (Optional[pd.Series], optional): The selected row (if any). If provided, renders the feedback values. Defaults to None.
-        key_prefix (str, optional): A prefix for the streamlit component key. Defaults to "".
 
     Returns:
         Any: The feedback pills streamlit component.
     """
-    if len(feedback_col_names) == 0:
-        st.warning("No feedback details found.")
-        return
-
     if selected_row is not None:
+        # Initialize session state for selected feedback if not already set
 
         def get_icon(feedback_name: str):
             cat = CATEGORY.of_score(
@@ -146,14 +143,11 @@ def _render_feedback_pills(
         st.warning("No feedback functions found.")
         return
 
-    hash = hashlib.md5(str(feedback_with_valid_results).encode()).hexdigest()
     if selected_row is None:
         return pills(
             "Feedback Functions (click to learn more)",
             feedback_with_valid_results,
             index=None,
-            format_func=lambda fcol: f"{fcol}",
-            key=f"{key_prefix}_pills_{hash}",
         )
 
     return pills(
@@ -162,7 +156,6 @@ def _render_feedback_pills(
         index=None,
         format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
         icons=icons,
-        key=f"{key_prefix}_pills_{selected_row['app_id']}_{hash}",
     )
 
 

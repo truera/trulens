@@ -17,10 +17,13 @@ class Dataset(serial.SerialModel, Hashable):
     """The class that holds the metadata of a dataset stored in the DB."""
 
     dataset_id: mod_types_schema.DatasetID  # str
+    """The unique identifier for the dataset."""
 
     name: str
+    """The name of the dataset."""
 
     meta: mod_types_schema.Metadata  # dict
+    """Metadata associated with the dataset."""
 
     def __init__(
         self,
