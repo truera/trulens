@@ -77,13 +77,6 @@ class LiteLLMEndpoint(Endpoint):
 
         self._instrument_module_members(litellm, "completion")
 
-    # def __new__(cls, litellm_provider: str = "openai", **kwargs):
-    #     # Problem here if someone uses litellm with different providers. Only a
-    #     # single one will be made. Cannot make a fix just here as
-    #     # track_all_costs creates endpoints via the singleton mechanism.
-
-    #     return super(Endpoint, cls).__new__(cls, name="litellm")
-
     def handle_wrapped_call(
         self,
         func: Callable,
