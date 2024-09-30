@@ -375,6 +375,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             app_ids = []
 
         df, feedback_cols = self.get_records_and_feedback(app_ids)
+        feedback_cols = sorted(feedback_cols)
 
         df["app_name"] = df["app_json"].apply(
             lambda x: json.loads(x).get("app_name")

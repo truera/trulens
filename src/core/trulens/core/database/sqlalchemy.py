@@ -365,7 +365,7 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
+            logger.info("%s added record %s", UNICODE_CHECK, _rec.record_id)
 
             return _rec.record_id
 
@@ -990,9 +990,9 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, mod_base_schema.Perf]],
+    series: pd.Series,
 ) -> pd.Series:
-    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
+    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> float:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
 
@@ -1003,14 +1003,16 @@ def _extract_latency(
             perf_json = mod_base_schema.Perf.model_validate(perf_json)
 
         if isinstance(perf_json, mod_base_schema.Perf):
-            return perf_json.latency.seconds
+            return (
+                perf_json.latency.seconds + perf_json.latency.microseconds / 1e6
+            )
 
         if perf_json is None:
             return 0
 
         raise ValueError(f"Failed to parse perf_json: {perf_json}")
 
-    return pd.Series(data=(_extract(p) for p in series))
+    return series.apply(_extract)
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
