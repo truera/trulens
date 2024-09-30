@@ -1274,7 +1274,7 @@ class LLMProvider(Provider):
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        key_points_list = key_points.split("\n\n")
+        key_points_list = [point.strip() for point in key_points.split('\n') if point.strip()]
 
         system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
         inclusion_assessments = []
