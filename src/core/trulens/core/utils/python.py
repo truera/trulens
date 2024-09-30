@@ -1303,7 +1303,7 @@ class SingletonPerName:
 
 
 class Singleton(type):
-    _instances = {}
+    _singleton_instances = {}
 
     def __call__(cls, *args, name: Optional[str] = None, **kwargs):
         """
@@ -1311,16 +1311,16 @@ class Singleton(type):
         """
         k = cls.__name__, name
 
-        if k not in cls._instances:
+        if k not in cls._singleton_instances:
             logger.debug(
                 "*** Creating new %s singleton instance for name = %s ***",
                 cls.__name__,
                 name,
             )
-            cls._instances[cls] = super(Singleton, cls).__call__(
+            cls._singleton_instances[k] = super(Singleton, cls).__call__(
                 *args, **kwargs
             )
-        return cls._instances[cls]
+        return cls._singleton_instances[k]
 
     @staticmethod
     def delete_singleton_by_name(
@@ -1338,12 +1338,12 @@ class Singleton(type):
                 instances with the given name are deleted.
         """
 
-        for k, v in list(Singleton._instances.items()):
+        for k, v in list(Singleton._singleton_instances.items()):
             if k[1] == name:
                 if cls is not None and v.cls != cls:
                     continue
 
-                del Singleton._instances[k]
+                del Singleton._singleton_instances[k]
 
     @staticmethod
     def delete_singleton(obj: Type[Singleton], name: Optional[str] = None):
@@ -1357,8 +1357,8 @@ class Singleton(type):
             else None
         )
         k = cls_name, name
-        if k in Singleton._instances:
-            del Singleton._instances[k]
+        if k in Singleton._singleton_instances:
+            del Singleton._singleton_instances[k]
         else:
             logger.warning("Instance %s not found:", obj)
 
@@ -1367,17 +1367,18 @@ class PydanticSingleton(type(pydantic.BaseModel), Singleton):
     pass
 
 
-class InstanceTrackerMixin:
-    _instances: Dict[
-        Type, List[weakref.ReferenceType[InstanceTrackerMixin]]
+class InstanceRefMixin:
+    _instance_refs: Dict[
+        Type, List[weakref.ReferenceType[InstanceRefMixin]]
     ] = defaultdict(list)
 
-    def __init__(self):
-        self._instances[self.__class__].append(weakref.ref(self))
+    def __init__(self, register_instance: bool = True):
+        if register_instance:
+            self._instance_refs[self.__class__].append(weakref.ref(self))
 
     @classmethod
     def get_instances(cls):
-        for inst_ref in cls._instances[cls]:
+        for inst_ref in cls._instance_refs[cls]:
             inst = inst_ref()
             if inst is not None:
                 yield inst
