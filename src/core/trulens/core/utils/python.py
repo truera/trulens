@@ -46,7 +46,11 @@ Thunk = Callable[[], T]
 if sys.version_info >= (3, 12):
     from typing import TypeAliasType  # noqa: F401
 
+    from typing_extensions import TypeAlias  # noqa: F401
+
 else:
+    from typing import TypeAlias  # noqa: F401
+
     from typing_extensions import TypeAliasType  # noqa: F401
 
 if sys.version_info >= (3, 11):

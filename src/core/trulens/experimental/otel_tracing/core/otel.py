@@ -23,7 +23,6 @@ from typing import (
     Sequence,
     Tuple,
     Type,
-    TypeAlias,
     TypeVar,
     Union,
 )
@@ -36,6 +35,7 @@ from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.core.utils.python import TypeAlias
 from trulens.core.utils.python import TypeAliasType
 from trulens.core.utils.serial import Lens
 
