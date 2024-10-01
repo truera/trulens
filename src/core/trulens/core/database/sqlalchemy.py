@@ -756,6 +756,7 @@ class SQLAlchemyDB(DB):
                 )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
+            stmt = stmt.options(joinedload(self.orm.Record.app))
             # NOTE(piotrm): The joinedload here makes it so that the
             # feedback_results get loaded eagerly instead if lazily when
             # accessed later.
