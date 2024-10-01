@@ -359,7 +359,9 @@ def get_class_members(
             (name, field.default, field.annotation)
             for name, field in class_.model_fields.items()
         ]
-    elif hasattr(class_, "__fields__"):  # pydantic.v1.BaseModel
+    elif hasattr(class_, "__fields__") and hasattr(
+        class_.__fields__, "items"
+    ):  # pydantic.v1.BaseModel
         fields_members = [
             (name, field.default, field.annotation)
             for name, field in class_.__fields__.items()
