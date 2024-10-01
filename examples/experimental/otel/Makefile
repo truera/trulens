@@ -1,5 +1,6 @@
-PYTHON:=python3
-PIP:=pip3
+POETRY:=poetry run
+PYTHON:=python
+PIP:=pip
 OTEL_AUTO:=opentelemetry-instrument
 TRULENS_PROVIDER:=trulens.experimental.otel_tracing.core.trace.TracerProvider
 
@@ -10,7 +11,7 @@ run_with_otel_env:
 		OTEL_SERVICE_NAME=trulens_otel_test_env \
 		OTEL_TRACES_EXPORTER=zipkin \
 		OTEL_METRICS_EXPORTER=none \
-		$(OTEL_AUTO) $(PYTHON) dummy.py
+		$(POETRY) $(OTEL_AUTO) $(PYTHON) dummy.py
 
 # Configure OTEL with command line arguments:
 # https://opentelemetry.io/docs/zero-code/python/configuration/
@@ -20,13 +21,13 @@ run_with_otel_cmd:
 		--service_name trulens_otel_test_cmd \
 		--traces_exporter zipkin \
 		--metrics_exporter none \
-		$(PYTHON) dummy.py
+		$(POETRY) $(PYTHON) dummy.py
 
 run_without_otel:
-	$(PYTHON) dummy.py
+	$(POETRY) $(PYTHON) dummy.py
 
 install:
-	$(PIP) install -r requirements.txt
+	$(POETRY) $(PIP) install -r requirements.txt
 
 # Start collector:
 start_collector:

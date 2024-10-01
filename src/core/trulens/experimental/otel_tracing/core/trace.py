@@ -725,6 +725,10 @@ class TracerProvider(mod_otel.TracerProvider, python_utils.Singleton):
 
     _trace_id: int = pydantic.PrivateAttr(default_factory=mod_otel.new_trace_id)
 
+    def __str__(self):
+        # Pydantic will not print anything useful otherwise.
+        return f"{self.__module__}.{type(self).__name__}()"
+
     @property
     def trace_id(self):
         return self._trace_id

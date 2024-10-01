@@ -29,7 +29,11 @@ from examples.dev.dummy_app.app import DummyApp  # noqa: E402
 
 dotenv.load_dotenv()
 
-print("Initial tracer_provider =", trace.get_tracer_provider())
+try:
+    print("Initial tracer_provider =", trace.get_tracer_provider())
+
+except Exception:  # pylint: disable=broad-except
+    print("No tracer provider set yet.")
 
 # Sets the global default tracer provider to be the trulens one.
 trace.set_tracer_provider(TracerProvider())
