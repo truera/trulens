@@ -486,9 +486,10 @@ def external_caller_frame(offset=0) -> FrameType:
         RuntimeError: If no such frame is found.
     """
     frame = inspect.currentframe()
-    gen = stack_generator(frame=frame, offset=offset + 2)
+    gen = stack_generator(frame=frame, offset=offset + 1)
     for f_info in gen:
-        if not f_info.f_globals["__name__"].startswith("trulens"):
+        name = f_info.f_globals["__name__"]
+        if not (name.startswith("trulens") or name.startswith("pydantic")):
             return f_info
 
     raise RuntimeError("No external caller frame found.")

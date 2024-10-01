@@ -280,9 +280,11 @@ class _WithExperimentalSettings(
 
         was_locked = self._experimental_feature_flags.is_locked(flag)
 
+        original_value = self._experimental_feature_flags.get(flag)
         val = self._experimental_feature_flags.set(flag, value=value, lock=lock)
+        changed = val != original_value
 
-        if value is not None:
+        if value is not None and changed:
             if val:
                 print(
                     f"{text_utils.UNICODE_CHECK} experimental {flag} enabled for {self._ident_str()}."

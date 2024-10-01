@@ -381,8 +381,7 @@ def get_class_members(
         is_public = False
         is_experimental = False
 
-        if name.lower().startswith("experimental"):
-            is_experimental = True
+        is_experimental = name.lower().startswith("experimental")
 
         if is_experimental:
             # Skip experimental members for now.

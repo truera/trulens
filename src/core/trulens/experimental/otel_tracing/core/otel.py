@@ -1,3 +1,10 @@
+"""OTEL Compatibility Classes
+
+This module contains classes to support interacting with the OTEL ecosystem.
+Additions on top of these meant for TruLens uses outside of OTEL compatibility
+are found in `traces.py`.
+"""
+
 from __future__ import annotations
 
 import contextlib
@@ -16,6 +23,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypeAlias,
     TypeVar,
     Union,
 )
@@ -38,32 +46,33 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 
-TSpanID = int
+TSpanID: TypeAlias = int
 """Type of span identifiers.
 64 bit int as per OpenTelemetry.
 """
-NUM_SPANID_BITS = 64
+NUM_SPANID_BITS: int = 64
 """Number of bits in a span identifier."""
 
-TTraceID = int
+TTraceID: TypeAlias = int
 """Type of trace identifiers.
 128 bit int as per OpenTelemetry.
 """
-NUM_TRACEID_BITS = 128
+NUM_TRACEID_BITS: int = 128
 """Number of bits in a trace identifier."""
 
-TTimestamp = int
+TTimestamp: TypeAlias = int
 """Type of timestamps in spans.
 
 64 bit int representing nanoseconds since epoch as per OpenTelemetry.
 """
 NUM_TIMESTAMP_BITS = 64
 
-TLensedBaseType = Union[str, int, float, bool]
+TLensedBaseType: TypeAlias = Union[str, int, float, bool]
 """Type of base types in span attributes.
+
 !!! Warning
-    OpenTelemetry does not allow None as an attribute value. However, we allow
-    it in lensed attributes.
+    OpenTelemetry does not allow None as an attribute value. Handling None is to
+    be decided.
 """
 
 TLensedAttributeValue = TypeAliasType(
@@ -74,7 +83,7 @@ TLensedAttributeValue = TypeAliasType(
         float,
         bool,
         python_utils.NoneType,  # NOTE(piotrm): None is not technically allowed as an attribute value.
-        Sequence["TLensedAttributeValue"],
+        Sequence["TLensedAttributeValue"],  # type: ignore
         "TLensedAttributes",
     ],
 )
@@ -83,40 +92,54 @@ TLensedAttributeValue = TypeAliasType(
 # NOTE(piotrm): pydantic will fail if you specify a recursive type alias without
 # the TypeAliasType schema as above.
 
-TLensedAttributes = Dict[str, TLensedAttributeValue]
+TLensedAttributes: TypeAlias = Dict[str, TLensedAttributeValue]
+"""Attribute dictionaries.
+
+Note that this deviates from what OTEL allows as attribute values. Because OTEL
+does not allow general recursive values to be stored as attributes, we employ a
+system of flattening values before exporting to OTEL. In this process we encode
+a single generic value as multiple attributes where the attribute name include
+paths/lenses to the parts of the generic value they are representing. For
+example, an attribute/value like `{"a": {"b": 1, "c": 2}}` would be encoded as
+`{"a.b": 1, "a.c": 2}`. This process is implemented in the
+`flatten_lensed_attributes` method.
+"""
 
 
 def flatten_value(
-    v: TLensedAttributeValue, path: Optional[Lens] = None
+    v: TLensedAttributeValue, lens: Optional[Lens] = None
 ) -> Iterable[Tuple[Lens, types_api.AttributeValue]]:
-    """Flatten a lensed value into OpenTelemetry attribute values."""
+    """Flatten recursive value into OTEL-compatible attribute values.
 
-    if path is None:
-        path = Lens()
+    See `TLensedAttributes` for more details.
+    """
 
-    # if v is None:
+    if lens is None:
+        lens = Lens()
+
     # OpenTelemetry does not allow None as an attribute value. Unsure what
-    # is best to do here. Returning "None" for now.
+    # is best to do here.
+    # if v is None:
     #    yield (path, "None")
 
     elif v is None:
         pass
 
     elif isinstance(v, TLensedBaseType):
-        yield (path, v)
+        yield (lens, v)
 
     elif isinstance(v, Sequence) and all(
         isinstance(e, TLensedBaseType) for e in v
     ):
-        yield (path, v)
+        yield (lens, v)
 
     elif isinstance(v, Sequence):
         for i, e in enumerate(v):
-            yield from flatten_value(v=e, path=path[i])
+            yield from flatten_value(v=e, lens=lens[i])
 
     elif isinstance(v, Mapping):
         for k, e in v.items():
-            yield from flatten_value(v=e, path=path[k])
+            yield from flatten_value(v=e, lens=lens[k])
 
     else:
         raise ValueError(
@@ -146,11 +169,16 @@ def flatten_lensed_attributes(
 
 
 def new_trace_id():
-    return int(random.getrandbits(128) & trace_api.span._TRACE_ID_MAX_VALUE)
+    return int(
+        random.getrandbits(NUM_TRACEID_BITS)
+        & trace_api.span._TRACE_ID_MAX_VALUE
+    )
 
 
 def new_span_id():
-    return int(random.getrandbits(64) & trace_api.span._SPAN_ID_MAX_VALUE)
+    return int(
+        random.getrandbits(NUM_SPANID_BITS) & trace_api.span._SPAN_ID_MAX_VALUE
+    )
 
 
 class TraceState(serial_utils.SerialModel, trace_api.span.TraceState):
@@ -350,12 +378,12 @@ class Span(serial_utils.SerialModel, trace_api.Span):
             self._start_timestamp = time.time_ns()
 
     def update_name(self, name: str) -> None:
-        """See [update_name][opentelemetry.trace.span.Span.update_name]."""
+        """See [OTEL update_name][opentelemetry.trace.span.Span.update_name]."""
 
         self._name = name
 
     def get_span_context(self) -> trace_api.span.SpanContext:
-        """See [get_span_context][opentelemetry.trace.span.Span.get_span_context]."""
+        """See [OTEL get_span_context][opentelemetry.trace.span.Span.get_span_context]."""
 
         return self.context
 
@@ -364,7 +392,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         status: Union[trace_api.span.Status, trace_api.span.StatusCode],
         description: Optional[str] = None,
     ) -> None:
-        """See [set_status][opentelemetry.trace.span.Span.set_status]."""
+        """See [OTEL set_status][opentelemetry.trace.span.Span.set_status]."""
 
         if isinstance(status, trace_api.span.Status):
             if description is not None:
@@ -384,7 +412,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         attributes: types_api.Attributes = None,
         timestamp: Optional[TTimestamp] = None,
     ) -> None:
-        """See [add_event][opentelemetry.trace.span.Span.add_event]."""
+        """See [OTEL add_event][opentelemetry.trace.span.Span.add_event]."""
 
         self._events.append((name, attributes, timestamp or time.time_ns()))
 
@@ -393,7 +421,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         context: trace_api.span.SpanContext,
         attributes: types_api.Attributes = None,
     ) -> None:
-        """See [add_link][opentelemetry.trace.span.Span.add_link]."""
+        """See [OTEL add_link][opentelemetry.trace.span.Span.add_link]."""
 
         if attributes is None:
             attributes = {}
@@ -401,20 +429,20 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         self._links[context] = attributes
 
     def is_recording(self) -> bool:
-        """See [is_recording][opentelemetry.trace.span.Span.is_recording]."""
+        """See [OTEL is_recording][opentelemetry.trace.span.Span.is_recording]."""
 
         return self._status == trace_api.status.StatusCode.UNSET
 
     def set_attributes(
         self, attributes: Dict[str, types_api.AttributeValue]
     ) -> None:
-        """See [set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
+        """See [OTEL set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
 
         for key, value in attributes.items():
             self.set_attribute(key, value)
 
     def set_attribute(self, key: str, value: types_api.AttributeValue) -> None:
-        """See [set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
+        """See [OTEL set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
 
         self.attributes[key] = value
 
@@ -423,16 +451,14 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         exception: BaseException,
         attributes: types_api.Attributes = None,
         timestamp: Optional[TTimestamp] = None,
-        escaped: bool = False,
+        escaped: bool = False,  # purpose unknown
     ) -> None:
-        """See [record_exception][opentelemetry.trace.span.Span.record_exception]."""
-
-        if timestamp is None:
-            timestamp = time.time_ns()
+        """See [OTEL record_exception][opentelemetry.trace.span.Span.record_exception]."""
 
         if self._set_status_on_exception:
-            self._end_timestamp = time.time_ns()
-            self._status = trace_api.status.StatusCode.ERROR
+            self.set_status(
+                trace_api.status.Status(trace_api.status.StatusCode.ERROR)
+            )
 
         if self._record_exception:
             if attributes is None:
@@ -448,16 +474,20 @@ class Span(serial_utils.SerialModel, trace_api.Span):
             self.add_event("trulens.exception", attributes, timestamp)
 
     def end(self, end_time: Optional[TTimestamp] = None):
-        """See [end][opentelemetry.trace.span.Span.end]"""
+        """See [OTEL end][opentelemetry.trace.span.Span.end]"""
 
         if end_time is None:
             end_time = time.time_ns()
 
-        self._status = trace_api.status.StatusCode.OK
         self._end_timestamp = end_time
 
+        if self.is_recording():
+            self.set_status(
+                trace_api.status.Status(trace_api.status.StatusCode.OK)
+            )
+
     def __enter__(self) -> Span:
-        """See [__enter__][opentelemetry.trace.span.Span.__enter__]."""
+        """See [OTEL __enter__][opentelemetry.trace.span.Span.__enter__]."""
 
         return self
 
@@ -467,13 +497,14 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        """See [__exit__][opentelemetry.trace.span.Span.__exit__]."""
+        """See [OTEL __exit__][opentelemetry.trace.span.Span.__exit__]."""
 
-        if exc_val is not None:
-            self.record_exception(exception=exc_val)
-            raise exc_val
-
-        self.end()
+        try:
+            if exc_val is not None:
+                self.record_exception(exception=exc_val)
+                raise exc_val
+        finally:
+            self.end()
 
     # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.
 
@@ -602,6 +633,9 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         set_status_on_exception: bool = True,
         cls: Optional[Type[Span]] = None,  # non-standard
     ) -> Span:
+        """See [OTEL
+        Tracer.start_span][opentelemetry.trace.Tracer.start_span]."""
+
         if context is None:
             parent_context = self.context_cvar.get()
 
@@ -660,6 +694,9 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         set_status_on_exception: bool = True,
         end_on_exit: bool = True,
     ):
+        """See [OTEL
+        Tracer.start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span]."""
+
         span = self.start_span(
             name=name,
             context=context,
@@ -727,6 +764,9 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         schema_url: Optional[str] = None,
         attributes: Optional[types_api.Attributes] = None,
     ):
+        """See [OTEL
+        TracerProvider.get_tracer][opentelemetry.trace.TracerProvider.get_tracer]."""
+
         tracer = self._tracer_class(
             _instrumenting_module_name=instrumenting_module_name,
             _instrumenting_library_version=instrumenting_library_version,

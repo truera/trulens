@@ -339,8 +339,7 @@ class _RecordingContext:
         ],
         existing_record: Optional[mod_record_schema.Record] = None,
     ):
-        """
-        Run the given function to build a record from the tracked calls and any
+        """Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
 
         If existing_record is provided, updates that record with new data.
@@ -354,8 +353,17 @@ class _RecordingContext:
                 for call in existing_record.calls:
                     current_calls[call.call_id] = call
 
+            # Maintain an order in a record' calls to make sure the root call
+            # (which returns last) is also last in the calls list:
+            sorted_calls = sorted(
+                current_calls.values(),
+                key=lambda c: c.perf.end_time
+                if c.perf is not None
+                else datetime.max,
+            )
+
             record = calls_to_record(
-                current_calls.values(), self.record_metadata, existing_record
+                sorted_calls, self.record_metadata, existing_record
             )
 
             if existing_record is None:

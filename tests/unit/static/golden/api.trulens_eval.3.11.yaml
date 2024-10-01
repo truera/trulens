@@ -792,6 +792,7 @@ trulens_eval.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -806,6 +807,7 @@ trulens_eval.Select:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.TP:
@@ -1363,6 +1365,7 @@ trulens_eval.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -6649,6 +6652,7 @@ trulens_eval.schema.feedback.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -6663,6 +6667,7 @@ trulens_eval.schema.feedback.Select:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.schema.record:
@@ -6680,7 +6685,6 @@ trulens_eval.schema.record.Record:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    add_call: builtins.function
     app_id: builtins.str
     calls: typing.List[trulens.core.schema.record.RecordAppCall]
     construct: builtins.classmethod
@@ -7418,6 +7422,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     LLM: trulens.core.utils.serial.Lens
     LastBotMessage: trulens.core.utils.serial.Lens
     LastUserMessage: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -7434,6 +7439,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.tru_rails.RailsInstrument:
@@ -7562,6 +7568,7 @@ trulens_eval.tru_virtual.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7661,12 +7668,12 @@ trulens_eval.tru_virtual.VirtualApp:
   __class__: builtins.type
   attributes:
     root: builtins.function
+    select_context: builtins.classmethod
 trulens_eval.tru_virtual.VirtualRecord:
   __bases__:
   - trulens.core.schema.record.Record
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    add_call: builtins.function
     app_id: builtins.str
     calls: typing.List[trulens.core.schema.record.RecordAppCall]
     construct: builtins.classmethod

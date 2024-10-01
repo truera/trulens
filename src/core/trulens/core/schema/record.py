@@ -162,25 +162,9 @@ class Record(serial_utils.SerialModel, Hashable):
 
     Note that these can be converted into a json structure with the same paths
     as the app that generated this record via `layout_calls_as_app`.
+
+    Invariant: calls are ordered by `.perf.end_time`.
     """
-
-    def add_call(self, call: RecordAppCall):
-        """Add a call to the record.
-
-        This is a method to make sure to add the call in a specific position sorted by endtime.
-        """
-
-        if len(self.calls) == 0:
-            self.calls.append(call)
-            return
-
-        for i, icall in enumerate(self.calls):
-            if (
-                icall.perf_time is None
-                or icall.perf.end_time > call.perf.end_time
-            ):
-                self.calls.insert(i, call)
-                return
 
     experimental_otel_spans: List[
         Any
@@ -217,17 +201,18 @@ class Record(serial_utils.SerialModel, Hashable):
         **kwargs,
     ):
         super(serial_utils.SerialModel, self).__init__(
-            record_id="temporary", calls=[], **kwargs
+            record_id="temporary", calls=calls, **kwargs
         )
 
-        now = datetime.datetime.now()
-
+        # Resetting the calls in sorted order here. Note that we are calling
+        # init with calls above to make sure they get converted to RecordAppCall
+        # from dicts. We then sort those in the next step:
         if calls is not None:
             self.calls = sorted(
-                calls,
+                self.calls,
                 key=lambda call: call.perf.end_time
                 if call.perf is not None
-                else now,
+                else datetime.datetime.max,
             )
 
         if record_id is None:

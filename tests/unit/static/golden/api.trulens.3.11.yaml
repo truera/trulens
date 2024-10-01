@@ -937,7 +937,6 @@ trulens.core.schema.record.Record:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    add_call: builtins.function
     app_id: builtins.str
     calls: typing.List[trulens.core.schema.record.RecordAppCall]
     cost: typing.Optional[trulens.core.schema.base.Cost, builtins.NoneType]
@@ -996,6 +995,7 @@ trulens.core.schema.select.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -1010,6 +1010,7 @@ trulens.core.schema.select.Select:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens.core.schema.types:
@@ -1538,6 +1539,7 @@ trulens.core.utils.serial.Lens:
 trulens.core.utils.serial.LensedDict:
   __bases__:
   - builtins.dict
+  - typing.Generic
   __class__: builtins.type
   attributes: {}
 trulens.core.utils.serial.ParseException:

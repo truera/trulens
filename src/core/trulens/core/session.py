@@ -165,10 +165,27 @@ class TruSession(
     ] = (  # Any = otel_export_sdk.SpanExporter
         pydantic.PrivateAttr(None)
     )
-    """OpenTelemetry SpanExporter to send spans to.
 
-    Only works if the trulens.core.experimental.Feature.OTEL_TRACING flag is set.
-    """
+    @property
+    def experimental_otel_exporter(
+        self,
+    ) -> Any:  # Any = Optional[otel_export_sdk.SpanExporter]
+        """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
+        to.
+
+        Only works if the trulens.core.experimental.Feature.OTEL_TRACING flag is
+        set. The setter will set and lock the flag as enabled.
+        """
+
+        return self._experimental_otel_exporter
+
+    @experimental_otel_exporter.setter
+    def experimental_otel_exporter(
+        self, value: Optional[Any]
+    ):  # Any = otel_export_sdk.SpanExporter
+        from trulens.experimental.otel_tracing.core.session import _TruSession
+
+        _TruSession._setup_otel_exporter(self, value)
 
     def __new__(cls, *args, **kwargs: Any) -> TruSession:
         inst = super().__new__(cls, *args, **kwargs)
@@ -233,14 +250,7 @@ class TruSession(
             self.experimental_set_features(experimental_feature_flags)
 
         if _experimental_otel_exporter is not None:
-            self.experimental_enable_feature(
-                mod_experimental.Feature.OTEL_TRACING
-            )
-            from trulens.experimental.otel_tracing.core.session import (
-                _TruSession,
-            )
-
-            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
+            self.experimental_otel_exporter = _experimental_otel_exporter
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing

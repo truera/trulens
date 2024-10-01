@@ -7,7 +7,7 @@ import sys
 import dotenv
 from opentelemetry import trace
 
-# zipkip exporter
+# zipkin exporter
 from opentelemetry.exporter.zipkin.json import ZipkinExporter
 
 # console exporter
