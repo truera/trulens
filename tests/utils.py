@@ -26,6 +26,7 @@ from typing import (
 import weakref
 
 from tqdm.auto import tqdm
+from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.text import format_size
@@ -198,7 +199,7 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
         except Exception:
             return
 
-    for item, val in python_utils.getmembers_static(mod):
+    for item, val in pycompat_utils.getmembers_static(mod):
         # Check for aliases: classes/modules defined somewhere outside of
         # mod. Note that this cannot check for aliasing of basic python
         # values which are not references.
@@ -341,7 +342,7 @@ def get_class_members(
     lows: List[Member] = []
 
     static_members = [
-        (k, v, type(v)) for k, v in python_utils.getmembers_static(class_)
+        (k, v, type(v)) for k, v in pycompat_utils.getmembers_static(class_)
     ]
 
     slot_members = []
@@ -479,7 +480,7 @@ def get_module_members(
 
     classes = set()
 
-    for name, val in python_utils.getmembers_static(mod):
+    for name, val in pycompat_utils.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
         member = Member(
             mod, name=name, qualname=qualname, val=val, typ=type(val)

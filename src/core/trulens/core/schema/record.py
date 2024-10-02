@@ -8,6 +8,7 @@ from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
 
 from munch import Munch as Bunch
 import pydantic
+from trulens.core._utils.pycompat import Future
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.schema import types as mod_types_schema
@@ -16,7 +17,6 @@ from trulens.core.utils import serial
 from trulens.core.utils import threading as mod_threading_utils
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.python import Future
 
 T = TypeVar("T")
 

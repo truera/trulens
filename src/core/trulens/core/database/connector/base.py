@@ -18,6 +18,7 @@ from typing import (
 )
 
 import pandas
+from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database.base import DB
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -25,7 +26,6 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.python import Future  # code style exception
 
 logger = logging.getLogger(__name__)
 

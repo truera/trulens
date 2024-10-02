@@ -10,7 +10,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.python import STACK
-from trulens.core.utils.python import EmptyType
 from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.python import SingletonInfo
 from trulens.core.utils.python import SingletonPerName

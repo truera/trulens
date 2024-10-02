@@ -1361,6 +1361,7 @@ trulens_eval.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7550,6 +7551,7 @@ trulens_eval.tru_virtual.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7648,6 +7650,7 @@ trulens_eval.tru_virtual.VirtualApp:
   __class__: builtins.type
   attributes:
     root: builtins.function
+    select_context: builtins.classmethod
 trulens_eval.tru_virtual.VirtualRecord:
   __bases__:
   - trulens.core.schema.record.Record
@@ -8314,7 +8317,6 @@ trulens_eval.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
     OpaqueWrapper: builtins.type
     STACK: builtins.str
     SingletonInfo: builtins.type
@@ -8343,11 +8345,6 @@ trulens_eval.utils.python:
     tru_new_event_loop: builtins.function
     wrap_awaitable: builtins.function
     wrap_generator: builtins.function
-trulens_eval.utils.python.EmptyType:
-  __bases__:
-  - builtins.type
-  __class__: builtins.type
-  attributes: {}
 trulens_eval.utils.python.OpaqueWrapper:
   __bases__:
   - typing.Generic
