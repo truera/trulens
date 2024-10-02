@@ -5,7 +5,6 @@ Tests server-side feedback evaluations in Snowflake.
 import time
 from unittest import main
 
-import snowflake.connector
 from trulens.apps.basic import TruBasicApp
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
@@ -56,11 +55,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self,
     ) -> SnowflakeFeedback:
         return SnowflakeFeedback(
-            Cortex(
-                snowflake.connector.connect(
-                    **self._snowflake_connection_parameters
-                )
-            ).relevance
+            Cortex(self._snowflake_session.connection).relevance
         ).on_input_output()
 
     def _start_evaluator_as_snowflake(self, session: TruSession):
