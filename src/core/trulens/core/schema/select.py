@@ -21,7 +21,7 @@ class Select:
 
     Lens: TypeAlias = serial.Lens
 
-    Query = Lens  # Deprecate this alias in the future.
+    Query: TypeAlias = Lens  # Deprecate this alias in the future.
 
     Tru: Lens = Lens()
     """Selector for the tru wrapper (TruLlama, TruChain, etc.)."""
