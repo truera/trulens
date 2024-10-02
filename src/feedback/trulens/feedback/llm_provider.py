@@ -552,7 +552,7 @@ class LLMProvider(Provider):
 
         if criteria or output_space:
             system_prompt = PromptResponseRelevance.generate_system_prompt(
-                criteria, output_space
+                min_score_val, max_score_val, criteria, output_space
             )
         else:
             system_prompt = PromptResponseRelevance.system_prompt
