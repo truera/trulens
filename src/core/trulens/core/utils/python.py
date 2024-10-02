@@ -36,6 +36,8 @@ from typing import (
 )
 import weakref
 
+import typing_extensions
+
 T = TypeVar("T")
 
 WRAP_LAZY: bool = True
@@ -43,15 +45,8 @@ WRAP_LAZY: bool = True
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
 
-if sys.version_info >= (3, 12):
-    from typing import TypeAliasType  # noqa: F401
-
-    from typing_extensions import TypeAlias  # noqa: F401
-
-else:
-    from typing import TypeAlias  # noqa: F401
-
-    from typing_extensions import TypeAliasType  # noqa: F401
+TypeAliasType = typing_extensions.TypeAliasType
+TypeAlias = typing_extensions.TypeAlias
 
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static
