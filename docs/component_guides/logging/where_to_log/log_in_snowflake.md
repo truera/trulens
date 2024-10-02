@@ -16,9 +16,32 @@ Here is a guide to logging in _Snowflake_.
 
 ## Connect TruLens to the Snowflake database
 
-Connecting TruLens to a Snowflake database for logging traces and evaluations only requires passing in Snowflake [connection parameters](https://docs.snowflake.com/developer-guide/python-connector/python-connector-api#connect).
+Connecting TruLens to a Snowflake database for logging traces and evaluations only requires passing in an existing [Snowpark session](https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/latest/snowpark/api/snowflake.snowpark.Session#snowflake.snowpark.Session) or Snowflake [connection parameters](https://docs.snowflake.com/developer-guide/python-connector/python-connector-api#connect).
 
-!!! example "Connect TruLens to your Snowflake database"
+!!! example "Connect TruLens to your Snowflake database via Snowpark Session"
+
+    ```python
+    from snowflake.snowpark.Session
+    from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.core import TruSession
+    connnection_parameters = {
+        account: "<account>",
+        user: "<user>",
+        password: "<password>",
+        database_name: "<database>",
+        schema_name: "<schema>",
+        warehouse: "<warehouse>",
+        role: "<role>",
+    }
+    # Here we create a new Snowpark session, but if we already have one we can use that instead.
+    snowpark_session = Session.builder.configs(connection_parameters).create()
+    conn = SnowflakeConnector(
+        snowpark_session=snowpark_session
+    )
+    session = TruSession(connector=conn)
+    ```
+
+!!! example "Connect TruLens to your Snowflake database via connection parameters"
 
     ```python
     from trulens.core import TruSession
