@@ -1,5 +1,4 @@
 import os
-import re
 
 from snowflake.snowpark import Session
 
@@ -29,32 +28,13 @@ class ServerSideEvaluationArtifacts:
     def __init__(
         self,
         session: Session,
-        account: str,
-        user: str,
-        database: str,
-        schema: str,
-        warehouse: str,
-        role: str,
         database_prefix: str,
     ) -> None:
         self._session = session
-        self._account = account
-        self._user = user
-        self._database = database
-        self._schema = schema
-        self._warehouse = warehouse
-        self._role = role
+        self._database = session.get_current_database()
+        self._schema = session.get_current_schema()
+        self._warehouse = session.get_current_warehouse()
         self._database_prefix = database_prefix
-        self._validate_name(database, "database")
-        self._validate_name(schema, "schema")
-        self._validate_name(warehouse, "warehouse")
-
-    @staticmethod
-    def _validate_name(name: str, error_message_variable_name: str) -> None:
-        if not re.match(r"^[A-Za-z0-9_]+$", name):
-            raise ValueError(
-                f"`{error_message_variable_name}` must contain only alphanumeric and underscore characters!"
-            )
 
     def set_up_all(self) -> None:
         self._set_up_stage()
