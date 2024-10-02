@@ -10,7 +10,6 @@ import inspect
 import queue
 import sys
 import types
-import typing
 from typing import (
     Any,
     Generic,
@@ -20,13 +19,8 @@ from typing import (
 
 import typing_extensions
 
-if sys.version_info >= (3, 12):
-    TypeAlias = typing_extensions.TypeAlias
-    TypeAliasType = typing.TypeAliasType
-
-else:
-    TypeAlias = typing.TypeAlias
-    TypeAliasType = typing_extensions.TypeAliasType
+TypeAliasType = typing_extensions.TypeAliasType
+TypeAlias = typing_extensions.TypeAlias
 
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static
