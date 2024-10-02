@@ -365,14 +365,14 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info("{UNICODE_CHECK} added record %s", _rec.record_id)
+            logger.info("%s added record %s", UNICODE_CHECK, _rec.record_id)
 
             return _rec.record_id
 
     def batch_insert_record(
         self, records: List[mod_record_schema.Record]
     ) -> List[mod_types_schema.RecordID]:
-        """See [DB.batch_insert_record][trulens_eval.database.base.DB.batch_insert_record]."""
+        """See [DB.batch_insert_record][trulens.core.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
                 self.orm.Record.parse(r, redact_keys=self.redact_keys)
@@ -397,7 +397,7 @@ class SQLAlchemyDB(DB):
     def update_app_metadata(
         self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
     ) -> Optional[mod_app_schema.AppDefinition]:
-        """See [DB.get_app_definition][trulens.core.database.base.DB.get_app_definition]."""
+        """See [DB.update_app_metadata][trulens.core.database.base.DB.update_app_metadata]."""
 
         def nested_update(metadata: dict, update: dict):
             for k, v in update.items():
@@ -577,7 +577,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_feedback(
         self, feedback_results: List[mod_feedback_schema.FeedbackResult]
     ) -> List[mod_types_schema.FeedbackResultID]:
-        """See [DB.batch_insert_feedback][trulens_eval.database.base.DB.batch_insert_feedback]."""
+        """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
             feedback_results_list = [
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
@@ -756,8 +756,9 @@ class SQLAlchemyDB(DB):
                 )
 
             stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
+            stmt = stmt.options(joinedload(self.orm.Record.app))
             # NOTE(piotrm): The joinedload here makes it so that the
-            # feedback_results get loaded eagerly instead if lazily when
+            # feedback_results and app definitions get loaded eagerly instead if lazily when
             # accessed later.
 
             # TODO(piotrm): The subsequent logic in helper methods end up
@@ -816,7 +817,7 @@ class SQLAlchemyDB(DB):
     def batch_insert_ground_truth(
         self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
     ) -> List[mod_types_schema.GroundTruthID]:
-        """See [DB.batch_insert_ground_truth][trulens_eval.database.base.DB.batch_insert_ground_truth]."""
+        """See [DB.batch_insert_ground_truth][trulens.core.database.base.DB.batch_insert_ground_truth]."""
         with self.session.begin() as session:
             ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
 
@@ -990,9 +991,9 @@ def _extract_feedback_results(
 
 
 def _extract_latency(
-    series: Iterable[Union[str, dict, mod_base_schema.Perf]],
+    series: pd.Series,
 ) -> pd.Series:
-    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> int:
+    def _extract(perf_json: Union[str, dict, mod_base_schema.Perf]) -> float:
         if perf_json == MIGRATION_UNKNOWN_STR:
             return np.nan
 
@@ -1003,14 +1004,16 @@ def _extract_latency(
             perf_json = mod_base_schema.Perf.model_validate(perf_json)
 
         if isinstance(perf_json, mod_base_schema.Perf):
-            return perf_json.latency.seconds
+            return (
+                perf_json.latency.seconds + perf_json.latency.microseconds / 1e6
+            )
 
         if perf_json is None:
             return 0
 
         raise ValueError(f"Failed to parse perf_json: {perf_json}")
 
-    return pd.Series(data=(_extract(p) for p in series))
+    return series.apply(_extract)
 
 
 def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:

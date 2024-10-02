@@ -17,22 +17,30 @@ class GroundTruth(serial.SerialModel, Hashable):
     """The class that represents a single ground truth data entry."""
 
     ground_truth_id: mod_types_schema.GroundTruthID  # str
+    """The unique identifier for the ground truth."""
 
     query: str
+    """The query for which the ground truth is provided."""
 
     query_id: Optional[str] = None
+    """Unique identifier for the query."""
 
     expected_response: Optional[str] = (
         None  # expected response can be empty in GT datasets
     )
+    """The expected response for the query."""
 
     expected_chunks: Optional[Sequence[Dict]] = None
+    """Expected chunks for the ground truth."""
 
     meta: Optional[mod_types_schema.Metadata] = (
         None  # TODO: which naming are we exactly going with - meta vs metadata?
     )
+    """Metadata for the ground truth."""
 
     dataset_id: mod_types_schema.DatasetID  # str
+    """The dataset ID to which this ground truth belongs.
+    See [Dataset.dataset_id][trulens.core.schema.dataset.Dataset.dataset_id]."""
 
     def __init__(
         self,

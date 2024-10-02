@@ -328,6 +328,7 @@ def _build_grid_options(
         "input",
         header_name="Input",
         resizable=True,
+        wrapText=True,
         pinned="left",
         flex=3,
         filter="agMultiColumnFilter",
@@ -653,6 +654,11 @@ def _reset_page_state():
 
 
 def render_app_comparison(app_name: str):
+    """Render the Compare page.
+
+    Args:
+        app_name (str): The name of the app to display app versions for comparison.
+    """
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
@@ -705,6 +711,10 @@ def render_app_comparison(app_name: str):
         )
 
     if selected_record_ids is None:
+        st.info(
+            "Click a record's checkbox to view details.",
+            icon="ℹ️",
+        )
         return
     record_data = {}
     for app_id, data in col_data.items():
@@ -722,11 +732,11 @@ def render_app_comparison(app_name: str):
     with record_feedback_graph_container:
         _render_all_app_feedback_plot(record_data, feedback_col_names)
 
+    record_feedback_selector_container.subheader("Feedback Results")
     with record_feedback_selector_container:
         if selected_ff := _render_feedback_pills(
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
-            key_prefix="shared",
         ):
             feedback_selector_cols = record_feedback_selector_container.columns(
                 len(record_data), gap="large"

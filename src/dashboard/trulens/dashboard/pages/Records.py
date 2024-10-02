@@ -462,6 +462,11 @@ def _handle_record_query_change():
 
 
 def render_records(app_name: str):
+    """Renders the records page.
+
+    Args:
+        app_name (str): The name of the app to render records for.
+    """
     st.title(page_name)
     st.markdown(f"Showing app `{app_name}`")
 
