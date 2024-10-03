@@ -19,7 +19,6 @@ from subprocess import check_output
 import sys
 from typing import Dict
 from unittest import TestCase
-from unittest import skip
 
 from dotenv import load_dotenv
 from nbconvert.preprocessors import ExecutePreprocessor
@@ -159,55 +158,38 @@ class TestTruLensEvalNotebooks(TestCase):
                 except Exception as e:
                     self.fail(e)
 
-    @skip("Done")
     def test_groundtruth_evals(self):
         self._test_notebook(self.notebooks["groundtruth_evals.ipynb"])
 
-    @skip("Done")
     def test_human_feedback(self):
         self._test_notebook(self.notebooks["human_feedback.ipynb"])
 
-    @skip("Done")
     def test_langchain_faiss_example(self):
         self._test_notebook(self.notebooks["langchain_faiss_example.ipynb"])
 
-    @skip("Done")
     def test_langchain_instrumentation(self):
         self._test_notebook(self.notebooks["langchain_instrumentation.ipynb"])
 
-    @skip("Done")
     def test_langchain_quickstart(self):
         self._test_notebook(self.notebooks["langchain_quickstart.ipynb"])
 
-    @skip("Done")
     def test_llama_index_instrumentation(self):
         self._test_notebook(self.notebooks["llama_index_instrumentation.ipynb"])
 
-    @skip("Done")
     def test_llama_index_quickstart(self):
         self._test_notebook(self.notebooks["llama_index_quickstart.ipynb"])
 
-    @skip("Done")
     def test_logging(self):
         self._test_notebook(self.notebooks["logging.ipynb"])
 
-    @skip("Done")
     def test_prototype_evals(self):
         self._test_notebook(self.notebooks["prototype_evals.ipynb"])
 
-    @skip("Done")
     def test_quickstart(self):
         self._test_notebook(self.notebooks["quickstart.ipynb"])
 
-    @skip("Done")
     def test_text2text_quickstart(self):
         self._test_notebook(self.notebooks["text2text_quickstart.ipynb"])
 
-    @skip("Done")
     def test_trulens_instrumentation(self):
         self._test_notebook(self.notebooks["trulens_instrumentation.ipynb"])
-
-    # def test_legacy_notebooks(self):
-    #    for notebook_path in get_test_notebooks(LEGACY_NOTEBOOKS_PATH):
-    #        self._test_notebook(notebook_path, kernel="python3")
-    #        self.fail("break for now")
