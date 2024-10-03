@@ -353,7 +353,7 @@ class _RecordingContext:
                 for call in existing_record.calls:
                     current_calls[call.call_id] = call
 
-            # Maintain an order in a record' calls to make sure the root call
+            # Maintain an order in a record's calls to make sure the root call
             # (which returns last) is also last in the calls list:
             sorted_calls = sorted(
                 current_calls.values(),
