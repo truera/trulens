@@ -401,7 +401,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
     # Without the above, orm class attributes which are defined using backref
     # will not be visible, i.e. orm.AppDefinition.records.
 
-    base.registry.configure()
+    # base.registry.configure()
 
     return NewORM
 
