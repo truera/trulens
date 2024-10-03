@@ -729,20 +729,30 @@ class TruSession(
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+
             group_by_metadata_key: A key included in record metadata that you want to group results by.
+
+            limit: Limit on the number of records to return.
+
+            offset: Record row offset.
 
         Returns:
             Dataframe of apps with their feedback results aggregated.
             If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
         """
         return self.connector.get_leaderboard(
-            app_ids=app_ids, group_by_metadata_key=group_by_metadata_key
+            app_ids=app_ids,
+            group_by_metadata_key=group_by_metadata_key,
+            limit=limit,
+            offset=offset,
         )
 
     def add_ground_truth_to_dataset(

@@ -9,6 +9,7 @@ from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
 from sqlalchemy import Float
+from sqlalchemy import ForeignKey
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import event
@@ -117,7 +118,7 @@ class ORM(abc.ABC, Generic[T]):
     Dataset: Type[T]
 
 
-def new_orm(base: Type[T]) -> Type[ORM[T]]:
+def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
     """Create a new orm container from the given base table class."""
 
     class NewORM(ORM):
@@ -222,7 +223,12 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "records"
 
             record_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            app_id = Column(TYPE_ID, nullable=False)  # foreign key
+
+            # Couldn't figure out how to avoid using prefix in ForeignKey here
+            # and in the other classes below.
+            app_id = Column(
+                TYPE_ID, ForeignKey(f"{prefix}apps.app_id"), nullable=False
+            )
 
             input = Column(Text)
             output = Column(Text)
@@ -235,10 +241,32 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             app = relationship(
                 "AppDefinition",
                 backref=backref("records", cascade="all,delete"),
-                primaryjoin="AppDefinition.app_id == Record.app_id",
-                foreign_keys=app_id,
-                order_by="(Record.ts,Record.record_id)",
+                order_by=(ts, record_id),
             )
+            # NOTE(piotrm): order_by: Temporarily disabling all order_by inside
+            # relationships as it causes a bug in what I think is sqlalchemy
+            # when used in conjunction with 2 joinedloads and limit. The problem
+            # is that an SQL query is generated that uses these order_by fields
+            # without having selected from the table first due to the use of a
+            # subquery:
+            """
+            ```sql
+             SELECT anon_1..., trulens_apps_1..., trulens_feedbacks_1...,
+               FROM (
+                SELECT
+                 trulens_records.record_id AS record_id,
+                     ...
+                FROM trulens_records LIMIT :param_1
+             ) AS anon_1
+             LEFT OUTER JOIN trulens_apps AS trulens_apps_1 ...
+             LEFT OUTER JOIN trulens_feedbacks AS trulens_feedbacks_1 ...
+             ORDER BY trulens_records.ts, trulens_records.record_id
+            ```
+            """
+            # Notice that trulens_records is in a subquery and named "anon_1"
+            # but then it is used in the ORDER BY outside of the subquery
+            # referred to by its non-aliased name that was never selected in the
+            # main query.
 
             @classmethod
             def parse(
@@ -278,10 +306,16 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             feedback_result_id = Column(
                 TYPE_ID, nullable=False, primary_key=True
             )
-            record_id = Column(TYPE_ID, nullable=False)  # foreign key
+            record_id = Column(
+                TYPE_ID,
+                ForeignKey(f"{prefix}records.record_id"),
+                nullable=False,
+            )
             feedback_definition_id = Column(
-                TYPE_ID, nullable=False
-            )  # foreign key
+                TYPE_ID,
+                ForeignKey(f"{prefix}feedback_defs.feedback_definition_id"),
+                nullable=False,
+            )
             last_ts = Column(TYPE_TIMESTAMP, nullable=False)
             status = Column(TYPE_ENUM, nullable=False)
             error = Column(Text)
@@ -294,18 +328,16 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             record = relationship(
                 "Record",
                 backref=backref("feedback_results", cascade="all,delete"),
-                primaryjoin="Record.record_id == FeedbackResult.record_id",
-                foreign_keys=record_id,
-                order_by="(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)",
+                # order_by=(last_ts, feedback_result_id),
             )
+            # See NOTE(piotrm): order_by.
 
             feedback_definition = relationship(
                 "FeedbackDefinition",
                 backref=backref("feedback_results", cascade="all,delete"),
-                primaryjoin="FeedbackDefinition.feedback_definition_id == FeedbackResult.feedback_definition_id",
-                foreign_keys=feedback_definition_id,
-                order_by="(FeedbackResult.last_ts,FeedbackResult.feedback_result_id)",
+                # order_by=(last_ts, feedback_result_id),
             )
+            # See NOTE(piotrm): order_by.
 
             @classmethod
             def parse(
@@ -343,16 +375,17 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
             _table_base_name = "ground_truth"
 
             ground_truth_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            dataset_id = Column(Text, nullable=False)
+            dataset_id = Column(
+                Text, ForeignKey(f"{prefix}dataset.dataset_id"), nullable=False
+            )
             ground_truth_json = Column(TYPE_JSON, nullable=False)
 
             dataset = relationship(
                 "Dataset",
                 backref=backref("ground_truths", cascade="all,delete"),
-                primaryjoin="Dataset.dataset_id == GroundTruth.dataset_id",
-                foreign_keys=dataset_id,
-                order_by="(GroundTruth.ground_truth_id)",
+                # order_by=ground_truth_id,
             )
+            # See NOTE(piotrm): order_by
 
             @classmethod
             def parse(
@@ -397,7 +430,7 @@ def new_orm(base: Type[T]) -> Type[ORM[T]]:
     # Without the above, orm class attributes which are defined using backref
     # will not be visible, i.e. orm.AppDefinition.records.
 
-    # base.registry.configure()
+    base.registry.configure()
 
     return NewORM
 
@@ -451,7 +484,7 @@ def make_orm_for_prefix(
 
     base: Type[T] = new_base(prefix=table_prefix)
 
-    return new_orm(base)
+    return new_orm(base, prefix=table_prefix)
 
 
 @event.listens_for(Engine, "connect")

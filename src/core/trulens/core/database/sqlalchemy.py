@@ -778,6 +778,8 @@ class SQLAlchemyDB(DB):
 
             stmt = stmt.limit(limit).offset(offset)
 
+            print("stmt=", stmt)
+
             ex = session.execute(stmt).unique()
             # unique needed for joinedload above.
 
