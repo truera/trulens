@@ -369,9 +369,9 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
             group_by_metadata_key: A key included in record metadata that you want to group results by.
 
-            limit: Limit on the number of records to return.
+            limit: Limit on the number of records to aggregate to produce the leaderboard.
 
-            offset: Record row offset.
+            offset: Record row offset to select which records to use to aggregate the leaderboard.
 
         Returns:
             DataFrame of apps with their feedback results aggregated.
