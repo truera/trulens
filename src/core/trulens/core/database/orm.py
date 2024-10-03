@@ -181,12 +181,8 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class FeedbackDefinition(base):
-            """ORM class for [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition].
-
-            Warning:
-                We don't use any of the typical ORM features and this class is only
-                used as a schema to interact with database through SQLAlchemy.
-            """
+            """ORM class for
+            [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition]."""
 
             _table_base_name = "feedback_defs"
 
@@ -213,12 +209,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class Record(base):
-            """ORM class for [Record][trulens.core.schema.record.Record].
-
-            Warning:
-                We don't use any of the typical ORM features and this class is only
-                used as a schema to interact with database through SQLAlchemy.
-            """
+            """ORM class for [Record][trulens.core.schema.record.Record]."""
 
             _table_base_name = "records"
 
@@ -240,35 +231,14 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             app = relationship(
                 "AppDefinition",
-                backref=backref("records", cascade="all,delete"),
-                order_by=(ts, record_id),
+                backref=backref(
+                    "records", cascade="all,delete", order_by=(ts, record_id)
+                ),
             )
-            # NOTE(piotrm): order_by: Temporarily disabling all order_by inside
-            # relationships as it causes a bug in what I think is sqlalchemy
-            # when used in conjunction with 2 joinedloads and limit. The problem
-            # is that an SQL query is generated that uses these order_by fields
-            # without having selected from the table first due to the use of a
-            # subquery:
-            """
-            ```sql
-             SELECT anon_1..., trulens_apps_1..., trulens_feedbacks_1...,
-               FROM (
-                SELECT
-                 trulens_records.record_id AS record_id,
-                     ...
-                FROM trulens_records LIMIT :param_1
-             ) AS anon_1
-             LEFT OUTER JOIN trulens_apps AS trulens_apps_1 ...
-             LEFT OUTER JOIN trulens_feedbacks AS trulens_feedbacks_1 ...
-             ORDER BY trulens_records.ts, trulens_records.record_id
-            ```
-            """
-            # Notice that trulens_records is in a subquery and named "anon_1"
-            # but then it is used in the ORDER BY outside of the subquery
-            # referred to by its non-aliased name that was never selected in the
-            # main query. If one of the joinedloads in get_records_and_feedback
-            # is removed or if the limit is removed, the query does not use a
-            # subquery and no bug happens.
+            # NOTE(backref order_by): The order_by must be inside the backref as
+            # it refers to the ordering of AppDefinition.records, not of
+            # Record.app. Doing the opposite can produce SQL errors later on but
+            # no warning will be given at schema creation time.
 
             @classmethod
             def parse(
@@ -295,13 +265,8 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class FeedbackResult(base):
-            """
-            ORM class for [FeedbackResult][trulens.core.schema.feedback.FeedbackResult].
-
-            Warning:
-                We don't use any of the typical ORM features and this class is only
-                used as a schema to interact with database through SQLAlchemy.
-            """
+            """ORM class for
+            [FeedbackResult][trulens.core.schema.feedback.FeedbackResult]."""
 
             _table_base_name = "feedbacks"
 
@@ -329,17 +294,23 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             record = relationship(
                 "Record",
-                backref=backref("feedback_results", cascade="all,delete"),
-                # order_by=(last_ts, feedback_result_id),
+                backref=backref(
+                    "feedback_results",
+                    cascade="all,delete",
+                    order_by=(last_ts, feedback_result_id),
+                ),
             )
-            # See NOTE(piotrm): order_by.
+            # See NOTE(backref order_by).
 
             feedback_definition = relationship(
                 "FeedbackDefinition",
-                backref=backref("feedback_results", cascade="all,delete"),
-                # order_by=(last_ts, feedback_result_id),
+                backref=backref(
+                    "feedback_results",
+                    cascade="all,delete",
+                    order_by=(last_ts, feedback_result_id),
+                ),
             )
-            # See NOTE(piotrm): order_by.
+            # See NOTE(backref order_by).
 
             @classmethod
             def parse(
@@ -366,13 +337,8 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class GroundTruth(base):
-            """
-            ORM class for [GroundTruth][trulens.core.schema.groundtruth.GroundTruth].
-
-            Warning:
-                We don't use any of the typical ORM features and this class is only
-                used as a schema to interact with database through SQLAlchemy.
-            """
+            """ORM class for
+            [GroundTruth][trulens.core.schema.groundtruth.GroundTruth]."""
 
             _table_base_name = "ground_truth"
 
@@ -384,10 +350,13 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             dataset = relationship(
                 "Dataset",
-                backref=backref("ground_truths", cascade="all,delete"),
-                # order_by=ground_truth_id,
+                backref=backref(
+                    "ground_truths",
+                    cascade="all,delete",
+                    order_by=ground_truth_id,
+                ),
             )
-            # See NOTE(piotrm): order_by
+            # See NOTE(backref order_by).
 
             @classmethod
             def parse(

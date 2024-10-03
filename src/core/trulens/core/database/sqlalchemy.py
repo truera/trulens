@@ -761,9 +761,6 @@ class SQLAlchemyDB(DB):
             # feedback_results and app definitions get loaded eagerly instead if lazily when
             # accessed later.
 
-            # NOTE(piotrm): Strange issue in sqlalchemy if two joinedloads and a
-            # limit/offset are used. See orm.py "NOTE(piotrm): order_by".
-
             # TODO(piotrm): The subsequent logic in helper methods end up
             # reading all of the records and feedback_results in order to create
             # a DataFrame so there is no reason to not eagerly get all of this
