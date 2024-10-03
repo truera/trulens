@@ -1,42 +1,44 @@
 {
-  "feedback_result_id": "feedback_result_hash_90e978349a62166d57e298c89cfe8555",
-  "record_id": "record_hash_78a9a90ee94a8c0f8679391003330756",
-  "feedback_definition_id": "feedback_definition_hash_384b6684542d80bc527324e86cf65c7a",
-  "last_ts": "2024-08-09T15:20:30.578834",
-  "status": "done",
-  "cost": {
-    "n_requests": 0,
-    "n_successful_requests": 0,
-    "n_classes": 0,
-    "n_tokens": 0,
-    "n_stream_chunks": 0,
-    "n_prompt_tokens": 0,
-    "n_completion_tokens": 0,
-    "cost": 0.0
-  },
-  "name": "language_match",
   "calls": [
     {
       "args": {
         "text1": "hello",
         "text2": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
       },
-      "ret": 0.8973519811528196,
       "meta": {
         "text1_scores": {
+          "LABEL_0": 0.22658802821291113,
           "LABEL_1": 0.5794276352564846,
-          "LABEL_2": 0.19398433653060437,
-          "LABEL_0": 0.22658802821291113
+          "LABEL_2": 0.19398433653060437
         },
         "text2_scores": {
+          "LABEL_0": 0.14386970279414246,
           "LABEL_1": 0.682075654103665,
-          "LABEL_2": 0.1740546431021926,
-          "LABEL_0": 0.14386970279414246
+          "LABEL_2": 0.1740546431021926
         }
-      }
+      },
+      "ret": 0.8973519811528196
     }
   ],
-  "result": 0.8973519811528196,
+  "cost": {
+    "cost": 0.0,
+    "cost_currency": "USD",
+    "n_classes": 0,
+    "n_completion_tokens": 0,
+    "n_cortext_guardrails_tokens": 0,
+    "n_prompt_tokens": 0,
+    "n_requests": 0,
+    "n_stream_chunks": 0,
+    "n_successful_requests": 0,
+    "n_tokens": 0
+  },
   "error": null,
-  "multi_result": "null"
+  "feedback_definition_id": "feedback_definition_hash_2b5d628a66115e397c6e7b151449c8ef",
+  "feedback_result_id": "feedback_result_hash_23ab1400521216fcae988ec27d147693",
+  "last_ts": "2024-10-03T15:27:27.455714",
+  "multi_result": "null",
+  "name": "language_match",
+  "record_id": "record_hash_eeeda24537ef3a686d03ee9bb8ef76af",
+  "result": 0.8973519811528196,
+  "status": "done"
 }

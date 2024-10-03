@@ -1,31 +1,33 @@
 {
-  "feedback_result_id": "feedback_result_hash_42b668faaeef54ded7c91faeeb26175f",
-  "record_id": "record_hash_78a9a90ee94a8c0f8679391003330756",
-  "feedback_definition_id": "feedback_definition_hash_ec4e8986114419c8265e68be7fa39edc",
-  "last_ts": "2024-08-09T15:20:30.596928",
-  "status": "done",
-  "cost": {
-    "n_requests": 0,
-    "n_successful_requests": 0,
-    "n_classes": 0,
-    "n_tokens": 0,
-    "n_stream_chunks": 0,
-    "n_prompt_tokens": 0,
-    "n_completion_tokens": 0,
-    "cost": 0.0
-  },
-  "name": "context_relevance",
   "calls": [
     {
       "args": {
-        "question": "hello",
-        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
+        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
+        "question": "hello"
       },
-      "ret": 0.6666666666666666,
-      "meta": {}
+      "meta": {},
+      "ret": 0.0
     }
   ],
-  "result": 0.6666666666666666,
+  "cost": {
+    "cost": 0.0,
+    "cost_currency": "USD",
+    "n_classes": 0,
+    "n_completion_tokens": 0,
+    "n_cortext_guardrails_tokens": 0,
+    "n_prompt_tokens": 0,
+    "n_requests": 0,
+    "n_stream_chunks": 0,
+    "n_successful_requests": 0,
+    "n_tokens": 0
+  },
   "error": null,
-  "multi_result": "null"
+  "feedback_definition_id": "feedback_definition_hash_a526ac5d9fef70b1a6f7488ca6fcd127",
+  "feedback_result_id": "feedback_result_hash_e438152fb29a86c7c85f08366f816d8d",
+  "last_ts": "2024-10-03T15:27:27.415880",
+  "multi_result": "null",
+  "name": "context_relevance",
+  "record_id": "record_hash_eeeda24537ef3a686d03ee9bb8ef76af",
+  "result": 0.0,
+  "status": "done"
 }

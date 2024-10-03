@@ -74,6 +74,7 @@ class TestSerial(JSONTestCase):
             self.assertGoldenJSONEqual(
                 actual=ta.model_dump(),
                 golden_filename=f"{_GOLDEN_DIRECTORY}/customapp.json",
+                skips=set(["feedback_definitions"]),  # actually contains ids
             )
 
         with ta as recorder:
