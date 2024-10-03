@@ -27,10 +27,10 @@ class SnowflakeTestCase(TestCase):
             "role": os.environ["SNOWFLAKE_ROLE"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
-        self._snowflake_session = Session.builder.configs(
+        self._snowpark_session = Session.builder.configs(
             self._snowflake_connection_parameters
         ).create()
-        self._snowflake_root = Root(self._snowflake_session)
+        self._snowflake_root = Root(self._snowpark_session)
         self._snowflake_schemas_to_delete = []
 
     def tearDown(self):
@@ -56,7 +56,7 @@ class SnowflakeTestCase(TestCase):
             error_msg += "\n".join(schemas_not_deleted)
             raise ValueError(error_msg)
         # Close session.
-        self._snowflake_session.close()
+        self._snowpark_session.close()
 
     def list_schemas(self):
         schemas = self._snowflake_root.databases[
@@ -94,7 +94,7 @@ class SnowflakeTestCase(TestCase):
             self._snowflake_schemas_to_delete.append(self._schema)
         connector = SnowflakeConnector(
             schema=self._schema,
-            **self._snowflake_connection_parameters,
+            snowpark_session=self._snowpark_session,
             init_server_side=True,
         )
         session = TruSession(connector=connector)
@@ -102,7 +102,7 @@ class SnowflakeTestCase(TestCase):
         return session
 
     def run_query(self, q: str) -> None:
-        self._snowflake_session.sql(q).collect()
+        self._snowpark_session.sql(q).collect()
 
 
 if __name__ == "__main__":

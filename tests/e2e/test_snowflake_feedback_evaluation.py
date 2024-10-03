@@ -27,7 +27,7 @@ def silly_feedback_function(q: str) -> float:
 
 class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def _suspend_task(self) -> None:
-        self._snowflake_session.sql(
+        self._snowpark_session.sql(
             f"ALTER TASK {self._database}.{self._schema}.{ssea._TASK_NAME} SUSPEND"
         ).collect()
 
@@ -36,7 +36,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     ) -> None:
         start_time = time.time()
         while time.time() - start_time < timeout_in_seconds:
-            res = self._snowflake_session.sql(
+            res = self._snowpark_session.sql(
                 f"SELECT STATUS FROM {self._database}.{self._schema}.TRULENS_FEEDBACKS"
             ).collect()
             if len(res) == num_expected_feedbacks and all([
@@ -47,7 +47,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         raise ValueError("Feedback evaluation didn't complete in time!")
 
     def _call_stored_procedure(self) -> None:
-        self._snowflake_session.sql(
+        self._snowpark_session.sql(
             f"CALL {self._database}.{self._schema}.{ssea._WRAPPER_STORED_PROCEDURE_NAME}()"
         ).collect()
 
@@ -55,13 +55,13 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self,
     ) -> SnowflakeFeedback:
         return SnowflakeFeedback(
-            Cortex(self._snowflake_session.connection).relevance
+            Cortex(self._snowpark_session.connection).relevance
         ).on_input_output()
 
     def _start_evaluator_as_snowflake(self, session: TruSession):
         try:
             cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
-                self._snowflake_session.connection
+                self._snowpark_session.connection
             )
             session.start_evaluator(
                 run_location=FeedbackRunLocation.SNOWFLAKE,
@@ -186,7 +186,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             text_to_text=lambda t: f"returning {t}",
         )
         # Test stage exists.
-        res = self._snowflake_session.sql(
+        res = self._snowpark_session.sql(
             f"SHOW TERSE STAGES IN SCHEMA {self._database}.{self._schema}"
         ).collect()
         self.assertEqual(len(res), 1)
@@ -194,7 +194,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].database_name, self._database.upper())
         self.assertEqual(res[0].schema_name, self._schema.upper())
         # Test stream exists.
-        res = self._snowflake_session.sql(
+        res = self._snowpark_session.sql(
             f"SHOW TERSE STREAMS IN SCHEMA {self._database}.{self._schema}"
         ).collect()
         self.assertEqual(len(res), 1)
@@ -203,14 +203,14 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].schema_name, self._schema.upper())
         self.assertEqual(res[0].tableOn, "TRULENS_FEEDBACKS")
         # Test stored procedure exists.
-        res = self._snowflake_session.sql(
+        res = self._snowpark_session.sql(
             f"SHOW TERSE PROCEDURES LIKE '{ssea._STORED_PROCEDURE_NAME}' IN SCHEMA {self._database}.{self._schema}"
         ).collect()
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].name, ssea._STORED_PROCEDURE_NAME)
         self.assertEqual(res[0].schema_name, self._schema.upper())
         # Test task exists.
-        res = self._snowflake_session.sql(
+        res = self._snowpark_session.sql(
             f"SHOW TERSE TASKS IN SCHEMA {self._database}.{self._schema}"
         ).collect()
         self.assertEqual(len(res), 1)
@@ -241,7 +241,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.8,
         )
         self._call_stored_procedure()  # The stream will have data again due to the computed feedbacks that were deferred but now ran.
-        res = self._snowflake_session.sql(
+        res = self._snowpark_session.sql(
             f"SELECT SYSTEM$STREAM_HAS_DATA('{self._database}.{self._schema}.{ssea._STREAM_NAME}')"
         ).collect()
         self.assertEqual(len(res), 1)
