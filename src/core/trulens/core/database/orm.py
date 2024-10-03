@@ -266,7 +266,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             # Notice that trulens_records is in a subquery and named "anon_1"
             # but then it is used in the ORDER BY outside of the subquery
             # referred to by its non-aliased name that was never selected in the
-            # main query.
+            # main query. If one of the joinedloads in get_records_and_feedback
+            # is removed or if the limit is removed, the query does not use a
+            # subquery and no bug happens.
 
             @classmethod
             def parse(
