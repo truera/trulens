@@ -348,7 +348,7 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
 class Answerability(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
-        """You are a ANSWERABILITY classifier; providing a score of 0 if the answer to the QUESTION does not exist in the SOURCE, and a 10 if the answer does exist in the SOURCE.
+        """You are a ANSWERABILITY classifier; providing a score of {min_score} if the answer to the QUESTION does not exist in the SOURCE, and a {max_score} if the answer does exist in the SOURCE.
         Do not consider the quality of the answer, only if it exists or not.
         Never elaborate."""
     )
@@ -365,7 +365,7 @@ class Abstention(Semantics, WithPrompt):
     system_prompt: ClassVar[str] = cleandoc(
         """You are a ABSTENTION classifier; classifying the STATEMENT as an abstention or not.
         Examples of an abstention include statement similar to 'I don't know' or 'I can't answer that'.
-        Respond only as a number from 0 to 10 where 0 is not an abstention and 10 is an abstention.
+        Respond only as a number from {min_score} to {max_score} where {min_score} is not an abstention and {max_score} is an abstention.
         Never elaborate."""
     )
     user_prompt: ClassVar[str] = cleandoc(

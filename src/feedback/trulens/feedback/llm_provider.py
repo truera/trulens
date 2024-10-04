@@ -1261,7 +1261,12 @@ class LLMProvider(Provider):
         )
 
     def _assess_key_point_inclusion(
-        self, key_points: str, summary: str, temperature: float = 0.0
+        self,
+        key_points: str,
+        summary: str,
+        min_score: int = 0,
+        max_score: int = 3,
+        temperature: float = 0.0,
     ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
@@ -1278,7 +1283,9 @@ class LLMProvider(Provider):
             point.strip() for point in key_points.split("\n") if point.strip()
         ]
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT.format(
+            min_score=min_score, max_score=max_score
+        )
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
@@ -1302,7 +1309,7 @@ class LLMProvider(Provider):
         return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str
+        self, source: str, summary: str, min_score: int = 0, max_score: int = 3
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1325,7 +1332,7 @@ class LLMProvider(Provider):
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
-            key_points, summary
+            key_points, summary, min_score=min_score, max_score=max_score
         )
         scores = []
         reasons = ""
@@ -1333,12 +1340,9 @@ class LLMProvider(Provider):
             reasons += assessment + "\n\n"
             if assessment:
                 first_line = assessment.split("\n")[0]
-                score = (
-                    re_configured_rating(
-                        first_line, min_score_val=0, max_score_val=3
-                    )
-                    / 3
-                )
+                score = re_configured_rating(
+                    first_line, min_score_val=min_score, max_score_val=max_score
+                ) / (max_score - min_score)
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
@@ -1713,7 +1717,10 @@ class LLMProvider(Provider):
                 statement=statement
             )
             score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM, user_prompt
+                prompts.LLM_ABSTENTION_SYSTEM.format(min_score=0, max_score=1),
+                user_prompt,
+                min_score_val=0,
+                max_score_val=1,
             )
             return score
 
@@ -1722,7 +1729,12 @@ class LLMProvider(Provider):
                 question=question, source=source
             )
             score = self.generate_score(
-                prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
+                prompts.LLM_ANSWERABILITY_SYSTEM.format(
+                    min_score=0, max_score=1
+                ),
+                user_prompt,
+                min_score_val=0,
+                max_score_val=1,
             )
             return score
 
