@@ -138,7 +138,7 @@ _trulens_eval:
 		docs/trulens_eval/tracking
 	git worktree prune
 test-legacy-notebooks: _trulens_eval
-	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
+	TEST_OPTIONAL=1 $(PYTEST) -s tests/legacy/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-golden-%: tests/e2e/test_%.py # has golden file
