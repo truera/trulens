@@ -3,7 +3,7 @@
 from typing import Dict
 import uuid
 
-from trulens.core.utils.python import TypeAlias
+from trulens.core._utils.pycompat import TypeAlias
 
 RecordID: TypeAlias = str
 """Unique identifier for a record.
