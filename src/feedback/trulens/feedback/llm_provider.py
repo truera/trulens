@@ -629,7 +629,9 @@ class LLMProvider(Provider):
             temperature=temperature,
         )
 
-    def sentiment(self, text: str) -> float:
+    def sentiment(
+        self, text: str, min_score_val: int = 0, max_score_val: int = 3
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
@@ -640,15 +642,24 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            text: The text to evaluate sentiment of.
+            text (str): The text to evaluate sentiment of.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             A value between 0 and 1. 0 being "negative sentiment" and 1
                 being "positive sentiment".
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM
+        system_prompt = prompts.SENTIMENT_SYSTEM.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
         user_prompt = prompts.SENTIMENT_USER + text
-        return self.generate_score(system_prompt, user_prompt)
+        return self.generate_score(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+        )
 
     def sentiment_with_cot_reasons(
         self,
@@ -726,7 +737,13 @@ class LLMProvider(Provider):
             / 3
         )
 
-    def _langchain_evaluate(self, text: str, criteria: str) -> float:
+    def _langchain_evaluate(
+        self,
+        text: str,
+        criteria: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+    ) -> float:
         """
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
@@ -734,11 +751,16 @@ class LLMProvider(Provider):
         Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
                 evaluation.
         """
+        criteria = criteria.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
 
         system_prompt = str.format(
             prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
@@ -747,7 +769,12 @@ class LLMProvider(Provider):
             prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
-        return self.generate_score(system_prompt, user_prompt)
+        return self.generate_score(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+        )
 
     def _langchain_evaluate_with_cot_reasons(
         self,
@@ -771,6 +798,10 @@ class LLMProvider(Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
         """
+
+        criteria = criteria.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
 
         system_prompt = str.format(
             prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
@@ -1261,7 +1292,12 @@ class LLMProvider(Provider):
         )
 
     def _assess_key_point_inclusion(
-        self, key_points: str, summary: str, temperature: float = 0.0
+        self,
+        key_points: str,
+        summary: str,
+        min_score: int = 0,
+        max_score: int = 3,
+        temperature: float = 0.0,
     ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
@@ -1278,7 +1314,9 @@ class LLMProvider(Provider):
             point.strip() for point in key_points.split("\n") if point.strip()
         ]
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT.format(
+            min_score=min_score, max_score=max_score
+        )
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
@@ -1302,7 +1340,7 @@ class LLMProvider(Provider):
         return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str
+        self, source: str, summary: str, min_score: int = 0, max_score: int = 3
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1325,7 +1363,7 @@ class LLMProvider(Provider):
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
-            key_points, summary
+            key_points, summary, min_score=min_score, max_score=max_score
         )
         scores = []
         reasons = ""
@@ -1333,12 +1371,9 @@ class LLMProvider(Provider):
             reasons += assessment + "\n\n"
             if assessment:
                 first_line = assessment.split("\n")[0]
-                score = (
-                    re_configured_rating(
-                        first_line, min_score_val=0, max_score_val=3
-                    )
-                    / 3
-                )
+                score = re_configured_rating(
+                    first_line, min_score_val=min_score, max_score_val=max_score
+                ) / (max_score - min_score)
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
@@ -1354,7 +1389,13 @@ class LLMProvider(Provider):
             "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
         )
 
-    def stereotypes(self, prompt: str, response: str) -> float:
+    def stereotypes(
+        self,
+        prompt: str,
+        response: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
@@ -1367,13 +1408,16 @@ class LLMProvider(Provider):
 
         Args:
             prompt (str): A text prompt to an agent.
-
             response (str): The agent's response to the prompt.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
-        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
+        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
         user_prompt = str.format(
             prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
         )
@@ -1575,6 +1619,7 @@ class LLMProvider(Provider):
 
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
             match = score_pattern.search(reason["reason"])
+            normalized_reason = None
             if match:
                 original_reason_score = float(match.group(1))
                 normalized_reason_score = (
@@ -1608,7 +1653,7 @@ class LLMProvider(Provider):
             groundedness_scores[f"statement_{i}"] = score
             reason_str = (
                 reason["reason"]
-                if "reason" in reason
+                if reason is not None and "reason" in reason
                 else "reason not generated"
             )
             reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
@@ -1713,7 +1758,10 @@ class LLMProvider(Provider):
                 statement=statement
             )
             score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM, user_prompt
+                prompts.LLM_ABSTENTION_SYSTEM.format(min_score=0, max_score=1),
+                user_prompt,
+                min_score_val=0,
+                max_score_val=1,
             )
             return score
 
@@ -1722,7 +1770,12 @@ class LLMProvider(Provider):
                 question=question, source=source
             )
             score = self.generate_score(
-                prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
+                prompts.LLM_ANSWERABILITY_SYSTEM.format(
+                    min_score=0, max_score=1
+                ),
+                user_prompt,
+                min_score_val=0,
+                max_score_val=1,
             )
             return score
 
