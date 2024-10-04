@@ -31,6 +31,7 @@ import weakref
 
 import pydantic
 from trulens.core._utils import optional as optional_utils
+from trulens.core._utils.pycompat import Future
 from trulens.core.database import base as mod_base_db
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
@@ -55,9 +56,6 @@ from trulens.core.utils.containers import BlockingSet
 from trulens.core.utils.json import json_str_of_obj
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.pyschema import Class
-
-# can take type args with python < 3.9
-from trulens.core.utils.python import Future
 from trulens.core.utils.python import T
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name

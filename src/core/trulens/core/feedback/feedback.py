@@ -30,6 +30,7 @@ import pydantic
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
+from trulens.core._utils import pycompat as pycompat_utils
 import trulens.core.feedback.endpoint as mod_base_endpoint
 from trulens.core.schema import Select
 from trulens.core.schema import app as mod_app_schema
@@ -335,7 +336,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     ) -> List[
         Tuple[
             pandas.Series,
-            mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+            pycompat_utils.Future[mod_feedback_schema.FeedbackResult],
         ]
     ]:
         """Evaluates feedback functions that were specified to be deferred.
@@ -404,7 +405,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         futures: List[
             Tuple[
                 pandas.Series,
-                mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+                pycompat_utils.Future[mod_feedback_schema.FeedbackResult],
             ]
         ] = []
 

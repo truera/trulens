@@ -21,9 +21,9 @@ import requests
 import torch
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
+from trulens.core._utils.pycompat import Future
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
-from trulens.core.utils.python import Future
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import prompts
