@@ -65,6 +65,7 @@ if not legacy:
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
     from llama_index.core.chat_engine.types import BaseChatEngine
+    from llama_index.core.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.indices.base import BaseIndex
     from llama_index.core.indices.prompt_helper import PromptHelper
     from llama_index.core.memory.types import BaseMemory
@@ -104,6 +105,7 @@ else:
 
     from llama_index.chat_engine.types import AgentChatResponse
     from llama_index.chat_engine.types import BaseChatEngine
+    from llama_index.chat_engine.types import StreamingAgentChatResponse
     from llama_index.core.base_query_engine import BaseQueryEngine
     from llama_index.core.base_query_engine import QueryEngineComponent
     from llama_index.core.base_retriever import BaseRetriever
@@ -514,20 +516,16 @@ class TruLlama(mod_app.App):
         if isinstance(ret, Response):  # query, aquery
             return "response"
 
-        elif isinstance(ret, AgentChatResponse):  #  chat, achat
+        elif isinstance(
+            ret, (AgentChatResponse, StreamingAgentChatResponse)
+        ):  #  chat, achat, stream_chat
             return "response"
 
         elif isinstance(
             ret,
-            (
-                StreamingResponse,
-                AsyncStreamingResponse,
-            ),
+            (StreamingResponse, AsyncStreamingResponse),
         ):
             return "response_txt"  # note that this is only available after the stream has been iterated over
-
-        # Haven't seen this being produced yet but is in llamaindex:
-        # StreamingAgentChatResponse,
 
         return None
 

@@ -664,8 +664,12 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         # Keep track whether any selectors failed to validate.
         check_good: bool = True
 
-        # with c.capture() as cap:
         for k, q in self.selectors.items():
+            if Select.RecordSpans.is_prefix_of(q):
+                # Skip checking for RecordSpans as they are not known ahead of
+                # producing a record.
+                continue
+
             if q.exists(source_data):
                 continue
 
@@ -746,7 +750,7 @@ Feedback function signature:
                         + "\n```\n"
                     )
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 msg += f"Some non-existent object because: {pretty_repr(e)}"
 
         if check_good:

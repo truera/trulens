@@ -192,7 +192,7 @@ class Class(SerialModel):
     def __str__(self):
         return f"{self.name}({self.module.module_name if self.module is not None else 'no module'})"
 
-    def base_class(self) -> "Class":
+    def base_class(self) -> Class:
         """
         Get the deepest base class in the same module as this class.
         """
@@ -421,13 +421,67 @@ class Obj(SerialModel):
             return cls(*bindings.args, **bindings.kwargs)
 
 
+def _self_arg(bindings: inspect.BoundArguments) -> Optional[str]:
+    """Guess whether the given bindings have a "self" argument and return its
+    name.
+
+    This guesses that first arg that contains "self" is a self argument.
+    """
+
+    if len(bindings.arguments) == 0:
+        return None
+
+    firstarg = next(iter(bindings.arguments))
+
+    if "self" in firstarg:
+        return firstarg
+
+    return None
+
+
 class Bindings(SerialModel):
     args: Tuple
     kwargs: Dict[str, Any]
 
     @staticmethod
-    def of_bound_arguments(b: inspect.BoundArguments) -> Bindings:
-        return Bindings(args=b.args, kwargs=b.kwargs)
+    def of_bound_arguments(
+        b: inspect.BoundArguments,
+        skip_self: bool = True,
+        arguments_only: bool = False,
+    ) -> Bindings:
+        """Populate Bindings from inspect.BoundArguments.
+
+        Args:
+            b: BoundArguments to populate from.
+
+            skip_self: If True, skip the first argument if it is named "self".
+
+            arguments_only: If True, only populate kwargs from arguments. This
+                includes the same arguments as otherwise except it provides all of
+                them by name even if they were bound by position.
+        """
+
+        firstarg: Optional[str] = _self_arg(b)
+
+        if arguments_only:
+            return Bindings(
+                args=(),
+                kwargs={
+                    k: v
+                    for k, v in b.arguments.items()
+                    if (not skip_self or k != firstarg)
+                },
+            )
+
+        if skip_self:
+            if firstarg is not None:
+                args = b.args[1:]
+            else:
+                args = b.args
+        else:
+            args = b.args
+
+        return Bindings(args=args, kwargs=b.kwargs)
 
     def _handle_providers_load(self):
         # HACK004: A Hack: reason below

@@ -36,12 +36,17 @@ from typing import (
 )
 import weakref
 
+import typing_extensions
+
 T = TypeVar("T")
 
 WRAP_LAZY: bool = True
 
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
+
+TypeAliasType = typing_extensions.TypeAliasType
+TypeAlias = typing_extensions.TypeAlias
 
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static
@@ -238,6 +243,39 @@ def safe_signature(func_or_obj: Any):
 
         else:
             raise e
+
+
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
 
 
 def safe_hasattr(obj: Any, k: str) -> bool:
@@ -447,9 +485,10 @@ def external_caller_frame(offset=0) -> FrameType:
         RuntimeError: If no such frame is found.
     """
     frame = inspect.currentframe()
-    gen = stack_generator(frame=frame, offset=offset + 2)
+    gen = stack_generator(frame=frame, offset=offset + 1)
     for f_info in gen:
-        if not f_info.f_globals["__name__"].startswith("trulens"):
+        name = f_info.f_globals["__name__"]
+        if not (name.startswith("trulens") or name.startswith("pydantic")):
             return f_info
 
     raise RuntimeError("No external caller frame found.")
@@ -1177,7 +1216,7 @@ class SingletonInfo(Generic[T]):
     for each unique name (and class).
     """
 
-    def __init__(self, name: str, val: Any):
+    def __init__(self, val: Any, name: Optional[str] = None):
         self.val = val
         self.cls = val.__class__
         self.name = name
@@ -1244,7 +1283,7 @@ class SingletonPerName:
 
         if k not in cls._instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )
@@ -1296,4 +1335,65 @@ class SingletonPerName:
             del SingletonPerName._id_to_name_map[id_]
             del SingletonPerName._instances[(self.__class__.__name__, name)]
         else:
-            logger.warning("Instance %s not found in our records.", self)
+            logger.warning(
+                "Instance %s not found among existing singletons.", self
+            )
+
+
+class Singleton:
+    """Class for creating singleton instances."""
+
+    # Hold singleton instances here.
+    _instances: Dict[Hashable, SingletonInfo[Singleton]] = {}
+
+    def warning(self):
+        """Issue warning that this singleton already exists."""
+
+        k = self.__class__.__name__
+        if k in Singleton._instances:
+            Singleton._instances[k].warning()
+        else:
+            raise RuntimeError(
+                f"Instance of singleton type {k} does not exist."
+            )
+
+    def __new__(
+        cls: Type[Singleton],
+        *args,
+        **kwargs,
+    ) -> Singleton:
+        """Create the singleton instance if it doesn't already exist and return it."""
+
+        k = cls.__name__
+
+        if k not in cls._instances:
+            logger.debug(
+                "Creating new %s singleton instance.",
+                cls.__name__,
+            )
+            # If exception happens here, the instance should not be added to
+            # _instances.
+            instance = super().__new__(cls)
+
+            info: SingletonInfo = SingletonInfo(val=instance)
+            Singleton._instances[k] = info
+        else:
+            info = Singleton._instances[k]
+
+        obj = info.val
+        assert isinstance(obj, cls)
+        return obj
+
+    def delete_singleton(self):
+        """
+        Delete the singleton instance. Can be used for testing to create another
+        singleton.
+        """
+        k = self.__class__.__name__
+
+        if k in Singleton._instances:
+            del Singleton._instances[k]
+        else:
+            logger.warning(
+                "Instance %s not found among existing singletons.", self
+            )
