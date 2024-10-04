@@ -752,8 +752,6 @@ any {
   `from trulens_eval.utils.pyschema import safe_getattr as $alias` => `from trulens.core.utils.pyschema import safe_getattr as $alias`,
   `from trulens_eval.utils.python import STACK` => `from trulens.core.utils.python import STACK`,
   `from trulens_eval.utils.python import STACK as $alias` => `from trulens.core.utils.python import STACK as $alias`,
-  `from trulens_eval.utils.python import EmptyType` => `from trulens.core.utils.python import EmptyType`,
-  `from trulens_eval.utils.python import EmptyType as $alias` => `from trulens.core.utils.python import EmptyType as $alias`,
   `from trulens_eval.utils.python import OpaqueWrapper` => `from trulens.core.utils.python import OpaqueWrapper`,
   `from trulens_eval.utils.python import OpaqueWrapper as $alias` => `from trulens.core.utils.python import OpaqueWrapper as $alias`,
   `from trulens_eval.utils.python import SingletonInfo` => `from trulens.core.utils.python import SingletonInfo`,

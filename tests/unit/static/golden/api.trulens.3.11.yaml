@@ -1346,7 +1346,6 @@ trulens.core.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
     OpaqueWrapper: builtins.type
     STACK: builtins.str
     Singleton: builtins.type
@@ -1390,11 +1389,6 @@ trulens.core.utils.python:
     wrap_generator: builtins.function
     wrap_lazy: builtins.function
     wrap_until_eager: builtins.function
-trulens.core.utils.python.EmptyType:
-  __bases__:
-  - builtins.type
-  __class__: builtins.type
-  attributes: {}
 trulens.core.utils.python.OpaqueWrapper:
   __bases__:
   - typing.Generic
