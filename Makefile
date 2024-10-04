@@ -27,20 +27,40 @@ env-%:
 	poetry install --with $*
 
 env-tests:
-	poetry run pip install pytest nbconvert nbformat pytest-subtests pytest-azurepipelines ruff pre-commit pytest-cov jsondiff
+	poetry run pip install \
+		pytest \
+		nbconvert \
+		nbformat \
+		pytest-subtests \
+		pytest-azurepipelines \
+		ruff \
+		pre-commit \
+		pytest-cov \
+		jsondiff
 
 env-tests-required:
 	poetry install --only required
 	make env-tests
 
 env-tests-optional: env env-tests
-	poetry run pip install llama-index-embeddings-huggingface llama-index-embeddings-openai
+	poetry run pip install \
+		llama-index-embeddings-huggingface \
+		llama-index-embeddings-openai \
+		langchain-openai \
+		unstructured \
+		chromadb \
 
 env-tests-db: env-tests
-	poetry run pip install cryptography psycopg2-binary pymysql
+	poetry run pip install \
+		cryptography \
+		psycopg2-binary \
+		pymysql
 
-env-tests-notebook: env-tests
-	poetry run pip install faiss-cpu ipytree chromadb unstructured llama-index-readers-web
+env-tests-notebook: env-tests env-tests-optional
+	poetry run pip install \
+		faiss-cpu \
+		ipytree \
+		llama-index-readers-web
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
