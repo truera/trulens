@@ -570,7 +570,11 @@ class OptionalImports:
         while frame.f_code == self.__import__.__code__:
             frame = frame.f_back
 
-        module_name = frame.f_globals["__name__"]
+        if "__name__" in frame.f_globals:
+            module_name = frame.f_globals["__name__"]
+        else:
+            # TODO: Figure out why we are even getting here.
+            module_name = ""  # will fail the next check
 
         if not module_name.startswith("trulens"):
             return self.imp(name, globals, locals, fromlist, level)

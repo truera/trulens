@@ -36,6 +36,7 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
+from trulens.core.experimental import Feature
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as mod_base_schema
@@ -338,8 +339,7 @@ class _RecordingContext:
         ],
         existing_record: Optional[mod_record_schema.Record] = None,
     ):
-        """
-        Run the given function to build a record from the tracked calls and any
+        """Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
 
         If existing_record is provided, updates that record with new data.
@@ -353,8 +353,17 @@ class _RecordingContext:
                 for call in existing_record.calls:
                     current_calls[call.call_id] = call
 
+            # Maintain an order in a record's calls to make sure the root call
+            # (which returns last) is also last in the calls list:
+            sorted_calls = sorted(
+                current_calls.values(),
+                key=lambda c: c.perf.end_time
+                if c.perf is not None
+                else datetime.max,
+            )
+
             record = calls_to_record(
-                current_calls.values(), self.record_metadata, existing_record
+                sorted_calls, self.record_metadata, existing_record
             )
 
             if existing_record is None:
@@ -550,6 +559,22 @@ class Instrument:
 
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
+
+        if self.app.session.experimental_feature(
+            Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.instruments import (
+                _Instrument,
+            )
+
+            return _Instrument.tracked_method_wrapper(
+                self,
+                query=query,
+                func=func,
+                method_name=method_name,
+                cls=cls,
+                obj=obj,
+            )
 
         if safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")

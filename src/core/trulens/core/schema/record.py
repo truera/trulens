@@ -4,15 +4,25 @@ from __future__ import annotations
 
 import datetime
 import logging
-from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Hashable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 from munch import Munch as Bunch
 import pydantic
 from trulens.core.schema import base as mod_base_schema
 from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
-from trulens.core.utils import serial
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as mod_threading_utils
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
@@ -23,20 +33,20 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-class RecordAppCallMethod(serial.SerialModel):
+class RecordAppCallMethod(serial_utils.SerialModel):
     """Method information for the stacks inside `RecordAppCall`."""
 
     def __str__(self):
         return f"{self.path}.{self.method.name}"
 
-    path: serial.Lens
+    path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
     method: pyschema.Method
     """The method that was called."""
 
 
-class RecordAppCall(serial.SerialModel):
+class RecordAppCall(serial_utils.SerialModel):
     """Info regarding each instrumented method call."""
 
     def __str__(self):
@@ -60,10 +70,10 @@ class RecordAppCall(serial.SerialModel):
     stack: List[RecordAppCallMethod]
     """Call stack but only containing paths of instrumented apps/other objects."""
 
-    args: serial.JSON
+    args: serial_utils.JSON
     """Arguments to the instrumented method."""
 
-    rets: Optional[serial.JSON] = None
+    rets: Optional[serial_utils.JSON] = None
     """Returns of the instrumented method if successful.
 
     Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
@@ -94,7 +104,7 @@ class RecordAppCall(serial.SerialModel):
         return self.top.method
 
 
-class Record(serial.SerialModel, Hashable):
+class Record(serial_utils.SerialModel, Hashable):
     """The record of a single main method call.
 
     Note:
@@ -135,16 +145,16 @@ class Record(serial.SerialModel, Hashable):
     tags: Optional[str] = ""
     """Tags for the record."""
 
-    meta: Optional[serial.JSON] = None
+    meta: Optional[serial_utils.JSON] = None
     """Metadata for the record."""
 
-    main_input: Optional[serial.JSON] = None
+    main_input: Optional[serial_utils.JSON] = None
     """The app's main input."""
 
-    main_output: Optional[serial.JSON] = None  # if no error
+    main_output: Optional[serial_utils.JSON] = None  # if no error
     """The app's main output if there was no error."""
 
-    main_error: Optional[serial.JSON] = None  # if error
+    main_error: Optional[serial_utils.JSON] = None  # if error
     """The app's main error if there was an error."""
 
     calls: List[RecordAppCall] = []
@@ -152,6 +162,16 @@ class Record(serial.SerialModel, Hashable):
 
     Note that these can be converted into a json structure with the same paths
     as the app that generated this record via `layout_calls_as_app`.
+
+    Invariant: calls are ordered by `.perf.end_time`.
+    """
+
+    experimental_otel_spans: List[
+        Any
+    ] = []  # actually trulens.experimental.otel_tracing.core.trace.Span
+    """EXPERIMENTAL(otel-tracing): OTEL spans representation of this record.
+
+    This will be filled in only if the otel-tracing experimental feature is enabled.
     """
 
     feedback_and_future_results: Optional[
@@ -175,11 +195,25 @@ class Record(serial.SerialModel, Hashable):
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(
-        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+        self,
+        record_id: Optional[mod_types_schema.RecordID] = None,
+        calls: Optional[List[RecordAppCall]] = None,
+        **kwargs,
     ):
-        super(serial.SerialModel, self).__init__(
-            record_id="temporary", **kwargs
+        super(serial_utils.SerialModel, self).__init__(
+            record_id="temporary", calls=calls, **kwargs
         )
+
+        # Resetting the calls in sorted order here. Note that we are calling
+        # init with calls above to make sure they get converted to RecordAppCall
+        # from dicts. We then sort those in the next step:
+        if calls is not None:
+            self.calls = sorted(
+                self.calls,
+                key=lambda call: call.perf.end_time
+                if call.perf is not None
+                else datetime.datetime.max,
+            )
 
         if record_id is None:
             record_id = obj_id_of_obj(jsonify(self), prefix="record")
@@ -226,6 +260,25 @@ class Record(serial.SerialModel, Hashable):
 
         return ret
 
+    def get(self, path: serial_utils.Lens) -> Optional[T]:
+        """Get a value from the record using a path.
+
+        Args:
+            path: Path to the value.
+        """
+
+        layout = self.layout_calls_as_app()
+
+        if len(path.path) == 0:
+            return layout
+
+        if path.path[0] == select_schema.Select.App.path[0]:
+            raise ValueError("This path references an app, not a record.")
+        elif path.path[0] == select_schema.Select.Record.path[0]:
+            path = serial_utils.Lens(path.path[1:])
+
+        return path.get_sole_item(obj=layout)
+
     def layout_calls_as_app(self) -> Bunch:
         """Layout the calls in this record into the structure that follows that of
         the app that created this record.
@@ -252,10 +305,8 @@ class Record(serial.SerialModel, Hashable):
             frame_info = call.top
 
             # Adds another attribute to path, from method name:
-            path = frame_info.path._append(
-                serial.GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.name
-                )
+            path = frame_info.path + serial_utils.GetItemOrAttribute(
+                item_or_attribute=frame_info.method.name
             )
 
             if path.exists(obj=ret):
@@ -263,6 +314,24 @@ class Record(serial.SerialModel, Hashable):
                 ret = path.set(obj=ret, val=existing + [call])
             else:
                 ret = path.set(obj=ret, val=[call])
+
+        ret.spans = {}
+        spans_path = serial_utils.Lens() + serial_utils.GetItemOrAttribute(
+            item_or_attribute="spans"
+        )
+
+        for span in self.experimental_otel_spans:
+            path = spans_path
+            for step in span.name.split(
+                "."
+            ):  # interpret dots in name as elements of a path
+                path += serial_utils.GetItemOrAttribute(item_or_attribute=step)
+
+            if path.exists(obj=ret):
+                existing = path.get_sole_item(obj=ret)
+                ret = path.set(obj=ret, val=existing + [span])
+            else:
+                ret = path.set(obj=ret, val=[span])
 
         return ret
 
