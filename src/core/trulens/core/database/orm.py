@@ -20,11 +20,11 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
-from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as mod_dataset_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.utils.json import json_str_of_obj
 
 TYPE_JSON = Text
@@ -170,7 +170,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_app_schema.AppDefinition,
+                obj: app_schema.AppDefinition,
                 redact_keys: bool = False,
             ) -> ORM.AppDefinition:
                 return cls(
@@ -197,7 +197,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_feedback_schema.FeedbackDefinition,
+                obj: feedback_schema.FeedbackDefinition,
                 redact_keys: bool = False,
             ) -> ORM.FeedbackDefinition:
                 return cls(
@@ -242,7 +242,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             @classmethod
             def parse(
-                cls, obj: mod_record_schema.Record, redact_keys: bool = False
+                cls, obj: record_schema.Record, redact_keys: bool = False
             ) -> ORM.Record:
                 return cls(
                     record_id=obj.record_id,
@@ -315,7 +315,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_feedback_schema.FeedbackResult,
+                obj: feedback_schema.FeedbackResult,
                 redact_keys: bool = False,
             ) -> ORM.FeedbackResult:
                 return cls(

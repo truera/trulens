@@ -39,7 +39,7 @@ from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -287,8 +287,8 @@ class SpanCall(Span):
     call_id: Optional[uuid.UUID] = pydantic.Field(None)
     """Unique identifier for the call."""
 
-    stack: Optional[List[mod_record_schema.RecordAppCallMethod]] = (
-        pydantic.Field(None)
+    stack: Optional[List[record_schema.RecordAppCallMethod]] = pydantic.Field(
+        None
     )
     """Call stack of instrumented methods only."""
 
@@ -449,12 +449,12 @@ class Tracer(mod_otel.Tracer):
     def _fill_stacks(
         span: Span,
         get_method_path: Callable,
-        stack: List[mod_record_schema.RecordAppCallMethod] = [],
+        stack: List[record_schema.RecordAppCallMethod] = [],
     ):
         if isinstance(span, LiveSpanCall):
             path = get_method_path(obj=span.live_obj, func=span.live_func)
 
-            frame_ident = mod_record_schema.RecordAppCallMethod(
+            frame_ident = record_schema.RecordAppCallMethod(
                 path=path
                 if path is not None
                 else serial_utils.Lens().static,  # placeholder path for functions
@@ -473,7 +473,7 @@ class Tracer(mod_otel.Tracer):
 
     def _call_of_spancall(
         self, span: LiveSpanCall
-    ) -> mod_record_schema.RecordAppCall:
+    ) -> record_schema.RecordAppCall:
         """Convert a SpanCall to a RecordAppCall."""
 
         args = (
@@ -488,7 +488,7 @@ class Tracer(mod_otel.Tracer):
         assert span.start_timestamp is not None
         assert span.end_timestamp is not None
 
-        return mod_record_schema.RecordAppCall(
+        return record_schema.RecordAppCall(
             call_id=str(span.call_id),
             stack=span.stack,
             args=args,
@@ -504,7 +504,7 @@ class Tracer(mod_otel.Tracer):
 
     def record_of_root_span(
         self, recording: Any, root_span: LiveSpanCall
-    ) -> mod_record_schema.Record:
+    ) -> record_schema.Record:
         """Convert a root span to a record.
 
         This span has to be a call span so we can extract things like main input and output.
@@ -564,7 +564,7 @@ class Tracer(mod_otel.Tracer):
             main_input = None
             main_output = None
 
-        record = mod_record_schema.Record(
+        record = record_schema.Record(
             record_id="placeholder",
             app_id=app.app_id,
             main_input=json_utils.jsonify(main_input),
@@ -594,7 +594,7 @@ class Tracer(mod_otel.Tracer):
 
     def records_of_recording(
         self, recording: PhantomSpanRecordingContext
-    ) -> Iterable[mod_record_schema.Record]:
+    ) -> Iterable[record_schema.Record]:
         """Convert a recording based on spans to a list of records."""
 
         for root_span in Tracer.find_each_child(
@@ -895,9 +895,7 @@ class _RecordingContext:
         span: Optional[PhantomSpanRecordingContext] = None,
         span_ctx: Optional[SpanContext] = None,
     ):
-        self.calls: Dict[
-            types_schema.CallID, mod_record_schema.RecordAppCall
-        ] = {}
+        self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
         Storing as a map as we want to override calls with the same id which may
@@ -907,7 +905,7 @@ class _RecordingContext:
         """
         # TODEP: To deprecated after migration to span-based tracing.
 
-        self.records: List[mod_record_schema.Record] = []
+        self.records: List[record_schema.Record] = []
         """Completed records."""
 
         self.lock: Lock = Lock()
@@ -947,7 +945,7 @@ class _RecordingContext:
     def __iter__(self):
         return iter(self.records)
 
-    def get(self) -> mod_record_schema.Record:
+    def get(self) -> record_schema.Record:
         """Get the single record only if there was exactly one or throw
         an error otherwise."""
 
@@ -962,7 +960,7 @@ class _RecordingContext:
 
         return self.records[0]
 
-    def __getitem__(self, idx: int) -> mod_record_schema.Record:
+    def __getitem__(self, idx: int) -> record_schema.Record:
         return self.records[idx]
 
     def __len__(self):
@@ -975,7 +973,7 @@ class _RecordingContext:
     def __eq__(self, other):
         return hash(self) == hash(other)
 
-    def add_call(self, call: mod_record_schema.RecordAppCall):
+    def add_call(self, call: record_schema.RecordAppCall):
         """Add the given call to the currently tracked call list."""
         # TODEP: To deprecated after migration to span-based tracing.
 
@@ -988,13 +986,13 @@ class _RecordingContext:
         self,
         calls_to_record: Callable[
             [
-                List[mod_record_schema.RecordAppCall],
+                List[record_schema.RecordAppCall],
                 types_schema.Metadata,
-                Optional[mod_record_schema.Record],
+                Optional[record_schema.Record],
             ],
-            mod_record_schema.Record,
+            record_schema.Record,
         ],
-        existing_record: Optional[mod_record_schema.Record] = None,
+        existing_record: Optional[record_schema.Record] = None,
     ):
         """Run the given function to build a record from the tracked calls and any
         pre-specified metadata."""
@@ -1077,7 +1075,7 @@ class _WithInstrumentCallbacks:
         self,
         ctx: _RecordingContext,
         root_span: LiveSpanCall,
-    ) -> mod_record_schema.Record:
+    ) -> record_schema.Record:
         """EXPERIMENTAL(otel-tracing): Called by instrumented methods if they
         are root calls (first instrumented methods in a call stack).
 

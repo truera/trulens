@@ -39,8 +39,8 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.experimental import Feature
 from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils.containers import dict_merge_with
@@ -186,9 +186,9 @@ class WithInstrumentCallbacks:
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
+        existing_record: Optional[record_schema.Record] = None,
         final: bool = True,
     ):
         """
@@ -258,7 +258,7 @@ class _RecordingContext:
         self, app: WithInstrumentCallbacks, record_metadata: JSON = None
     ):
         self.calls: Dict[
-            mod_types_schema.CallID, mod_record_schema.RecordAppCall
+            mod_types_schema.CallID, record_schema.RecordAppCall
         ] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
@@ -268,7 +268,7 @@ class _RecordingContext:
         the result is ready.
         """
 
-        self.records: List[mod_record_schema.Record] = []
+        self.records: List[record_schema.Record] = []
         """Completed records."""
 
         self.lock: th.Lock = th.Lock()
@@ -288,7 +288,7 @@ class _RecordingContext:
     def __iter__(self):
         return iter(self.records)
 
-    def get(self) -> mod_record_schema.Record:
+    def get(self) -> record_schema.Record:
         """
         Get the single record only if there was exactly one. Otherwise throw an error.
         """
@@ -304,7 +304,7 @@ class _RecordingContext:
 
         return self.records[0]
 
-    def __getitem__(self, idx: int) -> mod_record_schema.Record:
+    def __getitem__(self, idx: int) -> record_schema.Record:
         return self.records[idx]
 
     def __len__(self):
@@ -318,7 +318,7 @@ class _RecordingContext:
         return hash(self) == hash(other)
         # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
 
-    def add_call(self, call: mod_record_schema.RecordAppCall):
+    def add_call(self, call: record_schema.RecordAppCall):
         """
         Add the given call to the currently tracked call list.
         """
@@ -331,13 +331,13 @@ class _RecordingContext:
         self,
         calls_to_record: Callable[
             [
-                List[mod_record_schema.RecordAppCall],
+                List[record_schema.RecordAppCall],
                 mod_types_schema.Metadata,
-                Optional[mod_record_schema.Record],
+                Optional[record_schema.Record],
             ],
-            mod_record_schema.Record,
+            record_schema.Record,
         ],
-        existing_record: Optional[mod_record_schema.Record] = None,
+        existing_record: Optional[record_schema.Record] = None,
     ):
         """Run the given function to build a record from the tracked calls and any
         pre-specified metadata.
@@ -714,7 +714,7 @@ class Instrument:
                 else:
                     stack = stacks[ctx]
 
-                frame_ident = mod_record_schema.RecordAppCallMethod(
+                frame_ident = record_schema.RecordAppCallMethod(
                     path=path,
                     method=Method.of_method(
                         func, obj=args[0], cls=cls
@@ -803,7 +803,7 @@ class Instrument:
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
@@ -819,7 +819,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
+                    call = record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -828,7 +828,7 @@ class Instrument:
                     existing_record = records.get(ctx, None)
 
                     if tally is None:
-                        cost = mod_base_schema.Cost()
+                        cost = base_schema.Cost()
                     else:
                         cost = tally()  # get updated cost
 
@@ -843,7 +843,7 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,

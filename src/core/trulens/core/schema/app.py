@@ -19,8 +19,8 @@ import warnings
 
 import dill
 import pydantic
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
@@ -81,8 +81,8 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     feedback_definitions: Sequence[mod_types_schema.FeedbackDefinitionID] = []
     """Feedback functions to evaluate on each record."""
 
-    feedback_mode: mod_feedback_schema.FeedbackMode = (
-        mod_feedback_schema.FeedbackMode.WITH_APP_THREAD
+    feedback_mode: feedback_schema.FeedbackMode = (
+        feedback_schema.FeedbackMode.WITH_APP_THREAD
     )
     """How to evaluate feedback functions upon producing a record."""
 
@@ -132,7 +132,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_version: Optional[mod_types_schema.AppVersion] = None,
         tags: Optional[mod_types_schema.Tags] = None,
         metadata: Optional[mod_types_schema.Metadata] = None,
-        feedback_mode: mod_feedback_schema.FeedbackMode = mod_feedback_schema.FeedbackMode.WITH_APP_THREAD,
+        feedback_mode: feedback_schema.FeedbackMode = feedback_schema.FeedbackMode.WITH_APP_THREAD,
         record_ingest_mode: RecordIngestMode = RecordIngestMode.IMMEDIATE,
         app_extra_json: serial.JSON = None,
         **kwargs,
@@ -174,9 +174,9 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             try:
                 dump = dill.dumps(kwargs["initial_app_loader"], recurse=True)
 
-                if len(dump) > mod_base_schema.MAX_DILL_SIZE:
+                if len(dump) > base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(mod_base_schema.MAX_DILL_SIZE)} bytes). "
+                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                     )
                 else:
@@ -296,14 +296,14 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
             Callable[
                 [
                     Union[
-                        mod_feedback_schema.FeedbackResult,
-                        Future[mod_feedback_schema.FeedbackResult],
+                        feedback_schema.FeedbackResult,
+                        Future[feedback_schema.FeedbackResult],
                     ]
                 ],
                 None,
             ]
         ] = None,
-    ) -> List[Tuple[Feedback, Future[mod_feedback_schema.FeedbackResult]]]:
+    ) -> List[Tuple[Feedback, Future[feedback_schema.FeedbackResult]]]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -367,7 +367,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
                         return temp
                 return temp
 
-            fut: Future[mod_feedback_schema.FeedbackResult] = tp.submit(
+            fut: Future[feedback_schema.FeedbackResult] = tp.submit(
                 run_and_call_callback,
                 ffunc=ffunc,
                 app=app,

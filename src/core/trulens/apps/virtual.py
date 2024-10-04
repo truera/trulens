@@ -211,9 +211,9 @@ from pydantic import Field
 from trulens.core import Select
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as mod_select_schema
 from trulens.core.utils import serial
 from trulens.core.utils.pyschema import Class
@@ -309,7 +309,7 @@ Method name will be replaced by the last attribute in the selector provided by u
 """
 
 
-class VirtualRecord(mod_record_schema.Record):
+class VirtualRecord(record_schema.Record):
     """Virtual records for virtual apps.
 
     Many arguments are filled in by default values if not provided. See
@@ -346,11 +346,11 @@ class VirtualRecord(mod_record_schema.Record):
     def __init__(
         self,
         calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
-        cost: Optional[mod_base_schema.Cost] = None,
-        perf: Optional[mod_base_schema.Perf] = None,
+        cost: Optional[base_schema.Cost] = None,
+        perf: Optional[base_schema.Perf] = None,
         **kwargs: Any,
     ):
-        root_call = mod_record_schema.RecordAppCallMethod(
+        root_call = record_schema.RecordAppCallMethod(
             path=serial.Lens(), method=virtual_method_root
         )
 
@@ -377,7 +377,7 @@ class VirtualRecord(mod_record_schema.Record):
 
                     call["stack"] = [
                         root_call,
-                        mod_record_schema.RecordAppCallMethod(
+                        record_schema.RecordAppCallMethod(
                             path=path, method=method
                         ),
                     ]
@@ -400,11 +400,11 @@ class VirtualRecord(mod_record_schema.Record):
                     subend_time += datetime.timedelta(microseconds=1)
 
                 if "perf" not in call:
-                    call["perf"] = mod_base_schema.Perf(
+                    call["perf"] = base_schema.Perf(
                         start_time=substart_time, end_time=subend_time
                     )
 
-                rinfo = mod_record_schema.RecordAppCall(**call)
+                rinfo = record_schema.RecordAppCall(**call)
                 record_calls.append(rinfo)
 
         end_time = datetime.datetime.now()
@@ -415,8 +415,8 @@ class VirtualRecord(mod_record_schema.Record):
         if (end_time - start_time).total_seconds() == 0.0:
             end_time += datetime.timedelta(microseconds=1)
 
-        kwargs["cost"] = cost or mod_base_schema.Cost()
-        kwargs["perf"] = perf or mod_base_schema.Perf(
+        kwargs["cost"] = cost or base_schema.Cost()
+        kwargs["perf"] = perf or base_schema.Perf(
             start_time=start_time, end_time=end_time
         )
 
@@ -427,7 +427,7 @@ class VirtualRecord(mod_record_schema.Record):
 
         # append root call
         record_calls.append(
-            mod_record_schema.RecordAppCall(
+            record_schema.RecordAppCall(
                 stack=[root_call],
                 args=[kwargs["main_input"]],
                 rets=[kwargs["main_output"]],
@@ -541,9 +541,9 @@ class TruVirtual(App):
 
     def add_record(
         self,
-        record: mod_record_schema.Record,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
-    ) -> mod_record_schema.Record:
+        record: record_schema.Record,
+        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
+    ) -> record_schema.Record:
         """Add the given record to the database and evaluate any pre-specified
         feedbacks on it.
 
@@ -568,7 +568,7 @@ class TruVirtual(App):
 
         # Wait for results if mode is WITH_APP.
         if (
-            feedback_mode == mod_feedback_schema.FeedbackMode.WITH_APP
+            feedback_mode == feedback_schema.FeedbackMode.WITH_APP
             and record.feedback_results is not None
         ):
             futs = record.feedback_results
@@ -579,8 +579,8 @@ class TruVirtual(App):
     def add_dataframe(
         self,
         df,
-        feedback_mode: Optional[mod_feedback_schema.FeedbackMode] = None,
-    ) -> List[mod_record_schema.Record]:
+        feedback_mode: Optional[feedback_schema.FeedbackMode] = None,
+    ) -> List[record_schema.Record]:
         """Add the given dataframe as records to the database and evaluate any pre-specified
         feedbacks on them.
 

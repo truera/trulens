@@ -31,11 +31,11 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
-from trulens.core.schema import app as mod_app_schema
+from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as mod_dataset_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as mod_groundtruth_schema
-from trulens.core.schema import record as mod_record_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
@@ -506,7 +506,7 @@ class TruSession(
         self.connector.migrate_database(**kwargs)
 
     def add_record(
-        self, record: Optional[mod_record_schema.Record] = None, **kwargs: dict
+        self, record: Optional[record_schema.Record] = None, **kwargs: dict
     ) -> mod_types_schema.RecordID:
         """Add a record to the database.
 
@@ -524,20 +524,20 @@ class TruSession(
 
     def add_record_nowait(
         self,
-        record: mod_record_schema.Record,
+        record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
         return self.connector.add_record_nowait(record)
 
     def run_feedback_functions(
         self,
-        record: mod_record_schema.Record,
+        record: record_schema.Record,
         feedback_functions: Sequence[feedback.Feedback],
-        app: Optional[mod_app_schema.AppDefinition] = None,
+        app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
-        Iterable[mod_feedback_schema.FeedbackResult],
-        Iterable[Future[mod_feedback_schema.FeedbackResult]],
+        Iterable[feedback_schema.FeedbackResult],
+        Iterable[Future[feedback_schema.FeedbackResult]],
     ]:
         """Run a collection of feedback functions and report their result.
 
@@ -562,7 +562,7 @@ class TruSession(
                 is disabled.
         """
 
-        if not isinstance(record, mod_record_schema.Record):
+        if not isinstance(record, record_schema.Record):
             raise ValueError(
                 "`record` must be a `trulens.core.schema.record.Record` instance."
             )
@@ -577,7 +577,7 @@ class TruSession(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
             )
 
-        if not (app is None or isinstance(app, mod_app_schema.AppDefinition)):
+        if not (app is None or isinstance(app, app_schema.AppDefinition)):
             raise ValueError(
                 "`app` must be a `trulens.core.schema.app.AppDefinition` instance."
             )
@@ -586,10 +586,10 @@ class TruSession(
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[mod_feedback_schema.FeedbackResult], feedback.Feedback
+            Future[feedback_schema.FeedbackResult], feedback.Feedback
         ] = {
             p[1]: p[0]
-            for p in mod_app_schema.AppDefinition._submit_feedback_functions(
+            for p in app_schema.AppDefinition._submit_feedback_functions(
                 record=record,
                 feedback_functions=feedback_functions,
                 connector=self.connector,
@@ -616,9 +616,7 @@ class TruSession(
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_app(self, app: app_schema.AppDefinition) -> mod_types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -644,8 +642,8 @@ class TruSession(
         self,
         feedback_result_or_future: Optional[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ] = None,
         **kwargs: dict,
@@ -677,8 +675,8 @@ class TruSession(
         self,
         feedback_results: Iterable[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ],
     ) -> List[mod_types_schema.FeedbackResultID]:
@@ -696,7 +694,7 @@ class TruSession(
 
     def get_app(
         self, app_id: mod_types_schema.AppID
-    ) -> Optional[serial.JSONized[mod_app_schema.AppDefinition]]:
+    ) -> Optional[serial.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -721,7 +719,7 @@ class TruSession(
 
         return self.connector.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -843,7 +841,7 @@ class TruSession(
         restart: bool = False,
         fork: bool = False,
         disable_tqdm: bool = False,
-        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
         return_when_done: bool = False,
     ) -> Optional[Union[Process, Thread]]:
         """
@@ -921,9 +919,7 @@ class TruSession(
                 # predictions initially after restarting the process.
                 queue_stats = self.connector.db.get_feedback_count_by_status()
                 queue_done = (
-                    queue_stats.get(
-                        mod_feedback_schema.FeedbackResultStatus.DONE
-                    )
+                    queue_stats.get(feedback_schema.FeedbackResultStatus.DONE)
                     or 0
                 )
                 queue_total = sum(queue_stats.values())
@@ -961,7 +957,7 @@ class TruSession(
             runs_stats = defaultdict(int)
 
             futures_map: Dict[
-                Future[mod_feedback_schema.FeedbackResult], pandas.Series
+                Future[feedback_schema.FeedbackResult], pandas.Series
             ] = dict()
 
             while fork or not self._evaluator_stop.is_set():
@@ -970,7 +966,7 @@ class TruSession(
                     new_futures: List[
                         Tuple[
                             pandas.Series,
-                            Future[mod_feedback_schema.FeedbackResult],
+                            Future[feedback_schema.FeedbackResult],
                         ]
                     ] = feedback.Feedback.evaluate_deferred(
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
@@ -1036,7 +1032,7 @@ class TruSession(
                     )
                     queue_done = (
                         queue_stats.get(
-                            mod_feedback_schema.FeedbackResultStatus.DONE
+                            feedback_schema.FeedbackResultStatus.DONE
                         )
                         or 0
                     )
