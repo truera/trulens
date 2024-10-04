@@ -21,7 +21,7 @@ import dill
 import pydantic
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import select as mod_select_schema
+from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import pyschema
 from trulens.core.utils import serial
@@ -421,13 +421,13 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     def select_inputs(cls) -> serial.Lens:
         """Get the path to the main app's call inputs."""
 
-        return mod_select_schema.Select.RecordCall.args
+        return select_schema.Select.RecordCall.args
 
     @classmethod
     def select_outputs(cls) -> serial.Lens:
         """Get the path to the main app's call outputs."""
 
-        return mod_select_schema.Select.RecordCall.rets
+        return select_schema.Select.RecordCall.rets
 
 
 # HACK013: Need these if using __future__.annotations .

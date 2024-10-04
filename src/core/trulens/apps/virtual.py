@@ -208,21 +208,14 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 from pydantic import Field
-from trulens.core import Select
-from trulens.core.app import App
-from trulens.core.instruments import Instrument
+from trulens.core import app as mod_app
+from trulens.core import instruments as mod_instruments
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import select as mod_select_schema
-from trulens.core.utils import serial
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.pyschema import Method
-from trulens.core.utils.pyschema import Module
-from trulens.core.utils.pyschema import Obj
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import GetItemOrAttribute
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
@@ -239,10 +232,10 @@ class VirtualApp(dict):
     @classmethod
     def select_context(cls):
         """Select the context of the virtual app. This is fixed to return the default path."""
-        return Select.RecordCalls.retriever.get_context.rets[:]
+        return select_schema.Select.RecordCalls.retriever.get_context.rets[:]
 
     def __setitem__(
-        self, __name: Union[str, serial.Lens], __value: Any
+        self, __name: Union[str, serial_utils.Lens], __value: Any
     ) -> None:
         """
         Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
@@ -253,14 +246,14 @@ class VirtualApp(dict):
             return super().__setitem__(__name, __value)
 
         # Chop off __app__ or __record__ prefix if there.
-        __name = mod_select_schema.Select.dequalify(__name)
+        __name = select_schema.Select.dequalify(__name)
 
         # Chop off "app" prefix if there.
         if (
-            isinstance(__name.path[0], GetItemOrAttribute)
+            isinstance(__name.path[0], serial_utils.GetItemOrAttribute)
             and __name.path[0].get_item_or_attribute() == "app"
         ):
-            __name = serial.Lens(path=__name.path[1:])
+            __name = serial_utils.Lens(path=__name.path[1:])
 
         # Does not mutate so need to use dict.update .
         temp = __name.set(self, __value)
@@ -273,7 +266,7 @@ class VirtualApp(dict):
         pass
 
 
-virtual_module = Module(
+virtual_module = pyschema_utils.Module(
     package_name="trulens", module_name="trulens.apps.virtual"
 )
 """Module to represent the module of virtual apps.
@@ -281,25 +274,27 @@ virtual_module = Module(
 Virtual apps will record this as their module.
 """
 
-virtual_class = Class(module=virtual_module, name="VirtualApp")
+virtual_class = pyschema_utils.Class(module=virtual_module, name="VirtualApp")
 """Class to represent the class of virtual apps.
 
 Virtual apps will record this as their class.
 """
 
-virtual_object = Obj(cls=virtual_class, id=0)
+virtual_object = pyschema_utils.Obj(cls=virtual_class, id=0)
 """Object to represent instances of virtual apps.
 
 Virtual apps will record this as their instance.
 """
 
-virtual_method_root = Method(cls=virtual_class, obj=virtual_object, name="root")
+virtual_method_root = pyschema_utils.Method(
+    cls=virtual_class, obj=virtual_object, name="root"
+)
 """Method call to represent the root call of virtual apps.
 
 Virtual apps will record this as their root call.
 """
 
-virtual_method_call = Method(
+virtual_method_call = pyschema_utils.Method(
     cls=virtual_class, obj=virtual_object, name="method_name_not_set"
 )
 """Method call to represent virtual app calls that do not provide this
@@ -345,13 +340,13 @@ class VirtualRecord(record_schema.Record):
 
     def __init__(
         self,
-        calls: Dict[serial.Lens, Union[Dict, Sequence[Dict]]],
+        calls: Dict[serial_utils.Lens, Union[Dict, Sequence[Dict]]],
         cost: Optional[base_schema.Cost] = None,
         perf: Optional[base_schema.Perf] = None,
         **kwargs: Any,
     ):
         root_call = record_schema.RecordAppCallMethod(
-            path=serial.Lens(), method=virtual_method_root
+            path=serial_utils.Lens(), method=virtual_method_root
         )
 
         record_calls = []
@@ -368,10 +363,8 @@ class VirtualRecord(record_schema.Record):
                 substart_time = datetime.datetime.now()
 
                 if "stack" not in call:
-                    path, method_name = (
-                        mod_select_schema.Select.path_and_method(
-                            mod_select_schema.Select.dequalify(lens)
-                        )
+                    path, method_name = select_schema.Select.path_and_method(
+                        select_schema.Select.dequalify(lens)
                     )
                     method = virtual_method_call.replace(name=method_name)
 
@@ -446,7 +439,7 @@ class VirtualRecord(record_schema.Record):
         super().__init__(calls=record_calls, **kwargs)
 
 
-class TruVirtual(App):
+class TruVirtual(mod_app.App):
     """Recorder for virtual apps.
 
     Virtual apps are data only in that they cannot be executed but for whom
@@ -496,11 +489,13 @@ class TruVirtual(App):
 
     app: VirtualApp = Field(default_factory=VirtualApp)
 
-    root_callable: ClassVar[FunctionOrMethod] = virtual_method_root
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = (
+        virtual_method_root
+    )
 
-    root_class: Any = Class.of_class(VirtualApp)
+    root_class: Any = pyschema_utils.Class.of_class(VirtualApp)
 
-    instrument: Optional[Instrument] = None
+    instrument: Optional[mod_instruments.Instrument] = None
 
     selector_check_warning: bool = False
     """Selector checking is disabled for virtual apps."""
@@ -513,7 +508,9 @@ class TruVirtual(App):
     """
 
     def __init__(
-        self, app: Optional[Union[VirtualApp, JSON]] = None, **kwargs: Any
+        self,
+        app: Optional[Union[VirtualApp, serial_utils.JSON]] = None,
+        **kwargs: Any,
     ):
         """Virtual app for logging existing app results."""
 
@@ -594,7 +591,7 @@ class TruVirtual(App):
 
         for record in data_dict:
             if "contexts" in record:
-                retriever = Select.RecordCalls.retriever
+                retriever = select_schema.Select.RecordCalls.retriever
                 if retriever not in self.app:
                     self.app[retriever] = None
                 self.app[retriever] = record["contexts"]
