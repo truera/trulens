@@ -1361,7 +1361,6 @@ trulens_eval.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
