@@ -198,9 +198,7 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import Instrument
 from trulens.core.instruments import instrument as base_instrument
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import Function
-from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import UNICODE_CHECK
@@ -336,7 +334,7 @@ class TruCustomApp(App):
 
     app: Any
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     functions_to_instrument: ClassVar[Set[Callable]] = set()
     """Methods marked as needing instrumentation.
@@ -349,12 +347,12 @@ class TruCustomApp(App):
     main_method_loaded: Optional[Callable] = Field(None, exclude=True)
     """Main method of the custom app."""
 
-    main_method: Optional[Function] = None
+    main_method: Optional[pyschema_utils.Function] = None
     """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
         instrument = Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
@@ -366,9 +364,11 @@ class TruCustomApp(App):
 
             # TODO: ARGPARSE
             if isinstance(main_method, dict):
-                main_method = Function.model_validate(main_method)
+                main_method = pyschema_utils.Function.model_validate(
+                    main_method
+                )
 
-            if isinstance(main_method, Function):
+            if isinstance(main_method, pyschema_utils.Function):
                 main_method_loaded = main_method.load()
                 main_name = main_method.name
 
@@ -378,7 +378,9 @@ class TruCustomApp(App):
             else:
                 main_name = main_method.__name__
                 main_method_loaded = main_method
-                main_method = Function.of_function(main_method_loaded)
+                main_method = pyschema_utils.Function.of_function(
+                    main_method_loaded
+                )
 
                 if not safe_hasattr(main_method_loaded, "__self__"):
                     raise ValueError(
@@ -412,7 +414,9 @@ class TruCustomApp(App):
             main_method_loaded = getattr(cls, main_name)
 
             # This will be serialized as part of this TruCustomApp. Importantly, it is unbound.
-            main_method = Function.of_function(main_method_loaded, cls=cls)
+            main_method = pyschema_utils.Function.of_function(
+                main_method_loaded, cls=cls
+            )
 
             self.main_method = main_method
             self.main_method_loaded = main_method_loaded

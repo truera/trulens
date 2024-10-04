@@ -34,6 +34,7 @@ from typing import (
 )
 import uuid
 
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
 from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
@@ -42,7 +43,6 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
-from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing.core import otel as mod_otel

@@ -26,6 +26,7 @@ from trulens.core._utils.pycompat import EmptyType
 from trulens.core._utils.pycompat import getmembers_static
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 
 # TODO: Do we need to depend on this?
@@ -33,8 +34,6 @@ from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.imports import get_package_version
 from trulens.core.utils.imports import parse_version
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.serial import Lens
 
 T = TypeVar("T")
@@ -322,14 +321,16 @@ class TruLlama(mod_app.App):
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(
         self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
     ):
         # TruLlama specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["root_class"] = pyschema_utils.Class.of_object(
+            app
+        )  # TODO: make class property
         kwargs["instrument"] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)

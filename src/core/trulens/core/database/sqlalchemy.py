@@ -50,7 +50,6 @@ from trulens.core.schema import groundtruth as mod_groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import text
-from trulens.core.utils.pyschema import Class
 from trulens.core.utils.python import locals_except
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import JSONized
@@ -58,6 +57,8 @@ from trulens.core.utils.text import UNICODE_CHECK
 from trulens.core.utils.text import UNICODE_CLOCK
 from trulens.core.utils.text import UNICODE_HOURGLASS
 from trulens.core.utils.text import UNICODE_STOP
+
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
 
 logger = logging.getLogger(__name__)
 
@@ -1160,7 +1161,7 @@ class AppsExtractor:
                             # `root_class` here.
 
                             df[col] = str(
-                                Class.model_validate(
+                                pyschema_utils.Class.model_validate(
                                     json.loads(_app.app_json).get("root_class")
                                 )
                             )

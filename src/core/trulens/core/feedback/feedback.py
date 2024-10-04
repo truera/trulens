@@ -39,11 +39,12 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import json as mod_json_utils
-from trulens.core.utils import pyschema as mod_pyschema
 from trulens.core.utils import python as mod_python_utils
 from trulens.core.utils import serial as mod_serial_utils
 from trulens.core.utils import text as mod_text_utils
 from trulens.core.utils import threading as mod_threading_utils
+
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
 
 if TYPE_CHECKING:
     from trulens.core import TruSession
@@ -166,7 +167,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             if "implementation" not in kwargs:
                 try:
                     kwargs["implementation"] = (
-                        mod_pyschema.FunctionOrMethod.of_callable(
+                        pyschema_utils.FunctionOrMethod.of_callable(
                             imp, loadable=True
                         )
                     )
@@ -180,7 +181,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
                     )
 
                     kwargs["implementation"] = (
-                        mod_pyschema.FunctionOrMethod.of_callable(
+                        pyschema_utils.FunctionOrMethod.of_callable(
                             imp, loadable=False
                         )
                     )
@@ -188,7 +189,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         else:
             if "implementation" in kwargs:
                 imp: ImpCallable = (
-                    mod_pyschema.FunctionOrMethod.model_validate(
+                    pyschema_utils.FunctionOrMethod.model_validate(
                         kwargs["implementation"]
                     ).load()
                     if kwargs["implementation"] is not None
@@ -201,7 +202,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 try:
                     # These are for serialization to/from json and for db storage.
                     kwargs["aggregator"] = (
-                        mod_pyschema.FunctionOrMethod.of_callable(
+                        pyschema_utils.FunctionOrMethod.of_callable(
                             agg, loadable=True
                         )
                     )
@@ -217,16 +218,18 @@ class Feedback(feedback_schema.FeedbackDefinition):
                     )
                     # These are for serialization to/from json and for db storage.
                     kwargs["aggregator"] = (
-                        mod_pyschema.FunctionOrMethod.of_callable(
+                        pyschema_utils.FunctionOrMethod.of_callable(
                             agg, loadable=False
                         )
                     )
 
         else:
             if kwargs.get("aggregator") is not None:
-                agg: AggCallable = mod_pyschema.FunctionOrMethod.model_validate(
-                    kwargs["aggregator"]
-                ).load()
+                agg: AggCallable = (
+                    pyschema_utils.FunctionOrMethod.model_validate(
+                        kwargs["aggregator"]
+                    ).load()
+                )
             else:
                 # Default aggregator if neither serialized `aggregator` or
                 # loaded `agg` were specified.

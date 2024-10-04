@@ -24,10 +24,9 @@ from trulens.core import feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import Select
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import Lens
@@ -383,12 +382,14 @@ class TruRails(mod_app.App):
     app: LLMRails
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(self, app: LLMRails, **kwargs):
         # TruLlama specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["root_class"] = pyschema_utils.Class.of_object(
+            app
+        )  # TODO: make class property
         kwargs["instrument"] = RailsInstrument(app=self)
 
         super().__init__(**kwargs)

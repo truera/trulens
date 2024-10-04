@@ -29,8 +29,6 @@ from trulens.core.schema.base import Cost
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as mod_pace
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import Thunk
 from trulens.core.utils.python import callable_name
@@ -39,6 +37,9 @@ from trulens.core.utils.python import is_really_coroutinefunction
 from trulens.core.utils.python import module_name
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import SerialModel
+
+from core.trulens.core.utils.pyschema_utils import WithClassInfo
+from core.trulens.core.utils.pyschema_utils import safe_getattr
 
 logger = logging.getLogger(__name__)
 

@@ -23,12 +23,13 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.core.utils.text import format_quantity
 from trulens.core.utils.threading import TP
+
+from core.trulens.core.utils import pyschema_utils
 
 if TYPE_CHECKING:
     from trulens.core._utils.pycompat import Future
@@ -52,7 +53,7 @@ class RecordIngestMode(str, Enum):
     """Records are buffered and ingested in batches to the database."""
 
 
-class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
+class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
@@ -89,7 +90,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     record_ingest_mode: RecordIngestMode
     """Mode of records ingestion."""
 
-    root_class: pyschema.Class
+    root_class: pyschema_utils.Class
     """Class of the main instrumented object.
 
     Ideally this would be a [ClassVar][typing.ClassVar] but since we want to check this without
@@ -98,7 +99,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
     cannot use [ClassVar][typing.ClassVar].
     """
 
-    root_callable: ClassVar[pyschema.FunctionOrMethod]
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod]
     """App's main method.
 
     This is to be filled in by subclass.
@@ -227,7 +228,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
 
         app_definition_json["app"] = app
 
-        cls = pyschema.WithClassInfo.get_class(app_definition_json)
+        cls = pyschema_utils.WithClassInfo.get_class(app_definition_json)
 
         return cls(**app_definition_json)
 
@@ -274,7 +275,7 @@ class AppDefinition(pyschema.WithClassInfo, serial.SerialModel):
         app_definition_json["app"] = app
         app_definition_json["initial_app_loader_dump"] = serial_bytes_json
 
-        cls = pyschema.WithClassInfo.get_class(app_definition_json)
+        cls = pyschema_utils.WithClassInfo.get_class(app_definition_json)
 
         return cls.model_validate_json(app_definition_json)
 

@@ -22,11 +22,12 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as mod_threading_utils
 from trulens.core.utils.json import jsonify
 from trulens.core.utils.json import obj_id_of_obj
+
+from core.trulens.core.utils import pyschema_utils
 
 T = TypeVar("T")
 
@@ -42,7 +43,7 @@ class RecordAppCallMethod(serial_utils.SerialModel):
     path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema.Method
+    method: pyschema_utils.Method
     """The method that was called."""
 
 
@@ -98,7 +99,7 @@ class RecordAppCall(serial_utils.SerialModel):
         return self.stack[-1]
 
     @property
-    def method(self) -> pyschema.Method:
+    def method(self) -> pyschema_utils.Method:
         """The method at the top of the stack."""
 
         return self.top.method

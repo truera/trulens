@@ -21,10 +21,11 @@ from typing import (
 import pydantic
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
 from trulens.core.utils import serial
 from trulens.core.utils.json import obj_id_of_obj
 from trulens.core.utils.text import retab
+
+from core.trulens.core.utils import pyschema_utils
 
 T = TypeVar("T")
 
@@ -312,7 +313,9 @@ class FeedbackCombinations(str, Enum):
     """
 
 
-class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
+class FeedbackDefinition(
+    pyschema_utils.WithClassInfo, serial.SerialModel, Hashable
+):
     """Serialized parts of a feedback function.
 
     The non-serialized parts are in the
@@ -321,10 +324,14 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    implementation: Optional[Union[pyschema.Function, pyschema.Method]] = None
+    implementation: Optional[
+        Union[pyschema_utils.Function, pyschema_utils.Method]
+    ] = None
     """Implementation serialization."""
 
-    aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None
+    aggregator: Optional[
+        Union[pyschema_utils.Function, pyschema_utils.Method]
+    ] = None
     """Aggregator method serialization."""
 
     combinations: Optional[FeedbackCombinations] = FeedbackCombinations.PRODUCT
@@ -365,9 +372,11 @@ class FeedbackDefinition(pyschema.WithClassInfo, serial.SerialModel, Hashable):
             mod_types_schema.FeedbackDefinitionID
         ] = None,
         implementation: Optional[
-            Union[pyschema.Function, pyschema.Method]
+            Union[pyschema_utils.Function, pyschema_utils.Method]
         ] = None,
-        aggregator: Optional[Union[pyschema.Function, pyschema.Method]] = None,
+        aggregator: Optional[
+            Union[pyschema_utils.Function, pyschema_utils.Method]
+        ] = None,
         if_exists: Optional[serial.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
         selectors: Optional[Dict[str, serial.Lens]] = None,

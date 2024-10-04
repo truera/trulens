@@ -9,9 +9,9 @@ import scipy.stats as stats
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.imports import OptionalImports
 from trulens.core.utils.imports import format_import_errors
-from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.pyschema import WithClassInfo
 from trulens.core.utils.serial import SerialModel
 from trulens.feedback.generated import re_0_10_rating
@@ -34,7 +34,12 @@ logger = logging.getLogger(__name__)
 class GroundTruthAgreement(WithClassInfo, SerialModel):
     """Measures Agreement against a Ground Truth."""
 
-    ground_truth: Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]
+    ground_truth: Union[
+        List[Dict],
+        Callable,
+        pd.DataFrame,
+        pyschema_utils.pyschema_utils.FunctionOrMethod,
+    ]
     provider: LLMProvider
 
     # Note: the bert scorer object isn't serializable
@@ -48,7 +53,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def __init__(
         self,
         ground_truth: Union[
-            List[Dict], Callable, pd.DataFrame, FunctionOrMethod
+            List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod
         ],
         provider: Optional[LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
@@ -101,7 +106,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ```
 
         Args:
-            ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
+            ground_truth (Union[List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
                 or callable that returns a ground truth string given a prompt string.
                 provider (LLMProvider): The provider to use for agreement measures.
                 bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
@@ -125,11 +130,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         if isinstance(ground_truth, List):
             ground_truth_imp = None
-        elif isinstance(ground_truth, FunctionOrMethod):
+        elif isinstance(ground_truth, pyschema_utils.FunctionOrMethod):
             ground_truth_imp = ground_truth.load()
         elif isinstance(ground_truth, Callable):
             ground_truth_imp = ground_truth
-            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+            ground_truth = pyschema_utils.FunctionOrMethod.of_callable(
+                ground_truth
+            )
         elif isinstance(ground_truth, pd.DataFrame):
             ground_truth_df = ground_truth
             ground_truth = []
@@ -138,8 +145,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 ground_truth.append(entry)
             ground_truth_imp = None
         elif isinstance(ground_truth, Dict):
-            # Serialized FunctionOrMethod?
-            ground_truth = FunctionOrMethod.model_validate(ground_truth)
+            # Serialized pyschema_utils.FunctionOrMethod?
+            ground_truth = pyschema_utils.FunctionOrMethod.model_validate(
+                ground_truth
+            )
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(

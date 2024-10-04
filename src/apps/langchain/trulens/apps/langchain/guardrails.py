@@ -3,22 +3,22 @@ from typing import Any, List
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from trulens.core import Feedback
-from trulens.core.utils.serial import model_dump
-from trulens.core.utils.threading import ThreadPoolExecutor
+from trulens.core import feedback as mod_feedback
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
-    feedback: Feedback
+    feedback: mod_feedback.Feedback
     threshold: float
-    """
-    A VectorStoreRetriever that filters documents using a minimum threshold
+    """A VectorStoreRetriever that filters documents using a minimum threshold
     on a feedback function before returning them.
 
     Args:
-        feedback (Feedback): use this feedback function to score each document.
+        feedback: use this feedback function to score each document.
 
-        threshold (float): and keep documents only if their feedback value is at least this threshold.
+        threshold: and keep documents only if their feedback value is at least
+            this threshold.
 
     Example: "Using TruLens guardrail context filters with Langchain"
 
@@ -46,7 +46,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         ```
     """
 
-    def __init__(self, feedback: Feedback, threshold: float, *args, **kwargs):
+    def __init__(
+        self, feedback: mod_feedback.Feedback, threshold: float, *args, **kwargs
+    ):
         super().__init__(
             *args, feedback=feedback, threshold=threshold, **kwargs
         )
@@ -75,7 +77,9 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         docs = super()._get_relevant_documents(query, run_manager=run_manager)
 
         # Evaluate the filter on each, in parallel.
-        with ThreadPoolExecutor(max_workers=max(1, len(docs))) as ex:
+        with threading_utils.ThreadPoolExecutor(
+            max_workers=max(1, len(docs))
+        ) as ex:
             future_to_doc = {
                 ex.submit(
                     lambda doc=doc: self.feedback(query, doc.page_content)
@@ -120,4 +124,6 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
         Returns:
         - WithFeedbackFilterDocuments: a new instance of WithFeedbackFilterDocuments.
         """
-        return WithFeedbackFilterDocuments(**kwargs, **(model_dump(retriever)))
+        return WithFeedbackFilterDocuments(
+            **kwargs, **(serial_utils.model_dump(retriever))
+        )

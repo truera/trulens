@@ -22,10 +22,9 @@ from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema.select import Select
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
 from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import all_queries
@@ -224,7 +223,7 @@ class TruChain(mod_app.App):
     """The langchain app to be instrumented."""
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
     """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
@@ -232,7 +231,7 @@ class TruChain(mod_app.App):
     def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
         # TruChain specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)

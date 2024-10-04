@@ -46,9 +46,6 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils.containers import dict_merge_with
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Method
-from trulens.core.utils.pyschema import clean_attributes
-from trulens.core.utils.pyschema import safe_getattr
 from trulens.core.utils.python import callable_name
 from trulens.core.utils.python import class_name
 from trulens.core.utils.python import id_str
@@ -58,6 +55,10 @@ from trulens.core.utils.python import safe_signature
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.text import retab
+
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
+from core.trulens.core.utils.pyschema_utils import clean_attributes
+from core.trulens.core.utils.pyschema_utils import safe_getattr
 
 logger = logging.getLogger(__name__)
 
@@ -716,7 +717,7 @@ class Instrument:
 
                 frame_ident = record_schema.RecordAppCallMethod(
                     path=path,
-                    method=Method.of_method(
+                    method=pyschema_utils.Method.of_method(
                         func, obj=args[0], cls=cls
                     ),  # important: don't use obj here as that would capture obj in closure of this wrapper
                 )

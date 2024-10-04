@@ -13,8 +13,7 @@ from pydantic import Field
 from trulens.core.app import App
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +108,7 @@ class TruBasicApp(App):
     """The app to be instrumented."""
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
     """The root callable to be instrumented.
 
     This is the method that will be called by the main_input method."""
@@ -128,7 +127,7 @@ class TruBasicApp(App):
             ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
 
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)

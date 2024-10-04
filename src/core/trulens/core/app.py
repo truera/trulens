@@ -49,10 +49,11 @@ from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
-from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
+
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,8 @@ from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.utils.pyschema import FunctionOrMethod
+
+from core.trulens.core.utils import pyschema_utils as pyschema_utils
 
 sql_alchemy_migration_versions: List[int] = [1, 2, 3]
 """DB versions."""
@@ -94,7 +95,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                 # special implementation checks for serialized classes
                                 if "implementation" in test_json:
                                     try:
-                                        FunctionOrMethod.model_validate(
+                                        pyschema_utils.FunctionOrMethod.model_validate(
                                             test_json["implementation"]
                                         ).load()
                                     except ImportError:

@@ -7,13 +7,13 @@ from typing import Type
 
 from trulens.core import app
 from trulens.core.app import ComponentView
-from trulens.core.utils.pyschema import Class
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils.serial import JSON
 
 
 class LangChainComponent(ComponentView):
     @staticmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         if ComponentView.innermost_base(cls_obj.bases) == "langchain":
             return True
 
@@ -33,7 +33,7 @@ class Prompt(app.Prompt, LangChainComponent):
         return super().unsorted_parameters(skip=set(["template"]))
 
     @staticmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         return cls_obj.noserio_issubclass(
             module_name="langchain.prompts.base",
             class_name="BasePromptTemplate",
@@ -52,7 +52,7 @@ class LLM(app.LLM, LangChainComponent):
         return super().unsorted_parameters(skip=set(["model_name"]))
 
     @staticmethod
-    def class_is(cls_obj: Class) -> bool:
+    def class_is(cls_obj: pyschema_utils.Class) -> bool:
         return cls_obj.noserio_issubclass(
             module_name="langchain.llms.base", class_name="BaseLLM"
         )
@@ -66,7 +66,9 @@ class Other(app.Other, LangChainComponent):
 COMPONENT_VIEWS = [Prompt, LLM, Other]
 
 
-def constructor_of_class(cls_obj: Class) -> Type[LangChainComponent]:
+def constructor_of_class(
+    cls_obj: pyschema_utils.Class,
+) -> Type[LangChainComponent]:
     for view in COMPONENT_VIEWS:
         if view.class_is(cls_obj):
             return view
@@ -75,7 +77,7 @@ def constructor_of_class(cls_obj: Class) -> Type[LangChainComponent]:
 
 
 def component_of_json(json: JSON) -> LangChainComponent:
-    cls = Class.of_class_info(json)
+    cls = pyschema_utils.Class.of_class_info(json)
 
     view = constructor_of_class(cls)
 
