@@ -1615,10 +1615,6 @@ class LLMProvider(Provider):
                 temperature=temperature,
             )
 
-            normalized_score = (score - min_score_val) / (
-                max_score_val - min_score_val
-            )
-
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
             match = score_pattern.search(reason["reason"])
             if match:
@@ -1635,7 +1631,7 @@ class LLMProvider(Provider):
                     "reason"
                 ].replace(original_string, replacement_string)
 
-            return index, normalized_score, normalized_reason
+            return index, score, normalized_reason
 
         results = []
 
