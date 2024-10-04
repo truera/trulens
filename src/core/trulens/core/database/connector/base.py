@@ -358,13 +358,20 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+
             group_by_metadata_key: A key included in record metadata that you want to group results by.
+
+            limit: Limit on the number of records to aggregate to produce the leaderboard.
+
+            offset: Record row offset to select which records to use to aggregate the leaderboard.
 
         Returns:
             DataFrame of apps with their feedback results aggregated.
@@ -374,7 +381,10 @@ class DBConnector(ABC, text_utils.WithIdentString):
         if app_ids is None:
             app_ids = []
 
-        df, feedback_cols = self.get_records_and_feedback(app_ids)
+        df, feedback_cols = self.get_records_and_feedback(
+            app_ids, limit=limit, offset=offset
+        )
+        feedback_cols = sorted(feedback_cols)
 
         df["app_name"] = df["app_json"].apply(
             lambda x: json.loads(x).get("app_name")
