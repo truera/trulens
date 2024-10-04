@@ -82,7 +82,7 @@ TLensedAttributeValue = TypeAliasType(
         int,
         float,
         bool,
-        python_utils.NoneType,  # NOTE(piotrm): None is not technically allowed as an attribute value.
+        python_utils.NoneType,  # TODO(SNOW-1711929): None is not technically allowed as an attribute value.
         Sequence["TLensedAttributeValue"],  # type: ignore
         "TLensedAttributes",
     ],
@@ -117,8 +117,9 @@ def flatten_value(
     if lens is None:
         lens = Lens()
 
-    # OpenTelemetry does not allow None as an attribute value. Unsure what
-    # is best to do here.
+    # TODO(SNOW-1711929): OpenTelemetry does not allow None as an attribute
+    # value. Unsure what is best to do here.
+
     # if v is None:
     #    yield (path, "None")
 
@@ -538,6 +539,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         return trace_api.status.Status(self.status, self.status_description)
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
+        #  TODO(SNOW-1711959)
         return {
             "service.namespace": "trulens",
         }
@@ -565,11 +567,11 @@ class Span(serial_utils.SerialModel, trace_api.Span):
             events=self.otel_events(),
             links=self.otel_links(),
             kind=self.otel_kind(),
-            instrumentation_info=None,  # TODO
+            instrumentation_info=None,  # TODO(SNOW-1711959)
             status=self.otel_status(),
             start_time=self.start_timestamp,
             end_time=self.end_timestamp,
-            instrumentation_scope=None,  # TODO
+            instrumentation_scope=None,  # TODO(SNOW-1711959)
         )
 
 
