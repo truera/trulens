@@ -150,6 +150,7 @@ def expand_groundedness_df(df: pd.DataFrame) -> pd.DataFrame:
     reasons_df = pd.DataFrame(data)
 
     reasons_df.rename(columns={"Groundedness Score": "score"}, inplace=True)
+    print(reasons_df)
 
     # Return only the expanded reasons DataFrame
     return reasons_df.reset_index(drop=True)

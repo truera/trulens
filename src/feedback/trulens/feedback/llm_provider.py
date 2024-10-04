@@ -1660,8 +1660,6 @@ class LLMProvider(Provider):
             np.mean(list(groundedness_scores.values()))
         )
 
-        print(reasons_str)
-
         return average_groundedness_score, {"reasons": reasons_str}
 
     @deprecation_utils.method_renamed("relevance")
