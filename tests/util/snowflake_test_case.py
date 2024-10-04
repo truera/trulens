@@ -106,6 +106,7 @@ class SnowflakeTestCase(TestCase):
                 )
             connector = SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
+                init_server_side=True,
             )
         session = TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
