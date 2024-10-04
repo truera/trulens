@@ -1579,6 +1579,7 @@ class LLMProvider(Provider):
 
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
             match = score_pattern.search(reason["reason"])
+            normalized_reason = None
             if match:
                 original_reason_score = float(match.group(1))
                 normalized_reason_score = (
@@ -1612,7 +1613,7 @@ class LLMProvider(Provider):
             groundedness_scores[f"statement_{i}"] = score
             reason_str = (
                 reason["reason"]
-                if "reason" in reason
+                if reason is not None and "reason" in reason
                 else "reason not generated"
             )
             reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
