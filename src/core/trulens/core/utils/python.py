@@ -1097,7 +1097,7 @@ def wrap_until_eager(
 
 
 # Class utilities
-class SingletonPerName(type):
+class SingletonPerNameMeta(type):
     """
     Metaclass for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
@@ -1110,7 +1110,7 @@ class SingletonPerName(type):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
-        k = cls.__name__, name
+        k = f"{cls.__module__}.{cls.__name__}", name
 
         if k not in cls._singleton_instances:
             logger.debug(
@@ -1118,14 +1118,14 @@ class SingletonPerName(type):
                 cls.__name__,
                 name,
             )
-            cls._singleton_instances[k] = super(SingletonPerName, cls).__call__(
-                *args, **kwargs
-            )
+            cls._singleton_instances[k] = super(
+                SingletonPerNameMeta, cls
+            ).__call__(*args, **kwargs)
         return cls._singleton_instances[k]
 
     @staticmethod
     def delete_singleton_by_name(
-        name: str, cls: Optional[Type[SingletonPerName]] = None
+        name: str, cls: Optional[Type[SingletonPerNameMeta]] = None
     ):
         """
         Delete the singleton instance with the given name.
@@ -1139,16 +1139,16 @@ class SingletonPerName(type):
                 instances with the given name are deleted.
         """
 
-        for k, v in list(SingletonPerName._singleton_instances.items()):
+        for k, v in list(SingletonPerNameMeta._singleton_instances.items()):
             if k[1] == name:
                 if cls is not None and v.__class__ is not cls:
                     continue
 
-                del SingletonPerName._singleton_instances[k]
+                del SingletonPerNameMeta._singleton_instances[k]
 
     @staticmethod
     def delete_singleton(
-        obj: Type[SingletonPerName], name: Optional[str] = None
+        obj: Type[SingletonPerNameMeta], name: Optional[str] = None
     ):
         """
         Delete the singleton instance. Can be used for testing to create another
@@ -1160,13 +1160,13 @@ class SingletonPerName(type):
             else None
         )
         k = cls_name, name
-        if k in SingletonPerName._singleton_instances:
-            del SingletonPerName._singleton_instances[k]
+        if k in SingletonPerNameMeta._singleton_instances:
+            del SingletonPerNameMeta._singleton_instances[k]
         else:
             logger.warning("Instance %s not found:", obj)
 
 
-class PydanticSingleton(type(pydantic.BaseModel), SingletonPerName):
+class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
     pass
 
 

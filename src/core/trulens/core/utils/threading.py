@@ -14,7 +14,7 @@ from typing import Callable, Optional, TypeVar
 
 from trulens.core._utils.pycompat import Future
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.python import SingletonPerName
+from trulens.core.utils.python import SingletonPerNameMeta
 from trulens.core.utils.python import T
 from trulens.core.utils.python import WeakWrapper
 from trulens.core.utils.python import code_line
@@ -100,7 +100,7 @@ futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 
-class TP(metaclass=SingletonPerName):  # "thread processing"
+class TP(metaclass=SingletonPerNameMeta):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.

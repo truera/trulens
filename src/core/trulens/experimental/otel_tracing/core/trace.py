@@ -718,7 +718,9 @@ class NullTracer(Tracer):
         return []
 
 
-class TracerProvider(mod_otel.TracerProvider, python_utils.Singleton):
+class TracerProvider(
+    mod_otel.TracerProvider, metaclass=python_utils.SingletonPerNameMeta
+):
     """TruLens additions on top of [OTEL TracerProvider][opentelemetry.trace.TracerProvider]."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
