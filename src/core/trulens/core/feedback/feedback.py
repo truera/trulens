@@ -30,6 +30,7 @@ import pydantic
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
+from trulens.core._utils import pycompat as pycompat_utils
 import trulens.core.feedback.endpoint as mod_base_endpoint
 from trulens.core.schema import Select
 from trulens.core.schema import app as mod_app_schema
@@ -335,7 +336,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
     ) -> List[
         Tuple[
             pandas.Series,
-            mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+            pycompat_utils.Future[mod_feedback_schema.FeedbackResult],
         ]
     ]:
         """Evaluates feedback functions that were specified to be deferred.
@@ -404,7 +405,7 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         futures: List[
             Tuple[
                 pandas.Series,
-                mod_python_utils.Future[mod_feedback_schema.FeedbackResult],
+                pycompat_utils.Future[mod_feedback_schema.FeedbackResult],
             ]
         ] = []
 
@@ -664,8 +665,12 @@ class Feedback(mod_feedback_schema.FeedbackDefinition):
         # Keep track whether any selectors failed to validate.
         check_good: bool = True
 
-        # with c.capture() as cap:
         for k, q in self.selectors.items():
+            if Select.RecordSpans.is_prefix_of(q):
+                # Skip checking for RecordSpans as they are not known ahead of
+                # producing a record.
+                continue
+
             if q.exists(source_data):
                 continue
 
@@ -746,7 +751,7 @@ Feedback function signature:
                         + "\n```\n"
                     )
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 msg += f"Some non-existent object because: {pretty_repr(e)}"
 
         if check_good:

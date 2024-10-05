@@ -12,8 +12,8 @@ import threading
 from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
+from trulens.core._utils.pycompat import Future
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.python import Future
 from trulens.core.utils.python import SingletonPerName
 from trulens.core.utils.python import T
 from trulens.core.utils.python import WeakWrapper

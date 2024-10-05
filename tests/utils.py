@@ -26,6 +26,7 @@ from typing import (
 import weakref
 
 from tqdm.auto import tqdm
+from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.text import format_size
@@ -198,7 +199,7 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
         except Exception:
             return
 
-    for item, val in python_utils.getmembers_static(mod):
+    for item, val in pycompat_utils.getmembers_static(mod):
         # Check for aliases: classes/modules defined somewhere outside of
         # mod. Note that this cannot check for aliasing of basic python
         # values which are not references.
@@ -341,7 +342,7 @@ def get_class_members(
     lows: List[Member] = []
 
     static_members = [
-        (k, v, type(v)) for k, v in python_utils.getmembers_static(class_)
+        (k, v, type(v)) for k, v in pycompat_utils.getmembers_static(class_)
     ]
 
     slot_members = []
@@ -381,6 +382,14 @@ def get_class_members(
 
         is_def = False
         is_public = False
+        is_experimental = False
+
+        is_experimental = name.lower().startswith("experimental")
+
+        if is_experimental:
+            # Skip experimental members for now.
+            # TODO: include them as another category other than public.
+            continue
 
         if any(
             (
@@ -481,7 +490,7 @@ def get_module_members(
 
     classes = set()
 
-    for name, val in python_utils.getmembers_static(mod):
+    for name, val in pycompat_utils.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
         member = Member(
             mod, name=name, qualname=qualname, val=val, typ=type(val)
@@ -491,6 +500,10 @@ def get_module_members(
         is_public = False
         is_export = False
         is_base = False
+        is_experimental = False
+
+        if name.lower().startswith("experimental"):
+            is_experimental = True
 
         if aliases_are_defs or _isdefinedin(val, mod):
             is_def = True
@@ -534,7 +547,8 @@ def get_module_members(
 
         else:
             if (
-                name not in ["TYPE_CHECKING"]  # skip this common value
+                not is_experimental
+                and name not in ["TYPE_CHECKING"]  # skip this common value
                 and (len(name) > 1 or not isinstance(val, TypeVar))
             ):  # skip generic type vars
                 is_public = True
@@ -670,12 +684,15 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             return True
         if gc.is_finalized(val):
             return True
-        if weakref.CallableProxyType.__instancecheck__(val):
-            return True
-        if weakref.ReferenceType.__instancecheck__(val):
-            return True
-        if weakref.ProxyType.__instancecheck__(val):
-            return True
+        try:
+            if weakref.CallableProxyType.__instancecheck__(val):
+                return True
+            if weakref.ReferenceType.__instancecheck__(val):
+                return True
+            if weakref.ProxyType.__instancecheck__(val):
+                return True
+        except Exception:
+            return False
         if id(val) in visited:
             return True
 

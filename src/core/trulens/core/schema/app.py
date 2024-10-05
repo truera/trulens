@@ -31,10 +31,10 @@ from trulens.core.utils.text import format_quantity
 from trulens.core.utils.threading import TP
 
 if TYPE_CHECKING:
+    from trulens.core._utils.pycompat import Future
     from trulens.core.database.connector import DBConnector
     from trulens.core.feedback import Feedback
     from trulens.core.schema.record import Record
-    from trulens.core.utils.python import Future
 
 logger = logging.getLogger(__name__)
 

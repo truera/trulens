@@ -18,6 +18,7 @@ from typing import (
 )
 
 import pandas
+from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database.base import DB
 from trulens.core.schema import app as mod_app_schema
 from trulens.core.schema import feedback as mod_feedback_schema
@@ -25,7 +26,6 @@ from trulens.core.schema import record as mod_record_schema
 from trulens.core.schema import types as mod_types_schema
 from trulens.core.utils import serial
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.python import Future  # code style exception
 
 logger = logging.getLogger(__name__)
 
@@ -358,13 +358,20 @@ class DBConnector(ABC, text_utils.WithIdentString):
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+
             group_by_metadata_key: A key included in record metadata that you want to group results by.
+
+            limit: Limit on the number of records to aggregate to produce the leaderboard.
+
+            offset: Record row offset to select which records to use to aggregate the leaderboard.
 
         Returns:
             DataFrame of apps with their feedback results aggregated.
@@ -374,7 +381,9 @@ class DBConnector(ABC, text_utils.WithIdentString):
         if app_ids is None:
             app_ids = []
 
-        df, feedback_cols = self.get_records_and_feedback(app_ids)
+        df, feedback_cols = self.get_records_and_feedback(
+            app_ids, limit=limit, offset=offset
+        )
         feedback_cols = sorted(feedback_cols)
 
         df["app_name"] = df["app_json"].apply(

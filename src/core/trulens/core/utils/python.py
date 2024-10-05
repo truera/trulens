@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
-from concurrent import futures
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 import contextvars
@@ -44,92 +43,6 @@ WRAP_LAZY: bool = True
 
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
-
-if sys.version_info >= (3, 11):
-    getmembers_static = inspect.getmembers_static
-else:
-
-    def getmembers_static(obj, predicate=None):
-        """Implementation of inspect.getmembers_static for python < 3.11."""
-
-        if predicate is None:
-            predicate = lambda name, value: True
-
-        return [
-            (name, value)
-            for name in dir(obj)
-            if hasattr(obj, name)
-            and predicate(name, value := getattr(obj, name))
-        ]
-
-
-if sys.version_info >= (3, 9):
-    Future = futures.Future
-    """Alias for [concurrent.futures.Future][].
-
-    In python < 3.9, a subclass of [concurrent.futures.Future][] with
-    `Generic[A]` is used instead.
-    """
-
-    Queue = queue.Queue
-    """Alias for [queue.Queue][] .
-
-    In python < 3.9, a subclass of [queue.Queue][] with
-    `Generic[A]` is used instead.
-    """
-
-else:
-    # Fake classes which can have type args. In python earlier than 3.9, the
-    # classes imported above cannot have type args which is annoying for type
-    # annotations. We use these fake ones instead.
-
-    A = TypeVar("A")
-
-    # HACK011
-    class Future(Generic[A], futures.Future):
-        """Alias for [concurrent.futures.Future][].
-
-        In python < 3.9, a subclass of [concurrent.futures.Future][] with
-        `Generic[A]` is used instead.
-        """
-
-    # HACK012
-    class Queue(Generic[A], queue.Queue):
-        """Alias for [queue.Queue][] .
-
-        In python < 3.9, a subclass of [queue.Queue][] with
-        `Generic[A]` is used instead.
-        """
-
-
-class EmptyType(type):
-    """A type that cannot be instantiated or subclassed."""
-
-    def __new__(mcs, *args, **kwargs):
-        raise ValueError("EmptyType cannot be instantiated.")
-
-    def __instancecheck__(cls, __instance: Any) -> bool:
-        return False
-
-    def __subclasscheck__(cls, __subclass: Type) -> bool:
-        return False
-
-
-if sys.version_info >= (3, 10):
-    import types
-
-    NoneType = types.NoneType
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
-
-else:
-    NoneType = type(None)
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -240,6 +153,39 @@ def safe_signature(func_or_obj: Any):
 
         else:
             raise e
+
+
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
 
 
 def safe_hasattr(obj: Any, k: str) -> bool:
@@ -449,9 +395,10 @@ def external_caller_frame(offset=0) -> FrameType:
         RuntimeError: If no such frame is found.
     """
     frame = inspect.currentframe()
-    gen = stack_generator(frame=frame, offset=offset + 2)
+    gen = stack_generator(frame=frame, offset=offset + 1)
     for f_info in gen:
-        if not f_info.f_globals["__name__"].startswith("trulens"):
+        name = f_info.f_globals["__name__"]
+        if not (name.startswith("trulens") or name.startswith("pydantic")):
             return f_info
 
     raise RuntimeError("No external caller frame found.")
@@ -1167,7 +1114,7 @@ class SingletonPerName(type):
 
         if k not in cls._singleton_instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )

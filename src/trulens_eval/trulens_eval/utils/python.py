@@ -23,7 +23,6 @@ from typing import (
 )
 
 from trulens.core.utils.python import STACK
-from trulens.core.utils.python import EmptyType
 from trulens.core.utils.python import OpaqueWrapper
 from trulens.core.utils.python import T
 from trulens.core.utils.python import callable_name

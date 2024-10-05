@@ -792,6 +792,7 @@ trulens_eval.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -800,11 +801,13 @@ trulens_eval.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.TP:
@@ -876,7 +879,7 @@ trulens_eval.TruBasicApp:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -949,6 +952,7 @@ trulens_eval.TruBasicApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -974,7 +978,7 @@ trulens_eval.TruChain:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1047,6 +1051,7 @@ trulens_eval.TruChain:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1070,7 +1075,7 @@ trulens_eval.TruCustomApp:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1146,6 +1151,7 @@ trulens_eval.TruCustomApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1169,7 +1175,7 @@ trulens_eval.TruLlama:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1243,6 +1249,7 @@ trulens_eval.TruLlama:
     select_source_nodes: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1266,7 +1273,7 @@ trulens_eval.TruRails:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1339,6 +1346,7 @@ trulens_eval.TruRails:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1354,6 +1362,7 @@ trulens_eval.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1363,7 +1372,7 @@ trulens_eval.TruVirtual:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1436,6 +1445,7 @@ trulens_eval.TruVirtual:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1494,7 +1504,7 @@ trulens_eval.app.App:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1566,6 +1576,7 @@ trulens_eval.app.App:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6367,12 +6378,15 @@ trulens_eval.schema.base.Perf:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    end_ns_timestamp: builtins.property
     end_time: datetime.datetime
     formatted_objects: _contextvars.ContextVar
     latency: builtins.property
     min: builtins.staticmethod
     now: builtins.staticmethod
+    of_ns_timestamps: builtins.staticmethod
     replace: builtins.function
+    start_ns_timestamp: builtins.property
     start_time: datetime.datetime
     update: builtins.function
 trulens_eval.schema.feedback:
@@ -6587,6 +6601,7 @@ trulens_eval.schema.feedback.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -6595,11 +6610,13 @@ trulens_eval.schema.feedback.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.schema.record:
@@ -6630,6 +6647,7 @@ trulens_eval.schema.record.Record:
       builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
+    get: builtins.function
     json: builtins.function
     layout_calls_as_app: builtins.function
     main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -6856,7 +6874,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -6929,6 +6947,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -6998,7 +7017,7 @@ trulens_eval.tru_chain.TruChain:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7071,6 +7090,7 @@ trulens_eval.tru_chain.TruChain:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7103,7 +7123,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7179,6 +7199,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7233,7 +7254,7 @@ trulens_eval.tru_llama.TruLlama:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7307,6 +7328,7 @@ trulens_eval.tru_llama.TruLlama:
     select_source_nodes: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7349,6 +7371,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     LLM: trulens.core.utils.serial.Lens
     LastBotMessage: trulens.core.utils.serial.Lens
     LastUserMessage: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -7357,6 +7380,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     RetrievalContexts: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     UserMessage: trulens.core.utils.serial.Lens
@@ -7364,6 +7388,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.tru_rails.RailsInstrument:
@@ -7395,7 +7420,7 @@ trulens_eval.tru_rails.TruRails:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7468,6 +7493,7 @@ trulens_eval.tru_rails.TruRails:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7491,6 +7517,7 @@ trulens_eval.tru_virtual.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7500,7 +7527,7 @@ trulens_eval.tru_virtual.TruVirtual:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7573,6 +7600,7 @@ trulens_eval.tru_virtual.TruVirtual:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7589,6 +7617,7 @@ trulens_eval.tru_virtual.VirtualApp:
   __class__: builtins.type
   attributes:
     root: builtins.function
+    select_context: builtins.classmethod
 trulens_eval.tru_virtual.VirtualRecord:
   __bases__:
   - trulens.core.schema.record.Record
@@ -7607,6 +7636,7 @@ trulens_eval.tru_virtual.VirtualRecord:
       builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
+    get: builtins.function
     json: builtins.function
     layout_calls_as_app: builtins.function
     main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -8255,7 +8285,6 @@ trulens_eval.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
     OpaqueWrapper: builtins.type
     STACK: builtins.str
     SingletonInfo: builtins.type
@@ -8284,11 +8313,6 @@ trulens_eval.utils.python:
     tru_new_event_loop: builtins.function
     wrap_awaitable: builtins.function
     wrap_generator: builtins.function
-trulens_eval.utils.python.EmptyType:
-  __bases__:
-  - builtins.type
-  __class__: builtins.type
-  attributes: {}
 trulens_eval.utils.python.OpaqueWrapper:
   __bases__:
   - typing.Generic

@@ -7,17 +7,17 @@
       },
       "meta": {
         "text1_scores": {
-          "LABEL_0": 0.22994963536967594,
-          "LABEL_1": 0.47570595681596817,
-          "LABEL_2": 0.2943444078143559
+          "LABEL_0": 0.22658802821291113,
+          "LABEL_1": 0.5794276352564846,
+          "LABEL_2": 0.19398433653060437
         },
         "text2_scores": {
-          "LABEL_0": 0.15727264461930146,
-          "LABEL_1": 0.5897521935560311,
-          "LABEL_2": 0.2529751618246674
+          "LABEL_0": 0.14386970279414246,
+          "LABEL_1": 0.682075654103665,
+          "LABEL_2": 0.1740546431021926
         }
       },
-      "ret": 0.885953763259937
+      "ret": 0.8973519811528196
     }
   ],
   "cost": {
@@ -37,12 +37,12 @@
     "n_tokens": 0
   },
   "error": null,
-  "feedback_definition_id": "feedback_definition_hash_2f7a538a5032fd2dda658b087a782fa7",
-  "feedback_result_id": "feedback_result_hash_528aea420a9f42ef41d7c6fa9a5acbe7",
-  "last_ts": "2024-09-09T17:25:24.073096",
+  "feedback_definition_id": "feedback_definition_hash_5244692166a06574fb05495daf0ad3cf",
+  "feedback_result_id": "feedback_result_hash_f59871bcf2bf437363ea4f6596a359de",
+  "last_ts": "2024-09-25T13:28:17.734193",
   "multi_result": "null",
   "name": "language_match",
-  "record_id": "record_hash_a495a02287accac918c4f4245adcdace",
-  "result": 0.885953763259937,
+  "record_id": "record_hash_ed06148a6a9e5153a97be3dac551aca4",
+  "result": 0.8973519811528196,
   "status": "done"
 }

@@ -28,6 +28,7 @@ import pydantic
 from trulens.core import experimental as mod_experimental
 from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
+from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
@@ -44,7 +45,6 @@ from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
 
 if TYPE_CHECKING:
@@ -160,6 +160,33 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
+    _experimental_otel_exporter: Optional[
+        Any
+    ] = (  # Any = otel_export_sdk.SpanExporter
+        pydantic.PrivateAttr(None)
+    )
+
+    @property
+    def experimental_otel_exporter(
+        self,
+    ) -> Any:  # Any = Optional[otel_export_sdk.SpanExporter]
+        """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
+        to.
+
+        Only works if the trulens.core.experimental.Feature.OTEL_TRACING flag is
+        set. The setter will set and lock the flag as enabled.
+        """
+
+        return self._experimental_otel_exporter
+
+    @experimental_otel_exporter.setter
+    def experimental_otel_exporter(
+        self, value: Optional[Any]
+    ):  # Any = otel_export_sdk.SpanExporter
+        from trulens.experimental.otel_tracing.core.session import _TruSession
+
+        _TruSession._setup_otel_exporter(self, value)
+
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
 
@@ -179,6 +206,9 @@ class TruSession(
                 Iterable[mod_experimental.Feature],
             ]
         ] = None,
+        _experimental_otel_exporter: Optional[
+            Any
+        ] = None,  # Any = otel_export_sdk.SpanExporter
         **kwargs,
     ):
         if python.safe_hasattr(self, "connector"):
@@ -212,6 +242,9 @@ class TruSession(
         # for WithExperimentalSettings mixin
         if experimental_feature_flags is not None:
             self.experimental_set_features(experimental_feature_flags)
+
+        if _experimental_otel_exporter is not None:
+            self.experimental_otel_exporter = _experimental_otel_exporter
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
@@ -723,20 +756,30 @@ class TruSession(
         self,
         app_ids: Optional[List[mod_types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+
             group_by_metadata_key: A key included in record metadata that you want to group results by.
+
+            limit: Limit on the number of records to aggregate to produce the leaderboard.
+
+            offset: Record row offset to select which records to use to aggregate the leaderboard.
 
         Returns:
             Dataframe of apps with their feedback results aggregated.
             If group_by_metadata_key is provided, the dataframe will be grouped by the specified key.
         """
         return self.connector.get_leaderboard(
-            app_ids=app_ids, group_by_metadata_key=group_by_metadata_key
+            app_ids=app_ids,
+            group_by_metadata_key=group_by_metadata_key,
+            limit=limit,
+            offset=offset,
         )
 
     def add_ground_truth_to_dataset(
