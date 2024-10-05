@@ -253,8 +253,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         self,
         query: str,
         retrieved_context_chunks: List[str],
-        relevance_scores: List[float] | None,
-        k: int | None,
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
     ) -> float:
         """
         Compute NDCG@k for a given query and retrieved context chunks.
@@ -268,7 +268,6 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Returns:
             float: Computed NDCG@k score.
         """
-
         # Step 1: Find the ground truth context chunks for the given query
         ground_truth_context_chunks_and_scores = (
             self._find_golden_context_chunks_and_scores(query)
@@ -286,25 +285,35 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 chunk[1] for chunk in ground_truth_context_chunks_and_scores
             ]
 
-            # Step 3: Create a binary relevance vector for the retrieved chunks based on the golden chunks
+            # Step 3: If relevance scores are provided, sort retrieved chunks by scores in descending order
+            if relevance_scores:
+                # Zip together retrieved chunks and relevance scores
+                retrieved_with_scores = list(
+                    zip(retrieved_context_chunks, relevance_scores)
+                )
+                # Sort by scores in descending order
+                retrieved_with_scores.sort(key=lambda x: x[1], reverse=True)
+                # Extract the sorted chunks
+                retrieved_context_chunks = [
+                    chunk for chunk, _ in retrieved_with_scores
+                ]
+
+            # Step 4: Create a binary relevance vector for the retrieved chunks based on golden chunks
             rel_scores = [0.0] * len(
                 retrieved_context_chunks
             )  # Initialize with 0 relevance for all
             for i, chunk in enumerate(retrieved_context_chunks[:k]):
                 if chunk in golden_chunks:
-                    # If relevance scores are given, use them; otherwise, use binary relevance (1.0)
                     index_in_golden = golden_chunks.index(chunk)
-                    rel_scores[i] = (
-                        relevance_scores[i]
-                        if relevance_scores
-                        else golden_scores[index_in_golden]
-                    )
+                    rel_scores[i] = golden_scores[
+                        index_in_golden
+                    ]  # Use the true relevance score
 
-            # Step 4: Prepare the ground truth scores as a vector
+            # Step 5: Prepare the ground truth scores as a vector
             # Ideal DCG (IDCG) is calculated by placing all relevant items at the top in descending order
             ideal_golden_scores = sorted(golden_scores, reverse=True)[:k]
 
-            # Step 5: Calculate NDCG@k using sklearn's ndcg_score
+            # Step 6: Calculate NDCG@k using sklearn's ndcg_score
             return ndcg_score(
                 y_true=np.array([ideal_golden_scores]),
                 y_score=np.array([rel_scores[:k]]),  # Consider only top-k items
