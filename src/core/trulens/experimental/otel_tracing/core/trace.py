@@ -719,7 +719,7 @@ class NullTracer(Tracer):
 
 
 class TracerProvider(
-    mod_otel.TracerProvider, metaclass=python_utils.SingletonPerNameMeta
+    mod_otel.TracerProvider, metaclass=python_utils.PydanticSingletonMeta
 ):
     """TruLens additions on top of [OTEL TracerProvider][opentelemetry.trace.TracerProvider]."""
 
