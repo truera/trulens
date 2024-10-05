@@ -6,20 +6,21 @@ from llama_index.core.query_engine.retriever_query_engine import (
     RetrieverQueryEngine,
 )
 from llama_index.core.schema import NodeWithScore
-from trulens.core import Feedback
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.utils.threading import ThreadPoolExecutor
 
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
-    feedback: Feedback
+    feedback: mod_feedback.Feedback
     threshold: float
     """
     A BaseQueryEngine that filters documents using a minimum threshold
     on a feedback function before returning them.
 
     Args:
-        feedback (Feedback): use this feedback function to score each document.
-        threshold (float): and keep documents only if their feedback value is at least this threshold.
+        feedback: use this feedback function to score each document.
+
+        threshold: and keep documents only if their feedback value is at least this threshold.
 
     Example: "Using TruLens guardrail context filters with Llama-Index"
         ```python
@@ -47,7 +48,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
     def __init__(
         self,
         query_engine: RetrieverQueryEngine,
-        feedback: Feedback,
+        feedback: mod_feedback.Feedback,
         threshold: float,
         *args,
         **kwargs,

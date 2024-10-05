@@ -44,21 +44,15 @@ from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.database.utils import is_memory_sqlite
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import dataset as mod_dataset_schema
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import groundtruth as mod_groundtruth_schema
+from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import text
-from trulens.core.utils.python import locals_except
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import JSONized
-from trulens.core.utils.text import UNICODE_CHECK
-from trulens.core.utils.text import UNICODE_CLOCK
-from trulens.core.utils.text import UNICODE_HOURGLASS
-from trulens.core.utils.text import UNICODE_STOP
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -180,15 +174,15 @@ class SQLAlchemyDB(DB):
 
         print(
             "%s TruSession initialized with db url %s ."
-            % (text.UNICODE_SQUID, new_db.engine.url)
+            % (text_utils.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:
             print(
-                f"{text.UNICODE_LOCK} Secret keys will not be included in the database."
+                f"{text_utils.UNICODE_LOCK} Secret keys will not be included in the database."
             )
         else:
             print(
-                f"{text.UNICODE_STOP} Secret keys may be written to the database. "
+                f"{text_utils.UNICODE_STOP} Secret keys may be written to the database. "
                 "See the `database_redact_keys` option of `TruSession` to prevent this."
             )
 
@@ -351,7 +345,7 @@ class SQLAlchemyDB(DB):
 
     def insert_record(
         self, record: record_schema.Record
-    ) -> mod_types_schema.RecordID:
+    ) -> types_schema.RecordID:
         """See [DB.insert_record][trulens.core.database.base.DB.insert_record]."""
         # TODO: thread safety
 
@@ -366,13 +360,15 @@ class SQLAlchemyDB(DB):
             else:
                 session.merge(_rec)  # add new record # .add was not thread safe
 
-            logger.info("%s added record %s", UNICODE_CHECK, _rec.record_id)
+            logger.info(
+                "%s added record %s", text_utils.UNICODE_CHECK, _rec.record_id
+            )
 
             return _rec.record_id
 
     def batch_insert_record(
         self, records: List[record_schema.Record]
-    ) -> List[mod_types_schema.RecordID]:
+    ) -> List[types_schema.RecordID]:
         """See [DB.batch_insert_record][trulens.core.database.base.DB.batch_insert_record]."""
         with self.session.begin() as session:
             records_list = [
@@ -380,11 +376,13 @@ class SQLAlchemyDB(DB):
                 for r in records
             ]
             session.add_all(records_list)
-            logger.info(f"{UNICODE_CHECK} added record batch")
+            logger.info(f"{text_utils.UNICODE_CHECK} added record batch")
             # return record ids from orm objects
             return [r.record_id for r in records_list]
 
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
+    def get_app(
+        self, app_id: types_schema.AppID
+    ) -> Optional[serial_utils.JSONized]:
         """See [DB.get_app][trulens.core.database.base.DB.get_app]."""
 
         with self.session.begin() as session:
@@ -396,7 +394,7 @@ class SQLAlchemyDB(DB):
                 return json.loads(_app.app_json)
 
     def update_app_metadata(
-        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
+        self, app_id: types_schema.AppID, metadata: Dict[str, Any]
     ) -> Optional[app_schema.AppDefinition]:
         """See [DB.update_app_metadata][trulens.core.database.base.DB.update_app_metadata]."""
 
@@ -420,8 +418,8 @@ class SQLAlchemyDB(DB):
                 _app.app_json = json.dumps(app_json)
 
     def get_apps(
-        self, app_name: Optional[mod_types_schema.AppName] = None
-    ) -> Iterable[JSON]:
+        self, app_name: Optional[types_schema.AppName] = None
+    ) -> Iterable[serial_utils.JSON]:
         """See [DB.get_apps][trulens.core.database.base.DB.get_apps]."""
 
         with self.session.begin() as session:
@@ -432,9 +430,7 @@ class SQLAlchemyDB(DB):
             for _app in app_defs:
                 yield json.loads(_app.app_json)
 
-    def insert_app(
-        self, app: app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def insert_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """See [DB.insert_app][trulens.core.database.base.DB.insert_app]."""
 
         # TODO: thread safety
@@ -452,11 +448,13 @@ class SQLAlchemyDB(DB):
                 )
                 session.merge(_app)  # .add was not thread safe
 
-            logger.info("%s added app %s", UNICODE_CHECK, _app.app_id)
+            logger.info(
+                "%s added app %s", text_utils.UNICODE_CHECK, _app.app_id
+            )
 
             return _app.app_id
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -471,13 +469,13 @@ class SQLAlchemyDB(DB):
             )
             if _app:
                 session.delete(_app)
-                logger.info(f"{UNICODE_CHECK} deleted app {app_id}")
+                logger.info(f"{text_utils.UNICODE_CHECK} deleted app {app_id}")
             else:
                 logger.warning(f"App {app_id} not found for deletion.")
 
     def insert_feedback_definition(
         self, feedback_definition: feedback_schema.FeedbackDefinition
-    ) -> mod_types_schema.FeedbackDefinitionID:
+    ) -> types_schema.FeedbackDefinitionID:
         """See [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
 
         # TODO: thread safety
@@ -499,7 +497,7 @@ class SQLAlchemyDB(DB):
 
             logger.info(
                 "%s added feedback definition %s",
-                UNICODE_CHECK,
+                text_utils.UNICODE_CHECK,
                 _fb_def.feedback_definition_id,
             )
 
@@ -508,7 +506,7 @@ class SQLAlchemyDB(DB):
     def get_feedback_defs(
         self,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
     ) -> pd.DataFrame:
         """See [DB.get_feedback_defs][trulens.core.database.base.DB.get_feedback_defs]."""
@@ -528,7 +526,7 @@ class SQLAlchemyDB(DB):
 
     def insert_feedback(
         self, feedback_result: feedback_schema.FeedbackResult
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """See [DB.insert_feedback][trulens.core.database.base.DB.insert_feedback]."""
 
         # TODO: thread safety
@@ -555,13 +553,13 @@ class SQLAlchemyDB(DB):
             )
 
             if status == feedback_schema.FeedbackResultStatus.DONE:
-                icon = UNICODE_CHECK
+                icon = text_utils.UNICODE_CHECK
             elif status == feedback_schema.FeedbackResultStatus.RUNNING:
-                icon = UNICODE_HOURGLASS
+                icon = text_utils.UNICODE_HOURGLASS
             elif status == feedback_schema.FeedbackResultStatus.NONE:
-                icon = UNICODE_CLOCK
+                icon = text_utils.UNICODE_CLOCK
             elif status == feedback_schema.FeedbackResultStatus.FAILED:
-                icon = UNICODE_STOP
+                icon = text_utils.UNICODE_STOP
             else:
                 icon = "???"
 
@@ -577,7 +575,7 @@ class SQLAlchemyDB(DB):
 
     def batch_insert_feedback(
         self, feedback_results: List[feedback_schema.FeedbackResult]
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
         with self.session.begin() as session:
             feedback_results_list = [
@@ -591,10 +589,10 @@ class SQLAlchemyDB(DB):
         self,
         count_by_status: bool = False,
         shuffle: bool = False,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
             Union[
@@ -669,10 +667,10 @@ class SQLAlchemyDB(DB):
 
     def get_feedback_count_by_status(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
             Union[
@@ -691,7 +689,7 @@ class SQLAlchemyDB(DB):
         with self.session.begin() as session:
             q = self._feedback_query(
                 count_by_status=True,
-                **locals_except("self", "session"),
+                **python_utils.locals_except("self", "session"),
             )
             results = session.execute(q)
 
@@ -702,10 +700,10 @@ class SQLAlchemyDB(DB):
 
     def get_feedback(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
             Union[
@@ -722,7 +720,9 @@ class SQLAlchemyDB(DB):
         """See [DB.get_feedback][trulens.core.database.base.DB.get_feedback]."""
 
         with self.session.begin() as session:
-            q = self._feedback_query(**locals_except("self", "session"))
+            q = self._feedback_query(
+                **python_utils.locals_except("self", "session")
+            )
 
             results = (row[0] for row in session.execute(q))
 
@@ -731,7 +731,7 @@ class SQLAlchemyDB(DB):
     def get_records_and_feedback(
         self,
         app_ids: Optional[List[str]] = None,
-        app_name: Optional[mod_types_schema.AppName] = None,
+        app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -789,8 +789,8 @@ class SQLAlchemyDB(DB):
             return AppsExtractor().get_df_and_cols(records=records)
 
     def insert_ground_truth(
-        self, ground_truth: mod_groundtruth_schema.GroundTruth
-    ) -> mod_types_schema.GroundTruthID:
+        self, ground_truth: groundtruth_schema.GroundTruth
+    ) -> types_schema.GroundTruthID:
         """See [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
 
         # TODO: thread safety
@@ -810,14 +810,14 @@ class SQLAlchemyDB(DB):
                 session.merge(_ground_truth)
 
             logger.info(
-                f"{UNICODE_CHECK} added ground truth {_ground_truth.ground_truth_id}"
+                f"{text_utils.UNICODE_CHECK} added ground truth {_ground_truth.ground_truth_id}"
             )
 
             return _ground_truth.ground_truth_id
 
     def batch_insert_ground_truth(
-        self, ground_truths: List[mod_groundtruth_schema.GroundTruth]
-    ) -> List[mod_types_schema.GroundTruthID]:
+        self, ground_truths: List[groundtruth_schema.GroundTruth]
+    ) -> List[types_schema.GroundTruthID]:
         """See [DB.batch_insert_ground_truth][trulens.core.database.base.DB.batch_insert_ground_truth]."""
         with self.session.begin() as session:
             ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
@@ -856,7 +856,7 @@ class SQLAlchemyDB(DB):
 
     def get_ground_truth(
         self, ground_truth_id: str | None = None
-    ) -> Optional[JSONized]:
+    ) -> Optional[serial_utils.JSONized]:
         """See [DB.get_ground_truth][trulens.core.database.base.DB.get_ground_truth]."""
 
         with self.session.begin() as session:
@@ -894,8 +894,8 @@ class SQLAlchemyDB(DB):
             # TODO: use a generator instead of a list? (for large datasets)
 
     def insert_dataset(
-        self, dataset: mod_dataset_schema.Dataset
-    ) -> mod_types_schema.DatasetID:
+        self, dataset: dataset_schema.Dataset
+    ) -> types_schema.DatasetID:
         """See [DB.insert_dataset][trulens.core.database.base.DB.insert_dataset]."""
 
         with self.session.begin() as session:
@@ -912,7 +912,9 @@ class SQLAlchemyDB(DB):
                 )
                 session.merge(_dataset)
 
-            logger.info(f"{UNICODE_CHECK} added dataset {_dataset.dataset_id}")
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added dataset {_dataset.dataset_id}"
+            )
 
             return _dataset.dataset_id
 

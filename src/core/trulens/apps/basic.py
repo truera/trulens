@@ -10,7 +10,7 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens.core.app import App
+from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.utils import pyschema as pyschema_utils
@@ -63,7 +63,7 @@ class TruBasicCallableInstrument(Instrument):
         )
 
 
-class TruBasicApp(App):
+class TruBasicApp(mod_app.App):
     """Instantiates a Basic app that makes little assumptions.
 
     Assumes input text and output text.

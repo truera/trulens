@@ -3,20 +3,21 @@ import inspect
 import logging
 from typing import Optional
 
-from trulens.core import Feedback
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.utils.threading import ThreadPoolExecutor
 
 logger = logging.getLogger(__name__)
 
 
 class context_filter:
-    """
-    Provides a decorator to filter contexts based on a given feedback and threshold.
+    """Provides a decorator to filter contexts based on a given feedback and threshold.
 
     Args:
-        feedback (Feedback): The feedback object to use for filtering.
-        threshold (float): The minimum feedback value required for a context to be included.
-        keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
+        feedback: The feedback object to use for filtering.
+
+        threshold: The minimum feedback value required for a context to be included.
+
+        keyword_for_prompt: Keyword argument to decorator to use for prompt.
 
     Example:
         ```python
@@ -36,7 +37,7 @@ class context_filter:
 
     def __init__(
         self,
-        feedback: Feedback,
+        feedback: mod_feedback.Feedback,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
     ):

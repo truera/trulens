@@ -207,7 +207,6 @@ import logging
 from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
 from pydantic import Field
 from trulens.core import app as mod_app
 from trulens.core import instruments as mod_instruments
@@ -215,6 +214,7 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)

@@ -43,12 +43,11 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.schema import base as base_schema
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.pace import Pace
-from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import serial as serial_utils
 
 import openai
 from openai import resources
@@ -63,7 +62,7 @@ pp = pprint.PrettyPrinter()
 T = TypeVar("T")
 
 
-class OpenAIClient(SerialModel):
+class OpenAIClient(serial_utils.SerialModel):
     """A wrapper for openai clients.
 
     This class allows wrapped clients to be serialized into json. Does not
@@ -149,7 +148,7 @@ class OpenAIClient(SerialModel):
                     continue
 
                 if python_utils.safe_hasattr(client, k):
-                    client_kwargs[k] = safe_getattr(client, k)
+                    client_kwargs[k] = pyschema_utils.safe_getattr(client, k)
 
             # Create serializable class description.
             client_cls = pyschema_utils.Class.of_class(client_class)
@@ -162,7 +161,7 @@ class OpenAIClient(SerialModel):
         # Pass through attribute lookups to `self.client`, the openai.OpenAI
         # instance.
         if python_utils.safe_hasattr(self.client, k):
-            return safe_getattr(self.client, k)
+            return pyschema_utils.safe_getattr(self.client, k)
 
         raise AttributeError(
             f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client."
@@ -263,7 +262,7 @@ class OpenAIEndpoint(Endpoint):
             Union[openai.OpenAI, openai.AzureOpenAI, OpenAIClient]
         ] = None,
         rpm: Optional[int] = None,
-        pace: Optional[Pace] = None,
+        pace: Optional[pace_utils.Pace] = None,
         **kwargs: dict,
     ):
         if python_utils.safe_hasattr(self, "name") and client is not None:
@@ -285,8 +284,8 @@ class OpenAIEndpoint(Endpoint):
 
         self_kwargs["callback_class"] = OpenAICallback
 
-        if CLASS_INFO in kwargs:
-            del kwargs[CLASS_INFO]
+        if constant_utils.CLASS_INFO in kwargs:
+            del kwargs[constant_utils.CLASS_INFO]
 
         if client is None:
             # Pass kwargs to client.

@@ -10,7 +10,7 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 from trulens.core.utils.imports import static_resource
 from trulens.dashboard.utils.notebook_utils import is_notebook
 from trulens.dashboard.utils.notebook_utils import setup_widget_stdout_stderr
@@ -31,7 +31,7 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    session: Optional[TruSession] = None,
+    session: Optional[mod_session.TruSession] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
@@ -58,7 +58,7 @@ def run_dashboard(
         RuntimeError: Dashboard is already running. Can be avoided if `force` is set.
 
     """
-    session = session or TruSession()
+    session = session or mod_session.TruSession()
     session.connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
@@ -247,7 +247,7 @@ def run_dashboard(
 
 
 def stop_dashboard(
-    session: Optional[TruSession] = None, force: bool = False
+    session: Optional[mod_session.TruSession] = None, force: bool = False
 ) -> None:
     """
     Stop existing dashboard(s) if running.
@@ -261,7 +261,7 @@ def stop_dashboard(
     Raises:
             RuntimeError: Dashboard is not running in the current process. Can be avoided with `force`.
     """
-    session = session or TruSession()
+    session = session or mod_session.TruSession()
     if session._dashboard_proc is None:
         if not force:
             raise RuntimeError(

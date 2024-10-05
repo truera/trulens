@@ -37,28 +37,18 @@ import weakref
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core.experimental import Feature
-from trulens.core.feedback import Feedback
 from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.containers import dict_merge_with
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.python import callable_name
-from trulens.core.utils.python import class_name
-from trulens.core.utils.python import id_str
-from trulens.core.utils.python import is_really_coroutinefunction
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.python import safe_signature
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import retab
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
-from core.trulens.core.utils.pyschema_utils import clean_attributes
-from core.trulens.core.utils.pyschema_utils import safe_getattr
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +71,9 @@ class WithInstrumentCallbacks:
     _stack_contexts.set({})
 
     # Called during instrumentation.
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
         """Callback to be called by instrumentation system for every function
         requested to be instrumented.
 
@@ -102,7 +94,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # Called during invocation.
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
         """
         Get the path of the instrumented function `func`, a member of the class
         of `obj` relative to this app.
@@ -157,7 +149,7 @@ class WithInstrumentCallbacks:
     # WithInstrumentCallbacks requirement
     def get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -256,11 +248,11 @@ class _RecordingContext:
     """
 
     def __init__(
-        self, app: WithInstrumentCallbacks, record_metadata: JSON = None
+        self,
+        app: WithInstrumentCallbacks,
+        record_metadata: serial_utils.JSON = None,
     ):
-        self.calls: Dict[
-            mod_types_schema.CallID, record_schema.RecordAppCall
-        ] = {}
+        self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
 
         Storing as a map as we want to override calls with the same id which may
@@ -333,7 +325,7 @@ class _RecordingContext:
         calls_to_record: Callable[
             [
                 List[record_schema.RecordAppCall],
-                mod_types_schema.Metadata,
+                types_schema.Metadata,
                 Optional[record_schema.Record],
             ],
             record_schema.Record,
@@ -441,10 +433,10 @@ class Instrument:
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([Feedback])
+        CLASSES = set([mod_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
@@ -466,12 +458,14 @@ class Instrument:
                 if not cls.__module__.startswith(mod):
                     continue
 
-                if isinstance(cls, Dummy):
+                if isinstance(cls, import_utils.Dummy):
                     print(
                         f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
                     print(
-                        retab(tab=f"{t * 3}> ", s=str(cls.original_exception))
+                        text_utils.retab(
+                            tab=f"{t * 3}> ", s=str(cls.original_exception)
+                        )
                     )
                     continue
 
@@ -480,7 +474,7 @@ class Instrument:
                 for method, class_filter in self.include_methods.items():
                     if class_filter_matches(
                         f=class_filter, obj=cls
-                    ) and safe_hasattr(cls, method):
+                    ) and python_utils.safe_hasattr(cls, method):
                         f = getattr(cls, method)
                         print(f"{t * 2}Method {method}: {inspect.signature(f)}")
 
@@ -536,7 +530,7 @@ class Instrument:
             set(include_classes)
         )
 
-        self.include_methods = dict_merge_with(
+        self.include_methods = container_utils.dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
             merge=class_filter_disjunction,
@@ -550,7 +544,7 @@ class Instrument:
 
     def tracked_method_wrapper(
         self,
-        query: Lens,
+        query: serial_utils.Lens,
         func: Callable,
         method_name: str,
         cls: type,
@@ -577,10 +571,10 @@ class Instrument:
                 obj=obj,
             )
 
-        if safe_hasattr(func, "__func__"):
+        if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if python_utils.safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
             # Notify the app instrumenting this method where it is located. Note
@@ -604,7 +598,7 @@ class Instrument:
 
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
-        sig = safe_signature(func)
+        sig = python_utils.safe_signature(func)
 
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
@@ -621,7 +615,7 @@ class Instrument:
                 query,
                 func,
                 type(func),
-                is_really_coroutinefunction(func),
+                python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
 
@@ -701,9 +695,9 @@ class Instrument:
                     logger.warning(
                         "App of type %s no longer knows about object %s method %s. "
                         "Something might be going wrong.",
-                        class_name(type(app)),
-                        id_str(args[0]),
-                        callable_name(func),
+                        python_utils.class_name(type(app)),
+                        python_utils.id_str(args[0]),
+                        python_utils.callable_name(func),
                     )
                     continue
 
@@ -734,7 +728,7 @@ class Instrument:
             # Create a unique call_id for this method call. This will be the
             # same across everyone Record or RecordAppCall that refers to this
             # method invocation.
-            call_id = mod_types_schema.new_call_id()
+            call_id = types_schema.new_call_id()
 
             error_str = None
 
@@ -761,7 +755,8 @@ class Instrument:
                 error_str = str(e)
 
                 logger.error(
-                    "Error calling wrapped function %s.", callable_name(func)
+                    "Error calling wrapped function %s.",
+                    python_utils.callable_name(func),
                 )
                 logger.error(traceback.format_exc())
 
@@ -770,7 +765,7 @@ class Instrument:
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: jsonify(v)
+                k: json_utils.jsonify(v)
                 for k, v in (
                     bindings.arguments.items() if bindings is not None else {}
                 )
@@ -809,7 +804,7 @@ class Instrument:
                     ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
-                    rets=jsonify(rets),
+                    rets=json_utils.jsonify(rets),
                     error=error_str if error is not None else None,
                 )
                 # End of run wrapped block.
@@ -862,7 +857,7 @@ class Instrument:
                 call/record when ready."""
 
                 if python_utils.is_lazy(rets):
-                    type_name = class_name(type(rets))
+                    type_name = python_utils.class_name(type(rets))
 
                     logger.debug(
                         "This app produced a lazy response of type `%s`."
@@ -872,7 +867,7 @@ class Instrument:
 
                     # Placeholder:
                     temp_rets = f"""
-    The method {callable_name(func)} produced a lazy response of type
+    The method {python_utils.callable_name(func)} produced a lazy response of type
     `{type_name}`. This record will be updated once the response is available. If
     this message persists, check that you are using the correct version of the app
     method and await and/or iterate over any results it produces.
@@ -925,7 +920,9 @@ class Instrument:
 
         return tru_wrapper
 
-    def instrument_method(self, method_name: str, obj: Any, query: Lens):
+    def instrument_method(
+        self, method_name: str, obj: Any, query: serial_utils.Lens
+    ):
         """Instrument a method."""
 
         cls = type(obj)
@@ -933,15 +930,19 @@ class Instrument:
         logger.debug("%s: instrumenting %s on obj %s", query, method_name, obj)
 
         for base in list(cls.__mro__):
-            logger.debug("\t%s: instrumenting base %s", query, class_name(base))
+            logger.debug(
+                "\t%s: instrumenting base %s",
+                query,
+                python_utils.class_name(base),
+            )
 
-            if safe_hasattr(base, method_name):
+            if python_utils.safe_hasattr(base, method_name):
                 original_fun = getattr(base, method_name)
 
                 logger.debug(
                     "\t\t%s: instrumenting %s.%s",
                     query,
-                    class_name(base),
+                    python_utils.class_name(base),
                     method_name,
                 )
                 setattr(
@@ -969,9 +970,10 @@ class Instrument:
 
         func = cls.__new__
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if python_utils.safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug(
-                "Class %s __new__ is already instrumented.", class_name(cls)
+                "Class %s __new__ is already instrumented.",
+                python_utils.class_name(cls),
             )
             return
 
@@ -979,7 +981,7 @@ class Instrument:
         def wrapped_new(cls, *args, **kwargs):
             logger.debug(
                 "Creating a new instance of instrumented class %s.",
-                class_name(cls),
+                python_utils.class_name(cls),
             )
             # get deepest wrapped method here
             # get its self
@@ -992,7 +994,7 @@ class Instrument:
         cls.__new__ = wrapped_new
 
     def instrument_object(
-        self, obj, query: Lens, done: Optional[Set[int]] = None
+        self, obj, query: serial_utils.Lens, done: Optional[Set[int]] = None
     ):
         """Instrument the given object `obj` and its components."""
 
@@ -1006,8 +1008,8 @@ class Instrument:
         logger.debug(
             "%s: instrumenting object at %s of class %s",
             query,
-            id_str(obj),
-            class_name(cls),
+            python_utils.id_str(obj),
+            python_utils.class_name(cls),
         )
 
         if id(obj) in done:
@@ -1060,7 +1062,7 @@ class Instrument:
                 # continue
 
             for method_name, class_filter in self.include_methods.items():
-                if safe_hasattr(base, method_name):
+                if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
 
@@ -1077,7 +1079,7 @@ class Instrument:
                     # method is looked up from it, it actually comes from some
                     # other, even baser class which might come from builtins
                     # which we want to skip instrumenting.
-                    if safe_hasattr(original_fun, "__self__"):
+                    if python_utils.safe_hasattr(original_fun, "__self__"):
                         if not self.to_instrument_module(
                             original_fun.__self__.__class__.__module__
                         ):
@@ -1125,10 +1127,15 @@ class Instrument:
                 # is meant to be instrumented and if so, we  walk over it manually.
                 # NOTE: some llama_index objects are using dataclasses_json but most do
                 # not so this section applies.
-                attrs = clean_attributes(obj, include_props=True).keys()
+                attrs = pyschema_utils.clean_attributes(
+                    obj, include_props=True
+                ).keys()
 
             if vals is None:
-                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
+                vals = [
+                    python_utils.safe_getattr(obj, k, get_prop=True)
+                    for k in attrs
+                ]
 
             for k, v in zip(attrs, vals):
                 if isinstance(v, (str, bool, int, float)):
@@ -1162,7 +1169,7 @@ class Instrument:
             logger.debug(
                 "%s: Do not know how to instrument object of type %s.",
                 query,
-                class_name(cls),
+                python_utils.class_name(cls),
             )
 
         # Check whether bound methods are instrumented properly.

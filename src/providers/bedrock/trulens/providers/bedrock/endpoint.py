@@ -9,7 +9,7 @@ import pydantic
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,9 @@ class BedrockEndpoint(Endpoint):
 
         # Note here was are instrumenting a method that outputs a function which
         # we also want to instrument:
-        if not safe_hasattr(ClientCreator._create_api_method, INSTRUMENT):
+        if not python_utils.safe_hasattr(
+            ClientCreator._create_api_method, INSTRUMENT
+        ):
             self._instrument_class_wrapper(
                 ClientCreator,
                 wrapper_method_name="_create_api_method",
@@ -189,7 +191,9 @@ class BedrockEndpoint(Endpoint):
         if "client" in kwargs:
             # `self.client` should be already set by super().__init__.
 
-            if not safe_hasattr(self.client.invoke_model, INSTRUMENT):
+            if not python_utils.safe_hasattr(
+                self.client.invoke_model, INSTRUMENT
+            ):
                 # If they user instantiated the client before creating our
                 # endpoint, the above instrumentation will not have attached our
                 # instruments. Do it here instead:

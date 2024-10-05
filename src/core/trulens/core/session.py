@@ -26,32 +26,29 @@ import warnings
 import pandas
 import pydantic
 from trulens.core import experimental as mod_experimental
-from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
-from trulens.core.database.connector import DBConnector
-from trulens.core.database.connector import DefaultDBConnector
+from trulens.core.database import connector as mod_connector
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import app as app_schema
-from trulens.core.schema import dataset as mod_dataset_schema
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import groundtruth as mod_groundtruth_schema
+from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils import python
-from trulens.core.utils import serial
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import threading as tru_threading
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.text import format_seconds
 
 if TYPE_CHECKING:
     from trulens.core import app as base_app
 
 tqdm = None
-with OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
+with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_TQDM):
     from tqdm.auto import tqdm
 
 logger = logging.getLogger(__name__)
@@ -60,7 +57,7 @@ logger = logging.getLogger(__name__)
 class TruSession(
     mod_experimental._WithExperimentalSettings,
     pydantic.BaseModel,
-    python.SingletonPerName,
+    python_utils.SingletonPerName,
 ):
     """TruSession is the main class that provides an entry points to trulens.
 
@@ -156,7 +153,9 @@ class TruSession(
 
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    connector: Optional[DBConnector] = pydantic.Field(None, exclude=True)
+    connector: Optional[mod_connector.DBConnector] = pydantic.Field(
+        None, exclude=True
+    )
     """Database Connector to use. If not provided, a default is created and
     used."""
 
@@ -204,7 +203,7 @@ class TruSession(
 
     def __init__(
         self,
-        connector: Optional[DBConnector] = None,
+        connector: Optional[mod_connector.DBConnector] = None,
         experimental_feature_flags: Optional[
             Union[
                 Mapping[mod_experimental.Feature, bool],
@@ -216,7 +215,7 @@ class TruSession(
         ] = None,  # Any = otel_export_sdk.SpanExporter
         **kwargs,
     ):
-        if python.safe_hasattr(self, "connector"):
+        if python_utils.safe_hasattr(self, "connector"):
             # Already initialized by SingletonByName mechanism. Give warning if
             # any option was specified (not None) as it will be ignored.
             if connector is not None:
@@ -228,7 +227,10 @@ class TruSession(
         connector_args = {
             k: v
             for k, v in kwargs.items()
-            if k in inspect.signature(DefaultDBConnector.__init__).parameters
+            if k
+            in inspect.signature(
+                mod_connector.DefaultDBConnector.__init__
+            ).parameters
         }
         self_args = {k: v for k, v in kwargs.items() if k not in connector_args}
 
@@ -241,7 +243,8 @@ class TruSession(
             )
 
         super().__init__(
-            connector=connector or DefaultDBConnector(**connector_args),
+            connector=connector
+            or mod_connector.DefaultDBConnector(**connector_args),
             **self_args,
         )
 
@@ -507,7 +510,7 @@ class TruSession(
 
     def add_record(
         self, record: Optional[record_schema.Record] = None, **kwargs: dict
-    ) -> mod_types_schema.RecordID:
+    ) -> types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -532,7 +535,7 @@ class TruSession(
     def run_feedback_functions(
         self,
         record: record_schema.Record,
-        feedback_functions: Sequence[feedback.Feedback],
+        feedback_functions: Sequence[mod_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
@@ -571,7 +574,8 @@ class TruSession(
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, feedback.Feedback) for ffunc in feedback_functions
+            isinstance(ffunc, mod_feedback.Feedback)
+            for ffunc in feedback_functions
         ):
             raise ValueError(
                 "`feedback_functions` must be a sequence of `trulens.core.Feedback` instances."
@@ -586,7 +590,7 @@ class TruSession(
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[feedback_schema.FeedbackResult], feedback.Feedback
+            Future[feedback_schema.FeedbackResult], mod_feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in app_schema.AppDefinition._submit_feedback_functions(
@@ -616,7 +620,7 @@ class TruSession(
                 # yield (feedback, fut_result)
                 yield fut_result
 
-    def add_app(self, app: app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -629,7 +633,7 @@ class TruSession(
         """
         return self.connector.add_app(app=app)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -647,7 +651,7 @@ class TruSession(
             ]
         ] = None,
         **kwargs: dict,
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
@@ -679,7 +683,7 @@ class TruSession(
                 Future[feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -693,8 +697,8 @@ class TruSession(
         return self.connector.add_feedbacks(feedback_results=feedback_results)
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> Optional[serial.JSONized[app_schema.AppDefinition]]:
+        self, app_id: types_schema.AppID
+    ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -719,7 +723,7 @@ class TruSession(
 
         return self.connector.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -733,7 +737,7 @@ class TruSession(
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -758,7 +762,7 @@ class TruSession(
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
@@ -802,7 +806,7 @@ class TruSession(
         """
 
         # Create and insert the dataset record
-        dataset = mod_dataset_schema.Dataset(
+        dataset = dataset_schema.Dataset(
             name=dataset_name,
             meta=dataset_metadata,
         )
@@ -811,7 +815,7 @@ class TruSession(
         buffer = []
 
         for _, row in ground_truth_df.iterrows():
-            ground_truth = mod_groundtruth_schema.GroundTruth(
+            ground_truth = groundtruth_schema.GroundTruth(
                 dataset_id=dataset_id,
                 query=row["query"],
                 query_id=row.get("query_id", None),
@@ -903,11 +907,11 @@ class TruSession(
             )
             print(
                 f"Will rerun running feedbacks after "
-                f"{format_seconds(self.RETRY_RUNNING_SECONDS)}."
+                f"{text_utils.format_seconds(self.RETRY_RUNNING_SECONDS)}."
             )
             print(
                 f"Will rerun failed feedbacks after "
-                f"{format_seconds(self.RETRY_FAILED_SECONDS)}."
+                f"{text_utils.format_seconds(self.RETRY_FAILED_SECONDS)}."
             )
 
             total = 0
@@ -968,7 +972,7 @@ class TruSession(
                             pandas.Series,
                             Future[feedback_schema.FeedbackResult],
                         ]
-                    ] = feedback.Feedback.evaluate_deferred(
+                    ] = mod_feedback.Feedback.evaluate_deferred(
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
                         session=self,

@@ -8,26 +8,25 @@ various llama_index classes and example classes:
 
 from typing import Type
 
-from trulens.core import app
-from trulens.core.app import ComponentView
+from trulens.core import app as mod_app
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils.serial import JSON
+from trulens.core.utils import serial as serial_utils
 
 
-class LlamaIndexComponent(ComponentView):
+class LlamaIndexComponent(mod_app.ComponentView):
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        if ComponentView.innermost_base(cls_obj.bases) == "llama_index":
+        if mod_app.ComponentView.innermost_base(cls_obj.bases) == "llama_index":
             return True
 
         return False
 
     @staticmethod
-    def of_json(json: JSON) -> "LlamaIndexComponent":
+    def of_json(json: serial_utils.JSON) -> "LlamaIndexComponent":
         return component_of_json(json)
 
 
-class Prompt(app.Prompt, LlamaIndexComponent):
+class Prompt(mod_app.Prompt, LlamaIndexComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -42,7 +41,7 @@ class Prompt(app.Prompt, LlamaIndexComponent):
         )
 
 
-class Agent(app.Agent, LlamaIndexComponent):
+class Agent(mod_app.Agent, LlamaIndexComponent):
     @property
     def agent_name(self) -> str:
         return "agent name not supported in llama_index"
@@ -57,7 +56,7 @@ class Agent(app.Agent, LlamaIndexComponent):
         )
 
 
-class Tool(app.Tool, LlamaIndexComponent):
+class Tool(mod_app.Tool, LlamaIndexComponent):
     @property
     def tool_name(self) -> str:
         if "metadata" in self.json:
@@ -75,7 +74,7 @@ class Tool(app.Tool, LlamaIndexComponent):
         )
 
 
-class LLM(app.LLM, LlamaIndexComponent):
+class LLM(mod_app.LLM, LlamaIndexComponent):
     @property
     def model_name(self) -> str:
         return self.json["model"]
@@ -90,7 +89,7 @@ class LLM(app.LLM, LlamaIndexComponent):
         )
 
 
-class Other(app.Other, LlamaIndexComponent):
+class Other(mod_app.Other, LlamaIndexComponent):
     pass
 
 
@@ -108,7 +107,7 @@ def constructor_of_class(
     raise TypeError(f"Unknown llama_index component type with class {cls_obj}")
 
 
-def component_of_json(json: JSON) -> LlamaIndexComponent:
+def component_of_json(json: serial_utils.JSON) -> LlamaIndexComponent:
     cls = pyschema_utils.Class.of_class_info(json)
 
     view = constructor_of_class(cls)

@@ -31,23 +31,22 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
-import trulens.core.feedback.endpoint as mod_base_endpoint
-from trulens.core.schema import Select
+from trulens.core.feedback import endpoint as mod_base_endpoint
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import select as select_schema
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as mod_json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as mod_python_utils
 from trulens.core.utils import serial as mod_serial_utils
 from trulens.core.utils import text as mod_text_utils
 from trulens.core.utils import threading as mod_threading_utils
 
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
-
 if TYPE_CHECKING:
-    from trulens.core import TruSession
+    from trulens.core import session as mod_session
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -274,11 +273,11 @@ class Feedback(feedback_schema.FeedbackDefinition):
         return ret
 
     def _print_guessed_selector(self, par_name, par_path):
-        if par_path == Select.RecordCalls:
+        if par_path == select_schema.Select.RecordCalls:
             alias_info = " or `Select.RecordCalls`"
-        elif par_path == Select.RecordInput:
+        elif par_path == select_schema.Select.RecordInput:
             alias_info = " or `Select.RecordInput`"
-        elif par_path == Select.RecordOutput:
+        elif par_path == select_schema.Select.RecordOutput:
             alias_info = " or `Select.RecordOutput`"
         else:
             alias_info = ""
@@ -304,8 +303,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         if len(par_names) == 1:
             # A single argument remaining. Assume it is record output.
-            selectors = {par_names[0]: Select.RecordOutput}
-            self._print_guessed_selector(par_names[0], Select.RecordOutput)
+            selectors = {par_names[0]: select_schema.Select.RecordOutput}
+            self._print_guessed_selector(
+                par_names[0], select_schema.Select.RecordOutput
+            )
 
             # TODO: replace with on_output ?
 
@@ -313,11 +314,15 @@ class Feedback(feedback_schema.FeedbackDefinition):
             # Two arguments remaining. Assume they are record input and output
             # respectively.
             selectors = {
-                par_names[0]: Select.RecordInput,
-                par_names[1]: Select.RecordOutput,
+                par_names[0]: select_schema.Select.RecordInput,
+                par_names[1]: select_schema.Select.RecordOutput,
             }
-            self._print_guessed_selector(par_names[0], Select.RecordInput)
-            self._print_guessed_selector(par_names[1], Select.RecordOutput)
+            self._print_guessed_selector(
+                par_names[0], select_schema.Select.RecordInput
+            )
+            self._print_guessed_selector(
+                par_names[1], select_schema.Select.RecordOutput
+            )
 
             # TODO: replace on_input_output ?
         else:
@@ -332,7 +337,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        session: TruSession,
+        session: mod_session.TruSession,
         limit: Optional[int] = None,
         shuffle: bool = False,
         run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
@@ -522,9 +527,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Select.RecordInput)
+            self._print_guessed_selector(arg, select_schema.Select.RecordInput)
 
-        new_selectors[arg] = Select.RecordInput
+        new_selectors[arg] = select_schema.Select.RecordInput
 
         ret = self.model_copy()
 
@@ -545,9 +550,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         if arg is None:
             arg = self._next_unselected_arg_name()
-            self._print_guessed_selector(arg, Select.RecordOutput)
+            self._print_guessed_selector(arg, select_schema.Select.RecordOutput)
 
-        new_selectors[arg] = Select.RecordOutput
+        new_selectors[arg] = select_schema.Select.RecordOutput
 
         ret = self.model_copy()
 
@@ -669,7 +674,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         check_good: bool = True
 
         for k, q in self.selectors.items():
-            if Select.RecordSpans.is_prefix_of(q):
+            if select_schema.Select.RecordSpans.is_prefix_of(q):
                 # Skip checking for RecordSpans as they are not known ahead of
                 # producing a record.
                 continue
@@ -686,7 +691,7 @@ record:
 ```python
 {q}
 # or equivalently
-{Select.render_for_dashboard(q)}
+{select_schema.Select.render_for_dashboard(q)}
 ```
 
 The data used to make this check may be incomplete. If you expect records
@@ -1031,9 +1036,9 @@ Feedback function signature:
     def run_and_log(
         self,
         record: record_schema.Record,
-        session: TruSession,
+        session: mod_session.TruSession,
         app: Union[app_schema.AppDefinition, mod_serial_utils.JSON] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
     ) -> Optional[feedback_schema.FeedbackResult]:
         record_id = record.record_id
 

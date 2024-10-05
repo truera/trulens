@@ -3,8 +3,8 @@ from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
 from trulens.core.feedback import Endpoint
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.pace import Pace
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import pace as pace_utils
 from trulens.feedback import LLMProvider
 from trulens.providers.openai.endpoint import OpenAIClient
 from trulens.providers.openai.endpoint import OpenAIEndpoint
@@ -47,7 +47,7 @@ class OpenAI(LLMProvider):
         self,
         *args,
         endpoint=None,
-        pace: Optional[Pace] = None,
+        pace: Optional[pace_utils.Pace] = None,
         rpm: Optional[int] = None,
         model_engine: Optional[str] = None,
         **kwargs: dict,
@@ -406,8 +406,8 @@ class AzureOpenAI(OpenAI):
         # that client and instead is an argument to each chat request. We pass
         # that through the super class's `_create_chat_completion`.
         client_kwargs = dict(kwargs)
-        if CLASS_INFO in client_kwargs:
-            del client_kwargs[CLASS_INFO]
+        if constant_utils.CLASS_INFO in client_kwargs:
+            del client_kwargs[constant_utils.CLASS_INFO]
 
         if "model_engine" in client_kwargs:
             # delete from client args

@@ -195,13 +195,12 @@ from typing import Any, Callable, ClassVar, Optional, Set
 
 import pydantic
 from pydantic import Field
-from trulens.core.app import App
-from trulens.core.instruments import Instrument
-from trulens.core.instruments import instrument as base_instrument
+from trulens.core import app as mod_app
+from trulens.core.instruments import instrument as mod_instrument
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import UNICODE_CHECK
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +212,7 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(App):
+class TruCustomApp(mod_app.App):
     """
     This recorder is the most flexible option for instrumenting an application,
     and can be used to instrument any custom python class.
@@ -354,7 +353,7 @@ class TruCustomApp(App):
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        instrument = Instrument(
+        instrument = mod_instrument.Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
         )
         kwargs["instrument"] = instrument
@@ -382,7 +381,9 @@ class TruCustomApp(App):
                     main_method_loaded
                 )
 
-                if not safe_hasattr(main_method_loaded, "__self__"):
+                if not python_utils.safe_hasattr(
+                    main_method_loaded, "__self__"
+                ):
                     raise ValueError(
                         "Please specify `main_method` as a bound method (like `some_app.some_method` instead of `SomeClass.some_method`)."
                     )
@@ -434,7 +435,7 @@ class TruCustomApp(App):
         for m, path in methods_to_instrument.items():
             method_name = m.__name__
 
-            full_path = Lens().app + path
+            full_path = serial_utils.Lens().app + path
 
             self.instrument.instrument_method(
                 method_name=method_name, obj=m.__self__, query=full_path
@@ -448,7 +449,7 @@ class TruCustomApp(App):
                 next(full_path(json))
 
                 print(
-                    f"{UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
+                    f"{text_utils.UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
                 )
 
             except Exception:
@@ -510,7 +511,7 @@ class TruCustomApp(App):
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
 
 
-class instrument(base_instrument):
+class instrument(mod_instrument.instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.
@@ -518,7 +519,7 @@ class instrument(base_instrument):
 
     @classmethod
     def method(cls, inst_cls: type, name: str) -> None:
-        base_instrument.method(inst_cls, name)
+        mod_instrument.method(inst_cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.

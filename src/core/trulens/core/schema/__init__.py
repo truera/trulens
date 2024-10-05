@@ -17,16 +17,21 @@ serialized into json. Most are extended with non-serialized fields in other file
 actual wrapped app. We can thus inspect the contents of a wrapped app without
 having to construct it. Additionally, JSONized objects like `AppDefinition.app`
 feature information about the encoded object types in the dictionary under the
-`util.py:CLASS_INFO` key.
+`core/utils/constantx.py:CLASS_INFO` key.
 
 """
 
-from trulens.core.schema.app import AppDefinition
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.record import Record
-from trulens.core.schema.select import Select
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import select as select_schema
+
+AppDefinition = app_schema.AppDefinition
+Select = select_schema.Select
+FeedbackDefinition = feedback_schema.FeedbackDefinition
+FeedbackResult = feedback_schema.FeedbackResult
+FeedbackMode = feedback_schema.FeedbackMode
+Record = record_schema.Record
 
 __all__ = [
     "AppDefinition",

@@ -1,5 +1,5 @@
-from trulens.core import TruSession
-from trulens.core.schema.feedback import FeedbackRunLocation
+from trulens.core import session as mod_session
+from trulens.core.schema import feedback as feedback_schema
 import trulens.providers.cortex.provider
 
 from snowflake.snowpark import Session
@@ -27,13 +27,13 @@ def run(snowpark_session: Session):
         warehouse=snowpark_session.get_current_warehouse(),
         role=snowpark_session.get_current_role(),
     )
-    tru_session = TruSession(
+    tru_session = mod_session.TruSession(
         database_url=db_url,
         database_check_revision=False,  # TODO: check revision in the future?
         database_args=database_args,
     )
     tru_session.start_evaluator(
-        run_location=FeedbackRunLocation.SNOWFLAKE,
+        run_location=feedback_schema.FeedbackRunLocation.SNOWFLAKE,
         return_when_done=True,
         disable_tqdm=True,
     )

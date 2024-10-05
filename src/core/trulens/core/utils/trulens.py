@@ -6,8 +6,7 @@ Currently organizes all such components as "Other".
 from typing import Type
 
 from trulens.core import app
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
+from trulens.core.utils import pyschema as pyschema_utils
 
 
 class Other(app.Other, app.TrulensComponent):

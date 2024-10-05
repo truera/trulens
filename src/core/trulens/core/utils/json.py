@@ -26,23 +26,12 @@ import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic.v1.json import ENCODERS_BY_TYPE
 from pydantic.v1.json import pydantic_encoder
+from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils.constants import ALL_SPECIAL_KEYS
-from trulens.core.utils.constants import CIRCLE
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.keys import redact_value
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import JSON_BASES
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.serial import SerialBytes
-from trulens.core.utils.serial import SerialModel
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
-from core.trulens.core.utils.pyschema_utils import WithClassInfo
-from core.trulens.core.utils.pyschema_utils import clean_attributes
-from core.trulens.core.utils.pyschema_utils import noserio
-from core.trulens.core.utils.pyschema_utils import safe_getattr
+from trulens.core.utils import keys as key_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 
 if TYPE_CHECKING:
     from trulens.core.instruments import Instrument
@@ -137,7 +126,7 @@ def json_default(obj: Any) -> str:
 
     except Exception:
         # Otherwise give up and indicate a non-serialization.
-        return noserio(obj)
+        return pyschema_utils.noserio(obj)
 
 
 def jsonify_for_ui(*args, **kwargs):
@@ -151,14 +140,14 @@ def jsonify_for_ui(*args, **kwargs):
 
 def jsonify(
     obj: Any,
-    dicted: Optional[Dict[int, JSON]] = None,
+    dicted: Optional[Dict[int, serial_utils.JSON]] = None,
     instrument: Optional[Instrument] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
     depth: int = 0,
     max_depth: int = 256,
-) -> JSON:
+) -> serial_utils.JSON:
     """Convert the given object into types that can be serialized in json.
 
         Args:
@@ -226,13 +215,13 @@ def jsonify(
             "Max depth reached for jsonify of object type '%s'.", type(obj)
         )  # careful about str(obj) in case it is recursive infinitely.
 
-        return noserio(obj)
+        return pyschema_utils.noserio(obj)
 
     skip_excluded = not include_excluded
     # Hack so that our models do not get exclude dumped which causes many
     # problems. Another variable set here so we can recurse with the original
     # include_excluded .
-    if isinstance(obj, SerialModel):
+    if isinstance(obj, serial_utils.SerialModel):
         skip_excluded = True
 
     from trulens.core.instruments import Instrument
@@ -245,27 +234,30 @@ def jsonify(
     if skip_specials:
 
         def recur_key(k):
-            return isinstance(k, JSON_BASES) and k not in ALL_SPECIAL_KEYS
+            return (
+                isinstance(k, serial_utils.JSON_BASES)
+                and k not in constant_utils.ALL_SPECIAL_KEYS
+            )
 
     else:
 
         def recur_key(k):
-            return isinstance(k, JSON_BASES)
+            return isinstance(k, serial_utils.JSON_BASES)
 
     if id(obj) in dicted:
         if skip_specials:
             return None
 
-        return {CIRCLE: id(obj)}
+        return {constant_utils.CIRCLE: id(obj)}
 
-    if isinstance(obj, JSON_BASES):
+    if isinstance(obj, serial_utils.JSON_BASES):
         if redact_keys and isinstance(obj, str):
-            return redact_value(obj)
+            return key_utils.redact_value(obj)
 
         return obj
 
     # TODO: remove eventually
-    if isinstance(obj, SerialBytes):
+    if isinstance(obj, serial_utils.SerialBytes):
         return obj.model_dump()
 
     if isinstance(obj, Path):
@@ -304,7 +296,7 @@ def jsonify(
         # Redact possible secrets based on key name and value.
         if redact_keys:
             for k, v in forward_value.items():
-                forward_value[k] = redact_value(v=v, k=k)
+                forward_value[k] = key_utils.redact_value(v=v, k=k)
 
         content = forward_value
 
@@ -324,7 +316,7 @@ def jsonify(
 
         content = forward_value
 
-    elif isinstance(obj, Lens):  # special handling of paths
+    elif isinstance(obj, serial_utils.Lens):  # special handling of paths
         return obj.model_dump()
 
     elif isinstance(obj, pydantic.BaseModel):
@@ -333,19 +325,19 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
         forward_value.update({
-            k: recur(safe_getattr(obj, k))
+            k: recur(python_utils.safe_getattr(obj, k))
             for k, v in obj.model_fields.items()
             if (not skip_excluded or not v.exclude) and recur_key(k)
         })
 
         for k, _ in obj.model_computed_fields.items():
             if recur_key(k):
-                forward_value[k] = recur(safe_getattr(obj, k))
+                forward_value[k] = recur(python_utils.safe_getattr(obj, k))
 
         # Redact possible secrets based on key name and value.
         if redact_keys:
             for k, v in forward_value.items():
-                forward_value[k] = redact_value(v=v, k=k)
+                forward_value[k] = key_utils.redact_value(v=v, k=k)
 
         content = forward_value
 
@@ -357,7 +349,7 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
         forward_value.update({
-            k: recur(safe_getattr(obj, k))
+            k: recur(python_utils.safe_getattr(obj, k))
             for k, v in obj.__fields__.items()
             if (not skip_excluded or not v.field_info.exclude) and recur_key(k)
         })
@@ -365,7 +357,7 @@ def jsonify(
         # Redact possible secrets based on key name and value.
         if redact_keys:
             for k, v in forward_value.items():
-                forward_value[k] = redact_value(v=v, k=k)
+                forward_value[k] = key_utils.redact_value(v=v, k=k)
 
         content = forward_value
 
@@ -377,7 +369,7 @@ def jsonify(
         new_dicted[id(obj)] = forward_value
 
         forward_value.update({
-            f.name: recur(safe_getattr(obj, f.name))
+            f.name: recur(python_utils.safe_getattr(obj, f.name))
             for f in dataclasses.fields(obj)
             if recur_key(f.name)
         })
@@ -385,7 +377,7 @@ def jsonify(
         # Redact possible secrets based on key name and value.
         if redact_keys:
             for k, v in forward_value.items():
-                forward_value[k] = redact_value(v=v, k=k)
+                forward_value[k] = key_utils.redact_value(v=v, k=k)
 
         content = forward_value
 
@@ -393,7 +385,7 @@ def jsonify(
         forward_value = {}
         new_dicted[id(obj)] = forward_value
 
-        kvs = clean_attributes(obj, include_props=True)
+        kvs = pyschema_utils.clean_attributes(obj, include_props=True)
 
         # TODO(piotrm): object walks redo
         forward_value.update({
@@ -401,7 +393,7 @@ def jsonify(
             for k, v in kvs.items()
             if recur_key(k)
             and (
-                isinstance(v, JSON_BASES)
+                isinstance(v, serial_utils.JSON_BASES)
                 or isinstance(v, Dict)
                 or isinstance(v, Sequence)
                 or instrument.to_instrument_object(v)
@@ -415,7 +407,7 @@ def jsonify(
             "Do not know how to jsonify an object of type '%s'.", type(obj)
         )  # careful about str(obj) in case it is recursive infinitely.
 
-        content = noserio(obj)
+        content = pyschema_utils.noserio(obj)
 
     # Add class information for objects that are to be instrumented, known as
     # "components".
@@ -425,14 +417,16 @@ def jsonify(
         and not isinstance(obj, dict)
         and (
             instrument.to_instrument_object(obj)
-            or isinstance(obj, WithClassInfo)
+            or isinstance(obj, pyschema_utils.WithClassInfo)
         )
     ):
-        content[CLASS_INFO] = pyschema_utils.Class.of_class(
+        content[constant_utils.CLASS_INFO] = pyschema_utils.Class.of_class(
             cls=obj.__class__, with_bases=True
         ).model_dump()
 
-    if not isinstance(obj, Lens) and safe_hasattr(obj, "jsonify_extra"):
+    if not isinstance(obj, serial_utils.Lens) and python_utils.safe_hasattr(
+        obj, "jsonify_extra"
+    ):
         # Problem with Lens and similar objects: they always say they have every attribute.
         content = obj.jsonify_extra(content)
 

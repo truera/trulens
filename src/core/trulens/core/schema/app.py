@@ -19,23 +19,22 @@ import warnings
 
 import dill
 import pydantic
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.text import format_quantity
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 from trulens.core.utils.threading import TP
-
-from core.trulens.core.utils import pyschema_utils
 
 if TYPE_CHECKING:
     from trulens.core._utils.pycompat import Future
     from trulens.core.database.connector import DBConnector
-    from trulens.core.feedback import Feedback
-    from trulens.core.schema.record import Record
+    from trulens.core.feedback import feedback as mod_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -53,11 +52,11 @@ class RecordIngestMode(str, Enum):
     """Records are buffered and ingested in batches to the database."""
 
 
-class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
+class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     """Serialized fields of an app here whereas [App][trulens.core.app.App]
     contains non-serialized fields."""
 
-    app_id: mod_types_schema.AppID = pydantic.Field(frozen=True)  # str
+    app_id: types_schema.AppID = pydantic.Field(frozen=True)  # str
     """Unique identifier for this app.
 
     Computed deterministically from app_name and app_version. Leaving it here
@@ -65,21 +64,21 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
     not be changed after creation.
     """
 
-    app_name: mod_types_schema.AppName  # str
+    app_name: types_schema.AppName  # str
     """Name for this app. Default is "default_app"."""
 
-    app_version: mod_types_schema.AppVersion  # str
+    app_version: types_schema.AppVersion  # str
     """Version tag for this app. Default is "base"."""
 
-    tags: mod_types_schema.Tags  # str
+    tags: types_schema.Tags  # str
     """Tags for the app."""
 
     metadata: (
-        mod_types_schema.Metadata
+        types_schema.Metadata
     )  # dict  # TODO: rename to meta for consistency with other metas
     """Metadata for the app."""
 
-    feedback_definitions: Sequence[mod_types_schema.FeedbackDefinitionID] = []
+    feedback_definitions: Sequence[types_schema.FeedbackDefinitionID] = []
     """Feedback functions to evaluate on each record."""
 
     feedback_mode: feedback_schema.FeedbackMode = (
@@ -105,10 +104,10 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
     This is to be filled in by subclass.
     """
 
-    app: serial.JSONized[AppDefinition]
+    app: serial_utils.JSONized[AppDefinition]
     """Wrapped app in jsonized form."""
 
-    initial_app_loader_dump: Optional[serial.SerialBytes] = None
+    initial_app_loader_dump: Optional[serial_utils.SerialBytes] = None
     """Serialization of a function that loads an app.
 
     Dump is of the initial app state before any invocations. This can be used to
@@ -118,7 +117,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
         Experimental work in progress.
     """
 
-    app_extra_json: serial.JSON
+    app_extra_json: serial_utils.JSON
     """Info to store about the app and to display in dashboard.
 
     This can be used even if app itself cannot be serialized. `app_extra_json`,
@@ -128,14 +127,14 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
     def __init__(
         self,
-        app_id: Optional[mod_types_schema.AppName] = None,
-        app_name: Optional[mod_types_schema.AppName] = None,
-        app_version: Optional[mod_types_schema.AppVersion] = None,
-        tags: Optional[mod_types_schema.Tags] = None,
-        metadata: Optional[mod_types_schema.Metadata] = None,
+        app_id: Optional[types_schema.AppName] = None,
+        app_name: Optional[types_schema.AppName] = None,
+        app_version: Optional[types_schema.AppVersion] = None,
+        tags: Optional[types_schema.Tags] = None,
+        metadata: Optional[types_schema.Metadata] = None,
         feedback_mode: feedback_schema.FeedbackMode = feedback_schema.FeedbackMode.WITH_APP_THREAD,
         record_ingest_mode: RecordIngestMode = RecordIngestMode.IMMEDIATE,
-        app_extra_json: serial.JSON = None,
+        app_extra_json: serial_utils.JSON = None,
         **kwargs,
     ):
         kwargs["app_name"] = str(app_name or app_id or "default_app")
@@ -177,11 +176,13 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
                 if len(dump) > base_schema.MAX_DILL_SIZE:
                     logger.warning(
-                        f"`initial_app_loader` dump is too big ({format_quantity(len(dump))}) > {format_quantity(base_schema.MAX_DILL_SIZE)} bytes). "
+                        f"`initial_app_loader` dump is too big ({text_utils.format_quantity(len(dump))}) > {text_utils.format_quantity(base_schema.MAX_DILL_SIZE)} bytes). "
                         "If you are loading large objects, include the loading logic inside `initial_app_loader`.",
                     )
                 else:
-                    self.initial_app_loader_dump = serial.SerialBytes(data=dump)
+                    self.initial_app_loader_dump = serial_utils.SerialBytes(
+                        data=dump
+                    )
 
                     # This is an older serialization approach that saved things
                     # in local files instead of the DB. Leaving here for now as
@@ -191,7 +192,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
                     # path_dill = Path.cwd() / f"{app_id}.dill"
 
                     # with path_json.open("w") as fh:
-                    #     fh.write(json_str_of_obj(self))
+                    #     fh.write(json_utils.json_str_of_obj(self))
 
                     # with path_dill.open("wb") as fh:
                     #     fh.write(dump)
@@ -207,7 +208,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def continue_session(
-        app_definition_json: serial.JSON, app: Any
+        app_definition_json: serial_utils.JSON, app: Any
     ) -> AppDefinition:
         # initial_app_loader: Optional[Callable] = None) -> 'AppDefinition':
         """Instantiate the given `app` with the given state
@@ -234,13 +235,13 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def _compute_app_id(app_name, app_version):
-        return obj_id_of_obj(
+        return json_utils.obj_id_of_obj(
             obj={"app_name": app_name, "app_version": app_version}, prefix="app"
         )
 
     @staticmethod
     def new_session(
-        app_definition_json: serial.JSON,
+        app_definition_json: serial_utils.JSON,
         initial_app_loader: Optional[Callable] = None,
     ) -> AppDefinition:
         """Create an app instance at the start of a session.
@@ -253,7 +254,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
         blank memory).
         """
 
-        serial_bytes_json: Optional[serial.JSON] = app_definition_json[
+        serial_bytes_json: Optional[serial_utils.JSON] = app_definition_json[
             "initial_app_loader_dump"
         ]
 
@@ -262,14 +263,16 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
                 serial_bytes_json is not None
             ), "Cannot create new session without `initial_app_loader`."
 
-            serial_bytes = serial.SerialBytes.model_validate(serial_bytes_json)
+            serial_bytes = serial_utils.SerialBytes.model_validate(
+                serial_bytes_json
+            )
 
             app = dill.loads(serial_bytes.data)()
 
         else:
             app = initial_app_loader()
             data = dill.dumps(initial_app_loader, recurse=True)
-            serial_bytes = serial.SerialBytes(data=data)
+            serial_bytes = serial_utils.SerialBytes(data=data)
             serial_bytes_json = serial_bytes.model_dump()
 
         app_definition_json["app"] = app
@@ -289,8 +292,8 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
     @staticmethod
     def _submit_feedback_functions(
-        record: Record,
-        feedback_functions: Sequence[Feedback],
+        record: record_schema.Record,
+        feedback_functions: Sequence[mod_feedback.Feedback],
         connector: DBConnector,
         app: Optional[AppDefinition] = None,
         on_done: Optional[
@@ -304,7 +307,9 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
                 None,
             ]
         ] = None,
-    ) -> List[Tuple[Feedback, Future[feedback_schema.FeedbackResult]]]:
+    ) -> List[
+        Tuple[mod_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
+    ]:
         """Schedules to run the given feedback functions.
 
         Args:
@@ -321,7 +326,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
         Returns:
 
-            List[Tuple[feedback.Feedback, Future[schema.FeedbackResult]]]
+            List[Tuple[Feedback, Future[FeedbackResult]]]
 
             Produces a list of tuples where the first item in each tuple is the
             feedback function and the second is the future of the feedback result.
@@ -356,9 +361,9 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
             # Run feedback function and the on_done callback. This makes sure
             # that Future.result() returns only after on_done has finished.
             def run_and_call_callback(
-                ffunc: Feedback,
+                ffunc: mod_feedback.Feedback,
                 app: AppDefinition,
-                record: Record,
+                record: record_schema.Record,
             ):
                 temp = ffunc.run(app=app, record=record)
                 if on_done is not None:
@@ -395,7 +400,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
 
         rets = []
 
-        from trulens.core import TruSession
+        from trulens.core.session import TruSession
 
         session = TruSession()
 
@@ -414,18 +419,18 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial.SerialModel):
         from trulens.core.app import App
 
         if isinstance(self, App):
-            return jsonify(self, instrument=self.instrument)
+            return json_utils.jsonify(self, instrument=self.instrument)
         else:
-            return jsonify(self)
+            return json_utils.jsonify(self)
 
     @classmethod
-    def select_inputs(cls) -> serial.Lens:
+    def select_inputs(cls) -> serial_utils.Lens:
         """Get the path to the main app's call inputs."""
 
         return select_schema.Select.RecordCall.args
 
     @classmethod
-    def select_outputs(cls) -> serial.Lens:
+    def select_outputs(cls) -> serial_utils.Lens:
         """Get the path to the main app's call outputs."""
 
         return select_schema.Select.RecordCall.rets

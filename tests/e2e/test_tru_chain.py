@@ -8,11 +8,11 @@ from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
 from trulens.apps.langchain import TruChain
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 from trulens.core.schema import base as base_schema
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.record import Record
-from trulens.core.utils.keys import check_keys
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.utils import keys as key_utils
 
 from tests.test import TruTestCase
 from tests.test import async_test
@@ -36,10 +36,10 @@ class TestTruChain(TruTestCase):
     @classmethod
     def setUpClass(cls):
         # Cannot reset on each test as they might be done in parallel.
-        TruSession().reset_database()
+        mod_session.TruSession().reset_database()
 
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
         )
@@ -59,7 +59,9 @@ class TestTruChain(TruTestCase):
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
         tc = TruChain(
-            chain, app_name=app_name, feedback_mode=FeedbackMode.WITH_APP
+            chain,
+            app_name=app_name,
+            feedback_mode=feedback_schema.FeedbackMode.WITH_APP,
         )
 
         return chain, tc
@@ -198,7 +200,7 @@ class TestTruChain(TruTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        session = TruSession()
+        session = mod_session.TruSession()
         chain, recorder = self._create_basic_chain(app_name="metaplain")
 
         message, _ = self._get_question_and_answers(0)
@@ -218,7 +220,9 @@ class TestTruChain(TruTestCase):
         ):
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = Record.model_validate_json(recs.iloc[-1].record_json)
+            rec = record_schema.Record.model_validate_json(
+                recs.iloc[-1].record_json
+            )
             self.assertEqual(rec.meta, meta)
 
         with self.subTest("Check updating the record metadata in the db."):
@@ -227,7 +231,7 @@ class TestTruChain(TruTestCase):
             session.update_record(rec)
             recs, _ = session.get_records_and_feedback([recorder.app_id])
             self.assertGreater(len(recs), 0)
-            rec = Record.model_validate_json(
+            rec = record_schema.Record.model_validate_json(
                 recs[recs.record_id == rec.record_id].record_json[0]
             )
             self.assertNotEqual(rec.meta, meta)
@@ -244,7 +248,7 @@ class TestTruChain(TruTestCase):
                 self.assertEqual(rec.meta, None)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = Record.model_validate_json(
+                rec = record_schema.Record.model_validate_json(
                     recs[recs.record_id == rec.record_id].record_json[0]
                 )
                 self.assertEqual(rec.meta, None)
@@ -254,7 +258,7 @@ class TestTruChain(TruTestCase):
                 session.update_record(rec)
                 recs, _ = session.get_records_and_feedback([recorder.app_id])
                 self.assertGreater(len(recs), 1)
-                rec = Record.model_validate_json(
+                rec = record_schema.Record.model_validate_json(
                     recs[recs.record_id == rec.record_id].record_json[0]
                 )
                 self.assertEqual(rec.meta, new_meta)
@@ -278,19 +282,23 @@ class TestTruChain(TruTestCase):
         self.assertEqual(record.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = TruSession().get_records_and_feedback([recorder.app_id])
+        recs, _ = mod_session.TruSession().get_records_and_feedback([
+            recorder.app_id
+        ])
         self.assertGreater(len(recs), 0)
-        rec = Record.model_validate_json(recs.iloc[0].record_json)
+        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
         self.assertEqual(rec.meta, meta)
 
         # Check updating the record metadata in the db.
         new_meta = dict(hello="this is new meta")
         rec.meta = new_meta
-        TruSession().update_record(rec)
+        mod_session.TruSession().update_record(rec)
 
-        recs, _ = TruSession().get_records_and_feedback([recorder.app_id])
+        recs, _ = mod_session.TruSession().get_records_and_feedback([
+            recorder.app_id
+        ])
         self.assertGreater(len(recs), 0)
-        rec = Record.model_validate_json(recs.iloc[0].record_json)
+        rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
 

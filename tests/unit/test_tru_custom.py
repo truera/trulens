@@ -6,7 +6,7 @@ from unittest import main
 import weakref
 
 from trulens.apps.custom import TruCustomApp
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import TruTestCase
@@ -15,7 +15,7 @@ from tests.test import TruTestCase
 class TestTruCustomApp(TruTestCase):
     @staticmethod
     def setUpClass():
-        TruSession().reset_database()
+        mod_session.TruSession().reset_database()
 
     def _create_app(self):
         app = DummyApp()
@@ -24,7 +24,7 @@ class TestTruCustomApp(TruTestCase):
         return app, recorder
 
     def setUp(self):
-        self.session = TruSession()
+        self.session = mod_session.TruSession()
 
     def tearDown(self):
         super().tearDown()

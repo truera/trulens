@@ -8,7 +8,7 @@ import unittest
 from unittest import TestCase
 from unittest import main
 
-from trulens.core.utils.keys import check_keys
+from trulens.core.utils import keys as key_utils
 from trulens.feedback import LLMProvider
 from trulens.providers.huggingface import Huggingface
 from trulens.providers.openai import OpenAI
@@ -539,7 +539,7 @@ get_langchain_tests = get_llmprovider_tests
 
 class TestProviders(TestCase):
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
         )

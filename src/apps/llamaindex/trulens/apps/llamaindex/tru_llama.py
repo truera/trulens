@@ -28,13 +28,13 @@ from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 
 # TODO: Do we need to depend on this?
 from trulens.core.utils.containers import dict_set_with_multikey
 from trulens.core.utils.imports import Dummy
 from trulens.core.utils.imports import get_package_version
 from trulens.core.utils.imports import parse_version
-from trulens.core.utils.serial import Lens
 
 T = TypeVar("T")
 
@@ -336,7 +336,7 @@ class TruLlama(mod_app.App):
         super().__init__(**kwargs)
 
     @classmethod
-    def select_source_nodes(cls) -> Lens:
+    def select_source_nodes(cls) -> serial_utils.Lens:
         """
         Get the path to the source nodes in the query output.
         """
@@ -440,7 +440,7 @@ class TruLlama(mod_app.App):
     @classmethod
     def select_context(
         cls, app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
-    ) -> Lens:
+    ) -> serial_utils.Lens:
         """
         Get the path to the context in the query output.
         """

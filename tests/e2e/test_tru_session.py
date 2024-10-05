@@ -15,9 +15,9 @@ from trulens.apps.basic import TruBasicApp
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.virtual import TruVirtual
 from trulens.core import Feedback
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.utils.keys import check_keys
+from trulens.core.utils import keys as key_utils
 from trulens.providers.huggingface.provider import Dummy
 
 from tests.test import optional_test
@@ -30,7 +30,7 @@ class TestTru(TestCase):
         pass
 
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
             # "PINECONE_API_KEY", # don't seem to be needed
@@ -58,7 +58,7 @@ class TestTru(TestCase):
                         args["database_redact_keys"] = redact
 
                     try:
-                        session = TruSession(**args)
+                        session = mod_session.TruSession(**args)
                     finally:
                         if session is not None:
                             session.delete_singleton()
@@ -161,7 +161,7 @@ class TestTru(TestCase):
         app types. This test includes only ones that do not require optional
         packages.
         """
-        TruSession()
+        mod_session.TruSession()
 
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
@@ -281,7 +281,7 @@ class TestTru(TestCase):
 
         expected_feedback_names = {f.name for f in feedbacks}
 
-        session = TruSession()
+        session = mod_session.TruSession()
 
         tru_app = TruCustomApp(app)
 
@@ -337,7 +337,7 @@ class TestTru(TestCase):
         feedbacks = self._create_feedback_functions()
         expected_feedback_names = {f.name for f in feedbacks}
 
-        session = TruSession()
+        session = mod_session.TruSession()
 
         tru_app = TruCustomApp(app)
 
@@ -407,7 +407,7 @@ class TestTru(TestCase):
     #     app_name = "test_app"
     #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
     #     app_id = app_definition.app_id
-    #     session = TruSession()
+    #     session = mod_session.TruSession()
     #     # Action: Add the app to the database
     #     added_app_id = session.add_app(app_definition)
 
@@ -422,7 +422,7 @@ class TestTru(TestCase):
     #     app_name = "test_app"
     #     app_definition = mod_app_schema.AppDefinition(app_name=app_name, model_dump_json="{}")
     #     app_id = app_definition.app_id
-    #     session = TruSession()
+    #     session = mod_session.TruSession()
     #     session.add_app(app_definition)
 
     #     # Action: Delete the app
@@ -456,7 +456,7 @@ class TestTru(TestCase):
         pass
 
     def test_start_evaluator_with_blocking(self):
-        session = TruSession()
+        session = mod_session.TruSession()
         f = Feedback(custom_feedback_function).on_default()
         app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = TruBasicApp(

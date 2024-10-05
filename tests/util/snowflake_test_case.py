@@ -12,7 +12,7 @@ import uuid
 from snowflake.core import Root
 from snowflake.snowpark import Session
 from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 
 
 class SnowflakeTestCase(TestCase):
@@ -36,9 +36,11 @@ class SnowflakeTestCase(TestCase):
     def tearDown(self):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
         for key in [
-            curr for curr in TruSession._instances if curr[0] == "TruSession"
+            curr
+            for curr in mod_session.TruSession._instances
+            if curr[0] == "TruSession"
         ]:
-            del TruSession._instances[key]
+            del mod_session.TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -76,7 +78,7 @@ class SnowflakeTestCase(TestCase):
         app_base_name: Optional[str] = None,
         schema_name: Optional[str] = None,
         schema_already_exists: bool = False,
-    ) -> TruSession:
+    ) -> mod_session.TruSession:
         if bool(app_base_name) == bool(schema_name):
             raise ValueError(
                 "Exactly one of `app_base_name` and `schema_name` must be supplied!"
@@ -97,7 +99,7 @@ class SnowflakeTestCase(TestCase):
             **self._snowflake_connection_parameters,
             init_server_side=True,
         )
-        session = TruSession(connector=connector)
+        session = mod_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
         return session
 

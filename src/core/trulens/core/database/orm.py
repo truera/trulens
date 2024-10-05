@@ -21,11 +21,11 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
 from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
 from trulens.core.schema import app as app_schema
-from trulens.core.schema import dataset as mod_dataset_schema
+from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.schema import groundtruth as mod_groundtruth_schema
+from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.utils.json import json_str_of_obj
+from trulens.core.utils import json as json_utils
 
 TYPE_JSON = Text
 """Database type for JSON fields."""
@@ -205,7 +205,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                     run_location=None
                     if obj.run_location is None
                     else obj.run_location.value,
-                    feedback_json=json_str_of_obj(obj, redact_keys=redact_keys),
+                    feedback_json=json_utils.json_str_of_obj(
+                        obj, redact_keys=redact_keys
+                    ),
                 )
 
         class Record(base):
@@ -247,19 +249,21 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 return cls(
                     record_id=obj.record_id,
                     app_id=obj.app_id,
-                    input=json_str_of_obj(
+                    input=json_utils.json_str_of_obj(
                         obj.main_input, redact_keys=redact_keys
                     ),
-                    output=json_str_of_obj(
+                    output=json_utils.json_str_of_obj(
                         obj.main_output, redact_keys=redact_keys
                     ),
-                    record_json=json_str_of_obj(obj, redact_keys=redact_keys),
+                    record_json=json_utils.json_str_of_obj(
+                        obj, redact_keys=redact_keys
+                    ),
                     tags=obj.tags,
                     ts=obj.ts.timestamp(),
-                    cost_json=json_str_of_obj(
+                    cost_json=json_utils.json_str_of_obj(
                         obj.cost, redact_keys=redact_keys
                     ),
-                    perf_json=json_str_of_obj(
+                    perf_json=json_utils.json_str_of_obj(
                         obj.perf, redact_keys=redact_keys
                     ),
                 )
@@ -325,12 +329,12 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                     last_ts=obj.last_ts.timestamp(),
                     status=obj.status.value,
                     error=obj.error,
-                    calls_json=json_str_of_obj(
+                    calls_json=json_utils.json_str_of_obj(
                         dict(calls=obj.calls), redact_keys=redact_keys
                     ),
                     result=obj.result,
                     name=obj.name,
-                    cost_json=json_str_of_obj(
+                    cost_json=json_utils.json_str_of_obj(
                         obj.cost, redact_keys=redact_keys
                     ),
                     multi_result=obj.multi_result,
@@ -361,7 +365,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_groundtruth_schema.GroundTruth,
+                obj: groundtruth_schema.GroundTruth,
                 redact_keys: bool = False,
             ) -> ORM.GroundTruth:
                 return cls(
@@ -389,7 +393,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             @classmethod
             def parse(
                 cls,
-                obj: mod_dataset_schema.Dataset,
+                obj: dataset_schema.Dataset,
                 redact_keys: bool = False,
             ) -> ORM.Dataset:
                 return cls(

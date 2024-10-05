@@ -13,10 +13,10 @@ from typing import (
 import requests
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.keys import _check_key
 from trulens.core.utils.keys import get_huggingface_headers
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class HuggingfaceEndpoint(Endpoint):
     """
 
     def __init__(self, *args, **kwargs):
-        if safe_hasattr(self, "name"):
+        if python_utils.safe_hasattr(self, "name"):
             # Already created with SingletonPerName mechanism
             return
 
@@ -94,7 +94,10 @@ class HuggingfaceEndpoint(Endpoint):
         return response
 
     def post(
-        self, url: str, payload: JSON, timeout: float = DEFAULT_NETWORK_TIMEOUT
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: float = DEFAULT_NETWORK_TIMEOUT,
     ) -> Any:
         self.pace_me()
         ret = requests.post(

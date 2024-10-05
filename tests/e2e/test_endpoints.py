@@ -11,7 +11,7 @@ from unittest import TestCase
 from unittest import main
 
 from trulens.core.feedback import Endpoint
-from trulens.core.utils.keys import check_keys
+from trulens.core.utils import keys as key_utils
 
 from tests.test import optional_test
 
@@ -22,7 +22,7 @@ class TestEndpoints(TestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             # for non-azure openai tests
             "OPENAI_API_KEY",
             # for huggingface tests

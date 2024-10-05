@@ -38,8 +38,9 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.containers import iterable_peek
-from trulens.core.utils.python import class_name
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +554,7 @@ class SerialModel(pydantic.BaseModel):
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
 
-        # yield class_name(type(self))
+        # yield python_utils.class_name(type(self))
 
         # If this is a root repr, create a new set for already-formatted objects.
         tok = None
@@ -566,7 +567,7 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{class_name(type(self))}@0x{id(self):x}"
+            yield f"{python_utils.class_name(type(self))}@0x{id(self):x}"
 
             if tok is not None:
                 SerialModel.formatted_objects.reset(tok)
@@ -590,9 +591,8 @@ class SerialModel(pydantic.BaseModel):
 
     def model_dump(self, **kwargs):
         # TODO: Import at top-level and resolve circular import.
-        from trulens.core.utils.json import jsonify
 
-        return jsonify(self, **kwargs)
+        return json_utils.jsonify(self, **kwargs)
 
     # NOTE(piotrm): regarding model_validate: custom deserialization is done in
     # WithClassInfo class but only for classes that mix it in.

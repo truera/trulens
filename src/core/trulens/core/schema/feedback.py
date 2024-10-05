@@ -20,12 +20,11 @@ from typing import (
 
 import pydantic
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.text import retab
-
-from core.trulens.core.utils import pyschema_utils
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 T = TypeVar("T")
 
@@ -135,13 +134,13 @@ class FeedbackOnMissingParameters(str, Enum):
     """
 
 
-class FeedbackCall(serial.SerialModel):
+class FeedbackCall(serial_utils.SerialModel):
     """Invocations of feedback function results in one of these instances.
 
     Note that a single `Feedback` instance might require more than one call.
     """
 
-    args: Dict[str, Optional[serial.JSON]]
+    args: Dict[str, Optional[serial_utils.JSON]]
     """Arguments to the feedback function."""
 
     ret: Union[float, List[float], List[Tuple]]
@@ -157,7 +156,7 @@ class FeedbackCall(serial.SerialModel):
             out += f"{tab}{k} = {v}\n"
         out += f"{tab}ret = {self.ret}\n"
         if self.meta:
-            out += f"{tab}meta = \n{retab(tab=tab * 2, s=pformat(self.meta))}\n"
+            out += f"{tab}meta = \n{text_utils.retab(tab=tab * 2, s=pformat(self.meta))}\n"
 
         return out
 
@@ -165,7 +164,7 @@ class FeedbackCall(serial.SerialModel):
         return str(self)
 
 
-class FeedbackResult(serial.SerialModel):
+class FeedbackResult(serial_utils.SerialModel):
     """Feedback results for a single [Feedback][trulens.core.Feedback] instance.
 
     This might involve multiple feedback function calls. Typically you should
@@ -173,42 +172,40 @@ class FeedbackResult(serial.SerialModel):
     like to log human feedback.
 
     Attributes:
-        feedback_result_id (str): Unique identifier for this result.
+        feedback_result_id: Unique identifier for this result.
 
-        record_id (str): Record over which the feedback was evaluated.
+        record_id: Record over which the feedback was evaluated.
 
-        feedback_definition_id (str): The id of the
+        feedback_definition_id: The id of the
             [FeedbackDefinition][trulens.core.schema.feedback.FeedbackDefinition] which
             was evaluated to get this result.
 
-        last_ts (datetime.datetime): Last timestamp involved in the evaluation.
+        last_ts: Last timestamp involved in the evaluation.
 
-        status (FeedbackResultStatus): For deferred feedback evaluation, the
+        status: For deferred feedback evaluation, the
             status of the evaluation.
 
-        cost (Cost): Cost of the evaluation.
+        cost: Cost of the evaluation.
 
-        name (str): Given name of the feedback.
+        name: Given name of the feedback.
 
-        calls (List[FeedbackCall]): Individual feedback function invocations.
+        calls: Individual feedback function invocations.
 
-        result (float): Final result, potentially aggregating multiple calls.
+        result: Final result, potentially aggregating multiple calls.
 
-        error (str): Error information if there was an error.
+        error: Error information if there was an error.
 
-        multi_result (str): TODO: doc
+        multi_result: TBD
     """
 
-    feedback_result_id: mod_types_schema.FeedbackResultID
+    feedback_result_id: types_schema.FeedbackResultID
 
     # Record over which the feedback was evaluated.
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
 
     # The `Feedback` / `FeedbackDefinition` which was evaluated to get this
     # result.
-    feedback_definition_id: Optional[mod_types_schema.FeedbackDefinitionID] = (
-        None
-    )
+    feedback_definition_id: Optional[types_schema.FeedbackDefinitionID] = None
 
     # Last timestamp involved in the evaluation.
     last_ts: datetime.datetime = pydantic.Field(
@@ -237,13 +234,13 @@ class FeedbackResult(serial.SerialModel):
 
     def __init__(
         self,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         **kwargs,
     ):
         super().__init__(feedback_result_id="temporary", **kwargs)
 
         if feedback_result_id is None:
-            feedback_result_id = obj_id_of_obj(
+            feedback_result_id = json_utils.obj_id_of_obj(
                 self.model_dump(), prefix="feedback_result"
             )
 
@@ -314,7 +311,7 @@ class FeedbackCombinations(str, Enum):
 
 
 class FeedbackDefinition(
-    pyschema_utils.WithClassInfo, serial.SerialModel, Hashable
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel, Hashable
 ):
     """Serialized parts of a feedback function.
 
@@ -338,10 +335,10 @@ class FeedbackDefinition(
     """Mode of combining selected values to produce arguments to each feedback
     function call."""
 
-    feedback_definition_id: mod_types_schema.FeedbackDefinitionID
+    feedback_definition_id: types_schema.FeedbackDefinitionID
     """Id, if not given, uniquely determined from content."""
 
-    if_exists: Optional[serial.Lens] = None
+    if_exists: Optional[serial_utils.Lens] = None
     """Only execute the feedback function if the following selector names
     something that exists in a record/app.
 
@@ -356,7 +353,7 @@ class FeedbackDefinition(
     run_location: Optional[FeedbackRunLocation]
     """Where the feedback evaluation takes place (e.g. locally, at a Snowflake server, etc)."""
 
-    selectors: Dict[str, serial.Lens]
+    selectors: Dict[str, serial_utils.Lens]
     """Selectors; pointers into [Records][trulens.core.schema.record.Record] of where
     to get arguments for `imp`."""
 
@@ -369,7 +366,7 @@ class FeedbackDefinition(
     def __init__(
         self,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         implementation: Optional[
             Union[pyschema_utils.Function, pyschema_utils.Method]
@@ -377,9 +374,9 @@ class FeedbackDefinition(
         aggregator: Optional[
             Union[pyschema_utils.Function, pyschema_utils.Method]
         ] = None,
-        if_exists: Optional[serial.Lens] = None,
+        if_exists: Optional[serial_utils.Lens] = None,
         if_missing: FeedbackOnMissingParameters = FeedbackOnMissingParameters.ERROR,
-        selectors: Optional[Dict[str, serial.Lens]] = None,
+        selectors: Optional[Dict[str, serial_utils.Lens]] = None,
         name: Optional[str] = None,
         higher_is_better: Optional[bool] = None,
         run_location: Optional[FeedbackRunLocation] = None,
@@ -409,7 +406,7 @@ class FeedbackDefinition(
 
         if feedback_definition_id is None:
             if implementation is not None:
-                feedback_definition_id = obj_id_of_obj(
+                feedback_definition_id = json_utils.obj_id_of_obj(
                     self.model_dump(), prefix="feedback_definition"
                 )
             else:

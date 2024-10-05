@@ -4,20 +4,16 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from trulens.core.app import ComponentView
-from trulens.core.schema.record import Record
-from trulens.core.schema.record import RecordAppCall
-from trulens.core.schema.select import Select
-from trulens.core.schema.types import Metadata
-from trulens.core.schema.types import Tags
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.containers import is_empty
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.keys import REDACTED_VALUE
-from trulens.core.utils.keys import should_redact_key
-from trulens.core.utils.pyschema import is_noserio
-from trulens.core.utils.serial import GetItemOrAttribute
-from trulens.core.utils.serial import Lens
+from trulens.core import app as mod_app
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import select as select_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import keys as key_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
 
 
 def write_or_json(st, obj):
@@ -46,17 +42,19 @@ def copy_to_clipboard(path, *args, **kwargs):
 def draw_selector_button(path) -> None:
     st.button(
         key=str(random.random()),
-        label=f"{Select.render_for_dashboard(path)}",
+        label=f"{select_schema.Select.render_for_dashboard(path)}",
         on_click=copy_to_clipboard,
         args=(path,),
     )
 
 
 def render_selector_markdown(path) -> str:
-    return f"[`{Select.render_for_dashboard(path)}`]"
+    return f"[`{select_schema.Select.render_for_dashboard(path)}`]"
 
 
-def render_call_frame(frame: RecordAppCall, path=None) -> str:  # markdown
+def render_call_frame(
+    frame: record_schema.RecordAppCall, path=None
+) -> str:  # markdown
     path = path or frame.path
 
     return f"__{frame.method.name}__ (__{frame.method.obj.cls.module.module_name}.{frame.method.obj.cls.name}__)"
@@ -76,7 +74,9 @@ def dict_to_md(dictionary: dict) -> str:
     return mdtext
 
 
-def draw_metadata_and_tags(metadata: Metadata, tags: Tags) -> str:
+def draw_metadata_and_tags(
+    metadata: types_schema.Metadata, tags: types_schema.Tags
+) -> str:
     if isinstance(metadata, Dict):
         metadata["tags"] = tags
         return dict_to_md(metadata)
@@ -84,12 +84,14 @@ def draw_metadata_and_tags(metadata: Metadata, tags: Tags) -> str:
         return str(metadata) + "\n" + str(tags)
 
 
-def draw_call(call: RecordAppCall) -> None:
+def draw_call(call: record_schema.RecordAppCall) -> None:
     top = call.stack[-1]
 
-    path = Select.for_record(
+    path = select_schema.Select.for_record(
         top.path._append(
-            step=GetItemOrAttribute(item_or_attribute=top.method.name)
+            step=serial_utils.GetItemOrAttribute(
+                item_or_attribute=top.method.name
+            )
         )
     )
 
@@ -118,7 +120,7 @@ def draw_call(call: RecordAppCall) -> None:
             st.write(rets)
 
 
-def draw_calls(record: Record, index: int) -> None:
+def draw_calls(record: record_schema.Record, index: int) -> None:
     """
     Draw the calls recorded in a `record`.
     """
@@ -136,20 +138,22 @@ def draw_calls(record: Record, index: int) -> None:
         draw_call(call)
 
 
-def draw_prompt_info(query: Lens, component: ComponentView) -> None:
-    prompt_details_json = jsonify(component.json, skip_specials=True)
+def draw_prompt_info(
+    query: serial_utils.Lens, component: mod_app.ComponentView
+) -> None:
+    prompt_details_json = json_utils.jsonify(component.json, skip_specials=True)
 
     st.caption("Prompt details")
 
-    path = Select.for_app(query)
+    path = select_schema.Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
         if (v is not None)
-        and not is_empty(v)
-        and not is_noserio(v)
-        and k != CLASS_INFO
+        and not container_utils.is_empty(v)
+        and not pyschema_utils.is_noserio(v)
+        and k != constant_utils.CLASS_INFO
     }
 
     for key, value in prompt_types.items():
@@ -168,7 +172,9 @@ def draw_prompt_info(query: Lens, component: ComponentView) -> None:
                     st.write(value)
 
 
-def draw_llm_info(query: Lens, component: ComponentView) -> None:
+def draw_llm_info(
+    query: serial_utils.Lens, component: mod_app.ComponentView
+) -> None:
     llm_details_json = component.json
 
     st.subheader("*LLM Details*")
@@ -179,9 +185,9 @@ def draw_llm_info(query: Lens, component: ComponentView) -> None:
         k: v
         for k, v in llm_details_json.items()
         if (v is not None)
-        and not is_empty(v)
-        and not is_noserio(v)
-        and k != CLASS_INFO
+        and not container_utils.is_empty(v)
+        and not pyschema_utils.is_noserio(v)
+        and k != constant_utils.CLASS_INFO
     }
     # CSS to inject contained in a string
     hide_table_row_index = """
@@ -194,15 +200,15 @@ def draw_llm_info(query: Lens, component: ComponentView) -> None:
 
     # Redact any column whose name indicates it might be a secret.
     for col in df.columns:
-        if should_redact_key(col):
-            df[col] = REDACTED_VALUE
+        if key_utils.should_redact_key(col):
+            df[col] = key_utils.REDACTED_VALUE
 
     # TODO: What about columns not indicating a secret but some values do
     # indicate it as per `should_redact_value` ?
 
     # Iterate over each column of the DataFrame
     for column in df.columns:
-        path = getattr(Select.for_app(query), str(column))
+        path = getattr(select_schema.Select.for_app(query), str(column))
         # Check if any cell in the column is a dictionary
 
         if any(isinstance(cell, dict) for cell in df[column]):
@@ -234,22 +240,24 @@ def draw_llm_info(query: Lens, component: ComponentView) -> None:
     st.table(df)
 
 
-def draw_agent_info(query: Lens, component: ComponentView) -> None:
+def draw_agent_info(
+    query: serial_utils.Lens, component: mod_app.ComponentView
+) -> None:
     # copy of draw_prompt_info
     # TODO: dedup
-    prompt_details_json = jsonify(component.json, skip_specials=True)
+    prompt_details_json = json_utils.jsonify(component.json, skip_specials=True)
 
     st.subheader("*Agent Details*")
 
-    path = Select.for_app(query)
+    path = select_schema.Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
         if (v is not None)
-        and not is_empty(v)
-        and not is_noserio(v)
-        and k != CLASS_INFO
+        and not container_utils.is_empty(v)
+        and not pyschema_utils.is_noserio(v)
+        and k != constant_utils.CLASS_INFO
     }
 
     for key, value in prompt_types.items():
@@ -268,22 +276,24 @@ def draw_agent_info(query: Lens, component: ComponentView) -> None:
                     st.write(value)
 
 
-def draw_tool_info(query: Lens, component: ComponentView) -> None:
+def draw_tool_info(
+    query: serial_utils.Lens, component: mod_app.ComponentView
+) -> None:
     # copy of draw_prompt_info
     # TODO: dedup
-    prompt_details_json = jsonify(component.json, skip_specials=True)
+    prompt_details_json = json_utils.jsonify(component.json, skip_specials=True)
 
     st.subheader("*Tool Details*")
 
-    path = Select.for_app(query)
+    path = select_schema.Select.for_app(query)
 
     prompt_types = {
         k: v
         for k, v in prompt_details_json.items()
         if (v is not None)
-        and not is_empty(v)
-        and not is_noserio(v)
-        and k != CLASS_INFO
+        and not container_utils.is_empty(v)
+        and not pyschema_utils.is_noserio(v)
+        and k != constant_utils.CLASS_INFO
     }
 
     for key, value in prompt_types.items():

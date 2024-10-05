@@ -10,20 +10,21 @@ from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.imports import format_import_errors
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.serial import SerialModel
-from trulens.feedback.generated import re_0_10_rating
+from trulens.core.utils import serial as serial_utils
+from trulens.feedback import generated as mod_generated
 from trulens.feedback.llm_provider import LLMProvider
 
-with OptionalImports(
-    messages=format_import_errors("bert-score", purpose="measuring BERT Score")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "bert-score", purpose="measuring BERT Score"
+    )
 ):
     from bert_score import BERTScorer
 
-with OptionalImports(
-    messages=format_import_errors("evaluate", purpose="using certain metrics")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "evaluate", purpose="using certain metrics"
+    )
 ):
     import evaluate
 
@@ -31,14 +32,16 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(WithClassInfo, SerialModel):
+class GroundTruthAgreement(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     """Measures Agreement against a Ground Truth."""
 
     ground_truth: Union[
         List[Dict],
         Callable,
         pd.DataFrame,
-        pyschema_utils.pyschema_utils.FunctionOrMethod,
+        pyschema_utils.FunctionOrMethod,
     ]
     provider: LLMProvider
 
@@ -75,6 +78,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         Usage 2:
         from trulens.feedback import GroundTruthAgreement
         from trulens.providers.openai import OpenAI
+        from trulens.core.session import TruSession
 
         session = TruSession()
         ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
@@ -234,7 +238,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_0_10_rating(agreement_txt) / 10,
+                mod_generated.re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:
@@ -333,9 +337,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def bleu(
         self, prompt: str, response: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
-        """
-        Uses BLEU Score. A function that that measures
-        similarity to ground truth using token overlap.
+        """Uses BLEU Score. A function that that measures similarity to ground
+        truth using token overlap.
 
         Example:
             ```python
@@ -353,12 +356,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not in agreement" and 1
                 being "in agreement".
+
             dict: with key 'ground_truth_response'
         """
         bleu = evaluate.load("bleu")
@@ -413,7 +418,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
 
-class GroundTruthAggregator(WithClassInfo, SerialModel):
+class GroundTruthAggregator(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed=True, extra="allow"
     )

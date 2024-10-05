@@ -8,12 +8,11 @@ from plotly.subplots import make_subplots
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
+from trulearn.core.utils import text as text_utils
 from trulens.apps.virtual import TruVirtual
 from trulens.apps.virtual import VirtualApp
 from trulens.apps.virtual import VirtualRecord
-from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.feedback import FeedbackResultStatus
-from trulens.core.utils.text import format_quantity
+from trulens.core.schema import feedback as feedback_schema
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as compare_page_name
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -388,12 +387,12 @@ def handle_add_virtual_app(
 
             app.add_record(virtual_record)
             for feedback_name, feedback_value in feedback_values.items():
-                result = FeedbackResult(
+                result = feedback_schema.FeedbackResult(
                     record_id=virtual_record.record_id,
                     feedback_definition_id=feedback_defs[
                         feedback_defs["feedback_name"] == feedback_name
                     ]["feedback_definition_id"].iloc[0],
-                    status=FeedbackResultStatus.DONE,
+                    status=feedback_schema.FeedbackResultStatus.DONE,
                     cost={},
                     perf={},
                     name=feedback_name,
@@ -618,7 +617,7 @@ def _render_list_tab(
         latency_col.metric(
             "Average Latency (Seconds)",
             (
-                f"{format_quantity(round(latency_mean, 5), precision=2)}"
+                f"{text_utils.format_quantity(round(latency_mean, 5), precision=2)}"
                 if not math.isnan(latency_mean)
                 else "nan"
             ),
@@ -627,17 +626,17 @@ def _render_list_tab(
         if app_row["Total Cost (Snowflake Credits)"] > 0:
             cost_col.metric(
                 "Total Cost (Snowflake credits)",
-                f"{format_quantity(round(app_row['Total Cost (Snowflake Credits)'], 8), precision=5)}",
+                f"{text_utils.format_quantity(round(app_row['Total Cost (Snowflake Credits)'], 8), precision=5)}",
             )
         elif app_row["Total Cost (USD)"] > 0:
             cost_col.metric(
                 "Total Cost (USD)",
-                f"${format_quantity(round(app_row['Total Cost (USD)'], 5), precision=2)}",
+                f"${text_utils.format_quantity(round(app_row['Total Cost (USD)'], 5), precision=2)}",
             )
 
         tokens_col.metric(
             "Total Tokens",
-            format_quantity(
+            text_utils.format_quantity(
                 app_row["Total Tokens"],
                 precision=2,
             ),

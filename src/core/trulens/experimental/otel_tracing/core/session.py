@@ -1,12 +1,12 @@
 from typing import Any, Optional
 
 from trulens.core import experimental as mod_experimental
-from trulens.core.session import TruSession
+from trulens.core import session as mod_session
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
 
-class _TruSession(TruSession):
+class _TruSession(mod_session.TruSession):
     def _setup_otel_exporter(
         self, val: Optional[Any]
     ):  # any actually otel_export_sdk.SpanExporter

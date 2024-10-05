@@ -1,15 +1,14 @@
 import logging
 from typing import ClassVar, Optional
 
-import trulens.core.feedback.endpoint as mod_endpoint
-from trulens.core.utils.serial import SerialModel
-
-from core.trulens.core.utils.pyschema_utils import WithClassInfo
+from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
 
-class Provider(WithClassInfo, SerialModel):
+class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     """Base Provider class.
 
     TruLens makes use of *Feedback Providers* to generate evaluations of

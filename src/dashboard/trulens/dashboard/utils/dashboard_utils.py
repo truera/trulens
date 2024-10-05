@@ -7,8 +7,8 @@ import pandas as pd
 import streamlit as st
 from trulens.core import __package__ as core_package
 from trulens.core import __version__ as core_version
+from trulens.core import session as mod_session
 from trulens.core.database import base as mod_db
-from trulens.core.session import TruSession
 from trulens.core.utils.imports import static_resource
 from trulens.dashboard import __package__ as dashboard_package
 from trulens.dashboard import __version__
@@ -81,7 +81,7 @@ def read_query_params_into_session_state(
 
 
 @st.cache_resource(show_spinner="Setting up TruLens session")
-def get_session() -> TruSession:
+def get_session() -> mod_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
     As TruSession is a singleton, further TruSession() uses will get the same configuration.
@@ -103,7 +103,7 @@ def get_session() -> TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return TruSession(
+    return mod_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
 

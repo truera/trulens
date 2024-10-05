@@ -7,7 +7,7 @@ from typing import Any, Optional, Tuple, TypeVar
 
 from trulens.core._utils.pycompat import TypeAlias
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils import serial
+from trulens.core.utils import serial as serial_utils
 
 T = TypeVar("T")
 
@@ -19,7 +19,7 @@ class Select:
     Utilities for creating selectors using Lens and aliases/shortcuts.
     """
 
-    Lens: TypeAlias = serial.Lens
+    Lens: TypeAlias = serial_utils.Lens
 
     Query: TypeAlias = Lens  # Deprecate this alias in the future.
 
@@ -91,7 +91,7 @@ class Select:
         firsts = select.path[:-1]
         last = select.path[-1]
 
-        if not isinstance(last, serial.StepItemOrAttribute):
+        if not isinstance(last, serial_utils.StepItemOrAttribute):
             raise ValueError(
                 "Last part of selector is not an attribute so does not name a method."
             )

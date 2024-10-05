@@ -23,7 +23,7 @@ from langchain.schema import StrOutputParser
 # from langchain.chat_models import ChatOpenAI # Deprecated
 from langchain_openai import ChatOpenAI
 import streamlit as st
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 from trulens.dashboard import run_dashboard
 from trulens.apps.langchain import TruChain
 
@@ -33,7 +33,7 @@ os.environ["OPENAI_API_KEY"] = "..."
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
-session = TruSession()
+session = mod_session.TruSession()
 
 
 # Define function to generate GPT-3 response

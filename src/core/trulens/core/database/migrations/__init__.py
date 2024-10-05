@@ -11,7 +11,7 @@ module][trulens.core.database.migrations.data].
 ## Upgrading to the latest schema revision
 
 ```python
-from trulens.core import TruSession
+from trulens.core.session import TruSession
 
 session = TruSession(
    database_url="<sqlalchemy_url>",

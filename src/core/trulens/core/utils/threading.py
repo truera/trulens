@@ -14,17 +14,13 @@ from typing import Callable, Optional, TypeVar
 
 from trulens.core._utils.pycompat import Future
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.python import SingletonPerName
-from trulens.core.utils.python import T
-from trulens.core.utils.python import WeakWrapper
-from trulens.core.utils.python import code_line
-from trulens.core.utils.python import safe_hasattr
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
 A = TypeVar("A")
+T = TypeVar("T")
 
 
 class Thread(fThread):
@@ -47,7 +43,7 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
-        present_stack = WeakWrapper(inspect.stack())
+        present_stack = python_utils.WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
 
         fThread.__init__(
@@ -77,7 +73,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         super().__init__(*args, **kwargs)
 
     def submit(self, fn, /, *args, **kwargs):
-        present_stack = WeakWrapper(inspect.stack())
+        present_stack = python_utils.WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
 
         return super().submit(
@@ -101,7 +97,7 @@ futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 
-class TP(SingletonPerName):  # "thread processing"
+class TP(python_utils.SingletonPerName):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.
@@ -120,7 +116,7 @@ class TP(SingletonPerName):  # "thread processing"
         return inst
 
     def __init__(self):
-        if safe_hasattr(self, "thread_pool"):
+        if python_utils.safe_hasattr(self, "thread_pool"):
             # Already initialized as per SingletonPerName mechanism.
             return
 
@@ -164,7 +160,7 @@ class TP(SingletonPerName):  # "thread processing"
                 func.__name__,
                 threading.current_thread(),
                 TP.DEBUG_TIMEOUT,
-                code_line(func),
+                python_utils.code_line(func),
             )
 
             raise e

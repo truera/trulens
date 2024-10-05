@@ -23,8 +23,8 @@ from trulens.core.database.base import DB
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     def add_record(
         self, record: Optional[record_schema.Record] = None, **kwargs
-    ) -> mod_types_schema.RecordID:
+    ) -> types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -151,7 +151,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
 
-    def add_app(self, app: app_schema.AppDefinition) -> mod_types_schema.AppID:
+    def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -165,7 +165,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         return self.db.insert_app(app=app)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -177,7 +177,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     def add_feedback_definition(
         self, feedback_definition: feedback_schema.FeedbackDefinition
-    ) -> mod_types_schema.FeedbackDefinitionID:
+    ) -> types_schema.FeedbackDefinitionID:
         """
         Add a feedback definition to the database and return its unique id.
 
@@ -201,7 +201,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
             ]
         ] = None,
         **kwargs: Any,
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
@@ -259,7 +259,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 Future[feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -279,8 +279,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
         ]
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> Optional[serial.JSONized[app_schema.AppDefinition]]:
+        self, app_id: types_schema.AppID
+    ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -305,7 +305,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -319,7 +319,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -354,7 +354,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,

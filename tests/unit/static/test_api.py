@@ -14,8 +14,8 @@ from jsondiff import SymmetricJsonDiffSyntax
 from jsondiff import diff
 from jsondiff.symbols import Symbol
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils.imports import is_dummy
-from trulens.core.utils.serial import Lens
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import serial as serial_utils
 
 from tests.test import TruTestCase
 from tests.test import optional_test
@@ -77,7 +77,7 @@ class TestAPI(TruTestCase):
 
         # Enumerate all public classes found in the prior step.
         for class_alias, class_ in classes:
-            if is_dummy(class_):
+            if import_utils.is_dummy(class_):
                 if not deprecation_utils.is_deprecated(class_):
                     with self.subTest(class_=class_.__name__):
                         self.fail(
@@ -131,12 +131,12 @@ class TestAPI(TruTestCase):
         return self.get_members(trulens)
 
     def _flatten(
-        self, val: Any, lens: Optional[Lens] = None
-    ) -> Iterable[Tuple[Lens, Any]]:
+        self, val: Any, lens: Optional[serial_utils.Lens] = None
+    ) -> Iterable[Tuple[serial_utils.Lens, Any]]:
         """Flatten the API diff for easier comparison."""
 
         if lens is None:
-            lens = Lens()
+            lens = serial_utils.Lens()
 
         if len(lens) > 1 or isinstance(val, (str, int, float, bool)):
             yield (lens, val)
@@ -150,12 +150,12 @@ class TestAPI(TruTestCase):
             raise ValueError(f"Unexpected type {type(val)}")
 
     def _flatten_api_diff(
-        self, diff_value: Any, lens: Optional[Lens] = None
-    ) -> Iterable[Tuple[Symbol, Lens, Any]]:
+        self, diff_value: Any, lens: Optional[serial_utils.Lens] = None
+    ) -> Iterable[Tuple[Symbol, serial_utils.Lens, Any]]:
         """Flatten the API diff for easier comparison."""
 
         if lens is None:
-            lens = Lens()
+            lens = serial_utils.Lens()
 
         if isinstance(diff_value, dict):
             for k, v in diff_value.items():

@@ -3,7 +3,7 @@ from typing import Any, List
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from trulens.core import feedback as mod_feedback
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
 

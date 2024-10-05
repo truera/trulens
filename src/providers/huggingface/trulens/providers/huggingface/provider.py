@@ -24,7 +24,7 @@ from transformers import AutoTokenizer
 from trulens.core._utils.pycompat import Future
 from trulens.core.feedback import Endpoint
 from trulens.core.feedback import Provider
-from trulens.core.utils.python import locals_except
+from trulens.core.utils import python as python_utils
 from trulens.core.utils.threading import ThreadPoolExecutor
 from trulens.feedback import prompts
 from trulens.feedback.dummy.endpoint import DummyEndpoint
@@ -756,7 +756,8 @@ class Dummy(Huggingface):
     ):
         kwargs["name"] = name or "dummyhugs"
         kwargs["endpoint"] = DummyEndpoint(
-            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
+            name="dummyendhugspoint",
+            **python_utils.locals_except("self", "name", "kwargs"),
         )
 
         super().__init__(**kwargs)

@@ -1,7 +1,7 @@
 import json
 from typing import Dict, Optional, Sequence
 
-from trulens.core.utils.python import locals_except
+from trulens.core.utils import python as python_utils
 from trulens.feedback.dummy.endpoint import DummyEndpoint
 from trulens.feedback.llm_provider import LLMProvider
 
@@ -30,7 +30,8 @@ class DummyProvider(LLMProvider):
     ):
         kwargs["name"] = name
         kwargs["endpoint"] = DummyEndpoint(
-            name="dummyendpoint", **locals_except("self", "name", "kwargs")
+            name="dummyendpoint",
+            **python_utils.locals_except("self", "name", "kwargs"),
         )
 
         super().__init__(**kwargs)

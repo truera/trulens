@@ -5,22 +5,22 @@ Tests for TruBasicApp.
 from unittest import TestCase
 from unittest import main
 
-from trulens.core import TruSession
-from trulens.core.schema.app import AppDefinition
+from trulens.core import session as mod_session
+from trulens.core.schema import app as app_schema
 
 
 class TestApp(TestCase):
     def setUp(self):
-        self.session = TruSession()
+        self.session = mod_session.TruSession()
         self.session.reset_database()
 
-        self.app_1 = AppDefinition(
+        self.app_1 = app_schema.AppDefinition(
             app_name="test_application",
             app_version="v1",
             root_class={"name": "App", "module": {"module_name": "app"}},
             app={},
         )
-        self.app_2 = AppDefinition(
+        self.app_2 = app_schema.AppDefinition(
             app_name="test_application",
             app_version="v1",
             root_class={"name": "App", "module": {"module_name": "app"}},
@@ -39,7 +39,7 @@ class TestApp(TestCase):
         self.assertEqual(len(self.session.get_apps()), 1)
 
     def test_app_id_override(self):
-        AppDefinition(
+        app_schema.AppDefinition(
             app_name="test_application",
             app_version="v1",
             app_id=self.app_2.app_id,
@@ -50,7 +50,7 @@ class TestApp(TestCase):
         with self.assertWarns(DeprecationWarning):
             # change to below after dep period:
             # with self.assertRaises(ValueError):
-            AppDefinition(
+            app_schema.AppDefinition(
                 app_name="test_application",
                 app_version="v1",
                 app_id="invalid_app_id",

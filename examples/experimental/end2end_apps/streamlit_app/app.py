@@ -2,20 +2,22 @@ from dotenv import load_dotenv
 from langchain_openai import OpenAI
 import streamlit as st
 from trulens.apps.langchain import TruChain
-from trulens.core import Feedback
-from trulens.core import TruSession
+from trulens.core import session as mod_session
+from trulens.core.feedback import feedback as mod_feedback
 import trulens.dashboard.streamlit as trulens_st
 from trulens.providers.openai import OpenAI as fOpenAI
 
 load_dotenv()
 
-session = TruSession()
+session = mod_session.TruSession()
 
 st.title("🦑 Using TruLens Components in Streamlit")
 
 provider = fOpenAI()
 
-f_coherence = Feedback(provider.coherence_with_cot_reasons).on_output()
+f_coherence = mod_feedback.Feedback(
+    provider.coherence_with_cot_reasons
+).on_output()
 
 feedbacks = [f_coherence]
 

@@ -17,7 +17,7 @@ from pathlib import Path
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
-from trulens.core import Feedback
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.utils.threading import TP
 from trulens.feedback.dummy.provider import DummyProvider
 from trulens.providers.huggingface.provider import Dummy
@@ -66,10 +66,10 @@ class TestSerial(TruTestCase):
             delay=0.0,
         )
 
-        feedback_language_match = Feedback(
+        feedback_language_match = mod_feedback.Feedback(
             d_hugs.language_match
         ).on_input_output()
-        feedback_context_relevance = Feedback(
+        feedback_context_relevance = mod_feedback.Feedback(
             d.context_relevance
         ).on_input_output()
 

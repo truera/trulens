@@ -5,13 +5,13 @@ Tests for TruBasicApp.
 from unittest import main
 
 from trulens.apps.basic import TruBasicApp
-from trulens.core import TruSession
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.utils.keys import check_keys
+from trulens.core import session as mod_session
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.utils import keys as key_utils
 
 from tests.test import TruTestCase
 
-check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
+key_utils.check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
 class TestTruBasicApp(TruTestCase):
@@ -19,7 +19,7 @@ class TestTruBasicApp(TruTestCase):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        self.session = TruSession()
+        self.session = mod_session.TruSession()
 
         # Temporary before db migration gets fixed.
         self.session.migrate_database()
@@ -33,7 +33,7 @@ class TestTruBasicApp(TruTestCase):
             self.basic_app,
             app_name="Custom Application",
             app_version="v1",
-            feedback_mode=FeedbackMode.WITH_APP,
+            feedback_mode=feedback_schema.FeedbackMode.WITH_APP,
         )
 
     def test_no_fail(self):

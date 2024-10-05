@@ -15,8 +15,7 @@ from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
+from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
 """

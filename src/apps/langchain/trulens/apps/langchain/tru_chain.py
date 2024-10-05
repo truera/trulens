@@ -1,6 +1,4 @@
-"""
-# LangChain app instrumentation.
-"""
+"""LangChain app instrumentation."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -21,13 +19,12 @@ from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
 from trulens.core import app as mod_app
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.core.schema.select import Select
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.serial import all_queries
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent
@@ -237,7 +234,7 @@ class TruChain(mod_app.App):
         super().__init__(**kwargs)
 
     @classmethod
-    def select_context(cls, app: Optional[Chain] = None) -> Lens:
+    def select_context(cls, app: Optional[Chain] = None) -> serial_utils.Lens:
         """Get the path to the context in the query output."""
 
         if app is None:
@@ -248,8 +245,8 @@ class TruChain(mod_app.App):
 
         retrievers = []
 
-        app_json = jsonify(app)
-        for lens in all_queries(app_json):
+        app_json = json_utils.jsonify(app)
+        for lens in serial_utils.all_queries(app_json):
             try:
                 comp = lens.get_sole_item(app)
                 if isinstance(comp, BaseRetriever):
@@ -277,7 +274,7 @@ class TruChain(mod_app.App):
                     )
                 )
 
-        retriever = Select.RecordCalls + retrievers[0][0]
+        retriever = select_schema.Select.RecordCalls + retrievers[0][0]
         if hasattr(retriever, "invoke"):
             return retriever.invoke.rets[:].page_content
 
@@ -318,8 +315,8 @@ class TruChain(mod_app.App):
 
         if (
             "inputs" in bindings.arguments
-            and safe_hasattr(self.app, "input_keys")
-            and safe_hasattr(self.app, "prep_inputs")
+            and python_utils.safe_hasattr(self.app, "input_keys")
+            and python_utils.safe_hasattr(self.app, "prep_inputs")
         ):
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments["inputs"])
@@ -365,7 +362,9 @@ class TruChain(mod_app.App):
             # bundled by us into a sequence of strings.
             return "".join(ret)
 
-        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
+        if isinstance(ret, Dict) and python_utils.safe_hasattr(
+            self.app, "output_keys"
+        ):
             # langchain specific:
             if len(self.app.output_keys) == 0:
                 logger.warning(
@@ -381,7 +380,7 @@ class TruChain(mod_app.App):
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        if safe_hasattr(self.app, "output_keys"):
+        if python_utils.safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return self.app(human)[out_key]
         else:
@@ -393,7 +392,7 @@ class TruChain(mod_app.App):
 
         out = await self._acall(human)
 
-        if safe_hasattr(self.app, "output_keys"):
+        if python_utils.safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return out[out_key]
         else:

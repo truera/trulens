@@ -23,9 +23,8 @@ from trulens.core.feedback.endpoint import INSTRUMENT
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.feedback.endpoint import EndpointCallback
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils.python import locals_except
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
 logger = logging.getLogger(__name__)
@@ -118,13 +117,19 @@ class DummyAPI(pydantic.BaseModel):
         ), "Total probabilities should not exceed 1.0 ."
 
     async def apost(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Any:
         # TODO: use async inside post
         return self.post(url=url, payload=payload, timeout=timeout)
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Any:
         """Pretend to make an http post request to some model execution API."""
 
@@ -411,7 +416,7 @@ class DummyEndpoint(Endpoint):
         rpm: float = DEFAULT_RPM * 10,
         **kwargs,
     ):
-        if safe_hasattr(self, "callback_class"):
+        if python_utils.safe_hasattr(self, "callback_class"):
             # Already created with SingletonPerName mechanism
             return
 
@@ -424,12 +429,13 @@ class DummyEndpoint(Endpoint):
         # Will use fake api for fake feedback evals.
 
         super().__init__(
-            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
+            **kwargs,
+            **python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         logger.info(
             "Using DummyEndpoint with %s",
-            locals_except("self", "name", "kwargs", "__class__"),
+            python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         # Instrument existing DummyAPI class. These are used by the custom_app
@@ -439,7 +445,9 @@ class DummyEndpoint(Endpoint):
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
-        if not safe_hasattr(DummyAPICreator.create_method, INSTRUMENT):
+        if not python_utils.safe_hasattr(
+            DummyAPICreator.create_method, INSTRUMENT
+        ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
@@ -448,7 +456,10 @@ class DummyEndpoint(Endpoint):
             )
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Dict:
         return self.api.post(url, payload, timeout=timeout)
 

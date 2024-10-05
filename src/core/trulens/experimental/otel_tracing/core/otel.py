@@ -33,11 +33,11 @@ from opentelemetry.sdk import resources as resources_sdk
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.util import types as types_api
 import pydantic
+from trulens.core._utils.pycompat import NoneType
 from trulens.core._utils.pycompat import TypeAlias
 from trulens.core._utils.pycompat import TypeAliasType
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.serial import Lens
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +82,7 @@ TLensedAttributeValue = TypeAliasType(
         int,
         float,
         bool,
-        python_utils.NoneType,  # TODO(SNOW-1711929): None is not technically allowed as an attribute value.
+        NoneType,  # TODO(SNOW-1711929): None is not technically allowed as an attribute value.
         Sequence["TLensedAttributeValue"],  # type: ignore
         "TLensedAttributes",
     ],
@@ -107,15 +107,15 @@ example, an attribute/value like `{"a": {"b": 1, "c": 2}}` would be encoded as
 
 
 def flatten_value(
-    v: TLensedAttributeValue, lens: Optional[Lens] = None
-) -> Iterable[Tuple[Lens, types_api.AttributeValue]]:
+    v: TLensedAttributeValue, lens: Optional[serial_utils.Lens] = None
+) -> Iterable[Tuple[serial_utils.Lens, types_api.AttributeValue]]:
     """Flatten recursive value into OTEL-compatible attribute values.
 
     See `TLensedAttributes` for more details.
     """
 
     if lens is None:
-        lens = Lens()
+        lens = serial_utils.Lens()
 
     # TODO(SNOW-1711929): OpenTelemetry does not allow None as an attribute
     # value. Unsure what is best to do here.
@@ -149,12 +149,14 @@ def flatten_value(
 
 
 def flatten_lensed_attributes(
-    m: TLensedAttributes, path: Optional[Lens] = None, prefix: str = ""
+    m: TLensedAttributes,
+    path: Optional[serial_utils.Lens] = None,
+    prefix: str = "",
 ) -> types_api.Attributes:
     """Flatten lensed attributes into OpenTelemetry attributes."""
 
     if path is None:
-        path = Lens()
+        path = serial_utils.Lens()
 
     ret = {}
     for k, v in m.items():

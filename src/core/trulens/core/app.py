@@ -31,13 +31,13 @@ import weakref
 
 import pydantic
 from trulens.core import experimental as mod_experimental
-from trulens.core import feedback as mod_feedback
 from trulens.core import instruments as mod_instruments
 from trulens.core import session as mod_session
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future
 from trulens.core.database import base as mod_base_db
 from trulens.core.database import connector as mod_connector
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -49,11 +49,10 @@ from trulens.core.utils import containers as container_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-
-from core.trulens.core.utils import pyschema_utils as pyschema_utils
 
 logger = logging.getLogger(__name__)
 
@@ -115,9 +114,7 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
 
     @classmethod
     def of_json(cls, json: serial_utils.JSON) -> "ComponentView":
-        """
-        Sort the given json into the appropriate component view type.
-        """
+        """Sort the given json into the appropriate component view type."""
 
         cls_obj = pyschema_utils.Class.of_class_info(json)
 
@@ -131,18 +128,14 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
     @staticmethod
     @abstractmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        """
-        Determine whether the given class representation `cls` is of the type to
-        be viewed as this component type.
-        """
+        """Determine whether the given class representation `cls` is of the type to
+        be viewed as this component type."""
         pass
 
     def unsorted_parameters(
         self, skip: Set[str]
     ) -> Dict[str, serial_utils.JSON_BASES_T]:
-        """
-        All basic parameters not organized by other accessors.
-        """
+        """All basic parameters not organized by other accessors."""
 
         ret = {}
 
@@ -180,9 +173,7 @@ class ComponentView(ABC, metaclass=ComponentViewMeta):
 
 
 class TrulensComponent(ComponentView):
-    """
-    Components provided in trulens.
-    """
+    """Components provided in trulens."""
 
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:

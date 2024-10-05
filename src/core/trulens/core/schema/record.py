@@ -21,13 +21,11 @@ from trulens.core._utils.pycompat import Future
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as mod_threading_utils
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
-
-from core.trulens.core.utils import pyschema_utils
 
 T = TypeVar("T")
 
@@ -54,8 +52,8 @@ class RecordAppCall(serial_utils.SerialModel):
         stack = " -> ".join(map(str, self.stack))
         return f"RecordAppCall: {stack}"
 
-    call_id: mod_types_schema.CallID = pydantic.Field(
-        default_factory=mod_types_schema.new_call_id
+    call_id: types_schema.CallID = pydantic.Field(
+        default_factory=types_schema.new_call_id
     )
     """Unique identifier for this call.
 
@@ -124,10 +122,10 @@ class Record(serial_utils.SerialModel, Hashable):
         "arbitrary_types_allowed": True
     }
 
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_id: types_schema.AppID
     """The app that produced this record."""
 
     cost: Optional[base_schema.Cost] = None
@@ -197,7 +195,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
     def __init__(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
         calls: Optional[List[RecordAppCall]] = None,
         **kwargs,
     ):
@@ -217,7 +215,9 @@ class Record(serial_utils.SerialModel, Hashable):
             )
 
         if record_id is None:
-            record_id = obj_id_of_obj(jsonify(self), prefix="record")
+            record_id = json_utils.obj_id_of_obj(
+                json_utils.jsonify(self), prefix="record"
+            )
 
         self.record_id = record_id
 

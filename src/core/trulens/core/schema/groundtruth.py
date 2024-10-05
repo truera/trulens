@@ -5,18 +5,17 @@ from __future__ import annotations
 import logging
 from typing import Dict, Hashable, Optional, Sequence
 
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
 
-class GroundTruth(serial.SerialModel, Hashable):
+class GroundTruth(serial_utils.SerialModel, Hashable):
     """The class that represents a single ground truth data entry."""
 
-    ground_truth_id: mod_types_schema.GroundTruthID  # str
+    ground_truth_id: types_schema.GroundTruthID  # str
     """The unique identifier for the ground truth."""
 
     query: str
@@ -33,24 +32,24 @@ class GroundTruth(serial.SerialModel, Hashable):
     expected_chunks: Optional[Sequence[Dict]] = None
     """Expected chunks for the ground truth."""
 
-    meta: Optional[mod_types_schema.Metadata] = (
+    meta: Optional[types_schema.Metadata] = (
         None  # TODO: which naming are we exactly going with - meta vs metadata?
     )
     """Metadata for the ground truth."""
 
-    dataset_id: mod_types_schema.DatasetID  # str
+    dataset_id: types_schema.DatasetID  # str
     """The dataset ID to which this ground truth belongs.
     See [Dataset.dataset_id][trulens.core.schema.dataset.Dataset.dataset_id]."""
 
     def __init__(
         self,
-        dataset_id: mod_types_schema.DatasetID,
+        dataset_id: types_schema.DatasetID,
         query: str,
         query_id: Optional[str] = None,
         expected_response: Optional[str] = None,
         expected_chunks: Optional[Sequence[Dict]] = None,
-        meta: Optional[mod_types_schema.Metadata] = None,
-        ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
+        meta: Optional[types_schema.Metadata] = None,
+        ground_truth_id: Optional[types_schema.GroundTruthID] = None,
         **kwargs,
     ):
         kwargs["query"] = query
@@ -65,8 +64,8 @@ class GroundTruth(serial.SerialModel, Hashable):
         )  # will be updated below
 
         if ground_truth_id is None:
-            ground_truth_id = obj_id_of_obj(
-                jsonify(self), prefix="ground_truth"
+            ground_truth_id = json_utils.obj_id_of_obj(
+                json_utils.jsonify(self), prefix="ground_truth"
             )
         self.ground_truth_id = ground_truth_id
 

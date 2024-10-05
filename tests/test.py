@@ -29,9 +29,7 @@ import weakref
 import pydantic
 from pydantic import BaseModel
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import JSON_BASES
-from trulens.core.utils.serial import Lens
+from trulens.core.utils import serial as serial_utils
 import yaml
 
 from tests.utils import find_path
@@ -145,7 +143,7 @@ def canonical(obj: T, skips: Set[str]) -> Union[T, Dict, Tuple]:
     if isinstance(obj, float):
         return 0.0
 
-    if isinstance(obj, JSON_BASES):
+    if isinstance(obj, serial_utils.JSON_BASES):
         return obj
 
     if isinstance(obj, Mapping):
@@ -219,7 +217,7 @@ class WithJSONTestCase(TestCase):
     """TestCase mixin class that adds JSON comparisons and golden expectation
     handling."""
 
-    def load_golden(self, golden_path: Union[str, Path]) -> JSON:
+    def load_golden(self, golden_path: Union[str, Path]) -> serial_utils.JSON:
         """Load the golden file `path` and return its contents.
 
         Args:
@@ -243,7 +241,9 @@ class WithJSONTestCase(TestCase):
         with golden_path.open() as f:
             return loader(f)
 
-    def write_golden(self, golden_path: Union[str, Path], data: JSON) -> None:
+    def write_golden(
+        self, golden_path: Union[str, Path], data: serial_utils.JSON
+    ) -> None:
         """If writing golden file is enabled, write the golden file `path` with
         `data` and raise exception indicating so.
 
@@ -279,7 +279,7 @@ class WithJSONTestCase(TestCase):
 
     def assertGoldenJSONEqual(
         self,
-        actual: JSON,
+        actual: serial_utils.JSON,
         golden_path: Union[Path, str],
         skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
@@ -349,9 +349,9 @@ class WithJSONTestCase(TestCase):
 
     def assertJSONEqual(
         self,
-        j1: JSON,
-        j2: JSON,
-        path: Optional[Lens] = None,
+        j1: serial_utils.JSON,
+        j2: serial_utils.JSON,
+        path: Optional[serial_utils.Lens] = None,
         skips: Optional[Set[str]] = None,
         numeric_places: int = 7,
         unordereds: Optional[Set[str]] = None,
@@ -399,7 +399,7 @@ class WithJSONTestCase(TestCase):
         """
 
         skips = skips or set([])
-        path = path or Lens()
+        path = path or serial_utils.Lens()
         unordereds = unordereds or set([])
 
         def recur(j1, j2, path, unordered=False):
@@ -417,7 +417,7 @@ class WithJSONTestCase(TestCase):
 
         self.assertIsInstance(j1, type(j2), ps)
 
-        if isinstance(j1, JSON_BASES):
+        if isinstance(j1, serial_utils.JSON_BASES):
             if isinstance(j1, (int, float)):
                 self.assertAlmostEqual(j1, j2, places=numeric_places, msg=ps)
             else:

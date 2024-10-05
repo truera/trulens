@@ -33,7 +33,7 @@ import pandas as pd
 from sqlalchemy import Engine
 from trulens.apps.basic import TruBasicApp
 from trulens.core import Feedback
-from trulens.core import TruSession
+from trulens.core import session as mod_session
 from trulens.core.database.base import DB
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.migrations import DbRevisions
@@ -44,8 +44,8 @@ from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.database.utils import copy_database
 from trulens.core.database.utils import is_legacy_sqlite
 from trulens.core.feedback import Provider
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.select import Select
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
 
 
 class TestDBSpecifications(TestCase):
@@ -468,7 +468,7 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
 
 
 def _populate_data(db: DB):
-    session = TruSession()
+    session = mod_session.TruSession()
     session.connector.db = (
         db  # because of the singleton behavior, db must be changed manually
     )
@@ -476,14 +476,14 @@ def _populate_data(db: DB):
     fb = Feedback(
         imp=MockFeedback().length,
         feedback_definition_id="mock",
-        selectors={"text": Select.RecordOutput},
+        selectors={"text": select_schema.Select.RecordOutput},
     )
     app = TruBasicApp(
         text_to_text=lambda x: x,
         # app_name="test",
         db=db,
         feedbacks=[fb],
-        feedback_mode=FeedbackMode.WITH_APP_THREAD,
+        feedback_mode=feedback_schema.FeedbackMode.WITH_APP_THREAD,
     )
     _, rec = app.with_record(app.app.__call__, "boo")
 
