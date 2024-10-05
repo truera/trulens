@@ -57,6 +57,7 @@ class SnowflakeConnector(DBConnector):
             "warehouse": warehouse,
             "role": role,
         }
+
         if snowpark_session is None:
             kwargs_to_set = []
             for k, v in connection_parameters.items():
@@ -66,6 +67,7 @@ class SnowflakeConnector(DBConnector):
                 raise ValueError(
                     f"If not supplying `snowpark_session` then must set `{kwargs_to_set}`!"
                 )
+
             del connection_parameters["schema"]
             snowpark_session = Session.builder.configs(
                 connection_parameters
@@ -75,14 +77,7 @@ class SnowflakeConnector(DBConnector):
                 snowpark_session, database, schema
             )
             snowpark_session.use_schema(schema)
-            self._init_with_snowpark_session(
-                snowpark_session,
-                init_server_side,
-                database_redact_keys,
-                database_prefix,
-                database_args,
-                database_check_revision,
-            )
+            connection_parameters["schema"] = schema
         else:
             kwargs_to_not_set = []
             for k, v in connection_parameters.items():
@@ -92,14 +87,16 @@ class SnowflakeConnector(DBConnector):
                 raise ValueError(
                     f"Cannot supply both `snowpark_session` and `{kwargs_to_not_set}`!"
                 )
-            self._init_with_snowpark_session(
-                snowpark_session,
-                init_server_side,
-                database_redact_keys,
-                database_prefix,
-                database_args,
-                database_check_revision,
-            )
+
+        self._init_with_snowpark_session(
+            snowpark_session,
+            init_server_side,
+            database_redact_keys,
+            database_prefix,
+            database_args,
+            database_check_revision,
+            connection_parameters=connection_parameters,
+        )
 
     def _init_with_snowpark_session(
         self,
@@ -109,6 +106,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
+        connection_parameters: Optional[Dict[str, Optional[str]]] = None,
     ):
         database_args = database_args or {}
         if "engine_params" not in database_args:
@@ -126,26 +124,22 @@ class SnowflakeConnector(DBConnector):
             )
         database_args["engine_params"]["paramstyle"] = "qmark"
 
-        required_settings = {
-            "account": snowpark_session.get_current_account(),
-            "user": snowpark_session.get_current_user(),
-            "database": snowpark_session.get_current_database(),
-            "schema": snowpark_session.get_current_schema(),
-            "warehouse": snowpark_session.get_current_warehouse(),
-            "role": snowpark_session.get_current_role(),
-        }
-        for k, v in required_settings.items():
-            if not v:
-                raise ValueError(f"`{k}` not set in `snowpark_session`!")
+        if connection_parameters is None:
+            connection_parameters = {
+                "account": snowpark_session.get_current_account(),
+                "user": snowpark_session.get_current_user(),
+                "database": snowpark_session.get_current_database(),
+                "schema": snowpark_session.get_current_schema(),
+                "warehouse": snowpark_session.get_current_warehouse(),
+                "role": snowpark_session.get_current_role(),
+                "password": "password",
+            }
+            for k, v in connection_parameters.items():
+                if not v:
+                    raise ValueError(f"`{k}` not set in `snowpark_session`!")
 
         database_url = URL(
-            account=snowpark_session.get_current_account(),
-            user=snowpark_session.get_current_user(),
-            password="password",
-            database=snowpark_session.get_current_database(),
-            schema=snowpark_session.get_current_schema(),
-            warehouse=snowpark_session.get_current_warehouse(),
-            role=snowpark_session.get_current_role(),
+            **connection_parameters,
         )
         database_args.update({
             k: v
