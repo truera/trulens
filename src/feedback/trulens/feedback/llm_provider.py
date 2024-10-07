@@ -1616,7 +1616,7 @@ class LLMProvider(Provider):
             )
 
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-            match = score_pattern.search(reason["reason"])
+            match = score_pattern.search(reason.get("reason", ""))
             normalized_reason = None
             if match:
                 original_reason_score = float(match.group(1))
@@ -1817,7 +1817,7 @@ class LLMProvider(Provider):
                 )
 
                 score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-                match = score_pattern.search(reason["reason"])
+                match = score_pattern.search(reason.get("reason", ""))
                 normalized_reason = None
                 if match:
                     original_reason_score = float(match.group(1))
