@@ -1632,7 +1632,10 @@ class LLMProvider(Provider):
                     "reason"
                 ].replace(original_string, replacement_string)
 
-            return index, score, normalized_reason
+            if normalized_reason is not None:
+                return index, score, normalized_reason
+            else:
+                return index, score, reason
 
         results = []
 
@@ -1830,7 +1833,10 @@ class LLMProvider(Provider):
                         "reason"
                     ].replace(original_string, replacement_string)
 
-                return index, score, normalized_reason
+                if normalized_reason is not None:
+                    return index, score, normalized_reason
+                else:
+                    return index, score, reason
 
         results = []
 
