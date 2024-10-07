@@ -1059,13 +1059,13 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "rich"
-version = "13.9.1"
+version = "13.9.2"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "rich-13.9.1-py3-none-any.whl", hash = "sha256:b340e739f30aa58921dc477b8adaa9ecdb7cecc217be01d93730ee1bc8aa83be"},
-    {file = "rich-13.9.1.tar.gz", hash = "sha256:097cffdf85db1babe30cc7deba5ab3a29e1b9885047dab24c57e9a7f8a9c1466"},
+    {file = "rich-13.9.2-py3-none-any.whl", hash = "sha256:8c82a3d3f8dcfe9e734771313e606b39d8247bb6b826e196f4914b333b743cf1"},
+    {file = "rich-13.9.2.tar.gz", hash = "sha256:51a2c62057461aaf7152b4d611168f93a9fc73068f8ded2790f29fe2b5366d0c"},
 ]
 
 [package.dependencies]
@@ -1168,21 +1168,22 @@ secure-local-storage = ["keyring (>=23.1.0,<26.0.0)"]
 
 [[package]]
 name = "snowflake-core"
-version = "0.12.1"
+version = "0.13.0"
 description = "Snowflake Python API for Resource Management"
 optional = false
-python-versions = "<3.12,>=3.8"
+python-versions = ">=3.8"
 files = [
-    {file = "snowflake_core-0.12.1-py3-none-any.whl", hash = "sha256:14eb7af8d39b405c72b81bb9cbf78d9ff6e30a6df22469112f04e502ab436556"},
-    {file = "snowflake_core-0.12.1.tar.gz", hash = "sha256:e2ce9f23580fda79ba4d14fb3646f4f09bb5fa47ef488b66095e482e4ac45656"},
+    {file = "snowflake_core-0.13.0-py3-none-any.whl", hash = "sha256:86eb7b20bc408b9950ff23515a193b469f12b9b9a83bc12cf78383a9aa3d182a"},
+    {file = "snowflake_core-0.13.0.tar.gz", hash = "sha256:ffcfe2fff209c54be3df52bb792235255c2107cc1e2f06e47819be1c1d55071f"},
 ]
 
 [package.dependencies]
 atpublic = ">=4"
 pydantic = ">=2"
 python-dateutil = ">=2.8.2"
+pyyaml = "*"
 requests = "*"
-snowflake-snowpark-python = ">=1.5.0,<2.0.0"
+snowflake-connector-python = "*"
 urllib3 = "*"
 
 [[package]]
@@ -1346,7 +1347,7 @@ files = [
 
 [[package]]
 name = "trulens-core"
-version = "1.0.7"
+version = "1.0.10"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
