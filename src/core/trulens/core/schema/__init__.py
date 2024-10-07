@@ -18,3 +18,21 @@ having to construct it. Additionally, JSONized objects like `AppDefinition.app`
 feature information about the encoded object types in the dictionary under the
 `core/utils/constantx.py:CLASS_INFO` key.
 """
+
+# NOTE: This file does not follow the no-init aliases import standard.
+
+from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.feedback import FeedbackDefinition
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.feedback import FeedbackResult
+from trulens.core.schema.record import Record
+from trulens.core.schema.select import Select
+
+__all__ = [
+    "AppDefinition",
+    "Select",
+    "FeedbackDefinition",
+    "FeedbackResult",
+    "FeedbackMode",
+    "Record",
+]
