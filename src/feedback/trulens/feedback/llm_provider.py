@@ -1486,11 +1486,18 @@ class LLMProvider(Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         llm_messages.append({"role": "user", "content": user_prompt})
 
-        return eval(
-            self.endpoint.run_in_pace(
-                func=self._create_chat_completion, messages=llm_messages
+        try:
+            result = eval(
+                self.endpoint.run_in_pace(
+                    func=self._create_chat_completion, messages=llm_messages
+                )
             )
-        )
+            if isinstance(result, list):
+                return result
+        except Exception:
+            pass
+
+        return statements
 
     def groundedness_measure_with_cot_reasons(
         self,
@@ -1760,12 +1767,17 @@ class LLMProvider(Provider):
             user_prompt = prompts.LLM_ABSTENTION_USER.format(
                 statement=statement
             )
-            score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM.format(min_score=0, max_score=1),
-                user_prompt,
-                min_score_val=0,
-                max_score_val=1,
-            )
+            try:
+                score = self.generate_score(
+                    prompts.LLM_ABSTENTION_SYSTEM.format(
+                        min_score=0, max_score=1
+                    ),
+                    user_prompt,
+                    min_score_val=0,
+                    max_score_val=1,
+                )
+            except Exception:
+                score = 0
             return score
 
         def evaluate_answerability(question, source):
