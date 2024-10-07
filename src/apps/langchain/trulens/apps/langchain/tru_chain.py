@@ -15,16 +15,15 @@ from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
+from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.core import app as mod_app
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
+from trulens.core import instruments as mod_instruments
 from trulens.core.schema import select as select_schema
+from trulens.core.utils import containers as container_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.containers import dict_set_with_multikey
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent
@@ -48,7 +47,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class LangChainInstrument(Instrument):
+class LangChainInstrument(mod_instruments.Instrument):
     """Instrumentation for LangChain apps."""
 
     class Default:
@@ -75,44 +74,46 @@ class LangChainInstrument(Instrument):
             # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
             # langchain.adapters.openai.ChatCompletion, # no bases
             BaseTool,
-            WithFeedbackFilterDocuments,
+            langchain_guardrails.WithFeedbackFilterDocuments,
         }
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            {},
-            {
-                (
-                    "invoke",
-                    "ainvoke",
-                    "stream",
-                    "astream",
-                ): Runnable,
-                ("save_context", "clear"): BaseMemory,
-                (
-                    "run",
-                    "arun",
-                    "_call",
-                    "__call__",
-                    "_acall",
-                    "acall",
-                ): Chain,
-                (
-                    "_get_relevant_documents",
-                    "get_relevant_documents",
-                    "aget_relevant_documents",
-                    "_aget_relevant_documents",
-                ): RunnableSerializable,
-                # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                # the prompt calls might be too small to be interesting
-                ("plan", "aplan"): (
-                    BaseSingleActionAgent,
-                    BaseMultiActionAgent,
-                ),
-                ("_arun", "_run"): BaseTool,
-            },
+        METHODS: Dict[str, mod_instruments.ClassFilter] = (
+            container_utils.dict_set_with_multikey(
+                {},
+                {
+                    (
+                        "invoke",
+                        "ainvoke",
+                        "stream",
+                        "astream",
+                    ): Runnable,
+                    ("save_context", "clear"): BaseMemory,
+                    (
+                        "run",
+                        "arun",
+                        "_call",
+                        "__call__",
+                        "_acall",
+                        "acall",
+                    ): Chain,
+                    (
+                        "_get_relevant_documents",
+                        "get_relevant_documents",
+                        "aget_relevant_documents",
+                        "_aget_relevant_documents",
+                    ): RunnableSerializable,
+                    # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                    # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                    # the prompt calls might be too small to be interesting
+                    ("plan", "aplan"): (
+                        BaseSingleActionAgent,
+                        BaseMultiActionAgent,
+                    ),
+                    ("_arun", "_run"): BaseTool,
+                },
+            )
         )
         """Methods to be instrumented.
 
