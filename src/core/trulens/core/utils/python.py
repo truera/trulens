@@ -1167,20 +1167,25 @@ class SingletonPerNameMeta(type):
 
 
 class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
+    """This is the metaclass for creating Pydantic models that are also required to be singletons"""
+
     pass
 
 
 class InstanceRefMixin:
+    """Mixin for classes that need to keep track of their instances."""
+
     _instance_refs: Dict[
-        Type, List[weakref.ReferenceType[InstanceRefMixin]]
-    ] = defaultdict(list)
+        Type, weakref.WeakSet[weakref.ReferenceType[InstanceRefMixin]]
+    ] = defaultdict(weakref.WeakSet)
 
     def __init__(self, register_instance: bool = True):
         if register_instance:
-            self._instance_refs[self.__class__].append(weakref.ref(self))
+            self._instance_refs[self.__class__].add(weakref.ref(self))
 
     @classmethod
     def get_instances(cls):
+        """Get all instances of the class."""
         for inst_ref in cls._instance_refs[cls]:
             inst = inst_ref()
             if inst is not None:
