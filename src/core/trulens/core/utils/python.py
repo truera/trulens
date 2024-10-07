@@ -1121,6 +1121,12 @@ class SingletonPerNameMeta(type):
             cls._singleton_instances[k] = super(
                 SingletonPerNameMeta, cls
             ).__call__(*args, **kwargs)
+        elif args or kwargs:
+            logger.warning(
+                "Singleton instance %s already exists for name = %s.",
+                cls.__name__,
+                name,
+            )
         return cls._singleton_instances[k]
 
     @staticmethod
