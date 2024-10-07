@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 from trulens.core.feedback import feedback as mod_feedback
-from trulens.core.utils.threading import ThreadPoolExecutor
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,9 @@ class context_filter:
             bindings = sig.bind(*args, **kwargs)
 
             contexts = func(*args, **kwargs)
-            with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
+            with threading_utils.ThreadPoolExecutor(
+                max_workers=max(1, len(contexts))
+            ) as ex:
                 future_to_context = {
                     ex.submit(
                         lambda context=context: self.feedback(

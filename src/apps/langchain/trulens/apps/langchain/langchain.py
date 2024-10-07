@@ -1,6 +1,7 @@
-"""
-Utilities for langchain apps. Includes component categories that organize
-various langchain classes and example classes:
+"""Utilities for langchain apps.
+
+Includes component categories that organize various langchain classes and
+example classes:
 """
 
 from typing import Type
