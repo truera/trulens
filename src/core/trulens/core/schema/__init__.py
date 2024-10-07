@@ -19,7 +19,7 @@ feature information about the encoded object types in the dictionary under the
 `core/utils/constantx.py:CLASS_INFO` key.
 """
 
-# NOTE: This file does not follow the no-init aliases import standard.
+# WARNING: This file does not follow the no-init aliases import standard.
 
 from trulens.core.schema.app import AppDefinition
 from trulens.core.schema.feedback import FeedbackDefinition

@@ -1,4 +1,4 @@
-# NOTE: This file does not follow the no-init aliases import standard.
+# WARNING: This file does not follow the no-init aliases import standard.
 
 from trulens.core.feedback.endpoint import Endpoint
 from trulens.core.feedback.endpoint import EndpointCallback

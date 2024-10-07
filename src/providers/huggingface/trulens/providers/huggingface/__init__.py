@@ -7,7 +7,7 @@
     pip install trulens-providers-huggingface
     ```
 """
-# NOTE: This file does not follow the no-init aliases import standard.
+# WARNING: This file does not follow the no-init aliases import standard.
 
 from importlib.metadata import version
 
