@@ -28,6 +28,7 @@ import pydantic
 from trulens.core import experimental as mod_experimental
 from trulens.core import feedback
 from trulens.core._utils import optional as optional_utils
+from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database.connector import DBConnector
 from trulens.core.database.connector import DefaultDBConnector
 from trulens.core.schema import app as mod_app_schema
@@ -44,7 +45,6 @@ from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.core.utils import threading as tru_threading
 from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.python import Future  # code style exception
 from trulens.core.utils.text import format_seconds
 
 if TYPE_CHECKING:
