@@ -1,6 +1,4 @@
-"""
-# LlamaIndex instrumentation.
-"""
+"""LlamaIndex instrumentation."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -20,27 +18,26 @@ from typing import (
 
 import llama_index
 from pydantic import Field
-from trulens.apps.langchain import LangChainInstrument
+from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as mod_app
-from trulens.core._utils.pycompat import EmptyType
-from trulens.core._utils.pycompat import getmembers_static
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
+from trulens.core import instruments as mod_instruments
+from trulens.core._utils.pycompat import EmptyType  # import style exception
+from trulens.core._utils.pycompat import (
+    getmembers_static,  # import style exception
+)
+
+# TODO: Do we need to depend on this?
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-
-# TODO: Do we need to depend on this?
-from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.imports import get_package_version
-from trulens.core.utils.imports import parse_version
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-version = get_package_version("llama_index")
+version = import_utils.get_package_version("llama_index")
 
 # If llama index is not installed, will get a dummy for llama_index. In that
 # case or if it is installed and sufficiently new version, continue with
@@ -49,8 +46,8 @@ version = get_package_version("llama_index")
 
 legacy = (
     version is None
-    or isinstance(llama_index, Dummy)
-    or version < parse_version("0.10.0")
+    or isinstance(llama_index, import_utils.Dummy)
+    or version < import_utils.parse_version("0.10.0")
 )
 
 if not legacy:
@@ -136,14 +133,14 @@ else:
 pp = PrettyPrinter()
 
 
-class LlamaInstrument(Instrument):
+class LlamaInstrument(mod_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
         MODULES = {"llama_index.", "llama_hub."}.union(
-            LangChainInstrument.Default.MODULES
+            mod_tru_chain.LangChainInstrument.Default.MODULES
         )
         """Modules by prefix to instrument.
 
@@ -174,58 +171,68 @@ class LlamaInstrument(Instrument):
             BaseNodePostprocessor,
             QueryEngineComponent,
             RetrieverComponent,
-        }.union(LangChainInstrument.Default.CLASSES())
+        }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            dict(LangChainInstrument.Default.METHODS),
-            {
-                # LLM:
-                (
-                    "chat",
-                    "complete",
-                    "stream_chat",
-                    "stream_complete",
-                    "achat",
-                    "acomplete",
-                    "astream_chat",
-                    "astream_complete",
-                ): BaseLLM,
-                # BaseTool/AsyncBaseTool:
-                ("__call__", "call"): BaseTool,
-                ("acall"): AsyncBaseTool,
-                # Memory:
-                ("put"): BaseMemory,
-                # Misc.:
-                ("get_response"): Refine,
-                ("predict", "apredict", "stream", "astream"): BaseLLMPredictor,
-                (
-                    "query",
-                    "aquery",
-                    "synthesize",
-                    "asynthesize",
-                ): BaseQueryEngine,
-                (
-                    "chat",
-                    "achat",
-                    "stream_chat",
-                    "astream_chat",
-                    "complete",
-                    "acomplete",
-                    "stream_complete",
-                    "astream_complete",
-                ): (BaseChatEngine,),
-                # BaseRetriever/BaseQueryEngine:
-                ("retrieve", "_retrieve", "_aretrieve"): (
-                    BaseQueryEngine,
-                    BaseRetriever,
-                    WithFeedbackFilterNodes,
-                ),
-                # BaseNodePostProcessor
-                ("_postprocess_nodes"): BaseNodePostprocessor,
-                # Components
-                ("_run_component"): (QueryEngineComponent, RetrieverComponent),
-            },
+        METHODS: Dict[str, mod_instruments.ClassFilter] = (
+            container_utils.dict_set_with_multikey(
+                dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
+                {
+                    # LLM:
+                    (
+                        "chat",
+                        "complete",
+                        "stream_chat",
+                        "stream_complete",
+                        "achat",
+                        "acomplete",
+                        "astream_chat",
+                        "astream_complete",
+                    ): BaseLLM,
+                    # BaseTool/AsyncBaseTool:
+                    ("__call__", "call"): BaseTool,
+                    ("acall"): AsyncBaseTool,
+                    # Memory:
+                    ("put"): BaseMemory,
+                    # Misc.:
+                    ("get_response"): Refine,
+                    (
+                        "predict",
+                        "apredict",
+                        "stream",
+                        "astream",
+                    ): BaseLLMPredictor,
+                    (
+                        "query",
+                        "aquery",
+                        "synthesize",
+                        "asynthesize",
+                    ): BaseQueryEngine,
+                    (
+                        "chat",
+                        "achat",
+                        "stream_chat",
+                        "astream_chat",
+                        "complete",
+                        "acomplete",
+                        "stream_complete",
+                        "astream_complete",
+                    ): (BaseChatEngine,),
+                    # BaseRetriever/BaseQueryEngine:
+                    ("retrieve", "_retrieve", "_aretrieve"): (
+                        BaseQueryEngine,
+                        BaseRetriever,
+                        WithFeedbackFilterNodes,
+                    ),
+                    # BaseNodePostProcessor
+                    ("_postprocess_nodes"): BaseNodePostprocessor,
+                    # Components
+                    ("_run_component"): (
+                        QueryEngineComponent,
+                        RetrieverComponent,
+                    ),
+                },
+            )
         )
         """Methods to instrument."""
 
