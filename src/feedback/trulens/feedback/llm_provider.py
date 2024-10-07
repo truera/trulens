@@ -1775,7 +1775,7 @@ class LLMProvider(Provider):
                     max_score_val=1,
                 )
             except Exception:
-                score = 0
+                score = 0  # assume not abstention if abstention scoring fails
             return score
 
         def evaluate_answerability(question, source):
