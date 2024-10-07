@@ -1495,6 +1495,9 @@ class LLMProvider(Provider):
             if isinstance(result, list):
                 return result
         except Exception:
+            warnings.warn(
+                "Failed to process and remove trivial statements. Proceeding with all statements."
+            )
             pass
 
         return statements
@@ -1591,12 +1594,8 @@ class LLMProvider(Provider):
                 messages=llm_messages,
                 temperature=temperature,
             ).split("\n")
-        try:
-            hypotheses = self._remove_trivial_statements(hypotheses)
-        except Exception as e:
-            logger.error(
-                f"Error removing trivial statements: {e}. Proceeding with all statements."
-            )
+
+        hypotheses = self._remove_trivial_statements(hypotheses)
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
