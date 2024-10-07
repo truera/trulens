@@ -8,9 +8,8 @@ import sqlalchemy
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
 from trulens.core.database import base as mod_db
-from trulens.core.database.exceptions import DatabaseVersionException
-from trulens.core.database.migrations import DbRevisions
-from trulens.core.database.migrations import upgrade_db
+from trulens.core.database import exceptions as mod_db_exceptions
+from trulens.core.database import migrations as mod_db_migrations
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +101,7 @@ def check_db_revision(
     if prior_prefix is not None:
         # Check if tables using the old/empty prefix exist.
         if prior_prefix + "alembic_version" in version_tables:
-            raise DatabaseVersionException.reconfigured(
+            raise mod_db_exceptions.DatabaseVersionException.reconfigured(
                 prior_prefix=prior_prefix
             )
     else:
@@ -122,7 +121,7 @@ def check_db_revision(
                     )
 
                 # Guess prior prefix as the single one with version table name.
-                raise DatabaseVersionException.reconfigured(
+                raise mod_db_exceptions.DatabaseVersionException.reconfigured(
                     prior_prefix=version_tables[0].replace(
                         "alembic_version", ""
                     )
@@ -130,13 +129,13 @@ def check_db_revision(
 
     if is_legacy_sqlite(engine):
         logger.info("Found legacy SQLite file: %s", engine.url)
-        raise DatabaseVersionException.behind()
+        raise mod_db_exceptions.DatabaseVersionException.behind()
 
-    revisions = DbRevisions.load(engine, prefix=prefix)
+    revisions = mod_db_migrations.DbRevisions.load(engine, prefix=prefix)
 
     if revisions.current is None:
         logger.debug("Creating database")
-        upgrade_db(
+        mod_db_migrations.upgrade_db(
             engine, revision="head", prefix=prefix
         )  # create automatically if it doesn't exist
 
@@ -144,10 +143,10 @@ def check_db_revision(
         logger.debug("Database schema is up to date: %s", revisions)
 
     elif revisions.behind:
-        raise DatabaseVersionException.behind()
+        raise mod_db_exceptions.DatabaseVersionException.behind()
 
     elif revisions.ahead:
-        raise DatabaseVersionException.ahead()
+        raise mod_db_exceptions.DatabaseVersionException.ahead()
 
     else:
         raise NotImplementedError(
