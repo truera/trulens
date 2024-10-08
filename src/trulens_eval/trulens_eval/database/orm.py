@@ -9,7 +9,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.core.database.orm import DEFAULT_DATABASE_PREFIX
 from trulens.core.database.orm import ORM
 from trulens.core.database.orm import BaseWithTablePrefix
 from trulens.core.database.orm import make_base_for_prefix
