@@ -1563,15 +1563,6 @@ class LLMProvider(Provider):
         groundedness_scores = {}
         reasons_str = ""
 
-        output_space = self._determine_output_space(
-            min_score_val, max_score_val
-        )
-
-        if criteria and output_space:
-            Groundedness.override_criteria_and_output_space(
-                criteria, output_space
-            )
-
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
