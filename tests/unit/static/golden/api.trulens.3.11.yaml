@@ -2090,15 +2090,10 @@ trulens.feedback.groundtruth.GroundTruthAggregator:
     brier_score: builtins.function
     custom_agg_funcs: typing.Dict[builtins.str, typing.Callable]
     ece: builtins.function
-    ir_hit_rate: builtins.function
     k: typing.Optional[builtins.int, builtins.NoneType]
     kendall_tau: builtins.function
     mae: builtins.function
-    mrr: builtins.function
     n_bins: builtins.int
-    ndcg_at_k: builtins.function
-    precision_at_k: builtins.function
-    recall_at_k: builtins.function
     register_custom_agg_func: builtins.function
     spearman_correlation: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -2117,8 +2112,13 @@ trulens.feedback.groundtruth.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    ir_hit_rate: builtins.function
     mae: builtins.property
+    mrr: builtins.function
+    ndcg_at_k: builtins.function
+    precision_at_k: builtins.function
     provider: trulens.feedback.llm_provider.LLMProvider
+    recall_at_k: builtins.function
     rouge: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.feedback.llm_provider:

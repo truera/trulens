@@ -168,6 +168,26 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         else:
             return None
 
+    def _find_golden_context_chunks_and_scores(
+        self, prompt: str
+    ) -> Optional[List[Tuple[str, float]]]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
+        golden_context_chunks = [
+            (
+                chunk["text"],
+                chunk["expect_score"] if "expect_score" in chunk else 1,
+            )
+            for qr in self.ground_truth
+            for chunk in qr["expected_chunks"]
+            if qr["query"] == prompt
+        ]
+        if golden_context_chunks:
+            return golden_context_chunks
+        else:
+            return None
+
     def _find_score(self, prompt: str, response: str) -> Optional[float]:
         if self.ground_truth_imp is not None:
             return self.ground_truth_imp(prompt)
@@ -232,6 +252,288 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             ret = np.nan
 
         return ret
+
+    def ndcg_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute NDCG@k for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute NDCG. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed NDCG@k score.
+        """
+        # Step 1: Find the ground truth context chunks for the given query
+        ground_truth_context_chunks_and_scores = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks_and_scores:
+            k = k or len(
+                retrieved_context_chunks
+            )  # If k is None, use all retrieved chunks
+
+            # Step 2: Extract ground truth chunks and their relevance scores
+            golden_chunks = [
+                chunk[0] for chunk in ground_truth_context_chunks_and_scores
+            ]
+            golden_scores = [
+                chunk[1] for chunk in ground_truth_context_chunks_and_scores
+            ]
+
+            # Step 3: If relevance scores are provided, sort retrieved chunks by scores in descending order
+            if relevance_scores:
+                # Zip together retrieved chunks and relevance scores
+                retrieved_with_scores = list(
+                    zip(retrieved_context_chunks, relevance_scores)
+                )
+                # Sort by scores in descending order
+                retrieved_with_scores.sort(key=lambda x: x[1], reverse=True)
+                # Extract the sorted chunks
+                retrieved_context_chunks = [
+                    chunk for chunk, _ in retrieved_with_scores
+                ]
+
+            # Step 4: Create a binary relevance vector for the retrieved chunks based on golden chunks
+            rel_scores = [0.0] * len(
+                retrieved_context_chunks
+            )  # Initialize with 0 relevance for all
+            for i, chunk in enumerate(retrieved_context_chunks[:k]):
+                if chunk in golden_chunks:
+                    index_in_golden = golden_chunks.index(chunk)
+                    rel_scores[i] = golden_scores[
+                        index_in_golden
+                    ]  # Use the true relevance score
+
+            # Step 5: Prepare the ground truth scores as a vector
+            # Ideal DCG (IDCG) is calculated by placing all relevant items at the top in descending order
+            ideal_golden_scores = sorted(golden_scores, reverse=True)[:k]
+
+            # Step 6: Calculate NDCG@k using sklearn's ndcg_score
+            return ndcg_score(
+                y_true=np.array([ideal_golden_scores]),
+                y_score=np.array([rel_scores[:k]]),  # Consider only top-k items
+                k=k,
+            )
+        else:
+            return np.nan
+
+    def precision_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute Precision@k for a given query and retrieved context chunks, considering tie handling.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute Precision. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Precision@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort retrieved chunks by relevance scores if scores are provided
+            if relevance_scores:
+                # Get the top-k threshold score (with tie handling)
+                sorted_scores = sorted(relevance_scores, reverse=True)
+                kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
+
+                # Include all indices with scores >= kth score
+                top_k_indices = [
+                    i
+                    for i, score in enumerate(relevance_scores)
+                    if score >= kth_score
+                ]
+                retrieved_top_k = [
+                    retrieved_context_chunks[i] for i in top_k_indices
+                ]
+            else:
+                # If no relevance scores, use the top-k retrieved chunks as they are
+                retrieved_top_k = retrieved_context_chunks[:k]
+
+            # Calculate precision at k with tie handling
+            relevant_retrieved = len([
+                chunk for chunk in retrieved_top_k if chunk in golden_chunks
+            ])
+            return (
+                relevant_retrieved / len(retrieved_top_k)
+                if len(retrieved_top_k) > 0
+                else 0.0
+            )
+        else:
+            return np.nan
+
+    def recall_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute Recall@k for a given query and retrieved context chunks, considering tie handling.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute Recall. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Recall@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort retrieved chunks by relevance scores if scores are provided
+            if relevance_scores:
+                # Get the top-k threshold score (with tie handling)
+                sorted_scores = sorted(relevance_scores, reverse=True)
+                kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
+
+                # Include all indices with scores >= kth score
+                top_k_indices = [
+                    i
+                    for i, score in enumerate(relevance_scores)
+                    if score >= kth_score
+                ]
+                retrieved_top_k = [
+                    retrieved_context_chunks[i] for i in top_k_indices
+                ]
+            else:
+                # If no relevance scores, use the top-k retrieved chunks as they are
+                retrieved_top_k = retrieved_context_chunks[:k]
+
+            # Calculate recall at k with tie handling
+            relevant_retrieved = len([
+                chunk for chunk in retrieved_top_k if chunk in golden_chunks
+            ])
+            return (
+                relevant_retrieved / len(golden_chunks)
+                if len(golden_chunks) > 0
+                else 0.0
+            )
+        else:
+            return np.nan
+
+    def mrr(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+    ) -> float:
+        """
+        Compute Mean Reciprocal Rank (MRR) for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+
+        Returns:
+            float: Computed MRR score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort the retrieved chunks by relevance scores if provided
+            if relevance_scores:
+                retrieved_with_scores = list(
+                    zip(retrieved_context_chunks, relevance_scores)
+                )
+                # Sort in descending order of relevance score
+                retrieved_with_scores.sort(key=lambda x: x[1], reverse=True)
+                retrieved_context_chunks = [
+                    chunk for chunk, _ in retrieved_with_scores
+                ]
+
+            # Find the rank of the first relevant item in the sorted list
+            for i, chunk in enumerate(retrieved_context_chunks):
+                if chunk in golden_chunks:
+                    return 1 / (
+                        i + 1
+                    )  # MRR is the reciprocal of the rank (1-based index)
+
+            return 0.0  # No relevant item found
+        else:
+            return np.nan
+
+    def ir_hit_rate(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute IR Hit Rate (Hit Rate@k) for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            k (Optional[int]): Rank position up to which to compute Hit Rate. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Hit Rate@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
+            return (
+                1.0
+                if any(
+                    chunk in golden_chunks
+                    for chunk in retrieved_context_chunks[:k]
+                )
+                else 0.0
+            )
+        else:
+            return np.nan
 
     def absolute_error(
         self, prompt: str, response: str, score: float
@@ -436,119 +738,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         self.custom_agg_funcs[name] = func
 
         setattr(self, name, lambda scores: func(scores, self))
-
-    def ndcg_at_k(self, scores: List[float]) -> float:
-        """
-        NDCG can be used for meta-evaluation of other feedback results, returned as relevance scores.
-
-        Args:
-            scores (List[float]): relevance scores returned by feedback function
-
-        Returns:
-            float: NDCG@k
-        """
-        assert self.k is not None, "k must be set for ndcg_at_k"
-        relevance_scores = np.array([scores])
-        true_labels = np.array([self.true_labels])
-        ndcg_values = [ndcg_score(relevance_scores, true_labels, k=self.k)]
-        return np.mean(ndcg_values)
-
-    def precision_at_k(self, scores: List[float]) -> float:
-        """
-        Calculate the precision at K. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Precision@k
-        """
-        assert self.k is not None, "k must be set for precision_at_k"
-        sorted_scores = sorted(scores, reverse=True)
-        kth_score = sorted_scores[min(self.k - 1, len(scores) - 1)]
-
-        # Indices of items with scores >= kth highest score
-        top_k_indices = [
-            i for i, score in enumerate(scores) if score >= kth_score
-        ]
-
-        # Calculate precision
-        true_positives = sum(np.take(self.true_labels, top_k_indices))
-        return true_positives / len(top_k_indices) if top_k_indices else 0
-
-    def recall_at_k(self, scores: List[float]) -> float:
-        """
-        Calculate the recall at K. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Recall@k
-        """
-        assert self.k is not None, "k must be set for recall_at_k"
-        sorted_scores = sorted(scores, reverse=True)
-        kth_score = sorted_scores[min(self.k - 1, len(scores) - 1)]
-
-        # Indices of items with scores >= kth highest score
-        top_k_indices = [
-            i for i, score in enumerate(scores) if score >= kth_score
-        ]
-
-        # Calculate recall
-        relevant_indices = np.where(self.true_labels)[0]
-        hits = sum(idx in top_k_indices for idx in relevant_indices)
-        total_relevant = sum(self.true_labels)
-
-        return hits / total_relevant if total_relevant > 0 else 0
-
-    def ir_hit_rate(self, scores: List[float]) -> float:
-        """
-        Calculate the IR hit rate at top k.
-        the proportion of queries for which at least one relevant document is retrieved in the top k results. This metric evaluates whether a relevant document is present among the top k retrieved
-        Args:
-            scores (List[Float]): The list of scores generated by the model.
-
-        Returns:
-            float: The hit rate at top k. Binary 0 or 1.
-        """
-        assert self.k is not None, "k must be set for ir_hit_rate"
-
-        scores_with_relevance = list(zip(scores, self.true_labels))
-
-        # consistently handle duplicate scores with tie breaking (sorted is stable in python)
-        sorted_scores = sorted(
-            scores_with_relevance, key=lambda x: x[0], reverse=True
-        )
-
-        top_k = sorted_scores[: self.k]
-
-        # Check if there is at least one relevant document in the top k
-        hits = any([relevance for _, relevance in top_k])
-
-        return 1.0 if hits else 0.0
-
-    def mrr(self, scores: List[float]) -> float:
-        """
-        Calculate the mean reciprocal rank. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Mean reciprocal rank
-        """
-
-        reciprocal_ranks = []
-        for score, relevance in zip(scores, self.true_labels):
-            if relevance == 1:
-                reciprocal_ranks.append(1 / (scores.index(score) + 1))
-        mean_reciprocal_rank = (
-            sum(reciprocal_ranks) / len(reciprocal_ranks)
-            if reciprocal_ranks
-            else 0
-        )
-        return round(mean_reciprocal_rank, 4)
 
     def auc(self, scores: List[float]) -> float:
         """

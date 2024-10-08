@@ -2429,6 +2429,7 @@ trulens_eval.feedback.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    ir_hit_rate: builtins.function
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
@@ -2448,12 +2449,16 @@ trulens_eval.feedback.GroundTruthAgreement:
     model_validate: builtins.classmethod
     model_validate_json: builtins.classmethod
     model_validate_strings: builtins.classmethod
+    mrr: builtins.function
+    ndcg_at_k: builtins.function
     of_class: builtins.staticmethod
     of_object: builtins.staticmethod
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    precision_at_k: builtins.function
     provider: trulens.feedback.llm_provider.LLMProvider
+    recall_at_k: builtins.function
     replace: builtins.function
     rouge: builtins.function
     schema: builtins.classmethod
@@ -2991,6 +2996,7 @@ trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    ir_hit_rate: builtins.function
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
@@ -3010,12 +3016,16 @@ trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     model_validate: builtins.classmethod
     model_validate_json: builtins.classmethod
     model_validate_strings: builtins.classmethod
+    mrr: builtins.function
+    ndcg_at_k: builtins.function
     of_class: builtins.staticmethod
     of_object: builtins.staticmethod
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    precision_at_k: builtins.function
     provider: trulens.feedback.llm_provider.LLMProvider
+    recall_at_k: builtins.function
     replace: builtins.function
     rouge: builtins.function
     schema: builtins.classmethod
