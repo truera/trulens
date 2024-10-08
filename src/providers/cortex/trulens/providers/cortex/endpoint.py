@@ -94,18 +94,6 @@ class CortexEndpoint(Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, "name"):
-            # singleton already made
-            if len(kwargs) > 0:
-                logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name,
-                    pp.pformat(kwargs),
-                )
-                self.warning()
-            return
-
-        kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
@@ -113,9 +101,6 @@ class CortexEndpoint(Endpoint):
         # Instrument various methods for usage/cost tracking.
         self._instrument_class(Session, "sql")
         self._instrument_class(SnowflakeCursor, "fetchall")
-
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="cortex")
 
     def handle_wrapped_call(
         self,

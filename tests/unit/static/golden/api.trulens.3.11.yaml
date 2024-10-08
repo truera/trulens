@@ -68,7 +68,7 @@ trulens.core:
     Select: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
     Tru: builtins.function
-    TruSession: pydantic._internal._model_construction.ModelMetaclass
+    TruSession: trulens.core.utils.python.PydanticSingletonMeta
   lows:
     __all__: builtins.list
     __version__: builtins.str
@@ -482,7 +482,7 @@ trulens.core.feedback.endpoint.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
   - trulens.core.utils.serial.SerialModel
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
@@ -1023,13 +1023,12 @@ trulens.core.session:
   highs: {}
   lows:
     Tru: builtins.function
-    TruSession: pydantic._internal._model_construction.ModelMetaclass
+    TruSession: trulens.core.utils.python.PydanticSingletonMeta
 trulens.core.session.TruSession:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  - trulens.core.utils.python.SingletonPerName
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -1346,11 +1345,11 @@ trulens.core.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
+    InstanceRefMixin: builtins.type
     OpaqueWrapper: builtins.type
+    PydanticSingletonMeta: builtins.type
     STACK: builtins.str
-    Singleton: builtins.type
-    SingletonInfo: builtins.type
-    SingletonPerName: builtins.type
+    SingletonPerNameMeta: builtins.type
     WRAP_LAZY: builtins.bool
     WeakWrapper: builtins.type
     awith_context: builtins.function
@@ -1389,34 +1388,31 @@ trulens.core.utils.python:
     wrap_generator: builtins.function
     wrap_lazy: builtins.function
     wrap_until_eager: builtins.function
+trulens.core.utils.python.InstanceRefMixin:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    get_instances: builtins.classmethod
 trulens.core.utils.python.OpaqueWrapper:
   __bases__:
   - typing.Generic
   __class__: builtins.type
   attributes:
     unwrap: builtins.function
-trulens.core.utils.python.Singleton:
+trulens.core.utils.python.PydanticSingletonMeta:
   __bases__:
-  - builtins.object
+  - pydantic._internal._model_construction.ModelMetaclass
+  - trulens.core.utils.python.SingletonPerNameMeta
+  __class__: builtins.type
+  attributes: {}
+trulens.core.utils.python.SingletonPerNameMeta:
+  __bases__:
+  - builtins.type
   __class__: builtins.type
   attributes:
-    delete_singleton: builtins.function
-    warning: builtins.function
-trulens.core.utils.python.SingletonInfo:
-  __bases__:
-  - typing.Generic
-  __class__: builtins.type
-  attributes:
-    name: builtins.NoneType
-    warning: builtins.function
-trulens.core.utils.python.SingletonPerName:
-  __bases__:
-  - builtins.object
-  __class__: builtins.type
-  attributes:
-    delete_singleton: builtins.function
+    delete_singleton: builtins.staticmethod
     delete_singleton_by_name: builtins.staticmethod
-    warning: builtins.function
 trulens.core.utils.python.WeakWrapper:
   __bases__:
   - typing.Generic
@@ -1598,13 +1594,13 @@ trulens.core.utils.threading:
   highs: {}
   lows:
     DEFAULT_NETWORK_TIMEOUT: builtins.float
-    TP: builtins.type
+    TP: trulens.core.utils.python.SingletonPerNameMeta
     Thread: builtins.type
     ThreadPoolExecutor: builtins.type
 trulens.core.utils.threading.TP:
   __bases__:
-  - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  - builtins.object
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int

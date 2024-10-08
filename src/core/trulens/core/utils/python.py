@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 import contextvars
@@ -23,7 +24,6 @@ from typing import (
     Dict,
     Generator,
     Generic,
-    Hashable,
     Iterable,
     Iterator,
     List,
@@ -34,6 +34,8 @@ from typing import (
     Union,
 )
 import weakref
+
+import pydantic
 
 T = TypeVar("T")
 
@@ -1095,122 +1097,41 @@ def wrap_until_eager(
 
 
 # Class utilities
-
-
-@dataclasses.dataclass
-class SingletonInfo(Generic[T]):
+class SingletonPerNameMeta(type):
     """
-    Information about a singleton instance.
-    """
-
-    val: T
-    """The singleton instance."""
-
-    cls: Type[T]
-    """The class of the singleton instance."""
-
-    frameinfo_codeline: Optional[str]
-    """The frame where the singleton was created.
-
-    This is used for showing "already created" warnings. This is intentionally
-    not the frame itself but a rendering of it to avoid maintaining references
-    to frames and all of the things a frame holds onto.
-    """
-
-    name: Optional[str] = None
-    """The name of the singleton instance.
-
-    This is used for the SingletonPerName mechanism to have a separate singleton
-    for each unique name (and class).
-    """
-
-    def __init__(self, val: Any, name: Optional[str] = None):
-        self.val = val
-        self.cls = val.__class__
-        self.name = name
-        self.frameinfo_codeline = code_line(
-            caller_frameinfo(offset=2), show_source=True
-        )
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        logger.warning(
-            (
-                "Singleton instance of type %s already created at:\n%s\n"
-                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
-                f"""  ```python
-  from trulens.core.utils.python import SingletonPerName
-  SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
-  ```
-            """
-            ),
-            self.cls.__name__,
-            self.frameinfo_codeline,
-        )
-
-
-class SingletonPerName:
-    """
-    Class for creating singleton instances except there being one instance max,
+    Metaclass for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
     reverts to normal singleton behavior.
     """
 
-    # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonInfo[SingletonPerName]] = {}
+    _singleton_instances = {}
 
-    # Need some way to look up the name of the singleton instance. Cannot attach
-    # a new attribute to instance since some metaclasses don't allow this (like
-    # pydantic). We instead create a map from instance address to name.
-    _id_to_name_map: Dict[int, Optional[str]] = {}
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        name = SingletonPerName._id_to_name_map[id(self)]
-        k = self.__class__.__name__, name
-        if k in SingletonPerName._instances:
-            SingletonPerName._instances[k].warning()
-        else:
-            raise RuntimeError(
-                f"Instance of singleton type/name {k} does not exist."
-            )
-
-    def __new__(
-        cls: Type[SingletonPerName],
-        *args,
-        name: Optional[str] = None,
-        **kwargs,
-    ) -> SingletonPerName:
+    def __call__(cls, *args, name: Optional[str] = None, **kwargs):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
+        k = f"{cls.__module__}.{cls.__name__}", name
 
-        k = cls.__name__, name
-
-        if k not in cls._instances:
+        if k not in cls._singleton_instances:
             logger.debug(
                 "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )
-            # If exception happens here, the instance should not be added to
-            # _instances.
-            instance = super().__new__(cls)
-
-            SingletonPerName._id_to_name_map[id(instance)] = name
-            info: SingletonInfo = SingletonInfo(name=name, val=instance)
-            SingletonPerName._instances[k] = info
-        else:
-            info = SingletonPerName._instances[k]
-        obj = info.val
-        assert isinstance(obj, cls)
-        return obj
+            cls._singleton_instances[k] = super(
+                SingletonPerNameMeta, cls
+            ).__call__(*args, **kwargs)
+        elif args or kwargs:
+            logger.warning(
+                "Singleton instance %s already exists for name = %s.",
+                cls.__name__,
+                name,
+            )
+        return cls._singleton_instances[k]
 
     @staticmethod
     def delete_singleton_by_name(
-        name: str, cls: Optional[Type[SingletonPerName]] = None
+        name: str, cls: Optional[Type[SingletonPerNameMeta]] = None
     ):
         """
         Delete the singleton instance with the given name.
@@ -1223,85 +1144,54 @@ class SingletonPerName:
             cls: The class of the singleton instance to delete. If not given, all
                 instances with the given name are deleted.
         """
-        for k, v in list(SingletonPerName._instances.items()):
+
+        for k, v in list(SingletonPerNameMeta._singleton_instances.items()):
             if k[1] == name:
-                if cls is not None and v.cls != cls:
+                if cls is not None and v.__class__ is not cls:
                     continue
 
-                del SingletonPerName._instances[k]
-                del SingletonPerName._id_to_name_map[id(v.val)]
+                del SingletonPerNameMeta._singleton_instances[k]
 
-    def delete_singleton(self):
+    @staticmethod
+    def delete_singleton(
+        obj: Type[SingletonPerNameMeta], name: Optional[str] = None
+    ):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        id_ = id(self)
-
-        if id_ in SingletonPerName._id_to_name_map:
-            name = SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._instances[(self.__class__.__name__, name)]
+        cls_name = (
+            getattr(obj.__class__, "__name__")
+            if hasattr(obj.__class__, "__name__")
+            else None
+        )
+        k = cls_name, name
+        if k in SingletonPerNameMeta._singleton_instances:
+            del SingletonPerNameMeta._singleton_instances[k]
         else:
-            logger.warning(
-                "Instance %s not found among existing singletons.", self
-            )
+            logger.warning("Instance %s not found:", obj)
 
 
-class Singleton:
-    """Class for creating singleton instances."""
+class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
+    """This is the metaclass for creating Pydantic models that are also required to be singletons"""
 
-    # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonInfo[Singleton]] = {}
+    pass
 
-    def warning(self):
-        """Issue warning that this singleton already exists."""
 
-        k = self.__class__.__name__
-        if k in Singleton._instances:
-            Singleton._instances[k].warning()
-        else:
-            raise RuntimeError(
-                f"Instance of singleton type {k} does not exist."
-            )
+class InstanceRefMixin:
+    """Mixin for classes that need to keep track of their instances."""
 
-    def __new__(
-        cls: Type[Singleton],
-        *args,
-        **kwargs,
-    ) -> Singleton:
-        """Create the singleton instance if it doesn't already exist and return it."""
+    _instance_refs: Dict[Type, weakref.WeakSet[InstanceRefMixin]] = defaultdict(
+        weakref.WeakSet
+    )
 
-        k = cls.__name__
+    def __init__(self, register_instance: bool = True):
+        if register_instance:
+            self._instance_refs[self.__class__].add(self)
 
-        if k not in cls._instances:
-            logger.debug(
-                "Creating new %s singleton instance.",
-                cls.__name__,
-            )
-            # If exception happens here, the instance should not be added to
-            # _instances.
-            instance = super().__new__(cls)
-
-            info: SingletonInfo = SingletonInfo(val=instance)
-            Singleton._instances[k] = info
-        else:
-            info = Singleton._instances[k]
-
-        obj = info.val
-        assert isinstance(obj, cls)
-        return obj
-
-    def delete_singleton(self):
-        """
-        Delete the singleton instance. Can be used for testing to create another
-        singleton.
-        """
-        k = self.__class__.__name__
-
-        if k in Singleton._instances:
-            del Singleton._instances[k]
-        else:
-            logger.warning(
-                "Instance %s not found among existing singletons.", self
-            )
+    @classmethod
+    def get_instances(cls):
+        """Get all instances of the class."""
+        for inst in cls._instance_refs[cls]:
+            if inst is not None:
+                yield inst

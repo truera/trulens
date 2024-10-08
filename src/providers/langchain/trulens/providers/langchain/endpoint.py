@@ -30,9 +30,6 @@ class LangchainEndpoint(Endpoint):
     # https://github.com/langchain-ai/langchain/issues/10112
     chain: Any  # Union[BaseLLM, BaseChatModel]
 
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="langchain")
-
     def handle_wrapped_call(
         self,
         func: Callable,
@@ -56,7 +53,6 @@ class LangchainEndpoint(Endpoint):
             )
 
         kwargs["chain"] = chain
-        kwargs["name"] = "langchain"
         kwargs["callback_class"] = LangchainCallback
 
         super().__init__(*args, **kwargs)

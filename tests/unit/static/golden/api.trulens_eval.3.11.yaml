@@ -14,8 +14,8 @@ trulens_eval:
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
-    TP: builtins.type
-    Tru: pydantic._internal._model_construction.ModelMetaclass
+    TP: trulens.core.utils.python.SingletonPerNameMeta
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruChain: pydantic._internal._model_construction.ModelMetaclass
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
@@ -812,22 +812,18 @@ trulens_eval.Select:
     render_for_dashboard: builtins.staticmethod
 trulens_eval.TP:
   __bases__:
-  - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  - builtins.object
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     shutdown: builtins.function
     submit: builtins.function
-    warning: builtins.function
 trulens_eval.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  - trulens.core.utils.python.SingletonPerName
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -849,8 +845,6 @@ trulens_eval.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -867,7 +861,6 @@ trulens_eval.Tru:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    warning: builtins.function
 trulens_eval.TruBasicApp:
   __bases__:
   - trulens.core.app.App
@@ -4095,8 +4088,6 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4147,7 +4138,6 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.CortexEndpoint:
   __bases__:
@@ -4160,8 +4150,6 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4211,7 +4199,6 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.DummyEndpoint:
   __bases__:
@@ -4227,8 +4214,6 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
@@ -4284,13 +4269,12 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
   - trulens.core.utils.serial.SerialModel
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
@@ -4299,8 +4283,6 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4350,7 +4332,6 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
   __bases__:
@@ -4363,8 +4344,6 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4415,7 +4394,6 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
   __bases__:
@@ -4429,8 +4407,6 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4480,7 +4456,6 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
   __bases__:
@@ -4493,8 +4468,6 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4545,7 +4518,6 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.OpenAIClient:
   __bases__:
@@ -4599,8 +4571,6 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4650,7 +4620,6 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base:
   __class__: builtins.module
@@ -4677,8 +4646,6 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
@@ -4734,13 +4701,12 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
   - trulens.core.utils.serial.SerialModel
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
@@ -4749,8 +4715,6 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4800,7 +4764,6 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base.EndpointCallback:
   __bases__:
@@ -4910,8 +4873,6 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4962,7 +4923,6 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.cortex:
   __class__: builtins.module
@@ -5026,8 +4986,6 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5077,7 +5035,6 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.hugs:
   __class__: builtins.module
@@ -5141,8 +5098,6 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5193,7 +5148,6 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.langchain:
   __class__: builtins.module
@@ -5258,8 +5212,6 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5309,7 +5261,6 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.litellm:
   __class__: builtins.module
@@ -5373,8 +5324,6 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5425,7 +5374,6 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.openai:
   __class__: builtins.module
@@ -5534,8 +5482,6 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5585,7 +5531,6 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.hugs:
   __class__: builtins.module
@@ -6864,15 +6809,14 @@ trulens_eval.tru:
   highs: {}
   lows:
     DASHBOARD_START_TIMEOUT: builtins.int
-    Tru: pydantic._internal._model_construction.ModelMetaclass
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     deprecation_utils: builtins.module
     humanize_seconds: builtins.function
 trulens_eval.tru.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  - trulens.core.utils.python.SingletonPerName
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -6894,8 +6838,6 @@ trulens_eval.tru.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -6912,7 +6854,6 @@ trulens_eval.tru.Tru:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    warning: builtins.function
 trulens_eval.tru_basic_app:
   __class__: builtins.module
   highs: {}
@@ -8862,22 +8803,19 @@ trulens_eval.utils.threading:
   highs: {}
   lows:
     DEFAULT_NETWORK_TIMEOUT: builtins.float
-    TP: builtins.type
+    TP: trulens.core.utils.python.SingletonPerNameMeta
     Thread: builtins.type
     ThreadPoolExecutor: builtins.type
     deprecation_utils: builtins.module
 trulens_eval.utils.threading.TP:
   __bases__:
-  - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  - builtins.object
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     shutdown: builtins.function
     submit: builtins.function
-    warning: builtins.function
 trulens_eval.utils.threading.Thread:
   __bases__:
   - threading.Thread
