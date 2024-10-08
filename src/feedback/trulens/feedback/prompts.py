@@ -153,14 +153,14 @@ INSTRUCTIONS:
 Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
 
 Scoring criteria:
-0 - The key point is not included in the summary.
-5 - The key point is vaguely mentioned or partially included in the summary.
-10 - The key point is fully included in the summary.
+{min_score} - The key point is not included in the summary.
+A middle score - The key point is vaguely mentioned or partially included in the summary.
+{max_score} - The key point is fully included in the summary.
 
 Answer using the entire template below.
 
 TEMPLATE:
-Score: <The score from 0 (the key point is not captured at all) to 10 (the key point is fully captured).>
+Score: <The score from {min_score} (the key point is not captured at all) to {max_score} (the key point is fully captured).>
 Key Point: <Mention the key point from the source text being evaluated>
 Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
 """
