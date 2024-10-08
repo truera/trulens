@@ -1486,11 +1486,21 @@ class LLMProvider(Provider):
         llm_messages = [{"role": "system", "content": system_prompt}]
         llm_messages.append({"role": "user", "content": user_prompt})
 
-        return eval(
-            self.endpoint.run_in_pace(
-                func=self._create_chat_completion, messages=llm_messages
+        try:
+            result = eval(
+                self.endpoint.run_in_pace(
+                    func=self._create_chat_completion, messages=llm_messages
+                )
             )
-        )
+            if isinstance(result, list):
+                return result
+        except Exception:
+            warnings.warn(
+                "Failed to process and remove trivial statements. Proceeding with all statements."
+            )
+            pass
+
+        return statements
 
     def groundedness_measure_with_cot_reasons(
         self,
@@ -1584,12 +1594,8 @@ class LLMProvider(Provider):
                 messages=llm_messages,
                 temperature=temperature,
             ).split("\n")
-        try:
-            hypotheses = self._remove_trivial_statements(hypotheses)
-        except Exception as e:
-            logger.error(
-                f"Error removing trivial statements: {e}. Proceeding with all statements."
-            )
+
+        hypotheses = self._remove_trivial_statements(hypotheses)
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -1618,7 +1624,7 @@ class LLMProvider(Provider):
             )
 
             score_pattern = re.compile(r"Score:\s*([0-9.]+)")
-            match = score_pattern.search(reason["reason"])
+            match = score_pattern.search(reason.get("reason", ""))
             normalized_reason = None
             if match:
                 original_reason_score = float(match.group(1))
@@ -1634,7 +1640,10 @@ class LLMProvider(Provider):
                     "reason"
                 ].replace(original_string, replacement_string)
 
-            return index, score, normalized_reason
+            if normalized_reason is not None:
+                return index, score, normalized_reason
+            else:
+                return index, score, reason
 
         results = []
 
@@ -1757,12 +1766,17 @@ class LLMProvider(Provider):
             user_prompt = prompts.LLM_ABSTENTION_USER.format(
                 statement=statement
             )
-            score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM.format(min_score=0, max_score=1),
-                user_prompt,
-                min_score_val=0,
-                max_score_val=1,
-            )
+            try:
+                score = self.generate_score(
+                    prompts.LLM_ABSTENTION_SYSTEM.format(
+                        min_score=0, max_score=1
+                    ),
+                    user_prompt,
+                    min_score_val=0,
+                    max_score_val=1,
+                )
+            except Exception:
+                score = 0  # assume not abstention if abstention scoring fails
             return score
 
         def evaluate_answerability(question, source):
@@ -1814,7 +1828,28 @@ class LLMProvider(Provider):
                     max_score_val=max_score_val,
                     temperature=temperature,
                 )
-                return index, score, reason
+
+                score_pattern = re.compile(r"Score:\s*([0-9.]+)")
+                match = score_pattern.search(reason.get("reason", ""))
+                normalized_reason = None
+                if match:
+                    original_reason_score = float(match.group(1))
+                    normalized_reason_score = (
+                        original_reason_score - min_score_val
+                    ) / (max_score_val - min_score_val)
+
+                    # Ensure the formatting matches exactly
+                    original_string = f"Score: {int(original_reason_score)}"
+                    replacement_string = f"Score: {normalized_reason_score}"
+                    normalized_reason = reason.copy()
+                    normalized_reason["reason"] = normalized_reason[
+                        "reason"
+                    ].replace(original_string, replacement_string)
+
+                if normalized_reason is not None:
+                    return index, score, normalized_reason
+                else:
+                    return index, score, reason
 
         results = []
 
