@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional, Tuple, TypeVar
 
+from trulens.core._utils.pycompat import TypeAlias
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import serial
-from trulens.core.utils.python import TypeAlias
 
 T = TypeVar("T")
 

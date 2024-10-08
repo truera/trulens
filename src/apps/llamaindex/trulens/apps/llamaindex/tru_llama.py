@@ -22,6 +22,8 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import LangChainInstrument
 from trulens.core import app as mod_app
+from trulens.core._utils.pycompat import EmptyType
+from trulens.core._utils.pycompat import getmembers_static
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.utils import python as python_utils
@@ -33,8 +35,6 @@ from trulens.core.utils.imports import get_package_version
 from trulens.core.utils.imports import parse_version
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.python import EmptyType
-from trulens.core.utils.python import getmembers_static
 from trulens.core.utils.serial import Lens
 
 T = TypeVar("T")

@@ -8336,7 +8336,6 @@ trulens_eval.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
     OpaqueWrapper: builtins.type
     STACK: builtins.str
     SingletonInfo: builtins.type
@@ -8365,11 +8364,6 @@ trulens_eval.utils.python:
     tru_new_event_loop: builtins.function
     wrap_awaitable: builtins.function
     wrap_generator: builtins.function
-trulens_eval.utils.python.EmptyType:
-  __bases__:
-  - builtins.type
-  __class__: builtins.type
-  attributes: {}
 trulens_eval.utils.python.OpaqueWrapper:
   __bases__:
   - typing.Generic
