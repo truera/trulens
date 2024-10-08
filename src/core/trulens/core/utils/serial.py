@@ -38,9 +38,9 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
+from trulens.core.utils import containers as container_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.containers import iterable_peek
 
 logger = logging.getLogger(__name__)
 
@@ -1003,7 +1003,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         try:
             firsts = first.get(obj)
-            first_obj, firsts = iterable_peek(firsts)
+            first_obj, firsts = container_utils.iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
             # `first` points to an element that does not exist, use `set` to create a spot for it.

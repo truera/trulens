@@ -30,18 +30,12 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 from trulens.core.database import base as mod_db
+from trulens.core.database import exceptions as db_exceptions
+from trulens.core.database import migrations as db_migrations
 from trulens.core.database import orm as mod_orm
-from trulens.core.database.base import DB
-from trulens.core.database.exceptions import DatabaseVersionException
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.core.database.migrations import DbRevisions
-from trulens.core.database.migrations import upgrade_db
-from trulens.core.database.migrations.data import data_migrate
-from trulens.core.database.utils import (
-    check_db_revision as alembic_check_db_revision,
-)
-from trulens.core.database.utils import is_legacy_sqlite
-from trulens.core.database.utils import is_memory_sqlite
+from trulens.core.database import utils as db_utils
+from trulens.core.database.legacy import migration as legacy_migration
+from trulens.core.database.migrations import data as data_migrations
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
@@ -61,7 +55,7 @@ class SnowflakeImpl(DefaultImpl):
     __dialect__ = "snowflake"
 
 
-class SQLAlchemyDB(DB):
+class SQLAlchemyDB(mod_db.DB):
     """Database implemented using sqlalchemy.
 
     See abstract class [DB][trulens.core.database.base.DB] for method reference.
@@ -129,7 +123,7 @@ class SQLAlchemyDB(DB):
             **kwargs,
         )
         self._reload_engine()
-        if is_memory_sqlite(self.engine):
+        if db_utils.is_memory_sqlite(self.engine):
             warnings.warn(
                 UserWarning(
                     "SQLite in-memory may not be threadsafe. "
@@ -166,11 +160,13 @@ class SQLAlchemyDB(DB):
             kwargs["redact_keys"] = database_redact_keys
 
         if database_engine is not None:
-            new_db: DB = SQLAlchemyDB.from_db_engine(database_engine, **kwargs)
+            new_db: mod_db.DB = SQLAlchemyDB.from_db_engine(
+                database_engine, **kwargs
+            )
         else:
             if database_url is None:
                 database_url = f"sqlite:///{mod_db.DEFAULT_DATABASE_FILE}"
-            new_db: DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
+            new_db: mod_db.DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
             "%s TruSession initialized with db url %s ."
@@ -213,7 +209,7 @@ class SQLAlchemyDB(DB):
             "pool_pre_ping": True,
         }
 
-        if not is_memory_sqlite(url=url):
+        if not db_utils.is_memory_sqlite(url=url):
             # These params cannot be given to memory-based sqlite engine.
             default_engine_params["max_overflow"] = 2
             default_engine_params["pool_use_lifo"] = True
@@ -249,7 +245,7 @@ class SQLAlchemyDB(DB):
         if self.engine is None:
             raise ValueError("Database engine not initialized.")
 
-        alembic_check_db_revision(self.engine, self.table_prefix)
+        db_utils.check_db_revision(self.engine, self.table_prefix)
 
     def migrate_database(self, prior_prefix: Optional[str] = None):
         """See [DB.migrate_database][trulens.core.database.base.DB.migrate_database]."""
@@ -259,19 +255,19 @@ class SQLAlchemyDB(DB):
 
         try:
             # Expect to get the the behind exception.
-            alembic_check_db_revision(
+            db_utils.check_db_revision(
                 self.engine, prefix=self.table_prefix, prior_prefix=prior_prefix
             )
 
             # If we get here, our db revision does not need upgrade.
             logger.warning("Database does not need migration.")
 
-        except DatabaseVersionException as e:
-            if e.reason == DatabaseVersionException.Reason.BEHIND:
-                revisions = DbRevisions.load(self.engine)
+        except db_exceptions.DatabaseVersionException as e:
+            if e.reason == db_exceptions.DatabaseVersionException.Reason.BEHIND:
+                revisions = db_migrations.DbRevisions.load(self.engine)
                 from_version = revisions.current
                 ### SCHEMA MIGRATION ###
-                if is_legacy_sqlite(self.engine):
+                if db_utils.is_legacy_sqlite(self.engine):
                     raise RuntimeError(
                         "Migrating legacy sqlite database is no longer supported. "
                         "A database reset is required. This will delete all existing data: "
@@ -283,21 +279,26 @@ class SQLAlchemyDB(DB):
                     ### We might allow migrate_database to take a backup url (and suggest user to supply if not supplied ala `TruSession().migrate_database(backup_db_url="...")`)
                     ### We might try copy_database as a backup, but it would need to automatically handle clearing the db, and also current implementation requires migrate to run first.
                     ### A valid backup would need to be able to copy an old version, not the newest version
-                    upgrade_db(
+                    db_migrations.upgrade_db(
                         self.engine, revision="head", prefix=self.table_prefix
                     )
 
                 self._reload_engine()  # let sqlalchemy recognize the migrated schema
 
                 ### DATA MIGRATION ###
-                data_migrate(self, from_version)
+                data_migrations.data_migrate(self, from_version)
                 return
 
-            elif e.reason == DatabaseVersionException.Reason.AHEAD:
+            elif (
+                e.reason == db_exceptions.DatabaseVersionException.Reason.AHEAD
+            ):
                 # Rethrow the ahead message suggesting to upgrade trulens.
                 raise e
 
-            elif e.reason == DatabaseVersionException.Reason.RECONFIGURED:
+            elif (
+                e.reason
+                == db_exceptions.DatabaseVersionException.Reason.RECONFIGURED
+            ):
                 # Rename table to change prefix.
 
                 prior_prefix = e.prior_prefix
@@ -956,7 +957,8 @@ def _extract_feedback_results(
             _result.multi_result,
             _result.cost_json,  # why is cost_json not parsed?
             json.loads(_result.record.perf_json)
-            if _result.record.perf_json != MIGRATION_UNKNOWN_STR
+            if _result.record.perf_json
+            != legacy_migration.MIGRATION_UNKNOWN_STR
             else _make_no_perf(),
             json.loads(_result.calls_json)["calls"],
             json.loads(_result.feedback_definition.feedback_json)
@@ -997,7 +999,7 @@ def _extract_latency(
     series: pd.Series,
 ) -> pd.Series:
     def _extract(perf_json: Union[str, dict, base_schema.Perf]) -> float:
-        if perf_json == MIGRATION_UNKNOWN_STR:
+        if perf_json == legacy_migration.MIGRATION_UNKNOWN_STR:
             return np.nan
 
         if isinstance(perf_json, str):

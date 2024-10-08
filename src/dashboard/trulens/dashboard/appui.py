@@ -8,7 +8,7 @@ import traitlets
 from traitlets import HasTraits
 from traitlets import Unicode
 from trulens.core import app as mod_app
-from trulens.core.instruments import Instrument
+from trulens.core import instruments as mod_instruments
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
 
@@ -64,7 +64,7 @@ class SelectorValue(HasTraits):
         self,
         selector: Selector,
         stdout_display: widgets.Output,
-        instrument: Instrument,
+        instrument: mod_instruments.Instrument,
     ):
         self.selector = selector
         self.obj = None
@@ -146,7 +146,7 @@ class RecordWidget:
     def __init__(
         self,
         record_selections,
-        instrument: Instrument,
+        instrument: mod_instruments.Instrument,
         record=None,
         human_or_input=None,
         stdout_display: widgets.Output = None,

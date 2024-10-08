@@ -29,11 +29,11 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.threading import TP
+from trulens.core.utils import threading as threading_utils
 
 if TYPE_CHECKING:
-    from trulens.core._utils.pycompat import Future
-    from trulens.core.database.connector import DBConnector
+    from trulens.core._utils.pycompat import Future  # import style exception
+    from trulens.core.database import connector as db_connector
     from trulens.core.feedback import feedback as mod_feedback
 
 logger = logging.getLogger(__name__)
@@ -294,7 +294,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     def _submit_feedback_functions(
         record: record_schema.Record,
         feedback_functions: Sequence[mod_feedback.Feedback],
-        connector: DBConnector,
+        connector: db_connector.DBConnector,
         app: Optional[AppDefinition] = None,
         on_done: Optional[
             Callable[
@@ -355,7 +355,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
 
         feedbacks_and_futures = []
 
-        tp = TP()
+        tp = threading_utils.TP()
 
         for ffunc in feedback_functions:
             # Run feedback function and the on_done callback. This makes sure

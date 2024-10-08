@@ -14,8 +14,8 @@ deprecation_utils.packages_dep_warn()
 from trulens.core.utils import imports as import_utils
 
 with import_utils.OptionalImports(messages=optional_utils.REQUIREMENT_FEEDBACK):
+    from trulens.core.feedback.feedback import Feedback
     from trulens.feedback.embeddings import Embeddings
-    from trulens.feedback.feedback import Feedback
     from trulens.feedback.groundtruth import GroundTruthAgreement
 
 with import_utils.OptionalImports(

@@ -1,6 +1,6 @@
 from trulens.core import session as mod_session
 from trulens.core.schema import feedback as feedback_schema
-import trulens.providers.cortex.provider
+from trulens.providers.cortex import provider as cortex_provider
 
 from snowflake.snowpark import Session
 from snowflake.sqlalchemy import URL
@@ -14,9 +14,7 @@ def run(snowpark_session: Session):
     engine_params["creator"] = lambda: conn
     database_args = {"engine_params": engine_params}
     # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
-    trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
-        conn
-    )
+    cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = conn
     # Run deferred feedback evaluator.
     db_url = URL(
         account=snowpark_session.get_current_account(),

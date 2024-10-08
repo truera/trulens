@@ -6,10 +6,9 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from trulens.core.database import migrations as db_migrations
 from trulens.core.database.base import DB
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.core.database.legacy.migration import VersionException
-from trulens.core.database.migrations import DbRevisions
+from trulens.core.database.legacy import migration as legacy_migration
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -81,7 +80,10 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                         # Check only json columns
                         if "_json" in attr_name:
                             db_json_str = getattr(db_record, attr_name)
-                            if db_json_str == MIGRATION_UNKNOWN_STR:
+                            if (
+                                db_json_str
+                                == legacy_migration.MIGRATION_UNKNOWN_STR
+                            ):
                                 continue
 
                             # Do not check Nullables
@@ -127,7 +129,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                     )
                                 else:
                                     # If this happens, trulens needs to add a migration
-                                    raise VersionException(
+                                    raise legacy_migration.VersionException(
                                         f"serialized column migration not implemented: {attr_name}."
                                     )
 
@@ -165,8 +167,8 @@ def data_migrate(db: DB, from_version: Optional[str]):
         print("DB Migration complete!")
     except Exception as e:
         tb = traceback.format_exc()
-        current_revision = DbRevisions.load(db.engine).current
-        raise VersionException(
+        current_revision = db_migrations.DbRevisions.load(db.engine).current
+        raise legacy_migration.VersionException(
             f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         ) from e
     try:
@@ -174,7 +176,7 @@ def data_migrate(db: DB, from_version: Optional[str]):
         print("DB Validation complete!")
     except Exception as e:
         tb = traceback.format_exc()
-        current_revision = DbRevisions.load(db.engine).current
-        raise VersionException(
+        current_revision = db_migrations.DbRevisions.load(db.engine).current
+        raise legacy_migration.VersionException(
             f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         ) from e

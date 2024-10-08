@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import ClassVar, Iterable, Optional
 
-from trulens.core.feedback import Endpoint
+from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.feedback.v2.feedback import ClassificationModel
@@ -18,7 +18,7 @@ from trulens.feedback.v2.feedback import WithPrompt
 class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    endpoint: Optional[Endpoint]
+    endpoint: Optional[mod_endpoint.Endpoint]
 
     def __init__(self, *args, name: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)

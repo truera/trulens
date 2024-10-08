@@ -36,7 +36,7 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core.experimental import Feature
+from trulens.core import experimental as mod_experimental
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import base as base_schema
@@ -556,7 +556,7 @@ class Instrument:
             raise ValueError("Instrumentation requires an app but is None.")
 
         if self.app.session.experimental_feature(
-            Feature.OTEL_TRACING, lock=True
+            mod_experimental.Feature.OTEL_TRACING, lock=True
         ):
             from trulens.experimental.otel_tracing.core.instruments import (
                 _Instrument,

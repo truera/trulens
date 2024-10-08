@@ -1,5 +1,4 @@
-"""
-Streamlit app with a langchain-based chat and the use of feedback functions
+"""Streamlit app with a langchain-based chat and the use of feedback functions
 based on user input.
 
 # Running:
@@ -24,8 +23,8 @@ from langchain.schema import StrOutputParser
 from langchain_openai import ChatOpenAI
 import streamlit as st
 from trulens.core import session as mod_session
-from trulens.dashboard import run_dashboard
-from trulens.apps.langchain import TruChain
+from trulens import dashboard as mod_dashboard
+from trulens.apps.langchain import tru_chain as mod_tru_chain
 
 dev_path = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, dev_path)
@@ -50,9 +49,9 @@ def setup_chain():
     chat = ChatOpenAI(model_name=model_name, temperature=0.9)
     chain = chat_prompt_template | chat | StrOutputParser()
 
-    tc = TruChain(chain, app_name="Streamlit App")
+    tc = mod_tru_chain.TruChain(chain, app_name="Streamlit App")
     session.add_app(app=tc)
-    run_dashboard(session, _dev=dev_path)
+    mod_dashboard.run_dashboard(session, _dev=dev_path)
     return tc
 
 
@@ -94,7 +93,7 @@ if user_input:
         )
         thumb_result = False
     if thumb_result is not None:
-        tru.add_feedback(
+        session.add_feedback(
             name="👍 (1) or 👎 (0)",
             record_id=record.record_id,
             app_id=tc.app_id,

@@ -9,19 +9,16 @@ from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
 from trulens.core import session as mod_session
-from trulens.core.database.base import DEFAULT_DATABASE_PREFIX
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.core.database import base as base_db
+from trulens.core.database.legacy import migration as legacy_migration
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import text as text_utils
-from trulens.dashboard.components.record_viewer import record_viewer
-from trulens.dashboard.display import expand_groundedness_df
-from trulens.dashboard.display import get_feedback_result
-from trulens.dashboard.display import get_icon
-from trulens.dashboard.display import highlight
-from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata_and_tags
+from trulens.dashboard import display as mod_display
+from trulens.dashboard.components import record_viewer as mod_record_viewer
+from trulens.dashboard.ux import components as mod_components
+from trulens.dashboard.ux import styles as mod_styles
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -41,7 +38,9 @@ def init_from_args():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
-    parser.add_argument("--database-prefix", default=DEFAULT_DATABASE_PREFIX)
+    parser.add_argument(
+        "--database-prefix", default=base_db.DEFAULT_DATABASE_PREFIX
+    )
 
     try:
         args = parser.parse_args()
@@ -117,7 +116,10 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
         tags = app_json.get("tags")
-        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
+        st.header(
+            app_name_version,
+            help=mod_components.draw_metadata_and_tags(metadata, tags),
+        )
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -128,7 +130,11 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         )
         latency_mean = (
             app_df["latency"]
-            .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
+            .apply(
+                lambda td: td
+                if td != legacy_migration.MIGRATION_UNKNOWN_STR
+                else None
+            )
             .mean()
         )
 
@@ -161,14 +167,14 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
             mean = app_df[col_name].mean()
 
             st.write(
-                styles.stmetricdelta_hidearrow,
+                mod_styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 
             higher_is_better = feedback_directions.get(col_name, True)
 
             if "distance" in col_name:
-                cat = styles.CATEGORY.of_score(
+                cat = mod_styles.CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better, is_distance=True
                 )
                 feedback_cols[i].metric(
@@ -177,7 +183,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
                     delta_color="normal",
                 )
             else:
-                cat = styles.CATEGORY.of_score(
+                cat = mod_styles.CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better
                 )
                 feedback_cols[i].metric(
@@ -187,7 +193,8 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
                     delta_color=(
                         "normal"
                         if cat.compare(
-                            mean, styles.CATEGORY.PASS[cat.direction].threshold
+                            mean,
+                            mod_styles.CATEGORY.PASS[cat.direction].threshold,
                         )
                         else "inverse"
                     ),
@@ -246,7 +253,9 @@ def trulens_feedback(record: record_schema.Record):
         feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
             score=call_data["result"],
             calls=[],
-            icon=get_icon(fdef=feedback, result=feedback_result.result),
+            icon=mod_display.get_icon(
+                fdef=feedback, result=feedback_result.result
+            ),
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
@@ -262,15 +271,17 @@ def trulens_feedback(record: record_schema.Record):
     )
 
     if selected_feedback is not None:
-        df = get_feedback_result(record, feedback_name=selected_feedback)
+        df = mod_display.get_feedback_result(
+            record, feedback_name=selected_feedback
+        )
         if "groundedness" in selected_feedback.lower():
-            df = expand_groundedness_df(df)
+            df = mod_display.expand_groundedness_df(df)
         else:
             pass
 
         # Apply the highlight function row-wise
         styled_df = df.style.apply(
-            lambda row: highlight(
+            lambda row: mod_display.highlight(
                 row,
                 selected_feedback=selected_feedback,
                 feedback_directions=feedback_directions,
@@ -308,6 +319,6 @@ def trulens_trace(record: record_schema.Record):
 
     session = mod_session.TruSession()
     app = session.get_app(app_id=record.app_id)
-    record_viewer(
+    mod_record_viewer.record_viewer(
         record_json=json.loads(json_utils.json_str_of_obj(record)), app_json=app
     )

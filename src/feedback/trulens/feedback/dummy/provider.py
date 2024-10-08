@@ -2,11 +2,11 @@ import json
 from typing import Dict, Optional, Sequence
 
 from trulens.core.utils import python as python_utils
+from trulens.feedback import llm_provider
 from trulens.feedback.dummy.endpoint import DummyEndpoint
-from trulens.feedback.llm_provider import LLMProvider
 
 
-class DummyProvider(LLMProvider):
+class DummyProvider(llm_provider.LLMProvider):
     """Fake LLM provider.
 
     Does not make any networked requests but pretends to. Uses

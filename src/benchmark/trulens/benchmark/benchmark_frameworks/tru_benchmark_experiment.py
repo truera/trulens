@@ -5,8 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
+from trulens.apps import custom as custom_app
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import select as select_schema
 
@@ -90,7 +89,7 @@ class TruBenchmarkExperiment:
             for agg_func in agg_funcs
         ]
 
-    @instrument
+    @custom_app.instrument
     def run_score_generation_on_single_row(
         self,
         feedback_fn: Callable,
@@ -128,7 +127,7 @@ class TruBenchmarkExperiment:
             )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
         return ret
 
-    @instrument
+    @custom_app.instrument
     def __call__(
         self,
         ground_truth: pd.DataFrame,
@@ -202,7 +201,7 @@ def create_benchmark_experiment_app(
     app_version: str,
     benchmark_experiment: TruBenchmarkExperiment,
     **kwargs,
-) -> TruCustomApp:
+) -> custom_app.TruCustomApp:
     """Create a Custom app for special use case: benchmarking feedback
     functions.
 
@@ -224,7 +223,7 @@ def create_benchmark_experiment_app(
             feedback functions.
     """
 
-    return TruCustomApp(
+    return custom_app.TruCustomApp(
         benchmark_experiment,
         app_name=app_name,
         app_version=app_version,

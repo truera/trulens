@@ -40,8 +40,7 @@ from langchain.schema import LLMResult
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import pace as pace_utils
@@ -168,7 +167,7 @@ class OpenAIClient(serial_utils.SerialModel):
         )
 
 
-class OpenAICallback(EndpointCallback):
+class OpenAICallback(mod_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
@@ -239,7 +238,7 @@ class OpenAICallback(EndpointCallback):
         # TODO: there seems to be usage info in these responses sometimes as well
 
 
-class OpenAIEndpoint(Endpoint):
+class OpenAIEndpoint(mod_endpoint.Endpoint):
     """OpenAI endpoint.
 
     Instruments "create" methods in openai client.
@@ -317,14 +316,14 @@ class OpenAIEndpoint(Endpoint):
         self._instrument_module_members(chat, "create")
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="openai")
+        return super(mod_endpoint.Endpoint, cls).__new__(cls, name="openai")
 
     def handle_wrapped_call(
         self,
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[mod_endpoint.EndpointCallback],
     ) -> Any:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
@@ -335,7 +334,7 @@ class OpenAIEndpoint(Endpoint):
         assert not python_utils.is_lazy(response)
 
         context_vars = {
-            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+            mod_endpoint.Endpoint._context_endpoints: mod_endpoint.Endpoint._context_endpoints.get()
         }
 
         if isinstance(response, (openai.AsyncStream, openai.Stream)):

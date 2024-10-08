@@ -33,9 +33,9 @@ from opentelemetry.sdk import resources as resources_sdk
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.util import types as types_api
 import pydantic
-from trulens.core._utils.pycompat import NoneType
-from trulens.core._utils.pycompat import TypeAlias
-from trulens.core._utils.pycompat import TypeAliasType
+from trulens.core._utils.pycompat import NoneType  # import style exception
+from trulens.core._utils.pycompat import TypeAlias  # import style exception
+from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 

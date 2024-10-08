@@ -8,19 +8,16 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
-from trulens.core.feedback.provider import Provider
+from trulens.core.feedback import provider as mod_provider
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.feedback import prompts
-from trulens.feedback.generated import re_configured_rating
-from trulens.feedback.v2.feedback import ContextRelevance
-from trulens.feedback.v2.feedback import Groundedness
-from trulens.feedback.v2.feedback import OutputSpace
-from trulens.feedback.v2.feedback import PromptResponseRelevance
+from trulens.feedback import generated as mod_generated
+from trulens.feedback import prompts as mod_prompts
+from trulens.feedback.v2 import feedback as mod_v2feedback
 
 logger = logging.getLogger(__name__)
 
 
-class LLMProvider(Provider):
+class LLMProvider(mod_provider.Provider):
     """An LLM-based provider.
 
     This is an abstract class and needs to be initialized as one of these:
@@ -111,7 +108,7 @@ class LLMProvider(Provider):
         )
 
         return (
-            re_configured_rating(
+            mod_generated.re_configured_rating(
                 response,
                 min_score_val=min_score_val,
                 max_score_val=max_score_val,
@@ -229,7 +226,7 @@ class LLMProvider(Provider):
             for line in response.split("\n"):
                 if "Score" in line:
                     score = (
-                        re_configured_rating(
+                        mod_generated.re_configured_rating(
                             line,
                             min_score_val=min_score_val,
                             max_score_val=max_score_val,
@@ -279,7 +276,7 @@ class LLMProvider(Provider):
 
         else:
             score = (
-                re_configured_rating(
+                mod_generated.re_configured_rating(
                     response,
                     min_score_val=min_score_val,
                     max_score_val=max_score_val,
@@ -305,7 +302,7 @@ class LLMProvider(Provider):
         Returns:
             str: The corresponding output space.
         """
-        for output in OutputSpace:
+        for output in mod_v2feedback.OutputSpace:
             if output.value == (min_score_val, max_score_val):
                 return output.name
         raise ValueError(
@@ -352,19 +349,21 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
+            system_prompt = (
+                mod_v2feedback.ContextRelevance.generate_system_prompt(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    output_space=output_space,
+                )
             )
         else:
-            system_prompt = ContextRelevance.system_prompt
+            system_prompt = mod_v2feedback.ContextRelevance.system_prompt
 
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER,
+                mod_prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
                 context=context,
             ),
@@ -412,10 +411,12 @@ class LLMProvider(Provider):
         """
 
         user_prompt = str.format(
-            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
+            mod_prompts.CONTEXT_RELEVANCE_USER,
+            question=question,
+            context=context,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", mod_prompts.COT_REASONS_TEMPLATE
         )
 
         output_space = self._determine_output_space(
@@ -423,14 +424,16 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
+            system_prompt = (
+                mod_v2feedback.ContextRelevance.generate_system_prompt(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    output_space=output_space,
+                )
             )
         else:
-            system_prompt = ContextRelevance.system_prompt
+            system_prompt = mod_v2feedback.ContextRelevance.system_prompt
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -483,21 +486,23 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
+            system_prompt = (
+                mod_v2feedback.ContextRelevance.generate_system_prompt(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    output_space=output_space,
+                )
             )
         else:
-            system_prompt = ContextRelevance.system_prompt
+            system_prompt = mod_v2feedback.ContextRelevance.system_prompt
 
         try:
             return self.generate_confidence_score(
                 verb_confidence_prompt=system_prompt
-                + ContextRelevance.verb_confidence_prompt,
+                + mod_v2feedback.ContextRelevance.verb_confidence_prompt,
                 user_prompt=str.format(
-                    prompts.CONTEXT_RELEVANCE_USER,
+                    mod_prompts.CONTEXT_RELEVANCE_USER,
                     question=question,
                     context=context,
                 ),
@@ -551,16 +556,20 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = PromptResponseRelevance.generate_system_prompt(
-                min_score_val, max_score_val, criteria, output_space
+            system_prompt = (
+                mod_v2feedback.PromptResponseRelevance.generate_system_prompt(
+                    min_score_val, max_score_val, criteria, output_space
+                )
             )
         else:
-            system_prompt = PromptResponseRelevance.system_prompt
+            system_prompt = mod_v2feedback.PromptResponseRelevance.system_prompt
 
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
-                prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+                mod_prompts.ANSWER_RELEVANCE_USER,
+                prompt=prompt,
+                response=response,
             ),
             max_score_val=max_score_val,
             min_score_val=min_score_val,
@@ -606,20 +615,22 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
         if criteria or output_space:
-            system_prompt = PromptResponseRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
+            system_prompt = (
+                mod_v2feedback.PromptResponseRelevance.generate_system_prompt(
+                    min_score=min_score_val,
+                    max_score=max_score_val,
+                    criteria=criteria,
+                    output_space=output_space,
+                )
             )
         else:
-            system_prompt = PromptResponseRelevance.system_prompt
+            system_prompt = mod_v2feedback.PromptResponseRelevance.system_prompt
 
         user_prompt = str.format(
-            prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+            mod_prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", mod_prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -646,8 +657,8 @@ class LLMProvider(Provider):
             A value between 0 and 1. 0 being "negative sentiment" and 1
                 being "positive sentiment".
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM
-        user_prompt = prompts.SENTIMENT_USER + text
+        system_prompt = mod_prompts.SENTIMENT_SYSTEM
+        user_prompt = mod_prompts.SENTIMENT_USER + text
         return self.generate_score(system_prompt, user_prompt)
 
     def sentiment_with_cot_reasons(
@@ -676,9 +687,9 @@ class LLMProvider(Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM
+        system_prompt = mod_prompts.SENTIMENT_SYSTEM
         user_prompt = (
-            prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
+            mod_prompts.SENTIMENT_USER + text + mod_prompts.COT_REASONS_TEMPLATE
         )
         return self.generate_score_and_reasons(
             system_prompt,
@@ -714,13 +725,13 @@ class LLMProvider(Provider):
             DeprecationWarning,
         )
         chat_response = self._create_chat_completion(
-            prompt=prompts.CORRECT_SYSTEM
+            prompt=mod_prompts.CORRECT_SYSTEM
         )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
         return (
-            re_configured_rating(
+            mod_generated.re_configured_rating(
                 agreement_txt, min_score_val=0, max_score_val=3
             )
             / 3
@@ -741,10 +752,10 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
+            mod_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            mod_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
         return self.generate_score(system_prompt, user_prompt)
@@ -773,11 +784,11 @@ class LLMProvider(Provider):
         """
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            mod_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
             criteria=criteria,
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            mod_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
         return self.generate_score_and_reasons(
             system_prompt,
@@ -805,7 +816,7 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         )
 
     def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -824,7 +835,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         )
 
     def correctness(self, text: str) -> float:
@@ -844,7 +855,7 @@ class LLMProvider(Provider):
             A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         )
 
     def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -865,7 +876,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         )
 
     def coherence(self, text: str) -> float:
@@ -885,7 +896,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         )
 
     def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -906,7 +917,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         )
 
     def harmfulness(self, text: str) -> float:
@@ -926,7 +937,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         )
 
     def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -948,7 +959,7 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         )
 
     def maliciousness(self, text: str) -> float:
@@ -969,7 +980,8 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
         )
 
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -990,7 +1002,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
         )
 
     def helpfulness(self, text: str) -> float:
@@ -1010,7 +1023,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         )
 
     def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1031,7 +1044,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         )
 
     def controversiality(self, text: str) -> float:
@@ -1053,7 +1066,8 @@ class LLMProvider(Provider):
                 (controversial).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
         )
 
     def controversiality_with_cot_reasons(
@@ -1076,7 +1090,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
         )
 
     def misogyny(self, text: str) -> float:
@@ -1096,7 +1111,7 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         )
 
     def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1117,7 +1132,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         )
 
     def criminality(self, text: str) -> float:
@@ -1138,7 +1153,7 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         )
 
     def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1159,7 +1174,7 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            text=text, criteria=mod_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         )
 
     def insensitivity(self, text: str) -> float:
@@ -1179,7 +1194,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
         )
 
     def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1200,7 +1216,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            text=text,
+            criteria=mod_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
         )
 
     def _get_answer_agreement(
@@ -1223,7 +1240,7 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response))
+            prompt=(mod_prompts.AGREEMENT_SYSTEM % (prompt, check_response))
             + response,
         )
 
@@ -1244,12 +1261,12 @@ class LLMProvider(Provider):
         llm_messages = [
             {
                 "role": "system",
-                "content": prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
+                "content": mod_prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
             },
             {
                 "role": "user",
                 "content": str.format(
-                    prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source
+                    mod_prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source
                 ),
             },
         ]
@@ -1278,11 +1295,11 @@ class LLMProvider(Provider):
             point.strip() for point in key_points.split("\n") if point.strip()
         ]
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        system_prompt = mod_prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
-                prompts.COMPREHENSIVENESS_USER_PROMPT,
+                mod_prompts.COMPREHENSIVENESS_USER_PROMPT,
                 key_point=key_point,
                 summary=summary,
             )
@@ -1334,7 +1351,7 @@ class LLMProvider(Provider):
             if assessment:
                 first_line = assessment.split("\n")[0]
                 score = (
-                    re_configured_rating(
+                    mod_generated.re_configured_rating(
                         first_line, min_score_val=0, max_score_val=3
                     )
                     / 3
@@ -1373,9 +1390,11 @@ class LLMProvider(Provider):
         Returns:
             A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
-        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
+        system_prompt = mod_prompts.STEREOTYPES_SYSTEM_PROMPT
         user_prompt = str.format(
-            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
+            mod_prompts.STEREOTYPES_USER_PROMPT,
+            prompt=prompt,
+            response=response,
         )
         return self.generate_score(system_prompt, user_prompt)
 
@@ -1408,10 +1427,13 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
         system_prompt = (
-            prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
+            mod_prompts.STEREOTYPES_SYSTEM_PROMPT
+            + mod_prompts.COT_REASONS_TEMPLATE
         )
         user_prompt = str.format(
-            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
+            mod_prompts.STEREOTYPES_USER_PROMPT,
+            prompt=prompt,
+            response=response,
         )
 
         return self.generate_score_and_reasons(
@@ -1433,9 +1455,9 @@ class LLMProvider(Provider):
             List[str]: A list of statements with trivial statements removed.
         """
         assert self.endpoint is not None, "Endpoint is not set."
-        system_prompt = prompts.LLM_TRIVIAL_SYSTEM
+        system_prompt = mod_prompts.LLM_TRIVIAL_SYSTEM
 
-        user_prompt = prompts.LLM_TRIVIAL_USER.format(
+        user_prompt = mod_prompts.LLM_TRIVIAL_USER.format(
             statements=str(statements)
         )
 
@@ -1530,7 +1552,7 @@ class LLMProvider(Provider):
             llm_messages = [
                 {
                     "role": "system",
-                    "content": prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                    "content": mod_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
                 },
                 {"role": "user", "content": statement},
             ]
@@ -1552,17 +1574,17 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = Groundedness.generate_system_prompt(
+            system_prompt = mod_v2feedback.Groundedness.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
                 output_space=output_space,
             )
         else:
-            system_prompt = Groundedness.system_prompt
+            system_prompt = mod_v2feedback.Groundedness.system_prompt
 
         def evaluate_hypothesis(index, hypothesis):
-            user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+            user_prompt = mod_prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(
@@ -1694,7 +1716,7 @@ class LLMProvider(Provider):
             llm_messages = [
                 {
                     "role": "system",
-                    "content": prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                    "content": mod_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
                 },
                 {"role": "user", "content": statement},
             ]
@@ -1709,20 +1731,20 @@ class LLMProvider(Provider):
         reasons_str = ""
 
         def evaluate_abstention(statement):
-            user_prompt = prompts.LLM_ABSTENTION_USER.format(
+            user_prompt = mod_prompts.LLM_ABSTENTION_USER.format(
                 statement=statement
             )
             score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM, user_prompt
+                mod_prompts.LLM_ABSTENTION_SYSTEM, user_prompt
             )
             return score
 
         def evaluate_answerability(question, source):
-            user_prompt = prompts.LLM_ANSWERABILITY_USER.format(
+            user_prompt = mod_prompts.LLM_ANSWERABILITY_USER.format(
                 question=question, source=source
             )
             score = self.generate_score(
-                prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
+                mod_prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
             )
             return score
 
@@ -1733,14 +1755,14 @@ class LLMProvider(Provider):
         )
 
         if criteria or output_space:
-            system_prompt = Groundedness.generate_system_prompt(
+            system_prompt = mod_v2feedback.Groundedness.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
                 output_space=output_space,
             )
         else:
-            system_prompt = Groundedness.system_prompt
+            system_prompt = mod_v2feedback.Groundedness.system_prompt
 
         def evaluate_hypothesis(index, hypothesis):
             abstention_score = evaluate_abstention(hypothesis)
@@ -1751,7 +1773,7 @@ class LLMProvider(Provider):
                 else:
                     return index, 1.0, {"reason": "Unanswerable abstention"}
             else:
-                user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                user_prompt = mod_prompts.LLM_GROUNDEDNESS_USER.format(
                     premise=f"{source}", hypothesis=f"{hypothesis}"
                 )
                 score, reason = self.generate_score_and_reasons(

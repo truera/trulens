@@ -11,7 +11,7 @@ import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as mod_session
 
 
@@ -94,7 +94,7 @@ class SnowflakeTestCase(TestCase):
         if not schema_already_exists:
             self.assertNotIn(self._schema, self.list_schemas())
             self._snowflake_schemas_to_delete.append(self._schema)
-        connector = SnowflakeConnector(
+        connector = snowflake_connector.SnowflakeConnector(
             schema=self._schema,
             **self._snowflake_connection_parameters,
             init_server_side=True,

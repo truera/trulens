@@ -4,13 +4,13 @@ from typing import Dict, Optional
 import numpy as np
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.utils import serial as mod_serial_utils
-from trulens.feedback import LLMProvider
+from trulens.feedback import llm_provider
 
 logger = logging.getLogger(__name__)
 
 
 def rag_triad(
-    provider: LLMProvider,
+    provider: llm_provider.LLMProvider,
     question: Optional[mod_serial_utils.Lens] = None,
     answer: Optional[mod_serial_utils.Lens] = None,
     context: Optional[mod_serial_utils.Lens] = None,

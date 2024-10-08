@@ -32,8 +32,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 import yaml
 
-from tests.utils import find_path
-from tests.utils import print_referent_lens
+from tests import utils as test_utils
 
 OPTIONAL_VAR = "TEST_OPTIONAL"
 """Env var that were to evaluate to true indicates that optional tests are to be
@@ -579,7 +578,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
         ):
             with self.subTest(part="reference path"):
                 print("Trying to find path to non-collected object.")
-                path = find_path(id(alls), id(ref()))
+                path = test_utils.find_path(id(alls), id(ref()))
 
                 if path is None:
                     print(
@@ -594,7 +593,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
 
                 else:
                     print(f"Reference path from test frame to {ref}:")
-                    print_referent_lens(origin=alls, lens=path)
+                    test_utils.print_referent_lens(origin=alls, lens=path)
 
     def tearDown(self):
         """Check for running tasks and non-main threads after each test.

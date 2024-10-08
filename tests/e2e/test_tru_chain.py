@@ -7,20 +7,18 @@ import weakref
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
-from trulens.apps.langchain import TruChain
+from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import session as mod_session
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import keys as key_utils
 
-from tests.test import TruTestCase
-from tests.test import async_test
-from tests.test import optional_test
+from tests import test as mod_test
 
 
-@optional_test  # all tests are optional as langchain is optional
-class TestTruChain(TruTestCase):
+@mod_test.optional_test  # all tests are optional as langchain is optional
+class TestTruChain(mod_test.TruTestCase):
     """Test TruChain apps."""
 
     ANSWERS = {"What is 1+2?": set(["1+2 equals 3.", "The answer is 3."])}
@@ -58,7 +56,7 @@ class TestTruChain(TruTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = TruChain(
+        tc = mod_tru_chain.TruBasicApp(
             chain,
             app_name=app_name,
             feedback_mode=feedback_schema.FeedbackMode.WITH_APP,
@@ -119,7 +117,7 @@ class TestTruChain(TruTestCase):
         self.assertCollected(recorder_ref)
         self.assertCollected(chain_ref)
 
-    @async_test
+    @mod_test.async_test
     async def test_async(self):
         """Asynchronous (`ainvoke`) test."""
 
@@ -169,7 +167,7 @@ class TestTruChain(TruTestCase):
         self.assertCollected(recorder_ref)
         self.assertCollected(chain_ref)
 
-    @async_test
+    @mod_test.async_test
     async def test_async_stream(self):
         """Asynchronous stream (`astream`) test."""
 

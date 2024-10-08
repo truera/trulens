@@ -31,7 +31,7 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
-from trulens.core.feedback import endpoint as mod_base_endpoint
+from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -903,7 +903,7 @@ Feedback function signature:
             for ins in input_combinations:
                 try:
                     result_and_meta, part_cost_tally = (
-                        mod_base_endpoint.Endpoint.track_all_costs_tally(
+                        mod_endpoint.Endpoint.track_all_costs_tally(
                             self.imp, **ins
                         )
                     )

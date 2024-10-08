@@ -31,19 +31,15 @@ from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
-from trulens.apps.basic import TruBasicApp
-from trulens.core import Feedback
+from trulens.apps import basic as basic_app
 from trulens.core import session as mod_session
-from trulens.core.database.base import DB
-from trulens.core.database.exceptions import DatabaseVersionException
-from trulens.core.database.migrations import DbRevisions
-from trulens.core.database.migrations import downgrade_db
-from trulens.core.database.migrations import get_revision_history
-from trulens.core.database.migrations import upgrade_db
-from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.database.utils import copy_database
-from trulens.core.database.utils import is_legacy_sqlite
-from trulens.core.feedback import Provider
+from trulens.core.database import base as base_db
+from trulens.core.database import exceptions as db_exceptions
+from trulens.core.database import migrations as db_migrations
+from trulens.core.database import sqlalchemy as sqlalchemy_db
+from trulens.core.database import utils as db_utils
+from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import provider as mod_provider
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 
@@ -106,7 +102,7 @@ class TestDBSpecifications(TestCase):
                                             f"Expected no {orm_class}.",
                                         )
 
-                                copy_database(
+                                db_utils.copy_database(
                                     src_url=db_prior.engine.url,
                                     tgt_url=db_post.engine.url,
                                     src_prefix="test_prior_",
@@ -212,24 +208,26 @@ class TestDbV2Migration(TestCase):
                     self._test_future_db(dbfile=dbfile)
 
     def _test_future_db(self, dbfile: Path = None) -> None:
-        db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
-        self.assertFalse(is_legacy_sqlite(db.engine))
+        db = sqlalchemy_db.SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
+        self.assertFalse(db_utils.is_legacy_sqlite(db.engine))
 
         # Migration should state there is a future version present which we
         # cannot migrate.
-        with self.assertRaises(DatabaseVersionException) as e:
+        with self.assertRaises(db_exceptions.DatabaseVersionException) as e:
             db.migrate_database()
 
         self.assertEqual(
-            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+            e.exception.reason,
+            db_exceptions.DatabaseVersionException.Reason.AHEAD,
         )
 
         # Trying to use it anyway should also produce the exception.
-        with self.assertRaises(DatabaseVersionException) as e:
+        with self.assertRaises(db_exceptions.DatabaseVersionException) as e:
             db.get_records_and_feedback()
 
         self.assertEqual(
-            e.exception.reason, DatabaseVersionException.Reason.AHEAD
+            e.exception.reason,
+            db_exceptions.DatabaseVersionException.Reason.AHEAD,
         )
 
     def test_migrate_legacy_legacy_sqlite_file(self) -> None:
@@ -259,13 +257,13 @@ class TestDbV2Migration(TestCase):
         self, dbfile: Path = None
     ) -> None:
         # run migration
-        db = SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
-        self.assertTrue(is_legacy_sqlite(db.engine))
+        db = sqlalchemy_db.SQLAlchemyDB.from_db_url(f"sqlite:///{dbfile}")
+        self.assertTrue(db_utils.is_legacy_sqlite(db.engine))
         db.migrate_database()
 
         # validate final state
-        self.assertFalse(is_legacy_sqlite(db.engine))
-        self.assertTrue(DbRevisions.load(db.engine).in_sync)
+        self.assertFalse(db_utils.is_legacy_sqlite(db.engine))
+        self.assertTrue(db_migrations.DbRevisions.load(db.engine).in_sync)
 
         records, feedbacks = db.get_records_and_feedback()
 
@@ -274,7 +272,7 @@ class TestDbV2Migration(TestCase):
         self.assertGreater(len(feedbacks), 0)
 
 
-class MockFeedback(Provider):
+class MockFeedback(mod_provider.Provider):
     """Provider for testing purposes."""
 
     def length(self, text: str) -> float:  # noqa
@@ -284,7 +282,9 @@ class MockFeedback(Provider):
 
 
 @contextmanager
-def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
+def clean_db(
+    alias: str, **kwargs: Dict[str, Any]
+) -> Iterator[sqlalchemy_db.SQLAlchemyDB]:
     """Yields a clean database instance for the given database type.
 
     Args:
@@ -308,10 +308,10 @@ def clean_db(alias: str, **kwargs: Dict[str, Any]) -> Iterator[SQLAlchemyDB]:
             "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
-        db = SQLAlchemyDB.from_db_url(url, **kwargs)
+        db = sqlalchemy_db.SQLAlchemyDB.from_db_url(url, **kwargs)
 
         # NOTE(piotrm): I couldn't figure out why these things were done here.
-        # downgrade_db(
+        # db_migrations.downgrade_db(
         #    db.engine, revision="base"
         # )  # drops all tables except `db.version_table`
         # with db.engine.connect() as conn:
@@ -328,14 +328,14 @@ def assert_revision(
     """Asserts that the version of the database `engine` is `expected` and
     has the `status` flag set."""
 
-    revisions = DbRevisions.load(engine)
+    revisions = db_migrations.DbRevisions.load(engine)
     assert revisions.current == expected, f"{revisions.current} != {expected}"
     assert getattr(revisions, status)
 
 
-def _test_db_migration(db: SQLAlchemyDB):
+def _test_db_migration(db: sqlalchemy_db.SQLAlchemyDB):
     engine = db.engine
-    history = get_revision_history(engine)
+    history = db_migrations.get_revision_history(engine)
     curr_rev = None
 
     # apply each upgrade at a time up to head revision
@@ -344,18 +344,18 @@ def _test_db_migration(db: SQLAlchemyDB):
             int(next_rev) == i + 1
         ), f"Versions must be monotonically increasing from 1: {history}"
         assert_revision(engine, curr_rev, "behind")
-        upgrade_db(engine, revision=next_rev)
+        db_migrations.upgrade_db(engine, revision=next_rev)
         curr_rev = next_rev
 
     # validate final state
     assert_revision(engine, history[-1], "in_sync")
 
     # apply all downgrades
-    downgrade_db(engine, revision="base")
+    db_migrations.downgrade_db(engine, revision="base")
     assert_revision(engine, None, "behind")
 
 
-def debug_dump(db: SQLAlchemyDB):
+def debug_dump(db: sqlalchemy_db.SQLAlchemyDB):
     """Debug function to dump all tables in the database."""
 
     print("  # registry")
@@ -392,7 +392,7 @@ def debug_dump(db: SQLAlchemyDB):
             )
 
 
-def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
+def _test_db_consistency(test: TestCase, db: sqlalchemy_db.SQLAlchemyDB):
     db.migrate_database()  # ensure latest revision
 
     _populate_data(db)
@@ -467,18 +467,18 @@ def _test_db_consistency(test: TestCase, db: SQLAlchemyDB):
         )
 
 
-def _populate_data(db: DB):
+def _populate_data(db: base_db.DB):
     session = mod_session.TruSession()
     session.connector.db = (
         db  # because of the singleton behavior, db must be changed manually
     )
 
-    fb = Feedback(
+    fb = mod_feedback.Feedback(
         imp=MockFeedback().length,
         feedback_definition_id="mock",
         selectors={"text": select_schema.Select.RecordOutput},
     )
-    app = TruBasicApp(
+    app = basic_app.TruBasicApp(
         text_to_text=lambda x: x,
         # app_name="test",
         db=db,

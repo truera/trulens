@@ -1,20 +1,18 @@
-"""
-Tests for TruBasicApp.
-"""
+"""Tests for TruBasicApp."""
 
 from unittest import main
 
-from trulens.apps.basic import TruBasicApp
+from trulens.apps import basic as basic_app
 from trulens.core import session as mod_session
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
 
-from tests.test import TruTestCase
+from tests import test as mod_test
 
 key_utils.check_keys("OPENAI_API_KEY", "HUGGINGFACE_API_KEY")
 
 
-class TestTruBasicApp(TruTestCase):
+class TestTruBasicApp(mod_test.TruTestCase):
     def setUp(self):
         def custom_application(prompt: str) -> str:
             return "a response"
@@ -29,7 +27,7 @@ class TestTruBasicApp(TruTestCase):
 
         self.basic_app = custom_application
 
-        self.tru_basic_app_recorder = TruBasicApp(
+        self.tru_basic_app_recorder = basic_app.TruBasicApp(
             self.basic_app,
             app_name="Custom Application",
             app_version="v1",

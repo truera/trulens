@@ -6,9 +6,7 @@ from typing import Any, Callable, ClassVar, Iterable, Optional
 import boto3
 from botocore.client import ClientCreator
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
-from trulens.core.feedback.endpoint import INSTRUMENT
+from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
@@ -16,7 +14,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-class BedrockCallback(EndpointCallback):
+class BedrockCallback(mod_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_generation_chunk(self, response: Any) -> None:
@@ -126,7 +124,7 @@ class BedrockCallback(EndpointCallback):
             )
 
 
-class BedrockEndpoint(Endpoint):
+class BedrockEndpoint(mod_endpoint.Endpoint):
     """
     Bedrock endpoint.
 
@@ -179,7 +177,7 @@ class BedrockEndpoint(Endpoint):
         # Note here was are instrumenting a method that outputs a function which
         # we also want to instrument:
         if not python_utils.safe_hasattr(
-            ClientCreator._create_api_method, INSTRUMENT
+            ClientCreator._create_api_method, mod_endpoint.INSTRUMENT
         ):
             self._instrument_class_wrapper(
                 ClientCreator,
@@ -192,7 +190,7 @@ class BedrockEndpoint(Endpoint):
             # `self.client` should be already set by super().__init__.
 
             if not python_utils.safe_hasattr(
-                self.client.invoke_model, INSTRUMENT
+                self.client.invoke_model, mod_endpoint.INSTRUMENT
             ):
                 # If they user instantiated the client before creating our
                 # endpoint, the above instrumentation will not have attached our
@@ -214,7 +212,7 @@ class BedrockEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[mod_endpoint.EndpointCallback],
     ) -> None:
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)

@@ -8,7 +8,7 @@ from typing import ClassVar, Dict, List, Optional, Tuple, Union
 import pydantic
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.feedback.generated import re_configured_rating
+from trulens.feedback import generated as mod_generated
 
 
 # Level 1 abstraction
@@ -773,7 +773,7 @@ class COTExplained(Feedback):
                     for line in response.split("\n"):
                         if "Score" in line:
                             score = (
-                                re_configured_rating(
+                                mod_generated.re_configured_rating(
                                     line,
                                     min_score_val=0,
                                     max_score_val=normalize,
@@ -783,7 +783,7 @@ class COTExplained(Feedback):
                     return score, {"reason": response}
                 else:
                     return (
-                        re_configured_rating(
+                        mod_generated.re_configured_rating(
                             response, min_score_val=0, max_score_val=normalize
                         )
                         / normalize

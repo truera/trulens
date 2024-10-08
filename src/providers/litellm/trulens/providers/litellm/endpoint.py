@@ -4,8 +4,7 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as mod_endpoint
 
 import litellm
 from litellm import completion_cost
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-class LiteLLMCallback(EndpointCallback):
+class LiteLLMCallback(mod_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: pydantic.BaseModel) -> None:
@@ -59,7 +58,7 @@ class LiteLLMCallback(EndpointCallback):
             setattr(self.cost, "cost", completion_cost(response))
 
 
-class LiteLLMEndpoint(Endpoint):
+class LiteLLMEndpoint(mod_endpoint.Endpoint):
     """LiteLLM endpoint."""
 
     litellm_provider: str = "openai"
@@ -94,14 +93,14 @@ class LiteLLMEndpoint(Endpoint):
         # single one will be made. Cannot make a fix just here as
         # track_all_costs creates endpoints via the singleton mechanism.
 
-        return super(Endpoint, cls).__new__(cls, name="litellm")
+        return super(mod_endpoint.Endpoint, cls).__new__(cls, name="litellm")
 
     def handle_wrapped_call(
         self,
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[mod_endpoint.EndpointCallback],
     ) -> None:
         counted_something = False
 

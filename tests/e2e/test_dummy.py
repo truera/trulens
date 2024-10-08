@@ -8,14 +8,14 @@ DummyAPI for its requests.
 from pathlib import Path
 from unittest import main
 
-from trulens.apps.custom import TruCustomApp
+from trulens.apps import custom as custom_app
 from trulens.core import session as mod_session
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import TruTestCase
+from tests import test as mod_test
 
 
-class TestDummy(TruTestCase):
+class TestDummy(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
@@ -32,7 +32,9 @@ class TestDummy(TruTestCase):
         )  # uses DummyAPI internally
 
         # Create trulens wrapper:
-        ta = TruCustomApp(ca, app_name="customapp", app_version="base")
+        ta = custom_app.TruCustomApp(
+            ca, app_name="customapp", app_version="base"
+        )
 
         with ta as recorder:
             ca.respond_to_query("hello")

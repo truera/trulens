@@ -11,9 +11,8 @@ from threading import Thread
 from typing import Optional
 
 from trulens.core import session as mod_session
-from trulens.core.utils.imports import static_resource
-from trulens.dashboard.utils.notebook_utils import is_notebook
-from trulens.dashboard.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens.core.utils import imports as import_utils
+from trulens.dashboard.utils import notebook_utils
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
@@ -71,7 +70,9 @@ def run_dashboard(
     print("Starting dashboard ...")
 
     # run leaderboard with subprocess
-    leaderboard_path = static_resource("dashboard", "Leaderboard.py")
+    leaderboard_path = import_utils.static_resource(
+        "dashboard", "Leaderboard.py"
+    )
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -130,8 +131,8 @@ def run_dashboard(
 
     started = threading.Event()
     tunnel_started = threading.Event()
-    if is_notebook():
-        out_stdout, out_stderr = setup_widget_stdout_stderr()
+    if notebook_utils.is_notebook():
+        out_stdout, out_stderr = notebook_utils.setup_widget_stdout_stderr()
     else:
         out_stdout = None
         out_stderr = None

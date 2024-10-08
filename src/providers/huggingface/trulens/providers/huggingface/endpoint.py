@@ -11,18 +11,16 @@ from typing import (
 )
 
 import requests
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.utils import keys as key_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.keys import _check_key
-from trulens.core.utils.keys import get_huggingface_headers
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
 
-class HuggingfaceCallback(EndpointCallback):
+class HuggingfaceCallback(mod_endpoint.EndpointCallback):
     def handle_classification(self, response: requests.Response) -> None:
         # Huggingface free inference api doesn't seem to have its own library
         # and the docs say to use `requests`` so that is what we instrument and
@@ -39,7 +37,7 @@ class HuggingfaceCallback(EndpointCallback):
                 self.cost.n_classes += len(item)
 
 
-class HuggingfaceEndpoint(Endpoint):
+class HuggingfaceEndpoint(mod_endpoint.Endpoint):
     """Huggingface endpoint.
 
     Instruments the requests.post method for requests to
@@ -56,22 +54,24 @@ class HuggingfaceEndpoint(Endpoint):
 
         # Returns true in "warn" mode to indicate that key is set. Does not
         # print anything even if key not set.
-        if _check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
-            kwargs["post_headers"] = get_huggingface_headers()
+        if key_utils._check_key("HUGGINGFACE_API_KEY", silent=True, warn=True):
+            kwargs["post_headers"] = key_utils.get_huggingface_headers()
 
         super().__init__(*args, **kwargs)
 
         self._instrument_class(requests, "post")
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="huggingface")
+        return super(mod_endpoint.Endpoint, cls).__new__(
+            cls, name="huggingface"
+        )
 
     def handle_wrapped_call(
         self,
         func: Callable,
         bindings: inspect.BoundArguments,
         response: requests.Response,
-        callback: Optional[EndpointCallback],
+        callback: Optional[mod_endpoint.EndpointCallback],
     ) -> requests.Response:
         # Call here can only be requests.post .
 
@@ -97,7 +97,7 @@ class HuggingfaceEndpoint(Endpoint):
         self,
         url: str,
         payload: serial_utils.JSON,
-        timeout: float = DEFAULT_NETWORK_TIMEOUT,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
     ) -> Any:
         self.pace_me()
         ret = requests.post(

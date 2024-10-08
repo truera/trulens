@@ -1,6 +1,4 @@
-"""
-# Basic input output instrumentation and monitoring.
-"""
+"""Basic input output instrumentation and monitoring."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -11,8 +9,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
 from trulens.core import app as mod_app
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
+from trulens.core import instruments as mod_instruments
 from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
@@ -43,7 +40,7 @@ class TruWrapperApp:
         self._call_fn = call_fn
 
 
-class TruBasicCallableInstrument(Instrument):
+class TruBasicCallableInstrument(mod_instruments.Instrument):
     """Basic app instrumentation."""
 
     class Default:
@@ -52,7 +49,9 @@ class TruBasicCallableInstrument(Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+        METHODS: Dict[str, mod_instruments.ClassFilter] = {
+            "_call": TruWrapperApp
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -140,7 +139,9 @@ class TruBasicApp(mod_app.App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-        if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
+        if func == getattr(
+            TruWrapperApp._call, mod_instruments.Instrument.INSTRUMENT
+        ):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of
             # self.app._call . This needs to be done since the a TruWrapperApp

@@ -13,13 +13,13 @@ from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
 import streamlit as st
-from trulens.apps.langchain import TruChain
+from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import session as mod_session
 from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import keys as key_utils
-from trulens.providers.huggingface import Huggingface
-from trulens.providers.openai import OpenAI as fOpenAI
+from trulens.providers.huggingface import provider as huggingface_provider
+from trulens.providers.openai import provider as openai_provider
 
 key_utils.check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
@@ -38,8 +38,8 @@ pinecone.init(
 
 identity = lambda h: h
 
-hugs = Huggingface()
-openai = fOpenAI()
+hugs = huggingface_provider.Huggingface()
+openai = openai_provider.OpenAI()
 
 f_lang_match = mod_feedback.Feedback(hugs.language_match).on(
     text1=select_schema.Select.RecordInput,
@@ -127,7 +127,7 @@ def generate_response(prompt):
         )
 
     # Trulens instrumentation.
-    tc = TruChain(chain, app_name=app_name)
+    tc = mod_tru_chain.TruChain(chain, app_name=app_name)
 
     return tc, tc.with_record(dict(question=prompt))
 

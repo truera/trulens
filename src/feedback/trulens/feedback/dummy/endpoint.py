@@ -18,14 +18,11 @@ import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
-from trulens.core.feedback.endpoint import DEFAULT_RPM
-from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.core.feedback.endpoint import Endpoint
-from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +133,7 @@ class DummyAPI(pydantic.BaseModel):
         assert isinstance(payload, dict), "Payload should be a dict."
 
         if timeout is None:
-            timeout = DEFAULT_NETWORK_TIMEOUT
+            timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
 
         # allocate some data to pretend we are doing hard work
         temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
@@ -334,7 +331,7 @@ class DummyAPICreator:
         )
 
 
-class DummyEndpointCallback(EndpointCallback):
+class DummyEndpointCallback(mod_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def handle_classification(self, response: Sequence) -> None:
@@ -356,7 +353,7 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
 
-class DummyEndpoint(Endpoint):
+class DummyEndpoint(mod_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -366,7 +363,9 @@ class DummyEndpoint(Endpoint):
     """Fake API to use for making fake requests."""
 
     def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="dummyendpoint")
+        return super(mod_endpoint.Endpoint, cls).__new__(
+            cls, name="dummyendpoint"
+        )
 
     @deprecation_utils.deprecated_property(
         "Use `DummyEndpoint.api.alloc` instead."
@@ -413,7 +412,7 @@ class DummyEndpoint(Endpoint):
     def __init__(
         self,
         name: str = "dummyendpoint",
-        rpm: float = DEFAULT_RPM * 10,
+        rpm: float = mod_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
         if python_utils.safe_hasattr(self, "callback_class"):
@@ -446,7 +445,7 @@ class DummyEndpoint(Endpoint):
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
         if not python_utils.safe_hasattr(
-            DummyAPICreator.create_method, INSTRUMENT
+            DummyAPICreator.create_method, mod_endpoint.INSTRUMENT
         ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
@@ -468,7 +467,7 @@ class DummyEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[mod_endpoint.EndpointCallback],
     ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"

@@ -12,7 +12,7 @@ import threading
 from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
-from trulens.core._utils.pycompat import Future
+from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)

@@ -34,7 +34,7 @@ from trulens.core import experimental as mod_experimental
 from trulens.core import instruments as mod_instruments
 from trulens.core import session as mod_session
 from trulens.core._utils import optional as optional_utils
-from trulens.core._utils.pycompat import Future
+from trulens.core._utils.pycompat import Future  # import standard exception
 from trulens.core.database import base as mod_base_db
 from trulens.core.database import connector as mod_connector
 from trulens.core.feedback import feedback as mod_feedback

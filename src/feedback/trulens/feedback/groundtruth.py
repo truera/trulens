@@ -12,7 +12,7 @@ from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.feedback import generated as mod_generated
-from trulens.feedback.llm_provider import LLMProvider
+from trulens.feedback import llm_provider
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -43,7 +43,7 @@ class GroundTruthAgreement(
         pd.DataFrame,
         pyschema_utils.FunctionOrMethod,
     ]
-    provider: LLMProvider
+    provider: llm_provider.LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -58,62 +58,69 @@ class GroundTruthAgreement(
         ground_truth: Union[
             List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod
         ],
-        provider: Optional[LLMProvider] = None,
+        provider: Optional[llm_provider.LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
 
         Usage 1:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
-        golden_set = [
-            {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
-        ```
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            golden_set = [
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
+            ```
 
         Usage 2:
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
-        from trulens.core.session import TruSession
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            from trulens.core.session import TruSession
 
-        session = TruSession()
-        ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
+            session = TruSession()
+            ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ```
 
         Usage 3:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.cortex import Cortex
-        ground_truth_imp = llm_app
-        response = llm_app(prompt)
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.cortex import Cortex
+            ground_truth_imp = llm_app
+            response = llm_app(prompt)
 
-        snowflake_connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "schema": os.environ["SNOWFLAKE_SCHEMA"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
-        }
-        ground_truth_collection = GroundTruthAgreement(
-            ground_truth_imp,
-            provider=Cortex(
-                snowflake.connector.connect(**snowflake_connection_parameters),
-                model_engine="mistral-7b",
-            ),
-        )
-        ```
+            snowflake_connection_parameters = {
+                "account": os.environ["SNOWFLAKE_ACCOUNT"],
+                "user": os.environ["SNOWFLAKE_USER"],
+                "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+                "database": os.environ["SNOWFLAKE_DATABASE"],
+                "schema": os.environ["SNOWFLAKE_SCHEMA"],
+                "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+            }
+            ground_truth_collection = GroundTruthAgreement(
+                ground_truth_imp,
+                provider=Cortex(
+                    snowflake.connector.connect(**snowflake_connection_parameters),
+                    model_engine="mistral-7b",
+                ),
+            )
+            ```
 
         Args:
-            ground_truth (Union[List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-                or callable that returns a ground truth string given a prompt string.
-                provider (LLMProvider): The provider to use for agreement measures.
-                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+            ground_truth: A list of query/response pairs or a function, or a
+                dataframe containing ground truth dataset, or callable that
+                returns a ground truth string given a prompt string.
+
+            provider: The provider to use for
+                agreement measures.
+
+            bert_scorer: Internal Usage for
+                DB serialization.
 
         """
         if provider is None:

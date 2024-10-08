@@ -5,7 +5,7 @@ Tests for TruCustomApp.
 from unittest import main
 import weakref
 
-from trulens.apps.custom import TruCustomApp
+from trulens.apps import custom as custom_app
 from trulens.core import session as mod_session
 
 from examples.dev.dummy_app.app import DummyApp
@@ -19,7 +19,9 @@ class TestTruCustomApp(TruTestCase):
 
     def _create_app(self):
         app = DummyApp()
-        recorder = TruCustomApp(app, app_name="custom_app", app_version="v1")
+        recorder = custom_app.TruCustomApp(
+            app, app_name="custom_app", app_version="v1"
+        )
 
         return app, recorder
 

@@ -11,17 +11,17 @@ import time
 from unittest import TestCase
 import uuid
 
-from trulens.apps.basic import TruBasicApp
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.virtual import TruVirtual
-from trulens.core import Feedback
+from trulens.apps import basic as basic_app
+from trulens.apps import custom as custom_app
+from trulens.apps import virtual as virtual_app
 from trulens.core import session as mod_session
+from trulens.core.feedback import feedback as mod_feedback
 from trulens.core.schema import feedback as mod_feedback_schema
 from trulens.core.utils import keys as key_utils
-from trulens.providers.huggingface.provider import Dummy
+from trulens.providers.huggingface import provider as huggingface_provider
 
-from tests.test import optional_test
-from tests.unit.feedbacks import custom_feedback_function
+from tests import test as mod_test
+from tests.unit import feedbacks as feedback_tests
 
 
 class TestTru(TestCase):
@@ -104,7 +104,7 @@ class TestTru(TestCase):
         return chain
 
     def _create_feedback_functions(self):
-        provider = Dummy(
+        provider = huggingface_provider.Dummy(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
@@ -113,15 +113,15 @@ class TestTru(TestCase):
             alloc=1024,  # how much fake data to allocate during requests
         )
 
-        f_dummy1 = Feedback(
+        f_dummy1 = mod_feedback.Feedback(
             provider.language_match, name="language match"
         ).on_input_output()
 
-        f_dummy2 = Feedback(
+        f_dummy2 = mod_feedback.Feedback(
             provider.positive_sentiment, name="output sentiment"
         ).on_output()
 
-        f_dummy3 = Feedback(
+        f_dummy3 = mod_feedback.Feedback(
             provider.positive_sentiment, name="input sentiment"
         ).on_input()
 
@@ -167,16 +167,16 @@ class TestTru(TestCase):
             app = self._create_basic()
 
             with self.subTest(argname=None):
-                TruBasicApp(app)
+                basic_app.TruBasicApp(app)
 
             with self.subTest(argname="text_to_text"):
-                TruBasicApp(text_to_text=app)
+                basic_app.TruBasicApp(text_to_text=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
-                TruBasicApp()
+                basic_app.TruBasicApp()
             with self.assertRaises(Exception):
-                TruBasicApp(None)
+                basic_app.TruBasicApp(None)
 
             # Specifying custom basic app using any of these other argument
             # names should be an error.
@@ -185,19 +185,19 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        TruBasicApp(**{arg: app})
+                        basic_app.TruBasicApp(**{arg: app})
 
         with self.subTest(type="TruCustomApp"):
             app = self._create_custom()
 
-            TruCustomApp(app)
-            TruCustomApp(app=app)
+            custom_app.TruCustomApp(app)
+            custom_app.TruCustomApp(app=app)
 
             # Not specifying callable should be an error.
             with self.assertRaises(Exception):
-                TruCustomApp()
+                custom_app.TruCustomApp()
             with self.assertRaises(Exception):
-                TruCustomApp(None)
+                custom_app.TruCustomApp(None)
 
             # Specifying custom app using any of these other argument names
             # should be an error.
@@ -205,17 +205,17 @@ class TestTru(TestCase):
             for arg in wrong_args:
                 with self.subTest(argname=arg):
                     with self.assertRaises(Exception):
-                        TruCustomApp(**{arg: app})
+                        custom_app.TruCustomApp(**{arg: app})
 
         with self.subTest(type="TruVirtual"):
-            TruVirtual(None)
+            virtual_app.TruVirtual(None)
 
-    @optional_test
+    @mod_test.optional_test
     def test_langchain_constructors(self):
         """
         Test TruChain class that require optional packages.
         """
-        from trulens.apps.langchain import TruChain
+        from trulens.apps.langchain.tru_chain import TruChain
 
         with self.subTest(type="TruChain"):
             app = self._create_chain()
@@ -240,12 +240,12 @@ class TestTru(TestCase):
                     with self.assertRaises(Exception):
                         TruChain(**{arg: app})
 
-    @optional_test
+    @mod_test.optional_test
     def test_llamaindex_constructors(self):
         """
         Test TruLlama class that require optional packages.
         """
-        from trulens.apps.llamaindex import TruLlama
+        from trulens.apps.llamaindex.tru_llama import TruLlama
 
         with self.subTest(type="TruLlama"):
             app = self._create_llama()
@@ -283,7 +283,7 @@ class TestTru(TestCase):
 
         session = mod_session.TruSession()
 
-        tru_app = TruCustomApp(app)
+        tru_app = custom_app.TruCustomApp(app)
 
         with tru_app as recording:
             app.respond_to_query("hello")
@@ -339,7 +339,7 @@ class TestTru(TestCase):
 
         session = mod_session.TruSession()
 
-        tru_app = TruCustomApp(app)
+        tru_app = custom_app.TruCustomApp(app)
 
         with tru_app as recording:
             app.respond_to_query("hello")
@@ -457,9 +457,11 @@ class TestTru(TestCase):
 
     def test_start_evaluator_with_blocking(self):
         session = mod_session.TruSession()
-        f = Feedback(custom_feedback_function).on_default()
+        f = mod_feedback.Feedback(
+            feedback_tests.custom_feedback_function
+        ).on_default()
         app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
-        tru_app = TruBasicApp(
+        tru_app = basic_app.TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
             feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,

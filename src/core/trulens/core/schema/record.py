@@ -17,7 +17,7 @@ from typing import (
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core._utils.pycompat import Future
+from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema

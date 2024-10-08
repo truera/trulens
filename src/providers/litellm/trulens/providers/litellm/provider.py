@@ -2,16 +2,16 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.feedback import LLMProvider
-from trulens.providers.litellm.endpoint import LiteLLMEndpoint
+from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.feedback import llm_provider as llm_provider
+from trulens.providers.litellm import endpoint as litellm_endpoint
 
 from litellm import completion
 
 logger = logging.getLogger(__name__)
 
 
-class LiteLLM(LLMProvider):
+class LiteLLM(llm_provider.LLMProvider):
     """Out of the box feedback functions calling LiteLLM API.
 
     Create an LiteLLM Provider with out of the box feedback functions.
@@ -31,13 +31,13 @@ class LiteLLM(LLMProvider):
     completion_args: Dict[str, str] = pydantic.Field(default_factory=dict)
     """Additional arguments to pass to the `litellm.completion` as needed for chosen api."""
 
-    endpoint: Endpoint
+    endpoint: mod_endpoint.Endpoint
 
     def __init__(
         self,
         model_engine: Optional[str] = None,
         completion_kwargs: Optional[Dict] = None,
-        endpoint: Optional[Endpoint] = None,
+        endpoint: Optional[mod_endpoint.Endpoint] = None,
         **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
@@ -77,7 +77,7 @@ provider = LiteLLM(
         self_kwargs["model_engine"] = model_engine
         self_kwargs["litellm_provider"] = litellm_provider
         self_kwargs["completion_args"] = completion_kwargs
-        self_kwargs["endpoint"] = LiteLLMEndpoint(
+        self_kwargs["endpoint"] = litellm_endpoint.LiteLLMEndpoint(
             litellm_provider=litellm_provider, **kwargs
         )
 
