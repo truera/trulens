@@ -499,7 +499,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         self,
         query: str,
         retrieved_context_chunks: List[str],
-        k: int | None,
+        k: Optional[int] = None,
     ) -> float:
         """
         Compute IR Hit Rate (Hit Rate@k) for a given query and retrieved context chunks.
