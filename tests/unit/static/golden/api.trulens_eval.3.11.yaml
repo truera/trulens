@@ -14,8 +14,8 @@ trulens_eval:
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
-    TP: trulens.core.utils.python.SingletonPerName
-    Tru: trulens.core.utils.python.PydanticSingleton
+    TP: trulens.core.utils.python.SingletonPerNameMeta
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruChain: pydantic._internal._model_construction.ModelMetaclass
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
@@ -813,7 +813,7 @@ trulens_eval.Select:
 trulens_eval.TP:
   __bases__:
   - builtins.object
-  __class__: trulens.core.utils.python.SingletonPerName
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
@@ -823,7 +823,7 @@ trulens_eval.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  __class__: trulens.core.utils.python.PydanticSingleton
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -845,10 +845,6 @@ trulens_eval.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    experimental_disable_feature: builtins.function
-    experimental_enable_feature: builtins.function
-    experimental_feature: builtins.function
-    experimental_set_features: builtins.function
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -6813,14 +6809,14 @@ trulens_eval.tru:
   highs: {}
   lows:
     DASHBOARD_START_TIMEOUT: builtins.int
-    Tru: trulens.core.utils.python.PydanticSingleton
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     deprecation_utils: builtins.module
     humanize_seconds: builtins.function
 trulens_eval.tru.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  __class__: trulens.core.utils.python.PydanticSingleton
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -6842,10 +6838,6 @@ trulens_eval.tru.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    experimental_disable_feature: builtins.function
-    experimental_enable_feature: builtins.function
-    experimental_feature: builtins.function
-    experimental_set_features: builtins.function
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -8811,14 +8803,14 @@ trulens_eval.utils.threading:
   highs: {}
   lows:
     DEFAULT_NETWORK_TIMEOUT: builtins.float
-    TP: trulens.core.utils.python.SingletonPerName
+    TP: trulens.core.utils.python.SingletonPerNameMeta
     Thread: builtins.type
     ThreadPoolExecutor: builtins.type
     deprecation_utils: builtins.module
 trulens_eval.utils.threading.TP:
   __bases__:
   - builtins.object
-  __class__: trulens.core.utils.python.SingletonPerName
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
