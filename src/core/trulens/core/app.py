@@ -837,7 +837,7 @@ class App(
             ret: The return value of the function.
         """
 
-        if isinstance(ret, serial_utils.serial_utils.JSON_BASES):
+        if isinstance(ret, serial_utils.JSON_BASES):
             return str(ret)
 
         if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):

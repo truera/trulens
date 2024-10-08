@@ -39,7 +39,6 @@ from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
 from trulens.core.utils import containers as container_utils
-from trulens.core.utils import json as json_utils
 from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
@@ -591,8 +590,9 @@ class SerialModel(pydantic.BaseModel):
 
     def model_dump(self, **kwargs):
         # TODO: Import at top-level and resolve circular import.
+        from trulens.core.utils.json import jsonify
 
-        return json_utils.jsonify(self, **kwargs)
+        return jsonify(self, **kwargs)
 
     # NOTE(piotrm): regarding model_validate: custom deserialization is done in
     # WithClassInfo class but only for classes that mix it in.
