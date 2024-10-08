@@ -79,11 +79,9 @@ trulens.core.app:
     ATTRIBUTE_ERROR_MESSAGE: builtins.str
     Agent: trulens.core.app.ComponentViewMeta
     App: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     ComponentView: trulens.core.app.ComponentViewMeta
     ComponentViewMeta: builtins.type
     CustomComponent: trulens.core.app.ComponentViewMeta
-    JSON_BASES: builtins.tuple
     LLM: trulens.core.app.ComponentViewMeta
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
@@ -365,7 +363,6 @@ trulens.core.database.migrations.data:
   __class__: builtins.module
   highs: {}
   lows:
-    MIGRATION_UNKNOWN_STR: builtins.str
     data_migrate: builtins.function
     sql_alchemy_migration_versions: builtins.list
     sqlalchemy_upgrade_paths: builtins.dict
@@ -374,7 +371,6 @@ trulens.core.database.orm:
   highs: {}
   lows:
     BaseWithTablePrefix: builtins.type
-    DEFAULT_DATABASE_PREFIX: builtins.str
     ORM: abc.ABCMeta
     make_base_for_prefix: functools._lru_cache_wrapper
     make_orm_for_prefix: functools._lru_cache_wrapper
@@ -396,13 +392,8 @@ trulens.core.database.sqlalchemy:
   highs: {}
   lows:
     AppsExtractor: builtins.type
-    MIGRATION_UNKNOWN_STR: builtins.str
     SQLAlchemyDB: pydantic._internal._model_construction.ModelMetaclass
     SnowflakeImpl: alembic.ddl.impl.ImplMeta
-    UNICODE_CHECK: builtins.str
-    UNICODE_CLOCK: builtins.str
-    UNICODE_HOURGLASS: builtins.str
-    UNICODE_STOP: builtins.str
     flatten: builtins.function
 trulens.core.database.sqlalchemy.AppsExtractor:
   __bases__:
@@ -1178,11 +1169,7 @@ trulens.core.utils.json:
   __class__: builtins.module
   highs: {}
   lows:
-    ALL_SPECIAL_KEYS: builtins.set
-    CIRCLE: builtins.str
-    CLASS_INFO: builtins.str
     ENCODERS_BY_TYPE: builtins.dict
-    JSON_BASES: builtins.tuple
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
     json_default: builtins.function
@@ -1199,8 +1186,6 @@ trulens.core.utils.keys:
     MissingKeyError: builtins.type
     REDACTED_VALUE: builtins.str
     TEMPLATE_VALUES: builtins.set
-    UNICODE_CHECK: builtins.str
-    UNICODE_STOP: builtins.str
     check_keys: builtins.function
     check_or_set_keys: builtins.function
     cohere_agent: builtins.NoneType
@@ -1249,14 +1234,11 @@ trulens.core.utils.pyschema:
   highs: {}
   lows:
     Bindings: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     Class: pydantic._internal._model_construction.ModelMetaclass
-    ERROR: builtins.str
     Function: pydantic._internal._model_construction.ModelMetaclass
     FunctionOrMethod: pydantic._internal._model_construction.ModelMetaclass
     Method: pydantic._internal._model_construction.ModelMetaclass
     Module: pydantic._internal._model_construction.ModelMetaclass
-    NOSERIO: builtins.str
     Obj: pydantic._internal._model_construction.ModelMetaclass
     WithClassInfo: pydantic._internal._model_construction.ModelMetaclass
     builtin_init_dummy: builtins.function
@@ -1649,32 +1631,18 @@ trulens.dashboard.Leaderboard:
   lows:
     APP_AGG_COLS: builtins.list
     APP_COLS: builtins.list
-    EXTERNAL_APP_COL_NAME: builtins.str
-    HIDE_RECORD_COL_NAME: builtins.str
-    MAX_COMPARATORS: builtins.int
-    MIN_COMPARATORS: builtins.int
-    PINNED_COL_NAME: builtins.str
-    ST_RECORDS_LIMIT: builtins.str
-    aggrid_css: builtins.dict
-    cell_rules: builtins.dict
-    compare_page_name: builtins.str
-    default_direction: builtins.str
     handle_add_metadata: builtins.function
     handle_add_virtual_app: builtins.function
     handle_pin_toggle: builtins.function
     handle_table_edit: builtins.function
     init_page_state: builtins.function
     order_columns: builtins.function
-    page_name: builtins.str
-    records_page_name: builtins.str
     render_leaderboard: builtins.function
-    stmetricdelta_hidearrow: builtins.str
 trulens.dashboard.appui:
   __class__: builtins.module
   highs: {}
   lows:
     AppUI: traitlets.traitlets.MetaHasTraits
-    JSON_BASES: builtins.tuple
     RecordWidget: builtins.type
     Selector: traitlets.traitlets.MetaHasTraits
     SelectorValue: traitlets.traitlets.MetaHasTraits
@@ -1760,9 +1728,7 @@ trulens.dashboard.streamlit:
   __class__: builtins.module
   highs: {}
   lows:
-    DEFAULT_DATABASE_PREFIX: builtins.str
     FeedbackDisplay: pydantic._internal._model_construction.ModelMetaclass
-    MIGRATION_UNKNOWN_STR: builtins.str
     init_from_args: builtins.function
     trulens_feedback: builtins.function
     trulens_leaderboard: builtins.function
@@ -1781,21 +1747,11 @@ trulens.dashboard.utils:
   lows: {}
 trulens.dashboard.utils.dashboard_utils:
   __class__: builtins.module
-  __version__: 1.0.2a0
   highs: {}
   lows:
-    CACHE_TTL: builtins.int
-    EXTERNAL_APP_COL_NAME: builtins.str
-    HIDE_RECORD_COL_NAME: builtins.str
-    PINNED_COL_NAME: builtins.str
-    RECORDS_LIMIT: builtins.int
     ST_APP_NAME: builtins.str
     ST_RECORDS_LIMIT: builtins.str
-    __version__: builtins.str
     add_query_param: builtins.function
-    core_package: builtins.str
-    core_version: builtins.str
-    dashboard_package: builtins.str
     get_app_versions: streamlit.runtime.caching.cache_utils.CachedFunc
     get_apps: streamlit.runtime.caching.cache_utils.CachedFunc
     get_feedback_defs: streamlit.runtime.caching.cache_utils.CachedFunc
@@ -1837,8 +1793,6 @@ trulens.dashboard.ux.components:
   __class__: builtins.module
   highs: {}
   lows:
-    CLASS_INFO: builtins.str
-    REDACTED_VALUE: builtins.str
     copy_to_clipboard: builtins.function
     dict_to_md: builtins.function
     draw_agent_info: builtins.function
@@ -1955,13 +1909,10 @@ trulens.feedback.dummy.endpoint:
   __class__: builtins.module
   highs: {}
   lows:
-    DEFAULT_NETWORK_TIMEOUT: builtins.float
-    DEFAULT_RPM: builtins.int
     DummyAPI: pydantic._internal._model_construction.ModelMetaclass
     DummyAPICreator: builtins.type
     DummyEndpoint: pydantic._internal._model_construction.ModelMetaclass
     DummyEndpointCallback: pydantic._internal._model_construction.ModelMetaclass
-    INSTRUMENT: builtins.str
     NonDeterminism: pydantic._internal._model_construction.ModelMetaclass
 trulens.feedback.dummy.endpoint.DummyAPI:
   __bases__:
