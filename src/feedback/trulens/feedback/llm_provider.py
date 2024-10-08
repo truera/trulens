@@ -351,15 +351,12 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = ContextRelevance.system_prompt
+        system_prompt = ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         return self.generate_score(
             system_prompt=system_prompt,
@@ -422,15 +419,12 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = ContextRelevance.system_prompt
+        system_prompt = ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
@@ -482,15 +476,12 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = ContextRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = ContextRelevance.system_prompt
+        system_prompt = ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         try:
             return self.generate_confidence_score(
@@ -550,12 +541,9 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = PromptResponseRelevance.generate_system_prompt(
-                min_score_val, max_score_val, criteria, output_space
-            )
-        else:
-            system_prompt = PromptResponseRelevance.system_prompt
+        system_prompt = PromptResponseRelevance.generate_system_prompt(
+            min_score_val, max_score_val, criteria, output_space
+        )
 
         return self.generate_score(
             system_prompt=system_prompt,
@@ -605,15 +593,13 @@ class LLMProvider(Provider):
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
-        if criteria or output_space:
-            system_prompt = PromptResponseRelevance.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = PromptResponseRelevance.system_prompt
+
+        system_prompt = PromptResponseRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         user_prompt = str.format(
             prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
@@ -1601,15 +1587,12 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = Groundedness.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = Groundedness.system_prompt
+        system_prompt = Groundedness.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
@@ -1799,15 +1782,12 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria or output_space:
-            system_prompt = Groundedness.generate_system_prompt(
-                min_score=min_score_val,
-                max_score=max_score_val,
-                criteria=criteria,
-                output_space=output_space,
-            )
-        else:
-            system_prompt = Groundedness.system_prompt
+        system_prompt = Groundedness.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         def evaluate_hypothesis(index, hypothesis):
             abstention_score = evaluate_abstention(hypothesis)
