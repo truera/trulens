@@ -68,7 +68,7 @@ trulens.core:
     Select: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
     Tru: builtins.function
-    TruSession: trulens.core.utils.python.PydanticSingleton
+    TruSession: trulens.core.utils.python.PydanticSingletonMeta
   lows:
     __all__: builtins.list
     __version__: builtins.str
@@ -1023,12 +1023,12 @@ trulens.core.session:
   highs: {}
   lows:
     Tru: builtins.function
-    TruSession: trulens.core.utils.python.PydanticSingleton
+    TruSession: trulens.core.utils.python.PydanticSingletonMeta
 trulens.core.session.TruSession:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  __class__: trulens.core.utils.python.PydanticSingleton
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -1345,12 +1345,11 @@ trulens.core.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
     InstanceRefMixin: builtins.type
     OpaqueWrapper: builtins.type
-    PydanticSingleton: builtins.type
+    PydanticSingletonMeta: builtins.type
     STACK: builtins.str
-    SingletonPerName: builtins.type
+    SingletonPerNameMeta: builtins.type
     WRAP_LAZY: builtins.bool
     WeakWrapper: builtins.type
     awith_context: builtins.function
@@ -1389,11 +1388,6 @@ trulens.core.utils.python:
     wrap_generator: builtins.function
     wrap_lazy: builtins.function
     wrap_until_eager: builtins.function
-trulens.core.utils.python.EmptyType:
-  __bases__:
-  - builtins.type
-  __class__: builtins.type
-  attributes: {}
 trulens.core.utils.python.InstanceRefMixin:
   __bases__:
   - builtins.object
@@ -1406,13 +1400,13 @@ trulens.core.utils.python.OpaqueWrapper:
   __class__: builtins.type
   attributes:
     unwrap: builtins.function
-trulens.core.utils.python.PydanticSingleton:
+trulens.core.utils.python.PydanticSingletonMeta:
   __bases__:
   - pydantic._internal._model_construction.ModelMetaclass
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.SingletonPerNameMeta
   __class__: builtins.type
   attributes: {}
-trulens.core.utils.python.SingletonPerName:
+trulens.core.utils.python.SingletonPerNameMeta:
   __bases__:
   - builtins.type
   __class__: builtins.type
@@ -1600,13 +1594,13 @@ trulens.core.utils.threading:
   highs: {}
   lows:
     DEFAULT_NETWORK_TIMEOUT: builtins.float
-    TP: trulens.core.utils.python.SingletonPerName
+    TP: trulens.core.utils.python.SingletonPerNameMeta
     Thread: builtins.type
     ThreadPoolExecutor: builtins.type
 trulens.core.utils.threading.TP:
   __bases__:
   - builtins.object
-  __class__: trulens.core.utils.python.SingletonPerName
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
