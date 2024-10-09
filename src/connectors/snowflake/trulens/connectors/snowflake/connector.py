@@ -78,6 +78,40 @@ class SnowflakeConnector(DBConnector):
             )
             snowpark_session.use_schema(schema)
             connection_parameters["schema"] = schema
+        else:
+            snowpark_connection_parameters = {
+                "account": snowpark_session.get_current_account(),
+                "user": snowpark_session.get_current_user(),
+                "database": snowpark_session.get_current_database(),
+                "schema": snowpark_session.get_current_schema(),
+                "warehouse": snowpark_session.get_current_warehouse(),
+                "role": snowpark_session.get_current_role(),
+            }
+            missing_snowpark_params = []
+            mismatched_kwargs = []
+            for k, v in snowpark_connection_parameters.items():
+                if not v:
+                    missing_snowpark_params.append(k)
+                if connection_parameters[k] is None:
+                    connection_parameters[k] = v
+                elif connection_parameters[k] != v:
+                    mismatched_kwargs.append(k)
+
+            if missing_snowpark_params:
+                raise ValueError(
+                    f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
+                )
+            if mismatched_kwargs:
+                raise ValueError(
+                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
+                )
+
+            if connection_parameters["password"] is None:
+                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
+                logger.warning(
+                    "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
+                )
+                connection_parameters["password"] = "password"
 
         self._init_with_snowpark_session(
             snowpark_session,
@@ -114,40 +148,6 @@ class SnowflakeConnector(DBConnector):
                 "Cannot set `database_args['engine_params']['paramstyle']!"
             )
         database_args["engine_params"]["paramstyle"] = "qmark"
-
-        snowpark_connection_parameters = {
-            "account": snowpark_session.get_current_account(),
-            "user": snowpark_session.get_current_user(),
-            "database": snowpark_session.get_current_database(),
-            "schema": snowpark_session.get_current_schema(),
-            "warehouse": snowpark_session.get_current_warehouse(),
-            "role": snowpark_session.get_current_role(),
-        }
-        missing_snowpark_params = []
-        mismatched_kwargs = []
-        for k, v in snowpark_connection_parameters.items():
-            if not v:
-                missing_snowpark_params.append(k)
-            if connection_parameters[k] is None:
-                connection_parameters[k] = v
-            elif connection_parameters[k] != v:
-                mismatched_kwargs.append(k)
-
-        if missing_snowpark_params:
-            raise ValueError(
-                f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
-            )
-        if mismatched_kwargs:
-            raise ValueError(
-                f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
-            )
-
-        if connection_parameters["password"] is None:
-            # NOTE: user passwords are inaccessible from the `snowpark_session` object.
-            logger.warning(
-                "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
-            )
-            connection_parameters["password"] = "password"
 
         database_url = URL(
             **connection_parameters,
