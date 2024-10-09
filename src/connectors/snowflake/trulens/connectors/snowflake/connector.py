@@ -85,27 +85,6 @@ class SnowflakeConnector(DBConnector):
                     "When providing a `snowpark_session`, the dashboard is not accessible without passing in a `password` to the SnowflakeConnector."
                 )
 
-            snowpark_connection_parameters = {
-                "account": snowpark_session.get_current_account(),
-                "user": snowpark_session.get_current_user(),
-                "database": snowpark_session.get_current_database(),
-                "schema": snowpark_session.get_current_schema(),
-                "warehouse": snowpark_session.get_current_warehouse(),
-                "role": snowpark_session.get_current_role(),
-            }
-            mismatched_kwargs = []
-            for k, v in snowpark_connection_parameters.items():
-                if (
-                    connection_parameters[k] is not None
-                    and connection_parameters[k] != v
-                ):
-                    mismatched_kwargs.append(k)
-
-            if mismatched_kwargs:
-                raise ValueError(
-                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
-                )
-
         self._init_with_snowpark_session(
             snowpark_session,
             init_server_side,
@@ -113,7 +92,7 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
             database_args,
             database_check_revision,
-            connection_parameters=connection_parameters,
+            connection_parameters,
         )
 
     def _init_with_snowpark_session(
@@ -124,7 +103,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
-        connection_parameters: Optional[Dict[str, Optional[str]]] = None,
+        connection_parameters: Dict[str, Optional[str]],
     ):
         database_args = database_args or {}
         if "engine_params" not in database_args:
@@ -142,20 +121,32 @@ class SnowflakeConnector(DBConnector):
             )
         database_args["engine_params"]["paramstyle"] = "qmark"
 
-        if connection_parameters is None:
-            connection_parameters = {
-                "account": snowpark_session.get_current_account(),
-                "user": snowpark_session.get_current_user(),
-                "database": snowpark_session.get_current_database(),
-                "schema": snowpark_session.get_current_schema(),
-                "warehouse": snowpark_session.get_current_warehouse(),
-                "role": snowpark_session.get_current_role(),
-                "password": "password",
-            }
-            for k, v in connection_parameters.items():
-                if not v:
-                    raise ValueError(f"`{k}` not set in `snowpark_session`!")
+        snowpark_connection_parameters = {
+            "account": snowpark_session.get_current_account(),
+            "user": snowpark_session.get_current_user(),
+            "database": snowpark_session.get_current_database(),
+            "schema": snowpark_session.get_current_schema(),
+            "warehouse": snowpark_session.get_current_warehouse(),
+            "role": snowpark_session.get_current_role(),
+        }
+        missing_snowpark_params = []
+        mismatched_kwargs = []
+        for k, v in snowpark_connection_parameters.items():
+            if not v:
+                missing_snowpark_params.append(k)
+            if connection_parameters[k] is None:
+                connection_parameters[k] = v
+            elif connection_parameters[k] != v:
+                mismatched_kwargs.append(k)
 
+        if missing_snowpark_params:
+            raise ValueError(
+                f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
+            )
+        if mismatched_kwargs:
+            raise ValueError(
+                f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
+            )
         database_url = URL(
             **connection_parameters,
         )
