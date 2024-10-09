@@ -79,13 +79,31 @@ class SnowflakeConnector(DBConnector):
             snowpark_session.use_schema(schema)
             connection_parameters["schema"] = schema
         else:
-            kwargs_to_not_set = []
-            for k, v in connection_parameters.items():
-                if v is not None:
-                    kwargs_to_not_set.append(k)
-            if kwargs_to_not_set:
+            if password is None:
+                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
+                logger.warning(
+                    "When providing a `snowpark_session`, the dashboard is not accessible without passing in a `password` to the SnowflakeConnector."
+                )
+
+            snowpark_connection_parameters = {
+                "account": snowpark_session.get_current_account(),
+                "user": snowpark_session.get_current_user(),
+                "database": snowpark_session.get_current_database(),
+                "schema": snowpark_session.get_current_schema(),
+                "warehouse": snowpark_session.get_current_warehouse(),
+                "role": snowpark_session.get_current_role(),
+            }
+            mismatched_kwargs = []
+            for k, v in snowpark_connection_parameters.items():
+                if (
+                    connection_parameters[k] is not None
+                    and connection_parameters[k] != v
+                ):
+                    mismatched_kwargs.append(k)
+
+            if mismatched_kwargs:
                 raise ValueError(
-                    f"Cannot supply both `snowpark_session` and `{kwargs_to_not_set}`!"
+                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
                 )
 
         self._init_with_snowpark_session(
