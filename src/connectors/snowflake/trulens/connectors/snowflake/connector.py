@@ -78,12 +78,6 @@ class SnowflakeConnector(DBConnector):
             )
             snowpark_session.use_schema(schema)
             connection_parameters["schema"] = schema
-        else:
-            if password is None:
-                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
-                logger.warning(
-                    "When providing a `snowpark_session`, the dashboard is not accessible without passing in a `password` to the SnowflakeConnector."
-                )
 
         self._init_with_snowpark_session(
             snowpark_session,
@@ -147,6 +141,14 @@ class SnowflakeConnector(DBConnector):
             raise ValueError(
                 f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
             )
+
+        if connection_parameters["password"] is None:
+            # NOTE: user passwords are inaccessible from the `snowpark_session` object.
+            logger.warning(
+                "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
+            )
+            connection_parameters["password"] = "password"
+
         database_url = URL(
             **connection_parameters,
         )
