@@ -983,13 +983,6 @@ Feedback function signature:
 
             else:
                 if isinstance(result_vals[0], float):
-                    import math
-
-                    # hack: deal w/ NAN
-                    for i in range(len(result_vals)):
-                        if math.isnan(result_vals[i]):
-                            result_vals[i] = 0
-
                     result_vals = np.array(result_vals)
                     result = self.agg(result_vals)
                 else:
