@@ -29,7 +29,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.9,<3.13"
 trulens-core = { version = "^1.0.0" }
-langchain = "=0.2.10,!=0.2.12"
+langchain = "=0.2.11"                 # ,!=0.2.12"
 langchain-core = "=0.2.24"            # ,<0.2.27"
 # buggy after 0.2.24 until 0.3.0 but that is not compatible with nemoguardrails
 pydantic = "^2"
