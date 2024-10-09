@@ -74,7 +74,6 @@ class SnowflakeConnector(DBConnector):
             self._create_snowflake_schema_if_not_exists(
                 snowpark_session, database, schema
             )
-            snowpark_session.use_schema(schema)
             self._init_with_snowpark_session(
                 snowpark_session,
                 init_server_side,
@@ -193,6 +192,7 @@ class SnowflakeConnector(DBConnector):
         root.databases[database_name].schemas.create(
             schema, mode=CreateMode.if_not_exists
         )
+        snowpark_session.use_schema(schema_name)
 
     @cached_property
     def db(self) -> DB:
