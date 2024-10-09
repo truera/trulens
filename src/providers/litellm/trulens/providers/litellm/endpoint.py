@@ -70,30 +70,11 @@ class LiteLLMEndpoint(mod_endpoint.Endpoint):
     """
 
     def __init__(self, litellm_provider: str = "openai", **kwargs):
-        if hasattr(self, "name"):
-            # singleton already made
-            if len(kwargs) > 0:
-                logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name,
-                    pp.pformat(kwargs),
-                )
-                self.warning()
-            return
-
-        kwargs["name"] = "litellm"
         kwargs["callback_class"] = LiteLLMCallback
 
         super().__init__(litellm_provider=litellm_provider, **kwargs)
 
         self._instrument_module_members(litellm, "completion")
-
-    def __new__(cls, litellm_provider: str = "openai", **kwargs):
-        # Problem here if someone uses litellm with different providers. Only a
-        # single one will be made. Cannot make a fix just here as
-        # track_all_costs creates endpoints via the singleton mechanism.
-
-        return super(mod_endpoint.Endpoint, cls).__new__(cls, name="litellm")
 
     def handle_wrapped_call(
         self,

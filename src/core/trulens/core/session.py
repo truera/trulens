@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 class TruSession(
     mod_experimental._WithExperimentalSettings,
     pydantic.BaseModel,
-    python_utils.SingletonPerName,
+    metaclass=python_utils.PydanticSingletonMeta,
 ):
     """TruSession is the main class that provides an entry points to trulens.
 
@@ -186,11 +186,6 @@ class TruSession(
 
         _TruSession._setup_otel_exporter(self, value)
 
-    def __new__(cls, *args, **kwargs: Any) -> TruSession:
-        inst = super().__new__(cls, *args, **kwargs)
-        assert isinstance(inst, TruSession)
-        return inst
-
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
 
@@ -222,7 +217,6 @@ class TruSession(
                 logger.warning(
                     "TruSession was already initialized. Cannot change database configuration after initialization."
                 )
-                self.warning()
             return
         connector_args = {
             k: v

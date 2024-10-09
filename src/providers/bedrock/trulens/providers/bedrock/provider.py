@@ -41,10 +41,6 @@ class Bedrock(llm_provider.LLMProvider):
         if model_id is None:
             model_id = self.DEFAULT_MODEL_ID
 
-        # SingletonPerName: return singleton unless client provided
-        if hasattr(self, "model_id") and "client" not in kwargs:
-            return
-
         # Pass kwargs to Endpoint. Self has additional ones.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)

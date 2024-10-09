@@ -362,11 +362,6 @@ class DummyEndpoint(mod_endpoint.Endpoint):
     api: DummyAPI = Field(default_factory=DummyAPI)
     """Fake API to use for making fake requests."""
 
-    def __new__(cls, *args, **kwargs):
-        return super(mod_endpoint.Endpoint, cls).__new__(
-            cls, name="dummyendpoint"
-        )
-
     @deprecation_utils.deprecated_property(
         "Use `DummyEndpoint.api.alloc` instead."
     )
@@ -415,10 +410,6 @@ class DummyEndpoint(mod_endpoint.Endpoint):
         rpm: float = mod_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
-        if python_utils.safe_hasattr(self, "callback_class"):
-            # Already created with SingletonPerName mechanism
-            return
-
         assert rpm > 0
 
         kwargs["name"] = name

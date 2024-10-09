@@ -97,7 +97,7 @@ futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
 
-class TP(python_utils.SingletonPerName):  # "thread processing"
+class TP(metaclass=python_utils.SingletonPerNameMeta):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.
@@ -109,17 +109,7 @@ class TP(python_utils.SingletonPerName):  # "thread processing"
     DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
     """How long to wait (seconds) for any task before restarting it."""
 
-    def __new__(cls) -> TP:
-        """Override __new__ of SingletonPerName to ensure valid typing of the TP object."""
-        inst = super().__new__(cls)
-        assert isinstance(inst, TP)
-        return inst
-
     def __init__(self):
-        if python_utils.safe_hasattr(self, "thread_pool"):
-            # Already initialized as per SingletonPerName mechanism.
-            return
-
         # Run tasks started with this class using this pool.
         self.thread_pool = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"

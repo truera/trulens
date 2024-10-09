@@ -108,9 +108,7 @@ class Select:
         if len(lens.path) == 0:
             return lens
 
-        if Select.Record.path.is_prefix_of(
-            lens
-        ) or Select.App.path.is_prefix_of(lens):
+        if Select.Record.is_prefix_of(lens) or Select.App.is_prefix_of(lens):
             return Select.Lens(path=lens.path[len(Select.Record) :])
 
         return lens

@@ -169,7 +169,7 @@ class SQLAlchemyDB(mod_db.DB):
             new_db: mod_db.DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
 
         print(
-            "%s TruSession initialized with db url %s ."
+            "%s Initialized with db url %s ."
             % (text_utils.UNICODE_SQUID, new_db.engine.url)
         )
         if database_redact_keys:

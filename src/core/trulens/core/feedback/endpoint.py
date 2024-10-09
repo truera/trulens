@@ -94,7 +94,7 @@ class EndpointCallback(serial_utils.SerialModel):
 class Endpoint(
     pyschema_utils.WithClassInfo,
     serial_utils.SerialModel,
-    python_utils.SingletonPerName,
+    python_utils.InstanceRefMixin,
 ):
     """API usage, pacing, and utilities for API endpoints."""
 
@@ -202,10 +202,6 @@ class Endpoint(
     )
     _context_endpoints.set({})
 
-    def __new__(cls, *args, name: Optional[str] = None, **kwargs):
-        name = name or cls.__name__
-        return super().__new__(cls, *args, name=name, **kwargs)
-
     def __str__(self):
         # Have to override str/repr due to pydantic issue with recursive models.
         return f"Endpoint({self.name})"
@@ -217,14 +213,15 @@ class Endpoint(
     def __init__(
         self,
         *args,
-        name: str,
+        name: Optional[str] = None,
         rpm: Optional[float] = None,
         callback_class: Optional[Any] = None,
+        _register_instance: bool = True,
         **kwargs,
     ):
-        if python_utils.safe_hasattr(self, "rpm"):
-            # already initialized via the SingletonPerName mechanism
-            return
+        python_utils.InstanceRefMixin.__init__(
+            self, register_instance=_register_instance
+        )
 
         if callback_class is None:
             # Some old databases do not have this serialized so lets set it to
@@ -236,6 +233,8 @@ class Endpoint(
 
         if rpm is None:
             rpm = DEFAULT_RPM
+        if name is None:
+            name = self.__class__.__name__
 
         kwargs["name"] = name
         kwargs["callback_class"] = callback_class
@@ -455,7 +454,9 @@ class Endpoint(
             if locals().get(endpoint.arg_flag):
                 try:
                     mod = importlib.import_module(endpoint.module_name)
-                    cls = python_utils.safe_getattr(mod, endpoint.class_name)
+                    cls: Type[Endpoint] = python_utils.safe_getattr(
+                        mod, endpoint.class_name
+                    )
                 except ImportError:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
@@ -471,9 +472,19 @@ class Endpoint(
                     continue
 
                 try:
-                    e = cls()
-                    endpoints.append(e)
+                    endpoint = next(iter(cls.get_instances()))
+                except StopIteration:
+                    logger.warning(
+                        "Could not find an instance of %s. "
+                        "trulens will create an endpoint for cost tracking.",
+                        cls.__name__,
+                    )
+                    endpoint = None
 
+                try:
+                    if endpoint is None:
+                        endpoint = cls(_register_instance=False)  # type: ignore
+                    endpoints.append(endpoint)
                 except Exception as e:
                     logger.debug(
                         "Could not initialize endpoint %s. "

@@ -142,9 +142,6 @@ class BedrockEndpoint(mod_endpoint.Endpoint):
     # class not statically known
     client: Any = pydantic.Field(None, exclude=True)
 
-    def __new__(cls, *args, **kwargs):
-        return super().__new__(cls, *args, name="bedrock", **kwargs)
-
     def __str__(self) -> str:
         return f"BedrockEndpoint(region_name={self.region_name})"
 
@@ -154,22 +151,16 @@ class BedrockEndpoint(mod_endpoint.Endpoint):
     def __init__(
         self,
         *args,
-        name: str = "bedrock",
         region_name: str = "us-east-1",
         **kwargs,
     ):
-        # SingletonPerName behavior but only if client not provided.
-        if hasattr(self, "region_name") and "client" not in kwargs:
-            return
-
         # For constructing BedrockClient below:
         client_kwargs = {k: v for k, v in kwargs.items()}  # copy
         client_kwargs["region_name"] = region_name
 
         kwargs["region_name"] = region_name
 
-        # for Endpoint, SingletonPerName:
-        kwargs["name"] = name
+        # for Endpoint
         kwargs["callback_class"] = BedrockCallback
 
         super().__init__(*args, **kwargs)

@@ -448,8 +448,8 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
 
 class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
-    output_space_prompt: ClassVar[str] = LIKERT_0_10_PROMPT
-    output_space: ClassVar[str] = OutputSpace.LIKERT_0_10.name
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
         - RESPONSE must be relevant to the entire PROMPT to get a maximum score of {max_score}.
         - RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.
@@ -484,8 +484,8 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_10.value[0],
-        max_score=OutputSpace.LIKERT_0_10.value[1],
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
 
     system_prompt: ClassVar[str] = cleandoc(

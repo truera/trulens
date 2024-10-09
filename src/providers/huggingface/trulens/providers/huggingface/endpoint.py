@@ -13,7 +13,6 @@ from typing import (
 import requests
 from trulens.core.feedback import endpoint as mod_endpoint
 from trulens.core.utils import keys as key_utils
-from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
 
@@ -45,11 +44,6 @@ class HuggingfaceEndpoint(mod_endpoint.Endpoint):
     """
 
     def __init__(self, *args, **kwargs):
-        if python_utils.safe_hasattr(self, "name"):
-            # Already created with SingletonPerName mechanism
-            return
-
-        kwargs["name"] = "huggingface"
         kwargs["callback_class"] = HuggingfaceCallback
 
         # Returns true in "warn" mode to indicate that key is set. Does not
@@ -60,11 +54,6 @@ class HuggingfaceEndpoint(mod_endpoint.Endpoint):
         super().__init__(*args, **kwargs)
 
         self._instrument_class(requests, "post")
-
-    def __new__(cls, *args, **kwargs):
-        return super(mod_endpoint.Endpoint, cls).__new__(
-            cls, name="huggingface"
-        )
 
     def handle_wrapped_call(
         self,

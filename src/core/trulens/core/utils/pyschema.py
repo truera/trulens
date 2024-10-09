@@ -17,6 +17,7 @@ classes that mimic basic python entities:
 
 from __future__ import annotations
 
+import functools
 import importlib
 import inspect
 import logging
@@ -616,7 +617,12 @@ class Function(FunctionOrMethod):
         if cls is not None:
             cls = Class.of_class(cls, loadable=loadable)
 
-        return Function(cls=cls, module=module, name=func.__name__)
+        if isinstance(func, functools.partial):
+            f_name = func.func.__name__
+        else:
+            f_name = func.__name__
+
+        return Function(cls=cls, module=module, name=f_name)
 
     def load(self) -> Callable:
         if self.cls is not None:
