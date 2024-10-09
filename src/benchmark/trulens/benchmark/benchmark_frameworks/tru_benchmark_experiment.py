@@ -117,8 +117,6 @@ class TruBenchmarkExperiment:
                 )
 
             if isinstance(ret, tuple) and isinstance(ret[1], dict):
-                # print(f"feedback returns a tuple with metadata: \n {ret}")
-
                 if (
                     ret[1]
                     and len(list(ret[1].values())) > 0
