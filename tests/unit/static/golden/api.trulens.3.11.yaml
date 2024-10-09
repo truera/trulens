@@ -807,7 +807,8 @@ trulens.core.schema.feedback.FeedbackCall:
       builtins.bytes, builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str,
       typing.Any]]]
     meta: typing.Dict[builtins.str, typing.Any]
-    ret: typing.Union[builtins.float, typing.List[builtins.float], typing.List[typing.Tuple]]
+    ret: typing.Union[builtins.float, typing.List[builtins.float], typing.List[typing.Tuple],
+      typing.List[typing.Any]]
 trulens.core.schema.feedback.FeedbackCombinations:
   __bases__:
   - builtins.str
@@ -2084,16 +2085,22 @@ trulens.feedback.groundtruth.GroundTruthAggregator:
   attributes:
     auc: builtins.function
     brier_score: builtins.function
+    cohens_kappa: builtins.function
     custom_agg_funcs: typing.Dict[builtins.str, typing.Callable]
     ece: builtins.function
+    f1_score: builtins.function
     k: typing.Optional[builtins.int, builtins.NoneType]
     kendall_tau: builtins.function
     mae: builtins.function
+    matthews_correlation: builtins.function
     n_bins: builtins.int
+    pearson_correlation: builtins.function
+    precision: builtins.function
+    recall: builtins.function
     register_custom_agg_func: builtins.function
     spearman_correlation: builtins.function
     tru_class_info: trulens.core.utils.pyschema.Class
-    true_labels: typing.List[builtins.int]
+    true_labels: typing.List[typing.Union[builtins.int, builtins.float]]
 trulens.feedback.groundtruth.GroundTruthAgreement:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
