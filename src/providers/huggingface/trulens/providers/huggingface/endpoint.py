@@ -15,7 +15,6 @@ from trulens.core.feedback import Endpoint
 from trulens.core.feedback import EndpointCallback
 from trulens.core.utils.keys import _check_key
 from trulens.core.utils.keys import get_huggingface_headers
-from trulens.core.utils.python import safe_hasattr
 from trulens.core.utils.serial import JSON
 from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
 
@@ -47,11 +46,6 @@ class HuggingfaceEndpoint(Endpoint):
     """
 
     def __init__(self, *args, **kwargs):
-        if safe_hasattr(self, "name"):
-            # Already created with SingletonPerName mechanism
-            return
-
-        kwargs["name"] = "huggingface"
         kwargs["callback_class"] = HuggingfaceCallback
 
         # Returns true in "warn" mode to indicate that key is set. Does not
@@ -62,9 +56,6 @@ class HuggingfaceEndpoint(Endpoint):
         super().__init__(*args, **kwargs)
 
         self._instrument_class(requests, "post")
-
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="huggingface")
 
     def handle_wrapped_call(
         self,
