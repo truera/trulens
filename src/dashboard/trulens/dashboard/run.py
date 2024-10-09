@@ -36,6 +36,7 @@ def run_dashboard(
     address: Optional[str] = None,
     force: bool = False,
     _dev: Optional[Path] = None,
+    spcs_runtime: Optional[bool] = False,
 ) -> Process:
     """Run a streamlit dashboard to view logged results and apps.
 
@@ -125,7 +126,8 @@ def run_dashboard(
         "--database-prefix",
         session.connector.db.table_prefix,
     ]
-
+    if spcs_runtime:
+        args.append("--spcs-runtime")
     proc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,

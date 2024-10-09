@@ -4,4 +4,4 @@ snowflake[ml]
 snowflake-connector-python
 snowflake-sqlalchemy
 trulens
-trulens-connectors-snowflake
+# trulens-connectors-snowflake

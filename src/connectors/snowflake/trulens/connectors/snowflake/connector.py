@@ -41,6 +41,7 @@ class SnowflakeConnector(DBConnector):
         schema: str,
         warehouse: str,
         role: str,
+        host: Optional[str] = None,
         init_server_side: bool = True,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
@@ -91,6 +92,7 @@ class SnowflakeConnector(DBConnector):
                 warehouse,
                 role,
                 database_args["database_prefix"],
+                host,
             )
 
     def _initialize_snowflake_server_side_feedback_evaluations(
@@ -103,6 +105,7 @@ class SnowflakeConnector(DBConnector):
         warehouse: str,
         role: str,
         database_prefix: str,
+        host: Optional[str] = None,
     ):
         connection_parameters = {
             "account": account,
@@ -112,6 +115,7 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
+            **({"host": host} if host else {})
         }
         with Session.builder.configs(connection_parameters).create() as session:
             ServerSideEvaluationArtifacts(
