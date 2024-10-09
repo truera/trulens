@@ -44,11 +44,11 @@ apply when referring to things like package names, classes, methods.
 
     ```python
     from trulens.schema.record import Record # don't do this
-    from trulens.schema import record as mod_record # do this instead
+    from trulens.schema import record as record_schema # do this instead
     ```
 
     This prevents the `record` module from being loaded until something inside it
-    is needed. If your uses of `mod_record.Record` are inside functions, this
+    is needed. If your uses of `record_schema.Record` are inside functions, this
     loading can be delayed as far as the execution of that function.
 
 - Import and rename modules:
@@ -61,16 +61,25 @@ apply when referring to things like package names, classes, methods.
     This is especially important for module names which might cause name
     collisions with other things such as variables named `record`.
 
-- Keep module renames consistent:
+- Keep module renames consistent using the following patterns:
 
     ```python
     from trulens.schema import X as X_schema
-    from trulens.utils import X as X_utils
+    from trulens.utils import X as X_utils # if X was plural, make X singular in rename
+    from trulens.providers.X import provider as X_provider
+    from trulens.providers.X import endpoint as X_endpoint
+    from trulens.apps.X import Y as Y_app
+    from trulens.connector import X as X_connector
 
     # if X is inside some category of module Y:
-    from trulens...Y import Y as X_Y
+    from trulens...Y import X as X_Y
     # otherwise if X is not in some category of modules:
     from trulens... import X as mod_X
+    from trulens.core.feedback import feedback as mod_feedback
+    from trulens.dashboard import run as mod_run
+
+    # Some modules do not need renaming:
+    from trulens.feedback import llm_provider
     ```
 
 - If an imported module is only used in type annotations, import it inside a
