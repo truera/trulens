@@ -945,8 +945,6 @@ Feedback function signature:
                     )
 
                 else:
-                    if result_val is None:
-                        result_val = 0  # TODO: (DANIEL) tmp hack to work around positive examples in meta-eval
                     assert isinstance(
                         result_val, (int, float, list)
                     ), f"Feedback function output must be a float or an int, a list of floats, or dict but was {type(result_val)}."
