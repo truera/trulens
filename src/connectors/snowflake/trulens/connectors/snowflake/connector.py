@@ -57,6 +57,7 @@ class SnowflakeConnector(DBConnector):
             "warehouse": warehouse,
             "role": role,
         }
+
         if snowpark_session is None:
             kwargs_to_set = []
             for k, v in connection_parameters.items():
@@ -66,6 +67,7 @@ class SnowflakeConnector(DBConnector):
                 raise ValueError(
                     f"If not supplying `snowpark_session` then must set `{kwargs_to_set}`!"
                 )
+
             del connection_parameters["schema"]
             snowpark_session = Session.builder.configs(
                 connection_parameters
@@ -75,31 +77,51 @@ class SnowflakeConnector(DBConnector):
                 snowpark_session, database, schema
             )
             snowpark_session.use_schema(schema)
-            self._init_with_snowpark_session(
-                snowpark_session,
-                init_server_side,
-                database_redact_keys,
-                database_prefix,
-                database_args,
-                database_check_revision,
-            )
+            connection_parameters["schema"] = schema
         else:
-            kwargs_to_not_set = []
-            for k, v in connection_parameters.items():
-                if v is not None:
-                    kwargs_to_not_set.append(k)
-            if kwargs_to_not_set:
+            snowpark_connection_parameters = {
+                "account": snowpark_session.get_current_account(),
+                "user": snowpark_session.get_current_user(),
+                "database": snowpark_session.get_current_database(),
+                "schema": snowpark_session.get_current_schema(),
+                "warehouse": snowpark_session.get_current_warehouse(),
+                "role": snowpark_session.get_current_role(),
+            }
+            missing_snowpark_params = []
+            mismatched_kwargs = []
+            for k, v in snowpark_connection_parameters.items():
+                if not v:
+                    missing_snowpark_params.append(k)
+                if connection_parameters[k] is None:
+                    connection_parameters[k] = v
+                elif connection_parameters[k] != v:
+                    mismatched_kwargs.append(k)
+
+            if missing_snowpark_params:
                 raise ValueError(
-                    f"Cannot supply both `snowpark_session` and `{kwargs_to_not_set}`!"
+                    f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
                 )
-            self._init_with_snowpark_session(
-                snowpark_session,
-                init_server_side,
-                database_redact_keys,
-                database_prefix,
-                database_args,
-                database_check_revision,
-            )
+            if mismatched_kwargs:
+                raise ValueError(
+                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
+                )
+
+            if connection_parameters["password"] is None:
+                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
+                logger.warning(
+                    "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
+                )
+                connection_parameters["password"] = "password"
+
+        self._init_with_snowpark_session(
+            snowpark_session,
+            init_server_side,
+            database_redact_keys,
+            database_prefix,
+            database_args,
+            database_check_revision,
+            connection_parameters,
+        )
 
     def _init_with_snowpark_session(
         self,
@@ -109,6 +131,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
+        connection_parameters: Dict[str, Optional[str]],
     ):
         database_args = database_args or {}
         if "engine_params" not in database_args:
@@ -126,26 +149,8 @@ class SnowflakeConnector(DBConnector):
             )
         database_args["engine_params"]["paramstyle"] = "qmark"
 
-        required_settings = {
-            "account": snowpark_session.get_current_account(),
-            "user": snowpark_session.get_current_user(),
-            "database": snowpark_session.get_current_database(),
-            "schema": snowpark_session.get_current_schema(),
-            "warehouse": snowpark_session.get_current_warehouse(),
-            "role": snowpark_session.get_current_role(),
-        }
-        for k, v in required_settings.items():
-            if not v:
-                raise ValueError(f"`{k}` not set in `snowpark_session`!")
-
         database_url = URL(
-            account=snowpark_session.get_current_account(),
-            user=snowpark_session.get_current_user(),
-            password="password",
-            database=snowpark_session.get_current_database(),
-            schema=snowpark_session.get_current_schema(),
-            warehouse=snowpark_session.get_current_warehouse(),
-            role=snowpark_session.get_current_role(),
+            **connection_parameters,
         )
         database_args.update({
             k: v
