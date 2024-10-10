@@ -129,7 +129,7 @@ class TruBEIRDataLoader:
         self, split="test"
     ) -> Tuple[
         Generator[Dict[str, Dict[str, str]], None, None],
-        Generator[Dict[str, str], None, None],
+        Generator[Dict[str, Tuple[str, str]], None, None],
     ]:
         """
         Load corpus, queries, and qrels as generators.
@@ -170,7 +170,9 @@ class TruBEIRDataLoader:
                     }
                 }
 
-    def _queries_generator(self) -> Generator[Dict[str, str], None, None]:
+    def _queries_generator(
+        self,
+    ) -> Generator[Dict[str, Tuple[str, str]], None, None]:
         """
         Generator to load queries incrementally.
         """
@@ -180,7 +182,12 @@ class TruBEIRDataLoader:
             for line in fIn:
                 line = json.loads(line)
                 if line.get("_id") in self.qrels:
-                    yield {line.get("_id"): line.get("text")}
+                    yield {
+                        line.get("_id"): (
+                            line.get("text"),
+                            line.get("metadata").get("answer"),
+                        )
+                    }
 
     def _process_dataset(
         self, split="test", chunk_size=None
@@ -215,7 +222,7 @@ class TruBEIRDataLoader:
 
         # Iterate over queries generator and process entries
         for i, query in enumerate(queries_gen, 1):
-            for query_id, query_text in query.items():
+            for query_id, (query_text, answer) in query.items():
                 doc_to_rel = self.qrels.get(query_id, {})
 
                 expected_chunks = []
@@ -234,7 +241,7 @@ class TruBEIRDataLoader:
                 dataset_entries.append({
                     "query_id": query_id,
                     "query": query_text,
-                    "expected_response": None,  # expected response can be empty for IR datasets
+                    "expected_response": answer,  # expected response can be also be empty for IR datasets
                     "expected_chunks": expected_chunks,
                     "meta": {"source": self.dataset_name},
                 })

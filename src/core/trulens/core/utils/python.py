@@ -1181,17 +1181,18 @@ class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
 class InstanceRefMixin:
     """Mixin for classes that need to keep track of their instances."""
 
-    _instance_refs: Dict[Type, weakref.WeakSet[InstanceRefMixin]] = defaultdict(
-        weakref.WeakSet
-    )
+    _instance_refs: Dict[
+        Type, List[weakref.ReferenceType[InstanceRefMixin]]
+    ] = defaultdict(list)
 
     def __init__(self, register_instance: bool = True):
         if register_instance:
-            self._instance_refs[self.__class__].add(self)
+            self._instance_refs[self.__class__].append(weakref.ref(self))
 
     @classmethod
-    def get_instances(cls):
+    def get_instances(cls) -> Generator[InstanceRefMixin]:
         """Get all instances of the class."""
-        for inst in cls._instance_refs[cls]:
+        for inst_ref in cls._instance_refs[cls]:
+            inst = inst_ref()
             if inst is not None:
                 yield inst
