@@ -1,5 +1,4 @@
-"""
-# Tests endpoints.
+"""Tests endpoints.
 
 These tests make use of potentially non-free apis and require
 various secrets configured. See `setUp` below.
@@ -9,6 +8,7 @@ import os
 from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
+from unittest import skip
 
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
@@ -27,11 +27,11 @@ class TestEndpoints(TestCase):
             "OPENAI_API_KEY",
             # for huggingface tests
             "HUGGINGFACE_API_KEY",
-            # for bedrock tests
-            "AWS_REGION_NAME",
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_SESSION_TOKEN",
+            # for bedrock tests # no current keys available for bedrock
+            # "AWS_REGION_NAME",
+            # "AWS_ACCESS_KEY_ID",
+            # "AWS_SECRET_ACCESS_KEY",
+            # "AWS_SESSION_TOKEN",
             # for azure openai tests
             "AZURE_OPENAI_API_KEY",
             "AZURE_OPENAI_ENDPOINT",
@@ -202,6 +202,7 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
+    @skip("No keys available.")
     @test_utils.optional_test
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
@@ -213,6 +214,7 @@ class TestEndpoints(TestCase):
         # We don't have USD cost tracking for bedrock or anything beyond openai.
         self._test_llm_provider_endpoint(provider, with_cost=False)
 
+    @skip("No keys available.")
     @test_utils.optional_test
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
