@@ -4,11 +4,29 @@ import json
 import random
 from typing import List, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+from trulens.feedback import GroundTruthAggregator
 
 
-def generate_summeval_groundedness_golden_set(file_path):
+def generate_summeval_groundedness_golden_set(
+    file_path, max_samples_per_bucket=200
+):
+    """
+    Generate a balanced groundedness golden set from the Summeval dataset.
+
+    Args:
+        file_path (str): Path to the JSON file.
+        max_samples_per_bucket (int): Maximum number of samples per score bucket.
+
+    Yields:
+        dict: A dictionary containing query, expected_response, expected_score, and human_score.
+    """
+
     def calculate_expected_score(normalized_metrics_lst, weights_lst):
+        """Calculate the expected score using normalized metrics and weights."""
         assert len(normalized_metrics_lst) == len(weights_lst)
         return round(
             sum(
@@ -19,9 +37,16 @@ def generate_summeval_groundedness_golden_set(file_path):
             2,
         )
 
-    with open(file_path) as f:
+    # Track the number of samples in each bucket
+    buckets = {
+        "low": 0,  # Scores between 0.0 and 0.3
+        "medium": 0,  # Scores between 0.3 and 0.7
+        "high": 0,  # Scores between 0.7 and 1.0
+    }
+
+    with open(file_path, "r", encoding="utf-8") as f:
         for line in f:
-            # Each line is a separate JSON object
+            # Parse each line as a JSON object
             try:
                 data = json.loads(line)
 
@@ -34,20 +59,35 @@ def generate_summeval_groundedness_golden_set(file_path):
 
                     # Iterate over the summaries and create the desired dictionary structure
                     for i in range(len(row["machine_summaries"])):
-                        yield {
-                            "query": row.get(
-                                "text", ""
-                            ),  # Default to empty string if key not found
-                            "expected_response": row["machine_summaries"][i],
-                            "expected_score": calculate_expected_score(
-                                [
-                                    (row["consistency"][i] - 1)
-                                    / 4,  # Normalize from [1, 5] to [0, 1]
-                                ],
-                                [1.0],
-                            ),
-                            "human_score": row["consistency"][i],
-                        }
+                        query = row.get("text", "")
+                        expected_response = row["machine_summaries"][i]
+
+                        # Calculate the expected score based on normalized consistency score
+                        expected_score = calculate_expected_score(
+                            [
+                                (row["consistency"][i] - 1)
+                                / 4,  # Normalize from [1, 5] to [0, 1]
+                            ],
+                            [1.0],
+                        )
+
+                        # Determine the bucket based on the score range
+                        if expected_score <= 0.3:
+                            bucket = "low"
+                        elif expected_score <= 0.7:
+                            bucket = "medium"
+                        else:
+                            bucket = "high"
+
+                        # Yield the record only if the bucket has not reached the limit
+                        if buckets[bucket] < max_samples_per_bucket:
+                            buckets[bucket] += 1
+                            yield {
+                                "query": query,
+                                "expected_response": expected_response,
+                                "expected_score": expected_score,
+                                "human_score": row["consistency"][i],
+                            }
 
                 except KeyError as e:
                     print(
@@ -201,7 +241,17 @@ def generate_snowflake_it_golden_set_context_relevance(file_path):
         return res
 
 
-def generate_qags_golden_set_groundedness(file_path):
+def generate_qags_golden_set_groundedness(
+    file_path, max_samples_per_bucket=100
+):
+    # Initialize counters for score ranges
+    buckets = {
+        "low": 0,  # Scores between 0.0 and 0.3
+        "medium": 0,  # Scores between 0.3 and 0.7
+        "high": 0,  # Scores between 0.7 and 1.0
+    }
+
+    # Open the file and iterate through each line
     with open(file_path, "r", encoding="utf-8") as file:
         for line in file:
             # Parse each line as a JSON object
@@ -218,17 +268,27 @@ def generate_qags_golden_set_groundedness(file_path):
                 responses = [
                     response["response"] for response in summary["responses"]
                 ]
-                # Convert 'yes' to 1 and 'no' to 0, then calculate the average
+                # Convert 'yes' to 1 and 'no' to 0, then calculate the average score
                 expected_score = sum(
                     1 if r.lower() == "yes" else 0 for r in responses
                 ) / len(responses)
 
-                # Yield the processed record
-                yield {
-                    "query": query,
-                    "expected_response": expected_response,
-                    "expected_score": expected_score,
-                }
+                # Determine the bucket based on the score range
+                if expected_score <= 0.3:
+                    bucket = "low"
+                elif expected_score <= 0.7:
+                    bucket = "medium"
+                else:
+                    bucket = "high"
+
+                # Yield the record only if the bucket has not reached the limit
+                if buckets[bucket] < max_samples_per_bucket:
+                    buckets[bucket] += 1
+                    yield {
+                        "query": query,
+                        "expected_response": expected_response,
+                        "expected_score": expected_score,
+                    }
 
 
 def generate_ms_marco_context_relevance_benchmark(
@@ -253,6 +313,51 @@ def generate_ms_marco_context_relevance_benchmark(
                     i
                 ],  # Binary relevance
             }
+
+
+def generate_balanced_ms_marco_hard_negatives_dataset(
+    series: pd.Series, sample_size: int = 400
+):
+    # sampled_series = series.sample(n=sample_size, random_state=42)
+    sampled_series = series[:sample_size]
+    # Step 2: Create a list for the balanced dataset
+    balanced_dataset = []
+
+    # Step 3: Iterate over the sampled rows
+    for idx, row in sampled_series.items():
+        # "row" is a dictionary containing 'query', 'positive', and 'negative'
+        query = row.get("query")
+        positive_list = row.get("positive", [])
+        negative_list = row.get("negative", [])
+        print(f"query: {query}")
+        # Select one positive example
+        if positive_list:
+            positive_example = random.choice(positive_list)
+        else:
+            continue  # Skip if no positive examples
+
+        # Select one negative example
+        if negative_list:
+            negative_example = random.choice(negative_list)
+        else:
+            continue  # Skip if no negative examples
+
+        print(
+            f"positive_example: {positive_example} \n negative_example: {negative_example}"
+        )
+        # Add a positive example to the dataset
+        balanced_dataset.append({
+            "query": query,
+            "expected_response": positive_example,
+            "expected_score": 1,  # Positive example, label 1
+        })
+
+        # Add a negative example to the dataset
+        balanced_dataset.append({
+            "query": query,
+            "expected_response": negative_example,
+            "expected_score": 0,  # Negative example, label 0
+        })
 
 
 def write_results(
@@ -286,3 +391,77 @@ def read_results(
                 # Third row contains latencies
                 latencies = list(map(float, row))
     return scores, labels, latencies
+
+
+def visualize_expected_score_distribution(scores: List[float]):
+    """
+    Visualize the distribution of expected scores in the generated sample set.
+
+    Args:
+        scores (List[float]): List of expected scores.
+    Returns:
+        None: Displays the histogram of the expected score distribution.
+    """
+
+    # Plot the histogram of the expected scores
+    plt.figure(figsize=(8, 6))
+    sns.histplot(scores, bins=10, kde=True, color="skyblue")
+    plt.title("Distribution of Expected Scores")
+    plt.xlabel("Expected Score")
+    plt.ylabel("Frequency")
+    plt.grid(True)
+    plt.show()
+
+
+def plot_confusion_matrix(
+    true_labels: List[int],
+    predicted_labels: List[int],
+    threshold=0.5,
+    title="Confusion Matrix",
+):
+    # Compute the confusion matrix
+    cm = confusion_matrix(true_labels, predicted_labels)
+
+    # Plot the confusion matrix
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        cbar=False,
+        xticklabels=["Predicted 0", "Predicted 1"],
+        yticklabels=["True 0", "True 1"],
+    )
+    plt.title(title)
+    plt.xlabel("Predicted")
+    plt.ylabel("True")
+    plt.show()
+
+
+def compute_binary_classification_metrics(
+    dataset_name: str,
+    binary_labels: List[int],
+    generated_scores: List[int],
+    latencies: List[float],
+) -> None:
+    f_recall = GroundTruthAggregator(binary_labels).recall
+    f_precision = GroundTruthAggregator(binary_labels).precision
+    f_f1_score = GroundTruthAggregator(binary_labels).f1_score
+    f_cohens_kappa = GroundTruthAggregator(binary_labels).cohens_kappa
+    f_matthews = GroundTruthAggregator(binary_labels).matthews_correlation
+    recall = f_recall(generated_scores)
+    precision = f_precision(generated_scores)
+    f1_score = f_f1_score(generated_scores)
+    cohens_kappa = f_cohens_kappa(generated_scores)
+    matthews = f_matthews(generated_scores)
+    avg_latency = sum(latencies) / len(latencies) if len(latencies) > 0 else 0
+
+    print(
+        f"recall: {recall:.4f}, precision: {precision:.4f}, f1: {f1_score:.4f}, Cohen's Kappa: {cohens_kappa:.4f}, Matthews: {matthews:.4f}, avg_latency: {avg_latency:.4f}"
+    )
+    plot_confusion_matrix(
+        binary_labels,
+        generated_scores,
+        title=f"Confusion Matrix {dataset_name}",
+    )
