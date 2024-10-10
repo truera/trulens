@@ -1778,6 +1778,7 @@ class LLMProvider(Provider):
                 max_score_val=1,
             )
             return score
+
         if filter_trivial_statements:
             hypotheses = self._remove_trivial_statements(hypotheses)
 
