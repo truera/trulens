@@ -143,7 +143,7 @@ class FeedbackCall(serial.SerialModel):
     args: Dict[str, Optional[serial.JSON]]
     """Arguments to the feedback function."""
 
-    ret: Union[float, List[float], List[Tuple]]
+    ret: Union[float, List[float], List[Tuple], List[Any]]
     """Return value."""
 
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)

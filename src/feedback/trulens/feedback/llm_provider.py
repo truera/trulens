@@ -1494,6 +1494,7 @@ class LLMProvider(Provider):
         statement: str,
         criteria: Optional[str] = None,
         use_sent_tokenize: bool = True,
+        filter_trivial_statements: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1581,7 +1582,8 @@ class LLMProvider(Provider):
                 temperature=temperature,
             ).split("\n")
 
-        hypotheses = self._remove_trivial_statements(hypotheses)
+        if filter_trivial_statements:
+            hypotheses = self._remove_trivial_statements(hypotheses)
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
@@ -1678,6 +1680,7 @@ class LLMProvider(Provider):
         question: str,
         criteria: Optional[str] = None,
         use_sent_tokenize: bool = True,
+        filter_trivial_statements: bool = True,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1776,7 +1779,8 @@ class LLMProvider(Provider):
             )
             return score
 
-        hypotheses = self._remove_trivial_statements(hypotheses)
+        if filter_trivial_statements:
+            hypotheses = self._remove_trivial_statements(hypotheses)
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
