@@ -6,15 +6,14 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from trulens.core.database import migrations as db_migrations
 from trulens.core.database.base import DB
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.core.database.legacy.migration import VersionException
-from trulens.core.database.migrations import DbRevisions
-from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.database.legacy import migration as legacy_migration
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.utils import pyschema as pyschema_utils
 
 sql_alchemy_migration_versions: List[int] = [1, 2, 3]
 """DB versions."""
@@ -81,7 +80,10 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                         # Check only json columns
                         if "_json" in attr_name:
                             db_json_str = getattr(db_record, attr_name)
-                            if db_json_str == MIGRATION_UNKNOWN_STR:
+                            if (
+                                db_json_str
+                                == legacy_migration.MIGRATION_UNKNOWN_STR
+                            ):
                                 continue
 
                             # Do not check Nullables
@@ -94,7 +96,7 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                 # special implementation checks for serialized classes
                                 if "implementation" in test_json:
                                     try:
-                                        FunctionOrMethod.model_validate(
+                                        pyschema_utils.FunctionOrMethod.model_validate(
                                             test_json["implementation"]
                                         ).load()
                                     except ImportError:
@@ -103,35 +105,31 @@ def _sql_alchemy_serialization_asserts(db: DB) -> None:
                                         pass
 
                                 if attr_name == "record_json":
-                                    mod_record_schema.Record.model_validate(
+                                    record_schema.Record.model_validate(
                                         test_json
                                     )
                                 elif attr_name == "cost_json":
-                                    mod_base_schema.Cost.model_validate(
-                                        test_json
-                                    )
+                                    base_schema.Cost.model_validate(test_json)
                                 elif attr_name == "perf_json":
-                                    mod_base_schema.Perf.model_validate(
-                                        test_json
-                                    )
+                                    base_schema.Perf.model_validate(test_json)
                                 elif attr_name == "calls_json":
                                     for record_app_call_json in test_json[
                                         "calls"
                                     ]:
-                                        mod_feedback_schema.FeedbackCall.model_validate(
+                                        feedback_schema.FeedbackCall.model_validate(
                                             record_app_call_json
                                         )
                                 elif attr_name == "feedback_json":
-                                    mod_feedback_schema.FeedbackDefinition.model_validate(
+                                    feedback_schema.FeedbackDefinition.model_validate(
                                         test_json
                                     )
                                 elif attr_name == "app_json":
-                                    mod_app_schema.AppDefinition.model_validate(
+                                    app_schema.AppDefinition.model_validate(
                                         test_json
                                     )
                                 else:
                                     # If this happens, trulens needs to add a migration
-                                    raise VersionException(
+                                    raise legacy_migration.VersionException(
                                         f"serialized column migration not implemented: {attr_name}."
                                     )
 
@@ -169,8 +167,8 @@ def data_migrate(db: DB, from_version: Optional[str]):
         print("DB Migration complete!")
     except Exception as e:
         tb = traceback.format_exc()
-        current_revision = DbRevisions.load(db.engine).current
-        raise VersionException(
+        current_revision = db_migrations.DbRevisions.load(db.engine).current
+        raise legacy_migration.VersionException(
             f"Migration failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         ) from e
     try:
@@ -178,7 +176,7 @@ def data_migrate(db: DB, from_version: Optional[str]):
         print("DB Validation complete!")
     except Exception as e:
         tb = traceback.format_exc()
-        current_revision = DbRevisions.load(db.engine).current
-        raise VersionException(
+        current_revision = db_migrations.DbRevisions.load(db.engine).current
+        raise legacy_migration.VersionException(
             f"Validation failed on {db} from db version - {from_version} on step: {str(to_compat_version)}. The attempted DB version is {current_revision} \n\n{tb}\n\n{fail_advice}"
         ) from e

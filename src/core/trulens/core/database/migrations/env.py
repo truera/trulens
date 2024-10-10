@@ -4,7 +4,7 @@ import os
 from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from trulens.core.database import base as mod_db
+from trulens.core.database import base as core_db
 from trulens.core.database.orm import make_orm_for_prefix
 
 # Gives access to the values within the alembic.ini file
@@ -33,7 +33,7 @@ if config.get_main_option("sqlalchemy.url", None) is None:
 # Get `trulens.table_prefix` from the environment.
 prefix = (
     config.get_main_option("trulens.table_prefix")
-    or mod_db.DEFAULT_DATABASE_PREFIX
+    or core_db.DEFAULT_DATABASE_PREFIX
 )
 
 orm = make_orm_for_prefix(table_prefix=prefix)

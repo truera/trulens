@@ -10,9 +10,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.constants import CIRCLE
-from trulens.core.utils.pyschema import CLASS_INFO
-from trulens.core.utils.pyschema import ERROR
-from trulens.core.utils.pyschema import NOSERIO
 from trulens.core.utils.pyschema import Bindings
 from trulens.core.utils.pyschema import Class
 from trulens.core.utils.pyschema import Function

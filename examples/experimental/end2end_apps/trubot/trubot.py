@@ -13,17 +13,17 @@ import openai
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
-from trulens.apps.langchain import TruChain
-from trulens.apps.langchain import WithFeedbackFilterDocuments
-from trulens.core import Feedback
-from trulens.core import Select
-from trulens.core import TruSession
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.utils.keys import check_keys
-from trulens.providers.huggingface import Huggingface
-from trulens.providers.openai import OpenAI as fOpenAI
+from trulens.apps.langchain import langchain as langchain_app
+from trulens.apps.langchain import tru_chain as mod_tru_chain
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import keys as key_utils
+from trulens.providers import huggingface as huggingface_provider
+from trulens.providers import openai as openai_provider
 
-check_keys(
+key_utils.check_keys(
     "OPENAI_API_KEY", "HUGGINGFACE_API_KEY", "PINECONE_API_KEY", "PINECONE_ENV"
 )
 
@@ -47,14 +47,14 @@ pinecone.init(
 
 # Cache of conversations. Keys are SlackAPI conversation ids (channel ids or
 # otherwise) and values are TruChain to handle that conversation.
-convos: Dict[str, TruChain] = dict()
+convos: Dict[str, mod_tru_chain.TruChain] = dict()
 
 # Keep track of timestamps of messages already handled. Sometimes the same
 # message gets received more than once if there is a network hickup.
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-session = TruSession()
+session = core_session.TruSession()
 
 ident = lambda h: h
 
@@ -67,23 +67,23 @@ app_versions = {
 }
 
 # Construct feedback functions.
-hugs = Huggingface()
-openai = fOpenAI(client=openai.OpenAI())
+hugs = huggingface_provider.Huggingface()
+openai = openai_provider.OpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
-f_lang_match = Feedback(hugs.language_match).on_input_output()
+f_lang_match = core_feedback.Feedback(hugs.language_match).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = Feedback(openai.relevance).on_input_output()
+f_qa_relevance = core_feedback.Feedback(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    Feedback(openai.context_relevance)
+    core_feedback.Feedback(openai.context_relevance)
     .on_input()
     .on(
-        Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
+        select_schema.Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
             :
         ].page_content
     )
@@ -94,8 +94,10 @@ f_context_relevance = (
 
 
 def get_or_make_app(
-    cid: str, selector: int = 0, feedback_mode=FeedbackMode.DEFERRED
-) -> TruChain:
+    cid: str,
+    selector: int = 0,
+    feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
+) -> mod_tru_chain.TruChain:
     """
     Create a new app for the given conversation id `cid` or return an existing
     one. Return the new or existing app. `selector` determines which app
@@ -125,7 +127,7 @@ def get_or_make_app(
 
     if "filtered" in app_version:
         # Better contexts fix, filter contexts with relevance:
-        retriever = WithFeedbackFilterDocuments.of_retriever(
+        retriever = langchain_app.WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever, feedback=f_context_relevance, threshold=0.5
         )
 
@@ -195,7 +197,7 @@ def get_or_make_app(
         )
 
     # Trulens instrumentation.
-    tc = TruChain(
+    tc = mod_tru_chain.TruChain(
         app=app,
         app_version=app_version,
         feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
@@ -207,7 +209,7 @@ def get_or_make_app(
     return tc
 
 
-def get_answer(app: TruChain, question: str) -> Tuple[str, str]:
+def get_answer(app: mod_tru_chain.TruChain, question: str) -> Tuple[str, str]:
     """
     Use the given `app` to respond to `question`. Return the answer text and
     sources elaboration text.

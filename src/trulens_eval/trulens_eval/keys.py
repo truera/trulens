@@ -11,8 +11,6 @@ deprecation_utils.packages_dep_warn()
 
 from trulens.core.utils.keys import REDACTED_VALUE
 from trulens.core.utils.keys import TEMPLATE_VALUES
-from trulens.core.utils.keys import UNICODE_CHECK
-from trulens.core.utils.keys import UNICODE_STOP
 from trulens.core.utils.keys import ApiKeyError
 from trulens.core.utils.keys import check_keys
 from trulens.core.utils.keys import check_or_set_keys

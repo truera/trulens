@@ -1,15 +1,11 @@
-"""
-Tests for serial.py:Lens class.
-"""
+"""Tests for serial.py:Lens class."""
 
 from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
 
 from munch import Munch
-from trulens.core.utils.serial import GetAttribute
-from trulens.core.utils.serial import GetItem
-from trulens.core.utils.serial import Lens
+from trulens.core.utils import serial as serial_utils
 
 pp = PrettyPrinter()
 
@@ -31,53 +27,56 @@ class TestLens(TestCase):
         # GetItemOrAttribute
         with self.subTest("GetItemOrAttribute"):
             self.assertEqual(
-                Lens().of_string("outerkey.intkey"), Lens().outerkey.intkey
+                serial_utils.Lens().of_string("outerkey.intkey"),
+                serial_utils.Lens().outerkey.intkey,
             )
 
         # GetIndex
         with self.subTest("GetIndex"):
             self.assertEqual(
-                Lens().of_string("outerkey.seqkey[2]"),
-                Lens().outerkey.seqkey[2],
+                serial_utils.Lens().of_string("outerkey.seqkey[2]"),
+                serial_utils.Lens().outerkey.seqkey[2],
             )
 
         # GetSlice
         with self.subTest("GetSlice"):
             self.assertEqual(
-                Lens().of_string("outerkey.seqkey[3:1:-1]"),
-                Lens().outerkey.seqkey[3:1:-1],
+                serial_utils.Lens().of_string("outerkey.seqkey[3:1:-1]"),
+                serial_utils.Lens().outerkey.seqkey[3:1:-1],
             )
 
         # GetIndices
         with self.subTest("GetIndices"):
             self.assertEqual(
-                Lens().of_string("outerkey.seqkey[1,3]"),
-                Lens().outerkey.seqkey[1, 3],
+                serial_utils.Lens().of_string("outerkey.seqkey[1,3]"),
+                serial_utils.Lens().outerkey.seqkey[1, 3],
             )
 
         # GetItems
         with self.subTest("GetItems"):
             self.assertEqual(
-                Lens().of_string("['outerstr', 'outerint']"),
-                Lens()["outerstr", "outerint"],
+                serial_utils.Lens().of_string("['outerstr', 'outerint']"),
+                serial_utils.Lens()["outerstr", "outerint"],
             )
 
         # Collect
         with self.subTest("Collect"):
             self.assertEqual(
                 # note we are not manually collecting from the generator here, collect does it for us
-                Lens().of_string("['outerstr', 'outerint'].collect()"),
-                Lens()["outerstr", "outerint"].collect(),
+                serial_utils.Lens().of_string(
+                    "['outerstr', 'outerint'].collect()"
+                ),
+                serial_utils.Lens()["outerstr", "outerint"].collect(),
             )
 
     def testStepsGet(self):
         # GetItem, GetAttribute
         with self.subTest("GetItem,GetAttribute"):
             self.assertEqual(
-                Lens(
+                serial_utils.Lens(
                     path=(
-                        GetItem(item="outerkey"),
-                        GetAttribute(attribute="strkey"),
+                        serial_utils.GetItem(item="outerkey"),
+                        serial_utils.GetAttribute(attribute="strkey"),
                     )
                 ).get_sole_item(self.obj1),
                 "hello",
@@ -86,31 +85,38 @@ class TestLens(TestCase):
         # GetItemOrAttribute
         with self.subTest("GetItemOrAttribute"):
             self.assertEqual(
-                Lens().outerkey.intkey.get_sole_item(self.obj1), 42
+                serial_utils.Lens().outerkey.intkey.get_sole_item(self.obj1), 42
             )
 
         # GetIndex
         with self.subTest("GetIndex"):
             self.assertEqual(
-                Lens().outerkey.seqkey[2].get_sole_item(self.obj1), 3
+                serial_utils.Lens().outerkey.seqkey[2].get_sole_item(self.obj1),
+                3,
             )
 
         # GetSlice
         with self.subTest("GetSlice"):
             self.assertEqual(
-                list(Lens().outerkey.seqkey[3:1:-1].get(self.obj1)), [4, 3]
+                list(
+                    serial_utils.Lens().outerkey.seqkey[3:1:-1].get(self.obj1)
+                ),
+                [4, 3],
             )
 
         # GetIndices
         with self.subTest("GetIndices"):
             self.assertEqual(
-                list(Lens().outerkey.seqkey[1, 3].get(self.obj1)), [2, 4]
+                list(serial_utils.Lens().outerkey.seqkey[1, 3].get(self.obj1)),
+                [2, 4],
             )
 
         # GetItems
         with self.subTest("GetItems"):
             self.assertEqual(
-                list(Lens()["outerstr", "outerint"].get(self.obj1)),
+                list(
+                    serial_utils.Lens()["outerstr", "outerint"].get(self.obj1)
+                ),
                 ["lalala", 0xDEADBEEF],
             )
 
@@ -118,7 +124,7 @@ class TestLens(TestCase):
         with self.subTest("Collect"):
             self.assertEqual(
                 # note we are not manually collecting from the generator here, collect does it for us
-                Lens()["outerstr", "outerint"]
+                serial_utils.Lens()["outerstr", "outerint"]
                 .collect()
                 .get_sole_item(self.obj1),
                 ["lalala", 0xDEADBEEF],
@@ -132,10 +138,10 @@ class TestLens(TestCase):
         # GetItem, GetAttribute
         with self.subTest("GetItem,GetAttribute"):
             self.assertEqual(self.obj1["outerkey"].strkey, "hello")
-            obj1 = Lens(
+            obj1 = serial_utils.Lens(
                 path=(
-                    GetItem(item="outerkey"),
-                    GetAttribute(attribute="strkey"),
+                    serial_utils.GetItem(item="outerkey"),
+                    serial_utils.GetAttribute(attribute="strkey"),
                 )
             ).set(self.obj1, "not hello")
             self.assertEqual(obj1["outerkey"].strkey, "not hello")
@@ -143,13 +149,13 @@ class TestLens(TestCase):
         # GetItemOrAttribute
         with self.subTest("GetItemOrAttribute"):
             self.assertEqual(self.obj1["outerkey"].intkey, 42)
-            obj1 = Lens()["outerkey"].intkey.set(self.obj1, 43)
+            obj1 = serial_utils.Lens()["outerkey"].intkey.set(self.obj1, 43)
             self.assertEqual(obj1["outerkey"].intkey, 43)
 
         # GetIndex
         with self.subTest("GetIndex"):
             self.assertEqual(self.obj1["outerkey"].seqkey[2], 3)
-            obj1 = Lens()["outerkey"].seqkey[2].set(self.obj1, 4)
+            obj1 = serial_utils.Lens()["outerkey"].seqkey[2].set(self.obj1, 4)
             self.assertEqual(obj1["outerkey"].seqkey[2], 4)
 
         # Setting lenses that produce multiple things is not supported / does not work.
@@ -157,7 +163,11 @@ class TestLens(TestCase):
         # GetSlice
         with self.subTest("GetSlice"):
             self.assertEqual(self.obj1["outerkey"].seqkey[3:1:-1], [4, 3])
-            obj1 = Lens()["outerkey"].seqkey[3:1:-1].set(self.obj1, 43)
+            obj1 = (
+                serial_utils.Lens()["outerkey"]
+                .seqkey[3:1:-1]
+                .set(self.obj1, 43)
+            )
             self.assertEqual(obj1["outerkey"].seqkey[3:1:-1], [43, 43])
 
         # GetIndices
@@ -169,7 +179,9 @@ class TestLens(TestCase):
                 ],  # NOTE1
                 [2, 4],
             )
-            obj1 = Lens()["outerkey"].seqkey[1, 3].set(self.obj1, 24)
+            obj1 = (
+                serial_utils.Lens()["outerkey"].seqkey[1, 3].set(self.obj1, 24)
+            )
             self.assertEqual(
                 [
                     obj1["outerkey"].seqkey[1],
@@ -184,7 +196,7 @@ class TestLens(TestCase):
                 [self.obj1["outerstr"], self.obj1["outerint"]],  # NOTE1
                 ["lalala", 0xDEADBEEF],
             )
-            obj1 = Lens()["outerstr", "outerint"].set(
+            obj1 = serial_utils.Lens()["outerstr", "outerint"].set(
                 self.obj1, "still not hello 420"
             )
             self.assertEqual(

@@ -4,8 +4,7 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 
 import litellm
 from litellm import completion_cost
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-class LiteLLMCallback(EndpointCallback):
+class LiteLLMCallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: pydantic.BaseModel) -> None:
@@ -59,7 +58,7 @@ class LiteLLMCallback(EndpointCallback):
             setattr(self.cost, "cost", completion_cost(response))
 
 
-class LiteLLMEndpoint(Endpoint):
+class LiteLLMEndpoint(core_endpoint.Endpoint):
     """LiteLLM endpoint."""
 
     litellm_provider: str = "openai"
@@ -82,7 +81,7 @@ class LiteLLMEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> None:
         counted_something = False
 

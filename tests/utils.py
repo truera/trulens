@@ -29,7 +29,7 @@ from tqdm.auto import tqdm
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.text import format_size
+from trulens.core.utils import text as text_utils
 
 T = TypeVar("T")
 
@@ -717,7 +717,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             else:
                 prog.set_description_str(f"lens with {len(path)} steps")
             prog.set_postfix_str(
-                format_size(len(visited)) + " reference(s) visited"
+                text_utils.format_size(len(visited)) + " reference(s) visited"
             )
 
         final_ref = path[-1]

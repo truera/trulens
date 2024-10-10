@@ -27,14 +27,9 @@ from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 import warnings
 
 import pydantic
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.constants import ERROR
-from trulens.core.utils.constants import NOSERIO
-from trulens.core.utils.python import OpaqueWrapper
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.python import safe_issubclass
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -45,7 +40,7 @@ def is_noserio(obj: Any) -> bool:
     Determines whether the given json object represents some non-serializable
     object. See `noserio`.
     """
-    return isinstance(obj, dict) and NOSERIO in obj
+    return isinstance(obj, dict) and constant_utils.NOSERIO in obj
 
 
 def noserio(obj: Any, **extra: Dict) -> Dict:
@@ -60,7 +55,7 @@ def noserio(obj: Any, **extra: Dict) -> Dict:
     if isinstance(obj, Sequence):
         inner["len"] = len(obj)
 
-    return {NOSERIO: inner}
+    return {constant_utils.NOSERIO: inner}
 
 
 # TODO: rename as functionality optionally produces JSONLike .
@@ -82,7 +77,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         # exception.
         is_prop = isinstance(v, property)
     except Exception as e:
-        return {ERROR: Obj.of_object(e)}
+        return {constant_utils.ERROR: Obj.of_object(e)}
 
     if is_prop:
         if not get_prop:
@@ -93,7 +88,7 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
             return v
 
         except Exception as e:
-            return {ERROR: Obj.of_object(e)}
+            return {constant_utils.ERROR: Obj.of_object(e)}
     else:
         return v
 
@@ -131,7 +126,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
         try:
             v = safe_getattr(obj, k, get_prop=include_props)
 
-            if isinstance(v, OpaqueWrapper):
+            if isinstance(v, python_utils.OpaqueWrapper):
                 # Don't expose the contents of opaque wrappers.
                 continue
 
@@ -144,7 +139,7 @@ def clean_attributes(obj, include_props: bool = False) -> Dict[str, Any]:
     return ret
 
 
-class Module(SerialModel):
+class Module(serial_utils.SerialModel):
     package_name: Optional[str] = None  # some modules are not in a package
     module_name: str
 
@@ -174,7 +169,7 @@ class Module(SerialModel):
         )
 
 
-class Class(SerialModel):
+class Class(serial_utils.SerialModel):
     """
     A python class. Should be enough to deserialize the constructor. Also
     includes bases so that we can query subtyping relationships without
@@ -250,9 +245,9 @@ class Class(SerialModel):
         )
 
     @staticmethod
-    def of_class_info(json: JSON):
-        assert CLASS_INFO in json, "Class info not in json."
-        return Class.model_validate(json[CLASS_INFO])
+    def of_class_info(json: serial_utils.JSON):
+        assert constant_utils.CLASS_INFO in json, "Class info not in json."
+        return Class.model_validate(json[constant_utils.CLASS_INFO])
 
     def load(self) -> type:  # class
         try:
@@ -304,7 +299,7 @@ def _safe_init_sig(cls):
         return builtin_init_sig
 
 
-class Obj(SerialModel):
+class Obj(serial_utils.SerialModel):
     # TODO: refactor this into something like WithClassInfo, perhaps
     # WithObjectInfo, and store required constructor inputs as attributes with
     # potentially a placeholder for additional arguments that are not
@@ -340,7 +335,7 @@ class Obj(SerialModel):
 
                 init_args = ()
                 init_kwargs = obj.model_dump()
-                # init_kwargs = jsonify(obj)
+                # init_kwargs = json_utils.jsonify(obj)
 
             elif isinstance(obj, Exception):
                 init_args = obj.args
@@ -399,10 +394,10 @@ class Obj(SerialModel):
             sig = _safe_init_sig(cls)
 
             if (
-                CLASS_INFO in sig.parameters
-                and CLASS_INFO not in self.init_bindings.kwargs
+                constant_utils.CLASS_INFO in sig.parameters
+                and constant_utils.CLASS_INFO not in self.init_bindings.kwargs
             ):
-                extra_kwargs = {CLASS_INFO: self.cls}
+                extra_kwargs = {constant_utils.CLASS_INFO: self.cls}
             else:
                 extra_kwargs = {}
 
@@ -440,7 +435,7 @@ def _self_arg(bindings: inspect.BoundArguments) -> Optional[str]:
     return None
 
 
-class Bindings(SerialModel):
+class Bindings(serial_utils.SerialModel):
     args: Tuple
     kwargs: Dict[str, Any]
 
@@ -512,7 +507,7 @@ class Bindings(SerialModel):
         )
 
 
-class FunctionOrMethod(SerialModel):
+class FunctionOrMethod(serial_utils.SerialModel):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         if isinstance(obj, Dict):
@@ -587,7 +582,7 @@ class Method(FunctionOrMethod):
 
 
 def object_module(obj):
-    if safe_hasattr(obj, "__module__"):
+    if python_utils.safe_hasattr(obj, "__module__"):
         return getattr(obj, "__module__")
     else:
         return "builtins"
@@ -678,10 +673,10 @@ class WithClassInfo(pydantic.BaseModel):
         if not isinstance(obj, dict):
             return obj
 
-        if CLASS_INFO not in obj:
+        if constant_utils.CLASS_INFO not in obj:
             raise ValueError("No class info present in object.")
 
-        clsinfo = Class.model_validate(obj[CLASS_INFO])
+        clsinfo = Class.model_validate(obj[constant_utils.CLASS_INFO])
         try:
             # If class cannot be loaded, usually because it is not importable,
             # return obj as is.
@@ -704,11 +699,13 @@ class WithClassInfo(pydantic.BaseModel):
             try:
                 if (
                     (isinstance(val, dict))
-                    and (CLASS_INFO in val)
+                    and (constant_utils.CLASS_INFO in val)
                     and inspect.isclass(typ)
-                    and safe_issubclass(typ, WithClassInfo)
+                    and python_utils.safe_issubclass(typ, WithClassInfo)
                 ):
-                    subcls = Class.model_validate(val[CLASS_INFO]).load()
+                    subcls = Class.model_validate(
+                        val[constant_utils.CLASS_INFO]
+                    ).load()
 
                     val = subcls.model_validate(val)
             except Exception:
@@ -747,13 +744,13 @@ class WithClassInfo(pydantic.BaseModel):
             ), "Either `class_info`, `obj` or `cls` need to be specified."
             class_info = Class.of_class(cls, with_bases=True)
 
-        kwargs[CLASS_INFO] = class_info
+        kwargs[constant_utils.CLASS_INFO] = class_info
 
         super().__init__(*args, **kwargs)
 
     @staticmethod
     def get_class(obj_json: Dict):
-        return Class.model_validate(obj_json[CLASS_INFO]).load()
+        return Class.model_validate(obj_json[constant_utils.CLASS_INFO]).load()
 
     @staticmethod
     def of_object(obj: object):

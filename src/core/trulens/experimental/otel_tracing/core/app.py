@@ -6,21 +6,21 @@ from typing import (
     Iterable,
 )
 
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing.core import trace as mod_otel
-from trulens.experimental.otel_tracing.core import trace as mod_trace
+from trulens.experimental.otel_tracing.core import trace as core_otel
+from trulens.experimental.otel_tracing.core import trace as core_trace
 
 
-class _App(mod_app.App):
+class _App(core_app.App):
     # WithInstrumentCallbacks requirement
     def get_active_contexts(
         self,
-    ) -> Iterable[mod_instruments._RecordingContext]:
+    ) -> Iterable[core_instruments._RecordingContext]:
         """Get all active recording contexts."""
 
         recording = self.recording_contexts.get(contextvars.Token.MISSING)
@@ -32,13 +32,13 @@ class _App(mod_app.App):
     # WithInstrumentCallbacks requirement
     def _on_new_recording_span(
         self,
-        recording_span: mod_trace.Span,
+        recording_span: core_trace.Span,
     ):
         if self.session._experimental_otel_exporter is not None:
             # Export to otel exporter if exporter was set in workspace.
             to_export = []
             for span in recording_span.iter_family(include_phantom=True):
-                if isinstance(span, mod_otel.Span):
+                if isinstance(span, core_otel.Span):
                     e_span = span.otel_freeze()
                     to_export.append(e_span)
                 else:
@@ -52,8 +52,8 @@ class _App(mod_app.App):
     # WithInstrumentCallbacks requirement
     def _on_new_root_span(
         self,
-        recording: mod_instruments._RecordingContext,
-        root_span: mod_trace.Span,
+        recording: core_instruments._RecordingContext,
+        root_span: core_trace.Span,
     ) -> record_schema.Record:
         tracer = root_span.context.tracer
 
@@ -98,13 +98,13 @@ class _App(mod_app.App):
     def __enter__(self):
         # EXPERIMENTAL otel replacement to recording context manager.
 
-        tracer: mod_trace.Tracer = mod_trace.trulens_tracer()
+        tracer: core_trace.Tracer = core_trace.trulens_tracer()
 
         recording_span_ctx = tracer.recording()
-        recording_span: mod_trace.PhantomSpanRecordingContext = (
+        recording_span: core_trace.PhantomSpanRecordingContext = (
             recording_span_ctx.__enter__()
         )
-        recording = mod_trace._RecordingContext(
+        recording = core_trace._RecordingContext(
             app=self,
             tracer=tracer,
             span=recording_span,
@@ -124,7 +124,7 @@ class _App(mod_app.App):
     def __exit__(self, exc_type, exc_value, exc_tb):
         # EXPERIMENTAL otel replacement to recording context manager.
 
-        recording: mod_trace._RecordingContext = self.recording_contexts.get()
+        recording: core_trace._RecordingContext = self.recording_contexts.get()
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
@@ -139,13 +139,13 @@ class _App(mod_app.App):
     async def __aenter__(self):
         # EXPERIMENTAL: otel-tracing
 
-        tracer: mod_trace.Tracer = mod_trace.trulens_tracer()
+        tracer: core_trace.Tracer = core_trace.trulens_tracer()
 
         recording_span_ctx = await tracer.arecording()
-        recording_span: mod_trace.PhantomSpanRecordingContext = (
+        recording_span: core_trace.PhantomSpanRecordingContext = (
             await recording_span_ctx.__aenter__()
         )
-        recording = mod_trace._RecordingContext(
+        recording = core_trace._RecordingContext(
             app=self,
             tracer=tracer,
             span=recording_span,
@@ -165,7 +165,7 @@ class _App(mod_app.App):
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         # EXPERIMENTAL: otel-tracing
 
-        recording: mod_trace._RecordingContext = self.recording_contexts.get()
+        recording: core_trace._RecordingContext = self.recording_contexts.get()
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."

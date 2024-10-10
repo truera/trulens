@@ -6,8 +6,8 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
-from trulens.feedback import LLMProvider
-from trulens.providers.langchain.endpoint import LangchainEndpoint
+from trulens.feedback import llm_provider
+from trulens.providers.langchain import endpoint as langchain_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ def _convert_message(message: Dict) -> BaseMessage:
     return AIMessage(content=message["content"])
 
 
-class Langchain(LLMProvider):
+class Langchain(llm_provider.LLMProvider):
     """Out of the box feedback functions using LangChain LLMs and ChatModels
 
     Create a LangChain Provider with out of the box feedback functions.
@@ -37,7 +37,7 @@ class Langchain(LLMProvider):
         chain: LangChain LLM.
     """
 
-    endpoint: LangchainEndpoint
+    endpoint: langchain_endpoint.LangchainEndpoint
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class Langchain(LLMProvider):
     ):
         self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
-        self_kwargs["endpoint"] = LangchainEndpoint(
+        self_kwargs["endpoint"] = langchain_endpoint.LangchainEndpoint(
             *args, chain=chain, **kwargs
         )
 

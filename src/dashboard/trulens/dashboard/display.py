@@ -3,18 +3,19 @@ import time
 from typing import Dict, List
 
 import pandas as pd
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.record import Record
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
 from trulens.dashboard.ux.styles import CATEGORY
 
 
-def get_icon(fdef: FeedbackDefinition, result: float) -> str:
+def get_icon(fdef: feedback_schema.FeedbackDefinition, result: float) -> str:
     """
     Get the icon for a given feedback definition and result.
 
     Args:
-        fdef (FeedbackDefinition): The feedback definition
-        result (float): The result of the feedback
+        fdefThe feedback definition.
+
+        result: The result of the feedback.
 
     Returns:
         str: The icon for the feedback
@@ -30,7 +31,7 @@ def get_icon(fdef: FeedbackDefinition, result: float) -> str:
 
 
 def get_feedback_result(
-    tru_record: Record, feedback_name: str, timeout: int = 60
+    tru_record: record_schema.Record, feedback_name: str, timeout: int = 60
 ) -> pd.DataFrame:
     """
     Retrieve the feedback results including metadata (such as reasons) for a given feedback name from a TruLens record.

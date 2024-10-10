@@ -48,8 +48,9 @@ def record_viewer(record_json, app_json, key=None) -> str:
     """Create a new instance of "record_viewer", which produces a timeline
 
     Args:
-        record_json (object): JSON of the record serialized by `json.loads`.
-        app_json (object): JSON of the app serialized by `json.loads`.
+        record_json: JSON of the record serialized by `json.loads`.
+
+        app_json: JSON of the app serialized by `json.loads`.
 
     Returns:
         Start time of the selected component in the application. If the whole app is selected,

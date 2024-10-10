@@ -4,8 +4,7 @@ pattern matching of feedback scores from LLM responses.
 """
 
 import pytest
-from trulens.feedback.generated import ParseError
-from trulens.feedback.generated import re_0_10_rating
+from trulens.feedback import generated as feedback_generated
 
 test_data = [
     ("The relevance score is 7.", 7),
@@ -31,8 +30,8 @@ def test_re_0_10_rating(test_input, expected):
     """Check that re_0_10_rating can extract the correct score from a string."""
 
     try:
-        result = re_0_10_rating(test_input)
-    except ParseError:
+        result = feedback_generated.re_0_10_rating(test_input)
+    except feedback_generated.ParseError:
         result = None
 
     assert (

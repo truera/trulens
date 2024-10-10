@@ -10,10 +10,9 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens.core import TruSession
-from trulens.core.utils.imports import static_resource
-from trulens.dashboard.utils.notebook_utils import is_notebook
-from trulens.dashboard.utils.notebook_utils import setup_widget_stdout_stderr
+from trulens.core import session as core_session
+from trulens.core.utils import imports as import_utils
+from trulens.dashboard.utils import notebook_utils
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
@@ -31,7 +30,7 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    session: Optional[TruSession] = None,
+    session: Optional[core_session.TruSession] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
@@ -58,7 +57,7 @@ def run_dashboard(
         RuntimeError: Dashboard is already running. Can be avoided if `force` is set.
 
     """
-    session = session or TruSession()
+    session = session or core_session.TruSession()
     session.connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
@@ -71,7 +70,9 @@ def run_dashboard(
     print("Starting dashboard ...")
 
     # run leaderboard with subprocess
-    leaderboard_path = static_resource("dashboard", "Leaderboard.py")
+    leaderboard_path = import_utils.static_resource(
+        "dashboard", "Leaderboard.py"
+    )
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -130,8 +131,8 @@ def run_dashboard(
 
     started = threading.Event()
     tunnel_started = threading.Event()
-    if is_notebook():
-        out_stdout, out_stderr = setup_widget_stdout_stderr()
+    if notebook_utils.is_notebook():
+        out_stdout, out_stderr = notebook_utils.setup_widget_stdout_stderr()
     else:
         out_stdout = None
         out_stderr = None
@@ -247,7 +248,7 @@ def run_dashboard(
 
 
 def stop_dashboard(
-    session: Optional[TruSession] = None, force: bool = False
+    session: Optional[core_session.TruSession] = None, force: bool = False
 ) -> None:
     """
     Stop existing dashboard(s) if running.
@@ -261,7 +262,7 @@ def stop_dashboard(
     Raises:
             RuntimeError: Dashboard is not running in the current process. Can be avoided with `force`.
     """
-    session = session or TruSession()
+    session = session or core_session.TruSession()
     if session._dashboard_proc is None:
         if not force:
             raise RuntimeError(

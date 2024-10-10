@@ -1,11 +1,9 @@
 import inspect
 
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.imports import format_import_errors
+from trulens.core.utils import imports as import_utils
 
-with OptionalImports(
-    messages=format_import_errors(
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
         ["ipython", "ipywidgets"], purpose="using TruLens in a notebook"
     )
 ):
@@ -47,7 +45,10 @@ def setup_widget_stdout_stderr():
     return out_stdout, out_stderr
 
 
-if not isinstance(register_line_cell_magic, Dummy) and is_notebook():
+if (
+    not isinstance(register_line_cell_magic, import_utils.Dummy)
+    and is_notebook()
+):
 
     @register_line_cell_magic
     def writefileinterpolated(line, cell):

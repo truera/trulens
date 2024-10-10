@@ -7,13 +7,13 @@ from typing import Optional
 
 import pydantic
 from trulens.core.utils import containers as container_utils
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import serial as serial_utils
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
 """Max size in bytes of pickled objects."""
 
 
-class Cost(SerialModel, pydantic.BaseModel):
+class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     """Costs associated with some call or set of calls."""
 
     n_requests: int = 0
@@ -76,7 +76,7 @@ class Cost(SerialModel, pydantic.BaseModel):
         return self.__add__(other)
 
 
-class Perf(SerialModel, pydantic.BaseModel):
+class Perf(serial_utils.SerialModel, pydantic.BaseModel):
     """Performance information.
 
     Presently only the start and end times, and thus latency.

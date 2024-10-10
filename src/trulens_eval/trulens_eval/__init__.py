@@ -7,7 +7,7 @@
 
 from trulens.core._utils import optional as optional_utils
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils import imports as imports_utils
+from trulens.core.utils import imports as import_utils
 
 from trulens_eval._utils import optional as eval_optional_utils
 
@@ -21,57 +21,60 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.virtual import TruVirtual
 from trulens.core.feedback.feedback import Feedback
 from trulens.core.feedback.provider import Provider
-from trulens.core.schema import Select
-from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
 from trulens.core.session import TruSession as Tru
 from trulens.core.utils.threading import TP
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_LITELLM
 ):
     from trulens.providers.litellm.provider import LiteLLM
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_BEDROCK
 ):
     from trulens.providers.bedrock.provider import Bedrock
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_OPENAI
 ):
     from trulens.providers.openai.provider import AzureOpenAI
     from trulens.providers.openai.provider import OpenAI
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_CORTEX
 ):
     from trulens.providers.cortex.provider import Cortex
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_HUGGINGFACE
 ):
     from trulens.providers.huggingface.provider import Huggingface
     from trulens.providers.huggingface.provider import HuggingfaceLocal
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=eval_optional_utils.REQUIREMENT_PROVIDER_LANGCHAIN
 ):
     from trulens.providers.langchain.provider import Langchain
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_APPS_LANGCHAIN
 ):
     from trulens.apps.langchain.tru_chain import TruChain
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_APPS_LLAMA
 ):
     from trulens.apps.llamaindex.tru_llama import TruLlama
 
-with imports_utils.OptionalImports(
+with import_utils.OptionalImports(
     messages=optional_utils.REQUIREMENT_APPS_NEMO
 ):
     from trulens.apps.nemo.tru_rails import TruRails
+
+FeedbackMode = feedback_schema.FeedbackMode
+Select = select_schema.Select
 
 __all__ = [
     # main interface

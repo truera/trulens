@@ -1,8 +1,7 @@
 from typing import Union
 
 import pytest
-from trulens.core.utils.text import format_quantity
-from trulens.core.utils.text import format_seconds
+from trulens.core.utils import text as text_utils
 
 
 @pytest.mark.parametrize(
@@ -26,7 +25,7 @@ from trulens.core.utils.text import format_seconds
 def test_format_quantity(
     value: Union[int, float], precision: int, expected: str
 ):
-    assert format_quantity(value, precision=precision) == expected
+    assert text_utils.format_quantity(value, precision=precision) == expected
 
 
 @pytest.mark.parametrize(
@@ -46,4 +45,4 @@ def test_format_quantity(
     ],
 )
 def test_format_seconds(value: int, expected: str):
-    assert format_seconds(value) == expected
+    assert text_utils.format_seconds(value) == expected

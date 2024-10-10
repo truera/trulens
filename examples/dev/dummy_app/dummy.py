@@ -3,7 +3,7 @@ import random
 import time
 from typing import Optional
 
-from trulens.core.utils.python import OpaqueWrapper
+from trulens.core.utils import python as python_utils
 
 
 class Dummy:
@@ -53,10 +53,10 @@ class Dummy:
     def dummy_allocate(self):
         """Allocate some memory."""
 
-        self._dummy_allocated_data = OpaqueWrapper(
+        self._dummy_allocated_data = python_utils.OpaqueWrapper(
             obj=[True] * self.alloc, e=Exception()
         )
-        # OpaqueWrapper will prevent instrumentation or serialization of the
+        # python_utils.OpaqueWrapper will prevent instrumentation or serialization of the
         # contents of this fake data.
 
         return self._dummy_allocated_data

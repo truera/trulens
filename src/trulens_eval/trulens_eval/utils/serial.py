@@ -9,7 +9,9 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.core.utils.serial import JSON_BASES
+from trulens.core.utils import serial as serial_utilsPath
+from trulens.core.utils import serial as serial_utils_BASES
+from trulens.core.utils import serial as serial_utilsized
 from trulens.core.utils.serial import Collect
 from trulens.core.utils.serial import GetAttribute
 from trulens.core.utils.serial import GetIndex
@@ -18,8 +20,6 @@ from trulens.core.utils.serial import GetItem
 from trulens.core.utils.serial import GetItemOrAttribute
 from trulens.core.utils.serial import GetItems
 from trulens.core.utils.serial import GetSlice
-from trulens.core.utils.serial import JSONized
-from trulens.core.utils.serial import JSONPath
 from trulens.core.utils.serial import Lens
 from trulens.core.utils.serial import ParseException
 from trulens.core.utils.serial import SerialBytes

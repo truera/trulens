@@ -17,7 +17,7 @@ from llama_index.core.chat_engine.types import AgentChatResponse
 from llama_index.llms.openai import OpenAI
 from trulens.apps.llamaindex import TruLlama
 from trulens.core.schema import base as base_schema
-from trulens.core.utils.keys import check_keys
+from trulens.core.utils import keys as key_utils
 
 from tests.test import TruTestCase
 from tests.test import async_test
@@ -48,7 +48,7 @@ class TestLlamaIndex(TruTestCase):
         return list(TestLlamaIndex.ANSWERS.items())[index]
 
     def setUp(self):
-        check_keys("OPENAI_API_KEY")
+        key_utils.check_keys("OPENAI_API_KEY")
 
         if not TestLlamaIndex.DATA_PATH.exists():
             os.system(f"wget {TestLlamaIndex.DATA_URL} -P data/")

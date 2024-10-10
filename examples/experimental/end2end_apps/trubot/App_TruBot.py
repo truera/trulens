@@ -13,15 +13,15 @@ from langchain_community.vectorstores import Pinecone
 import numpy as np
 import pinecone
 import streamlit as st
-from trulens.apps.langchain import TruChain
-from trulens.core import Feedback
-from trulens.core import Select
-from trulens.core import TruSession
-from trulens.core.utils.keys import check_keys
-from trulens.providers.huggingface import Huggingface
-from trulens.providers.openai import OpenAI as fOpenAI
+from trulens.apps.langchain import tru_chain as mod_tru_chain
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import keys as key_utils
+from trulens.providers.huggingface import provider as huggingface_provider
+from trulens.providers.openai import provider as openai_provider
 
-check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
+key_utils.check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
 # Set up GPT-3 model
 model_name = "gpt-3.5-turbo"
@@ -38,22 +38,24 @@ pinecone.init(
 
 identity = lambda h: h
 
-hugs = Huggingface()
-openai = fOpenAI()
+hugs = huggingface_provider.Huggingface()
+openai = openai_provider.OpenAI()
 
-f_lang_match = Feedback(hugs.language_match).on(
-    text1=Select.RecordInput, text2=Select.RecordOutput
+f_lang_match = core_feedback.Feedback(hugs.language_match).on(
+    text1=select_schema.Select.RecordInput,
+    text2=select_schema.Select.RecordOutput,
 )
 
-f_qa_relevance = Feedback(openai.relevance).on(
-    prompt=Select.RecordInput, response=Select.RecordOutput
+f_qa_relevance = core_feedback.Feedback(openai.relevance).on(
+    prompt=select_schema.Select.RecordInput,
+    response=select_schema.Select.RecordOutput,
 )
 
 f_context_relevance = (
-    Feedback(openai.context_relevance)
+    core_feedback.Feedback(openai.context_relevance)
     .on(
-        question=Select.RecordInput,
-        statement=Select.Record.chain.combine_docs_chain._call.args.inputs.input_documents[
+        question=select_schema.Select.RecordInput,
+        statement=select_schema.Select.Record.chain.combine_docs_chain._call.args.inputs.input_documents[
             :
         ].page_content,
     )
@@ -125,7 +127,7 @@ def generate_response(prompt):
         )
 
     # Trulens instrumentation.
-    tc = TruChain(chain, app_name=app_name)
+    tc = mod_tru_chain.TruChain(chain, app_name=app_name)
 
     return tc, tc.with_record(dict(question=prompt))
 
@@ -149,7 +151,7 @@ if user_input:
     # Display response
     st.write(answer)
 
-    session = TruSession()
+    session = core_session.TruSession()
     record_id = session.add_data(
         app_name=app_name,
         prompt=prompt_input,

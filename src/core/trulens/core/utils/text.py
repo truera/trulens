@@ -4,11 +4,11 @@ import logging
 import math
 import sys
 
-from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
-if safe_hasattr(sys.stdout, "reconfigure"):
+if python_utils.safe_hasattr(sys.stdout, "reconfigure"):
     # Some stdout can't handle the below emojis (like terminal). This will skip over the emoji printing
     sys.stdout.reconfigure(errors="replace")
 

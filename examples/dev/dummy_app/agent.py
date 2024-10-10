@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional
 
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
+from trulens.apps import custom as custom_app
 
 from examples.dev.dummy_app.dummy import Dummy
 
@@ -47,11 +46,13 @@ class DummyAgent(Dummy):
         self.app = app
 
         if self.use_app:
-            self.tru_app = TruCustomApp(self.app, app_name=description)
+            self.tru_app = custom_app.TruCustomApp(
+                self.app, app_name=description
+            )
 
         self.dummy_allocate()
 
-    @instrument
+    @custom_app.instrument
     def invoke(self, data: str) -> str:
         """Invoke the dummy tool."""
 
@@ -69,7 +70,7 @@ class DummyAgent(Dummy):
         else:
             return "Record placeholder"
 
-    @instrument
+    @custom_app.instrument
     async def ainvoke(self, data: str) -> str:
         """Invoke the dummy tool."""
 

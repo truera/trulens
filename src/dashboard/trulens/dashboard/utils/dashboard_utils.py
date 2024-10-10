@@ -5,19 +5,13 @@ from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 import streamlit as st
-from trulens.core import __package__ as core_package
-from trulens.core import __version__ as core_version
-from trulens.core.database import base as mod_db
-from trulens.core.session import TruSession
-from trulens.core.utils.imports import static_resource
-from trulens.dashboard import __package__ as dashboard_package
-from trulens.dashboard import __version__
-from trulens.dashboard.constants import CACHE_TTL
-from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
-from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
-from trulens.dashboard.constants import PINNED_COL_NAME
-from trulens.dashboard.constants import RECORDS_LIMIT
-from trulens.dashboard.utils.metadata_utils import flatten_metadata
+from trulens import core as mod_core
+from trulens import dashboard as mod_dashboard
+from trulens.core import session as core_session
+from trulens.core.database import base as core_db
+from trulens.core.utils import imports as import_utils
+from trulens.dashboard import constants as dashboard_constants
+from trulens.dashboard.utils import metadata_utils
 
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
@@ -32,18 +26,28 @@ def set_page_config(page_title: Optional[str] = None):
     )
 
     if st.get_option("theme.base") == "dark":
-        logo = str(static_resource("dashboard", "ux/trulens_logo_light.svg"))
+        logo = str(
+            import_utils.static_resource(
+                "dashboard", "ux/trulens_logo_light.svg"
+            )
+        )
         logo_small = str(
-            static_resource("dashboard", "ux/trulens_squid_light.svg")
+            import_utils.static_resource(
+                "dashboard", "ux/trulens_squid_light.svg"
+            )
         )
     else:
-        logo = str(static_resource("dashboard", "ux/trulens_logo.svg"))
-        logo_small = str(static_resource("dashboard", "ux/trulens_squid.svg"))
+        logo = str(
+            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+        )
+        logo_small = str(
+            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
+        )
 
     st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
-        st.session_state[ST_RECORDS_LIMIT] = RECORDS_LIMIT
+        st.session_state[ST_RECORDS_LIMIT] = dashboard_constants.RECORDS_LIMIT
 
 
 def add_query_param(param_name: str, param_value: str):
@@ -81,7 +85,7 @@ def read_query_params_into_session_state(
 
 
 @st.cache_resource(show_spinner="Setting up TruLens session")
-def get_session() -> TruSession:
+def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
     As TruSession is a singleton, further TruSession() uses will get the same configuration.
@@ -90,7 +94,7 @@ def get_session() -> TruSession:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
     parser.add_argument(
-        "--database-prefix", default=mod_db.DEFAULT_DATABASE_PREFIX
+        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
     try:
@@ -103,12 +107,14 @@ def get_session() -> TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return TruSession(
+    return core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
 
 
-@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting record data")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting record data"
+)
 def get_records_and_feedback(
     app_name: str,
     app_ids: Optional[List[str]] = None,
@@ -123,22 +129,24 @@ def get_records_and_feedback(
 
     record_json = records_df["record_json"].apply(json.loads)
     records_df["record_metadata"] = record_json.apply(
-        lambda x: flatten_metadata(x["meta"])
+        lambda x: metadata_utils.flatten_metadata(x["meta"])
         if isinstance(x["meta"], dict)
         else {}
     )
 
     records_df, _ = _factor_out_metadata(records_df, "record_metadata")
 
-    if HIDE_RECORD_COL_NAME in records_df.columns:
-        records_df[HIDE_RECORD_COL_NAME] = (
-            records_df[HIDE_RECORD_COL_NAME] == "True"
+    if dashboard_constants.HIDE_RECORD_COL_NAME in records_df.columns:
+        records_df[dashboard_constants.HIDE_RECORD_COL_NAME] = (
+            records_df[dashboard_constants.HIDE_RECORD_COL_NAME] == "True"
         ).astype(bool)
     records_df = records_df.replace({float("nan"): None})
     return records_df, feedback_col_names
 
 
-@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app data")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app data"
+)
 def get_apps(app_name: Optional[str] = None):
     session = get_session()
     lms = session.connector.db
@@ -146,7 +154,10 @@ def get_apps(app_name: Optional[str] = None):
     return list(lms.get_apps(app_name=app_name))
 
 
-@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting feedback definitions")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Getting feedback definitions",
+)
 def get_feedback_defs():
     session = get_session()
     lms = session.connector.db
@@ -216,8 +227,8 @@ def render_sidebar():
     render_refresh_button()
 
     with st.sidebar.expander("Info"):
-        st.text(f"{core_package} {core_version}")
-        st.text(f"{dashboard_package} {__version__}")
+        st.text(f"{mod_core.__package__} {mod_core.__version__}")
+        st.text(f"{mod_dashboard.__package__} {mod_dashboard.__version__}")
 
         st.link_button(
             "Share Feedback",
@@ -242,14 +253,18 @@ def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
     return df, metadata_cols
 
 
-@st.cache_data(ttl=CACHE_TTL, show_spinner="Getting app versions")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app versions"
+)
 def get_app_versions(app_name: str):
     app_versions = get_apps(app_name=app_name)
     app_versions_df = pd.DataFrame(app_versions)
 
     # Flatten metadata
     app_versions_df["metadata"] = app_versions_df["metadata"].apply(
-        lambda x: flatten_metadata(x) if isinstance(x, dict) else {}
+        lambda x: metadata_utils.flatten_metadata(x)
+        if isinstance(x, dict)
+        else {}
     )
 
     # Factor out metadata
@@ -259,7 +274,10 @@ def get_app_versions(app_name: str):
 
     app_versions_df = app_versions_df.replace({float("nan"): None})
 
-    for bool_col in [PINNED_COL_NAME, EXTERNAL_APP_COL_NAME]:
+    for bool_col in [
+        dashboard_constants.PINNED_COL_NAME,
+        dashboard_constants.EXTERNAL_APP_COL_NAME,
+    ]:
         if bool_col in app_versions_df.columns:
             app_versions_df[bool_col] = (
                 app_versions_df[bool_col] == "True"

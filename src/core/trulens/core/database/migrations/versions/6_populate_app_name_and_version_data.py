@@ -8,7 +8,7 @@ Create Date: 2024-08-16 12:46:49.510690
 from alembic import op
 from sqlalchemy.orm.session import Session
 from trulens.core.database.orm import make_orm_for_prefix
-from trulens.core.schema.app import AppDefinition
+from trulens.core.schema import app as app_schema
 
 try:
     from tqdm import tqdm
@@ -41,7 +41,7 @@ def upgrade(config) -> None:
                 app.app_name = "default_app"
             if app.app_version is None:
                 app.app_version = app.app_id
-            app.app_id = AppDefinition._compute_app_id(
+            app.app_id = app_schema.AppDefinition._compute_app_id(
                 app.app_name, app.app_version
             )
         session.commit()

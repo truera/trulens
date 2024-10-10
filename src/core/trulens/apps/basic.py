@@ -1,6 +1,4 @@
-"""
-# Basic input output instrumentation and monitoring.
-"""
+"""Basic input output instrumentation and monitoring."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -10,11 +8,9 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens.core.app import App
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
+from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +40,7 @@ class TruWrapperApp:
         self._call_fn = call_fn
 
 
-class TruBasicCallableInstrument(Instrument):
+class TruBasicCallableInstrument(core_instruments.Instrument):
     """Basic app instrumentation."""
 
     class Default:
@@ -53,7 +49,9 @@ class TruBasicCallableInstrument(Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = {"_call": TruWrapperApp}
+        METHODS: Dict[str, core_instruments.ClassFilter] = {
+            "_call": TruWrapperApp
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(
@@ -64,7 +62,7 @@ class TruBasicCallableInstrument(Instrument):
         )
 
 
-class TruBasicApp(App):
+class TruBasicApp(core_app.App):
     """Instantiates a Basic app that makes little assumptions.
 
     Assumes input text and output text.
@@ -109,7 +107,7 @@ class TruBasicApp(App):
     """The app to be instrumented."""
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
     """The root callable to be instrumented.
 
     This is the method that will be called by the main_input method."""
@@ -128,7 +126,7 @@ class TruBasicApp(App):
             ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
 
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = TruBasicCallableInstrument(app=self)
 
         super().__init__(**kwargs)
@@ -141,7 +139,9 @@ class TruBasicApp(App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-        if func == getattr(TruWrapperApp._call, Instrument.INSTRUMENT):
+        if func == getattr(
+            TruWrapperApp._call, core_instruments.Instrument.INSTRUMENT
+        ):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of
             # self.app._call . This needs to be done since the a TruWrapperApp

@@ -3,7 +3,7 @@ import operator
 from typing import Callable, List, NamedTuple, Optional
 
 import numpy as np
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import serial as serial_utils
 
 
 class ResultCategoryType(Enum):
@@ -12,7 +12,7 @@ class ResultCategoryType(Enum):
     FAIL = 2
 
 
-class Category(SerialModel):
+class Category(serial_utils.SerialModel):
     name: str
     adjective: str
     threshold: float

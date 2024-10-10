@@ -14,8 +14,6 @@ deprecation_utils.packages_dep_warn()
 from trulens.apps.langchain.langchain import LangChainComponent
 from trulens.apps.llamaindex.llama import LlamaIndexComponent
 from trulens.core.app import ATTRIBUTE_ERROR_MESSAGE
-from trulens.core.app import CLASS_INFO
-from trulens.core.app import JSON_BASES
 from trulens.core.app import LLM
 from trulens.core.app import Agent
 from trulens.core.app import App
