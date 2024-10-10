@@ -126,7 +126,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/*.py --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
