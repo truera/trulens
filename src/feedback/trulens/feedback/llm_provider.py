@@ -1806,8 +1806,8 @@ class LLMProvider(Provider):
                     premise=f"{source}", hypothesis=f"{hypothesis}"
                 )
                 score, reason = self.generate_score_and_reasons(
-                    system_prompt,
-                    user_prompt,
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
                     min_score_val=min_score_val,
                     max_score_val=max_score_val,
                     temperature=temperature,

@@ -120,7 +120,7 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
             database_args,
             database_check_revision,
-            connection_parameters,
+            connection_parameters=connection_parameters,
         )
 
     def _init_with_snowpark_session(
