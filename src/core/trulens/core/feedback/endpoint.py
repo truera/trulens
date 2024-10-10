@@ -214,6 +214,10 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         # Have to override str/repr due to pydantic issue with recursive models.
         return f"Endpoint({self.name})"
 
+    def __hash__(self):
+        """Hashable requirement for weakref in InstanceRefMixin."""
+        return hash(id(self))
+
     def __init__(
         self,
         *args,
