@@ -1,7 +1,7 @@
 import logging
 from typing import ClassVar, Optional
 
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 
@@ -59,7 +59,7 @@ class Provider(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
-    endpoint: Optional[mod_endpoint.Endpoint] = None
+    endpoint: Optional[core_endpoint.Endpoint] = None
     """Endpoint supporting this provider.
 
     Remote API invocations are handled by the endpoint.

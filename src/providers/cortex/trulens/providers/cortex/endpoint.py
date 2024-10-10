@@ -8,14 +8,14 @@ from typing import Any, Callable, ClassVar, Optional
 from snowflake.connector.cursor import SnowflakeCursor
 from snowflake.snowpark import DataFrame
 from snowflake.snowpark import Session
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
 
-class CortexCallback(mod_endpoint.EndpointCallback):
+class CortexCallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
     _model_costs: Optional[dict] = None
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
@@ -89,7 +89,7 @@ class CortexCallback(mod_endpoint.EndpointCallback):
         setattr(self.cost, "cost_currency", "Snowflake credits")
 
 
-class CortexEndpoint(mod_endpoint.Endpoint):
+class CortexEndpoint(core_endpoint.Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
@@ -106,7 +106,7 @@ class CortexEndpoint(mod_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[mod_endpoint.EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         counted_something = False
 

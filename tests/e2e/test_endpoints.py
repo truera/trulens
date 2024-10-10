@@ -10,7 +10,7 @@ from pprint import PrettyPrinter
 from unittest import TestCase
 from unittest import main
 
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
 
 from tests import test as test_utils
@@ -45,7 +45,7 @@ class TestEndpoints(TestCase):
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
-        _, cost_tally = mod_endpoint.Endpoint.track_all_costs_tally(
+        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
             provider.sentiment, text="This rocks!"
         )
         cost = cost_tally()
@@ -100,7 +100,7 @@ class TestEndpoints(TestCase):
 
         hugs = Huggingface()
 
-        _, cost_tally = mod_endpoint.Endpoint.track_all_costs_tally(
+        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
             hugs.positive_sentiment, text="This rocks!"
         )
         cost = cost_tally()
@@ -158,7 +158,7 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        mod_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         provider = LiteLLM(f"openai/{OpenAI.DEFAULT_MODEL_ENGINE}")
 
@@ -189,7 +189,7 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        mod_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         from trulens.providers.litellm import LiteLLM
 
@@ -222,7 +222,7 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        mod_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
 

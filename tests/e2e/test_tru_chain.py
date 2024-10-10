@@ -8,7 +8,7 @@ from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
 from trulens.apps.langchain import tru_chain as mod_tru_chain
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -34,7 +34,7 @@ class TestTruChain(mod_test.TruTestCase):
     @classmethod
     def setUpClass(cls):
         # Cannot reset on each test as they might be done in parallel.
-        mod_session.TruSession().reset_database()
+        core_session.TruSession().reset_database()
 
     def setUp(self):
         key_utils.check_keys(
@@ -198,7 +198,7 @@ class TestTruChain(mod_test.TruTestCase):
 
         # Need unique app_id per test as they may be run in parallel and have
         # same ids.
-        session = mod_session.TruSession()
+        session = core_session.TruSession()
         chain, recorder = self._create_basic_chain(app_name="metaplain")
 
         message, _ = self._get_question_and_answers(0)
@@ -280,7 +280,7 @@ class TestTruChain(mod_test.TruTestCase):
         self.assertEqual(record.meta, meta)
 
         # Check the record has the metadata when retrieved back from db.
-        recs, _ = mod_session.TruSession().get_records_and_feedback([
+        recs, _ = core_session.TruSession().get_records_and_feedback([
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)
@@ -290,9 +290,9 @@ class TestTruChain(mod_test.TruTestCase):
         # Check updating the record metadata in the db.
         new_meta = dict(hello="this is new meta")
         rec.meta = new_meta
-        mod_session.TruSession().update_record(rec)
+        core_session.TruSession().update_record(rec)
 
-        recs, _ = mod_session.TruSession().get_records_and_feedback([
+        recs, _ = core_session.TruSession().get_records_and_feedback([
             recorder.app_id
         ])
         self.assertGreater(len(recs), 0)

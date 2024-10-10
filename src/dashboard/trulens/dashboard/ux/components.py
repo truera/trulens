@@ -4,7 +4,7 @@ from typing import Dict, List
 
 import pandas as pd
 import streamlit as st
-from trulens.core import app as mod_app
+from trulens.core import app as core_app
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
@@ -139,7 +139,7 @@ def draw_calls(record: record_schema.Record, index: int) -> None:
 
 
 def draw_prompt_info(
-    query: serial_utils.Lens, component: mod_app.ComponentView
+    query: serial_utils.Lens, component: core_app.ComponentView
 ) -> None:
     prompt_details_json = json_utils.jsonify(component.json, skip_specials=True)
 
@@ -173,7 +173,7 @@ def draw_prompt_info(
 
 
 def draw_llm_info(
-    query: serial_utils.Lens, component: mod_app.ComponentView
+    query: serial_utils.Lens, component: core_app.ComponentView
 ) -> None:
     llm_details_json = component.json
 
@@ -241,7 +241,7 @@ def draw_llm_info(
 
 
 def draw_agent_info(
-    query: serial_utils.Lens, component: mod_app.ComponentView
+    query: serial_utils.Lens, component: core_app.ComponentView
 ) -> None:
     # copy of draw_prompt_info
     # TODO: dedup
@@ -277,7 +277,7 @@ def draw_agent_info(
 
 
 def draw_tool_info(
-    query: serial_utils.Lens, component: mod_app.ComponentView
+    query: serial_utils.Lens, component: core_app.ComponentView
 ) -> None:
     # copy of draw_prompt_info
     # TODO: dedup

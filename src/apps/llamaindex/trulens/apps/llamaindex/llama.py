@@ -8,15 +8,18 @@ various llama_index classes and example classes:
 
 from typing import Type
 
-from trulens.core import app as mod_app
+from trulens.core import app as core_app
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 
 
-class LlamaIndexComponent(mod_app.ComponentView):
+class LlamaIndexComponent(core_app.ComponentView):
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        if mod_app.ComponentView.innermost_base(cls_obj.bases) == "llama_index":
+        if (
+            core_app.ComponentView.innermost_base(cls_obj.bases)
+            == "llama_index"
+        ):
             return True
 
         return False
@@ -26,7 +29,7 @@ class LlamaIndexComponent(mod_app.ComponentView):
         return component_of_json(json)
 
 
-class Prompt(mod_app.Prompt, LlamaIndexComponent):
+class Prompt(core_app.Prompt, LlamaIndexComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -41,7 +44,7 @@ class Prompt(mod_app.Prompt, LlamaIndexComponent):
         )
 
 
-class Agent(mod_app.Agent, LlamaIndexComponent):
+class Agent(core_app.Agent, LlamaIndexComponent):
     @property
     def agent_name(self) -> str:
         return "agent name not supported in llama_index"
@@ -56,7 +59,7 @@ class Agent(mod_app.Agent, LlamaIndexComponent):
         )
 
 
-class Tool(mod_app.Tool, LlamaIndexComponent):
+class Tool(core_app.Tool, LlamaIndexComponent):
     @property
     def tool_name(self) -> str:
         if "metadata" in self.json:
@@ -74,7 +77,7 @@ class Tool(mod_app.Tool, LlamaIndexComponent):
         )
 
 
-class LLM(mod_app.LLM, LlamaIndexComponent):
+class LLM(core_app.LLM, LlamaIndexComponent):
     @property
     def model_name(self) -> str:
         return self.json["model"]
@@ -89,7 +92,7 @@ class LLM(mod_app.LLM, LlamaIndexComponent):
         )
 
 
-class Other(mod_app.Other, LlamaIndexComponent):
+class Other(core_app.Other, LlamaIndexComponent):
     pass
 
 

@@ -64,19 +64,40 @@ apply when referring to things like package names, classes, methods.
 - Keep module renames consistent using the following patterns:
 
     ```python
+    # schema
     from trulens.schema import X as X_schema
+
+    # utils
     from trulens.utils import X as X_utils # if X was plural, make X singular in rename
+
+    # providers
     from trulens.providers.X import provider as X_provider
     from trulens.providers.X import endpoint as X_endpoint
+
+    # apps
     from trulens.apps.X import Y as Y_app
+
+    # connectors
     from trulens.connector import X as X_connector
+
+    # core modules
+    from trulens.core import X as core_X
+
+    # core.feedback modules
+    from trulens.core.feedback import X as core_X
+
+    # core.database modules
+    from trulens.core.database import base as core_db
+    from trulens.core.database import connector as core_connector
+    from trulens.core.database import X as X_db
+
+    # dashboard modules
+    from trulens.dashboard.X import Y as dashboard_Y
 
     # if X is inside some category of module Y:
     from trulens...Y import X as X_Y
     # otherwise if X is not in some category of modules:
     from trulens... import X as mod_X
-    from trulens.core.feedback import feedback as mod_feedback
-    from trulens.dashboard import run as mod_run
 
     # Some modules do not need renaming:
     from trulens.feedback import llm_provider

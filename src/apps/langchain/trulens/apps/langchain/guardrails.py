@@ -3,13 +3,13 @@ from typing import Any, List
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStoreRetriever
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
 
 
 class WithFeedbackFilterDocuments(VectorStoreRetriever):
-    feedback: mod_feedback.Feedback
+    feedback: core_feedback.Feedback
     threshold: float
     """A VectorStoreRetriever that filters documents using a minimum threshold
     on a feedback function before returning them.
@@ -47,7 +47,11 @@ class WithFeedbackFilterDocuments(VectorStoreRetriever):
     """
 
     def __init__(
-        self, feedback: mod_feedback.Feedback, threshold: float, *args, **kwargs
+        self,
+        feedback: core_feedback.Feedback,
+        threshold: float,
+        *args,
+        **kwargs,
     ):
         super().__init__(
             *args, feedback=feedback, threshold=threshold, **kwargs

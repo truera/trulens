@@ -3,7 +3,7 @@ import inspect
 import logging
 from typing import Optional
 
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class context_filter:
 
     def __init__(
         self,
-        feedback: mod_feedback.Feedback,
+        feedback: core_feedback.Feedback,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
     ):

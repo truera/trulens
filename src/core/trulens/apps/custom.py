@@ -195,8 +195,8 @@ from typing import Any, Callable, ClassVar, Optional, Set
 
 import pydantic
 from pydantic import Field
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -212,7 +212,7 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(mod_app.App):
+class TruCustomApp(core_app.App):
     """
     This recorder is the most flexible option for instrumenting an application,
     and can be used to instrument any custom python class.
@@ -353,7 +353,7 @@ class TruCustomApp(mod_app.App):
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
-        instrument = mod_instruments.Instrument(
+        instrument = core_instruments.Instrument(
             app=self  # App mixes in WithInstrumentCallbacks
         )
         kwargs["instrument"] = instrument
@@ -511,7 +511,7 @@ class TruCustomApp(mod_app.App):
         return self.main_method_loaded(*bindings.args, **bindings.kwargs)
 
 
-class instrument(mod_instruments.instrument):
+class instrument(core_instruments.instrument):
     """
     Decorator for marking methods to be instrumented in custom classes that are
     wrapped by TruCustomApp.
@@ -519,7 +519,7 @@ class instrument(mod_instruments.instrument):
 
     @classmethod
     def method(cls, inst_cls: type, name: str) -> None:
-        mod_instruments.instrument.method(inst_cls, name)
+        core_instruments.instrument.method(inst_cls, name)
 
         # Also make note of it for verification that it was found by the walk
         # after init.

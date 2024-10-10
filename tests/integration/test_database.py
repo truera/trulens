@@ -32,14 +32,14 @@ from unittest import main
 import pandas as pd
 from sqlalchemy import Engine
 from trulens.apps import basic as basic_app
-from trulens.core import session as mod_session
-from trulens.core.database import base as base_db
+from trulens.core import session as core_session
+from trulens.core.database import base as core_db
 from trulens.core.database import exceptions as db_exceptions
 from trulens.core.database import migrations as db_migrations
 from trulens.core.database import sqlalchemy as sqlalchemy_db
 from trulens.core.database import utils as db_utils
-from trulens.core.feedback import feedback as mod_feedback
-from trulens.core.feedback import provider as mod_provider
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.feedback import provider as core_provider
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 
@@ -272,7 +272,7 @@ class TestDbV2Migration(TestCase):
         self.assertGreater(len(feedbacks), 0)
 
 
-class MockFeedback(mod_provider.Provider):
+class MockFeedback(core_provider.Provider):
     """Provider for testing purposes."""
 
     def length(self, text: str) -> float:  # noqa
@@ -467,13 +467,13 @@ def _test_db_consistency(test: TestCase, db: sqlalchemy_db.SQLAlchemyDB):
         )
 
 
-def _populate_data(db: base_db.DB):
-    session = mod_session.TruSession()
+def _populate_data(db: core_db.DB):
+    session = core_session.TruSession()
     session.connector.db = (
         db  # because of the singleton behavior, db must be changed manually
     )
 
-    fb = mod_feedback.Feedback(
+    fb = core_feedback.Feedback(
         imp=MockFeedback().length,
         feedback_definition_id="mock",
         selectors={"text": select_schema.Select.RecordOutput},

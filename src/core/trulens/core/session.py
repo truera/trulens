@@ -25,11 +25,11 @@ import warnings
 
 import pandas
 import pydantic
-from trulens.core import experimental as mod_experimental
+from trulens.core import experimental as core_experimental
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # code style exception
-from trulens.core.database import connector as mod_connector
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.database import connector as core_connector
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 class TruSession(
-    mod_experimental._WithExperimentalSettings,
+    core_experimental._WithExperimentalSettings,
     pydantic.BaseModel,
     metaclass=python_utils.PydanticSingletonMeta,
 ):
@@ -153,7 +153,7 @@ class TruSession(
 
     _dashboard_listener_stderr: Optional[Thread] = pydantic.PrivateAttr(None)
 
-    connector: Optional[mod_connector.DBConnector] = pydantic.Field(
+    connector: Optional[core_connector.DBConnector] = pydantic.Field(
         None, exclude=True
     )
     """Database Connector to use. If not provided, a default is created and
@@ -198,11 +198,11 @@ class TruSession(
 
     def __init__(
         self,
-        connector: Optional[mod_connector.DBConnector] = None,
+        connector: Optional[core_connector.DBConnector] = None,
         experimental_feature_flags: Optional[
             Union[
-                Mapping[mod_experimental.Feature, bool],
-                Iterable[mod_experimental.Feature],
+                Mapping[core_experimental.Feature, bool],
+                Iterable[core_experimental.Feature],
             ]
         ] = None,
         _experimental_otel_exporter: Optional[
@@ -223,7 +223,7 @@ class TruSession(
             for k, v in kwargs.items()
             if k
             in inspect.signature(
-                mod_connector.DefaultDBConnector.__init__
+                core_connector.DefaultDBConnector.__init__
             ).parameters
         }
         self_args = {k: v for k, v in kwargs.items() if k not in connector_args}
@@ -238,7 +238,7 @@ class TruSession(
 
         super().__init__(
             connector=connector
-            or mod_connector.DefaultDBConnector(**connector_args),
+            or core_connector.DefaultDBConnector(**connector_args),
             **self_args,
         )
 
@@ -529,7 +529,7 @@ class TruSession(
     def run_feedback_functions(
         self,
         record: record_schema.Record,
-        feedback_functions: Sequence[mod_feedback.Feedback],
+        feedback_functions: Sequence[core_feedback.Feedback],
         app: Optional[app_schema.AppDefinition] = None,
         wait: bool = True,
     ) -> Union[
@@ -568,7 +568,7 @@ class TruSession(
             raise ValueError("`feedback_functions` must be a sequence.")
 
         if not all(
-            isinstance(ffunc, mod_feedback.Feedback)
+            isinstance(ffunc, core_feedback.Feedback)
             for ffunc in feedback_functions
         ):
             raise ValueError(
@@ -584,7 +584,7 @@ class TruSession(
             raise ValueError("`wait` must be a bool.")
 
         future_feedback_map: Dict[
-            Future[feedback_schema.FeedbackResult], mod_feedback.Feedback
+            Future[feedback_schema.FeedbackResult], core_feedback.Feedback
         ] = {
             p[1]: p[0]
             for p in app_schema.AppDefinition._submit_feedback_functions(
@@ -966,7 +966,7 @@ class TruSession(
                             pandas.Series,
                             Future[feedback_schema.FeedbackResult],
                         ]
-                    ] = mod_feedback.Feedback.evaluate_deferred(
+                    ] = core_feedback.Feedback.evaluate_deferred(
                         limit=self.DEFERRED_NUM_RUNS - len(futures_map),
                         shuffle=True,
                         session=self,

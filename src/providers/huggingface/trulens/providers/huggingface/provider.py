@@ -22,11 +22,11 @@ import torch
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
 from trulens.core._utils.pycompat import Future  # import style exception
-from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.feedback import provider as mod_provider
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.feedback import prompts as mod_prompts
+from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.dummy import endpoint as dummy_endpoint
 from trulens.providers.huggingface import endpoint as huggingface_endpoint
 
@@ -101,7 +101,7 @@ def _tci(func):  # "typecheck inputs"
     return wrapper
 
 
-class HuggingfaceBase(mod_provider.Provider):
+class HuggingfaceBase(core_provider.Provider):
     """
     Out of the box feedback functions calling Huggingface.
     """
@@ -231,7 +231,7 @@ class HuggingfaceBase(mod_provider.Provider):
                 premise=source, hypothesis=hypothesis
             )
             reasons_str = reasons_str + str.format(
-                mod_prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
                 statement_sentence=hypothesis,
                 supporting_evidence="[Doc NLI Used full source]",
                 score=score * 10,
@@ -469,12 +469,12 @@ class Huggingface(HuggingfaceBase):
     Out of the box feedback functions calling Huggingface APIs.
     """
 
-    endpoint: mod_endpoint.Endpoint
+    endpoint: core_endpoint.Endpoint
 
     def __init__(
         self,
         name: str = "huggingface",
-        endpoint: Optional[mod_endpoint.Endpoint] = None,
+        endpoint: Optional[core_endpoint.Endpoint] = None,
         **kwargs,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
@@ -500,7 +500,7 @@ class Huggingface(HuggingfaceBase):
                 **kwargs
             )
         else:
-            if isinstance(endpoint, mod_endpoint.Endpoint):
+            if isinstance(endpoint, core_endpoint.Endpoint):
                 self_kwargs["endpoint"] = endpoint
             else:
                 self_kwargs["endpoint"] = (

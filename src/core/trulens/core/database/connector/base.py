@@ -19,7 +19,7 @@ from typing import (
 
 import pandas
 from trulens.core._utils.pycompat import Future  # code style exception
-from trulens.core.database import base as base_db
+from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -49,7 +49,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
 
     @property
     @abstractmethod
-    def db(self) -> base_db.DB:
+    def db(self) -> core_db.DB:
         """Get the database instance."""
         ...
 

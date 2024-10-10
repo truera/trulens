@@ -40,7 +40,7 @@ from langchain.schema import LLMResult
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import pace as pace_utils
@@ -167,7 +167,7 @@ class OpenAIClient(serial_utils.SerialModel):
         )
 
 
-class OpenAICallback(mod_endpoint.EndpointCallback):
+class OpenAICallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
@@ -238,7 +238,7 @@ class OpenAICallback(mod_endpoint.EndpointCallback):
         # TODO: there seems to be usage info in these responses sometimes as well
 
 
-class OpenAIEndpoint(mod_endpoint.Endpoint):
+class OpenAIEndpoint(core_endpoint.Endpoint):
     """OpenAI endpoint.
 
     Instruments "create" methods in openai client.
@@ -308,7 +308,7 @@ class OpenAIEndpoint(mod_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[mod_endpoint.EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
@@ -319,7 +319,7 @@ class OpenAIEndpoint(mod_endpoint.Endpoint):
         assert not python_utils.is_lazy(response)
 
         context_vars = {
-            mod_endpoint.Endpoint._context_endpoints: mod_endpoint.Endpoint._context_endpoints.get()
+            core_endpoint.Endpoint._context_endpoints: core_endpoint.Endpoint._context_endpoints.get()
         }
 
         if isinstance(response, (openai.AsyncStream, openai.Stream)):

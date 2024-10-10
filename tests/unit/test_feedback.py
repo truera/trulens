@@ -7,7 +7,7 @@ from unittest import main
 
 import numpy as np
 from trulens.apps.basic import TruBasicApp
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 
@@ -26,7 +26,7 @@ class TestFeedbackEval(TestCase):
     def test_skipeval(self) -> None:
         """Test the SkipEval capability."""
 
-        f = mod_feedback.Feedback(imp=skip_if_odd).on(
+        f = core_feedback.Feedback(imp=skip_if_odd).on(
             val=select_schema.Select.RecordCalls.somemethod.args.num[:]
         )
 
@@ -56,7 +56,7 @@ class TestFeedbackEval(TestCase):
     def test_skipeval_all(self) -> None:
         """Test the SkipEval capability for when all evals are skipped"""
 
-        f = mod_feedback.Feedback(imp=skip_if_odd).on(
+        f = core_feedback.Feedback(imp=skip_if_odd).on(
             val=select_schema.Select.RecordCalls.somemethod.args.num[:]
         )
 
@@ -103,7 +103,7 @@ class TestFeedbackConstructors(TestCase):
             # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
             with self.subTest(imp=imp, target=target):
-                f = mod_feedback.Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
 
                 # Run the feedback function.
                 res = f.run(record=self.record, app=self.app)
@@ -113,7 +113,7 @@ class TestFeedbackConstructors(TestCase):
                 # Serialize and deserialize the feedback function.
                 fs = f.model_dump()
 
-                fds = mod_feedback.Feedback.model_validate(fs)
+                fds = core_feedback.Feedback.model_validate(fs)
 
                 # Run it again.
                 res = fds.run(record=self.record, app=self.app)
@@ -136,9 +136,9 @@ class TestFeedbackConstructors(TestCase):
             (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
         ]:
             with self.subTest(imp=imp, target=target):
-                f = mod_feedback.Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
                 with self.assertRaises(Exception):
-                    mod_feedback.Feedback.model_validate(f.model_dump())
+                    core_feedback.Feedback.model_validate(f.model_dump())
 
     def test_nonglobal_feedback_functions(self) -> None:
         # Set up the same feedback functions as in feedback.py but locally here.
@@ -159,7 +159,7 @@ class TestFeedbackConstructors(TestCase):
             # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
             with self.subTest(imp=imp, target=target):
-                f = mod_feedback.Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
 
                 # Run the feedback function.
                 res = f.run(record=self.record, app=self.app)
@@ -171,7 +171,7 @@ class TestFeedbackConstructors(TestCase):
 
                 # This should fail:
                 with self.assertRaises(Exception):
-                    mod_feedback.Feedback.model_validate(fs)
+                    core_feedback.Feedback.model_validate(fs)
 
                 # OK to use with App as long as not deferred mode:
                 TruBasicApp(

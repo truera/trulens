@@ -11,7 +11,7 @@ from typing import (
 )
 
 import requests
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
@@ -19,7 +19,7 @@ from trulens.core.utils import threading as threading_utils
 logger = logging.getLogger(__name__)
 
 
-class HuggingfaceCallback(mod_endpoint.EndpointCallback):
+class HuggingfaceCallback(core_endpoint.EndpointCallback):
     def handle_classification(self, response: requests.Response) -> None:
         # Huggingface free inference api doesn't seem to have its own library
         # and the docs say to use `requests`` so that is what we instrument and
@@ -36,7 +36,7 @@ class HuggingfaceCallback(mod_endpoint.EndpointCallback):
                 self.cost.n_classes += len(item)
 
 
-class HuggingfaceEndpoint(mod_endpoint.Endpoint):
+class HuggingfaceEndpoint(core_endpoint.Endpoint):
     """Huggingface endpoint.
 
     Instruments the requests.post method for requests to
@@ -60,7 +60,7 @@ class HuggingfaceEndpoint(mod_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: requests.Response,
-        callback: Optional[mod_endpoint.EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> requests.Response:
         # Call here can only be requests.post .
 

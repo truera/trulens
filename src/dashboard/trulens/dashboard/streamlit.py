@@ -8,17 +8,19 @@ from typing import List, Optional
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import session as mod_session
-from trulens.core.database import base as base_db
+from trulens.core import session as core_session
+from trulens.core.database import base as core_db
 from trulens.core.database.legacy import migration as legacy_migration
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import text as text_utils
-from trulens.dashboard import display as mod_display
-from trulens.dashboard.components import record_viewer as mod_record_viewer
-from trulens.dashboard.ux import components as mod_components
-from trulens.dashboard.ux import styles as mod_styles
+from trulens.dashboard import display as dashboard_display
+from trulens.dashboard.components import (
+    record_viewer as dashboard_record_viewer,
+)
+from trulens.dashboard.ux import components as dashboard_components
+from trulens.dashboard.ux import styles as dashboard_styles
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -39,7 +41,7 @@ def init_from_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
     parser.add_argument(
-        "--database-prefix", default=base_db.DEFAULT_DATABASE_PREFIX
+        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
     try:
@@ -52,7 +54,7 @@ def init_from_args():
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    mod_session.TruSession(
+    core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
 
@@ -72,7 +74,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         trulens_st.trulens_leaderboard()
         ```
     """
-    session = mod_session.TruSession()
+    session = core_session.TruSession()
 
     lms = session.connector.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
@@ -118,7 +120,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         tags = app_json.get("tags")
         st.header(
             app_name_version,
-            help=mod_components.draw_metadata_and_tags(metadata, tags),
+            help=dashboard_components.draw_metadata_and_tags(metadata, tags),
         )
         app_feedback_col_names = [
             col_name
@@ -167,14 +169,14 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
             mean = app_df[col_name].mean()
 
             st.write(
-                mod_styles.stmetricdelta_hidearrow,
+                dashboard_styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 
             higher_is_better = feedback_directions.get(col_name, True)
 
             if "distance" in col_name:
-                cat = mod_styles.CATEGORY.of_score(
+                cat = dashboard_styles.CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better, is_distance=True
                 )
                 feedback_cols[i].metric(
@@ -183,7 +185,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
                     delta_color="normal",
                 )
             else:
-                cat = mod_styles.CATEGORY.of_score(
+                cat = dashboard_styles.CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better
                 )
                 feedback_cols[i].metric(
@@ -194,7 +196,9 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
                         "normal"
                         if cat.compare(
                             mean,
-                            mod_styles.CATEGORY.PASS[cat.direction].threshold,
+                            dashboard_styles.CATEGORY.PASS[
+                                cat.direction
+                            ].threshold,
                         )
                         else "inverse"
                     ),
@@ -227,7 +231,7 @@ def trulens_feedback(record: record_schema.Record):
     feedbacks = {}
     icons = []
     default_direction = "HIGHER_IS_BETTER"
-    session = mod_session.TruSession()
+    session = core_session.TruSession()
     lms = session.connector.db
     feedback_defs = lms.get_feedback_defs()
 
@@ -253,7 +257,7 @@ def trulens_feedback(record: record_schema.Record):
         feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
             score=call_data["result"],
             calls=[],
-            icon=mod_display.get_icon(
+            icon=dashboard_display.get_icon(
                 fdef=feedback, result=feedback_result.result
             ),
         )
@@ -271,17 +275,17 @@ def trulens_feedback(record: record_schema.Record):
     )
 
     if selected_feedback is not None:
-        df = mod_display.get_feedback_result(
+        df = dashboard_display.get_feedback_result(
             record, feedback_name=selected_feedback
         )
         if "groundedness" in selected_feedback.lower():
-            df = mod_display.expand_groundedness_df(df)
+            df = dashboard_display.expand_groundedness_df(df)
         else:
             pass
 
         # Apply the highlight function row-wise
         styled_df = df.style.apply(
-            lambda row: mod_display.highlight(
+            lambda row: dashboard_display.highlight(
                 row,
                 selected_feedback=selected_feedback,
                 feedback_directions=feedback_directions,
@@ -317,8 +321,8 @@ def trulens_trace(record: record_schema.Record):
         ```
     """
 
-    session = mod_session.TruSession()
+    session = core_session.TruSession()
     app = session.get_app(app_id=record.app_id)
-    mod_record_viewer.record_viewer(
+    dashboard_record_viewer.record_viewer(
         record_json=json.loads(json_utils.json_str_of_obj(record)), app_json=app
     )

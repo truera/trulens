@@ -18,7 +18,7 @@ import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -331,7 +331,7 @@ class DummyAPICreator:
         )
 
 
-class DummyEndpointCallback(mod_endpoint.EndpointCallback):
+class DummyEndpointCallback(core_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def handle_classification(self, response: Sequence) -> None:
@@ -353,7 +353,7 @@ class DummyEndpointCallback(mod_endpoint.EndpointCallback):
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
 
-class DummyEndpoint(mod_endpoint.Endpoint):
+class DummyEndpoint(core_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -407,7 +407,7 @@ class DummyEndpoint(mod_endpoint.Endpoint):
     def __init__(
         self,
         name: str = "dummyendpoint",
-        rpm: float = mod_endpoint.DEFAULT_RPM * 10,
+        rpm: float = core_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
         assert rpm > 0
@@ -436,7 +436,7 @@ class DummyEndpoint(mod_endpoint.Endpoint):
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
         if not python_utils.safe_hasattr(
-            DummyAPICreator.create_method, mod_endpoint.INSTRUMENT
+            DummyAPICreator.create_method, core_endpoint.INSTRUMENT
         ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
@@ -458,7 +458,7 @@ class DummyEndpoint(mod_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[mod_endpoint.EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"

@@ -19,8 +19,8 @@ from typing import (
 import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
@@ -133,7 +133,7 @@ else:
 pp = PrettyPrinter()
 
 
-class LlamaInstrument(mod_instruments.Instrument):
+class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
     class Default:
@@ -174,7 +174,7 @@ class LlamaInstrument(mod_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, mod_instruments.ClassFilter] = (
+        METHODS: Dict[str, core_instruments.ClassFilter] = (
             container_utils.dict_set_with_multikey(
                 dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
                 {
@@ -246,7 +246,7 @@ class LlamaInstrument(mod_instruments.Instrument):
         )
 
 
-class TruLlama(mod_app.App):
+class TruLlama(core_app.App):
     """Recorder for _LlamaIndex_ applications.
 
     This recorder is designed for LlamaIndex apps, providing a way to
@@ -483,7 +483,7 @@ class TruLlama(mod_app.App):
             return bindings.arguments["message"]
 
         else:
-            return mod_app.App.main_input(self, func, sig, bindings)
+            return core_app.App.main_input(self, func, sig, bindings)
 
     # App override:
     def main_output(
@@ -511,7 +511,7 @@ class TruLlama(mod_app.App):
                 return val
 
             else:  # attr is None
-                return mod_app.App.main_output(self, func, sig, bindings, ret)
+                return core_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None

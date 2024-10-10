@@ -4,12 +4,12 @@ from typing import Any, Callable, ClassVar, Dict, Optional, Union
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.language_models.llms import BaseLLM
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
 
 
-class LangchainCallback(mod_endpoint.EndpointCallback):
+class LangchainCallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: Dict) -> None:
@@ -19,7 +19,7 @@ class LangchainCallback(mod_endpoint.EndpointCallback):
         super().handle_generation(response)
 
 
-class LangchainEndpoint(mod_endpoint.Endpoint):
+class LangchainEndpoint(core_endpoint.Endpoint):
     """
     LangChain endpoint.
     """
@@ -34,7 +34,7 @@ class LangchainEndpoint(mod_endpoint.Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[mod_endpoint.EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> None:
         # TODO: Implement this and wrapped
         self.global_callback.handle_generation(response=None)

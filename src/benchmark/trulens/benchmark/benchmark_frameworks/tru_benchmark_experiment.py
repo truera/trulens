@@ -6,7 +6,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 import pandas as pd
 from pydantic import BaseModel
 from trulens.apps import custom as custom_app
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import select as select_schema
 
 log = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class TruBenchmarkExperiment:
     def __init__(
         self,
         feedback_fn: Callable,
-        agg_funcs: List[mod_feedback.AggCallable],
+        agg_funcs: List[core_feedback.AggCallable],
         benchmark_params: BenchmarkParams,
     ):
         """Create a benchmark experiment class which defines custom feedback
@@ -77,8 +77,8 @@ class TruBenchmarkExperiment:
         self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
-        self.f_benchmark_metrics: List[mod_feedback.Feedback] = [
-            mod_feedback.Feedback(
+        self.f_benchmark_metrics: List[core_feedback.Feedback] = [
+            core_feedback.Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )

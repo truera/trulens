@@ -25,7 +25,7 @@ from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import threading as threading_utils
 
 T = TypeVar("T")
 
@@ -242,7 +242,7 @@ class Record(serial_utils.SerialModel, Hashable):
         """
 
         if feedback_timeout is None:
-            feedback_timeout = mod_threading_utils.TP.DEBUG_TIMEOUT
+            feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 
         if self.feedback_and_future_results is None:
             return {}

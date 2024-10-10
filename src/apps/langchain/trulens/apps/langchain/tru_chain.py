@@ -16,8 +16,8 @@ from langchain_core.runnables.base import RunnableSerializable
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
 from trulens.apps.langchain import guardrails as langchain_guardrails
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import containers as container_utils
 from trulens.core.utils import json as json_utils
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class LangChainInstrument(mod_instruments.Instrument):
+class LangChainInstrument(core_instruments.Instrument):
     """Instrumentation for LangChain apps."""
 
     class Default:
@@ -79,7 +79,7 @@ class LangChainInstrument(mod_instruments.Instrument):
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, mod_instruments.ClassFilter] = (
+        METHODS: Dict[str, core_instruments.ClassFilter] = (
             container_utils.dict_set_with_multikey(
                 {},
                 {
@@ -130,7 +130,7 @@ class LangChainInstrument(mod_instruments.Instrument):
         )
 
 
-class TruChain(mod_app.App):
+class TruChain(core_app.App):
     """Recorder for _LangChain_ applications.
 
     This recorder is designed for LangChain apps, providing a way to instrument,
@@ -330,7 +330,7 @@ class TruChain(mod_app.App):
 
             return ins[self.app.input_keys[0]]
 
-        return mod_app.App.main_input(self, func, sig, bindings)
+        return core_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -376,7 +376,7 @@ class TruChain(mod_app.App):
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
-        return mod_app.App.main_output(self, func, sig, bindings, ret)
+        return core_app.App.main_output(self, func, sig, bindings, ret)
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.

@@ -45,7 +45,7 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing.core import otel as mod_otel
+from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ APPS: str = "__tru_apps"
 """Attribute name for storing apps that expect to be notified of calls."""
 
 
-class SpanContext(mod_otel.SpanContext, Hashable):
+class SpanContext(core_otel.SpanContext, Hashable):
     """TruLens additions on top of OTEL SpanContext to add Hashable and
     reference to tracer that made the span."""
 
@@ -83,7 +83,7 @@ class SpanContext(mod_otel.SpanContext, Hashable):
         if isinstance(span_context, SpanContext):
             return span_context
 
-        elif isinstance(span_context, mod_otel.SpanContext):
+        elif isinstance(span_context, core_otel.SpanContext):
             return SpanContext(
                 trace_id=span_context.trace_id,
                 span_id=span_context.span_id,
@@ -99,10 +99,12 @@ class SpanContext(mod_otel.SpanContext, Hashable):
             raise ValueError(f"Unrecognized span context type: {span_context}")
 
 
-SpanContextLike = Union[SpanContext, mod_otel.SpanContext, span_api.SpanContext]
+SpanContextLike = Union[
+    SpanContext, core_otel.SpanContext, span_api.SpanContext
+]
 
 
-class Span(mod_otel.Span):
+class Span(core_otel.Span):
     """TruLens additions on top of OTEL spans."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
@@ -414,15 +416,15 @@ class LiveSpanCallWithCost(LiveSpanCall, WithCost):
     pass
 
 
-class Tracer(mod_otel.Tracer):
+class Tracer(core_otel.Tracer):
     """TruLens additions on top of [OTEL Tracer][opentelemetry.trace.Tracer]."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    # Overrides mod_otel.Tracer._span_class
+    # Overrides core_otel.Tracer._span_class
     _span_class: Type[Span] = pydantic.PrivateAttr(Span)
 
-    # Overrides mod_otel.Tracer._span_context_class
+    # Overrides core_otel.Tracer._span_context_class
     _span_context_class: Type[SpanContext] = pydantic.PrivateAttr(SpanContext)
 
     @property
@@ -719,13 +721,15 @@ class NullTracer(Tracer):
 
 
 class TracerProvider(
-    mod_otel.TracerProvider, metaclass=python_utils.PydanticSingletonMeta
+    core_otel.TracerProvider, metaclass=python_utils.PydanticSingletonMeta
 ):
     """TruLens additions on top of [OTEL TracerProvider][opentelemetry.trace.TracerProvider]."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    _trace_id: int = pydantic.PrivateAttr(default_factory=mod_otel.new_trace_id)
+    _trace_id: int = pydantic.PrivateAttr(
+        default_factory=core_otel.new_trace_id
+    )
 
     def __str__(self):
         # Pydantic will not print anything useful otherwise.
@@ -735,7 +739,7 @@ class TracerProvider(
     def trace_id(self):
         return self._trace_id
 
-    # Overrides mod_otel.TracerProvider._tracer_class
+    # Overrides core_otel.TracerProvider._tracer_class
     _tracer_class: Type[Tracer] = pydantic.PrivateAttr(default=Tracer)
 
     _tracers: Dict[str, Tracer] = pydantic.PrivateAttr(default_factory=dict)

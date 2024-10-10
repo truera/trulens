@@ -36,9 +36,9 @@ import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core import experimental as mod_experimental
-from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core import experimental as core_experimental
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
@@ -433,10 +433,10 @@ class Instrument:
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([mod_feedback.Feedback])
+        CLASSES = set([core_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": mod_feedback.Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": core_feedback.Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
@@ -556,7 +556,7 @@ class Instrument:
             raise ValueError("Instrumentation requires an app but is None.")
 
         if self.app.session.experimental_feature(
-            mod_experimental.Feature.OTEL_TRACING, lock=True
+            core_experimental.Feature.OTEL_TRACING, lock=True
         ):
             from trulens.experimental.otel_tracing.core.instruments import (
                 _Instrument,
@@ -746,7 +746,7 @@ class Instrument:
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                rets, tally = mod_endpoint.Endpoint.track_all_costs_tally(
+                rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
 

@@ -1,6 +1,4 @@
-"""
-Tests of various functionalities of the `TruSession` class.
-"""
+"""Tests of various functionalities of the `TruSession` class."""
 
 from concurrent.futures import Future as FutureClass
 from concurrent.futures import wait
@@ -14,9 +12,9 @@ import uuid
 from trulens.apps import basic as basic_app
 from trulens.apps import custom as custom_app
 from trulens.apps import virtual as virtual_app
-from trulens.core import session as mod_session
-from trulens.core.feedback import feedback as mod_feedback
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
 from trulens.providers.huggingface import provider as huggingface_provider
 
@@ -58,7 +56,7 @@ class TestTru(TestCase):
                         args["database_redact_keys"] = redact
 
                     try:
-                        session = mod_session.TruSession(**args)
+                        session = core_session.TruSession(**args)
                     finally:
                         if session is not None:
                             session.delete_singleton()
@@ -113,15 +111,15 @@ class TestTru(TestCase):
             alloc=1024,  # how much fake data to allocate during requests
         )
 
-        f_dummy1 = mod_feedback.Feedback(
+        f_dummy1 = core_feedback.Feedback(
             provider.language_match, name="language match"
         ).on_input_output()
 
-        f_dummy2 = mod_feedback.Feedback(
+        f_dummy2 = core_feedback.Feedback(
             provider.positive_sentiment, name="output sentiment"
         ).on_output()
 
-        f_dummy3 = mod_feedback.Feedback(
+        f_dummy3 = core_feedback.Feedback(
             provider.positive_sentiment, name="input sentiment"
         ).on_input()
 
@@ -161,7 +159,7 @@ class TestTru(TestCase):
         app types. This test includes only ones that do not require optional
         packages.
         """
-        mod_session.TruSession()
+        core_session.TruSession()
 
         with self.subTest(type="TruBasicApp"):
             app = self._create_basic()
@@ -281,7 +279,7 @@ class TestTru(TestCase):
 
         expected_feedback_names = {f.name for f in feedbacks}
 
-        session = mod_session.TruSession()
+        session = core_session.TruSession()
 
         tru_app = custom_app.TruCustomApp(app)
 
@@ -311,7 +309,7 @@ class TestTru(TestCase):
 
         # Check that the structure of returned tuples is correct.
         for result in feedback_results:
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
         # TODO: move tests to test_add_feedbacks.
@@ -337,7 +335,7 @@ class TestTru(TestCase):
         feedbacks = self._create_feedback_functions()
         expected_feedback_names = {f.name for f in feedbacks}
 
-        session = mod_session.TruSession()
+        session = core_session.TruSession()
 
         tru_app = custom_app.TruCustomApp(app)
 
@@ -378,7 +376,7 @@ class TestTru(TestCase):
             wait([future_result])
 
             result = future_result.result()
-            self.assertIsInstance(result, mod_feedback_schema.FeedbackResult)
+            self.assertIsInstance(result, feedback_schema.FeedbackResult)
             self.assertIsInstance(result.result, float)
 
             feedback_results.append(result)
@@ -456,15 +454,15 @@ class TestTru(TestCase):
         pass
 
     def test_start_evaluator_with_blocking(self):
-        session = mod_session.TruSession()
-        f = mod_feedback.Feedback(
+        session = core_session.TruSession()
+        f = core_feedback.Feedback(
             feedback_tests.custom_feedback_function
         ).on_default()
         app_name = f"test_start_evaluator_with_blocking_{str(uuid.uuid4())}"
         tru_app = basic_app.TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
-            feedback_mode=mod_feedback_schema.FeedbackMode.DEFERRED,
+            feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
             app_name=app_name,
         )
         with tru_app:

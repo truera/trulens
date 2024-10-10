@@ -11,12 +11,12 @@ import streamlit as st
 from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
-from trulens.dashboard import constants as mod_constants
+from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
-from trulens.dashboard.ux import components as mod_components
-from trulens.dashboard.ux import styles as mod_styles
+from trulens.dashboard.ux import components as dashboard_components
+from trulens.dashboard.ux import styles as dashboard_styles
 
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
@@ -24,21 +24,21 @@ APP_AGG_COLS = ["Records", "Average Latency"]
 
 def init_page_state():
     if st.session_state.get(
-        f"{mod_constants.LEADERBOARD_PAGE_NAME}.initialized", False
+        f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.initialized", False
     ):
         return
 
     dashboard_utils.read_query_params_into_session_state(
-        page_name=mod_constants.LEADERBOARD_PAGE_NAME,
+        page_name=dashboard_constants.LEADERBOARD_PAGE_NAME,
         transforms={
             "metadata_to_front": lambda x: x == "True",
             "only_show_pinned": lambda x: x == "True",
             "metadata_cols": lambda x: x.split(","),
         },
     )
-    st.session_state[f"{mod_constants.LEADERBOARD_PAGE_NAME}.initialized"] = (
-        True
-    )
+    st.session_state[
+        f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.initialized"
+    ] = True
 
 
 def _preprocess_df(
@@ -78,9 +78,9 @@ def _preprocess_df(
         .reset_index()
     )
 
-    if mod_constants.PINNED_COL_NAME in app_versions_df:
-        app_versions_df[mod_constants.PINNED_COL_NAME] = app_versions_df[
-            mod_constants.PINNED_COL_NAME
+    if dashboard_constants.PINNED_COL_NAME in app_versions_df:
+        app_versions_df[dashboard_constants.PINNED_COL_NAME] = app_versions_df[
+            dashboard_constants.PINNED_COL_NAME
         ]
 
     df = app_agg_df.join(
@@ -127,13 +127,13 @@ def _build_grid_options(
     )
 
     gb.configure_column(
-        mod_constants.PINNED_COL_NAME,
+        dashboard_constants.PINNED_COL_NAME,
         header_name="Pinned",
         hide=True,
         filter="agSetColumnFilter",
     )
     gb.configure_column(
-        mod_constants.EXTERNAL_APP_COL_NAME,
+        dashboard_constants.EXTERNAL_APP_COL_NAME,
         header_name="External App",
         hide=True,
         filter="agSetColumnFilter",
@@ -165,14 +165,14 @@ def _build_grid_options(
             feedback_direction = (
                 "HIGHER_IS_BETTER"
                 if feedback_directions.get(
-                    feedback_col, mod_styles.default_direction
+                    feedback_col, dashboard_styles.default_direction
                 )
                 else "LOWER_IS_BETTER"
             )
 
             gb.configure_column(
                 feedback_col,
-                cellClassRules=mod_styles.cell_rules[feedback_direction],
+                cellClassRules=dashboard_styles.cell_rules[feedback_direction],
                 hide=feedback_col.endswith("_calls"),
                 filter="agNumberColumnFilter",
             )
@@ -182,8 +182,8 @@ def _build_grid_options(
         suppressContextMenu=True,
         rowClassRules={
             # "external-app": f"data['{mod_constants.EXTERNAL_APP_COL_NAME}'] > 0",
-            "app-external": f"data['{mod_constants.EXTERNAL_APP_COL_NAME}']",
-            "app-pinned": f"data['{mod_constants.PINNED_COL_NAME}']",
+            "app-external": f"data['{dashboard_constants.EXTERNAL_APP_COL_NAME}']",
+            "app-pinned": f"data['{dashboard_constants.PINNED_COL_NAME}']",
         },
     )
     gb.configure_selection(
@@ -207,9 +207,9 @@ def _render_grid(
 ):
     columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
-    if mod_constants.PINNED_COL_NAME in df:
-        df.loc[df[mod_constants.PINNED_COL_NAME], "app_version"] = df.loc[
-            df[mod_constants.PINNED_COL_NAME], "app_version"
+    if dashboard_constants.PINNED_COL_NAME in df:
+        df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = df.loc[
+            df[dashboard_constants.PINNED_COL_NAME], "app_version"
         ].apply(lambda x: f"📌 {x}")
 
     height = 1000 if len(df) > 20 else 45 * len(df) + 100
@@ -225,7 +225,7 @@ def _render_grid(
             feedback_directions=feedback_directions,
             version_metadata_col_names=version_metadata_col_names,
         ),
-        custom_css=mod_styles.aggrid_css,
+        custom_css=dashboard_styles.aggrid_css,
         update_on=["selectionChanged", "cellValueChanged"],
         allow_unsafe_jscode=True,
     )
@@ -234,7 +234,7 @@ def _render_grid(
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
     # Create nested metadata dict
     value = metadata_utils.nest_metadata(
-        mod_constants.PINNED_COL_NAME, not on_leaderboard
+        dashboard_constants.PINNED_COL_NAME, not on_leaderboard
     )
     for app_id in selected_app_ids:
         dashboard_utils.update_app_metadata(app_id, value)
@@ -329,7 +329,7 @@ def handle_add_virtual_app(
     metadata_col_names: List[str],
 ):
     with st.form(
-        f"{mod_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_form",
+        f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_form",
         border=False,
     ):
         app_version = st.text_input(
@@ -348,7 +348,7 @@ def handle_add_virtual_app(
         })
 
         metadata_values = {k: v for k, v in metadata_values.items() if v}
-        metadata_values[mod_constants.EXTERNAL_APP_COL_NAME] = True
+        metadata_values[dashboard_constants.EXTERNAL_APP_COL_NAME] = True
 
         if st.form_submit_button("Submit"):
             if app_version and not re.match(r"^[A-Za-z0-9_.]+$", app_version):
@@ -369,7 +369,7 @@ def handle_add_virtual_app(
                 main_input="<autogenerated record>",
                 main_output="<autogenerated record>",
                 meta=metadata_utils.nest_metadata(
-                    mod_constants.HIDE_RECORD_COL_NAME, True
+                    dashboard_constants.HIDE_RECORD_COL_NAME, True
                 ),
             )
 
@@ -418,10 +418,10 @@ def _render_grid_tab(
 
     # Validate metadata_cols
     if metadata_cols := st.session_state.get(
-        f"{mod_constants.LEADERBOARD_PAGE_NAME}.metadata_cols", []
+        f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols", []
     ):
         st.session_state[
-            f"{mod_constants.LEADERBOARD_PAGE_NAME}.metadata_cols"
+            f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols"
         ] = [
             col_name
             for col_name in metadata_cols
@@ -430,26 +430,26 @@ def _render_grid_tab(
 
     metadata_cols = st.multiselect(
         label="Display Metadata Columns",
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.metadata_cols",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_cols",
         options=_metadata_options,
         default=_metadata_options,
     )
     if len(metadata_cols) != len(_metadata_options):
         st.query_params["metadata_cols"] = ",".join(metadata_cols)
     if (
-        mod_constants.EXTERNAL_APP_COL_NAME in df
-        and mod_constants.EXTERNAL_APP_COL_NAME not in metadata_cols
+        dashboard_constants.EXTERNAL_APP_COL_NAME in df
+        and dashboard_constants.EXTERNAL_APP_COL_NAME not in metadata_cols
     ):
-        metadata_cols.append(mod_constants.EXTERNAL_APP_COL_NAME)
+        metadata_cols.append(dashboard_constants.EXTERNAL_APP_COL_NAME)
     if (
-        mod_constants.PINNED_COL_NAME in df
-        and mod_constants.PINNED_COL_NAME not in metadata_cols
+        dashboard_constants.PINNED_COL_NAME in df
+        and dashboard_constants.PINNED_COL_NAME not in metadata_cols
     ):
-        metadata_cols.append(mod_constants.PINNED_COL_NAME)
+        metadata_cols.append(dashboard_constants.PINNED_COL_NAME)
 
     if metadata_to_front := c1.toggle(
         "Metadata to Front",
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.metadata_to_front",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.metadata_to_front",
     ):
         df = order_columns(
             df,
@@ -464,10 +464,10 @@ def _render_grid_tab(
 
     if only_show_pinned := c1.toggle(
         "Only Show Pinned",
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.only_show_pinned",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.only_show_pinned",
     ):
-        if mod_constants.PINNED_COL_NAME in df:
-            df = df[df[mod_constants.PINNED_COL_NAME]]
+        if dashboard_constants.PINNED_COL_NAME in df:
+            df = df[df[dashboard_constants.PINNED_COL_NAME]]
         else:
             st.info(
                 "Pin an app version by selecting it and clicking the `Pin App` button.",
@@ -499,13 +499,13 @@ def _render_grid_tab(
 
     # Add to Leaderboard
     on_leaderboard = any(
-        mod_constants.PINNED_COL_NAME in app
-        and app[mod_constants.PINNED_COL_NAME]
+        dashboard_constants.PINNED_COL_NAME in app
+        and app[dashboard_constants.PINNED_COL_NAME]
         for _, app in selected_rows.iterrows()
     )
     if c2.button(
         "Unpin App" if on_leaderboard else "Pin App",
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.pin_button",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.pin_button",
         disabled=selected_rows.empty,
         on_click=handle_pin_toggle,
         use_container_width=True,
@@ -517,9 +517,9 @@ def _render_grid_tab(
         "Examine Records",
         disabled=selected_rows.empty,
         use_container_width=True,
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.records_button",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.records_button",
     ):
-        st.session_state[f"{mod_constants.RECORDS_PAGE_NAME}.app_ids"] = (
+        st.session_state[f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
         st.switch_page("pages/Records.py")
@@ -546,9 +546,9 @@ def _render_grid_tab(
         help=help_msg,
         disabled=_compare_button_disabled,
         use_container_width=True,
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.compare_button",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.compare_button",
     ):
-        st.session_state[f"{mod_constants.COMPARE_PAGE_NAME}.app_ids"] = (
+        st.session_state[f"{dashboard_constants.COMPARE_PAGE_NAME}.app_ids"] = (
             selected_app_ids
         )
         st.switch_page("pages/Compare.py")
@@ -558,7 +558,7 @@ def _render_grid_tab(
         "Add/Edit Metadata",
         disabled=selected_rows.empty,
         use_container_width=True,
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.modify_metadata_button",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.modify_metadata_button",
     ):
         handle_add_metadata(selected_rows, version_metadata_col_names)
 
@@ -566,7 +566,7 @@ def _render_grid_tab(
     if c6.button(
         "Add Virtual App",
         use_container_width=True,
-        key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
+        key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.add_virtual_app_button",
     ):
         handle_add_virtual_app(
             app_name,
@@ -585,7 +585,7 @@ def _render_list_tab(
     max_feedback_cols: int = 6,
 ):
     st.markdown(
-        mod_styles.stmetricdelta_hidearrow,
+        dashboard_styles.stmetricdelta_hidearrow,
         unsafe_allow_html=True,
     )
     for _, app_row in df.iterrows():
@@ -599,7 +599,7 @@ def _render_list_tab(
         }
         st.markdown(
             f"#### {app_version}",
-            help=mod_components.draw_metadata_and_tags(metadata, tags),
+            help=dashboard_components.draw_metadata_and_tags(metadata, tags),
         )
         st.caption(app_id)
         app_feedback_col_names = [
@@ -665,8 +665,10 @@ def _render_list_tab(
                         delta_color="normal",
                     )
                 else:
-                    cat: mod_styles.Category = mod_styles.CATEGORY.of_score(
-                        mean, higher_is_better=higher_is_better
+                    cat: dashboard_styles.Category = (
+                        dashboard_styles.CATEGORY.of_score(
+                            mean, higher_is_better=higher_is_better
+                        )
                     )
                     feedback_container.metric(
                         label=col_name,
@@ -678,7 +680,7 @@ def _render_list_tab(
                             and cat.direction
                             and cat.compare(
                                 mean,
-                                mod_styles.CATEGORY.PASS[
+                                dashboard_styles.CATEGORY.PASS[
                                     cat.direction
                                 ].threshold,
                             )
@@ -692,7 +694,7 @@ def _render_list_tab(
                 key=f"select_app_{app_id}",
             ):
                 st.session_state[
-                    f"{mod_constants.RECORDS_PAGE_NAME}.app_ids"
+                    f"{dashboard_constants.RECORDS_PAGE_NAME}.app_ids"
                 ] = [app_id]
                 st.switch_page("pages/Records.py")
 
@@ -707,8 +709,8 @@ def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     if len(feedback_col_names) == 0:
         st.warning("No feedback functions found.")
         return
-    if mod_constants.HIDE_RECORD_COL_NAME in df.columns:
-        df = df[~df[mod_constants.HIDE_RECORD_COL_NAME]]
+    if dashboard_constants.HIDE_RECORD_COL_NAME in df.columns:
+        df = df[~df[dashboard_constants.HIDE_RECORD_COL_NAME]]
     cols = 4
     rows = len(feedback_col_names) // cols + 1
     fig = make_subplots(rows=rows, cols=cols, subplot_titles=feedback_col_names)
@@ -763,7 +765,7 @@ def render_leaderboard(app_name: str):
     Args:
         app_name (str): The app name to render the leaderboard for.
     """
-    st.title(mod_constants.LEADERBOARD_PAGE_NAME)
+    st.title(dashboard_constants.LEADERBOARD_PAGE_NAME)
     st.markdown(f"Showing app `{app_name}`")
 
     # Get app versions
@@ -826,7 +828,7 @@ def render_leaderboard(app_name: str):
     with versions_tab:
         _render_grid_tab(
             df,
-            grid_key=f"{mod_constants.LEADERBOARD_PAGE_NAME}.leaderboard_grid",
+            grid_key=f"{dashboard_constants.LEADERBOARD_PAGE_NAME}.leaderboard_grid",
             feedback_col_names=feedback_col_names,
             feedback_defs=feedback_defs,
             feedback_directions=feedback_directions,
@@ -846,7 +848,7 @@ def render_leaderboard(app_name: str):
 
 if __name__ == "__main__":
     dashboard_utils.set_page_config(
-        page_title=mod_constants.LEADERBOARD_PAGE_NAME
+        page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
     )
     init_page_state()
     app_name = dashboard_utils.render_sidebar()

@@ -14,8 +14,8 @@ import numpy as np
 import pinecone
 import streamlit as st
 from trulens.apps.langchain import tru_chain as mod_tru_chain
-from trulens.core import session as mod_session
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import keys as key_utils
 from trulens.providers.huggingface import provider as huggingface_provider
@@ -41,18 +41,18 @@ identity = lambda h: h
 hugs = huggingface_provider.Huggingface()
 openai = openai_provider.OpenAI()
 
-f_lang_match = mod_feedback.Feedback(hugs.language_match).on(
+f_lang_match = core_feedback.Feedback(hugs.language_match).on(
     text1=select_schema.Select.RecordInput,
     text2=select_schema.Select.RecordOutput,
 )
 
-f_qa_relevance = mod_feedback.Feedback(openai.relevance).on(
+f_qa_relevance = core_feedback.Feedback(openai.relevance).on(
     prompt=select_schema.Select.RecordInput,
     response=select_schema.Select.RecordOutput,
 )
 
 f_context_relevance = (
-    mod_feedback.Feedback(openai.context_relevance)
+    core_feedback.Feedback(openai.context_relevance)
     .on(
         question=select_schema.Select.RecordInput,
         statement=select_schema.Select.Record.chain.combine_docs_chain._call.args.inputs.input_documents[
@@ -151,7 +151,7 @@ if user_input:
     # Display response
     st.write(answer)
 
-    session = mod_session.TruSession()
+    session = core_session.TruSession()
     record_id = session.add_data(
         app_name=app_name,
         prompt=prompt_input,

@@ -8,8 +8,8 @@ from unittest import main
 from trulens.apps.basic import TruBasicApp
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
-from trulens.core import session as mod_session
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
 import trulens.providers.cortex.provider as cortex_provider
 from trulens.providers.openai import provider as openai_provider
@@ -50,12 +50,12 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     def _get_cortex_relevance_feedback_function(
         self,
-    ) -> mod_feedback.SnowflakeFeedback:
-        return mod_feedback.SnowflakeFeedback(
+    ) -> core_feedback.SnowflakeFeedback:
+        return core_feedback.SnowflakeFeedback(
             cortex_provider.Cortex(self._snowflake_session.connection).relevance
         ).on_input_output()
 
-    def _start_evaluator_as_snowflake(self, session: mod_session.TruSession):
+    def _start_evaluator_as_snowflake(self, session: core_session.TruSession):
         try:
             cortex_provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION = (
                 self._snowflake_session.connection
@@ -69,9 +69,9 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
 
     @mod_test.optional_test
     def test_local_deferred_mode(self) -> None:
-        session = mod_session.TruSession()
+        session = core_session.TruSession()
         session.reset_database()
-        f = mod_feedback.Feedback(silly_feedback_function).on_default()
+        f = core_feedback.Feedback(silly_feedback_function).on_default()
         tru_app = TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
             feedbacks=[f],
@@ -100,7 +100,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_snowflake_deferred_mode(self) -> None:
         session = self.get_session("test_snowflake_deferred_mode")
         self._suspend_task()
-        f_local = mod_feedback.Feedback(silly_feedback_function).on_default()
+        f_local = core_feedback.Feedback(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
@@ -142,7 +142,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
     def test_snowflake_feedback_is_always_deferred(self) -> None:
         session = self.get_session("test_snowflake_feedback_is_always_deferred")
         self._suspend_task()
-        f_local = mod_feedback.Feedback(silly_feedback_function).on_default()
+        f_local = core_feedback.Feedback(silly_feedback_function).on_default()
         f_snowflake = self._get_cortex_relevance_feedback_function()
         tru_app = TruBasicApp(
             text_to_text=lambda _: "Tokyo is the capital of Japan.",
@@ -252,7 +252,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             ValueError,
             "`SnowflakeFeedback` can only support feedback functions defined in `trulens-providers-cortex` package's, `trulens.providers.cortex.provider.Cortex` class!",
         ):
-            mod_feedback.SnowflakeFeedback(openai_provider.OpenAI().relevance)
+            core_feedback.SnowflakeFeedback(openai_provider.OpenAI().relevance)
 
     @mod_test.optional_test
     def test_stored_procedure(self) -> None:

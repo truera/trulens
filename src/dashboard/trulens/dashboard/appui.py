@@ -7,8 +7,8 @@ from ipywidgets import widgets
 import traitlets
 from traitlets import HasTraits
 from traitlets import Unicode
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
 
@@ -64,7 +64,7 @@ class SelectorValue(HasTraits):
         self,
         selector: Selector,
         stdout_display: widgets.Output,
-        instrument: mod_instruments.Instrument,
+        instrument: core_instruments.Instrument,
     ):
         self.selector = selector
         self.obj = None
@@ -146,7 +146,7 @@ class RecordWidget:
     def __init__(
         self,
         record_selections,
-        instrument: mod_instruments.Instrument,
+        instrument: core_instruments.Instrument,
         record=None,
         human_or_input=None,
         stdout_display: widgets.Output = None,
@@ -220,7 +220,7 @@ class AppUI(traitlets.HasTraits):
 
     def __init__(
         self,
-        app: mod_app.App,
+        app: core_app.App,
         use_async: bool = False,
         app_selectors: Optional[List[Union[str, serial_utils.Lens]]] = None,
         record_selectors: Optional[List[Union[str, serial_utils.Lens]]] = None,

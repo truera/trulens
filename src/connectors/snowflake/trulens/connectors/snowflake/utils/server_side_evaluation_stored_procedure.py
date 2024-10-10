@@ -1,4 +1,4 @@
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 from trulens.core.schema import feedback as feedback_schema
 from trulens.providers.cortex import provider as cortex_provider
 
@@ -25,7 +25,7 @@ def run(snowpark_session: Session):
         warehouse=snowpark_session.get_current_warehouse(),
         role=snowpark_session.get_current_role(),
     )
-    tru_session = mod_session.TruSession(
+    tru_session = core_session.TruSession(
         database_url=db_url,
         database_check_revision=False,  # TODO: check revision in the future?
         database_args=database_args,

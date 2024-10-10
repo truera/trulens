@@ -19,7 +19,7 @@ from sqlalchemy.orm import configure_mappers
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.schema import MetaData
-from trulens.core.database import base as base_db
+from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -415,7 +415,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 @functools.lru_cache
 def make_base_for_prefix(
     base: Type[T],
-    table_prefix: str = base_db.DEFAULT_DATABASE_PREFIX,
+    table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
 ) -> Type[T]:
     """
     Create a base class for ORM classes with the given table name prefix.
@@ -445,7 +445,7 @@ def make_base_for_prefix(
 # the same table name as sqlalchemy will complain.
 @functools.lru_cache
 def make_orm_for_prefix(
-    table_prefix: str = base_db.DEFAULT_DATABASE_PREFIX,
+    table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
 ) -> Type[ORM[T]]:
     """
     Make a container for ORM classes.

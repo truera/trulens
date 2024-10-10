@@ -30,14 +30,14 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.core import experimental as mod_experimental
-from trulens.core import instruments as mod_instruments
-from trulens.core import session as mod_session
+from trulens.core import experimental as core_experimental
+from trulens.core import instruments as core_instruments
+from trulens.core import session as core_session
 from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # import standard exception
-from trulens.core.database import base as mod_base_db
-from trulens.core.database import connector as mod_connector
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.database import base as core_db
+from trulens.core.database import connector as core_connector
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -305,7 +305,7 @@ def instrumented_component_views(
 
 class App(
     app_schema.AppDefinition,
-    mod_instruments.WithInstrumentCallbacks,
+    core_instruments.WithInstrumentCallbacks,
     Hashable,
 ):
     """Base app recorder type.
@@ -331,39 +331,39 @@ class App(
         arbitrary_types_allowed=True
     )
 
-    feedbacks: List[mod_feedback.Feedback] = pydantic.Field(
+    feedbacks: List[core_feedback.Feedback] = pydantic.Field(
         exclude=True, default_factory=list
     )
     """Feedback functions to evaluate on each record."""
 
-    session: mod_session.TruSession = pydantic.Field(
-        default_factory=mod_session.TruSession, exclude=True
+    session: core_session.TruSession = pydantic.Field(
+        default_factory=core_session.TruSession, exclude=True
     )
     """Session for this app."""
 
     @property
-    def connector(self) -> mod_connector.DBConnector:
+    def connector(self) -> core_connector.DBConnector:
         """Database connector."""
 
         return self.session.connector
 
     @property
-    def db(self) -> mod_base_db.DB:
+    def db(self) -> core_db.DB:
         """Database used by this app."""
 
         return self.connector.db
 
     @deprecation_utils.deprecated_property(
         "The `App.tru` property for retrieving `Tru` is deprecated. "
-        "Use `App.connector` which contains the replacement `mod_connector.DBConnector` class instead."
+        "Use `App.connector` which contains the replacement `core_connector.DBConnector` class instead."
     )
-    def tru(self) -> mod_connector.DBConnector:
+    def tru(self) -> core_connector.DBConnector:
         return self.connector
 
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
 
-    instrument: Optional[mod_instruments.Instrument] = pydantic.Field(
+    instrument: Optional[core_instruments.Instrument] = pydantic.Field(
         None, exclude=True
     )
     """Instrumentation class.
@@ -373,7 +373,7 @@ class App(
     """
 
     recording_contexts: contextvars.ContextVar[
-        mod_instruments._RecordingContext
+        core_instruments._RecordingContext
     ] = pydantic.Field(None, exclude=True)
     """Sequences of records produced by the this class used as a context manager
     are stored in a RecordingContext.
@@ -422,8 +422,8 @@ class App(
 
     def __init__(
         self,
-        connector: Optional[mod_connector.DBConnector] = None,
-        feedbacks: Optional[Iterable[mod_feedback.Feedback]] = None,
+        connector: Optional[core_connector.DBConnector] = None,
+        feedbacks: Optional[Iterable[core_feedback.Feedback]] = None,
         **kwargs,
     ):
         if feedbacks is not None:
@@ -598,7 +598,7 @@ class App(
         if self.connector is None:
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:
                 logger.debug("Using default database connector.")
-                self.connector = mod_connector.DefaultDBConnector()
+                self.connector = core_connector.DefaultDBConnector()
 
         else:
             if self.feedback_mode == feedback_schema.FeedbackMode.NONE:
@@ -893,7 +893,7 @@ class App(
     # Experimental OTEL WithInstrumentCallbacks requirement
     def _on_new_root_span(
         self,
-        recording: mod_instruments._RecordingContext,
+        recording: core_instruments._RecordingContext,
         root_span: Any,  # Any = mod_trace.Span,
     ) -> record_schema.Record:
         from trulens.experimental.otel_tracing.core.app import _App
@@ -1040,13 +1040,13 @@ class App(
     # For use as a context manager.
     def __enter__(self):
         if self.session.experimental_feature(
-            mod_experimental.Feature.OTEL_TRACING
+            core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.app import _App
 
             return _App.__enter__(self)
 
-        ctx = mod_instruments._RecordingContext(app=self)
+        ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1058,7 +1058,7 @@ class App(
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.session.experimental_feature(
-            mod_experimental.Feature.OTEL_TRACING
+            core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.app import _App
 
@@ -1077,13 +1077,13 @@ class App(
     # For use as a context manager.
     async def __aenter__(self):
         if self.session.experimental_feature(
-            mod_experimental.Feature.OTEL_TRACING
+            core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.app import _App
 
             return await _App.__aenter__(self)
 
-        ctx = mod_instruments._RecordingContext(app=self)
+        ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
@@ -1095,7 +1095,7 @@ class App(
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         if self.session.experimental_feature(
-            mod_experimental.Feature.OTEL_TRACING
+            core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.app import _App
 
@@ -1140,7 +1140,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def on_new_record(
         self, func
-    ) -> Iterable[mod_instruments._RecordingContext]:
+    ) -> Iterable[core_instruments._RecordingContext]:
         """Called at the start of record creation.
 
         See
@@ -1155,7 +1155,7 @@ class App(
     # WithInstrumentCallbacks requirement
     def on_add_record(
         self,
-        ctx: mod_instruments._RecordingContext,
+        ctx: core_instruments._RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
@@ -1275,9 +1275,9 @@ class App(
             func = func.__call__
 
         if not python_utils.safe_hasattr(
-            func, mod_instruments.Instrument.INSTRUMENT
+            func, core_instruments.Instrument.INSTRUMENT
         ):
-            if mod_instruments.Instrument.INSTRUMENT in dir(func):
+            if core_instruments.Instrument.INSTRUMENT in dir(func):
                 # HACK009: Need to figure out the __call__ accesses by class
                 # name/object name with relation to this check for
                 # instrumentation because we keep hitting spurious warnings
@@ -1453,7 +1453,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     ) -> Optional[
         List[
             Tuple[
-                mod_feedback.Feedback,
+                core_feedback.Feedback,
                 Future[feedback_schema.FeedbackResult],
             ]
         ]

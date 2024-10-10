@@ -2,7 +2,7 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.feedback import llm_provider as llm_provider
 from trulens.providers.litellm import endpoint as litellm_endpoint
 
@@ -31,13 +31,13 @@ class LiteLLM(llm_provider.LLMProvider):
     completion_args: Dict[str, str] = pydantic.Field(default_factory=dict)
     """Additional arguments to pass to the `litellm.completion` as needed for chosen api."""
 
-    endpoint: mod_endpoint.Endpoint
+    endpoint: core_endpoint.Endpoint
 
     def __init__(
         self,
         model_engine: Optional[str] = None,
         completion_kwargs: Optional[Dict] = None,
-        endpoint: Optional[mod_endpoint.Endpoint] = None,
+        endpoint: Optional[core_endpoint.Endpoint] = None,
         **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this

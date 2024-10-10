@@ -8,7 +8,7 @@ import zipfile
 import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 
 logger = logging.getLogger(__name__)
 
@@ -285,7 +285,7 @@ class TruBEIRDataLoader:
 
     def persist_dataset(
         self,
-        session: mod_session.TruSession,
+        session: core_session.TruSession,
         dataset_name: str,
         dataset_metadata: Optional[Dict[str, Any]] = None,
         split="test",

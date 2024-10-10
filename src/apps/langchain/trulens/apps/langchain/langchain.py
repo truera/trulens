@@ -6,15 +6,15 @@ example classes:
 
 from typing import Type
 
-from trulens.core import app as mod_app
+from trulens.core import app as core_app
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 
 
-class LangChainComponent(mod_app.ComponentView):
+class LangChainComponent(core_app.ComponentView):
     @staticmethod
     def class_is(cls_obj: pyschema_utils.Class) -> bool:
-        if mod_app.ComponentView.innermost_base(cls_obj.bases) == "langchain":
+        if core_app.ComponentView.innermost_base(cls_obj.bases) == "langchain":
             return True
 
         return False
@@ -24,7 +24,7 @@ class LangChainComponent(mod_app.ComponentView):
         return component_of_json(json)
 
 
-class Prompt(mod_app.Prompt, LangChainComponent):
+class Prompt(core_app.Prompt, LangChainComponent):
     @property
     def template(self) -> str:
         return self.json["template"]
@@ -43,7 +43,7 @@ class Prompt(mod_app.Prompt, LangChainComponent):
         )  # langchain >= 0.230
 
 
-class LLM(mod_app.LLM, LangChainComponent):
+class LLM(core_app.LLM, LangChainComponent):
     @property
     def model_name(self) -> str:
         return self.json["model_name"]
@@ -58,7 +58,7 @@ class LLM(mod_app.LLM, LangChainComponent):
         )
 
 
-class Other(mod_app.Other, LangChainComponent):
+class Other(core_app.Other, LangChainComponent):
     pass
 
 

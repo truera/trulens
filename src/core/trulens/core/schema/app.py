@@ -19,7 +19,7 @@ import warnings
 
 import dill
 import pydantic
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -34,7 +34,7 @@ from trulens.core.utils import threading as threading_utils
 if TYPE_CHECKING:
     from trulens.core._utils.pycompat import Future  # import style exception
     from trulens.core.database import connector as db_connector
-    from trulens.core.feedback import feedback as mod_feedback
+    from trulens.core.feedback import feedback as core_feedback
 
 logger = logging.getLogger(__name__)
 
@@ -293,7 +293,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     @staticmethod
     def _submit_feedback_functions(
         record: record_schema.Record,
-        feedback_functions: Sequence[mod_feedback.Feedback],
+        feedback_functions: Sequence[core_feedback.Feedback],
         connector: db_connector.DBConnector,
         app: Optional[AppDefinition] = None,
         on_done: Optional[
@@ -308,7 +308,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             ]
         ] = None,
     ) -> List[
-        Tuple[mod_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
+        Tuple[core_feedback.Feedback, Future[feedback_schema.FeedbackResult]]
     ]:
         """Schedules to run the given feedback functions.
 
@@ -361,7 +361,7 @@ class AppDefinition(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
             # Run feedback function and the on_done callback. This makes sure
             # that Future.result() returns only after on_done has finished.
             def run_and_call_callback(
-                ffunc: mod_feedback.Feedback,
+                ffunc: core_feedback.Feedback,
                 app: AppDefinition,
                 record: record_schema.Record,
             ):

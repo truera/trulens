@@ -21,7 +21,7 @@ from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.feedback import generated as mod_generated
+from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 
 with import_utils.OptionalImports(
@@ -275,7 +275,7 @@ class GroundTruthAgreement(
                 prompt, response, ground_truth_response
             )
             ret = (
-                mod_generated.re_0_10_rating(agreement_txt) / 10,
+                feedback_generated.re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:

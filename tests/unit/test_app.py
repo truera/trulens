@@ -5,13 +5,13 @@ Tests for TruBasicApp.
 from unittest import TestCase
 from unittest import main
 
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 from trulens.core.schema import app as app_schema
 
 
 class TestApp(TestCase):
     def setUp(self):
-        self.session = mod_session.TruSession()
+        self.session = core_session.TruSession()
         self.session.reset_database()
 
         self.app_1 = app_schema.AppDefinition(

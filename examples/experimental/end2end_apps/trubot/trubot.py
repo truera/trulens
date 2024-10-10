@@ -13,10 +13,10 @@ import openai
 import pinecone
 from slack_bolt import App
 from slack_sdk import WebClient
-from trulens.apps.langchain import langchain as mod_langchain
+from trulens.apps.langchain import langchain as langchain_app
 from trulens.apps.langchain import tru_chain as mod_tru_chain
-from trulens.core import session as mod_session
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core import session as core_session
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import keys as key_utils
@@ -54,7 +54,7 @@ convos: Dict[str, mod_tru_chain.TruChain] = dict()
 handled_ts: Set[Tuple[str, str]] = set()
 
 # DB to save models and records.
-session = mod_session.TruSession()
+session = core_session.TruSession()
 
 ident = lambda h: h
 
@@ -71,16 +71,16 @@ hugs = huggingface_provider.Huggingface()
 openai = openai_provider.OpenAI(client=openai.OpenAI())
 
 # Language match between question/answer.
-f_lang_match = mod_feedback.Feedback(hugs.language_match).on_input_output()
+f_lang_match = core_feedback.Feedback(hugs.language_match).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/answer relevance between overall question and answer.
-f_qa_relevance = mod_feedback.Feedback(openai.relevance).on_input_output()
+f_qa_relevance = core_feedback.Feedback(openai.relevance).on_input_output()
 # By default this will evaluate feedback on main app input and main app output.
 
 # Question/statement relevance between question and each context chunk.
 f_context_relevance = (
-    mod_feedback.Feedback(openai.context_relevance)
+    core_feedback.Feedback(openai.context_relevance)
     .on_input()
     .on(
         select_schema.Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[
@@ -127,7 +127,7 @@ def get_or_make_app(
 
     if "filtered" in app_version:
         # Better contexts fix, filter contexts with relevance:
-        retriever = mod_langchain.WithFeedbackFilterDocuments.of_retriever(
+        retriever = langchain_app.WithFeedbackFilterDocuments.of_retriever(
             retriever=retriever, feedback=f_context_relevance, threshold=0.5
         )
 

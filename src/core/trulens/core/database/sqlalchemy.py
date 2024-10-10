@@ -29,10 +29,10 @@ import sqlalchemy as sa
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
-from trulens.core.database import base as mod_db
+from trulens.core.database import base as core_db
 from trulens.core.database import exceptions as db_exceptions
 from trulens.core.database import migrations as db_migrations
-from trulens.core.database import orm as mod_orm
+from trulens.core.database import orm as db_orm
 from trulens.core.database import utils as db_utils
 from trulens.core.database.legacy import migration as legacy_migration
 from trulens.core.database.migrations import data as data_migrations
@@ -55,7 +55,7 @@ class SnowflakeImpl(DefaultImpl):
     __dialect__ = "snowflake"
 
 
-class SQLAlchemyDB(mod_db.DB):
+class SQLAlchemyDB(core_db.DB):
     """Database implemented using sqlalchemy.
 
     See abstract class [DB][trulens.core.database.base.DB] for method reference.
@@ -65,7 +65,7 @@ class SQLAlchemyDB(mod_db.DB):
         arbitrary_types_allowed=True
     )
 
-    table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX
     """The prefix to use for all table names.
 
     [DB][trulens.core.database.base.DB] interface requirement.
@@ -83,7 +83,7 @@ class SQLAlchemyDB(mod_db.DB):
     session: Optional[sessionmaker] = None
     """SQLAlchemy session(maker)."""
 
-    orm: Type[mod_orm.ORM]
+    orm: Type[db_orm.ORM]
     """Container of all the ORM classes for this database.
 
     This should be set to a subclass of
@@ -112,14 +112,14 @@ class SQLAlchemyDB(mod_db.DB):
 
     def __init__(
         self,
-        redact_keys: bool = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
-        table_prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+        redact_keys: bool = core_db.DEFAULT_DATABASE_REDACT_KEYS,
+        table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ):
         super().__init__(
             redact_keys=redact_keys,
             table_prefix=table_prefix,
-            orm=mod_orm.make_orm_for_prefix(table_prefix=table_prefix),
+            orm=db_orm.make_orm_for_prefix(table_prefix=table_prefix),
             **kwargs,
         )
         self._reload_engine()
@@ -143,8 +143,8 @@ class SQLAlchemyDB(mod_db.DB):
         database_engine: Optional[sa.Engine] = None,
         database_redact_keys: Optional[
             bool
-        ] = mod_db.DEFAULT_DATABASE_REDACT_KEYS,
-        database_prefix: Optional[str] = mod_db.DEFAULT_DATABASE_PREFIX,
+        ] = core_db.DEFAULT_DATABASE_REDACT_KEYS,
+        database_prefix: Optional[str] = core_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
         """Process database-related configuration provided to the [Tru][trulens.core.session.TruSession] class to
@@ -160,13 +160,15 @@ class SQLAlchemyDB(mod_db.DB):
             kwargs["redact_keys"] = database_redact_keys
 
         if database_engine is not None:
-            new_db: mod_db.DB = SQLAlchemyDB.from_db_engine(
+            new_db: core_db.DB = SQLAlchemyDB.from_db_engine(
                 database_engine, **kwargs
             )
         else:
             if database_url is None:
-                database_url = f"sqlite:///{mod_db.DEFAULT_DATABASE_FILE}"
-            new_db: mod_db.DB = SQLAlchemyDB.from_db_url(database_url, **kwargs)
+                database_url = f"sqlite:///{core_db.DEFAULT_DATABASE_FILE}"
+            new_db: core_db.DB = SQLAlchemyDB.from_db_url(
+                database_url, **kwargs
+            )
 
         print(
             "%s Initialized with db url %s ."
@@ -939,9 +941,9 @@ def _make_no_perf():
 
 
 def _extract_feedback_results(
-    results: Iterable["mod_orm.FeedbackResult"],
+    results: Iterable["db_orm.FeedbackResult"],
 ) -> pd.DataFrame:
-    def _extract(_result: "mod_orm.FeedbackResult"):
+    def _extract(_result: "db_orm.FeedbackResult"):
         app_json = json.loads(_result.record.app.app_json)
         _type = app_schema.AppDefinition.model_validate(app_json).root_class
 
@@ -1038,9 +1040,9 @@ def _extract_tokens_and_cost(cost_json: pd.Series) -> pd.DataFrame:
 
 
 def _extract_ground_truths(
-    results: Iterable["mod_orm.GroundTruth"],
+    results: Iterable["db_orm.GroundTruth"],
 ) -> pd.DataFrame:
-    def _extract(_result: "mod_orm.GroundTruth"):
+    def _extract(_result: "db_orm.GroundTruth"):
         ground_truth_json = json.loads(_result.ground_truth_json)
 
         return (
@@ -1089,8 +1091,8 @@ class AppsExtractor:
 
     def get_df_and_cols(
         self,
-        apps: Optional[List["mod_orm.ORM.AppDefinition"]] = None,
-        records: Optional[List["mod_orm.ORM.Record"]] = None,
+        apps: Optional[List["db_orm.ORM.AppDefinition"]] = None,
+        records: Optional[List["db_orm.ORM.Record"]] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
         """Produces a records dataframe which joins in information from apps and
         feedback results.
@@ -1126,8 +1128,8 @@ class AppsExtractor:
 
     def extract_apps(
         self,
-        apps: Iterable["mod_orm.ORM.AppDefinition"],
-        records: Optional[List["mod_orm.ORM.Record"]] = None,
+        apps: Iterable["db_orm.ORM.AppDefinition"],
+        records: Optional[List["db_orm.ORM.Record"]] = None,
     ) -> Iterable[pd.DataFrame]:
         """
         Creates record rows with app information.
@@ -1184,7 +1186,7 @@ class AppsExtractor:
                 print(f"Error details: {e}")
 
     def extract_records(
-        self, records: Iterable["mod_orm.ORM.Record"]
+        self, records: Iterable["db_orm.ORM.Record"]
     ) -> Iterable[pd.Series]:
         for _rec in records:
             calls = defaultdict(list)

@@ -7,10 +7,10 @@ import pandas as pd
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
-from trulens.core import session as mod_session
-from trulens.core.database import base as mod_db
+from trulens.core import session as core_session
+from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
-from trulens.dashboard import constants as mod_constants
+from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.utils import metadata_utils
 
 ST_APP_NAME = "app_name"
@@ -47,7 +47,7 @@ def set_page_config(page_title: Optional[str] = None):
     st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
-        st.session_state[ST_RECORDS_LIMIT] = mod_constants.RECORDS_LIMIT
+        st.session_state[ST_RECORDS_LIMIT] = dashboard_constants.RECORDS_LIMIT
 
 
 def add_query_param(param_name: str, param_value: str):
@@ -85,7 +85,7 @@ def read_query_params_into_session_state(
 
 
 @st.cache_resource(show_spinner="Setting up TruLens session")
-def get_session() -> mod_session.TruSession:
+def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
 
     As TruSession is a singleton, further TruSession() uses will get the same configuration.
@@ -94,7 +94,7 @@ def get_session() -> mod_session.TruSession:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
     parser.add_argument(
-        "--database-prefix", default=mod_db.DEFAULT_DATABASE_PREFIX
+        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
 
     try:
@@ -107,12 +107,14 @@ def get_session() -> mod_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return mod_session.TruSession(
+    return core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
 
 
-@st.cache_data(ttl=mod_constants.CACHE_TTL, show_spinner="Getting record data")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting record data"
+)
 def get_records_and_feedback(
     app_name: str,
     app_ids: Optional[List[str]] = None,
@@ -134,15 +136,17 @@ def get_records_and_feedback(
 
     records_df, _ = _factor_out_metadata(records_df, "record_metadata")
 
-    if mod_constants.HIDE_RECORD_COL_NAME in records_df.columns:
-        records_df[mod_constants.HIDE_RECORD_COL_NAME] = (
-            records_df[mod_constants.HIDE_RECORD_COL_NAME] == "True"
+    if dashboard_constants.HIDE_RECORD_COL_NAME in records_df.columns:
+        records_df[dashboard_constants.HIDE_RECORD_COL_NAME] = (
+            records_df[dashboard_constants.HIDE_RECORD_COL_NAME] == "True"
         ).astype(bool)
     records_df = records_df.replace({float("nan"): None})
     return records_df, feedback_col_names
 
 
-@st.cache_data(ttl=mod_constants.CACHE_TTL, show_spinner="Getting app data")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app data"
+)
 def get_apps(app_name: Optional[str] = None):
     session = get_session()
     lms = session.connector.db
@@ -151,7 +155,8 @@ def get_apps(app_name: Optional[str] = None):
 
 
 @st.cache_data(
-    ttl=mod_constants.CACHE_TTL, show_spinner="Getting feedback definitions"
+    ttl=dashboard_constants.CACHE_TTL,
+    show_spinner="Getting feedback definitions",
 )
 def get_feedback_defs():
     session = get_session()
@@ -248,7 +253,9 @@ def _factor_out_metadata(df: pd.DataFrame, metadata_col_name: str):
     return df, metadata_cols
 
 
-@st.cache_data(ttl=mod_constants.CACHE_TTL, show_spinner="Getting app versions")
+@st.cache_data(
+    ttl=dashboard_constants.CACHE_TTL, show_spinner="Getting app versions"
+)
 def get_app_versions(app_name: str):
     app_versions = get_apps(app_name=app_name)
     app_versions_df = pd.DataFrame(app_versions)
@@ -268,8 +275,8 @@ def get_app_versions(app_name: str):
     app_versions_df = app_versions_df.replace({float("nan"): None})
 
     for bool_col in [
-        mod_constants.PINNED_COL_NAME,
-        mod_constants.EXTERNAL_APP_COL_NAME,
+        dashboard_constants.PINNED_COL_NAME,
+        dashboard_constants.EXTERNAL_APP_COL_NAME,
     ]:
         if bool_col in app_versions_df.columns:
             app_versions_df[bool_col] = (

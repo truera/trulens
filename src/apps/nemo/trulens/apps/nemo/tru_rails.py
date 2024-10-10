@@ -19,8 +19,8 @@ from nemoguardrails.actions.llm.generation import LLMGenerationActions
 from nemoguardrails.kb.kb import KnowledgeBase
 from pydantic import Field
 from trulens.apps.langchain import LangChainInstrument
-from trulens.core import app as mod_app
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core import app as core_app
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
 from trulens.core.schema import select as select_schema
@@ -102,8 +102,8 @@ class FeedbackActions:
 
     @staticmethod
     def register_feedback_functions(
-        *args: Tuple[mod_feedback.Feedback, ...],
-        **kwargs: Dict[str, mod_feedback.Feedback],
+        *args: Tuple[core_feedback.Feedback, ...],
+        **kwargs: Dict[str, core_feedback.Feedback],
     ):
         """Register one or more feedback functions to use in rails `feedback`
         action.
@@ -113,7 +113,7 @@ class FeedbackActions:
         """
 
         for name, feedback_instance in kwargs.items():
-            if not isinstance(feedback_instance, mod_feedback.Feedback):
+            if not isinstance(feedback_instance, core_feedback.Feedback):
                 raise ValueError(
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
@@ -122,7 +122,7 @@ class FeedbackActions:
             registered_feedback_functions[name] = feedback_instance
 
         for feedback_instance in args:
-            if not isinstance(feedback_instance, mod_feedback.Feedback):
+            if not isinstance(feedback_instance, core_feedback.Feedback):
                 raise ValueError(
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
@@ -136,7 +136,7 @@ class FeedbackActions:
 
     @staticmethod
     def action_of_feedback(
-        feedback_instance: mod_feedback.Feedback, verbose: bool = False
+        feedback_instance: core_feedback.Feedback, verbose: bool = False
     ) -> Callable:
         """Create a custom rails action for the given feedback function.
 
@@ -150,7 +150,7 @@ class FeedbackActions:
                 the same as the feedback function's name.
         """
 
-        if not isinstance(feedback_instance, mod_feedback.Feedback):
+        if not isinstance(feedback_instance, core_feedback.Feedback):
             raise ValueError(
                 f"Invalid feedback function: {feedback_instance}; "
                 f"expected a Feedback class instance."
@@ -373,7 +373,7 @@ class RailsInstrument(Instrument):
         )
 
 
-class TruRails(mod_app.App):
+class TruRails(core_app.App):
     """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:

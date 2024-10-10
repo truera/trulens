@@ -2,7 +2,7 @@ import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
 from trulens.feedback import llm_provider
-from trulens.feedback import prompts as mod_prompts
+from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
 
 # If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
@@ -196,7 +196,7 @@ class Cortex(
         assert self.endpoint is not None, "Endpoint is not set."
 
         messages = [
-            {"role": "system", "content": mod_prompts.AGREEMENT_SYSTEM},
+            {"role": "system", "content": feedback_prompts.AGREEMENT_SYSTEM},
             {"role": "user", "content": prompt},
             {"role": "assistant", "content": response},
             {"role": "user", "content": check_response},

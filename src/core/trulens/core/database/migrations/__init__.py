@@ -79,14 +79,14 @@ from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from pydantic import BaseModel
 from sqlalchemy import Engine
-from trulens.core.database import base as mod_db
+from trulens.core.database import base as core_db
 
 logger = logging.getLogger(__name__)
 
 
 @contextmanager
 def alembic_config(
-    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = core_db.DEFAULT_DATABASE_PREFIX
 ) -> Iterator[Config]:
     alembic_dir = os.path.dirname(os.path.abspath(__file__))
     db_url = str(engine.url).replace("%", "%%")  # Escape any '%' in db_url
@@ -105,7 +105,7 @@ def alembic_config(
 def upgrade_db(
     engine: Engine,
     revision: str = "head",
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.upgrade(config, revision)
@@ -114,14 +114,14 @@ def upgrade_db(
 def downgrade_db(
     engine: Engine,
     revision: str = "base",
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
 ):
     with alembic_config(engine, prefix=prefix) as config:
         command.downgrade(config, revision)
 
 
 def get_current_db_revision(
-    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = core_db.DEFAULT_DATABASE_PREFIX
 ) -> Optional[str]:
     with engine.connect() as conn:
         return MigrationContext.configure(
@@ -130,7 +130,7 @@ def get_current_db_revision(
 
 
 def get_revision_history(
-    engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+    engine: Engine, prefix: str = core_db.DEFAULT_DATABASE_PREFIX
 ) -> List[str]:
     """
     Return list of all revisions, from base to head.
@@ -160,7 +160,7 @@ class DbRevisions(BaseModel):
 
     @classmethod
     def load(
-        cls, engine: Engine, prefix: str = mod_db.DEFAULT_DATABASE_PREFIX
+        cls, engine: Engine, prefix: str = core_db.DEFAULT_DATABASE_PREFIX
     ) -> DbRevisions:
         return cls(
             current=get_current_db_revision(engine, prefix=prefix),

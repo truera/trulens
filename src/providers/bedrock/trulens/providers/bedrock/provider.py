@@ -2,7 +2,7 @@ import json
 import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
-from trulens.feedback import generated as mod_generated
+from trulens.feedback import generated as feedback_generated
 from trulens.feedback import llm_provider
 from trulens.providers.bedrock import endpoint as bedrock_endpoint
 
@@ -217,7 +217,7 @@ class Bedrock(llm_provider.LLMProvider):
         )
 
         return (
-            mod_generated.re_configured_rating(response) - min_score_val
+            feedback_generated.re_configured_rating(response) - min_score_val
         ) / (max_score_val - min_score_val)
 
     # overwrite base to use prompt instead of messages
@@ -264,7 +264,7 @@ class Bedrock(llm_provider.LLMProvider):
             for line in response.split("\n"):
                 if "Score" in line:
                     score = (
-                        mod_generated.re_configured_rating(
+                        feedback_generated.re_configured_rating(
                             line,
                             min_score_val=min_score_val,
                             max_score_val=max_score_val,
@@ -289,7 +289,7 @@ class Bedrock(llm_provider.LLMProvider):
             return score, reasons
         else:
             return (
-                mod_generated.re_configured_rating(
+                feedback_generated.re_configured_rating(
                     response,
                     min_score_val=min_score_val,
                     max_score_val=max_score_val,

@@ -8,8 +8,8 @@ from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Dict, Optional
 
 from pydantic import Field
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class TruWrapperApp:
         self._call_fn = call_fn
 
 
-class TruBasicCallableInstrument(mod_instruments.Instrument):
+class TruBasicCallableInstrument(core_instruments.Instrument):
     """Basic app instrumentation."""
 
     class Default:
@@ -49,7 +49,7 @@ class TruBasicCallableInstrument(mod_instruments.Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, mod_instruments.ClassFilter] = {
+        METHODS: Dict[str, core_instruments.ClassFilter] = {
             "_call": TruWrapperApp
         }
 
@@ -62,7 +62,7 @@ class TruBasicCallableInstrument(mod_instruments.Instrument):
         )
 
 
-class TruBasicApp(mod_app.App):
+class TruBasicApp(core_app.App):
     """Instantiates a Basic app that makes little assumptions.
 
     Assumes input text and output text.
@@ -140,7 +140,7 @@ class TruBasicApp(mod_app.App):
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
         if func == getattr(
-            TruWrapperApp._call, mod_instruments.Instrument.INSTRUMENT
+            TruWrapperApp._call, core_instruments.Instrument.INSTRUMENT
         ):
             # If func is the wrapper app _call, replace the signature and
             # bindings based on the actual containing callable instead of

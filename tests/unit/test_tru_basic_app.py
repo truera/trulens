@@ -3,7 +3,7 @@
 from unittest import main
 
 from trulens.apps import basic as basic_app
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import keys as key_utils
 
@@ -17,7 +17,7 @@ class TestTruBasicApp(mod_test.TruTestCase):
         def custom_application(prompt: str) -> str:
             return "a response"
 
-        self.session = mod_session.TruSession()
+        self.session = core_session.TruSession()
 
         # Temporary before db migration gets fixed.
         self.session.migrate_database()

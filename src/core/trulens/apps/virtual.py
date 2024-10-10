@@ -208,8 +208,8 @@ from pprint import PrettyPrinter
 from typing import Any, ClassVar, Dict, List, Optional, Sequence, Union
 
 from pydantic import Field
-from trulens.core import app as mod_app
-from trulens.core import instruments as mod_instruments
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
@@ -439,7 +439,7 @@ class VirtualRecord(record_schema.Record):
         super().__init__(calls=record_calls, **kwargs)
 
 
-class TruVirtual(mod_app.App):
+class TruVirtual(core_app.App):
     """Recorder for virtual apps.
 
     Virtual apps are data only in that they cannot be executed but for whom
@@ -495,7 +495,7 @@ class TruVirtual(mod_app.App):
 
     root_class: Any = pyschema_utils.Class.of_class(VirtualApp)
 
-    instrument: Optional[mod_instruments.Instrument] = None
+    instrument: Optional[core_instruments.Instrument] = None
 
     selector_check_warning: bool = False
     """Selector checking is disabled for virtual apps."""

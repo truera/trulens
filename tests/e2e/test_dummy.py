@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest import main
 
 from trulens.apps import custom as custom_app
-from trulens.core import session as mod_session
+from trulens.core import session as core_session
 
 from examples.dev.dummy_app.app import DummyApp
 from tests import test as mod_test
@@ -19,7 +19,7 @@ class TestDummy(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
-        self.session = mod_session.TruSession()
+        self.session = core_session.TruSession()
         self.session.reset_database()
 
     def test_dummy(self):

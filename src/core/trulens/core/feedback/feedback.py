@@ -31,22 +31,22 @@ from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
 from trulens.core._utils import pycompat as pycompat_utils
-from trulens.core.feedback import endpoint as mod_endpoint
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.utils import json as mod_json_utils
+from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils import python as mod_python_utils
-from trulens.core.utils import serial as mod_serial_utils
-from trulens.core.utils import text as mod_text_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
+from trulens.core.utils import threading as threading_utils
 
 if TYPE_CHECKING:
-    from trulens.core import session as mod_session
+    from trulens.core import session as core_session
 
 # WARNING: HACK014: importing schema seems to break pydantic for unknown reason.
 # This happens even if you import it as something else.
@@ -104,7 +104,7 @@ class InvalidSelector(Exception):
 
     def __init__(
         self,
-        selector: mod_serial_utils.Lens,
+        selector: serial_utils.Lens,
         source_data: Optional[Dict[str, Any]] = None,
     ):
         self.selector = selector
@@ -283,7 +283,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             alias_info = ""
 
         print(
-            f"{mod_text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
+            f"{text_utils.UNICODE_CHECK} In {self.supplied_name if self.supplied_name is not None else self.name}, "
             f"input {par_name} will be set to {par_path}{alias_info} ."
         )
 
@@ -337,7 +337,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
     @staticmethod
     def evaluate_deferred(
-        session: mod_session.TruSession,
+        session: core_session.TruSession,
         limit: Optional[int] = None,
         shuffle: bool = False,
         run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
@@ -408,7 +408,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             run_location=run_location,
         )
 
-        tp = mod_threading_utils.TP()
+        tp = threading_utils.TP()
 
         futures: List[
             Tuple[
@@ -503,7 +503,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
                 logger.warning(
                     "Feedback function `%s` has `self` as argument. "
                     "Perhaps it is static method or its Provider class was not initialized?",
-                    mod_python_utils.callable_name(self.imp),
+                    python_utils.callable_name(self.imp),
                 )
             if len(par_names) == 0:
                 raise TypeError(
@@ -574,18 +574,18 @@ class Feedback(feedback_schema.FeedbackDefinition):
         new_selectors = self.selectors.copy()
 
         for k, v in kwargs.items():
-            if not isinstance(v, mod_serial_utils.Lens):
+            if not isinstance(v, serial_utils.Lens):
                 raise ValueError(
-                    f"Expected a Lens but got `{v}` of type `{mod_python_utils.class_name(type(v))}`."
+                    f"Expected a Lens but got `{v}` of type `{python_utils.class_name(type(v))}`."
                 )
             new_selectors[k] = v
 
         new_selectors.update(kwargs)
 
         for path in args:
-            if not isinstance(path, mod_serial_utils.Lens):
+            if not isinstance(path, serial_utils.Lens):
                 raise ValueError(
-                    f"Expected a Lens but got `{path}` of type `{mod_python_utils.class_name(type(path))}`."
+                    f"Expected a Lens but got `{path}` of type `{python_utils.class_name(type(path))}`."
                 )
 
             argname = self._next_unselected_arg_name()
@@ -611,7 +611,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
     def check_selectors(
         self,
-        app: Union[app_schema.AppDefinition, mod_serial_utils.JSON],
+        app: Union[app_schema.AppDefinition, serial_utils.JSON],
         record: record_schema.Record,
         source_data: Optional[Dict[str, Any]] = None,
         warning: bool = False,
@@ -651,7 +651,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         if isinstance(app, App):
             app_type = f"`{type(app).__name__}`"
-            app = mod_json_utils.jsonify(
+            app = json_utils.jsonify(
                 app,
                 instrument=app.instrument,
                 skip_specials=True,
@@ -659,9 +659,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
             )
 
         elif isinstance(app, app_schema.AppDefinition):
-            app = mod_json_utils.jsonify(
-                app, skip_specials=True, redact_keys=True
-            )
+            app = json_utils.jsonify(app, skip_specials=True, redact_keys=True)
 
         source_data = self._construct_source_data(
             app=app, record=record, source_data=source_data
@@ -715,9 +713,7 @@ Feedback function signature:
 
             if (
                 len(prefix.path) >= 2
-                and isinstance(
-                    prefix.path[-1], mod_serial_utils.GetItemOrAttribute
-                )
+                and isinstance(prefix.path[-1], serial_utils.GetItemOrAttribute)
                 and prefix.path[-1].get_item_or_attribute() == "rets"
             ):
                 # If the selector check failed because the selector was pointing
@@ -728,9 +724,7 @@ Feedback function signature:
 
             if (
                 len(prefix.path) >= 3
-                and isinstance(
-                    prefix.path[-2], mod_serial_utils.GetItemOrAttribute
-                )
+                and isinstance(prefix.path[-2], serial_utils.GetItemOrAttribute)
                 and prefix.path[-2].get_item_or_attribute() == "args"
             ):
                 # Likewise if failure was because the selector was pointing to
@@ -747,10 +741,10 @@ Feedback function signature:
                     if isinstance(prefix_obj, munch.Munch):
                         prefix_obj = prefix_obj.toDict()
 
-                    msg += f"- Object of type `{mod_python_utils.class_name(type(prefix_obj))}` starting with:\n"
+                    msg += f"- Object of type `{python_utils.class_name(type(prefix_obj))}` starting with:\n"
                     msg += (
                         "```python\n"
-                        + mod_text_utils.retab(
+                        + text_utils.retab(
                             tab="\t  ",
                             s=pretty_repr(
                                 prefix_obj, max_depth=2, indent_size=2
@@ -779,7 +773,7 @@ Feedback function signature:
     def run(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[app_schema.AppDefinition, serial_utils.JSON]
         ] = None,
         record: Optional[record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -807,7 +801,7 @@ Feedback function signature:
         """
 
         if isinstance(app, app_schema.AppDefinition):
-            app_json = mod_json_utils.jsonify(app)
+            app_json = json_utils.jsonify(app)
         else:
             app_json = app
 
@@ -903,7 +897,7 @@ Feedback function signature:
             for ins in input_combinations:
                 try:
                     result_and_meta, part_cost_tally = (
-                        mod_endpoint.Endpoint.track_all_costs_tally(
+                        core_endpoint.Endpoint.track_all_costs_tally(
                             self.imp, **ins
                         )
                     )
@@ -1036,8 +1030,8 @@ Feedback function signature:
     def run_and_log(
         self,
         record: record_schema.Record,
-        session: mod_session.TruSession,
-        app: Union[app_schema.AppDefinition, mod_serial_utils.JSON] = None,
+        session: core_session.TruSession,
+        app: Union[app_schema.AppDefinition, serial_utils.JSON] = None,
         feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
     ) -> Optional[feedback_schema.FeedbackResult]:
         record_id = record.record_id
@@ -1173,7 +1167,7 @@ Feedback function signature:
     def _construct_source_data(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[app_schema.AppDefinition, serial_utils.JSON]
         ] = None,
         record: Optional[record_schema.Record] = None,
         source_data: Optional[Dict] = None,
@@ -1214,7 +1208,7 @@ Feedback function signature:
     def extract_selection(
         self,
         app: Optional[
-            Union[app_schema.AppDefinition, mod_serial_utils.JSON]
+            Union[app_schema.AppDefinition, serial_utils.JSON]
         ] = None,
         record: Optional[record_schema.Record] = None,
         source_data: Optional[Dict] = None,

@@ -6,12 +6,12 @@ from llama_index.core.query_engine.retriever_query_engine import (
     RetrieverQueryEngine,
 )
 from llama_index.core.schema import NodeWithScore
-from trulens.core.feedback import feedback as mod_feedback
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.utils.threading import ThreadPoolExecutor
 
 
 class WithFeedbackFilterNodes(RetrieverQueryEngine):
-    feedback: mod_feedback.Feedback
+    feedback: core_feedback.Feedback
     threshold: float
     """
     A BaseQueryEngine that filters documents using a minimum threshold
@@ -48,7 +48,7 @@ class WithFeedbackFilterNodes(RetrieverQueryEngine):
     def __init__(
         self,
         query_engine: RetrieverQueryEngine,
-        feedback: mod_feedback.Feedback,
+        feedback: core_feedback.Feedback,
         threshold: float,
         *args,
         **kwargs,

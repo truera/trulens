@@ -34,7 +34,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 
 if TYPE_CHECKING:
-    from trulens.core import instruments as mod_instruments
+    from trulens.core import instruments as core_instruments
 
 with import_utils.OptionalImports(
     messages=import_utils.format_import_errors(
@@ -141,7 +141,7 @@ def jsonify_for_ui(*args, **kwargs):
 def jsonify(
     obj: Any,
     dicted: Optional[Dict[int, serial_utils.JSON]] = None,
-    instrument: Optional[mod_instruments.Instrument] = None,
+    instrument: Optional[core_instruments.Instrument] = None,
     skip_specials: bool = False,
     redact_keys: bool = False,
     include_excluded: bool = True,
