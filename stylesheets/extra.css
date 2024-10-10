@@ -1,29 +1,13 @@
-:root {
-  --coral: #E89787;
-  --sienna: #E0735C;
-  --jasper: #DB5C43;
+[data-md-color-scheme="trulens"] {
+  --md-primary-fg-color: #0A2C37;
+  --md-primary-fg-color--light: #D5E2E1;
+  --md-accent-fg-color: #E0735C;
+}
 
-  --poppy: #e99923;
-  --dark-poppy: #ac7119;
-
-  --lavender: #9d98df;
-  --ultramarine: #0E0689;
-  --federal: #080357;
-  --penn: #06023B;
-
-  --flash-white: #F3F7F6;
-  --azure: #c1d2d0;
-  --ash-grey: #C3D5D4;
-
-  --teal: #b0eadb;
-  --zomp: #64A694;
-  --viridian: #528E7E;
-  --brunswick: #2D4E45;
-
-  --cerulean: #5e899c;
-  --indigo: #124F69;
-  --gunmetal: #0A2C37;
-  --rich-black: #061B22;
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0A2C37;
+  --md-primary-fg-color--light: #D5E2E1;
+  --md-accent-fg-color: #E0735C;
 }
 
 .banner {
@@ -34,99 +18,5 @@
   width: 100%;
   z-index: 1;         /* Tells the renderer "this is important", otherwise Admonition and Code Blocks will render into it */
   text-align: center;
-  background-color: var(--sienna);
-}
-
-[data-md-color-scheme="trulens-light"] {
-  --md-default-bg-color--dark: var(--rich-black);
-  --md-primary-fg-color: var(--gunmetal);
-  --md-typeset-a-color: var(--viridian);
-  --md-accent-fg-color: var(--sienna);
-}
-
-[data-md-color-scheme=slate][data-md-color-primary=indigo] {
-
-  --md-primary-color: var(--gunmetal);
-  --md-default-bg-color: var(--rich-black);
-  --md-default-fg-color: var(--azure);
-  --md-default-fg-color--light: var(--azure);
-  --md-default-fg-color--lighter: var(--azure);
-  --md-primary-fg-color: var(--gunmetal);
-  --md-primary-bg-color: var(--azure);
-  --md-accent-fg-color: var(--sienna);
-
-  --md-typeset-color: var(--azure);
-  --md-typeset-a-color: var(--jasper);
-  --md-typeset-mark-color: var(--jasper);
-
-  --md-code-fg-color: var(--azure);
-  --md-code-bg-color: var(--gunmetal);
-
-  --md-code-hl-punctuation-color: var(--poppy);
-  --md-code-hl-generic-color: var(--zomp);
-  --md-code-hl-variable-color: var(--flash-white);
-  --md-code-hl-string-color: var(--sienna);
-  --md-code-hl-comment-color: var(--cerulean);
-  --md-code-hl-keyword-color: var(--zomp);
-  --md-code-hl-operator-color: var(--zomp);
-  --md-code-hl-number-color: var(--teal);
-  --md-code-hl-special-color: var(--coral);
-  --md-code-hl-function-color: var(--coral);
-  --md-code-hl-constant-color: var(--zomp);
-  --md-code-hl-name-color: var(--md-code-fg-color);
-
-  --md-typeset-del-color: hsla(6, 90%, 60%, 0.15);
-  --md-typeset-ins-color: hsla(150, 90%, 44%, 0.15);
-
-  --md-typeset-table-color: hsla(0, 0%, 100%, 0.12);
-  --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
-  --md-admonition-fg-color: var(--md-default-fg-color);
-  --md-admonition-bg-color: var(--md-default-bg-color);
-}
-
-[data-md-color-scheme=slate][data-md-color-primary=indigo] .clipboard-copy-icon {
-  color: var(--ash-grey) !important;
-}
-
-[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper .jp-InputArea-editor {
-
-  --jp-cell-editor-background: var(--md-code-bg-color);
-  --jp-mirror-editor-keyword-color: var(--md-code-hl-keyword-color);
-  --jp-mirror-editor-operator-color: var(--md-code-hl-operator-color);
-  --jp-mirror-editor-variable-color: var(--md-code-hl-variable-color);
-  --jp-mirror-editor-variable-2-color: var(--md-code-hl-variable-color);
-  --jp-mirror-editor-variable-3-color: var(--md-code-hl-variable-color);
-  --jp-mirror-editor-def-color: var(--jp-mirror-editor-keyword-color);
-  --jp-mirror-editor-number-color: var(--md-code-hl-number-color);
-  --jp-mirror-editor-string-color: var(--md-code-hl-string-color);
-  --jp-mirror-editor-comment-color: var(--md-code-hl-comment-color);
-  --jp-mirror-editor-punctuation-color: var(--md-code-hl-punctuation-color);
-}
-
-[data-md-color-scheme=slate][data-md-color-primary=indigo] .jupyter-wrapper .highlight pre {
-  background-color: var(--md-code-bg-color);
-}
-
-
-.jupyter-wrapper .jp-InputArea-editor {
-  --jp-code-font-size: .75em;
-  border-radius: 6px !important;
-  padding: 10px !important;
-  --jp-cell-editor-border-color: none !important;
-}
-
-.md-typeset code {
-  font-size: .75em;
-}
-
-.jupyter-wrapper .jp-InputPrompt {
-  display: none !important;
-}
-
-.jupyter-wrapper .jp-Collapser {
-  display: none !important;
-}
-
-.jupyter-wrapper .jp-OutputPrompt {
-  display: none !important;
+  background-color: color-accent;
 }
