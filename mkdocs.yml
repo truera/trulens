@@ -231,7 +231,7 @@ nav:
           - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
           - getting_started/dashboard/index.md
-  - Component Guides:
+  - 🗺️ Component Guides:
     - Instrumentation:
         - component_guides/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provider here.
@@ -273,7 +273,7 @@ nav:
     - Other:
       - Moving from TruLens Eval: component_guides/other/trulens_eval_migration.md
       - Uninstalling TruLens: component_guides/other/uninstalling.md
-  - API Reference: reference/
+  - 📚 API Reference: reference/
   - 🧑‍🍳 Cookbook: cookbook/
   - 🤝 Contributing:
       - contributing/index.md
@@ -283,7 +283,7 @@ nav:
       - ⛅ Optional Packages: contributing/optional.md
       - ✨ Database Migration: contributing/migration.md
       - 🏁 Release History: contributing/release_history.md
-  - Blog:
+  - ✍️ Blog:
       - blog/index.md
 
 #  - Resources:
