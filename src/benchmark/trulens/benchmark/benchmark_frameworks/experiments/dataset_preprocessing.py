@@ -105,7 +105,7 @@ def generate_summeval_groundedness_golden_set(
 # Snowflake IT dataset
 
 
-def generatate_snowflake_it_golden_set_groundedness(file_path):
+def generate_snowflake_it_golden_set_groundedness(file_path):
     res = []
     with open(file_path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
