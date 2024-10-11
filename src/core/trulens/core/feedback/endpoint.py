@@ -108,7 +108,8 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
 
     @dataclass
     class EndpointSetup:
-        """Class for storing supported endpoint information.
+        """
+        Class for storing supported endpoint information.
 
         See [track_all_costs][trulens.core.feedback.endpoint.Endpoint.track_all_costs]
         for usage.
