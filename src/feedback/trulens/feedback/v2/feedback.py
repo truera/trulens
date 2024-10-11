@@ -306,6 +306,7 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
+
         Respond only as a number from {output_space_prompt}.
 
         {criteria}
