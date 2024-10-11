@@ -318,7 +318,7 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Hypothesis: {hypothesis}
 
-        Please answer with the template below for all statement sentences:
+        Please meticulously answer with the template below for all statement sentences:
 
         Criteria: <Statement Sentence>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
