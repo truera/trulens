@@ -2,7 +2,7 @@ import ast
 import csv
 import json
 import random
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -12,7 +12,7 @@ from trulens.feedback import GroundTruthAggregator
 
 
 def generate_summeval_groundedness_golden_set(
-    file_path, max_samples_per_bucket=200
+    file_path: str, max_samples_per_bucket: int = 200
 ):
     """
     Generate a balanced groundedness golden set from the Summeval dataset.
@@ -25,7 +25,9 @@ def generate_summeval_groundedness_golden_set(
         dict: A dictionary containing query, expected_response, expected_score, and human_score.
     """
 
-    def calculate_expected_score(normalized_metrics_lst, weights_lst):
+    def calculate_expected_score(
+        normalized_metrics_lst: List[Any], weights_lst: List[float]
+    ):
         """Calculate the expected score using normalized metrics and weights."""
         assert len(normalized_metrics_lst) == len(weights_lst)
         return round(
@@ -105,7 +107,7 @@ def generate_summeval_groundedness_golden_set(
 # Snowflake IT dataset
 
 
-def generate_snowflake_it_golden_set_groundedness(file_path):
+def generate_snowflake_it_golden_set_groundedness(file_path: str):
     res = []
     with open(file_path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -154,7 +156,7 @@ def generate_snowflake_it_golden_set_groundedness(file_path):
     return res
 
 
-def generate_snowflake_it_golden_set_answer_relevance(file_path):
+def generate_snowflake_it_golden_set_answer_relevance(file_path: str):
     res = []
     with open(file_path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -192,7 +194,7 @@ def generate_snowflake_it_golden_set_answer_relevance(file_path):
     return res
 
 
-def generate_snowflake_it_golden_set_context_relevance(file_path):
+def generate_snowflake_it_golden_set_context_relevance(file_path: str):
     res = []
     with open(file_path, mode="r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -242,7 +244,7 @@ def generate_snowflake_it_golden_set_context_relevance(file_path):
 
 
 def generate_qags_golden_set_groundedness(
-    file_path, max_samples_per_bucket=100
+    file_path: str, max_samples_per_bucket: int = 100
 ):
     # Initialize counters for score ranges
     buckets = {
@@ -292,7 +294,7 @@ def generate_qags_golden_set_groundedness(
 
 
 def generate_ms_marco_context_relevance_benchmark(
-    file_path="data/ms_marco_v2_1_val.parquet",
+    file_path: str = "data/ms_marco_v2_1_val.parquet",
 ):
     df = pd.read_parquet(file_path, engine="pyarrow")  # or engine='fastparquet'
 
@@ -362,7 +364,7 @@ def generate_balanced_ms_marco_hard_negatives_dataset(
 
 def write_results(
     feedback_scores: List[float],
-    labels: List[float | int],
+    labels: List[Any],
     latencies: List[float],
     file_name: str,
 ):
@@ -377,7 +379,7 @@ def write_results(
 
 def read_results(
     file_name: str,
-) -> Tuple[List[float | int], List[float | int], List[float]]:
+) -> Tuple[List[Any], List[Any], List[float]]:
     with open(file_name, "r") as file:
         reader = csv.reader(file)
         for index, row in enumerate(reader):
