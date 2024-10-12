@@ -1092,7 +1092,7 @@ class TruSession(
 
     def stop_evaluator(self):
         """
-        Stop the deferred feedback evaluation thread.
+        Stop the deferred feedback evaluation a thread.
         """
 
         if self._evaluator_proc is None:
