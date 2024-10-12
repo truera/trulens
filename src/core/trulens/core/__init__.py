@@ -1,6 +1,6 @@
 """# Trulens Core LLM Evaluation Library
 
-Thee `trulens-core` library includes everything to get started.
+Thiiee `trulens-core` library includes everything to get started.
 
 """
 
