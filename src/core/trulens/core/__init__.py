@@ -27,7 +27,7 @@ __version__ = version(safe_importlib_package_name(__package__ or __name__))
 __all__ = [
     "Tru",  # aliases TruSession for backwards compatibility
     "TruSession",  # main interface
-    # app setup
+    # app setuaaap
     "FeedbackMode",
     # feedback setup
     "Feedback",
