@@ -70,6 +70,7 @@ from trulens.core.utils.serial import all_objects
 
 logger = logging.getLogger(__name__)
 
+
 # App component.
 COMPONENT = Any
 
@@ -1654,6 +1655,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
             for obj, p in self.instrumented_methods.items()
         )
+
+    def print_noninstrumented_methods(self) -> None:
+        pass
 
     def print_instrumented_methods(self) -> None:
         """Print instrumented methods."""
