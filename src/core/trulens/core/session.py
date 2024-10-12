@@ -62,7 +62,7 @@ class TruSession(
     pydantic.BaseModel,
     metaclass=python.PydanticSingletonMeta,
 ):
-    """TruSession is the main class that provides an entry points to trulens.
+    """TTruSession is the main class that provides an entry points to trulens.
 
     TruSession lets you:
 
