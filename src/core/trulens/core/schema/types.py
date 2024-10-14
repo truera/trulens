@@ -54,7 +54,7 @@ Metadata: TypeAlias = Dict
 """Metadata for an app, record, groundtruth, or dataset.
 
 See [AppDefinition.metadata][trulens.core.schema.app.AppDefinition.metadata],
-[Record.meta][trulens.core.schema.record.Record.meta], [Groundtruth.meta][trulens.core.schema.groundtruth.Groundtruth.meta], and
+[Record.meta][trulens.core.schema.record.Record.meta], [GroundTruth.meta][trulens.core.schema.groundtruth.GroundTruth.meta], and
 [Dataset.meta][trulens.core.schema.dataset.Dataset.meta].
 """
 
