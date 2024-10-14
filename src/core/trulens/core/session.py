@@ -62,7 +62,7 @@ class TruSession(
     pydantic.BaseModel,
     metaclass=python.PydanticSingletonMeta,
 ):
-    """TruSession is the main class that provides an entry points to trulens.
+    """TTruSession is the main class that provides an entry points to trulens.
 
     TruSession lets you:
 
@@ -1092,7 +1092,7 @@ class TruSession(
 
     def stop_evaluator(self):
         """
-        Stop the deferred feedback evaluation thread.
+        Stop the deferred feedback evaluation a thread.
         """
 
         if self._evaluator_proc is None:
