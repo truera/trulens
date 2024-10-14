@@ -152,8 +152,6 @@ any {
   `from trulens_eval.database.orm import new_base as $alias` => `from trulens.core.database.orm import new_base as $alias`,
   `from trulens_eval.database.orm import new_orm` => `from trulens.core.database.orm import new_orm`,
   `from trulens_eval.database.orm import new_orm as $alias` => `from trulens.core.database.orm import new_orm as $alias`,
-  `from trulens_eval.database.sqlalchemy import MIGRATION_UNKNOWN_STR` => `from trulens.core.database.sqlalchemy import MIGRATION_UNKNOWN_STR`,
-  `from trulens_eval.database.sqlalchemy import MIGRATION_UNKNOWN_STR as $alias` => `from trulens.core.database.sqlalchemy import MIGRATION_UNKNOWN_STR as $alias`,
   `from trulens_eval.database.sqlalchemy import UNICODE_CHECK` => `from trulens.core.database.sqlalchemy import UNICODE_CHECK`,
   `from trulens_eval.database.sqlalchemy import UNICODE_CHECK as $alias` => `from trulens.core.database.sqlalchemy import UNICODE_CHECK as $alias`,
   `from trulens_eval.database.sqlalchemy import UNICODE_CLOCK` => `from trulens.core.database.sqlalchemy import UNICODE_CLOCK`,

@@ -9,7 +9,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.core.database.sqlalchemy import MIGRATION_UNKNOWN_STR
 from trulens.core.database.sqlalchemy import AppsExtractor
 from trulens.core.database.sqlalchemy import SnowflakeImpl
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
