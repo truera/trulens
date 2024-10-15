@@ -1,12 +1,12 @@
 from typing import Any, Optional
 
-from trulens.core import experimental as mod_experimental
-from trulens.core.session import TruSession
+from trulens.core import experimental as core_experimental
+from trulens.core import session as core_session
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
 
-class _TruSession(TruSession):
+class _TruSession(core_session.TruSession):
     def _setup_otel_exporter(
         self, val: Optional[Any]
     ):  # any actually otel_export_sdk.SpanExporter
@@ -27,7 +27,7 @@ class _TruSession(TruSession):
         ), "otel_exporter must be an OpenTelemetry SpanExporter."
 
         self._experimental_feature(
-            flag=mod_experimental.Feature.OTEL_TRACING, value=True, lock=True
+            flag=core_experimental.Feature.OTEL_TRACING, value=True, lock=True
         )
 
         print(

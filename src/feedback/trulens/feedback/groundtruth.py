@@ -19,21 +19,22 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.imports import format_import_errors
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.serial import SerialModel
-from trulens.feedback.generated import re_0_10_rating
-from trulens.feedback.llm_provider import LLMProvider
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.feedback import generated as feedback_generated
+from trulens.feedback import llm_provider
 
-with OptionalImports(
-    messages=format_import_errors("bert-score", purpose="measuring BERT Score")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "bert-score", purpose="measuring BERT Score"
+    )
 ):
     from bert_score import BERTScorer
 
-with OptionalImports(
-    messages=format_import_errors("evaluate", purpose="using certain metrics")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "evaluate", purpose="using certain metrics"
+    )
 ):
     import evaluate
 
@@ -41,11 +42,18 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(WithClassInfo, SerialModel):
+class GroundTruthAgreement(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     """Measures Agreement against a Ground Truth."""
 
-    ground_truth: Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]
-    provider: LLMProvider
+    ground_truth: Union[
+        List[Dict],
+        Callable,
+        pd.DataFrame,
+        pyschema_utils.FunctionOrMethod,
+    ]
+    provider: llm_provider.LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -58,63 +66,71 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def __init__(
         self,
         ground_truth: Union[
-            List[Dict], Callable, pd.DataFrame, FunctionOrMethod
+            List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod
         ],
-        provider: Optional[LLMProvider] = None,
+        provider: Optional[llm_provider.LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
 
         Usage 1:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
-        golden_set = [
-            {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
-        ```
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            golden_set = [
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
+            ```
 
         Usage 2:
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            from trulens.core.session import TruSession
 
-        session = TruSession()
-        ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
+            session = TruSession()
+            ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ```
 
         Usage 3:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.cortex import Cortex
-        ground_truth_imp = llm_app
-        response = llm_app(prompt)
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.cortex import Cortex
+            ground_truth_imp = llm_app
+            response = llm_app(prompt)
 
-        snowflake_connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "schema": os.environ["SNOWFLAKE_SCHEMA"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
-        }
-        ground_truth_collection = GroundTruthAgreement(
-            ground_truth_imp,
-            provider=Cortex(
-                snowflake.connector.connect(**snowflake_connection_parameters),
-                model_engine="mistral-7b",
-            ),
-        )
-        ```
+            snowflake_connection_parameters = {
+                "account": os.environ["SNOWFLAKE_ACCOUNT"],
+                "user": os.environ["SNOWFLAKE_USER"],
+                "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+                "database": os.environ["SNOWFLAKE_DATABASE"],
+                "schema": os.environ["SNOWFLAKE_SCHEMA"],
+                "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+            }
+            ground_truth_collection = GroundTruthAgreement(
+                ground_truth_imp,
+                provider=Cortex(
+                    snowflake.connector.connect(**snowflake_connection_parameters),
+                    model_engine="mistral-7b",
+                ),
+            )
+            ```
 
         Args:
-            ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-                or callable that returns a ground truth string given a prompt string.
-                provider (LLMProvider): The provider to use for agreement measures.
-                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+            ground_truth: A list of query/response pairs or a function, or a
+                dataframe containing ground truth dataset, or callable that
+                returns a ground truth string given a prompt string.
+
+            provider: The provider to use for
+                agreement measures.
+
+            bert_scorer: Internal Usage for
+                DB serialization.
 
         """
         if provider is None:
@@ -135,11 +151,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         if isinstance(ground_truth, List):
             ground_truth_imp = None
-        elif isinstance(ground_truth, FunctionOrMethod):
+        elif isinstance(ground_truth, pyschema_utils.FunctionOrMethod):
             ground_truth_imp = ground_truth.load()
         elif isinstance(ground_truth, Callable):
             ground_truth_imp = ground_truth
-            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+            ground_truth = pyschema_utils.FunctionOrMethod.of_callable(
+                ground_truth
+            )
         elif isinstance(ground_truth, pd.DataFrame):
             ground_truth_df = ground_truth
             ground_truth = []
@@ -148,8 +166,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 ground_truth.append(entry)
             ground_truth_imp = None
         elif isinstance(ground_truth, Dict):
-            # Serialized FunctionOrMethod?
-            ground_truth = FunctionOrMethod.model_validate(ground_truth)
+            # Serialized pyschema_utils.FunctionOrMethod?
+            ground_truth = pyschema_utils.FunctionOrMethod.model_validate(
+                ground_truth
+            )
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(
@@ -255,7 +275,7 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_0_10_rating(agreement_txt) / 10,
+                feedback_generated.re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:
@@ -636,9 +656,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def bleu(
         self, prompt: str, response: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
-        """
-        Uses BLEU Score. A function that that measures
-        similarity to ground truth using token overlap.
+        """Uses BLEU Score. A function that that measures similarity to ground
+        truth using token overlap.
 
         Example:
             ```python
@@ -656,12 +675,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not in agreement" and 1
                 being "in agreement".
+
             dict: with key 'ground_truth_response'
         """
         bleu = evaluate.load("bleu")
@@ -716,7 +737,9 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
 
-class GroundTruthAggregator(WithClassInfo, SerialModel):
+class GroundTruthAggregator(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed=True, extra="allow"
     )

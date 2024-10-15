@@ -17,16 +17,15 @@ from typing import (
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core._utils.pycompat import Future
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
+from trulens.core._utils.pycompat import Future  # import style exception
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import select as select_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils import threading as mod_threading_utils
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.utils import threading as threading_utils
 
 T = TypeVar("T")
 
@@ -42,7 +41,7 @@ class RecordAppCallMethod(serial_utils.SerialModel):
     path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema.Method
+    method: pyschema_utils.Method
     """The method that was called."""
 
 
@@ -53,8 +52,8 @@ class RecordAppCall(serial_utils.SerialModel):
         stack = " -> ".join(map(str, self.stack))
         return f"RecordAppCall: {stack}"
 
-    call_id: mod_types_schema.CallID = pydantic.Field(
-        default_factory=mod_types_schema.new_call_id
+    call_id: types_schema.CallID = pydantic.Field(
+        default_factory=types_schema.new_call_id
     )
     """Unique identifier for this call.
 
@@ -82,7 +81,7 @@ class RecordAppCall(serial_utils.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -98,7 +97,7 @@ class RecordAppCall(serial_utils.SerialModel):
         return self.stack[-1]
 
     @property
-    def method(self) -> pyschema.Method:
+    def method(self) -> pyschema_utils.Method:
         """The method at the top of the stack."""
 
         return self.top.method
@@ -123,16 +122,16 @@ class Record(serial_utils.SerialModel, Hashable):
         "arbitrary_types_allowed": True
     }
 
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_id: types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[mod_base_schema.Cost] = None
+    cost: Optional[base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(
@@ -177,8 +176,8 @@ class Record(serial_utils.SerialModel, Hashable):
     feedback_and_future_results: Optional[
         List[
             Tuple[
-                mod_feedback_schema.FeedbackDefinition,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackDefinition,
+                Future[feedback_schema.FeedbackResult],
             ]
         ]
     ] = pydantic.Field(None, exclude=True)
@@ -189,14 +188,14 @@ class Record(serial_utils.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[
-        List[Future[mod_feedback_schema.FeedbackResult]]
-    ] = pydantic.Field(None, exclude=True)
+    feedback_results: Optional[List[Future[feedback_schema.FeedbackResult]]] = (
+        pydantic.Field(None, exclude=True)
+    )
     """Only the futures part of the above for backwards compatibility."""
 
     def __init__(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
         calls: Optional[List[RecordAppCall]] = None,
         **kwargs,
     ):
@@ -216,7 +215,9 @@ class Record(serial_utils.SerialModel, Hashable):
             )
 
         if record_id is None:
-            record_id = obj_id_of_obj(jsonify(self), prefix="record")
+            record_id = json_utils.obj_id_of_obj(
+                json_utils.jsonify(self), prefix="record"
+            )
 
         self.record_id = record_id
 
@@ -226,8 +227,8 @@ class Record(serial_utils.SerialModel, Hashable):
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
     ) -> Dict[
-        mod_feedback_schema.FeedbackDefinition,
-        mod_feedback_schema.FeedbackResult,
+        feedback_schema.FeedbackDefinition,
+        feedback_schema.FeedbackResult,
     ]:
         """Wait for feedback results to finish.
 
@@ -241,7 +242,7 @@ class Record(serial_utils.SerialModel, Hashable):
         """
 
         if feedback_timeout is None:
-            feedback_timeout = mod_threading_utils.TP.DEBUG_TIMEOUT
+            feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 
         if self.feedback_and_future_results is None:
             return {}

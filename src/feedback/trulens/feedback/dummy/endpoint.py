@@ -18,15 +18,11 @@ import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
-from trulens.core.feedback.endpoint import DEFAULT_RPM
-from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.core.feedback.endpoint import Endpoint
-from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils.python import locals_except
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -118,20 +114,26 @@ class DummyAPI(pydantic.BaseModel):
         ), "Total probabilities should not exceed 1.0 ."
 
     async def apost(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Any:
         # TODO: use async inside post
         return self.post(url=url, payload=payload, timeout=timeout)
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Any:
         """Pretend to make an http post request to some model execution API."""
 
         assert isinstance(payload, dict), "Payload should be a dict."
 
         if timeout is None:
-            timeout = DEFAULT_NETWORK_TIMEOUT
+            timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
 
         # allocate some data to pretend we are doing hard work
         temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
@@ -329,7 +331,7 @@ class DummyAPICreator:
         )
 
 
-class DummyEndpointCallback(EndpointCallback):
+class DummyEndpointCallback(core_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def handle_classification(self, response: Sequence) -> None:
@@ -351,7 +353,7 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
 
-class DummyEndpoint(Endpoint):
+class DummyEndpoint(core_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -405,7 +407,7 @@ class DummyEndpoint(Endpoint):
     def __init__(
         self,
         name: str = "dummyendpoint",
-        rpm: float = DEFAULT_RPM * 10,
+        rpm: float = core_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
         assert rpm > 0
@@ -417,12 +419,13 @@ class DummyEndpoint(Endpoint):
         # Will use fake api for fake feedback evals.
 
         super().__init__(
-            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
+            **kwargs,
+            **python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         logger.info(
             "Using DummyEndpoint with %s",
-            locals_except("self", "name", "kwargs", "__class__"),
+            python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         # Instrument existing DummyAPI class. These are used by the custom_app
@@ -432,7 +435,9 @@ class DummyEndpoint(Endpoint):
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
-        if not safe_hasattr(DummyAPICreator.create_method, INSTRUMENT):
+        if not python_utils.safe_hasattr(
+            DummyAPICreator.create_method, core_endpoint.INSTRUMENT
+        ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
@@ -441,7 +446,10 @@ class DummyEndpoint(Endpoint):
             )
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Dict:
         return self.api.post(url, payload, timeout=timeout)
 
@@ -450,7 +458,7 @@ class DummyEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
