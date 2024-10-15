@@ -1,6 +1,4 @@
-"""
-# LangChain app instrumentation.
-"""
+"""LangChain app instrumentation."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -17,18 +15,15 @@ from langchain_core.runnables.base import RunnableSerializable
 
 # import nest_asyncio # NOTE(piotrm): disabling for now, need more investigation
 from pydantic import Field
-from trulens.apps.langchain.guardrails import WithFeedbackFilterDocuments
-from trulens.core import app as mod_app
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
-from trulens.core.schema.select import Select
-from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.serial import all_queries
+from trulens.apps.langchain import guardrails as langchain_guardrails
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 
 from langchain.agents.agent import BaseMultiActionAgent
 from langchain.agents.agent import BaseSingleActionAgent
@@ -52,7 +47,7 @@ logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 
-class LangChainInstrument(Instrument):
+class LangChainInstrument(core_instruments.Instrument):
     """Instrumentation for LangChain apps."""
 
     class Default:
@@ -79,44 +74,46 @@ class LangChainInstrument(Instrument):
             # langchain.load.serializable.Serializable, # this seems to be work in progress over at langchain
             # langchain.adapters.openai.ChatCompletion, # no bases
             BaseTool,
-            WithFeedbackFilterDocuments,
+            langchain_guardrails.WithFeedbackFilterDocuments,
         }
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            {},
-            {
-                (
-                    "invoke",
-                    "ainvoke",
-                    "stream",
-                    "astream",
-                ): Runnable,
-                ("save_context", "clear"): BaseMemory,
-                (
-                    "run",
-                    "arun",
-                    "_call",
-                    "__call__",
-                    "_acall",
-                    "acall",
-                ): Chain,
-                (
-                    "_get_relevant_documents",
-                    "get_relevant_documents",
-                    "aget_relevant_documents",
-                    "_aget_relevant_documents",
-                ): RunnableSerializable,
-                # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                # the prompt calls might be too small to be interesting
-                ("plan", "aplan"): (
-                    BaseSingleActionAgent,
-                    BaseMultiActionAgent,
-                ),
-                ("_arun", "_run"): BaseTool,
-            },
+        METHODS: Dict[str, core_instruments.ClassFilter] = (
+            container_utils.dict_set_with_multikey(
+                {},
+                {
+                    (
+                        "invoke",
+                        "ainvoke",
+                        "stream",
+                        "astream",
+                    ): Runnable,
+                    ("save_context", "clear"): BaseMemory,
+                    (
+                        "run",
+                        "arun",
+                        "_call",
+                        "__call__",
+                        "_acall",
+                        "acall",
+                    ): Chain,
+                    (
+                        "_get_relevant_documents",
+                        "get_relevant_documents",
+                        "aget_relevant_documents",
+                        "_aget_relevant_documents",
+                    ): RunnableSerializable,
+                    # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                    # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
+                    # the prompt calls might be too small to be interesting
+                    ("plan", "aplan"): (
+                        BaseSingleActionAgent,
+                        BaseMultiActionAgent,
+                    ),
+                    ("_arun", "_run"): BaseTool,
+                },
+            )
         )
         """Methods to be instrumented.
 
@@ -133,7 +130,7 @@ class LangChainInstrument(Instrument):
         )
 
 
-class TruChain(mod_app.App):
+class TruChain(core_app.App):
     """Recorder for _LangChain_ applications.
 
     This recorder is designed for LangChain apps, providing a way to instrument,
@@ -224,7 +221,7 @@ class TruChain(mod_app.App):
     """The langchain app to be instrumented."""
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
     """The root callable of the wrapped app."""
 
     # Normally pydantic does not like positional args but chain here is
@@ -232,13 +229,13 @@ class TruChain(mod_app.App):
     def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
         # TruChain specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)
+        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
 
         super().__init__(**kwargs)
 
     @classmethod
-    def select_context(cls, app: Optional[Chain] = None) -> Lens:
+    def select_context(cls, app: Optional[Chain] = None) -> serial_utils.Lens:
         """Get the path to the context in the query output."""
 
         if app is None:
@@ -249,8 +246,8 @@ class TruChain(mod_app.App):
 
         retrievers = []
 
-        app_json = jsonify(app)
-        for lens in all_queries(app_json):
+        app_json = json_utils.jsonify(app)
+        for lens in serial_utils.all_queries(app_json):
             try:
                 comp = lens.get_sole_item(app)
                 if isinstance(comp, BaseRetriever):
@@ -278,7 +275,7 @@ class TruChain(mod_app.App):
                     )
                 )
 
-        retriever = Select.RecordCalls + retrievers[0][0]
+        retriever = select_schema.Select.RecordCalls + retrievers[0][0]
         if hasattr(retriever, "invoke"):
             return retriever.invoke.rets[:].page_content
 
@@ -319,8 +316,8 @@ class TruChain(mod_app.App):
 
         if (
             "inputs" in bindings.arguments
-            and safe_hasattr(self.app, "input_keys")
-            and safe_hasattr(self.app, "prep_inputs")
+            and python_utils.safe_hasattr(self.app, "input_keys")
+            and python_utils.safe_hasattr(self.app, "prep_inputs")
         ):
             # langchain specific:
             ins = self.app.prep_inputs(bindings.arguments["inputs"])
@@ -333,7 +330,7 @@ class TruChain(mod_app.App):
 
             return ins[self.app.input_keys[0]]
 
-        return mod_app.App.main_input(self, func, sig, bindings)
+        return core_app.App.main_input(self, func, sig, bindings)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
@@ -366,7 +363,9 @@ class TruChain(mod_app.App):
             # bundled by us into a sequence of strings.
             return "".join(ret)
 
-        if isinstance(ret, Dict) and safe_hasattr(self.app, "output_keys"):
+        if isinstance(ret, Dict) and python_utils.safe_hasattr(
+            self.app, "output_keys"
+        ):
             # langchain specific:
             if len(self.app.output_keys) == 0:
                 logger.warning(
@@ -377,12 +376,12 @@ class TruChain(mod_app.App):
             if self.app.output_keys[0] in ret:
                 return ret[self.app.output_keys[0]]
 
-        return mod_app.App.main_output(self, func, sig, bindings, ret)
+        return core_app.App.main_output(self, func, sig, bindings, ret)
 
     def main_call(self, human: str):
         # If available, a single text to a single text invocation of this app.
 
-        if safe_hasattr(self.app, "output_keys"):
+        if python_utils.safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return self.app(human)[out_key]
         else:
@@ -394,7 +393,7 @@ class TruChain(mod_app.App):
 
         out = await self._acall(human)
 
-        if safe_hasattr(self.app, "output_keys"):
+        if python_utils.safe_hasattr(self.app, "output_keys"):
             out_key = self.app.output_keys[0]
             return out[out_key]
         else:

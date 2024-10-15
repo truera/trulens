@@ -4,7 +4,7 @@ import logging
 from typing import Callable, TypeVar
 import weakref
 
-from trulens.core import instruments as mod_instruments
+from trulens.core import instruments as core_instruments
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing.core import trace as mod_trace
@@ -21,7 +21,7 @@ def deproxy(proxy: weakref.ProxyType[T]) -> T:
     return proxy.__init__.__self__
 
 
-class _Instrument(mod_instruments.Instrument):
+class _Instrument(core_instruments.Instrument):
     def tracked_method_wrapper(
         self,
         query: serial_utils.Lens,

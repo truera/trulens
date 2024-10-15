@@ -37,8 +37,8 @@ def iprint(*args, tabs=0, **kwargs):
 def print_context(msg: Optional[str] = None, tabs=0):
     """Print the status of trulens context variables."""
 
-    from trulens.core import instruments as mod_instruments
-    from trulens.core.feedback import endpoint as mod_endpoint
+    from trulens.core import instruments as core_instruments
+    from trulens.core.feedback import endpoint as core_endpoint
 
     if msg is None:
         msg = python_utils.code_line(
@@ -46,9 +46,9 @@ def print_context(msg: Optional[str] = None, tabs=0):
         )
 
     contextvars = [
-        mod_instruments.WithInstrumentCallbacks._context_contexts,
-        mod_instruments.WithInstrumentCallbacks._stack_contexts,
-        mod_endpoint.Endpoint._context_endpoints,
+        core_instruments.WithInstrumentCallbacks._context_contexts,
+        core_instruments.WithInstrumentCallbacks._stack_contexts,
+        core_endpoint.Endpoint._context_endpoints,
     ]
 
     iprint(msg, tabs=tabs)

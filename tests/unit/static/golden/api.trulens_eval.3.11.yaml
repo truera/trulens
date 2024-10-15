@@ -28,8 +28,10 @@ trulens_eval:
     __version_info__: builtins.tuple
     deprecation_utils: builtins.module
     eval_optional_utils: builtins.module
-    imports_utils: builtins.module
+    feedback_schema: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
+    select_schema: builtins.module
 trulens_eval.AzureOpenAI:
   __bases__:
   - trulens.providers.openai.provider.OpenAI
@@ -1459,10 +1461,8 @@ trulens_eval.app:
     ATTRIBUTE_ERROR_MESSAGE: builtins.str
     Agent: trulens.core.app.ComponentViewMeta
     App: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     ComponentView: trulens.core.app.ComponentViewMeta
     CustomComponent: trulens.core.app.ComponentViewMeta
-    JSON_BASES: builtins.tuple
     LLM: trulens.core.app.ComponentViewMeta
     LangChainComponent: trulens.core.app.ComponentViewMeta
     LlamaIndexComponent: trulens.core.app.ComponentViewMeta
@@ -1693,7 +1693,6 @@ trulens_eval.appui:
   highs: {}
   lows:
     AppUI: traitlets.traitlets.MetaHasTraits
-    JSON_BASES: builtins.tuple
     RecordWidget: builtins.type
     Selector: traitlets.traitlets.MetaHasTraits
     SelectorValue: traitlets.traitlets.MetaHasTraits
@@ -1863,7 +1862,6 @@ trulens_eval.database.migrations.data:
   __class__: builtins.module
   highs: {}
   lows:
-    MIGRATION_UNKNOWN_STR: builtins.str
     data_migrate: builtins.function
     deprecation_utils: builtins.module
     sql_alchemy_migration_versions: builtins.list
@@ -1873,7 +1871,6 @@ trulens_eval.database.orm:
   highs: {}
   lows:
     BaseWithTablePrefix: builtins.type
-    DEFAULT_DATABASE_PREFIX: builtins.str
     ORM: abc.ABCMeta
     deprecation_utils: builtins.module
     make_base_for_prefix: functools._lru_cache_wrapper
@@ -1896,13 +1893,8 @@ trulens_eval.database.sqlalchemy:
   highs: {}
   lows:
     AppsExtractor: builtins.type
-    MIGRATION_UNKNOWN_STR: builtins.str
     SQLAlchemyDB: pydantic._internal._model_construction.ModelMetaclass
     SnowflakeImpl: alembic.ddl.impl.ImplMeta
-    UNICODE_CHECK: builtins.str
-    UNICODE_CLOCK: builtins.str
-    UNICODE_HOURGLASS: builtins.str
-    UNICODE_STOP: builtins.str
     deprecation_utils: builtins.module
     flatten: builtins.function
     no_perf: builtins.dict
@@ -2019,7 +2011,7 @@ trulens_eval.feedback:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.AzureOpenAI:
   __bases__:
@@ -3083,7 +3075,7 @@ trulens_eval.feedback.provider:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.provider.AzureOpenAI:
   __bases__:
@@ -4074,7 +4066,7 @@ trulens_eval.feedback.provider.endpoint:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
   __bases__:
@@ -4825,7 +4817,6 @@ trulens_eval.feedback.provider.endpoint.bedrock:
   lows:
     BedrockCallback: pydantic._internal._model_construction.ModelMetaclass
     BedrockEndpoint: pydantic._internal._model_construction.ModelMetaclass
-    INSTRUMENT: builtins.str
     deprecation_utils: builtins.module
 trulens_eval.feedback.provider.endpoint.bedrock.BedrockCallback:
   __bases__:
@@ -5394,7 +5385,6 @@ trulens_eval.feedback.provider.endpoint.openai:
   __class__: builtins.module
   highs: {}
   lows:
-    CLASS_INFO: builtins.str
     OpenAICallback: pydantic._internal._model_construction.ModelMetaclass
     OpenAIClient: pydantic._internal._model_construction.ModelMetaclass
     OpenAIEndpoint: pydantic._internal._model_construction.ModelMetaclass
@@ -5949,7 +5939,6 @@ trulens_eval.feedback.provider.openai:
   highs: {}
   lows:
     AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     deprecation_utils: builtins.module
 trulens_eval.feedback.provider.openai.AzureOpenAI:
@@ -6257,8 +6246,6 @@ trulens_eval.keys:
     ApiKeyError: builtins.type
     REDACTED_VALUE: builtins.str
     TEMPLATE_VALUES: builtins.set
-    UNICODE_CHECK: builtins.str
-    UNICODE_STOP: builtins.str
     check_keys: builtins.function
     check_or_set_keys: builtins.function
     cohere_agent: builtins.NoneType
@@ -6828,7 +6815,7 @@ trulens_eval.tru:
     DASHBOARD_START_TIMEOUT: builtins.int
     Tru: trulens.core.utils.python.PydanticSingletonMeta
     deprecation_utils: builtins.module
-    humanize_seconds: builtins.function
+    text_utils: builtins.module
 trulens_eval.tru.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
@@ -7126,7 +7113,6 @@ trulens_eval.tru_custom_app:
   lows:
     PLACEHOLDER: builtins.str
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
-    UNICODE_CHECK: builtins.str
     deprecation_utils: builtins.module
     instrument: builtins.type
 trulens_eval.tru_custom_app.TruCustomApp:
@@ -7825,12 +7811,6 @@ trulens_eval.utils.json:
   __class__: builtins.module
   highs: {}
   lows:
-    ALL_SPECIAL_KEYS: builtins.set
-    CIRCLE: builtins.str
-    CLASS_INFO: builtins.str
-    ERROR: builtins.str
-    JSON_BASES: builtins.tuple
-    NOSERIO: builtins.str
     deprecation_utils: builtins.module
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
@@ -7985,14 +7965,11 @@ trulens_eval.utils.pyschema:
   lows:
     Bindings: pydantic._internal._model_construction.ModelMetaclass
     CIRCLE: builtins.str
-    CLASS_INFO: builtins.str
     Class: pydantic._internal._model_construction.ModelMetaclass
-    ERROR: builtins.str
     Function: pydantic._internal._model_construction.ModelMetaclass
     FunctionOrMethod: pydantic._internal._model_construction.ModelMetaclass
     Method: pydantic._internal._model_construction.ModelMetaclass
     Module: pydantic._internal._model_construction.ModelMetaclass
-    NOSERIO: builtins.str
     Obj: pydantic._internal._model_construction.ModelMetaclass
     WithClassInfo: pydantic._internal._model_construction.ModelMetaclass
     builtin_init_dummy: builtins.function
@@ -8394,9 +8371,6 @@ trulens_eval.utils.serial:
     GetItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
     GetItems: pydantic._internal._model_construction.ModelMetaclass
     GetSlice: pydantic._internal._model_construction.ModelMetaclass
-    JSONPath: pydantic._internal._model_construction.ModelMetaclass
-    JSON_BASES: builtins.tuple
-    JSONized: builtins.type
     Lens: pydantic._internal._model_construction.ModelMetaclass
     ParseException: builtins.type
     SerialBytes: pydantic._internal._model_construction.ModelMetaclass
@@ -8411,6 +8385,9 @@ trulens_eval.utils.serial:
     matching_objects: builtins.function
     matching_queries: builtins.function
     model_dump: builtins.function
+    serial_utilsPath: builtins.module
+    serial_utils_BASES: builtins.module
+    serial_utilsized: builtins.module
 trulens_eval.utils.serial.Collect:
   __bases__:
   - trulens.core.utils.serial.Step
@@ -8712,32 +8689,6 @@ trulens_eval.utils.serial.GetSlice:
     stop: typing.Optional[builtins.int, builtins.NoneType]
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-trulens_eval.utils.serial.JSONPath:
-  __bases__:
-  - pydantic.main.BaseModel
-  - collections.abc.Sized
-  - collections.abc.Hashable
-  - typing.Generic
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    dump_as_string: builtins.function
-    existing_prefix: builtins.function
-    exists: builtins.function
-    get: builtins.function
-    get_sole_item: builtins.function
-    is_immediate_prefix_of: builtins.function
-    is_prefix_of: builtins.function
-    of_string: builtins.staticmethod
-    path: typing.Tuple[trulens.core.utils.serial.Step, ...]
-    set: builtins.function
-    set_or_append: builtins.function
-    validate_from_string: builtins.classmethod
-trulens_eval.utils.serial.JSONized:
-  __bases__:
-  - builtins.dict
-  - typing.Generic
-  __class__: builtins.type
-  attributes: {}
 trulens_eval.utils.serial.Lens:
   __bases__:
   - pydantic.main.BaseModel
@@ -8877,58 +8828,13 @@ trulens_eval.utils.trulens:
   highs: {}
   lows:
     COMPONENT_VIEWS: builtins.list
-    Class: pydantic._internal._model_construction.ModelMetaclass
     Other: trulens.core.app.ComponentViewMeta
     Type: typing._SpecialGenericAlias
     app: builtins.module
     component_of_json: builtins.function
     constructor_of_class: builtins.function
     deprecation_utils: builtins.module
-trulens_eval.utils.trulens.Class:
-  __bases__:
-  - trulens.core.utils.serial.SerialModel
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    base_class: builtins.function
-    bases: typing.Optional[typing.Sequence[trulens.core.utils.pyschema.Class], builtins.NoneType]
-    construct: builtins.classmethod
-    copy: builtins.function
-    dict: builtins.function
-    formatted_objects: _contextvars.ContextVar
-    from_orm: builtins.classmethod
-    json: builtins.function
-    load: builtins.function
-    model_computed_fields: builtins.dict
-    model_config: builtins.dict
-    model_construct: builtins.classmethod
-    model_copy: builtins.function
-    model_dump: builtins.function
-    model_dump_json: builtins.function
-    model_extra: builtins.property
-    model_fields: builtins.dict
-    model_fields_set: builtins.property
-    model_json_schema: builtins.classmethod
-    model_parametrized_name: builtins.classmethod
-    model_post_init: builtins.function
-    model_rebuild: builtins.classmethod
-    model_validate: builtins.classmethod
-    model_validate_json: builtins.classmethod
-    model_validate_strings: builtins.classmethod
-    module: trulens.core.utils.pyschema.Module
-    name: builtins.str
-    noserio_issubclass: builtins.function
-    of_class: builtins.staticmethod
-    of_class_info: builtins.staticmethod
-    of_object: builtins.staticmethod
-    parse_file: builtins.classmethod
-    parse_obj: builtins.classmethod
-    parse_raw: builtins.classmethod
-    replace: builtins.function
-    schema: builtins.classmethod
-    schema_json: builtins.classmethod
-    update: builtins.function
-    update_forward_refs: builtins.classmethod
-    validate: builtins.classmethod
+    pyschema_utils: builtins.module
 trulens_eval.utils.trulens.Other:
   __bases__:
   - trulens.core.app.Other

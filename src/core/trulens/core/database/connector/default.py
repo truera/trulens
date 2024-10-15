@@ -14,7 +14,7 @@ from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.utils.python import OpaqueWrapper
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class DefaultDBConnector(DBConnector):
 
         """
 
-        self._db: Union[DB, OpaqueWrapper]
+        self._db: Union[DB, python_utils.OpaqueWrapper]
         database_args = database_args or {}
 
         if isinstance(database, DB):
@@ -82,11 +82,11 @@ class DefaultDBConnector(DBConnector):
                 self._db.check_db_revision()
             except DatabaseVersionException as e:
                 print(e)
-                self._db = OpaqueWrapper(obj=self._db, e=e)
+                self._db = python_utils.OpaqueWrapper(obj=self._db, e=e)
 
     @cached_property
     def db(self) -> DB:
-        if isinstance(self._db, OpaqueWrapper):
+        if isinstance(self._db, python_utils.OpaqueWrapper):
             self._db = self._db.unwrap()
         if not isinstance(self._db, DB):
             raise RuntimeError("Unhandled database type.")

@@ -1,6 +1,11 @@
 """Python compatibility utilities.
 
-These are mostly type/function aliases to provide consistency across python versions.
+These are mostly type/function aliases to provide consistency across python
+versions.
+
+Imports from this module can violate the import modules standard. That is, it is
+ok to import the defined names directly as they are replacement to standard
+python names.
 """
 
 from __future__ import annotations

@@ -314,7 +314,7 @@ Along with the high level changes in TruLens v1, ground truth can now be persist
         )
         ```
 
-    === "Load and Evaluate with Persisted Groundtruth Data"
+    === "Load and Evaluate with Persisted GroundTruth Data"
 
         ```python
         from trulens.core import Feedback
