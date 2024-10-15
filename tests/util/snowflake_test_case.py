@@ -11,8 +11,8 @@ import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.core import TruSession
+from trulens.connectors import snowflake as snowflake_connector
+from trulens.core import session as core_session
 
 
 class SnowflakeTestCase(TestCase):
@@ -36,9 +36,11 @@ class SnowflakeTestCase(TestCase):
     def tearDown(self):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
         for key in [
-            curr for curr in TruSession._instances if curr[0] == "TruSession"
+            curr
+            for curr in core_session.TruSession._instances
+            if curr[0] == "TruSession"
         ]:
-            del TruSession._instances[key]
+            del core_session.TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -76,7 +78,7 @@ class SnowflakeTestCase(TestCase):
         app_base_name: Optional[str] = None,
         schema_name: Optional[str] = None,
         schema_already_exists: bool = False,
-    ) -> TruSession:
+    ) -> core_session.TruSession:
         if bool(app_base_name) == bool(schema_name):
             raise ValueError(
                 "Exactly one of `app_base_name` and `schema_name` must be supplied!"
@@ -92,12 +94,12 @@ class SnowflakeTestCase(TestCase):
         if not schema_already_exists:
             self.assertNotIn(self._schema, self.list_schemas())
             self._snowflake_schemas_to_delete.append(self._schema)
-        connector = SnowflakeConnector(
+        connector = snowflake_connector.SnowflakeConnector(
             schema=self._schema,
             **self._snowflake_connection_parameters,
             init_server_side=True,
         )
-        session = TruSession(connector=connector)
+        session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
         return session
 

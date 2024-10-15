@@ -38,8 +38,8 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
-from trulens.core.utils.containers import iterable_peek
-from trulens.core.utils.python import class_name
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +553,7 @@ class SerialModel(pydantic.BaseModel):
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
 
-        # yield class_name(type(self))
+        # yield python_utils.class_name(type(self))
 
         # If this is a root repr, create a new set for already-formatted objects.
         tok = None
@@ -566,7 +566,7 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{class_name(type(self))}@0x{id(self):x}"
+            yield f"{python_utils.class_name(type(self))}@0x{id(self):x}"
 
             if tok is not None:
                 SerialModel.formatted_objects.reset(tok)
@@ -1003,7 +1003,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         try:
             firsts = first.get(obj)
-            first_obj, firsts = iterable_peek(firsts)
+            first_obj, firsts = container_utils.iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
             # `first` points to an element that does not exist, use `set` to create a spot for it.

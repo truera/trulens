@@ -8,7 +8,7 @@ import zipfile
 import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
-from trulens.core import TruSession
+from trulens.core import session as core_session
 
 logger = logging.getLogger(__name__)
 
@@ -285,24 +285,33 @@ class TruBEIRDataLoader:
 
     def persist_dataset(
         self,
-        session: TruSession,
+        session: core_session.TruSession,
         dataset_name: str,
         dataset_metadata: Optional[Dict[str, Any]] = None,
         split="test",
         download=True,
         chunk_size=1000,
     ):
-        """
-        Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+        """Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+
         Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
+
         Args:
-            split (str, optional): Defaults to "test".
-            session (TruSession): TruSession instance to persist the dataset.
-            dataset_name (str): Name of the dataset to be persisted - Note this can be different from the standardized BEIR dataset names.
-            dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset.
-            download (bool, optional): If False, remove the downloaded dataset file after processing. Defaults to True.
+            split: Defaults to "test".
+
+            session: TruSession instance to persist the dataset.
+
+            dataset_name: Name of the dataset to be persisted - Note this can
+              be different from the standardized BEIR dataset names.
+
+            dataset_metadata: Metadata for the dataset.
+
+            download: If False, remove the downloaded dataset file after
+              processing. Defaults to True.
+
         Returns:
-            pd.DataFrame: DataFrame with the BEIR dataset
+            DataFrame with the BEIR dataset
+
         """
         for chunk in self._process_dataset(split=split, chunk_size=chunk_size):
             df_chunk = pd.DataFrame(chunk)

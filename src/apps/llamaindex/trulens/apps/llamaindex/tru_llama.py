@@ -1,6 +1,4 @@
-"""
-# LlamaIndex instrumentation.
-"""
+"""LlamaIndex instrumentation."""
 
 from inspect import BoundArguments
 from inspect import Signature
@@ -20,28 +18,26 @@ from typing import (
 
 import llama_index
 from pydantic import Field
-from trulens.apps.langchain import LangChainInstrument
-from trulens.core import app as mod_app
-from trulens.core._utils.pycompat import EmptyType
-from trulens.core._utils.pycompat import getmembers_static
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
-from trulens.core.utils import python as python_utils
+from trulens.apps.langchain import tru_chain as mod_tru_chain
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
+from trulens.core._utils.pycompat import EmptyType  # import style exception
+from trulens.core._utils.pycompat import (
+    getmembers_static,  # import style exception
+)
 
 # TODO: Do we need to depend on this?
-from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.imports import get_package_version
-from trulens.core.utils.imports import parse_version
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.serial import Lens
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-version = get_package_version("llama_index")
+version = import_utils.get_package_version("llama_index")
 
 # If llama index is not installed, will get a dummy for llama_index. In that
 # case or if it is installed and sufficiently new version, continue with
@@ -50,8 +46,8 @@ version = get_package_version("llama_index")
 
 legacy = (
     version is None
-    or isinstance(llama_index, Dummy)
-    or version < parse_version("0.10.0")
+    or isinstance(llama_index, import_utils.Dummy)
+    or version < import_utils.parse_version("0.10.0")
 )
 
 if not legacy:
@@ -137,14 +133,14 @@ else:
 pp = PrettyPrinter()
 
 
-class LlamaInstrument(Instrument):
+class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
         MODULES = {"llama_index.", "llama_hub."}.union(
-            LangChainInstrument.Default.MODULES
+            mod_tru_chain.LangChainInstrument.Default.MODULES
         )
         """Modules by prefix to instrument.
 
@@ -175,58 +171,68 @@ class LlamaInstrument(Instrument):
             BaseNodePostprocessor,
             QueryEngineComponent,
             RetrieverComponent,
-        }.union(LangChainInstrument.Default.CLASSES())
+        }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            dict(LangChainInstrument.Default.METHODS),
-            {
-                # LLM:
-                (
-                    "chat",
-                    "complete",
-                    "stream_chat",
-                    "stream_complete",
-                    "achat",
-                    "acomplete",
-                    "astream_chat",
-                    "astream_complete",
-                ): BaseLLM,
-                # BaseTool/AsyncBaseTool:
-                ("__call__", "call"): BaseTool,
-                ("acall"): AsyncBaseTool,
-                # Memory:
-                ("put"): BaseMemory,
-                # Misc.:
-                ("get_response"): Refine,
-                ("predict", "apredict", "stream", "astream"): BaseLLMPredictor,
-                (
-                    "query",
-                    "aquery",
-                    "synthesize",
-                    "asynthesize",
-                ): BaseQueryEngine,
-                (
-                    "chat",
-                    "achat",
-                    "stream_chat",
-                    "astream_chat",
-                    "complete",
-                    "acomplete",
-                    "stream_complete",
-                    "astream_complete",
-                ): (BaseChatEngine,),
-                # BaseRetriever/BaseQueryEngine:
-                ("retrieve", "_retrieve", "_aretrieve"): (
-                    BaseQueryEngine,
-                    BaseRetriever,
-                    WithFeedbackFilterNodes,
-                ),
-                # BaseNodePostProcessor
-                ("_postprocess_nodes"): BaseNodePostprocessor,
-                # Components
-                ("_run_component"): (QueryEngineComponent, RetrieverComponent),
-            },
+        METHODS: Dict[str, core_instruments.ClassFilter] = (
+            container_utils.dict_set_with_multikey(
+                dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
+                {
+                    # LLM:
+                    (
+                        "chat",
+                        "complete",
+                        "stream_chat",
+                        "stream_complete",
+                        "achat",
+                        "acomplete",
+                        "astream_chat",
+                        "astream_complete",
+                    ): BaseLLM,
+                    # BaseTool/AsyncBaseTool:
+                    ("__call__", "call"): BaseTool,
+                    ("acall"): AsyncBaseTool,
+                    # Memory:
+                    ("put"): BaseMemory,
+                    # Misc.:
+                    ("get_response"): Refine,
+                    (
+                        "predict",
+                        "apredict",
+                        "stream",
+                        "astream",
+                    ): BaseLLMPredictor,
+                    (
+                        "query",
+                        "aquery",
+                        "synthesize",
+                        "asynthesize",
+                    ): BaseQueryEngine,
+                    (
+                        "chat",
+                        "achat",
+                        "stream_chat",
+                        "astream_chat",
+                        "complete",
+                        "acomplete",
+                        "stream_complete",
+                        "astream_complete",
+                    ): (BaseChatEngine,),
+                    # BaseRetriever/BaseQueryEngine:
+                    ("retrieve", "_retrieve", "_aretrieve"): (
+                        BaseQueryEngine,
+                        BaseRetriever,
+                        WithFeedbackFilterNodes,
+                    ),
+                    # BaseNodePostProcessor
+                    ("_postprocess_nodes"): BaseNodePostprocessor,
+                    # Components
+                    ("_run_component"): (
+                        QueryEngineComponent,
+                        RetrieverComponent,
+                    ),
+                },
+            )
         )
         """Methods to instrument."""
 
@@ -240,7 +246,7 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(mod_app.App):
+class TruLlama(core_app.App):
     """Recorder for _LlamaIndex_ applications.
 
     This recorder is designed for LlamaIndex apps, providing a way to
@@ -322,20 +328,22 @@ class TruLlama(mod_app.App):
     app: Union[BaseQueryEngine, BaseChatEngine]
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(
         self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
     ):
         # TruLlama specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["root_class"] = pyschema_utils.Class.of_object(
+            app
+        )  # TODO: make class property
         kwargs["instrument"] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)
 
     @classmethod
-    def select_source_nodes(cls) -> Lens:
+    def select_source_nodes(cls) -> serial_utils.Lens:
         """
         Get the path to the source nodes in the query output.
         """
@@ -439,7 +447,7 @@ class TruLlama(mod_app.App):
     @classmethod
     def select_context(
         cls, app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
-    ) -> Lens:
+    ) -> serial_utils.Lens:
         """
         Get the path to the context in the query output.
         """
@@ -475,7 +483,7 @@ class TruLlama(mod_app.App):
             return bindings.arguments["message"]
 
         else:
-            return mod_app.App.main_input(self, func, sig, bindings)
+            return core_app.App.main_input(self, func, sig, bindings)
 
     # App override:
     def main_output(
@@ -503,7 +511,7 @@ class TruLlama(mod_app.App):
                 return val
 
             else:  # attr is None
-                return mod_app.App.main_output(self, func, sig, bindings, ret)
+                return core_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None

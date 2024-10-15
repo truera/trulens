@@ -16,19 +16,19 @@ are expected.
 from pathlib import Path
 from unittest import main
 
-from trulens.apps.custom import TruCustomApp
-from trulens.core import Feedback
-from trulens.core.utils.threading import TP
-from trulens.feedback.dummy.provider import DummyProvider
-from trulens.providers.huggingface.provider import Dummy
+from trulens.apps import custom as custom_app
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.utils import threading as threading_utils
+from trulens.feedback.dummy import provider as dummy_provider
+from trulens.providers.huggingface import provider as huggingface_provider
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import TruTestCase
+from tests import test as mod_test
 
 _GOLDEN_PATH = Path("tests") / "e2e" / "golden"
 
 
-class TestSerial(TruTestCase):
+class TestSerial(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
@@ -37,7 +37,7 @@ class TestSerial(TruTestCase):
     def tearDown(self):
         # Need to shutdown threading pools as otherwise the thread cleanup
         # checks will fail.
-        TP().shutdown()
+        threading_utils.TP().shutdown()
 
         super().tearDown()
 
@@ -46,7 +46,7 @@ class TestSerial(TruTestCase):
 
         ca = DummyApp(delay=0.0, alloc=0, use_parallel=False)
 
-        d = DummyProvider(
+        d = dummy_provider.DummyProvider(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
@@ -56,7 +56,7 @@ class TestSerial(TruTestCase):
             delay=0.0,
         )
 
-        d_hugs = Dummy(
+        d_hugs = huggingface_provider.Dummy(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
@@ -66,14 +66,14 @@ class TestSerial(TruTestCase):
             delay=0.0,
         )
 
-        feedback_language_match = Feedback(
+        feedback_language_match = core_feedback.Feedback(
             d_hugs.language_match
         ).on_input_output()
-        feedback_context_relevance = Feedback(
+        feedback_context_relevance = core_feedback.Feedback(
             d.context_relevance
         ).on_input_output()
 
-        ta = TruCustomApp(
+        ta = custom_app.TruCustomApp(
             ca,
             app_name="customapp",
             feedbacks=[feedback_language_match, feedback_context_relevance],

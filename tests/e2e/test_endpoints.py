@@ -1,5 +1,4 @@
-"""
-# Tests endpoints.
+"""Tests endpoints.
 
 These tests make use of potentially non-free apis and require
 various secrets configured. See `setUp` below.
@@ -11,10 +10,10 @@ from unittest import TestCase
 from unittest import main
 from unittest import skip
 
-from trulens.core.feedback import Endpoint
-from trulens.core.utils.keys import check_keys
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.utils import keys as key_utils
 
-from tests.test import optional_test
+from tests import test as test_utils
 
 pp = PrettyPrinter()
 
@@ -23,7 +22,7 @@ class TestEndpoints(TestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             # for non-azure openai tests
             "OPENAI_API_KEY",
             # for huggingface tests
@@ -46,7 +45,7 @@ class TestEndpoints(TestCase):
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
-        _, cost_tally = Endpoint.track_all_costs_tally(
+        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
             provider.sentiment, text="This rocks!"
         )
         cost = cost_tally()
@@ -93,7 +92,7 @@ class TestEndpoints(TestCase):
                 "Expected cost currency to be Snowflake credits.",
             )
 
-    @optional_test
+    @test_utils.optional_test
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
@@ -101,7 +100,7 @@ class TestEndpoints(TestCase):
 
         hugs = Huggingface()
 
-        _, cost_tally = Endpoint.track_all_costs_tally(
+        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
             hugs.positive_sentiment, text="This rocks!"
         )
         cost = cost_tally()
@@ -134,7 +133,7 @@ class TestEndpoints(TestCase):
             cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
         )
 
-    @optional_test
+    @test_utils.optional_test
     def test_openai(self):
         """Check that cost tracking works for openai models."""
 
@@ -147,7 +146,7 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @optional_test
+    @test_utils.optional_test
     def test_litellm_openai(self):
         """Check that cost tracking works for openai models through litellm."""
 
@@ -159,13 +158,13 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         provider = LiteLLM(f"openai/{OpenAI.DEFAULT_MODEL_ENGINE}")
 
         self._test_llm_provider_endpoint(provider)
 
-    @optional_test
+    @test_utils.optional_test
     def test_openai_azure(self):
         """Check that cost tracking works for openai azure models."""
 
@@ -181,7 +180,7 @@ class TestEndpoints(TestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @optional_test
+    @test_utils.optional_test
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
 
@@ -190,7 +189,7 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         from trulens.providers.litellm import LiteLLM
 
@@ -204,7 +203,7 @@ class TestEndpoints(TestCase):
         self._test_llm_provider_endpoint(provider)
 
     @skip("No keys available.")
-    @optional_test
+    @test_utils.optional_test
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
 
@@ -216,7 +215,7 @@ class TestEndpoints(TestCase):
         self._test_llm_provider_endpoint(provider, with_cost=False)
 
     @skip("No keys available.")
-    @optional_test
+    @test_utils.optional_test
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
 
@@ -225,14 +224,14 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        Endpoint.delete_singleton_by_name("litellm")
+        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
 
         provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
 
         # Litellm comes with cost tracking for bedrock though it may be inaccurate.
         self._test_llm_provider_endpoint(provider)
 
-    @optional_test
+    @test_utils.optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
         import snowflake.connector
