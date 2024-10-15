@@ -27,20 +27,44 @@ env-%:
 	poetry install --with $*
 
 env-tests:
-	poetry run pip install pytest nbconvert nbformat pytest-subtests pytest-azurepipelines ruff pre-commit pytest-cov jsondiff
+	poetry run pip install \
+		pytest \
+		nbconvert \
+		nbformat \
+		pytest-subtests \
+		pytest-azurepipelines \
+		ruff \
+		pre-commit \
+		pytest-cov \
+		jsondiff
 
 env-tests-required:
 	poetry install --only required
 	make env-tests
 
+# Note: in the below, there are a few pinned langchain versions to make sure they don't have updated
+# to broken versions which are a few versions after the pinned ones.
 env-tests-optional: env env-tests
-	poetry run pip install llama-index-embeddings-huggingface llama-index-embeddings-openai
+	poetry run pip install \
+		langchain==0.2.11 \
+		langchain-core==0.2.24 \
+		llama-index-embeddings-huggingface \
+		llama-index-embeddings-openai \
+		langchain-openai \
+		unstructured \
+		chromadb \
 
 env-tests-db: env-tests
-	poetry run pip install cryptography psycopg2-binary pymysql
+	poetry run pip install \
+		cryptography \
+		psycopg2-binary \
+		pymysql
 
-env-tests-notebook: env-tests
-	poetry run pip install faiss-cpu ipytree chromadb unstructured llama-index-readers-web
+env-tests-notebook: env-tests env-tests-optional
+	poetry run pip install \
+		faiss-cpu \
+		ipytree \
+		llama-index-readers-web
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -138,7 +162,7 @@ _trulens_eval:
 		docs/trulens_eval/tracking
 	git worktree prune
 test-legacy-notebooks: _trulens_eval
-	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
+	TEST_OPTIONAL=1 $(PYTEST) -s tests/legacy/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-golden-%: tests/e2e/test_%.py # has golden file
