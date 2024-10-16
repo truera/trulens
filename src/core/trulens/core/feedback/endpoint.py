@@ -673,7 +673,6 @@ class Endpoint(
         """Determine whether we can access the context vars needed for cost tracking."""
 
         try:
-            # make sure these two context vars are available
             Endpoint._context_endpoints.get()
 
         except LookupError:

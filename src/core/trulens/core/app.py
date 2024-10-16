@@ -1043,7 +1043,7 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
-        if not core_instruments.Instrument._have_context([self]):
+        if not core_instruments.Instrument._have_context():
             raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
 
         if self.session.experimental_feature(

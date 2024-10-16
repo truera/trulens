@@ -543,11 +543,10 @@ class Instrument:
         )
 
     @staticmethod
-    def _have_context(apps: Set[WithInstrumentCallbacks]) -> bool:
+    def _have_context() -> bool:
         """Determine whether context vars we need for recording are available."""
 
         try:
-            # make sure these two context vars are available
             WithInstrumentCallbacks._context_contexts.get()
             WithInstrumentCallbacks._stack_contexts.get()
 
@@ -636,7 +635,7 @@ class Instrument:
 
             apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
 
-            if len(apps) > 0 and not Instrument._have_context(apps):
+            if len(apps) > 0 and not Instrument._have_context():
                 return func(*args, **kwargs)
 
             # If not within a root method, call the wrapped function without
