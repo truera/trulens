@@ -497,8 +497,7 @@ class App(
 
         try:
             while True:
-                record = self_proxy.records_with_pending_feedback_results.peek()
-                self_proxy.records_with_pending_feedback_results.remove(record)
+                record = self_proxy.records_with_pending_feedback_results.pop()
                 record.wait_for_feedback_results()
 
         except StopIteration:
