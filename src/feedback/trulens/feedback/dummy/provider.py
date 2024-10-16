@@ -11,6 +11,33 @@ class DummyProvider(llm_provider.LLMProvider):
 
     Does not make any networked requests but pretends to. Uses
     [DummyEndpoint][trulens.feedback.dummy.endpoint.DummyEndpoint].
+
+    Args:
+        name: Name of the provider. Defaults to "dummyhugs".
+
+        rpm: Requests per minute. Defaults to 600.
+            [Endpoint][trulens.core.feedback.endpoint.Endpoint] argument.
+
+        error_prob: Probability of an error occurring.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        loading_prob: Probability of loading.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        freeze_prob: Probability of freezing.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        overloaded_prob: Probability of being overloaded.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        alloc: Amount of memory allocated.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        delay: Delay in seconds to add to requests.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        seed: Random seed. [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI]
+            argument.
     """
 
     model_engine: str = "dummymodel"
@@ -18,12 +45,12 @@ class DummyProvider(llm_provider.LLMProvider):
     def __init__(
         self,
         name: str = "dummyhugs",
+        rpm: float = 600,
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
-        rpm: float = 600,
         delay: float = 1.0,
         seed: int = 0xDEADBEEF,
         **kwargs,
