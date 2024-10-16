@@ -33,7 +33,7 @@ B = TypeVar("B")
 T = TypeVar("T")
 
 
-class DummyOutcome(Enum):
+class _DummyOutcome(Enum):
     """Outcomes of a dummy API call."""
 
     NORMAL = "normal"
@@ -156,7 +156,7 @@ class DummyAPI(pydantic.BaseModel):
             )
 
         r = self.ndt.discrete_choice(
-            seq=list(DummyOutcome),
+            seq=list(_DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -170,18 +170,18 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == DummyOutcome.FREEZE:
+        if r == _DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 await asyncio.sleep(timeout)
 
-        elif r == DummyOutcome.ERROR:
+        elif r == _DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == DummyOutcome.LOADING:
+        elif r == _DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -194,14 +194,14 @@ class DummyAPI(pydantic.BaseModel):
             await asyncio.sleep(wait_time + 2)
             return await self.apost(url, payload, timeout=timeout)
 
-        elif r == DummyOutcome.OVERLOADED:
+        elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             await asyncio.sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == DummyOutcome.NORMAL:
+        elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
@@ -237,7 +237,7 @@ class DummyAPI(pydantic.BaseModel):
             )
 
         r = self.ndt.discrete_choice(
-            seq=list(DummyOutcome),
+            seq=list(_DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -251,18 +251,18 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == DummyOutcome.FREEZE:
+        if r == _DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 sleep(timeout)
 
-        elif r == DummyOutcome.ERROR:
+        elif r == _DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == DummyOutcome.LOADING:
+        elif r == _DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -275,14 +275,14 @@ class DummyAPI(pydantic.BaseModel):
             sleep(wait_time + 2)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == DummyOutcome.OVERLOADED:
+        elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == DummyOutcome.NORMAL:
+        elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
