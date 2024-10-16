@@ -12,8 +12,7 @@ different than the one in which your app was instrumented. A different context
 here means either a different `threading.Thread` or a different `asyncio.Task`.
 While we include several remedies to this problem to allow use of threaded or
 asynchronous apps, these remedies may not cover all of the cases. This document
-is here to help you fix the issue in case your app or the libraries you use was
-not covered by our existing remedies.
+is here to help you fix the issue in case your app or the libraries you use were not covered by our existing remedies.
 
 ## Threads
 
