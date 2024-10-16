@@ -1,7 +1,7 @@
-# "Cannot find TruLens Context" Warning
+# "Cannot find TruLens context" Warning/Error
 
 ```
-Cannot find TruLens Context. See
+Cannot find TruLens context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 ```
 
@@ -70,7 +70,7 @@ which cannot be changed.
 
 ## Other issues
 
-If you are still seeing the _Not Recording_ warning and none of the solutions
+If you are still seeing the _Cannot find TruLens context_ warning and none of the solutions
 above address the problem, please post a [GitHub
 issue](https://github.com/truera/trulens/issues) or a slack post on the
 [AIQuality Forum](https://communityinviter.com/apps/aiqualityforum/josh).

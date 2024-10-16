@@ -46,7 +46,7 @@ DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
 _NO_CONTEXT_WARNING = """
-Cannot find TruLens Context. See
+Cannot find TruLens context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 """
 
