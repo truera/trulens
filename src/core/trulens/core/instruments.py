@@ -542,6 +542,21 @@ class Instrument:
             weakref.proxy(app) if app is not None else None
         )
 
+    @staticmethod
+    def _have_context(apps: Set[WithInstrumentCallbacks]) -> bool:
+        """Determine whether context vars we need for recording are available."""
+
+        try:
+            # make sure these two context vars are available
+            WithInstrumentCallbacks._context_contexts.get()
+            WithInstrumentCallbacks._stack_contexts.get()
+
+        except LookupError:
+            logger.warning(core_endpoint.NO_CONTEXT_WARNING)
+            return False
+
+        return True
+
     def tracked_method_wrapper(
         self,
         query: serial_utils.Lens,
@@ -620,6 +635,9 @@ class Instrument:
             )
 
             apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
+
+            if len(apps) > 0 and not Instrument._have_context(apps):
+                return func(*args, **kwargs)
 
             # If not within a root method, call the wrapped function without
             # any recording.

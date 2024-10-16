@@ -109,13 +109,20 @@ class BlockingSet(set, Generic[T]):
             if len(self.content) == 0:
                 self.event_nonempty.clear()
 
-    def pop(self) -> T:
+    def pop(self, blocking: bool = True) -> Optional[T]:
         """Get and remove an item from the set.
 
-        Blocks until an item is available.
+        Blocks until an item is available, unless blocking is set to False.
+
+        Args:
+            blocking: Whether to block until an item is ready. If not blocking
+                and empty, will return None.
         """
 
         with self.read_lock:
+            if not blocking and not self.event_nonempty.is_set():
+                return None
+
             self.event_nonempty.wait()
 
             if self.event_shutdown.is_set():

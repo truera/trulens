@@ -37,6 +37,7 @@ from trulens.core._utils import optional as optional_utils
 from trulens.core._utils.pycompat import Future  # import standard exception
 from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
@@ -529,8 +530,11 @@ class App(
 
         records = []
 
-        while not self.records_with_pending_feedback_results.empty():
-            record = self.records_with_pending_feedback_results.pop()
+        while (
+            record := self.records_with_pending_feedback_results.pop(
+                blocking=False
+            )
+        ) is not None:
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
             records.append(record)
 
@@ -1039,6 +1043,9 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
+        if not core_instruments.Instrument._have_context([self]):
+            raise RuntimeError(core_endpoint.NO_CONTEXT_WARNING)
+
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
