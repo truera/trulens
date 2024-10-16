@@ -41,7 +41,7 @@ from contextvars import copy_context
 # before:
 Thread(target=your_thread_target, args=(yourargs, ...), kwargs=...)
 
-# after
+# after:
 Thread(target=copy_context().run, args=(your_thread_target, yourargs, ...), kwargs=...)
 ```
 
