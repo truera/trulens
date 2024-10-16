@@ -427,15 +427,18 @@ def caller_frameinfo(
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
-    """A task factory that annotates created tasks with stacks of their parents.
+    """A task factory that annotates created tasks with stacks and context of
+    their parents.
 
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
     stack.
     """
 
-    if "context" not in kwargs:
-        kwargs["context"] = contextvars.copy_context()
+    if "context" in kwargs:
+        logger.warning(
+            "Context is being overwritten, TruLens may not be able to record traces."
+        )
 
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
