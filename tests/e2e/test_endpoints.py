@@ -42,6 +42,63 @@ class TestEndpoints(TestCase):
             "SNOWFLAKE_USER_PASSWORD",
         )
 
+    def _test_hugs_provider_endpoint(self, provider, with_cost: bool = True):
+        """Check that cost tracking works for the huggingface endpoints."""
+
+        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
+            provider.positive_sentiment, text="This rocks!"
+        )
+        cost = cost_tally()
+
+        with self.subTest("n_requests"):
+            self.assertEqual(
+                cost.n_requests, 1, "Expected exactly one request."
+            )
+
+        with self.subTest("n_successful_requests"):
+            self.assertEqual(
+                cost.n_successful_requests,
+                1,
+                "Expected exactly one successful request.",
+            )
+
+        with self.subTest("n_classes"):
+            self.assertEqual(
+                cost.n_classes,
+                3,
+                "Expected exactly three classes for sentiment classification.",
+            )
+
+        with self.subTest("n_stream_chunks"):
+            self.assertEqual(
+                cost.n_stream_chunks,
+                0,
+                "Expected zero chunks for classification endpoints.",
+            )
+
+        with self.subTest("n_tokens"):
+            self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
+
+        with self.subTest("n_prompt_tokens"):
+            self.assertEqual(
+                cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
+            )
+
+        with self.subTest("n_completion_tokens"):
+            self.assertEqual(
+                cost.n_completion_tokens,
+                0.0,
+                "Expected zero completion tokens.",
+            )
+
+        if with_cost:
+            with self.subTest("cost"):
+                self.assertEqual(
+                    cost.cost,
+                    0.0,
+                    "Expected zero cost for huggingface endpoint.",
+                )
+
     def _test_llm_provider_endpoint(self, provider, with_cost: bool = True):
         """Cost checks for endpoints whose providers implement LLMProvider."""
 
@@ -50,47 +107,82 @@ class TestEndpoints(TestCase):
         )
         cost = cost_tally()
 
-        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
-        self.assertEqual(
-            cost.n_successful_requests,
-            1,
-            "Expected exactly one successful request.",
-        )
-        self.assertEqual(
-            cost.n_classes, 0, "Expected zero classes for LLM-based endpoints."
-        )
-        self.assertEqual(
-            cost.n_stream_chunks,
-            0,
-            "Expected zero chunks when not using streaming mode.",
-        )
-        self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
-        self.assertGreater(
-            cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
-        )
-        self.assertGreater(
-            cost.n_completion_tokens,
-            0.0,
-            "Expected non-zero completion tokens.",
-        )
+        with self.subTest("n_requests"):
+            self.assertEqual(
+                cost.n_requests, 1, "Expected exactly one request."
+            )
+
+        with self.subTest("n_successful_requests"):
+            self.assertEqual(
+                cost.n_successful_requests,
+                1,
+                "Expected exactly one successful request.",
+            )
+
+        with self.subTest("n_classes"):
+            self.assertEqual(
+                cost.n_classes,
+                0,
+                "Expected zero classes for LLM-based endpoints.",
+            )
+
+        with self.subTest("n_stream_chunks"):
+            self.assertEqual(
+                cost.n_stream_chunks,
+                0,
+                "Expected zero chunks when not using streaming mode.",
+            )
+
+        with self.subTest("n_tokens"):
+            self.assertGreater(cost.n_tokens, 0, "Expected non-zero tokens.")
+
+        with self.subTest("n_prompt_tokens"):
+            self.assertGreater(
+                cost.n_prompt_tokens, 0, "Expected non-zero prompt tokens."
+            )
+
+        with self.subTest("n_completion_tokens"):
+            self.assertGreater(
+                cost.n_completion_tokens,
+                0.0,
+                "Expected non-zero completion tokens.",
+            )
 
         if with_cost:
-            self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
+            with self.subTest("cost"):
+                self.assertGreater(cost.cost, 0.0, "Expected non-zero cost.")
 
         if (
-            str(type(provider.__self__))
+            str(type(provider))
             == "<class 'trulens.providers.cortex.provider.Cortex'>"
         ):
-            self.assertGreater(
-                cost.n_cortex_guardrails_tokens,
-                0.0,
-                "Expected non-zero cortex guardrails tokens.",
-            )
-            self.assertEqual(
-                cost.cost_currency,
-                "Snowflake credits",
-                "Expected cost currency to be Snowflake credits.",
-            )
+            with self.subTest("n_cortex_guardrails_tokens"):
+                self.assertGreater(
+                    cost.n_cortex_guardrails_tokens,
+                    0.0,
+                    "Expected non-zero cortex guardrails tokens.",
+                )
+
+            with self.subTest("cost_currency"):
+                self.assertEqual(
+                    cost.cost_currency,
+                    "Snowflake credits",
+                    "Expected cost currency to be Snowflake credits.",
+                )
+
+    def test_dummy_hugs(self):
+        """Check that cost tracking works for the dummy huggingface provider."""
+
+        from trulens.providers.huggingface.provider import Dummy
+
+        self._test_hugs_provider_endpoint(Dummy())
+
+    def test_dummy_llm(self):
+        """Check that cost tracking works for dummy llm provider."""
+
+        from trulens.feedback.dummy.provider import DummyProvider
+
+        self._test_llm_provider_endpoint(DummyProvider())
 
     @test_utils.optional_test
     def test_hugs(self):
@@ -98,40 +190,7 @@ class TestEndpoints(TestCase):
 
         from trulens.providers.huggingface import Huggingface
 
-        hugs = Huggingface()
-
-        _, cost_tally = core_endpoint.Endpoint.track_all_costs_tally(
-            hugs.positive_sentiment, text="This rocks!"
-        )
-        cost = cost_tally()
-
-        self.assertEqual(cost.n_requests, 1, "Expected exactly one request.")
-        self.assertEqual(
-            cost.n_successful_requests,
-            1,
-            "Expected exactly one successful request.",
-        )
-        self.assertEqual(
-            cost.n_classes,
-            3,
-            "Expected exactly three classes for sentiment classification.",
-        )
-        self.assertEqual(
-            cost.n_stream_chunks,
-            0,
-            "Expected zero chunks for classification endpoints.",
-        )
-        self.assertEqual(cost.n_tokens, 0, "Expected zero tokens.")
-        self.assertEqual(
-            cost.n_prompt_tokens, 0, "Expected zero prompt tokens."
-        )
-        self.assertEqual(
-            cost.n_completion_tokens, 0.0, "Expected zero completion tokens."
-        )
-
-        self.assertEqual(
-            cost.cost, 0.0, "Expected zero cost for huggingface endpoint."
-        )
+        self._test_hugs_provider_endpoint(Huggingface())
 
     @test_utils.optional_test
     def test_openai(self):
