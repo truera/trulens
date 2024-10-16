@@ -1,0 +1,48 @@
+{
+  "calls": [
+    {
+      "args": {
+        "text1": "hello",
+        "text2": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n"
+      },
+      "meta": {
+        "text1_scores": {
+          "LABEL_0": 0.22658802821291113,
+          "LABEL_1": 0.5794276352564846,
+          "LABEL_2": 0.19398433653060437
+        },
+        "text2_scores": {
+          "LABEL_0": 0.14386970279414246,
+          "LABEL_1": 0.682075654103665,
+          "LABEL_2": 0.1740546431021926
+        }
+      },
+      "ret": 0.8973519811528196
+    }
+  ],
+  "cost": {
+    "cost": 0.0,
+    "cost_currency": "USD",
+    "n_classes": 0,
+    "n_classification_requests": 0,
+    "n_completion_requests": 0,
+    "n_completion_tokens": 0,
+    "n_cortex_guardrails_tokens": 0,
+    "n_embedding_requests": 0,
+    "n_embeddings": 0,
+    "n_prompt_tokens": 0,
+    "n_requests": 0,
+    "n_stream_chunks": 0,
+    "n_successful_requests": 0,
+    "n_tokens": 0
+  },
+  "error": null,
+  "feedback_definition_id": "feedback_definition_hash_5244692166a06574fb05495daf0ad3cf",
+  "feedback_result_id": "feedback_result_hash_f59871bcf2bf437363ea4f6596a359de",
+  "last_ts": "2024-09-25T13:28:17.734193",
+  "multi_result": "null",
+  "name": "language_match",
+  "record_id": "record_hash_ed06148a6a9e5153a97be3dac551aca4",
+  "result": 0.8973519811528196,
+  "status": "done"
+}

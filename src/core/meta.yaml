@@ -1,0 +1,56 @@
+{% set name = "trulens-core" %}
+{% set version = "1.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: 739ca935c4945f8859e1d16ee8ac518cca820bbe26e5273b506b4705d618942f
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - numpy >=1.23
+    - munch >=2.5.0,<3.0.0
+    - dill >=0.3.8,<0.4.0
+    - typing_extensions >=4.9.0,<5.0.0
+    - pydantic >=2.0.0,<3.0.0
+    - pandas >=1.0.0,<3.0.0
+    - rich >=13.6.0,<14.0.0
+    - sqlalchemy >=2.0.0,<3.0.0
+    - alembic >=1.8.1,<2.0.0
+    - nest-asyncio >=1.5.0,<2.0.0
+    - python-dotenv >=0.21,<2.0
+  run_constrained:
+    - tqdm >=4.2.0
+    - openai >=1.0.0
+    - httpx >=0.27
+
+test:
+  imports:
+    - trulens.core
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu

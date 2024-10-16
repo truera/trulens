@@ -1,0 +1,47 @@
+{% set name = "trulens-feedback" %}
+{% set version = "1.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: cbc4a949c5effaedbb556983d70897e45f888305eb665cd56e88d84bdf25d2f6
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - trulens-core >=1.0.0,<2.0.0
+    - nltk >=3.9.1,<4.0.0
+    - pydantic >=2.0.0,<3.0.0
+    - numpy >=1.23.0,<2.0.0
+    - scikit-learn >=1.3.0,<2
+    - scipy >=1.10.1,<2
+
+test:
+  imports:
+    - trulens.feedback
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: A TruLens extension package implementing feedback functions for LLM App evaluation.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu

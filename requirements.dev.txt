@@ -1,5 +1,0 @@
-# Packages required for development and committing to repo.
-
-# Formatting packages pinned for consistency with format checker.
-yapf    == 0.32.0
-isort   == 5.10.1

@@ -1,0 +1,37 @@
+{
+  "calls": [
+    {
+      "args": {
+        "context": "\nFirst an integer: 2 . Also, this is my response to a prompt of length\n263 with a model derp with temperature 0.5. Also, here is\nan integer in case this is being used as a score: 2\n",
+        "question": "hello"
+      },
+      "meta": {},
+      "ret": 0.0
+    }
+  ],
+  "cost": {
+    "cost": 0.0,
+    "cost_currency": "USD",
+    "n_classes": 0,
+    "n_classification_requests": 0,
+    "n_completion_requests": 0,
+    "n_completion_tokens": 0,
+    "n_cortex_guardrails_tokens": 0,
+    "n_embedding_requests": 0,
+    "n_embeddings": 0,
+    "n_prompt_tokens": 0,
+    "n_requests": 0,
+    "n_stream_chunks": 0,
+    "n_successful_requests": 0,
+    "n_tokens": 0
+  },
+  "error": null,
+  "feedback_definition_id": "feedback_definition_hash_178ad41fde59d05dfa60f6898865a00c",
+  "feedback_result_id": "feedback_result_hash_9ca8a9eb7bb150b7c3e8b11a67f2a174",
+  "last_ts": "2024-09-25T13:28:17.771633",
+  "multi_result": "null",
+  "name": "context_relevance",
+  "record_id": "record_hash_ed06148a6a9e5153a97be3dac551aca4",
+  "result": 0.0,
+  "status": "done"
+}

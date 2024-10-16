@@ -1,0 +1,38 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-providers-langchain"
+version = "1.0.1"
+description = "Library to systematically track and evaluate LLM based applications."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
+langchain-core = "=0.2.24"                # ,<0.2.27"
+# buggy after 0.2.24 until 0.3.0 but that is not compatible with nemoguardrails
+
+[tool.poetry.group.dev.dependencies]
+trulens-core = { path = "../../core" }
+trulens-feedback = { path = "../../feedback" }

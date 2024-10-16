@@ -1,0 +1,45 @@
+{% set name = "trulens-providers-cortex" %}
+{% set version = "1.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: 3d586521351f7a710850465e9970372bb5d3fd7c490f35576a9fcbd72993ae1d
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - trulens-core >=1.0.0,<2.0.0
+    - trulens-feedback >=1.0.0,<2.0.0
+    - snowflake-connector-python >=3.11.0,<4.0.0
+    - snowflake-snowpark-python >=1.18.0,<2.0.0
+
+test:
+  imports:
+    - trulens.providers.cortex
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: A TruLens extension package adding Snowflake Cortex support for LLM App evaluation.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu

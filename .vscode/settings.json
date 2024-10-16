@@ -1,4 +1,18 @@
 {
-	"python.formatting.provider": "yapf",
-	"python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+    },
+    "files.exclude": {
+        "**/.venv": true
+    },
+    "cSpell.words": [
+        "behaviour"
+    ],
 }
