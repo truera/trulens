@@ -8,6 +8,7 @@ randomness is introduced to simulate the behavior of real APIs.
 from __future__ import annotations
 
 import asyncio
+from enum import Enum
 import inspect
 import logging
 from pprint import pformat
@@ -30,6 +31,25 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
+
+
+class DummyOutcome(Enum):
+    """Outcomes of a dummy API call."""
+
+    NORMAL = "normal"
+    """Normal response."""
+
+    FREEZE = "freeze"
+    """Simulated freeze outcome."""
+
+    ERROR = "error"
+    """Simulated error outcome."""
+
+    LOADING = "loading"
+    """Simulated loading model outcome."""
+
+    OVERLOADED = "overloaded"
+    """Simulated overloaded outcome."""
 
 
 class NonDeterminism(pydantic.BaseModel):
@@ -136,7 +156,7 @@ class DummyAPI(pydantic.BaseModel):
             )
 
         r = self.ndt.discrete_choice(
-            seq=["normal", "freeze", "error", "loading", "overloaded"],
+            seq=list(DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -150,18 +170,18 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == "freeze":
+        if r == DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 await asyncio.sleep(timeout)
 
-        elif r == "error":
+        elif r == DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == "loading":
+        elif r == DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -174,14 +194,14 @@ class DummyAPI(pydantic.BaseModel):
             await asyncio.sleep(wait_time + 2)
             return await self.apost(url, payload, timeout=timeout)
 
-        elif r == "overloaded":
+        elif r == DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             await asyncio.sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "normal":
+        elif r == DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
@@ -217,7 +237,7 @@ class DummyAPI(pydantic.BaseModel):
             )
 
         r = self.ndt.discrete_choice(
-            seq=["normal", "freeze", "error", "loading", "overloaded"],
+            seq=list(DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -231,18 +251,18 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == "freeze":
+        if r == DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 sleep(timeout)
 
-        elif r == "error":
+        elif r == DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == "loading":
+        elif r == DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -255,14 +275,14 @@ class DummyAPI(pydantic.BaseModel):
             sleep(wait_time + 2)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "overloaded":
+        elif r == DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "normal":
+        elif r == DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
