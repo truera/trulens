@@ -170,6 +170,7 @@ class TestEndpoints(TestCase):
                     "Expected cost currency to be Snowflake credits.",
                 )
 
+    @test_utils.optional_test
     def test_dummy_hugs(self):
         """Check that cost tracking works for the dummy huggingface provider."""
 
