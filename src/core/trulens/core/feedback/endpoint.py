@@ -45,7 +45,7 @@ INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
-NO_CONTEXT_WARNING = """
+_NO_CONTEXT_WARNING = """
 Cannot find TruLens Context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 """
@@ -677,7 +677,7 @@ class Endpoint(
             Endpoint._context_endpoints.get()
 
         except LookupError:
-            logger.warning(NO_CONTEXT_WARNING)
+            logger.warning(_NO_CONTEXT_WARNING)
             return False
 
         return True

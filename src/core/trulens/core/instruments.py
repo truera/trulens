@@ -552,7 +552,7 @@ class Instrument:
             WithInstrumentCallbacks._stack_contexts.get()
 
         except LookupError:
-            logger.warning(core_endpoint.NO_CONTEXT_WARNING)
+            logger.warning(core_endpoint._NO_CONTEXT_WARNING)
             return False
 
         return True

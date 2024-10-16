@@ -1044,7 +1044,7 @@ class App(
     # For use as a context manager.
     def __enter__(self):
         if not core_instruments.Instrument._have_context([self]):
-            raise RuntimeError(core_endpoint.NO_CONTEXT_WARNING)
+            raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
 
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
