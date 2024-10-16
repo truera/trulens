@@ -82,7 +82,7 @@ class DummyStackTool(DummyTool):
         # stack to include in the return of this method but at the same time
         # want to be able to take a look at those things which we didn't
         # serialize.
-        current_stack = list(python_utils.superstack())
+        current_stack = list(f.frame for f in inspect.stack())
         DummyStackTool.last_stacks.append(
             # Has to be a weakref to prevent GC test failures.
             python_utils.WeakWrapper(current_stack)

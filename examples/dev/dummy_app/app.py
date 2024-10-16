@@ -287,6 +287,7 @@ class DummyApp(Dummy):
 
         # Run the agents on the same input. These perform the same steps as this
         # app.
+
         for agent in self.agents:
             await agent.ainvoke(query)
 
@@ -308,7 +309,7 @@ class DummyApp(Dummy):
         answer = await self.llm.agenerate(answer_prompt)
 
         # Do some more remembering.
-        self.memory.remember(answer)
+        await self.memory.aremember(answer)
 
         return answer
 

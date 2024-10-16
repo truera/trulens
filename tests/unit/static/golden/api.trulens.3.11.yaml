@@ -937,6 +937,7 @@ trulens.core.schema.record.Record:
       builtins.NoneType]
     feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens.core.schema.feedback.FeedbackResult]],
       builtins.NoneType]
+    feedback_results_as_completed: builtins.property
     get: builtins.function
     layout_calls_as_app: builtins.function
     main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
