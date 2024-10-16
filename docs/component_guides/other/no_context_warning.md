@@ -1,18 +1,17 @@
 # "Cannot find TruLens Context" Warning
 
-If you see the error or warning below:
-
 ```
 Cannot find TruLens Context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 ```
 
-it means that _TruLens_ attempted to execute an instrumented method in a context
-different than the one in which your app was instrumented. A different context
-here means either a different `threading.Thread` or a different `asyncio.Task`.
-While we include several remedies to this problem to allow use of threaded or
-asynchronous apps, these remedies may not cover all of the cases. This document
-is here to help you fix the issue in case your app or the libraries you use were not covered by our existing remedies.
+If you see this warning/error, _TruLens_ attempted to execute an instrumented
+method in a context different than the one in which your app was instrumented. A
+different context here means either a different `threading.Thread` or a
+different `asyncio.Task`. While we include several remedies to this problem to
+allow use of threaded and/or asynchronous apps, these remedies may not cover all
+of the cases. This document is here to help you fix the issue in case your app
+or the libraries you use were not covered by our existing remedies.
 
 ## Threads
 
@@ -25,6 +24,9 @@ that stand in place of python classes:
 - [trulens.core.utils.threading.ThreadPoolExecutor][trulens.core.utils.threading.ThreadPoolExecutor]
   instead of
   [concurrent.futures.ThreadPoolExecutor][concurrent.futures.ThreadPoolExecutor].
+
+You can also import either from their builtin locations as long as you import
+_TruLens_ first.
 
 Alternatively, use the utility methods in the [TP
 class][trulens.core.utils.threading.TP] such as
