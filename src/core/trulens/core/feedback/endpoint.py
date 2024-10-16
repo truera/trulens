@@ -47,7 +47,7 @@ DEFAULT_RPM = 60
 
 NO_CONTEXT_WARNING = """
 Cannot find TruLens Context. See
-https://trulens.org/component_guides/other/no_context_warning for more information.
+https://www.trulens.org/component_guides/other/no_context_warning for more information.
 """
 
 
