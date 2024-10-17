@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """OTEL Compatibility Classes
 
 This module contains classes to support interacting with the OTEL ecosystem.
@@ -27,17 +29,21 @@ from typing import (
     Union,
 )
 
-from opentelemetry import context as context_api
-from opentelemetry import trace as trace_api
-from opentelemetry.sdk import resources as resources_sdk
-from opentelemetry.sdk import trace as trace_sdk
-from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core._utils.pycompat import NoneType  # import style exception
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing import feature
+
+feature.assert_optionals_installed()  # checks to make sure otel is installed
+
+from opentelemetry import context as context_api
+from opentelemetry import trace as trace_api
+from opentelemetry.sdk import resources as resources_sdk
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.util import types as types_api
 
 logger = logging.getLogger(__name__)
 

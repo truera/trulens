@@ -25,6 +25,9 @@ from typing import (
 
 import pydantic
 from pydantic import Field
+from pydantic import PrivateAttr
+from trulens.core import experimental as core_experimental
+from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import asynchro as mod_asynchro_utils
 from trulens.core.utils import pace as pace_utils
@@ -206,6 +209,11 @@ class Endpoint(
 
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
+
+    _experimental_wrapper_callback_class: Optional[Type[Any]] = PrivateAttr(
+        None
+    )  # Any actually WrapperEndpointCallback but cannot import it here
+    """EXPERIMENTAL(otel_tracing): callback class to use for usage tracking."""
 
     _context_endpoints: ClassVar[contextvars.ContextVar] = (
         contextvars.ContextVar("endpoints")
@@ -691,6 +699,17 @@ class Endpoint(
 
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
+
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.wrap_function(self, func)
 
         if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the

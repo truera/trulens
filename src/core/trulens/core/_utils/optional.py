@@ -19,3 +19,7 @@ REQUIREMENT_APPS_NEMO = format_import_errors(
 REQUIREMENT_TQDM = format_import_errors(
     "tqdm", purpose="displaying progress bars"
 )
+
+REQUIREMENT_OTEL = format_import_errors(
+    "opentelemetry-api", purpose="otel_tracing experimental feature"
+)

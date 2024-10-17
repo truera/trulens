@@ -25,6 +25,7 @@ from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.experimental.otel_tracing import feature as otel_tracing_feature
 
 logger = logging.getLogger(__name__)
 
@@ -424,6 +425,58 @@ class DummyAPICreator:
         )
 
 
+if otel_tracing_feature.are_optionals_installed():
+    from trulens.experimental.otel_tracing.core.feedback import (
+        endpoint as experimental_core_endpoint,
+    )
+
+    class _WrapperDummyEndpointCallback(
+        experimental_core_endpoint._WrapperEndpointCallback
+    ):
+        """EXPERIMENTAL(otel_tracing): Callbacks for instrumented methods in
+        DummyAPI to recover costs from those calls."""
+
+        def __init__(self, func: Callable, **kwargs):
+            super().__init__(func=func, **kwargs)
+
+            # Increment the appropriate counter for request before we even make the
+            # request. Note that these counters do not imply success.
+            if (
+                func is DummyAPI.aclassification
+                or func is DummyAPI.classification
+            ):
+                self.cost.n_classification_requests += 1
+            elif func is DummyAPI.acompletion or func is DummyAPI.completion:
+                self.cost.n_completion_requests += 1
+
+        def on_callable_return(self, ret: Any, **kwargs):
+            ret = super().on_callable_return(ret=ret, **kwargs)
+
+            is_success = True
+
+            if (usage := ret.get("usage")) is not None:
+                # fake completion
+                self.cost.cost += usage.get("cost", 0.0)
+                self.cost.n_tokens += usage.get("n_tokens", 0)
+                self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
+                self.cost.n_completion_tokens += usage.get(
+                    "n_completion_tokens", 0
+                )
+
+            elif (scores := ret.get("scores")) is not None:
+                # fake classification
+                self.cost.n_classes += len(scores)
+
+            else:
+                is_success = False
+                logger.warning("Could not determine cost from DummyAPI call.")
+
+            if is_success:
+                self.cost.n_successful_requests += 1
+
+            return ret
+
+
 class DummyEndpointCallback(core_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
@@ -501,6 +554,12 @@ class DummyEndpoint(core_endpoint.Endpoint):
     def overloaded_prob(self) -> float:
         return self.api.overloaded_prob
 
+    _experimental_wrapper_callback_class = (
+        _WrapperDummyEndpointCallback
+        if otel_tracing_feature.are_optionals_installed()
+        else None
+    )
+
     def __init__(
         self,
         name: str = "dummyendpoint",
@@ -557,6 +616,14 @@ class DummyEndpoint(core_endpoint.Endpoint):
     ) -> Dict:
         return self.api.post(url, payload, timeout=timeout)
 
+    async def apost(
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
+    ) -> Dict:
+        return await self.api.apost(url, payload, timeout=timeout)
+
     def handle_wrapped_call(
         self,
         func: Callable,
@@ -564,6 +631,9 @@ class DummyEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
+        # TODELETE(otel_tracing). Delete once otel_tracing is no longer
+        # experimental.
+
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
             "\tbindings: %s,\n"
