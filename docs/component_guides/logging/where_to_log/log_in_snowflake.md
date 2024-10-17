@@ -24,12 +24,12 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
     from snowflake.snowpark import Session
     from trulens.connectors.snowflake import SnowflakeConnector
     from trulens.core import TruSession
-    connnection_parameters = {
+    connection_parameters = {
         account: "<account>",
         user: "<user>",
         password: "<password>",
-        database_name: "<database>",
-        schema_name: "<schema>",
+        database: "<database>",
+        schema: "<schema>",
         warehouse: "<warehouse>",
         role: "<role>",
     }
@@ -50,8 +50,8 @@ Connecting TruLens to a Snowflake database for logging traces and evaluations on
         account="<account>",
         user="<user>",
         password="<password>",
-        database_name="<database>",
-        schema_name="<schema>",
+        database="<database>",
+        schema="<schema>",
         warehouse="<warehouse>",
         role="<role>",
     )
