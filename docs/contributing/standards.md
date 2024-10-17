@@ -61,7 +61,7 @@ apply when referring to things like package names, classes, methods.
     This is especially important for module names which might cause name
     collisions with other things such as variables named `record`.
 
-- Keep module renames consistent using the following patterns:
+- Keep module renames consistent using the following patterns (see `src/core/trulens/_mods.py` for the full list):
 
     ```python
     # schema

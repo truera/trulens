@@ -69,6 +69,7 @@ all_trulens_mods = list(get_submodule_names(trulens))
 # Things which should not be imported at all.
 not_mods = [
     "trulens.core.database.migrations.env",  # can only be executed by alembic
+    "trulens._mods",  # for static tools only
 ]
 
 if sys.version_info >= (3, 12):

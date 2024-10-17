@@ -1,7 +1,8 @@
 # ruff: noqa: E402, F401
 """
 !!! warning
-    This module is deprecated and will be removed. Use `trulens.dashboard.pages.Leaderboard` instead.
+    This module is deprecated and will be removed. Use
+    `trulens.dashboard.Leaderboard` instead.
 """
 
 from trulens.core.utils import deprecation as deprecation_utils
