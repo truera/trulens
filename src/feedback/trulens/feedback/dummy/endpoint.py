@@ -434,6 +434,8 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             # fake classification
             self.cost.n_classes += len(response)
 
+            self.cost.n_successful_requests += 1
+
     def handle_generation(self, response: Dict) -> None:
         super().handle_generation(response=response)
 
@@ -444,6 +446,8 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             self.cost.n_tokens += usage.get("n_tokens", 0)
             self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
+
+            self.cost.n_successful_requests += 1
 
 
 class DummyEndpoint(core_endpoint.Endpoint):
@@ -524,7 +528,9 @@ class DummyEndpoint(core_endpoint.Endpoint):
         # Instrument existing DummyAPI class. These are used by the custom_app
         # example.
         self._instrument_class(DummyAPI, "completion")
-        self._instrument_class(DummyAPI, "classify")
+        self._instrument_class(DummyAPI, "classification")
+        self._instrument_class(DummyAPI, "acompletion")
+        self._instrument_class(DummyAPI, "aclassification")
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
@@ -535,7 +541,12 @@ class DummyEndpoint(core_endpoint.Endpoint):
                 DummyAPICreator,
                 wrapper_method_name="create_method",
                 wrapped_method_filter=lambda f: f.__name__
-                in ["completion", "classify"],
+                in [
+                    "completion",
+                    "classification",
+                    "acompletion",
+                    "aclassification",
+                ],
             )
 
     def post(
