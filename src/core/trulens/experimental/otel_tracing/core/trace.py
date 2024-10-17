@@ -1,7 +1,7 @@
 """Implementation of recording that resembles the tracing process in OpenTelemetry.
 
 !!! Note
-    Most of the module is (EXPERIMENTAL: otel-tracing) though it includes some existing
+    Most of the module is (EXPERIMENTAL(otel_tracing)) though it includes some existing
     non-experimental classes moved here to resolve some circular import issues.
 
 This module is likely temporary and will be replaced by actual OpenTelemetry sdk
@@ -928,20 +928,20 @@ class _RecordingContext:
         """Metadata to attach to all records produced in this context."""
 
         self.tracer: Optional[Tracer] = tracer
-        """EXPERIMENTAL(otel-tracing): OTEL-like tracer for recording.
+        """EXPERIMENTAL(otel_tracing): OTEL-like tracer for recording.
         """
 
         self.span: Optional[PhantomSpanRecordingContext] = span
-        """EXPERIMENTAL(otel-tracing): Span that represents a recording context
+        """EXPERIMENTAL(otel_tracing): Span that represents a recording context
         (the with block)."""
 
         self.span_ctx = span_ctx
-        """EXPERIMENTAL(otel-tracing): The context manager for the above span.
+        """EXPERIMENTAL(otel_tracing): The context manager for the above span.
         """
 
     @property
     def spans(self) -> Dict[SpanContext, Span]:
-        """EXPERIMENTAL(otel-tracing): Get the spans of the tracer in this context."""
+        """EXPERIMENTAL(otel_tracing): Get the spans of the tracer in this context."""
 
         if self.tracer is None:
             return {}
@@ -1067,7 +1067,7 @@ class _WithInstrumentCallbacks:
     def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
-        """EXPERIMENTAL(otel-tracing): Get the methods (rather the inner
+        """EXPERIMENTAL(otel_tracing): Get the methods (rather the inner
         functions) matching the given `func` and the path of each.
 
         Args:
@@ -1082,7 +1082,7 @@ class _WithInstrumentCallbacks:
         ctx: _RecordingContext,
         root_span: LiveSpanCall,
     ) -> record_schema.Record:
-        """EXPERIMENTAL(otel-tracing): Called by instrumented methods if they
+        """EXPERIMENTAL(otel_tracing): Called by instrumented methods if they
         are root calls (first instrumented methods in a call stack).
 
         Args:
@@ -1090,7 +1090,7 @@ class _WithInstrumentCallbacks:
 
             root_span: The root span that was recorded.
         """
-        # EXPERIMENTAL: otel-tracing
+        # EXPERIMENTAL(otel_tracing)
 
         raise NotImplementedError
 

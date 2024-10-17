@@ -122,10 +122,8 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
     def of_ns_timestamps(
         start_ns_timestamp: int, end_ns_timestamp: Optional[int] = None
     ) -> Perf:
-        """EXPERIMENTAL: otel-tracing
-
-        Create a `Perf` instance from start and end times in nanoseconds
-        since the epoch."""
+        """EXPERIMENTAL(otel_tracing): Create a `Perf` instance from start and
+        end times in nanoseconds since the epoch."""
 
         return Perf(
             start_time=container_utils.datetime_of_ns_timestamp(
@@ -138,17 +136,15 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
 
     @property
     def start_ns_timestamp(self) -> int:
-        """EXPERIMENTAL: otel-tracing
-
-        Start time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL(otel_tracing): Start time in number of nanoseconds since
+        the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.start_time)
 
     @property
     def end_ns_timestamp(self) -> int:
-        """EXPERIMENTAL: otel-tracing
-
-        End time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL(otel_tracing): End time in number of nanoseconds since
+        the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.end_time)
 

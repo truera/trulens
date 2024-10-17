@@ -17,6 +17,8 @@ from trulens.experimental.otel_tracing.core import trace as core_trace
 
 
 class _App(core_app.App):
+    # TODO(otel_tracing): Roll into core_app.App once no longer experimental.
+
     # WithInstrumentCallbacks requirement
     def get_active_contexts(
         self,
@@ -137,7 +139,7 @@ class _App(core_app.App):
 
     # For use as an async context manager.
     async def __aenter__(self):
-        # EXPERIMENTAL: otel-tracing
+        # EXPERIMENTAL(otel_tracing)
 
         tracer: core_trace.Tracer = core_trace.trulens_tracer()
 
@@ -163,7 +165,7 @@ class _App(core_app.App):
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        # EXPERIMENTAL: otel-tracing
+        # EXPERIMENTAL(otel_tracing)
 
         recording: core_trace._RecordingContext = self.recording_contexts.get()
 

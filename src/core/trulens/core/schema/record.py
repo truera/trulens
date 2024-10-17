@@ -170,9 +170,9 @@ class Record(serial_utils.SerialModel, Hashable):
     experimental_otel_spans: List[
         Any
     ] = []  # actually trulens.experimental.otel_tracing.core.trace.Span
-    """EXPERIMENTAL(otel-tracing): OTEL spans representation of this record.
+    """EXPERIMENTAL(otel_tracing): OTEL spans representation of this record.
 
-    This will be filled in only if the otel-tracing experimental feature is enabled.
+    This will be filled in only if the otel_tracing experimental feature is enabled.
     """
 
     feedback_and_future_results: Optional[
