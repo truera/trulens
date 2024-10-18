@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import as_completed
 import datetime
 import logging
 from typing import (
@@ -9,6 +10,7 @@ from typing import (
     ClassVar,
     Dict,
     Hashable,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -192,6 +194,23 @@ class Record(serial_utils.SerialModel, Hashable):
         pydantic.Field(None, exclude=True)
     )
     """Only the futures part of the above for backwards compatibility."""
+
+    @property
+    def feedback_results_as_completed(
+        self,
+    ) -> Iterable[feedback_schema.FeedbackResult]:
+        """Generate feedback results as they are completed.
+
+        Wraps
+        [feedback_results][trulens.core.schema.record.Record.feedback_results]
+        in [as_completed][concurrent.futures.as_completed].
+        """
+
+        if self.feedback_results is None:
+            return
+
+        for f in as_completed(self.feedback_results):
+            yield f.result()
 
     def __init__(
         self,

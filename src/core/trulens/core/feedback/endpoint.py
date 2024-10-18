@@ -45,6 +45,11 @@ INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
+_NO_CONTEXT_WARNING = """
+Cannot find TruLens context. See
+https://www.trulens.org/component_guides/other/no_context_warning for more information.
+"""
+
 
 class EndpointCallback(serial_utils.SerialModel):
     """
@@ -140,6 +145,11 @@ class Endpoint(
             arg_flag="with_cortex",
             module_name="trulens.providers.cortex.endpoint",
             class_name="CortexEndpoint",
+        ),
+        EndpointSetup(
+            arg_flag="with_dummy",
+            module_name="trulens.feedback.dummy.endpoint",
+            class_name="DummyEndpoint",
         ),
     ]
 
@@ -441,6 +451,7 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -507,6 +518,7 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
         """
@@ -529,6 +541,7 @@ class Endpoint(
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
             with_cortex=with_cortex,
+            with_dummy=with_dummy,
             **kwargs,
         )
 
@@ -552,6 +565,16 @@ class Endpoint(
         Runs the given `thunk`, tracking costs using each of the provided
         endpoints' callbacks.
         """
+
+        if (
+            with_endpoints is not None
+            and len(with_endpoints) > 0
+            and not Endpoint._have_context()
+        ):
+            # If we cannot access the context vars, we cannot track costs, the
+            # last condition issues a warning with more info.
+            return __func(*args, **kwargs), []
+
         # Check to see if this call is within another _track_costs call:
         endpoints = dict(Endpoint._context_endpoints.get())  # copy
 
@@ -653,6 +676,19 @@ class Endpoint(
         """
         return response
 
+    @staticmethod
+    def _have_context() -> bool:
+        """Determine whether we can access the context vars needed for cost tracking."""
+
+        try:
+            Endpoint._context_endpoints.get()
+
+        except LookupError:
+            logger.warning(_NO_CONTEXT_WARNING)
+            return False
+
+        return True
+
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
 
@@ -699,6 +735,9 @@ class Endpoint(
                 python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
+
+            if not Endpoint._have_context():
+                return func(*args, **kwargs)
 
             endpoints = Endpoint._context_endpoints.get()
 

@@ -7,6 +7,8 @@ randomness is introduced to simulate the behavior of real APIs.
 
 from __future__ import annotations
 
+import asyncio
+from enum import Enum
 import inspect
 import logging
 from pprint import pformat
@@ -29,6 +31,25 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
+
+
+class _DummyOutcome(Enum):
+    """Outcomes of a dummy API call."""
+
+    NORMAL = "normal"
+    """Normal response."""
+
+    FREEZE = "freeze"
+    """Simulated freeze outcome."""
+
+    ERROR = "error"
+    """Simulated error outcome."""
+
+    LOADING = "loading"
+    """Simulated loading model outcome."""
+
+    OVERLOADED = "overloaded"
+    """Simulated overloaded outcome."""
 
 
 class NonDeterminism(pydantic.BaseModel):
@@ -119,8 +140,80 @@ class DummyAPI(pydantic.BaseModel):
         payload: serial_utils.JSON,
         timeout: Optional[float] = None,
     ) -> Any:
-        # TODO: use async inside post
-        return self.post(url=url, payload=payload, timeout=timeout)
+        """Pretend to make an http post request to some model execution API."""
+
+        assert isinstance(payload, dict), "Payload should be a dict."
+
+        if timeout is None:
+            timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
+
+        # allocate some data to pretend we are doing hard work
+        temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
+
+        if self.delay > 0.0:
+            await asyncio.sleep(
+                max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2))
+            )
+
+        r = self.ndt.discrete_choice(
+            seq=list(_DummyOutcome),
+            probs=[
+                1
+                - self.freeze_prob
+                - self.error_prob
+                - self.loading_prob
+                - self.overloaded_prob,
+                self.freeze_prob,
+                self.error_prob,
+                self.loading_prob,
+                self.overloaded_prob,
+            ],
+        )
+
+        if r == _DummyOutcome.FREEZE:
+            # Simulated freeze outcome.
+
+            while True:
+                await asyncio.sleep(timeout)
+
+        elif r == _DummyOutcome.ERROR:
+            # Simulated error outcome.
+
+            raise RuntimeError("Simulated error happened.")
+
+        elif r == _DummyOutcome.LOADING:
+            # Simulated loading model outcome.
+
+            wait_time = self.ndt.np_random.uniform(
+                *self.loading_time_uniform_params
+            )
+            logger.warning(
+                "Waiting for model to load (%s) second(s).",
+                wait_time,
+            )
+            await asyncio.sleep(wait_time + 2)
+            return await self.apost(url, payload, timeout=timeout)
+
+        elif r == _DummyOutcome.OVERLOADED:
+            # Simulated overloaded outcome.
+
+            logger.warning("Waiting for overloaded API before trying again.")
+            await asyncio.sleep(10)
+            return self.post(url, payload, timeout=timeout)
+
+        elif r == _DummyOutcome.NORMAL:
+            if "api-inference.huggingface.co" in url:
+                # pretend to produce huggingface api classification results
+                return self._fake_classification()
+            else:
+                return self._fake_completion(
+                    model=payload["model"],
+                    prompt=payload["prompt"],
+                    temperature=payload["temperature"],
+                )
+
+        else:
+            raise RuntimeError("Unknown random result type.")
 
     def post(
         self,
@@ -144,7 +237,7 @@ class DummyAPI(pydantic.BaseModel):
             )
 
         r = self.ndt.discrete_choice(
-            seq=["normal", "freeze", "error", "loading", "overloaded"],
+            seq=list(_DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -158,18 +251,18 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == "freeze":
+        if r == _DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 sleep(timeout)
 
-        elif r == "error":
+        elif r == _DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == "loading":
+        elif r == _DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -182,14 +275,14 @@ class DummyAPI(pydantic.BaseModel):
             sleep(wait_time + 2)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "overloaded":
+        elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "normal":
+        elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
@@ -341,6 +434,8 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             # fake classification
             self.cost.n_classes += len(response)
 
+            self.cost.n_successful_requests += 1
+
     def handle_generation(self, response: Dict) -> None:
         super().handle_generation(response=response)
 
@@ -351,6 +446,8 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             self.cost.n_tokens += usage.get("n_tokens", 0)
             self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
+
+            self.cost.n_successful_requests += 1
 
 
 class DummyEndpoint(core_endpoint.Endpoint):
@@ -431,7 +528,9 @@ class DummyEndpoint(core_endpoint.Endpoint):
         # Instrument existing DummyAPI class. These are used by the custom_app
         # example.
         self._instrument_class(DummyAPI, "completion")
-        self._instrument_class(DummyAPI, "classify")
+        self._instrument_class(DummyAPI, "classification")
+        self._instrument_class(DummyAPI, "acompletion")
+        self._instrument_class(DummyAPI, "aclassification")
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
@@ -442,7 +541,12 @@ class DummyEndpoint(core_endpoint.Endpoint):
                 DummyAPICreator,
                 wrapper_method_name="create_method",
                 wrapped_method_filter=lambda f: f.__name__
-                in ["completion", "classify"],
+                in [
+                    "completion",
+                    "classification",
+                    "acompletion",
+                    "aclassification",
+                ],
             )
 
     def post(
