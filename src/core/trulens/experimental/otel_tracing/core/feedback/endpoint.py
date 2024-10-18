@@ -4,11 +4,13 @@ import logging
 from pprint import PrettyPrinter
 from typing import (
     Any,
+    Tuple,
     TypeVar,
 )
 
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
+from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import python as python_utils
 from trulens.experimental.otel_tracing.core import trace as mod_trace
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
@@ -94,3 +96,16 @@ class _Endpoint(core_endpoint.Endpoint):
             callback_class=self._experimental_wrapper_callback_class,
             endpoint=self,
         )
+
+    @staticmethod
+    def track_all_costs_tally(
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
+        *args,
+        **kwargs,
+    ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
+        with mod_trace.trulens_tracer().cost(
+            method_name=__func.__name__
+        ) as span:
+            ret = __func(*args, **kwargs)
+
+            return ret, span.total_cost

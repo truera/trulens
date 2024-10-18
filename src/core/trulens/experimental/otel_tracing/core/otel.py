@@ -633,7 +633,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     def start_span(
         self,
         name: Optional[str] = None,
-        *,
+        *args,  # non-standard
         context: Optional[context_api.context.Context] = None,
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
         attributes: trace_api.types.Attributes = None,
@@ -642,6 +642,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         record_exception: bool = True,
         set_status_on_exception: bool = True,
         cls: Optional[Type[Span]] = None,  # non-standard
+        **kwargs,  # non-standard
     ) -> Span:
         """See [OTEL
         Tracer.start_span][opentelemetry.trace.Tracer.start_span]."""
@@ -661,7 +662,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             )
 
         new_context = self._span_context_class(
-            trace_id=self.trace_id, _tracer=self
+            *args, trace_id=self.trace_id, _tracer=self, **kwargs
         )
 
         if name is None:
