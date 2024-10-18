@@ -37,7 +37,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing import feature
 
-feature.assert_optionals_installed()  # checks to make sure otel is installed
+feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api

@@ -425,7 +425,7 @@ class DummyAPICreator:
         )
 
 
-if otel_tracing_feature.are_optionals_installed():
+if otel_tracing_feature._FeatureSetup.are_optionals_installed():
     from trulens.experimental.otel_tracing.core.feedback import (
         endpoint as experimental_core_endpoint,
     )
@@ -441,13 +441,12 @@ if otel_tracing_feature.are_optionals_installed():
 
             # Increment the appropriate counter for request before we even make the
             # request. Note that these counters do not imply success.
-            if (
-                func is DummyAPI.aclassification
-                or func is DummyAPI.classification
-            ):
+            if func.__name__ in ["aclassification", "classification"]:
                 self.cost.n_classification_requests += 1
-            elif func is DummyAPI.acompletion or func is DummyAPI.completion:
+            elif func.__name__ in ["acompletion", "completion"]:
                 self.cost.n_completion_requests += 1
+            else:
+                raise RuntimeError(f"Unknown function {func} is being called.")
 
         def on_callable_return(self, ret: Any, **kwargs):
             ret = super().on_callable_return(ret=ret, **kwargs)
@@ -556,7 +555,7 @@ class DummyEndpoint(core_endpoint.Endpoint):
 
     _experimental_wrapper_callback_class = (
         _WrapperDummyEndpointCallback
-        if otel_tracing_feature.are_optionals_installed()
+        if otel_tracing_feature._FeatureSetup.are_optionals_installed()
         else None
     )
 

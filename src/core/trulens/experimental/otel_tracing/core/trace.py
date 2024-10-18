@@ -50,7 +50,7 @@ from trulens.experimental.otel_tracing import feature
 from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
-feature.assert_optionals_installed()  # checks to make sure otel is installed
+feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import span as span_api
@@ -540,10 +540,7 @@ class Tracer(core_otel.Tracer):
             else None
         )
 
-        if isinstance(root_span, WithCost):
-            root_cost = root_span.total_cost()
-        else:
-            root_cost = base_schema.Cost()
+        total_cost = root_span.total_cost()
 
         calls = []
         if isinstance(root_span, LiveSpanCall):
@@ -587,7 +584,7 @@ class Tracer(core_otel.Tracer):
             main_error=json_utils.jsonify(main_error),
             calls=calls,
             perf=root_perf,
-            cost=root_cost,
+            cost=total_cost,
             experimental_otel_spans=spans,
         )
 
@@ -1110,7 +1107,7 @@ class _WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-class AppTracingCallbacks(TracingCallbacks[T]):
+class AppTracingCallbacks(TracingCallbacks[T, S]):
     """Extension to TracingCallbacks that keep track of apps that are
     instrumenting their constituent calls."""
 

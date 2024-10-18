@@ -1,19 +1,26 @@
+from __future__ import annotations
+
+from abc import abstractmethod
 from collections import defaultdict
 from enum import Enum
 import functools
+import importlib
 from typing import (
     Callable,
+    ClassVar,
     Dict,
     Generic,
     Iterable,
     Mapping,
     Optional,
     Set,
+    Type,
     TypeVar,
     Union,
 )
 
 import pydantic
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
@@ -60,6 +67,79 @@ class Feature(str, Enum):
         raise ValueError(
             f"Invalid feature flag `{value}`. Available flags are:\n{cls._repr_all()}"
         )
+
+
+FEATURE_SETUPS: Dict[Feature, str] = {
+    Feature.OTEL_TRACING: "trulens.experimental.otel_tracing.feature"
+}
+"""Mapping from experimental flags to their setup class module by name (module
+containing _FeatureSetup class).
+
+Using name here as we don't want to import them until they are needed and also
+importing them here would result in a circular import.
+
+This is used to check if the optional imports are available before enabling the
+feature flags.
+"""
+
+
+class _FeatureSetup(pydantic.BaseModel):
+    """Abstract class for utilities that manage experimental features."""
+
+    FEATURE: ClassVar[Feature]
+    """The feature flag enabling this feature."""
+
+    REQUIREMENT: ClassVar[import_utils.ImportErrorMessages]
+    """The optional imports required to use the feature."""
+
+    @staticmethod
+    @abstractmethod
+    def assert_optionals_installed() -> None:
+        """Assert that the optional requirements for the feature are installed."""
+
+    @staticmethod
+    @abstractmethod
+    def are_optionals_installed() -> bool:
+        """Check if the optional requirements for the feature are installed."""
+
+    @staticmethod
+    def assert_can_enable(feature: Feature) -> None:
+        """Asserts that the given feature can be enabled.
+
+        This is used to check if the optional imports are available before
+        enabling the feature flags.
+        """
+
+        if (modname := FEATURE_SETUPS.get(feature)) is None:
+            return
+
+        return _FeatureSetup.load_setup(modname).assert_optionals_installed()
+
+    @staticmethod
+    def can_enable(feature: Feature) -> bool:
+        """Check if the given feature can be enabled.
+
+        This is used to check if the optional imports are available before
+        enabling the feature flags.
+        """
+
+        if (modname := FEATURE_SETUPS.get(feature)) is None:
+            return True
+
+        return _FeatureSetup.load_setup(modname).are_optionals_installed()
+
+    @staticmethod
+    def load_setup(modname: str) -> Type[_FeatureSetup]:
+        """Load the setup class for the given module."""
+
+        mod = importlib.import_module(modname)
+
+        if not hasattr(mod, "_FeatureSetup"):
+            raise ImportError(
+                f"Module {mod} does not contain a _FeatureSetup class."
+            )
+
+        return getattr(mod, "_FeatureSetup")
 
 
 class _Setting(Generic[T]):
@@ -279,6 +359,11 @@ class _WithExperimentalSettings(
         flag = Feature(flag)
 
         was_locked = self._experimental_feature_flags.is_locked(flag)
+
+        if value:
+            # If the feature has optional requirements, this checks that they
+            # are installed and raises an ImportError if not.
+            _FeatureSetup.assert_can_enable(flag)
 
         original_value = self._experimental_feature_flags.get(flag)
         val = self._experimental_feature_flags.set(flag, value=value, lock=lock)
