@@ -25,8 +25,11 @@ from typing import (
 
 import pydantic
 from pydantic import Field
+from pydantic import PrivateAttr
+from trulens.core import experimental as core_experimental
+from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
-from trulens.core.utils import asynchro as mod_asynchro_utils
+from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -206,6 +209,11 @@ class Endpoint(
 
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
+
+    _experimental_wrapper_callback_class: Optional[Type[Any]] = PrivateAttr(
+        None
+    )  # Any actually WrapperEndpointCallback but cannot import it here
+    """EXPERIMENTAL(otel_tracing): callback class to use for usage tracking."""
 
     _context_endpoints: ClassVar[contextvars.ContextVar] = (
         contextvars.ContextVar("endpoints")
@@ -444,7 +452,7 @@ class Endpoint(
 
     @staticmethod
     def track_all_costs(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -454,10 +462,8 @@ class Endpoint(
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        """
-        Track costs of all of the apis we can currently track, over the
-        execution of thunk.
-        """
+        """Track costs of all of the apis we can currently track, over the
+        execution of thunk."""
 
         endpoints = []
 
@@ -511,7 +517,7 @@ class Endpoint(
 
     @staticmethod
     def track_all_costs_tally(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -521,8 +527,7 @@ class Endpoint(
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
-        """
-        Track costs of all of the apis we can currently track, over the
+        """Track costs of all of the apis we can currently track, over the
         execution of thunk.
 
         Returns:
@@ -532,6 +537,17 @@ class Endpoint(
                 callbacks that tracked costs. This is a thunk as the costs might
                 change after this method returns in case of Awaitable results.
         """
+
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.track_all_costs_tally(__func, *args, **kwargs)
 
         result, cbs = Endpoint.track_all_costs(
             __func,
@@ -555,7 +571,7 @@ class Endpoint(
 
     @staticmethod
     def _track_costs(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs,
@@ -633,7 +649,7 @@ class Endpoint(
 
     def track_cost(
         self,
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[..., T],
+        __func: asynchro_utils.CallableMaybeAwaitable[..., T],
         *args,
         **kwargs,
     ) -> Tuple[T, EndpointCallback]:
@@ -691,6 +707,17 @@ class Endpoint(
 
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
+
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.wrap_function(self, func)
 
         if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the

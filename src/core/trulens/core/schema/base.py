@@ -17,43 +17,87 @@ class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     """Costs associated with some call or set of calls."""
 
     n_requests: int = 0
-    """Number of requests."""
+    """Number of requests.
+
+    To increment immediately when a request is made.
+    """
 
     n_successful_requests: int = 0
-    """Number of successful requests."""
+    """Number of successful requests.
+
+    To increment only after a response is processed and it indicates success.
+    """
 
     n_completion_requests: int = 0
-    """Number of completion requests."""
+    """Number of completion requests.
+
+    To increment immediately when a completion request is made.
+    """
 
     n_classification_requests: int = 0
-    """Number of classification requests."""
+    """Number of classification requests.
+
+    To increment immediately when a classification request is made.
+    """
 
     n_classes: int = 0
-    """Number of class scores retrieved."""
+    """Number of class scores retrieved.
+
+    To increment for each class in a successful classification response.
+    """
 
     n_embedding_requests: int = 0
-    """Number of embedding requests."""
+    """Number of embedding requests.
+
+    To increment immediately when an embedding request is made.
+    """
 
     n_embeddings: int = 0
-    """Number of embeddings retrieved."""
+    """Number of embeddings retrieved.
+
+    To increment for each embedding vector returned by an embedding request.
+    """
 
     n_tokens: int = 0
-    """Total tokens processed."""
+    """Total tokens processed.
+
+    To increment by the number of input(prompt) and output tokens in completion
+    requests. While the input part of this could be incremented upon a request,
+    the actual count is not easy to determine due to tokenizer variations and
+    instead is usually seen in the response. Also, we want to count only tokens
+    for successful requests that incur a cost to the user.
+    """
 
     n_stream_chunks: int = 0
-    """In streaming mode, number of chunks produced."""
+    """In streaming mode, number of chunks produced.
+
+    To increment for each chunk in a streaming response. This does not need to
+    wait for completion of the responses.
+    """
 
     n_prompt_tokens: int = 0
-    """Number of prompt tokens supplied."""
+    """Number of prompt tokens supplied.
+
+    To increment by the number of tokens in the prompt of a completion request.
+    This is visible in the response though and should only count successful
+    requests.
+    """
 
     n_completion_tokens: int = 0
-    """Number of completion tokens generated."""
+    """Number of completion tokens generated.
+
+    To increment by the number of tokens in the completion of a completion request.
+    """
 
     n_cortex_guardrails_tokens: int = 0
-    """Number of guardrails tokens generated. i.e. available in Cortex endpoint."""
+    """Number of guardrails tokens generated. This is only available for
+    requests instrumented by the Cortex endpoint."""
 
     cost: float = 0.0
-    """Cost in [cost_currency]."""
+    """Cost in [cost_currency].
+
+    This may not always be available or accurate.
+    """
 
     cost_currency: str = "USD"
 
@@ -122,10 +166,8 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
     def of_ns_timestamps(
         start_ns_timestamp: int, end_ns_timestamp: Optional[int] = None
     ) -> Perf:
-        """EXPERIMENTAL: otel-tracing
-
-        Create a `Perf` instance from start and end times in nanoseconds
-        since the epoch."""
+        """EXPERIMENTAL(otel_tracing): Create a `Perf` instance from start and
+        end times in nanoseconds since the epoch."""
 
         return Perf(
             start_time=container_utils.datetime_of_ns_timestamp(
@@ -138,17 +180,15 @@ class Perf(serial_utils.SerialModel, pydantic.BaseModel):
 
     @property
     def start_ns_timestamp(self) -> int:
-        """EXPERIMENTAL: otel-tracing
-
-        Start time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL(otel_tracing): Start time in number of nanoseconds since
+        the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.start_time)
 
     @property
     def end_ns_timestamp(self) -> int:
-        """EXPERIMENTAL: otel-tracing
-
-        End time in number of nanoseconds since the epoch."""
+        """EXPERIMENTAL(otel_tracing): End time in number of nanoseconds since
+        the epoch."""
 
         return container_utils.ns_timestamp_of_datetime(self.end_time)
 

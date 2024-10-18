@@ -907,10 +907,8 @@ class App(
     def on_method_instrumented(
         self, obj: object, func: Callable, path: serial_utils.Lens
     ):
-        """
-        Called by instrumentation system for every function requested to be
-        instrumented by this app.
-        """
+        """Called by instrumentation system for every function requested to be
+        instrumented by this app."""
 
         if id(obj) in self.instrumented_methods:
             funcs = self.instrumented_methods[id(obj)]
@@ -941,11 +939,11 @@ class App(
     def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
-        """
-        Get the methods (rather the inner functions) matching the given `func`
-        and the path of each.
+        """Get the methods (rather the inner functions) matching the given
+        `func` and the path of each.
 
-        See [WithInstrumentCallbacks.get_methods_for_func][trulens.core.instruments.WithInstrumentCallbacks.get_methods_for_func].
+        See
+        [WithInstrumentCallbacks.get_methods_for_func][trulens.core.instruments.WithInstrumentCallbacks.get_methods_for_func].
         """
 
         for _id, funcs in self.instrumented_methods.items():
@@ -955,9 +953,8 @@ class App(
 
     # WithInstrumentCallbacks requirement
     def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
-        """
-        Get the path of the instrumented function `method` relative to this app.
-        """
+        """Get the path of the instrumented function `method` relative to this
+        app."""
 
         # TODO: cleanup and/or figure out why references to objects change when executing langchain chains.
 
