@@ -43,6 +43,7 @@ class SnowflakeConnector(DBConnector):
         role: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
+        init_server_side_with_staged_packages: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -116,6 +117,7 @@ class SnowflakeConnector(DBConnector):
         self._init_with_snowpark_session(
             snowpark_session,
             init_server_side,
+            init_server_side_with_staged_packages,
             database_redact_keys,
             database_prefix,
             database_args,
@@ -127,6 +129,7 @@ class SnowflakeConnector(DBConnector):
         self,
         snowpark_session: Session,
         init_server_side: bool,
+        init_server_side_with_staged_packages: bool,
         database_redact_keys: bool,
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
@@ -176,7 +179,9 @@ class SnowflakeConnector(DBConnector):
 
         if init_server_side:
             ServerSideEvaluationArtifacts(
-                snowpark_session, database_args["database_prefix"]
+                snowpark_session,
+                database_args["database_prefix"],
+                init_server_side_with_staged_packages,
             ).set_up_all()
 
     @classmethod
