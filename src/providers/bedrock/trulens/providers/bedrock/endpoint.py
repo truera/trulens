@@ -359,7 +359,8 @@ class BedrockEndpoint(core_endpoint.Endpoint):
                 )
 
         else:
-            # This one will be instrumented by our hacks onto _create_api_method above:
+            # This one will be instrumented by our hacks onto _create_api_method
+            # above:
 
             self.client = boto3.client(
                 service_name="bedrock-runtime", **client_kwargs
@@ -372,6 +373,9 @@ class BedrockEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> None:
+        # TODELETE(otel_tracing). Delete once otel_tracing is no longer
+        # experimental.
+
         if func.__name__ == "invoke_model":
             self.global_callback.handle_generation(response=response)
             if callback is not None:
