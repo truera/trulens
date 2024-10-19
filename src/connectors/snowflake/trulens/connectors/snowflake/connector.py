@@ -13,15 +13,13 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
+from trulens.core import __version__ as trulens_version
 from trulens.core.database import base as core_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.schema.types import AppID
-from trulens.core.schema import app as app_schema
 from trulens.core.utils import python as python_utils
-from trulens.core import __version__ as trulens_version
 
 from snowflake.core import CreateMode
 from snowflake.core import Root
@@ -181,10 +179,12 @@ class SnowflakeConnector(DBConnector):
             ServerSideEvaluationArtifacts(
                 snowpark_session, database_args["database_prefix"]
             ).set_up_all()
-        
+
         # Add "trulens_workspace_version" tag to the current schema
         schema = snowpark_session.get_current_schema()
-        snowpark_session.sql(f"ALTER SCHEMA {schema} SET TAG trulens_workspace_version = {trulens_version}")
+        snowpark_session.sql(
+            f"ALTER SCHEMA {schema} SET TAG trulens_workspace_version = {trulens_version}"
+        )
 
     @classmethod
     def _validate_schema_name(cls, name: str) -> None:
