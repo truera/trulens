@@ -1,7 +1,6 @@
 from collections import defaultdict
 from enum import Enum
 import functools
-from types import FrameType
 from typing import (
     Callable,
     Dict,
@@ -70,8 +69,8 @@ class _Setting(Generic[T]):
         self.value: T = default
         """The stored value."""
 
-        self.locked_by: Set[FrameType] = set()
-        """Set of frames (not in trulens) that have locked this value.
+        self.locked_by: Set[str] = set()
+        """Set of representations of frames (not in trulens) that have locked this value.
 
         If empty, it has not been locked and can be changed.
         """
@@ -95,10 +94,8 @@ class _Setting(Generic[T]):
         if value is not None:
             if len(self.locked_by) > 0 and value != self.value:
                 locked_frames = ""
-                for frame in self.locked_by:
-                    locked_frames += (
-                        f"  {python_utils.code_line(frame, show_source=True)}\n"
-                    )
+                for frame_str in self.locked_by:
+                    locked_frames += f"  {frame_str}\n"
 
                 raise ValueError(
                     f"Feature flag has already been set to {self.value} and cannot be changed. "
@@ -108,7 +105,11 @@ class _Setting(Generic[T]):
             self.value = value
 
         if lock:
-            self.locked_by.add(python_utils.external_caller_frame(offset=1))
+            frame = python_utils.external_caller_frame(offset=1)
+            frame_str = python_utils.code_line(frame, show_source=True)
+            # Store representation instead of frame to avoid keeping references
+            # that would prevent GC.
+            self.locked_by.add(frame_str)
 
         return self.value
 
@@ -275,11 +276,15 @@ class _WithExperimentalSettings(
         # NOTE(piotrm): The printouts are important as we want to make sure the
         # user is aware that they are using a experimental feature.
 
+        flag = Feature(flag)
+
         was_locked = self._experimental_feature_flags.is_locked(flag)
 
+        original_value = self._experimental_feature_flags.get(flag)
         val = self._experimental_feature_flags.set(flag, value=value, lock=lock)
+        changed = val != original_value
 
-        if value is not None:
+        if value is not None and changed:
             if val:
                 print(
                     f"{text_utils.UNICODE_CHECK} experimental {flag} enabled for {self._ident_str()}."

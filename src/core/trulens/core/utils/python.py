@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from concurrent import futures
+from collections import defaultdict
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 import contextvars
@@ -24,7 +24,6 @@ from typing import (
     Dict,
     Generator,
     Generic,
-    Hashable,
     Iterable,
     Iterator,
     List,
@@ -36,98 +35,14 @@ from typing import (
 )
 import weakref
 
+import pydantic
+
 T = TypeVar("T")
 
 WRAP_LAZY: bool = True
 
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
-
-if sys.version_info >= (3, 11):
-    getmembers_static = inspect.getmembers_static
-else:
-
-    def getmembers_static(obj, predicate=None):
-        """Implementation of inspect.getmembers_static for python < 3.11."""
-
-        if predicate is None:
-            predicate = lambda name, value: True
-
-        return [
-            (name, value)
-            for name in dir(obj)
-            if hasattr(obj, name)
-            and predicate(name, value := getattr(obj, name))
-        ]
-
-
-if sys.version_info >= (3, 9):
-    Future = futures.Future
-    """Alias for [concurrent.futures.Future][].
-
-    In python < 3.9, a subclass of [concurrent.futures.Future][] with
-    `Generic[A]` is used instead.
-    """
-
-    Queue = queue.Queue
-    """Alias for [queue.Queue][] .
-
-    In python < 3.9, a subclass of [queue.Queue][] with
-    `Generic[A]` is used instead.
-    """
-
-else:
-    # Fake classes which can have type args. In python earlier than 3.9, the
-    # classes imported above cannot have type args which is annoying for type
-    # annotations. We use these fake ones instead.
-
-    A = TypeVar("A")
-
-    # HACK011
-    class Future(Generic[A], futures.Future):
-        """Alias for [concurrent.futures.Future][].
-
-        In python < 3.9, a subclass of [concurrent.futures.Future][] with
-        `Generic[A]` is used instead.
-        """
-
-    # HACK012
-    class Queue(Generic[A], queue.Queue):
-        """Alias for [queue.Queue][] .
-
-        In python < 3.9, a subclass of [queue.Queue][] with
-        `Generic[A]` is used instead.
-        """
-
-
-class EmptyType(type):
-    """A type that cannot be instantiated or subclassed."""
-
-    def __new__(mcs, *args, **kwargs):
-        raise ValueError("EmptyType cannot be instantiated.")
-
-    def __instancecheck__(cls, __instance: Any) -> bool:
-        return False
-
-    def __subclasscheck__(cls, __subclass: Type) -> bool:
-        return False
-
-
-if sys.version_info >= (3, 10):
-    import types
-
-    NoneType = types.NoneType
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
-
-else:
-    NoneType = type(None)
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -238,6 +153,39 @@ def safe_signature(func_or_obj: Any):
 
         else:
             raise e
+
+
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
 
 
 def safe_hasattr(obj: Any, k: str) -> bool:
@@ -447,9 +395,10 @@ def external_caller_frame(offset=0) -> FrameType:
         RuntimeError: If no such frame is found.
     """
     frame = inspect.currentframe()
-    gen = stack_generator(frame=frame, offset=offset + 2)
+    gen = stack_generator(frame=frame, offset=offset + 1)
     for f_info in gen:
-        if not f_info.f_globals["__name__"].startswith("trulens"):
+        name = f_info.f_globals["__name__"]
+        if not (name.startswith("trulens") or name.startswith("pydantic")):
             return f_info
 
     raise RuntimeError("No external caller frame found.")
@@ -478,15 +427,18 @@ def caller_frameinfo(
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
-    """A task factory that annotates created tasks with stacks of their parents.
+    """A task factory that annotates created tasks with stacks and context of
+    their parents.
 
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
     stack.
     """
 
-    if "context" not in kwargs:
-        kwargs["context"] = contextvars.copy_context()
+    if "context" in kwargs:
+        logger.warning(
+            "Context is being overwritten, TruLens may not be able to record traces."
+        )
 
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
@@ -1148,122 +1100,41 @@ def wrap_until_eager(
 
 
 # Class utilities
-
-
-@dataclasses.dataclass
-class SingletonInfo(Generic[T]):
+class SingletonPerNameMeta(type):
     """
-    Information about a singleton instance.
-    """
-
-    val: T
-    """The singleton instance."""
-
-    cls: Type[T]
-    """The class of the singleton instance."""
-
-    frameinfo_codeline: Optional[str]
-    """The frame where the singleton was created.
-
-    This is used for showing "already created" warnings. This is intentionally
-    not the frame itself but a rendering of it to avoid maintaining references
-    to frames and all of the things a frame holds onto.
-    """
-
-    name: Optional[str] = None
-    """The name of the singleton instance.
-
-    This is used for the SingletonPerName mechanism to have a separate singleton
-    for each unique name (and class).
-    """
-
-    def __init__(self, name: str, val: Any):
-        self.val = val
-        self.cls = val.__class__
-        self.name = name
-        self.frameinfo_codeline = code_line(
-            caller_frameinfo(offset=2), show_source=True
-        )
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        logger.warning(
-            (
-                "Singleton instance of type %s already created at:\n%s\n"
-                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
-                f"""  ```python
-  from trulens.core.utils.python import SingletonPerName
-  SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
-  ```
-            """
-            ),
-            self.cls.__name__,
-            self.frameinfo_codeline,
-        )
-
-
-class SingletonPerName:
-    """
-    Class for creating singleton instances except there being one instance max,
+    Metaclass for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
     reverts to normal singleton behavior.
     """
 
-    # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonInfo[SingletonPerName]] = {}
+    _singleton_instances = {}
 
-    # Need some way to look up the name of the singleton instance. Cannot attach
-    # a new attribute to instance since some metaclasses don't allow this (like
-    # pydantic). We instead create a map from instance address to name.
-    _id_to_name_map: Dict[int, Optional[str]] = {}
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        name = SingletonPerName._id_to_name_map[id(self)]
-        k = self.__class__.__name__, name
-        if k in SingletonPerName._instances:
-            SingletonPerName._instances[k].warning()
-        else:
-            raise RuntimeError(
-                f"Instance of singleton type/name {k} does not exist."
-            )
-
-    def __new__(
-        cls: Type[SingletonPerName],
-        *args,
-        name: Optional[str] = None,
-        **kwargs,
-    ) -> SingletonPerName:
+    def __call__(cls, *args, name: Optional[str] = None, **kwargs):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
+        k = f"{cls.__module__}.{cls.__name__}", name
 
-        k = cls.__name__, name
-
-        if k not in cls._instances:
+        if k not in cls._singleton_instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )
-            # If exception happens here, the instance should not be added to
-            # _instances.
-            instance = super().__new__(cls)
-
-            SingletonPerName._id_to_name_map[id(instance)] = name
-            info: SingletonInfo = SingletonInfo(name=name, val=instance)
-            SingletonPerName._instances[k] = info
-        else:
-            info = SingletonPerName._instances[k]
-        obj = info.val
-        assert isinstance(obj, cls)
-        return obj
+            cls._singleton_instances[k] = super(
+                SingletonPerNameMeta, cls
+            ).__call__(*args, **kwargs)
+        elif args or kwargs:
+            logger.warning(
+                "Singleton instance %s already exists for name = %s.",
+                cls.__name__,
+                name,
+            )
+        return cls._singleton_instances[k]
 
     @staticmethod
     def delete_singleton_by_name(
-        name: str, cls: Optional[Type[SingletonPerName]] = None
+        name: str, cls: Optional[Type[SingletonPerNameMeta]] = None
     ):
         """
         Delete the singleton instance with the given name.
@@ -1276,24 +1147,55 @@ class SingletonPerName:
             cls: The class of the singleton instance to delete. If not given, all
                 instances with the given name are deleted.
         """
-        for k, v in list(SingletonPerName._instances.items()):
+
+        for k, v in list(SingletonPerNameMeta._singleton_instances.items()):
             if k[1] == name:
-                if cls is not None and v.cls != cls:
+                if cls is not None and v.__class__ is not cls:
                     continue
 
-                del SingletonPerName._instances[k]
-                del SingletonPerName._id_to_name_map[id(v.val)]
+                del SingletonPerNameMeta._singleton_instances[k]
 
-    def delete_singleton(self):
+    @staticmethod
+    def delete_singleton(
+        obj: Type[SingletonPerNameMeta], name: Optional[str] = None
+    ):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        id_ = id(self)
-
-        if id_ in SingletonPerName._id_to_name_map:
-            name = SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._instances[(self.__class__.__name__, name)]
+        cls_name = (
+            getattr(obj.__class__, "__name__")
+            if hasattr(obj.__class__, "__name__")
+            else None
+        )
+        k = cls_name, name
+        if k in SingletonPerNameMeta._singleton_instances:
+            del SingletonPerNameMeta._singleton_instances[k]
         else:
-            logger.warning("Instance %s not found in our records.", self)
+            logger.warning("Instance %s not found:", obj)
+
+
+class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
+    """This is the metaclass for creating Pydantic models that are also required to be singletons"""
+
+    pass
+
+
+class InstanceRefMixin:
+    """Mixin for classes that need to keep track of their instances."""
+
+    _instance_refs: Dict[
+        Type, List[weakref.ReferenceType[InstanceRefMixin]]
+    ] = defaultdict(list)
+
+    def __init__(self, register_instance: bool = True):
+        if register_instance:
+            self._instance_refs[self.__class__].append(weakref.ref(self))
+
+    @classmethod
+    def get_instances(cls) -> Generator[InstanceRefMixin]:
+        """Get all instances of the class."""
+        for inst_ref in cls._instance_refs[cls]:
+            inst = inst_ref()
+            if inst is not None:
+                yield inst

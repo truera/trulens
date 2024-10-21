@@ -42,4 +42,4 @@ Feedback functions in common across these providers are in their abstract class
 
 ## Provider Combinations
 
-- [Groundtruth][trulens.feedback.groundtruth.GroundTruthAgreement]
+- [GroundTruth][trulens.feedback.groundtruth.GroundTruthAgreement]

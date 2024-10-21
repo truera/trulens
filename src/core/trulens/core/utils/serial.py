@@ -38,8 +38,8 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
-from trulens.core.utils.containers import iterable_peek
-from trulens.core.utils.python import class_name
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +553,7 @@ class SerialModel(pydantic.BaseModel):
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
 
-        # yield class_name(type(self))
+        # yield python_utils.class_name(type(self))
 
         # If this is a root repr, create a new set for already-formatted objects.
         tok = None
@@ -566,7 +566,7 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{class_name(type(self))}@0x{id(self):x}"
+            yield f"{python_utils.class_name(type(self))}@0x{id(self):x}"
 
             if tok is not None:
                 SerialModel.formatted_objects.reset(tok)
@@ -1003,7 +1003,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         try:
             firsts = first.get(obj)
-            first_obj, firsts = iterable_peek(firsts)
+            first_obj, firsts = container_utils.iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
             # `first` points to an element that does not exist, use `set` to create a spot for it.
@@ -1107,6 +1107,29 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
 
 Lens.model_rebuild()
+
+
+class LensedDict(dict, Generic[T]):
+    """A dictionary which can be accessed using lenses."""
+
+    def __setitem__(self, __name: Union[str, Lens], __value: T) -> None:
+        """Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
+        if a lens is given."""
+
+        if isinstance(__name, Lens):
+            # Does not mutate so need to use dict.update .
+            temp = __name.set(self, __value)
+            self.update(temp)
+            return None
+
+        return super().__setitem__(__name, __value)
+
+    def __getitem__(self, __name: Union[Any, Lens]) -> T:
+        if isinstance(__name, Lens):
+            return __name.get_sole_item(self)
+
+        return super().__getitem__(__name)
+
 
 # TODO: Deprecate old name.
 JSONPath = Lens

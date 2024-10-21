@@ -7,7 +7,7 @@ import sys
 from unittest import TestCase
 from unittest import main
 
-from tests.test import optional_test
+from tests import test as mod_test
 
 
 class TestDeprecation(TestCase):
@@ -86,7 +86,7 @@ class TestDeprecation(TestCase):
             "trulens_eval.react_components.record_viewer": ["record_viewer"],
         }
 
-    @optional_test
+    @mod_test.optional_test
     def test_init_aliases(self):
         """Check that all trulens_eval.*.__init__ aliases are still usable
         produce deprecation messages when used.

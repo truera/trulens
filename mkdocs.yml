@@ -278,6 +278,7 @@ nav:
   - 🤝 Contributing:
       - contributing/index.md
       - 🧭 Design: contributing/design.md
+      - 📦 Release Policies: contributing/policies.md
       - ✅ Standards: contributing/standards.md
       - 💣 Tech Debt: contributing/techdebt.md
       - ⛅ Optional Packages: contributing/optional.md

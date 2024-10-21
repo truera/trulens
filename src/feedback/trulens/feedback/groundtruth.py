@@ -1,29 +1,40 @@
 import logging
-from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import (
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 import warnings
 
 import numpy as np
 import pandas as pd
 import pydantic
 import scipy.stats as stats
+from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import roc_auc_score
 from trulens.core.utils import imports as import_utils
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.imports import format_import_errors
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.serial import SerialModel
-from trulens.feedback.generated import re_0_10_rating
-from trulens.feedback.llm_provider import LLMProvider
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.feedback import generated as feedback_generated
+from trulens.feedback import llm_provider
 
-with OptionalImports(
-    messages=format_import_errors("bert-score", purpose="measuring BERT Score")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "bert-score", purpose="measuring BERT Score"
+    )
 ):
     from bert_score import BERTScorer
 
-with OptionalImports(
-    messages=format_import_errors("evaluate", purpose="using certain metrics")
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "evaluate", purpose="using certain metrics"
+    )
 ):
     import evaluate
 
@@ -31,11 +42,18 @@ logger = logging.getLogger(__name__)
 
 
 # TODEP
-class GroundTruthAgreement(WithClassInfo, SerialModel):
+class GroundTruthAgreement(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     """Measures Agreement against a Ground Truth."""
 
-    ground_truth: Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]
-    provider: LLMProvider
+    ground_truth: Union[
+        List[Dict],
+        Callable,
+        pd.DataFrame,
+        pyschema_utils.FunctionOrMethod,
+    ]
+    provider: llm_provider.LLMProvider
 
     # Note: the bert scorer object isn't serializable
     # It's a class member because creating it is expensive
@@ -48,63 +66,71 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def __init__(
         self,
         ground_truth: Union[
-            List[Dict], Callable, pd.DataFrame, FunctionOrMethod
+            List[Dict], Callable, pd.DataFrame, pyschema_utils.FunctionOrMethod
         ],
-        provider: Optional[LLMProvider] = None,
+        provider: Optional[llm_provider.LLMProvider] = None,
         bert_scorer: Optional["BERTScorer"] = None,
         **kwargs,
     ):
         """Measures Agreement against a Ground Truth.
 
         Usage 1:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
-        golden_set = [
-            {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
-            {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
-        ]
-        ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
-        ```
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            golden_set = [
+                {"query": "who invented the lightbulb?", "expected_response": "Thomas Edison"},
+                {"query": "¿quien invento la bombilla?", "expected_response": "Thomas Edison"}
+            ]
+            ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
+            ```
 
         Usage 2:
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.openai import OpenAI
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.openai import OpenAI
+            from trulens.core.session import TruSession
 
-        session = TruSession()
-        ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
+            session = TruSession()
+            ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB
 
-        ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())
+            ```
 
         Usage 3:
-        ```
-        from trulens.feedback import GroundTruthAgreement
-        from trulens.providers.cortex import Cortex
-        ground_truth_imp = llm_app
-        response = llm_app(prompt)
+            ```python
+            from trulens.feedback import GroundTruthAgreement
+            from trulens.providers.cortex import Cortex
+            ground_truth_imp = llm_app
+            response = llm_app(prompt)
 
-        snowflake_connection_parameters = {
-            "account": os.environ["SNOWFLAKE_ACCOUNT"],
-            "user": os.environ["SNOWFLAKE_USER"],
-            "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
-            "database": os.environ["SNOWFLAKE_DATABASE"],
-            "schema": os.environ["SNOWFLAKE_SCHEMA"],
-            "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
-        }
-        ground_truth_collection = GroundTruthAgreement(
-            ground_truth_imp,
-            provider=Cortex(
-                snowflake.connector.connect(**snowflake_connection_parameters),
-                model_engine="mistral-7b",
-            ),
-        )
-        ```
+            snowflake_connection_parameters = {
+                "account": os.environ["SNOWFLAKE_ACCOUNT"],
+                "user": os.environ["SNOWFLAKE_USER"],
+                "password": os.environ["SNOWFLAKE_USER_PASSWORD"],
+                "database": os.environ["SNOWFLAKE_DATABASE"],
+                "schema": os.environ["SNOWFLAKE_SCHEMA"],
+                "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
+            }
+            ground_truth_collection = GroundTruthAgreement(
+                ground_truth_imp,
+                provider=Cortex(
+                    snowflake.connector.connect(**snowflake_connection_parameters),
+                    model_engine="mistral-7b",
+                ),
+            )
+            ```
 
         Args:
-            ground_truth (Union[List[Dict], Callable, pd.DataFrame, FunctionOrMethod]): A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-                or callable that returns a ground truth string given a prompt string.
-                provider (LLMProvider): The provider to use for agreement measures.
-                bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.
+            ground_truth: A list of query/response pairs or a function, or a
+                dataframe containing ground truth dataset, or callable that
+                returns a ground truth string given a prompt string.
+
+            provider: The provider to use for
+                agreement measures.
+
+            bert_scorer: Internal Usage for
+                DB serialization.
 
         """
         if provider is None:
@@ -125,11 +151,13 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
 
         if isinstance(ground_truth, List):
             ground_truth_imp = None
-        elif isinstance(ground_truth, FunctionOrMethod):
+        elif isinstance(ground_truth, pyschema_utils.FunctionOrMethod):
             ground_truth_imp = ground_truth.load()
         elif isinstance(ground_truth, Callable):
             ground_truth_imp = ground_truth
-            ground_truth = FunctionOrMethod.of_callable(ground_truth)
+            ground_truth = pyschema_utils.FunctionOrMethod.of_callable(
+                ground_truth
+            )
         elif isinstance(ground_truth, pd.DataFrame):
             ground_truth_df = ground_truth
             ground_truth = []
@@ -138,8 +166,10 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 ground_truth.append(entry)
             ground_truth_imp = None
         elif isinstance(ground_truth, Dict):
-            # Serialized FunctionOrMethod?
-            ground_truth = FunctionOrMethod.model_validate(ground_truth)
+            # Serialized pyschema_utils.FunctionOrMethod?
+            ground_truth = pyschema_utils.FunctionOrMethod.model_validate(
+                ground_truth
+            )
             ground_truth_imp = ground_truth.load()
         else:
             raise RuntimeError(
@@ -165,6 +195,26 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         ]
         if responses:
             return responses[0]
+        else:
+            return None
+
+    def _find_golden_context_chunks_and_scores(
+        self, prompt: str
+    ) -> Optional[List[Tuple[str, float]]]:
+        if self.ground_truth_imp is not None:
+            return self.ground_truth_imp(prompt)
+
+        golden_context_chunks = [
+            (
+                chunk["text"],
+                chunk["expect_score"] if "expect_score" in chunk else 1,
+            )
+            for qr in self.ground_truth
+            for chunk in qr["expected_chunks"]
+            if qr["query"] == prompt
+        ]
+        if golden_context_chunks:
+            return golden_context_chunks
         else:
             return None
 
@@ -225,13 +275,295 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
                 prompt, response, ground_truth_response
             )
             ret = (
-                re_0_10_rating(agreement_txt) / 10,
+                feedback_generated.re_0_10_rating(agreement_txt) / 10,
                 dict(ground_truth_response=ground_truth_response),
             )
         else:
             ret = np.nan
 
         return ret
+
+    def ndcg_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute NDCG@k for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute NDCG. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed NDCG@k score.
+        """
+        # Step 1: Find the ground truth context chunks for the given query
+        ground_truth_context_chunks_and_scores = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks_and_scores:
+            k = k or len(
+                retrieved_context_chunks
+            )  # If k is None, use all retrieved chunks
+
+            # Step 2: Extract ground truth chunks and their relevance scores
+            golden_chunks = [
+                chunk[0] for chunk in ground_truth_context_chunks_and_scores
+            ]
+            golden_scores = [
+                chunk[1] for chunk in ground_truth_context_chunks_and_scores
+            ]
+
+            # Step 3: If relevance scores are provided, sort retrieved chunks by scores in descending order
+            if relevance_scores:
+                # Zip together retrieved chunks and relevance scores
+                retrieved_with_scores = list(
+                    zip(retrieved_context_chunks, relevance_scores)
+                )
+                # Sort by scores in descending order
+                retrieved_with_scores.sort(key=lambda x: x[1], reverse=True)
+                # Extract the sorted chunks
+                retrieved_context_chunks = [
+                    chunk for chunk, _ in retrieved_with_scores
+                ]
+
+            # Step 4: Create a binary relevance vector for the retrieved chunks based on golden chunks
+            rel_scores = [0.0] * len(
+                retrieved_context_chunks
+            )  # Initialize with 0 relevance for all
+            for i, chunk in enumerate(retrieved_context_chunks[:k]):
+                if chunk in golden_chunks:
+                    index_in_golden = golden_chunks.index(chunk)
+                    rel_scores[i] = golden_scores[
+                        index_in_golden
+                    ]  # Use the true relevance score
+
+            # Step 5: Prepare the ground truth scores as a vector
+            # Ideal DCG (IDCG) is calculated by placing all relevant items at the top in descending order
+            ideal_golden_scores = sorted(golden_scores, reverse=True)[:k]
+
+            # Step 6: Calculate NDCG@k using sklearn's ndcg_score
+            return ndcg_score(
+                y_true=np.array([ideal_golden_scores]),
+                y_score=np.array([rel_scores[:k]]),  # Consider only top-k items
+                k=k,
+            )
+        else:
+            return np.nan
+
+    def precision_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute Precision@k for a given query and retrieved context chunks, considering tie handling.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute Precision. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Precision@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort retrieved chunks by relevance scores if scores are provided
+            if relevance_scores:
+                # Get the top-k threshold score (with tie handling)
+                sorted_scores = sorted(relevance_scores, reverse=True)
+                kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
+
+                # Include all indices with scores >= kth score
+                top_k_indices = [
+                    i
+                    for i, score in enumerate(relevance_scores)
+                    if score >= kth_score
+                ]
+                retrieved_top_k = [
+                    retrieved_context_chunks[i] for i in top_k_indices
+                ]
+            else:
+                # If no relevance scores, use the top-k retrieved chunks as they are
+                retrieved_top_k = retrieved_context_chunks[:k]
+
+            # Calculate precision at k with tie handling
+            relevant_retrieved = len([
+                chunk for chunk in retrieved_top_k if chunk in golden_chunks
+            ])
+            return (
+                relevant_retrieved / len(retrieved_top_k)
+                if len(retrieved_top_k) > 0
+                else 0.0
+            )
+        else:
+            return np.nan
+
+    def recall_at_k(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute Recall@k for a given query and retrieved context chunks, considering tie handling.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            relevance_scores (Optional[List[float]]): Relevance scores for each retrieved chunk.
+            k (Optional[int]): Rank position up to which to compute Recall. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Recall@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort retrieved chunks by relevance scores if scores are provided
+            if relevance_scores:
+                # Get the top-k threshold score (with tie handling)
+                sorted_scores = sorted(relevance_scores, reverse=True)
+                kth_score = sorted_scores[min(k - 1, len(sorted_scores) - 1)]
+
+                # Include all indices with scores >= kth score
+                top_k_indices = [
+                    i
+                    for i, score in enumerate(relevance_scores)
+                    if score >= kth_score
+                ]
+                retrieved_top_k = [
+                    retrieved_context_chunks[i] for i in top_k_indices
+                ]
+            else:
+                # If no relevance scores, use the top-k retrieved chunks as they are
+                retrieved_top_k = retrieved_context_chunks[:k]
+
+            # Calculate recall at k with tie handling
+            relevant_retrieved = len([
+                chunk for chunk in retrieved_top_k if chunk in golden_chunks
+            ])
+            return (
+                relevant_retrieved / len(golden_chunks)
+                if len(golden_chunks) > 0
+                else 0.0
+            )
+        else:
+            return np.nan
+
+    def mrr(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        relevance_scores: Optional[List[float]] = None,
+    ) -> float:
+        """
+        Compute Mean Reciprocal Rank (MRR) for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+
+        Returns:
+            float: Computed MRR score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Sort the retrieved chunks by relevance scores if provided
+            if relevance_scores:
+                retrieved_with_scores = list(
+                    zip(retrieved_context_chunks, relevance_scores)
+                )
+                # Sort in descending order of relevance score
+                retrieved_with_scores.sort(key=lambda x: x[1], reverse=True)
+                retrieved_context_chunks = [
+                    chunk for chunk, _ in retrieved_with_scores
+                ]
+
+            # Find the rank of the first relevant item in the sorted list
+            for i, chunk in enumerate(retrieved_context_chunks):
+                if chunk in golden_chunks:
+                    return 1 / (
+                        i + 1
+                    )  # MRR is the reciprocal of the rank (1-based index)
+
+            return 0.0  # No relevant item found
+        else:
+            return np.nan
+
+    def ir_hit_rate(
+        self,
+        query: str,
+        retrieved_context_chunks: List[str],
+        k: Optional[int] = None,
+    ) -> float:
+        """
+        Compute IR Hit Rate (Hit Rate@k) for a given query and retrieved context chunks.
+
+        Args:
+            query (str): The input query string.
+            retrieved_context_chunks (List[str]): List of retrieved context chunks.
+            k (Optional[int]): Rank position up to which to compute Hit Rate. If None, compute for all retrieved chunks.
+
+        Returns:
+            float: Computed Hit Rate@k score.
+        """
+        ground_truth_context_chunks = (
+            self._find_golden_context_chunks_and_scores(query)
+        )
+        if ground_truth_context_chunks:
+            k = k or len(retrieved_context_chunks)
+
+            # Extract ground truth chunks
+            golden_chunks = set(
+                chunk[0] for chunk in ground_truth_context_chunks
+            )
+
+            # Calculate hit rate at k (1 if at least one relevant item is retrieved, 0 otherwise)
+            return (
+                1.0
+                if any(
+                    chunk in golden_chunks
+                    for chunk in retrieved_context_chunks[:k]
+                )
+                else 0.0
+            )
+        else:
+            return np.nan
 
     def absolute_error(
         self, prompt: str, response: str, score: float
@@ -324,9 +656,8 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
     def bleu(
         self, prompt: str, response: str
     ) -> Union[float, Tuple[float, Dict[str, str]]]:
-        """
-        Uses BLEU Score. A function that that measures
-        similarity to ground truth using token overlap.
+        """Uses BLEU Score. A function that that measures similarity to ground
+        truth using token overlap.
 
         Example:
             ```python
@@ -344,12 +675,14 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
             The `on_input_output()` selector can be changed. See [Feedback Function Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            prompt (str): A text prompt to an agent.
-            response (str): The agent's response to the prompt.
+            prompt: A text prompt to an agent.
+
+            response: The agent's response to the prompt.
 
         Returns:
             float: A value between 0 and 1. 0 being "not in agreement" and 1
                 being "in agreement".
+
             dict: with key 'ground_truth_response'
         """
         bleu = evaluate.load("bleu")
@@ -404,13 +737,17 @@ class GroundTruthAgreement(WithClassInfo, SerialModel):
         raise NotImplementedError("`mae` has moved to `GroundTruthAggregator`")
 
 
-class GroundTruthAggregator(WithClassInfo, SerialModel):
+class GroundTruthAggregator(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel
+):
     model_config: ClassVar[dict] = dict(
         arbitrary_types_allowed=True, extra="allow"
     )
     """Aggregate benchmarking metrics for ground-truth-based evaluation on feedback functions."""
 
-    true_labels: List[int]  # ground truth labels in [0, 1, 0, ...] format
+    true_labels: List[
+        Union[int, float]
+    ]  # ground truth labels in [0, 1, 0, ...] format
     custom_agg_funcs: Dict[str, Callable] = pydantic.Field(default_factory=dict)
 
     k: Optional[int] = (
@@ -437,119 +774,6 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
 
         setattr(self, name, lambda scores: func(scores, self))
 
-    def ndcg_at_k(self, scores: List[float]) -> float:
-        """
-        NDCG can be used for meta-evaluation of other feedback results, returned as relevance scores.
-
-        Args:
-            scores (List[float]): relevance scores returned by feedback function
-
-        Returns:
-            float: NDCG@k
-        """
-        assert self.k is not None, "k must be set for ndcg_at_k"
-        relevance_scores = np.array([scores])
-        true_labels = np.array([self.true_labels])
-        ndcg_values = [ndcg_score(relevance_scores, true_labels, k=self.k)]
-        return np.mean(ndcg_values)
-
-    def precision_at_k(self, scores: List[float]) -> float:
-        """
-        Calculate the precision at K. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Precision@k
-        """
-        assert self.k is not None, "k must be set for precision_at_k"
-        sorted_scores = sorted(scores, reverse=True)
-        kth_score = sorted_scores[min(self.k - 1, len(scores) - 1)]
-
-        # Indices of items with scores >= kth highest score
-        top_k_indices = [
-            i for i, score in enumerate(scores) if score >= kth_score
-        ]
-
-        # Calculate precision
-        true_positives = sum(np.take(self.true_labels, top_k_indices))
-        return true_positives / len(top_k_indices) if top_k_indices else 0
-
-    def recall_at_k(self, scores: List[float]) -> float:
-        """
-        Calculate the recall at K. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Recall@k
-        """
-        assert self.k is not None, "k must be set for recall_at_k"
-        sorted_scores = sorted(scores, reverse=True)
-        kth_score = sorted_scores[min(self.k - 1, len(scores) - 1)]
-
-        # Indices of items with scores >= kth highest score
-        top_k_indices = [
-            i for i, score in enumerate(scores) if score >= kth_score
-        ]
-
-        # Calculate recall
-        relevant_indices = np.where(self.true_labels)[0]
-        hits = sum(idx in top_k_indices for idx in relevant_indices)
-        total_relevant = sum(self.true_labels)
-
-        return hits / total_relevant if total_relevant > 0 else 0
-
-    def ir_hit_rate(self, scores: List[float]) -> float:
-        """
-        Calculate the IR hit rate at top k.
-        the proportion of queries for which at least one relevant document is retrieved in the top k results. This metric evaluates whether a relevant document is present among the top k retrieved
-        Args:
-            scores (List[Float]): The list of scores generated by the model.
-
-        Returns:
-            float: The hit rate at top k. Binary 0 or 1.
-        """
-        assert self.k is not None, "k must be set for ir_hit_rate"
-
-        scores_with_relevance = list(zip(scores, self.true_labels))
-
-        # consistently handle duplicate scores with tie breaking (sorted is stable in python)
-        sorted_scores = sorted(
-            scores_with_relevance, key=lambda x: x[0], reverse=True
-        )
-
-        top_k = sorted_scores[: self.k]
-
-        # Check if there is at least one relevant document in the top k
-        hits = any([relevance for _, relevance in top_k])
-
-        return 1.0 if hits else 0.0
-
-    def mrr(self, scores: List[float]) -> float:
-        """
-        Calculate the mean reciprocal rank. Can be used for meta-evaluation.
-
-        Args:
-            scores (List[float]): scores returned by feedback function
-
-        Returns:
-            float: Mean reciprocal rank
-        """
-
-        reciprocal_ranks = []
-        for score, relevance in zip(scores, self.true_labels):
-            if relevance == 1:
-                reciprocal_ranks.append(1 / (scores.index(score) + 1))
-        mean_reciprocal_rank = (
-            sum(reciprocal_ranks) / len(reciprocal_ranks)
-            if reciprocal_ranks
-            else 0
-        )
-        return round(mean_reciprocal_rank, 4)
-
     def auc(self, scores: List[float]) -> float:
         """
         Calculate the area under the ROC curve. Can be used for meta-evaluation.
@@ -560,9 +784,11 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Area under the ROC curve
         """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
         return roc_auc_score(self.true_labels, scores)
 
-    def kendall_tau(self, scores: List[float]) -> float:
+    def kendall_tau(self, scores: Union[List[float], List[List]]) -> float:
         """
         Calculate Kendall's tau. Can be used for meta-evaluation.
         Kendall’s tau is a measure of the correspondence between two rankings. Values close to 1 indicate strong agreement, values close to -1 indicate strong disagreement. This is the tau-b version of Kendall’s tau which accounts for ties.
@@ -573,12 +799,16 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Kendall's tau
         """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
         tau, _p_value = stats.kendalltau(scores, self.true_labels).correlation
         # The two-sided p-value for a hypothesis test whose null hypothesis is an absence of association, tau = 0.
         # TODO: p_value is unused here
         return tau
 
-    def spearman_correlation(self, scores: List[float]) -> float:
+    def spearman_correlation(
+        self, scores: Union[List[float], List[List]]
+    ) -> float:
         """
         Calculate the Spearman correlation. Can be used for meta-evaluation.
         The Spearman correlation coefficient is a nonparametric measure of rank correlation (statistical dependence between the rankings of two variables).
@@ -590,12 +820,193 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
             float: Spearman correlation
 
         """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
         x = np.array(scores)
         y = np.array(self.true_labels)
 
         return stats.spearmanr(x, y).statistic
 
-    def brier_score(self, scores: List[float]) -> float:
+    def pearson_correlation(
+        self, scores: Union[List[float], List[List]]
+    ) -> float:
+        """
+        Calculate the Pearson correlation. Can be used for meta-evaluation.
+        The Pearson correlation coefficient is a measure of the linear relationship between two variables.
+
+        Args:
+            scores (List[float]): scores returned by feedback function
+
+        Returns:
+            float: Pearson correlation
+
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+        x = np.array(scores)
+        y = np.array(self.true_labels)
+
+        return stats.pearsonr(x, y)[0]
+
+    def matthews_correlation(
+        self, scores: Union[List[float], List[List]]
+    ) -> float:
+        """
+        Calculate the Matthews correlation coefficient. Can be used for meta-evaluation.
+        The Matthews correlation coefficient is used in machine learning as a measure of the quality of binary and multiclass classifications.
+
+        Args:
+            scores (List[float]): scores returned by feedback function
+
+        Returns:
+            float: Matthews correlation coefficient
+
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+        x = np.array(scores)
+        y = np.array(self.true_labels)
+
+        return matthews_corrcoef(y, x)
+
+    def cohens_kappa(
+        self, scores: Union[List[float], List[List]], threshold=0.5
+    ) -> float:
+        """
+        Computes Cohen's Kappa score between true labels and predicted scores.
+
+        Parameters:
+        - true_labels (list): A list of true labels.
+        - scores (list): A list of predicted labels or scores.
+
+        Returns:
+        - float: Cohen's Kappa score.
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+
+        if len(self.true_labels) != len(scores):
+            raise ValueError(
+                "The length of true_labels and scores must be the same."
+            )
+        #  convert to categorical if necessary
+        if any(isinstance(score, float) for score in scores):
+            # threshold at 0.5 for binary classification
+            scores = [1 if score >= threshold else 0 for score in scores]
+
+        if any(isinstance(label, float) for label in self.true_labels):
+            self.true_labels = [
+                1 if label >= threshold else 0 for label in self.true_labels
+            ]
+
+        kappa = cohen_kappa_score(self.true_labels, scores)
+        return kappa
+
+    def recall(self, scores: Union[List[float], List[List]], threshold=0.5):
+        """
+        Calculates recall given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The recall score.
+        """
+
+        try:
+            if isinstance(scores[0], List):
+                scores = [score for score, _ in scores]
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            logger.error(f"scores processing failed in Recall aggregator: {e}")
+            print(f"scores processing failed in Recall aggregator: {e}")
+        # Convert scores to binary predictions based on the threshold
+        predictions = [1 if score >= threshold else 0 for score in scores]
+
+        # Calculate true positives and false negatives
+        true_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 1
+        )
+        false_negatives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 0
+        )
+
+        # Handle the case where there are no actual positives to avoid division by zero
+        if true_positives + false_negatives == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate recall
+        recall = true_positives / (true_positives + false_negatives)
+        return recall
+
+    def precision(self, scores: Union[List[float], List[List]], threshold=0.5):
+        """
+        Calculates precision given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The precision score.
+        """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+
+        # Convert scores to binary predictions based on the threshold
+        predictions = [1 if score >= threshold else 0 for score in scores]
+
+        # Calculate true positives and false positives
+        true_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 1 and pred == 1
+        )
+        false_positives = sum(
+            1
+            for true, pred in zip(self.true_labels, predictions)
+            if true == 0 and pred == 1
+        )
+
+        # Handle the case where there are no predicted positives to avoid division by zero
+        if true_positives + false_positives == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate precision
+        precision = true_positives / (true_positives + false_positives)
+        return precision
+
+    def f1_score(self, scores: Union[List[float], List[List]], threshold=0.5):
+        """
+        Calculates the F1 score given true labels and model-generated scores.
+
+        Parameters:
+        - scores (list of float): A list of model-generated scores (0 to 1.0).
+        - threshold (float): The threshold to convert scores to binary predictions. Default is 0.5.
+
+        Returns:
+        - float: The F1 score.
+        """
+        # Calculate precision and recall
+        precision = self.precision(scores, threshold)
+        recall = self.recall(scores, threshold)
+
+        # Handle the case where both precision and recall are zero to avoid division by zero
+        if precision + recall == 0:
+            return 0.0  # or handle as needed (e.g., return None, raise an exception)
+
+        # Calculate F1 score
+        f1 = 2 * (precision * recall) / (precision + recall)
+        return f1
+
+    def brier_score(self, scores: Union[List[float], List[List]]) -> float:
         """
         assess both calibration and sharpness of the probability estimates
         Args:
@@ -603,6 +1014,8 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Brier score
         """
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
         assert len(scores) == len(self.true_labels)
         brier_score = 0
 
@@ -660,7 +1073,7 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
                 )
         return round(ece, 4)
 
-    def mae(self, scores: List[float]) -> float:
+    def mae(self, scores: Union[List[float], List[List]]) -> float:
         """
         Calculate the mean absolute error. Can be used for meta-evaluation.
 
@@ -670,5 +1083,10 @@ class GroundTruthAggregator(WithClassInfo, SerialModel):
         Returns:
             float: Mean absolute error
         """
+
+        # TODO: refactor this, this is to deal with COT type of response from feedback functions
+        if isinstance(scores[0], List):
+            scores = [score for score, _ in scores]
+            print(f"flatten scores: {scores}")
 
         return np.mean(np.abs(np.array(scores) - np.array(self.true_labels)))

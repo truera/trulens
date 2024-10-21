@@ -101,7 +101,7 @@ See [Development guide](development.md).
 The design of the API is governed by the principles outlined in the
 [Design](design.md) doc.
 
-### Release Policies
+### 📦 Release Policies
 
 Versioning and deprecation guidelines are included. [Release policies](policies.md).
 

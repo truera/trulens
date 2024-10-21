@@ -5,8 +5,8 @@ Tests for TruCustomApp.
 from unittest import main
 import weakref
 
-from trulens.apps.custom import TruCustomApp
-from trulens.core import TruSession
+from trulens.apps import custom as custom_app
+from trulens.core import session as core_session
 
 from examples.dev.dummy_app.app import DummyApp
 from tests.test import TruTestCase
@@ -15,16 +15,18 @@ from tests.test import TruTestCase
 class TestTruCustomApp(TruTestCase):
     @staticmethod
     def setUpClass():
-        TruSession().reset_database()
+        core_session.TruSession().reset_database()
 
     def _create_app(self):
         app = DummyApp()
-        recorder = TruCustomApp(app, app_name="custom_app", app_version="v1")
+        recorder = custom_app.TruCustomApp(
+            app, app_name="custom_app", app_version="v1"
+        )
 
         return app, recorder
 
     def setUp(self):
-        self.session = TruSession()
+        self.session = core_session.TruSession()
 
     def tearDown(self):
         super().tearDown()

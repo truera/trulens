@@ -14,8 +14,8 @@ trulens_eval:
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     Provider: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
-    TP: builtins.type
-    Tru: pydantic._internal._model_construction.ModelMetaclass
+    TP: trulens.core.utils.python.SingletonPerNameMeta
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     TruBasicApp: pydantic._internal._model_construction.ModelMetaclass
     TruChain: pydantic._internal._model_construction.ModelMetaclass
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
@@ -28,8 +28,10 @@ trulens_eval:
     __version_info__: builtins.tuple
     deprecation_utils: builtins.module
     eval_optional_utils: builtins.module
-    imports_utils: builtins.module
+    feedback_schema: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
+    select_schema: builtins.module
 trulens_eval.AzureOpenAI:
   __bases__:
   - trulens.providers.openai.provider.OpenAI
@@ -792,6 +794,7 @@ trulens_eval.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -800,31 +803,29 @@ trulens_eval.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.TP:
   __bases__:
-  - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  - builtins.object
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     shutdown: builtins.function
     submit: builtins.function
-    warning: builtins.function
 trulens_eval.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  - trulens.core.utils.python.SingletonPerName
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -846,12 +847,6 @@ trulens_eval.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
-    experimental_disable_feature: builtins.function
-    experimental_enable_feature: builtins.function
-    experimental_feature: builtins.function
-    experimental_set_features: builtins.function
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -868,7 +863,6 @@ trulens_eval.Tru:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    warning: builtins.function
 trulens_eval.TruBasicApp:
   __bases__:
   - trulens.core.app.App
@@ -883,7 +877,7 @@ trulens_eval.TruBasicApp:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -956,6 +950,7 @@ trulens_eval.TruBasicApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -981,7 +976,7 @@ trulens_eval.TruChain:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1054,6 +1049,7 @@ trulens_eval.TruChain:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1077,7 +1073,7 @@ trulens_eval.TruCustomApp:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1153,6 +1149,7 @@ trulens_eval.TruCustomApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1176,7 +1173,7 @@ trulens_eval.TruLlama:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1250,6 +1247,7 @@ trulens_eval.TruLlama:
     select_source_nodes: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1273,7 +1271,7 @@ trulens_eval.TruRails:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1346,6 +1344,7 @@ trulens_eval.TruRails:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1361,6 +1360,7 @@ trulens_eval.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -1370,7 +1370,7 @@ trulens_eval.TruVirtual:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1443,6 +1443,7 @@ trulens_eval.TruVirtual:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1460,10 +1461,8 @@ trulens_eval.app:
     ATTRIBUTE_ERROR_MESSAGE: builtins.str
     Agent: trulens.core.app.ComponentViewMeta
     App: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     ComponentView: trulens.core.app.ComponentViewMeta
     CustomComponent: trulens.core.app.ComponentViewMeta
-    JSON_BASES: builtins.tuple
     LLM: trulens.core.app.ComponentViewMeta
     LangChainComponent: trulens.core.app.ComponentViewMeta
     LlamaIndexComponent: trulens.core.app.ComponentViewMeta
@@ -1501,7 +1500,7 @@ trulens_eval.app.App:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -1573,6 +1572,7 @@ trulens_eval.app.App:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1693,7 +1693,6 @@ trulens_eval.appui:
   highs: {}
   lows:
     AppUI: traitlets.traitlets.MetaHasTraits
-    JSON_BASES: builtins.tuple
     RecordWidget: builtins.type
     Selector: traitlets.traitlets.MetaHasTraits
     SelectorValue: traitlets.traitlets.MetaHasTraits
@@ -1863,7 +1862,6 @@ trulens_eval.database.migrations.data:
   __class__: builtins.module
   highs: {}
   lows:
-    MIGRATION_UNKNOWN_STR: builtins.str
     data_migrate: builtins.function
     deprecation_utils: builtins.module
     sql_alchemy_migration_versions: builtins.list
@@ -1873,7 +1871,6 @@ trulens_eval.database.orm:
   highs: {}
   lows:
     BaseWithTablePrefix: builtins.type
-    DEFAULT_DATABASE_PREFIX: builtins.str
     ORM: abc.ABCMeta
     deprecation_utils: builtins.module
     make_base_for_prefix: functools._lru_cache_wrapper
@@ -1896,13 +1893,8 @@ trulens_eval.database.sqlalchemy:
   highs: {}
   lows:
     AppsExtractor: builtins.type
-    MIGRATION_UNKNOWN_STR: builtins.str
     SQLAlchemyDB: pydantic._internal._model_construction.ModelMetaclass
     SnowflakeImpl: alembic.ddl.impl.ImplMeta
-    UNICODE_CHECK: builtins.str
-    UNICODE_CLOCK: builtins.str
-    UNICODE_HOURGLASS: builtins.str
-    UNICODE_STOP: builtins.str
     deprecation_utils: builtins.module
     flatten: builtins.function
     no_perf: builtins.dict
@@ -2019,7 +2011,7 @@ trulens_eval.feedback:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.AzureOpenAI:
   __bases__:
@@ -2422,6 +2414,7 @@ trulens_eval.feedback.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    ir_hit_rate: builtins.function
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
@@ -2441,12 +2434,16 @@ trulens_eval.feedback.GroundTruthAgreement:
     model_validate: builtins.classmethod
     model_validate_json: builtins.classmethod
     model_validate_strings: builtins.classmethod
+    mrr: builtins.function
+    ndcg_at_k: builtins.function
     of_class: builtins.staticmethod
     of_object: builtins.staticmethod
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    precision_at_k: builtins.function
     provider: trulens.feedback.llm_provider.LLMProvider
+    recall_at_k: builtins.function
     replace: builtins.function
     rouge: builtins.function
     schema: builtins.classmethod
@@ -2984,6 +2981,7 @@ trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     ground_truth: typing.Union[typing.List[typing.Dict], typing.Callable, pandas.core.frame.DataFrame,
       trulens.core.utils.pyschema.FunctionOrMethod]
     ground_truth_imp: typing.Optional[typing.Callable, builtins.NoneType]
+    ir_hit_rate: builtins.function
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
@@ -3003,12 +3001,16 @@ trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     model_validate: builtins.classmethod
     model_validate_json: builtins.classmethod
     model_validate_strings: builtins.classmethod
+    mrr: builtins.function
+    ndcg_at_k: builtins.function
     of_class: builtins.staticmethod
     of_object: builtins.staticmethod
     parse_file: builtins.classmethod
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
+    precision_at_k: builtins.function
     provider: trulens.feedback.llm_provider.LLMProvider
+    recall_at_k: builtins.function
     replace: builtins.function
     rouge: builtins.function
     schema: builtins.classmethod
@@ -3073,7 +3075,7 @@ trulens_eval.feedback.provider:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.provider.AzureOpenAI:
   __bases__:
@@ -4064,7 +4066,7 @@ trulens_eval.feedback.provider.endpoint:
   lows:
     __all__: builtins.list
     deprecation_utils: builtins.module
-    imports_utils: builtins.module
+    import_utils: builtins.module
     optional_utils: builtins.module
 trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
   __bases__:
@@ -4078,12 +4080,11 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4130,7 +4131,6 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.CortexEndpoint:
   __bases__:
@@ -4143,12 +4143,11 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4194,7 +4193,6 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.DummyEndpoint:
   __bases__:
@@ -4210,14 +4208,13 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
     freeze_prob: builtins.property
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4267,13 +4264,12 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
   - trulens.core.utils.serial.SerialModel
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
@@ -4282,12 +4278,11 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4333,7 +4328,6 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
   __bases__:
@@ -4346,12 +4340,11 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4398,7 +4391,6 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
   __bases__:
@@ -4412,12 +4404,11 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4463,7 +4454,6 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
   __bases__:
@@ -4476,12 +4466,11 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4528,7 +4517,6 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.OpenAIClient:
   __bases__:
@@ -4582,12 +4570,11 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4633,7 +4620,6 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base:
   __class__: builtins.module
@@ -4660,14 +4646,13 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
     freeze_prob: builtins.property
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4717,13 +4702,12 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base.Endpoint:
   __bases__:
   - trulens.core.utils.pyschema.WithClassInfo
   - trulens.core.utils.serial.SerialModel
-  - trulens.core.utils.python.SingletonPerName
+  - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
@@ -4732,12 +4716,11 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4783,7 +4766,6 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.base.EndpointCallback:
   __bases__:
@@ -4835,7 +4817,6 @@ trulens_eval.feedback.provider.endpoint.bedrock:
   lows:
     BedrockCallback: pydantic._internal._model_construction.ModelMetaclass
     BedrockEndpoint: pydantic._internal._model_construction.ModelMetaclass
-    INSTRUMENT: builtins.str
     deprecation_utils: builtins.module
 trulens_eval.feedback.provider.endpoint.bedrock.BedrockCallback:
   __bases__:
@@ -4893,12 +4874,11 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -4945,7 +4925,6 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.cortex:
   __class__: builtins.module
@@ -5009,12 +4988,11 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -5060,7 +5038,6 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.hugs:
   __class__: builtins.module
@@ -5124,12 +5101,11 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -5176,7 +5152,6 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.langchain:
   __class__: builtins.module
@@ -5241,12 +5216,11 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -5292,7 +5266,6 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.litellm:
   __class__: builtins.module
@@ -5356,12 +5329,11 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -5408,13 +5380,11 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.openai:
   __class__: builtins.module
   highs: {}
   lows:
-    CLASS_INFO: builtins.str
     OpenAICallback: pydantic._internal._model_construction.ModelMetaclass
     OpenAIClient: pydantic._internal._model_construction.ModelMetaclass
     OpenAIEndpoint: pydantic._internal._model_construction.ModelMetaclass
@@ -5517,12 +5487,11 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    get_instances: builtins.classmethod
     global_callback: trulens.core.feedback.endpoint.EndpointCallback
     handle_wrapped_call: builtins.function
     instrumented_methods: collections.defaultdict
@@ -5568,7 +5537,6 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     update: builtins.function
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-    warning: builtins.function
     wrap_function: builtins.function
 trulens_eval.feedback.provider.hugs:
   __class__: builtins.module
@@ -5971,7 +5939,6 @@ trulens_eval.feedback.provider.openai:
   highs: {}
   lows:
     AzureOpenAI: pydantic._internal._model_construction.ModelMetaclass
-    CLASS_INFO: builtins.str
     OpenAI: pydantic._internal._model_construction.ModelMetaclass
     deprecation_utils: builtins.module
 trulens_eval.feedback.provider.openai.AzureOpenAI:
@@ -6279,8 +6246,6 @@ trulens_eval.keys:
     ApiKeyError: builtins.type
     REDACTED_VALUE: builtins.str
     TEMPLATE_VALUES: builtins.set
-    UNICODE_CHECK: builtins.str
-    UNICODE_STOP: builtins.str
     check_keys: builtins.function
     check_or_set_keys: builtins.function
     cohere_agent: builtins.NoneType
@@ -6422,12 +6387,15 @@ trulens_eval.schema.base.Perf:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    end_ns_timestamp: builtins.property
     end_time: datetime.datetime
     formatted_objects: _contextvars.ContextVar
     latency: builtins.property
     min: builtins.staticmethod
     now: builtins.staticmethod
+    of_ns_timestamps: builtins.staticmethod
     replace: builtins.function
+    start_ns_timestamp: builtins.property
     start_time: datetime.datetime
     update: builtins.function
 trulens_eval.schema.feedback:
@@ -6478,7 +6446,8 @@ trulens_eval.schema.feedback.FeedbackCall:
     parse_obj: builtins.classmethod
     parse_raw: builtins.classmethod
     replace: builtins.function
-    ret: typing.Union[builtins.float, typing.List[builtins.float], typing.List[typing.Tuple]]
+    ret: typing.Union[builtins.float, typing.List[builtins.float], typing.List[typing.Tuple],
+      typing.List[typing.Any]]
     schema: builtins.classmethod
     schema_json: builtins.classmethod
     update: builtins.function
@@ -6642,6 +6611,7 @@ trulens_eval.schema.feedback.Select:
   __class__: builtins.type
   attributes:
     App: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -6650,11 +6620,13 @@ trulens_eval.schema.feedback.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.schema.record:
@@ -6685,6 +6657,7 @@ trulens_eval.schema.record.Record:
       builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
+    get: builtins.function
     json: builtins.function
     layout_calls_as_app: builtins.function
     main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -6840,15 +6813,14 @@ trulens_eval.tru:
   highs: {}
   lows:
     DASHBOARD_START_TIMEOUT: builtins.int
-    Tru: pydantic._internal._model_construction.ModelMetaclass
+    Tru: trulens.core.utils.python.PydanticSingletonMeta
     deprecation_utils: builtins.module
-    humanize_seconds: builtins.function
+    text_utils: builtins.module
 trulens_eval.tru.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
   - pydantic.main.BaseModel
-  - trulens.core.utils.python.SingletonPerName
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
     Basic: builtins.function
@@ -6870,12 +6842,6 @@ trulens_eval.tru.Tru:
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
-    experimental_disable_feature: builtins.function
-    experimental_enable_feature: builtins.function
-    experimental_feature: builtins.function
-    experimental_set_features: builtins.function
     find_unused_port: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
@@ -6892,7 +6858,6 @@ trulens_eval.tru.Tru:
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
     update_record: builtins.function
-    warning: builtins.function
 trulens_eval.tru_basic_app:
   __class__: builtins.module
   highs: {}
@@ -6915,7 +6880,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -6988,6 +6953,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7057,7 +7023,7 @@ trulens_eval.tru_chain.TruChain:
     awith_: builtins.function
     awith_record: builtins.function
     call_with_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7130,6 +7096,7 @@ trulens_eval.tru_chain.TruChain:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7146,7 +7113,6 @@ trulens_eval.tru_custom_app:
   lows:
     PLACEHOLDER: builtins.str
     TruCustomApp: pydantic._internal._model_construction.ModelMetaclass
-    UNICODE_CHECK: builtins.str
     deprecation_utils: builtins.module
     instrument: builtins.type
 trulens_eval.tru_custom_app.TruCustomApp:
@@ -7162,7 +7128,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7238,6 +7204,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7292,7 +7259,7 @@ trulens_eval.tru_llama.TruLlama:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7366,6 +7333,7 @@ trulens_eval.tru_llama.TruLlama:
     select_source_nodes: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7408,6 +7376,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     LLM: trulens.core.utils.serial.Lens
     LastBotMessage: trulens.core.utils.serial.Lens
     LastUserMessage: trulens.core.utils.serial.Lens
+    Lens: pydantic._internal._model_construction.ModelMetaclass
     Query: pydantic._internal._model_construction.ModelMetaclass
     Record: trulens.core.utils.serial.Lens
     RecordArgs: trulens.core.utils.serial.Lens
@@ -7416,6 +7385,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
+    RecordSpans: trulens.core.utils.serial.Lens
     RetrievalContexts: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     UserMessage: trulens.core.utils.serial.Lens
@@ -7423,6 +7393,7 @@ trulens_eval.tru_rails.RailsActionSelect:
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
+    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens_eval.tru_rails.RailsInstrument:
@@ -7454,7 +7425,7 @@ trulens_eval.tru_rails.TruRails:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7527,6 +7498,7 @@ trulens_eval.tru_rails.TruRails:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7550,6 +7522,7 @@ trulens_eval.tru_virtual.TruVirtual:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_dataframe: builtins.function
     add_record: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7559,7 +7532,7 @@ trulens_eval.tru_virtual.TruVirtual:
     app_version: builtins.str
     awith_: builtins.function
     awith_record: builtins.function
-    connector: trulens.core.database.connector.base.DBConnector
+    connector: builtins.property
     construct: builtins.classmethod
     continue_session: builtins.staticmethod
     copy: builtins.function
@@ -7632,6 +7605,7 @@ trulens_eval.tru_virtual.TruVirtual:
     select_outputs: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
+    session: trulens.core.session.TruSession
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7648,6 +7622,7 @@ trulens_eval.tru_virtual.VirtualApp:
   __class__: builtins.type
   attributes:
     root: builtins.function
+    select_context: builtins.classmethod
 trulens_eval.tru_virtual.VirtualRecord:
   __bases__:
   - trulens.core.schema.record.Record
@@ -7666,6 +7641,7 @@ trulens_eval.tru_virtual.VirtualRecord:
       builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
+    get: builtins.function
     json: builtins.function
     layout_calls_as_app: builtins.function
     main_error: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
@@ -7835,12 +7811,6 @@ trulens_eval.utils.json:
   __class__: builtins.module
   highs: {}
   lows:
-    ALL_SPECIAL_KEYS: builtins.set
-    CIRCLE: builtins.str
-    CLASS_INFO: builtins.str
-    ERROR: builtins.str
-    JSON_BASES: builtins.tuple
-    NOSERIO: builtins.str
     deprecation_utils: builtins.module
     encode_httpx_url: builtins.function
     encode_openai_timeout: builtins.function
@@ -7995,14 +7965,11 @@ trulens_eval.utils.pyschema:
   lows:
     Bindings: pydantic._internal._model_construction.ModelMetaclass
     CIRCLE: builtins.str
-    CLASS_INFO: builtins.str
     Class: pydantic._internal._model_construction.ModelMetaclass
-    ERROR: builtins.str
     Function: pydantic._internal._model_construction.ModelMetaclass
     FunctionOrMethod: pydantic._internal._model_construction.ModelMetaclass
     Method: pydantic._internal._model_construction.ModelMetaclass
     Module: pydantic._internal._model_construction.ModelMetaclass
-    NOSERIO: builtins.str
     Obj: pydantic._internal._model_construction.ModelMetaclass
     WithClassInfo: pydantic._internal._model_construction.ModelMetaclass
     builtin_init_dummy: builtins.function
@@ -8314,16 +8281,25 @@ trulens_eval.utils.python:
   __class__: builtins.module
   highs: {}
   lows:
-    EmptyType: builtins.type
+    Any: typing._AnyMeta
+    Callable: typing._CallableType
+    Dict: typing._SpecialGenericAlias
+    Generic: builtins.type
+    Hashable: typing._SpecialGenericAlias
     OpaqueWrapper: builtins.type
+    Optional: typing._SpecialForm
     STACK: builtins.str
     SingletonInfo: builtins.type
     SingletonPerName: builtins.type
+    Type: typing._SpecialGenericAlias
+    TypeVar: builtins.type
+    annotations: __future__._Feature
     callable_name: builtins.function
     caller_frame: builtins.function
     caller_frameinfo: builtins.function
     class_name: builtins.function
     code_line: builtins.function
+    dataclasses: builtins.module
     deprecation_utils: builtins.module
     for_all_methods: builtins.function
     get_all_local_in_call_stack: builtins.function
@@ -8332,6 +8308,7 @@ trulens_eval.utils.python:
     id_str: builtins.function
     is_really_coroutinefunction: builtins.function
     locals_except: builtins.function
+    logger: logging.Logger
     merge_stacks: builtins.function
     module_name: builtins.function
     run_before: builtins.function
@@ -8343,9 +8320,14 @@ trulens_eval.utils.python:
     tru_new_event_loop: builtins.function
     wrap_awaitable: builtins.function
     wrap_generator: builtins.function
-trulens_eval.utils.python.EmptyType:
+trulens_eval.utils.python.Any:
   __bases__:
-  - builtins.type
+  - builtins.object
+  __class__: typing._AnyMeta
+  attributes: {}
+trulens_eval.utils.python.Generic:
+  __bases__:
+  - builtins.object
   __class__: builtins.type
   attributes: {}
 trulens_eval.utils.python.OpaqueWrapper:
@@ -8369,6 +8351,14 @@ trulens_eval.utils.python.SingletonPerName:
     delete_singleton: builtins.function
     delete_singleton_by_name: builtins.staticmethod
     warning: builtins.function
+trulens_eval.utils.python.TypeVar:
+  __bases__:
+  - typing._Final
+  - typing._Immutable
+  - typing._BoundVarianceMixin
+  - typing._PickleUsingNameMixin
+  __class__: builtins.type
+  attributes: {}
 trulens_eval.utils.serial:
   __class__: builtins.module
   highs: {}
@@ -8381,9 +8371,6 @@ trulens_eval.utils.serial:
     GetItemOrAttribute: pydantic._internal._model_construction.ModelMetaclass
     GetItems: pydantic._internal._model_construction.ModelMetaclass
     GetSlice: pydantic._internal._model_construction.ModelMetaclass
-    JSONPath: pydantic._internal._model_construction.ModelMetaclass
-    JSON_BASES: builtins.tuple
-    JSONized: builtins.type
     Lens: pydantic._internal._model_construction.ModelMetaclass
     ParseException: builtins.type
     SerialBytes: pydantic._internal._model_construction.ModelMetaclass
@@ -8398,6 +8385,9 @@ trulens_eval.utils.serial:
     matching_objects: builtins.function
     matching_queries: builtins.function
     model_dump: builtins.function
+    serial_utilsPath: builtins.module
+    serial_utils_BASES: builtins.module
+    serial_utilsized: builtins.module
 trulens_eval.utils.serial.Collect:
   __bases__:
   - trulens.core.utils.serial.Step
@@ -8699,32 +8689,6 @@ trulens_eval.utils.serial.GetSlice:
     stop: typing.Optional[builtins.int, builtins.NoneType]
     update_forward_refs: builtins.classmethod
     validate: builtins.classmethod
-trulens_eval.utils.serial.JSONPath:
-  __bases__:
-  - pydantic.main.BaseModel
-  - collections.abc.Sized
-  - collections.abc.Hashable
-  - typing.Generic
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    dump_as_string: builtins.function
-    existing_prefix: builtins.function
-    exists: builtins.function
-    get: builtins.function
-    get_sole_item: builtins.function
-    is_immediate_prefix_of: builtins.function
-    is_prefix_of: builtins.function
-    of_string: builtins.staticmethod
-    path: typing.Tuple[trulens.core.utils.serial.Step, ...]
-    set: builtins.function
-    set_or_append: builtins.function
-    validate_from_string: builtins.classmethod
-trulens_eval.utils.serial.JSONized:
-  __bases__:
-  - builtins.dict
-  - typing.Generic
-  __class__: builtins.type
-  attributes: {}
 trulens_eval.utils.serial.Lens:
   __bases__:
   - pydantic.main.BaseModel
@@ -8836,22 +8800,19 @@ trulens_eval.utils.threading:
   highs: {}
   lows:
     DEFAULT_NETWORK_TIMEOUT: builtins.float
-    TP: builtins.type
+    TP: trulens.core.utils.python.SingletonPerNameMeta
     Thread: builtins.type
     ThreadPoolExecutor: builtins.type
     deprecation_utils: builtins.module
 trulens_eval.utils.threading.TP:
   __bases__:
-  - trulens.core.utils.python.SingletonPerName
-  __class__: builtins.type
+  - builtins.object
+  __class__: trulens.core.utils.python.SingletonPerNameMeta
   attributes:
     DEBUG_TIMEOUT: builtins.float
     MAX_THREADS: builtins.int
-    delete_singleton: builtins.function
-    delete_singleton_by_name: builtins.staticmethod
     shutdown: builtins.function
     submit: builtins.function
-    warning: builtins.function
 trulens_eval.utils.threading.Thread:
   __bases__:
   - threading.Thread
@@ -8867,58 +8828,13 @@ trulens_eval.utils.trulens:
   highs: {}
   lows:
     COMPONENT_VIEWS: builtins.list
-    Class: pydantic._internal._model_construction.ModelMetaclass
     Other: trulens.core.app.ComponentViewMeta
     Type: typing._SpecialGenericAlias
     app: builtins.module
     component_of_json: builtins.function
     constructor_of_class: builtins.function
     deprecation_utils: builtins.module
-trulens_eval.utils.trulens.Class:
-  __bases__:
-  - trulens.core.utils.serial.SerialModel
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    base_class: builtins.function
-    bases: typing.Optional[typing.Sequence[trulens.core.utils.pyschema.Class], builtins.NoneType]
-    construct: builtins.classmethod
-    copy: builtins.function
-    dict: builtins.function
-    formatted_objects: _contextvars.ContextVar
-    from_orm: builtins.classmethod
-    json: builtins.function
-    load: builtins.function
-    model_computed_fields: builtins.dict
-    model_config: builtins.dict
-    model_construct: builtins.classmethod
-    model_copy: builtins.function
-    model_dump: builtins.function
-    model_dump_json: builtins.function
-    model_extra: builtins.property
-    model_fields: builtins.dict
-    model_fields_set: builtins.property
-    model_json_schema: builtins.classmethod
-    model_parametrized_name: builtins.classmethod
-    model_post_init: builtins.function
-    model_rebuild: builtins.classmethod
-    model_validate: builtins.classmethod
-    model_validate_json: builtins.classmethod
-    model_validate_strings: builtins.classmethod
-    module: trulens.core.utils.pyschema.Module
-    name: builtins.str
-    noserio_issubclass: builtins.function
-    of_class: builtins.staticmethod
-    of_class_info: builtins.staticmethod
-    of_object: builtins.staticmethod
-    parse_file: builtins.classmethod
-    parse_obj: builtins.classmethod
-    parse_raw: builtins.classmethod
-    replace: builtins.function
-    schema: builtins.classmethod
-    schema_json: builtins.classmethod
-    update: builtins.function
-    update_forward_refs: builtins.classmethod
-    validate: builtins.classmethod
+    pyschema_utils: builtins.module
 trulens_eval.utils.trulens.Other:
   __bases__:
   - trulens.core.app.Other

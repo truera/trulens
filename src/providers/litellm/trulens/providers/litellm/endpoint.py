@@ -4,8 +4,7 @@ import pprint
 from typing import Any, Callable, ClassVar, Optional
 
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 
 import litellm
 from litellm import completion_cost
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 pp = pprint.PrettyPrinter()
 
 
-class LiteLLMCallback(EndpointCallback):
+class LiteLLMCallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     def handle_classification(self, response: pydantic.BaseModel) -> None:
@@ -59,7 +58,7 @@ class LiteLLMCallback(EndpointCallback):
             setattr(self.cost, "cost", completion_cost(response))
 
 
-class LiteLLMEndpoint(Endpoint):
+class LiteLLMEndpoint(core_endpoint.Endpoint):
     """LiteLLM endpoint."""
 
     litellm_provider: str = "openai"
@@ -71,37 +70,18 @@ class LiteLLMEndpoint(Endpoint):
     """
 
     def __init__(self, litellm_provider: str = "openai", **kwargs):
-        if hasattr(self, "name"):
-            # singleton already made
-            if len(kwargs) > 0:
-                logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name,
-                    pp.pformat(kwargs),
-                )
-                self.warning()
-            return
-
-        kwargs["name"] = "litellm"
         kwargs["callback_class"] = LiteLLMCallback
 
         super().__init__(litellm_provider=litellm_provider, **kwargs)
 
         self._instrument_module_members(litellm, "completion")
 
-    def __new__(cls, litellm_provider: str = "openai", **kwargs):
-        # Problem here if someone uses litellm with different providers. Only a
-        # single one will be made. Cannot make a fix just here as
-        # track_all_costs creates endpoints via the singleton mechanism.
-
-        return super(Endpoint, cls).__new__(cls, name="litellm")
-
     def handle_wrapped_call(
         self,
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> None:
         counted_something = False
 

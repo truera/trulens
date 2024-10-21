@@ -5,7 +5,7 @@ import re
 from typing import Optional
 import warnings
 
-from trulens.core.utils.text import retab
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ParseError(Exception):
             f"Tried to find {expected}"
             + (f" using pattern {pattern.pattern}" if pattern else "")
             + " in\n"
-            + retab(tab="  ", s=text)
+            + text_utils.retab(tab="  ", s=text)
         )
         self.text = text
         self.pattern = pattern

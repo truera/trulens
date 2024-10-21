@@ -8,15 +8,14 @@ from typing import Any, Callable, ClassVar, Optional
 from snowflake.connector.cursor import SnowflakeCursor
 from snowflake.snowpark import DataFrame
 from snowflake.snowpark import Session
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
 
 
-class CortexCallback(EndpointCallback):
+class CortexCallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
     _model_costs: Optional[dict] = None
     # TODO (Daniel): cost tracking for Cortex finetuned models is not yet implemented.
@@ -90,22 +89,10 @@ class CortexCallback(EndpointCallback):
         setattr(self.cost, "cost_currency", "Snowflake credits")
 
 
-class CortexEndpoint(Endpoint):
+class CortexEndpoint(core_endpoint.Endpoint):
     """Snowflake Cortex endpoint."""
 
     def __init__(self, *args, **kwargs):
-        if hasattr(self, "name"):
-            # singleton already made
-            if len(kwargs) > 0:
-                logger.warning(
-                    "Ignoring additional kwargs for singleton endpoint %s: %s",
-                    self.name,
-                    pp.pformat(kwargs),
-                )
-                self.warning()
-            return
-
-        kwargs["name"] = "cortex"
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
@@ -114,15 +101,12 @@ class CortexEndpoint(Endpoint):
         self._instrument_class(Session, "sql")
         self._instrument_class(SnowflakeCursor, "fetchall")
 
-    def __new__(cls, *args, **kwargs):
-        return super(Endpoint, cls).__new__(cls, name="cortex")
-
     def handle_wrapped_call(
         self,
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         counted_something = False
 

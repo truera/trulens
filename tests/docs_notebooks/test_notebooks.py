@@ -7,7 +7,7 @@ from unittest import main
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
-from trulens.core.database.legacy import migration
+from trulens.core.database.legacy import migration as legacy_migration
 
 
 class DocsNotebookTests(TestCase):
@@ -55,7 +55,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
         if "TruSession()" in cell["source"]:
             cell["source"] = (
                 cell["source"]
-                + "\nfrom trulens.core import TruSession\nsession=TruSession()\nsession.migrate_database()\n"
+                + "\nfrom trulens.core.session import TruSession\nsession=TruSession()\nsession.migrate_database()\n"
                 + "\nfrom trulens.core.database.migrations.data import _sql_alchemy_serialization_asserts\n_sql_alchemy_serialization_asserts(session.connector.db)\n"
             )
         ret = super().preprocess_cell(cell, resources, index, **kwargs)
@@ -116,8 +116,8 @@ for filename in listdir("./tests/docs_notebooks/notebooks_to_test/"):
 
             # Run the oldest and latest migrations to keep testing more manageable
             legacy_sqllite_migrations = [
-                migration.migration_versions[0],
-                migration.migration_versions[-1],
+                legacy_migration.migration_versions[0],
+                legacy_migration.migration_versions[-1],
             ]
             sqlalchemy_versions = [
                 compat_versions

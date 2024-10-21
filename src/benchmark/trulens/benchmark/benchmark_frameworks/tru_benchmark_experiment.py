@@ -5,11 +5,9 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import BaseModel
-from trulens.apps.custom import TruCustomApp
-from trulens.apps.custom import instrument
-from trulens.core import Feedback
-from trulens.core import Select
-from trulens.core.feedback.feedback import AggCallable
+from trulens.apps import custom as custom_app
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import select as select_schema
 
 log = logging.getLogger(__name__)
 
@@ -58,33 +56,40 @@ class TruBenchmarkExperiment:
     def __init__(
         self,
         feedback_fn: Callable,
-        agg_funcs: List[AggCallable],
+        agg_funcs: List[core_feedback.AggCallable],
         benchmark_params: BenchmarkParams,
     ):
-        """Create a benchmark experiment class which defines custom
-        feedback functions and aggregators to evaluate the feedback function on a ground truth dataset.
+        """Create a benchmark experiment class which defines custom feedback
+        functions and aggregators to evaluate the feedback function on a ground
+        truth dataset.
 
         Args:
-            feedback_fn (Callable): function that takes in a row of ground truth data and returns a score by typically a LLM-as-judge
-            agg_funcs (List[AggCallable]): list of aggregation functions to compute metrics on the feedback scores
-            benchmark_params (BenchmarkParams): benchmark configuration parameters
+            feedback_fn: function that takes in a row of ground truth data and
+                returns a score by typically a LLM-as-judge
+
+            agg_funcs: list of aggregation functions to compute metrics on the
+                feedback scores
+
+            benchmark_params: benchmark configuration parameters
 
         """
 
         self.feedback_fn = feedback_fn
         self.benchmark_params = benchmark_params
 
-        self.f_benchmark_metrics: List[Feedback] = [
-            Feedback(
+        self.f_benchmark_metrics: List[core_feedback.Feedback] = [
+            core_feedback.Feedback(
                 lambda x: x,
                 name=f"metric_{agg_func.__name__}",
             )
-            .on(Select.RecordCalls.run_score_generation_on_single_row.rets)
+            .on(
+                select_schema.Select.RecordCalls.run_score_generation_on_single_row.rets
+            )
             .aggregate(agg_func)
             for agg_func in agg_funcs
         ]
 
-    @instrument
+    @custom_app.instrument
     def run_score_generation_on_single_row(
         self,
         feedback_fn: Callable,
@@ -108,21 +113,38 @@ class TruBenchmarkExperiment:
         # Append the benchmark parameters dictionary
         feedback_args.append(benchmark_params_dict)
 
-        ret = feedback_fn(*feedback_args)
+        try:
+            ret = feedback_fn(*feedback_args)
 
-        if not isinstance(ret, tuple) and not isinstance(ret, float):
-            raise ValueError(
-                f"Output must be a float or a tuple, got {type(ret)}"
+            if not isinstance(ret, tuple) and not isinstance(ret, float):
+                raise ValueError(
+                    f"Output must be a float or a tuple, got {type(ret)}"
+                )
+
+            if isinstance(ret, tuple) and isinstance(ret[1], dict):
+                if (
+                    ret[1]
+                    and len(list(ret[1].values())) > 0
+                    and isinstance(list(ret[1].values())[-1], float)
+                ):
+                    ret = (
+                        ret[0],
+                        list(ret[1].values())[-1],
+                    )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
+                else:
+                    ret = ret[0]
+                    # handle the case when metadata is empty
+            return ret
+        except Exception as e:
+            import traceback
+
+            log.error(f"Row generated an exception: {e}")
+            traceback.print_exc()
+            return (
+                0.0  # hack to make sure we always return a value for each row
             )
 
-        if isinstance(ret, tuple) and isinstance(ret[1], dict):
-            ret = (
-                ret[0],
-                list(ret[1].values())[-1],
-            )  # this is the case when a feedback function returns a tuple with a score and metadata like (0.5, {"confidence_score": 0.8})
-        return ret
-
-    @instrument
+    @custom_app.instrument
     def __call__(
         self,
         ground_truth: pd.DataFrame,
@@ -196,21 +218,29 @@ def create_benchmark_experiment_app(
     app_version: str,
     benchmark_experiment: TruBenchmarkExperiment,
     **kwargs,
-) -> TruCustomApp:
-    """Create a Custom app for special use case: benchmarking feedback functions.
+) -> custom_app.TruCustomApp:
+    """Create a Custom app for special use case: benchmarking feedback
+    functions.
 
     Args:
-        app_name (str): user-defined name of the experiment run.
-        app_version (str): user-defined version of the experiment run.
-        feedback_fn (Callable): feedback function of interest to perform meta-evaluation on.
-        agg_funcs (List[feedback.AggCallable]): list of aggregation functions to compute metrics for the benchmark.
-        benchmark_params (Any): parameters for the benchmarking experiment.
+        app_name: user-defined name of the experiment run.
+
+        app_version: user-defined version of the experiment run.
+
+        feedback_fn: feedback function of interest to perform meta-evaluation
+        on.
+
+        agg_funcs: list of aggregation functions to compute metrics for the
+            benchmark.
+
+        benchmark_params: parameters for the benchmarking experiment.
 
     Returns:
-        trulens.core.app.TruCustomApp: Custom app wrapper for benchmarking feedback functions.
+        Custom app wrapper for benchmarking
+            feedback functions.
     """
 
-    return TruCustomApp(
+    return custom_app.TruCustomApp(
         benchmark_experiment,
         app_name=app_name,
         app_version=app_version,

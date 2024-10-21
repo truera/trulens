@@ -2,19 +2,19 @@ import logging
 from typing import Dict, Optional
 
 import numpy as np
-from trulens.core import Feedback
-from trulens.core.utils import serial as mod_serial_utils
-from trulens.feedback import LLMProvider
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.utils import serial as serial_utils
+from trulens.feedback import llm_provider
 
 logger = logging.getLogger(__name__)
 
 
 def rag_triad(
-    provider: LLMProvider,
-    question: Optional[mod_serial_utils.Lens] = None,
-    answer: Optional[mod_serial_utils.Lens] = None,
-    context: Optional[mod_serial_utils.Lens] = None,
-) -> Dict[str, Feedback]:
+    provider: llm_provider.LLMProvider,
+    question: Optional[serial_utils.Lens] = None,
+    answer: Optional[serial_utils.Lens] = None,
+    context: Optional[serial_utils.Lens] = None,
+) -> Dict[str, core_feedback.Feedback]:
     """Create a triad of feedback functions for evaluating context retrieval
     generation steps.
 
@@ -73,7 +73,9 @@ def rag_triad(
             "Context Relevance",
         ),
     ]:
-        f = Feedback(f_imp, if_exists=context, name=f_name).aggregate(f_agg)
+        f = core_feedback.Feedback(
+            f_imp, if_exists=context, name=f_name
+        ).aggregate(f_agg)
         if arg1lens is not None:
             f = f.on(**{arg1name: arg1lens})
         else:

@@ -4,19 +4,15 @@ import logging
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import pandas as pd
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.schema.app import AppDefinition
-from trulens.core.schema.dataset import Dataset
-from trulens.core.schema.feedback import FeedbackDefinition
-from trulens.core.schema.feedback import FeedbackResult
-from trulens.core.schema.feedback import FeedbackResultStatus
-from trulens.core.schema.groundtruth import GroundTruth
-from trulens.core.schema.record import Record
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import dataset as dataset_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import groundtruth as groundtruth_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.serial import JSONized
-from trulens.core.utils.serial import SerialModel
 
 NoneType = type(None)
 
@@ -40,7 +36,7 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 """Default value for option to redact secrets before writing out data to database."""
 
 
-class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
+class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     """Abstract definition of databases used by trulens.
 
     [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
@@ -64,7 +60,7 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
         return f"{self.__class__.__name__}"
 
     def _json_str_of_obj(self, obj: Any) -> str:
-        return json_str_of_obj(obj, redact_keys=self.redact_keys)
+        return json_utils.json_str_of_obj(obj, redact_keys=self.redact_keys)
 
     @abc.abstractmethod
     def reset_database(self):
@@ -97,8 +93,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def insert_record(
         self,
-        record: Record,
-    ) -> mod_types_schema.RecordID:
+        record: record_schema.Record,
+    ) -> types_schema.RecordID:
         """
         Upsert a `record` into the database.
 
@@ -113,8 +109,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def batch_insert_record(
-        self, records: List[Record]
-    ) -> List[mod_types_schema.RecordID]:
+        self, records: List[record_schema.Record]
+    ) -> List[types_schema.RecordID]:
         """
         Upsert a batch of records into the database.
 
@@ -127,7 +123,7 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_app(self, app: AppDefinition) -> mod_types_schema.AppID:
+    def insert_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Upsert an `app` into the database.
 
@@ -143,7 +139,7 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Delete an `app` from the database.
 
@@ -155,8 +151,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def insert_feedback_definition(
-        self, feedback_definition: FeedbackDefinition
-    ) -> mod_types_schema.FeedbackDefinitionID:
+        self, feedback_definition: feedback_schema.FeedbackDefinition
+    ) -> types_schema.FeedbackDefinitionID:
         """
         Upsert a `feedback_definition` into the database.
 
@@ -176,7 +172,7 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     def get_feedback_defs(
         self,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
     ) -> pd.DataFrame:
         """Retrieve feedback definitions from the database.
@@ -195,8 +191,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def insert_feedback(
         self,
-        feedback_result: FeedbackResult,
-    ) -> mod_types_schema.FeedbackResultID:
+        feedback_result: feedback_schema.FeedbackResult,
+    ) -> types_schema.FeedbackResultID:
         """Upsert a `feedback_result` into the the database.
 
         Args:
@@ -210,8 +206,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def batch_insert_feedback(
-        self, feedback_results: List[FeedbackResult]
-    ) -> List[mod_types_schema.FeedbackResultID]:
+        self, feedback_results: List[feedback_schema.FeedbackResult]
+    ) -> List[types_schema.FeedbackResultID]:
         """Upsert a batch of feedback results into the database.
 
         Args:
@@ -226,19 +222,22 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def get_feedback(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
-            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+            Union[
+                feedback_schema.FeedbackResultStatus,
+                Sequence[feedback_schema.FeedbackResultStatus],
+            ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: Optional[bool] = None,
-        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
     ) -> pd.DataFrame:
         """Get feedback results matching a set of optional criteria:
 
@@ -272,20 +271,23 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def get_feedback_count_by_status(
         self,
-        record_id: Optional[mod_types_schema.RecordID] = None,
-        feedback_result_id: Optional[mod_types_schema.FeedbackResultID] = None,
+        record_id: Optional[types_schema.RecordID] = None,
+        feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
-            mod_types_schema.FeedbackDefinitionID
+            types_schema.FeedbackDefinitionID
         ] = None,
         status: Optional[
-            Union[FeedbackResultStatus, Sequence[FeedbackResultStatus]]
+            Union[
+                feedback_schema.FeedbackResultStatus,
+                Sequence[feedback_schema.FeedbackResultStatus],
+            ]
         ] = None,
         last_ts_before: Optional[datetime] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
         shuffle: bool = False,
-        run_location: Optional[mod_feedback_schema.FeedbackRunLocation] = None,
-    ) -> Dict[FeedbackResultStatus, int]:
+        run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
+    ) -> Dict[feedback_schema.FeedbackResultStatus, int]:
         """Get count of feedback results matching a set of optional criteria grouped by
         their status.
 
@@ -300,7 +302,9 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_app(self, app_id: mod_types_schema.AppID) -> Optional[JSONized]:
+    def get_app(
+        self, app_id: types_schema.AppID
+    ) -> Optional[serial_utils.JSONized]:
         """Get the app with the given id from the database.
 
         Returns:
@@ -313,22 +317,22 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def get_apps(
-        self, app_name: Optional[mod_types_schema.AppName] = None
-    ) -> Iterable[JSONized[AppDefinition]]:
+        self, app_name: Optional[types_schema.AppName] = None
+    ) -> Iterable[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Get all apps."""
 
         raise NotImplementedError()
 
     def update_app_metadata(
-        self, app_id: mod_types_schema.AppID, metadata: Dict[str, Any]
-    ) -> Optional[AppDefinition]:
+        self, app_id: types_schema.AppID, metadata: Dict[str, Any]
+    ) -> Optional[app_schema.AppDefinition]:
         """Update the metadata of an app."""
 
     @abc.abstractmethod
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
-        app_name: Optional[mod_types_schema.AppName] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
+        app_name: Optional[types_schema.AppName] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
@@ -351,8 +355,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def insert_ground_truth(
-        self, ground_truth: GroundTruth
-    ) -> mod_types_schema.GroundTruthID:
+        self, ground_truth: groundtruth_schema.GroundTruth
+    ) -> types_schema.GroundTruthID:
         """Insert a ground truth entry into the database. The ground truth id is generated
         based on the ground truth content, so re-inserting is idempotent.
 
@@ -366,8 +370,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
 
     @abc.abstractmethod
     def batch_insert_ground_truth(
-        self, ground_truths: List[GroundTruth]
-    ) -> List[mod_types_schema.GroundTruthID]:
+        self, ground_truths: List[groundtruth_schema.GroundTruth]
+    ) -> List[types_schema.GroundTruthID]:
         """Insert a batch of ground truth entries into the database.
 
         Args:
@@ -381,8 +385,8 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
     @abc.abstractmethod
     def get_ground_truth(
         self,
-        ground_truth_id: Optional[mod_types_schema.GroundTruthID] = None,
-    ) -> Optional[JSONized]:
+        ground_truth_id: Optional[types_schema.GroundTruthID] = None,
+    ) -> Optional[serial_utils.JSONized]:
         """Get the ground truth with the given id from the database."""
 
         raise NotImplementedError()
@@ -397,7 +401,9 @@ class DB(SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_dataset(self, dataset: Dataset) -> mod_types_schema.DatasetID:
+    def insert_dataset(
+        self, dataset: dataset_schema.Dataset
+    ) -> types_schema.DatasetID:
         """Insert a dataset into the database. The dataset id is generated based on the
         dataset content, so re-inserting is idempotent.
 

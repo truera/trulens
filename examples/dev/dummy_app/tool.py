@@ -2,8 +2,7 @@ import inspect
 from typing import Callable, List, Optional
 
 from trulens.apps.custom import instrument
-from trulens.core.utils.python import WeakWrapper
-from trulens.core.utils.python import superstack
+from trulens.core.utils import python as python_utils
 
 from examples.dev.dummy_app.dummy import Dummy
 
@@ -64,7 +63,7 @@ class DummyTool(Dummy):
 class DummyStackTool(DummyTool):
     """A tool that returns a rendering of the call stack when it is invoked."""
 
-    last_stacks: List[WeakWrapper] = []
+    last_stacks: List[python_utils.WeakWrapper] = []
     """The stacks seen during save_stack invocations.
 
     You can use this to get the readout even if this tool is used deep in an app
@@ -83,10 +82,10 @@ class DummyStackTool(DummyTool):
         # stack to include in the return of this method but at the same time
         # want to be able to take a look at those things which we didn't
         # serialize.
-        current_stack = list(superstack())
+        current_stack = list(f.frame for f in inspect.stack())
         DummyStackTool.last_stacks.append(
             # Has to be a weakref to prevent GC test failures.
-            WeakWrapper(current_stack)
+            python_utils.WeakWrapper(current_stack)
         )
 
         ret = "<table>\n"
