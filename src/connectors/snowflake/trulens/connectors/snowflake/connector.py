@@ -183,11 +183,15 @@ class SnowflakeConnector(DBConnector):
         # Add "trulens_workspace_version" tag to the current schema
         schema = snowpark_session.get_current_schema()
         db = snowpark_session.get_current_database()
+        TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
+
         res = snowpark_session.sql(
-            "create tag if not exists trulens_workspace_version"
+            f"create tag if not exists {TRULENS_WORKSPACE_VERSION_TAG}"
         ).collect()
         res = snowpark_session.sql(
-            f"ALTER schema {db}.{schema} SET TAG trulens_workspace_version='{trulens_version}'"
+            "ALTER schema {}.{} SET TAG {}='{}'".format(
+                db, schema, TRULENS_WORKSPACE_VERSION_TAG, trulens_version
+            )
         ).collect()
 
         print(f"Set TruLens workspace version tag: {res}")
