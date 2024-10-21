@@ -98,6 +98,7 @@ class SnowflakeTestCase(TestCase):
             schema=self._schema,
             **self._snowflake_connection_parameters,
             init_server_side=True,
+            init_server_side_with_staged_packages=True,
         )
         session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
