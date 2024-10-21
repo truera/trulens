@@ -195,7 +195,7 @@ class SnowflakeConnector(DBConnector):
         schema_name: str,
     ):
         snowpark_session.sql(
-            f"CREATE SCHEMA IF NOT EXISTS {schema_name}"
+            "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)", [schema_name]
         ).collect()
 
     @cached_property
