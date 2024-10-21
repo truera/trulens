@@ -182,11 +182,14 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
         )
-        # Test stage doesn't exist.
+        # Test stage exists.
         res = self._snowflake_session.sql(
             f"SHOW TERSE STAGES IN SCHEMA {self._database}.{self._schema}"
         ).collect()
-        self.assertEqual(len(res), 0)
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].name, ssea._STAGE_NAME)
+        self.assertEqual(res[0].database_name, self._database.upper())
+        self.assertEqual(res[0].schema_name, self._schema.upper())
         # Test stream exists.
         res = self._snowflake_session.sql(
             f"SHOW TERSE STREAMS IN SCHEMA {self._database}.{self._schema}"
