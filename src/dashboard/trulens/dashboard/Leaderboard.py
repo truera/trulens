@@ -12,7 +12,7 @@ from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
-from trulens.dashboard.pages import Compare as compare_page
+from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
 from trulens.dashboard.ux import components as dashboard_components
@@ -524,18 +524,18 @@ def _render_grid_tab(
         )
         st.switch_page("pages/Records.py")
     # Compare App Versions
-    if len(selected_app_ids) < compare_page.MIN_COMPARATORS:
+    if len(selected_app_ids) < Compare_page.MIN_COMPARATORS:
         _compare_button_label = (
-            f"Min {compare_page.MIN_COMPARATORS} App Versions"
+            f"Min {Compare_page.MIN_COMPARATORS} App Versions"
         )
         _compare_button_disabled = True
-        help_msg = f"Select at least {compare_page.MIN_COMPARATORS} app versions to compare."
-    elif len(selected_app_ids) > compare_page.MAX_COMPARATORS:
+        help_msg = f"Select at least {Compare_page.MIN_COMPARATORS} app versions to compare."
+    elif len(selected_app_ids) > Compare_page.MAX_COMPARATORS:
         _compare_button_label = (
-            f"Max {compare_page.MAX_COMPARATORS} App Versions"
+            f"Max {Compare_page.MAX_COMPARATORS} App Versions"
         )
         _compare_button_disabled = True
-        help_msg = f"Deselect to at most {compare_page.MAX_COMPARATORS} app versions to compare."
+        help_msg = f"Deselect to at most {Compare_page.MAX_COMPARATORS} app versions to compare."
     else:
         _compare_button_label = "Compare"
         _compare_button_disabled = False
