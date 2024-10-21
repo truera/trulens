@@ -182,7 +182,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         TruBasicApp(
             text_to_text=lambda t: f"returning {t}",
         )
-        # Test stage doensn't exist.
+        # Test stage doesn't exist.
         res = self._snowflake_session.sql(
             f"SHOW TERSE STAGES IN SCHEMA {self._database}.{self._schema}"
         ).collect()
