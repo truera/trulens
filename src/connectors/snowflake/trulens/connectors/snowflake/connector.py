@@ -58,61 +58,16 @@ class SnowflakeConnector(DBConnector):
             "warehouse": warehouse,
             "role": role,
         }
-
         if snowpark_session is None:
-            kwargs_to_set = []
-            for k, v in connection_parameters.items():
-                if v is None:
-                    kwargs_to_set.append(k)
-            if kwargs_to_set:
-                raise ValueError(
-                    f"If not supplying `snowpark_session` then must set `{kwargs_to_set}`!"
-                )
-
-            del connection_parameters["schema"]
-            snowpark_session = Session.builder.configs(
+            snowpark_session = self._create_snowpark_session(
                 connection_parameters
-            ).create()
-            self._validate_schema_name(schema)
-            self._create_snowflake_schema_if_not_exists(
-                snowpark_session, database, schema
             )
-            snowpark_session.use_schema(schema)
-            connection_parameters["schema"] = schema
         else:
-            snowpark_connection_parameters = {
-                "account": snowpark_session.get_current_account(),
-                "user": snowpark_session.get_current_user(),
-                "database": snowpark_session.get_current_database(),
-                "schema": snowpark_session.get_current_schema(),
-                "warehouse": snowpark_session.get_current_warehouse(),
-                "role": snowpark_session.get_current_role(),
-            }
-            missing_snowpark_params = []
-            mismatched_kwargs = []
-            for k, v in snowpark_connection_parameters.items():
-                if not v:
-                    missing_snowpark_params.append(k)
-                if connection_parameters[k] is None:
-                    connection_parameters[k] = v
-                elif connection_parameters[k] != v:
-                    mismatched_kwargs.append(k)
-
-            if missing_snowpark_params:
-                raise ValueError(
-                    f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
+            connection_parameters = (
+                self._validate_snowpark_session_with_connection_parameters(
+                    snowpark_session, connection_parameters
                 )
-            if mismatched_kwargs:
-                raise ValueError(
-                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
-                )
-
-            if connection_parameters["password"] is None:
-                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
-                logger.warning(
-                    "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
-                )
-                connection_parameters["password"] = "password"
+            )
 
         self._init_with_snowpark_session(
             snowpark_session,
@@ -122,8 +77,83 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
             database_args,
             database_check_revision,
-            connection_parameters,
+            URL(**connection_parameters),
         )
+
+    def _create_snowpark_session(
+        self, connection_parameters: Dict[str, Optional[str]]
+    ):
+        connection_parameters = connection_parameters.copy()
+        # Validate.
+        connection_parameters_to_set = []
+        for k, v in connection_parameters.items():
+            if v is None:
+                connection_parameters_to_set.append(k)
+        if connection_parameters_to_set:
+            raise ValueError(
+                f"If not supplying `snowpark_session` then must set `{connection_parameters_to_set}`!"
+            )
+        self.password_known = True
+        # Create snowpark session making sure to create schema if it doesn't
+        # already exist.
+        database = connection_parameters["database"]
+        schema = connection_parameters["schema"]
+        del connection_parameters["schema"]
+        snowpark_session = Session.builder.configs(
+            connection_parameters
+        ).create()
+        self._validate_schema_name(schema)
+        self._create_snowflake_schema_if_not_exists(
+            snowpark_session, database, schema
+        )
+        snowpark_session.use_schema(schema)
+        return snowpark_session
+
+    def _validate_snowpark_session_with_connection_parameters(
+        self,
+        snowpark_session: Session,
+        connection_parameters: Dict[str, Optional[str]],
+    ) -> Dict[str, Optional[str]]:
+        # Validate.
+        snowpark_session_connection_parameters = {
+            "account": snowpark_session.get_current_account(),
+            "user": snowpark_session.get_current_user(),
+            "database": snowpark_session.get_current_database(),
+            "schema": snowpark_session.get_current_schema(),
+            "warehouse": snowpark_session.get_current_warehouse(),
+            "role": snowpark_session.get_current_role(),
+        }
+        missing_snowpark_session_parameters = []
+        mismatched_parameters = []
+        for k, v in snowpark_session_connection_parameters.items():
+            if not v:
+                missing_snowpark_session_parameters.append(k)
+            elif connection_parameters[k] not in [None, v]:
+                mismatched_parameters.append(k)
+        if missing_snowpark_session_parameters:
+            raise ValueError(
+                f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_session_parameters}"
+            )
+        if mismatched_parameters:
+            raise ValueError(
+                f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_parameters}"
+            )
+        # Check if password is also supplied as it's used in `run_dashboard`:
+        # Passwords are inaccessible from the `snowpark_session` object and we
+        # use another process to launch streamlit so must have the password on
+        # hand.
+        if connection_parameters["password"] is None:
+            logger.warning(
+                "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
+            )
+            snowpark_session_connection_parameters["password"] = "password"
+            self.password_known = False
+        else:
+            snowpark_session_connection_parameters["password"] = (
+                connection_parameters["password"]
+            )
+            self.password_known = True
+        return snowpark_session_connection_parameters
 
     def _init_with_snowpark_session(
         self,
@@ -134,7 +164,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
-        connection_parameters: Dict[str, Optional[str]],
+        database_url: str,
     ):
         database_args = database_args or {}
         if "engine_params" not in database_args:
@@ -152,9 +182,6 @@ class SnowflakeConnector(DBConnector):
             )
         database_args["engine_params"]["paramstyle"] = "qmark"
 
-        database_url = URL(
-            **connection_parameters,
-        )
         database_args.update({
             k: v
             for k, v in {
