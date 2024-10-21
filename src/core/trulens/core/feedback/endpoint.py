@@ -146,6 +146,11 @@ class Endpoint(
             module_name="trulens.providers.cortex.endpoint",
             class_name="CortexEndpoint",
         ),
+        EndpointSetup(
+            arg_flag="with_dummy",
+            module_name="trulens.feedback.dummy.endpoint",
+            class_name="DummyEndpoint",
+        ),
     ]
 
     instrumented_methods: ClassVar[
@@ -446,6 +451,7 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -512,6 +518,7 @@ class Endpoint(
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
         """
@@ -534,6 +541,7 @@ class Endpoint(
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
             with_cortex=with_cortex,
+            with_dummy=with_dummy,
             **kwargs,
         )
 
