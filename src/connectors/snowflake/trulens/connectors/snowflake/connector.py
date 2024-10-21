@@ -93,16 +93,13 @@ class SnowflakeConnector(DBConnector):
         self.password_known = True
         # Create snowpark session making sure to create schema if it doesn't
         # already exist.
-        database = connection_parameters["database"]
         schema = connection_parameters["schema"]
         del connection_parameters["schema"]
         snowpark_session = Session.builder.configs(
             connection_parameters
         ).create()
         self._validate_schema_name(schema)
-        self._create_snowflake_schema_if_not_exists(
-            snowpark_session, database, schema
-        )
+        self._create_snowflake_schema_if_not_exists(snowpark_session, schema)
         return snowpark_session
 
     def _validate_snowpark_session_with_connection_parameters(
