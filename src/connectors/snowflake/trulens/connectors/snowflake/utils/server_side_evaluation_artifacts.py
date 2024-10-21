@@ -55,9 +55,7 @@ class ServerSideEvaluationArtifacts:
         )
         for trulens_package in _TRULENS_PACKAGES:
             self._session.file.put(
-                os.path.join(
-                    data_directory, self._package_to_zip(trulens_package)
-                ),
+                os.path.join(data_directory, f"{trulens_package}.zip"),
                 f"@{_STAGE_NAME}",
             )
 
@@ -73,8 +71,7 @@ class ServerSideEvaluationArtifacts:
     def _set_up_stored_procedure(self) -> None:
         if self._use_staged_packages:
             import_packages = ",".join([
-                f"'@{_STAGE_NAME}/{self._package_to_zip(curr)}'"
-                for curr in _TRULENS_PACKAGES
+                f"'@{_STAGE_NAME}/{curr}.zip'" for curr in _TRULENS_PACKAGES
             ])
             import_statement = f"IMPORTS = ({import_packages})"
             trulens_packages = ""
@@ -159,7 +156,3 @@ class ServerSideEvaluationArtifacts:
             """
         )
         self._run_query(f"ALTER TASK {_TASK_NAME} RESUME")
-
-    @staticmethod
-    def _package_to_zip(package_name: str) -> str:
-        return f"{package_name.replace('-', '_')}.zip"
