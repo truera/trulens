@@ -11,11 +11,24 @@ from tests.util.snowflake_test_case import SnowflakeTestCase
 
 class TestSnowflakeConnection(SnowflakeTestCase):
     @optional_test
-    def test_basic_snowflake_connection(self):
+    def test_snowflake_connection_via_snowpark_session(self):
         """
         Check that we can connect to a Snowflake backend and have created the required schema.
         """
-        self.get_session("test_basic_snowflake_connection")
+        self.get_session(
+            "test_snowflake_connection_via_snowpark_session",
+            connect_via_snowpark_session=True,
+        )
+
+    @optional_test
+    def test_snowflake_connection_via_connection_parameters(self):
+        """
+        Check that we can connect to a Snowflake backend and have created the required schema.
+        """
+        self.get_session(
+            "test_snowflake_connection_via_connection_parameters",
+            connect_via_snowpark_session=False,
+        )
 
     @optional_test
     def test_connecting_to_premade_schema(self):

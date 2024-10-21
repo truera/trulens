@@ -27,10 +27,10 @@ class SnowflakeTestCase(TestCase):
             "role": os.environ["SNOWFLAKE_ROLE"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
-        self._snowflake_session = Session.builder.configs(
+        self._snowpark_session = Session.builder.configs(
             self._snowflake_connection_parameters
         ).create()
-        self._snowflake_root = Root(self._snowflake_session)
+        self._snowflake_root = Root(self._snowpark_session)
         self._snowflake_schemas_to_delete = []
 
     def tearDown(self):
@@ -58,7 +58,7 @@ class SnowflakeTestCase(TestCase):
             error_msg += "\n".join(schemas_not_deleted)
             raise ValueError(error_msg)
         # Close session.
-        self._snowflake_session.close()
+        self._snowpark_session.close()
 
     def list_schemas(self):
         schemas = self._snowflake_root.databases[
@@ -78,6 +78,7 @@ class SnowflakeTestCase(TestCase):
         app_base_name: Optional[str] = None,
         schema_name: Optional[str] = None,
         schema_already_exists: bool = False,
+        connect_via_snowpark_session: bool = True,
     ) -> core_session.TruSession:
         if bool(app_base_name) == bool(schema_name):
             raise ValueError(
@@ -94,18 +95,29 @@ class SnowflakeTestCase(TestCase):
         if not schema_already_exists:
             self.assertNotIn(self._schema, self.list_schemas())
             self._snowflake_schemas_to_delete.append(self._schema)
-        connector = snowflake_connector.SnowflakeConnector(
-            schema=self._schema,
-            **self._snowflake_connection_parameters,
-            init_server_side=True,
-            init_server_side_with_staged_packages=True,
-        )
+        if not connect_via_snowpark_session:
+            connector = snowflake_connector.SnowflakeConnector(
+                schema=self._schema,
+                **self._snowflake_connection_parameters,
+                init_server_side=True,
+                init_server_side_with_staged_packages=True,
+            )
+        else:
+            if not schema_already_exists:
+                snowflake_connector.SnowflakeConnector._create_snowflake_schema_if_not_exists(
+                    self._snowpark_session, self._schema
+                )
+            connector = snowflake_connector.SnowflakeConnector(
+                snowpark_session=self._snowpark_session,
+                init_server_side=True,
+                init_server_side_with_staged_packages=True,
+            )
         session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
         return session
 
     def run_query(self, q: str) -> None:
-        self._snowflake_session.sql(q).collect()
+        self._snowpark_session.sql(q).collect()
 
 
 if __name__ == "__main__":
