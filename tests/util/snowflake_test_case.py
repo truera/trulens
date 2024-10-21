@@ -37,10 +37,10 @@ class SnowflakeTestCase(TestCase):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
         for key in [
             curr
-            for curr in core_session.TruSession._instances
-            if curr[0] == "TruSession"
+            for curr in core_session.TruSession._singleton_instances
+            if curr[0] == "trulens.core.session.TruSession"
         ]:
-            del core_session.TruSession._instances[key]
+            del core_session.TruSession._singleton_instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -100,6 +100,7 @@ class SnowflakeTestCase(TestCase):
                 schema=self._schema,
                 **self._snowflake_connection_parameters,
                 init_server_side=True,
+                init_server_side_with_staged_packages=True,
             )
         else:
             if not schema_already_exists:
@@ -109,6 +110,7 @@ class SnowflakeTestCase(TestCase):
             connector = snowflake_connector.SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
                 init_server_side=True,
+                init_server_side_with_staged_packages=True,
             )
         session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())

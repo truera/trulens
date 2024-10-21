@@ -56,7 +56,7 @@ class TestTruChain(mod_test.TruTestCase):
 
         # Note that without WITH_APP mode, there might be a delay between return
         # of a with_record and the record appearing in the db.
-        tc = mod_tru_chain.TruBasicApp(
+        tc = mod_tru_chain.TruChain(
             chain,
             app_name=app_name,
             feedback_mode=feedback_schema.FeedbackMode.WITH_APP,

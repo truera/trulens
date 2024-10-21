@@ -20,9 +20,6 @@ from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
 from trulens.core.utils import python as python_utils
 
-from snowflake.core import CreateMode
-from snowflake.core import Root
-from snowflake.core.schema import Schema
 from snowflake.snowpark import Session
 from snowflake.sqlalchemy import URL
 
@@ -43,6 +40,7 @@ class SnowflakeConnector(DBConnector):
         role: Optional[str] = None,
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
+        init_server_side_with_staged_packages: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -74,7 +72,7 @@ class SnowflakeConnector(DBConnector):
             ).create()
             self._validate_schema_name(schema)
             self._create_snowflake_schema_if_not_exists(
-                snowpark_session, database, schema
+                snowpark_session, schema
             )
             connection_parameters["schema"] = schema
         else:
@@ -115,6 +113,7 @@ class SnowflakeConnector(DBConnector):
         self._init_with_snowpark_session(
             snowpark_session,
             init_server_side,
+            init_server_side_with_staged_packages,
             database_redact_keys,
             database_prefix,
             database_args,
@@ -126,6 +125,7 @@ class SnowflakeConnector(DBConnector):
         self,
         snowpark_session: Session,
         init_server_side: bool,
+        init_server_side_with_staged_packages: bool,
         database_redact_keys: bool,
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
@@ -175,7 +175,9 @@ class SnowflakeConnector(DBConnector):
 
         if init_server_side:
             ServerSideEvaluationArtifacts(
-                snowpark_session, database_args["database_prefix"]
+                snowpark_session,
+                database_args["database_prefix"],
+                init_server_side_with_staged_packages,
             ).set_up_all()
 
     @classmethod
@@ -189,14 +191,11 @@ class SnowflakeConnector(DBConnector):
     def _create_snowflake_schema_if_not_exists(
         cls,
         snowpark_session: Session,
-        database_name: str,
         schema_name: str,
     ):
-        root = Root(snowpark_session)
-        schema = Schema(name=schema_name)
-        root.databases[database_name].schemas.create(
-            schema, mode=CreateMode.if_not_exists
-        )
+        snowpark_session.sql(
+            "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)", [schema_name]
+        ).collect()
         snowpark_session.use_schema(schema_name)
 
     @cached_property

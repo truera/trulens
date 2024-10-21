@@ -13,12 +13,11 @@ _PYTHON_STORED_PROCEDURE_CODE_FILENAME = os.path.join(
     "server_side_evaluation_stored_procedure.py",
 )
 
-_ZIPS_TO_UPLOAD = [
-    "snowflake_sqlalchemy.zip",
-    "trulens_connectors_snowflake.zip",
-    "trulens_core.zip",
-    "trulens_feedback.zip",
-    "trulens_providers_cortex.zip",
+_TRULENS_PACKAGES = [
+    "trulens-connectors-snowflake",
+    "trulens-core",
+    "trulens-feedback",
+    "trulens-providers-cortex",
 ]
 
 
@@ -29,15 +28,18 @@ class ServerSideEvaluationArtifacts:
         self,
         session: Session,
         database_prefix: str,
+        use_staged_packages: bool,
     ) -> None:
         self._session = session
         self._database = session.get_current_database()
         self._schema = session.get_current_schema()
         self._warehouse = session.get_current_warehouse()
         self._database_prefix = database_prefix
+        self._use_staged_packages = use_staged_packages
 
     def set_up_all(self) -> None:
-        self._set_up_stage()
+        if self._use_staged_packages:
+            self._set_up_stage()
         self._set_up_stream()
         self._set_up_stored_procedure()
         self._set_up_wrapper_stored_procedure()
@@ -51,9 +53,9 @@ class ServerSideEvaluationArtifacts:
         data_directory = os.path.join(
             os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
-        for zip_to_upload in _ZIPS_TO_UPLOAD:
+        for trulens_package in _TRULENS_PACKAGES:
             self._session.file.put(
-                os.path.join(data_directory, zip_to_upload),
+                os.path.join(data_directory, f"{trulens_package}.zip"),
                 f"@{_STAGE_NAME}",
             )
 
@@ -67,9 +69,17 @@ class ServerSideEvaluationArtifacts:
         )
 
     def _set_up_stored_procedure(self) -> None:
-        imports = ",".join([
-            f"'@{_STAGE_NAME}/{curr}'" for curr in _ZIPS_TO_UPLOAD
-        ])
+        if self._use_staged_packages:
+            import_packages = ",".join([
+                f"'@{_STAGE_NAME}/{curr}.zip'" for curr in _TRULENS_PACKAGES
+            ])
+            import_statement = f"IMPORTS = ({import_packages})"
+            trulens_packages = ""
+        else:
+            import_statement = ""
+            trulens_packages = "".join([
+                f"'{curr}'," for curr in _TRULENS_PACKAGES
+            ])
         with open(_PYTHON_STORED_PROCEDURE_CODE_FILENAME, "r") as fh:
             python_code = fh.read()
         self._run_query(
@@ -79,6 +89,7 @@ class ServerSideEvaluationArtifacts:
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
                 PACKAGES = (
+                    {trulens_packages}
                     -- TODO(dkurokawa): get these package versions automatically.
                     'alembic',
                     'dill',
@@ -96,11 +107,12 @@ class ServerSideEvaluationArtifacts:
                     'scikit-learn',
                     'scipy',
                     'snowflake-snowpark-python',
+                    'snowflake-sqlalchemy',
                     'sqlalchemy',
                     'tqdm',
                     'typing_extensions'
                 )
-                IMPORTS = ({imports})
+                {import_statement}
                 HANDLER = 'run'
             AS
                 $$\n{python_code}$$
