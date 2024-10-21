@@ -74,7 +74,6 @@ class SnowflakeConnector(DBConnector):
             self._create_snowflake_schema_if_not_exists(
                 snowpark_session, schema
             )
-            snowpark_session.use_schema(schema)
             connection_parameters["schema"] = schema
         else:
             snowpark_connection_parameters = {
@@ -197,6 +196,7 @@ class SnowflakeConnector(DBConnector):
         snowpark_session.sql(
             "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)", [schema_name]
         ).collect()
+        snowpark_session.use_schema(schema_name)
 
     @cached_property
     def db(self) -> DB:
