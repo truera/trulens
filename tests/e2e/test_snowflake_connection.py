@@ -16,7 +16,8 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         Check that we can connect to a Snowflake backend and have created the required schema.
         """
         self.get_session(
-            "test_basic_snowflake_connection", connect_via_snowpark_session=True
+            "test_snowflake_connection_via_snowpark_session",
+            connect_via_snowpark_session=True,
         )
 
     @optional_test
@@ -25,7 +26,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         Check that we can connect to a Snowflake backend and have created the required schema.
         """
         self.get_session(
-            "test_basic_snowflake_connection",
+            "test_snowflake_connection_via_connection_parameters",
             connect_via_snowpark_session=False,
         )
 

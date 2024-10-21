@@ -105,7 +105,7 @@ class SnowflakeTestCase(TestCase):
         else:
             if not schema_already_exists:
                 snowflake_connector.SnowflakeConnector._create_snowflake_schema_if_not_exists(
-                    self._snowpark_session, self._database, self._schema
+                    self._snowpark_session, self._schema
                 )
             connector = snowflake_connector.SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
