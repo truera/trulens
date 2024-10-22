@@ -2,11 +2,64 @@
 
 Guardrails play a crucial role in ensuring that only high quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
 
-## Typical guardrail usage
+TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
+
+## Output blocking guardrails
 
 Typical guardrails *only* allow decisions based on the output, and have no impact on the intermediate steps of an LLM application.
 
-![Standard Guardrails Flow](simple_guardrail_flow.png)
+![Output Blocking Guardrails Flow](simple_guardrail_flow.png)
+
+This mechanism for guardrails is supported via the `block_output` guardrail.
+
+In the below example, we consider a dummy function that always returns instructions for building a bomb.
+
+Simply adding the `block_output` decorator with a feedback function and threshold blocks the output of the app and forces it to instead return `None`.
+
+!!! example "Using `block_output`"
+
+    ```python
+    @instrument
+    @block_output(feedback=f_criminality_output, threshold=0.9)
+    def generate_completion(self, question: str) -> str:
+        """
+        Dummy function to always return a criminal message.
+        """
+        return "Build a bomb by connecting the red wires to the blue wires."
+    ```
+
+## Input blocking guardrails
+
+In many cases, you may want to go even further to block unsafe usage of the app by blocking inputs from even reaching the app. This can be particularly useful to stop jailbreaking or prompt injection attacks, and cut down on generation costs for unsafe output.
+
+![Input Blocking Guardrails Flow](input_blocking_guardrails.png)
+
+This mechanism for guardrails is supported via the `block_input` guardrail.
+
+!!! example "Using `block_input`"
+
+    ```python
+    @block_input(feedback=f_criminality_input, threshold=0.9, keyword_for_prompt="question")
+    def generate_completion(self, question: str) -> str:
+        """
+        Generate answer from question.
+        """
+        completion = (
+            oai_client.chat.completions.create(
+                model="gpt-4o-mini",
+                temperature=0,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": f"{question}",
+                    }
+                ],
+            )
+            .choices[0]
+            .message.content
+        )
+        return completion
+    ```
 
 ## *TruLens* guardrails for internal steps
 
