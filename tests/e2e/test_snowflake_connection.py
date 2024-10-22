@@ -5,6 +5,9 @@ Tests for a Snowflake connection.
 from unittest import main
 import uuid
 
+from trulens.dashboard import run_dashboard
+from trulens.dashboard import stop_dashboard
+
 from tests.test import optional_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
@@ -45,6 +48,25 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         self.assertIn(schema_name, self.list_schemas())
         # Test that using this connection works.
         self.get_session(schema_name=schema_name, schema_already_exists=True)
+
+    @optional_test
+    def test_run_leaderboard_without_password(self):
+        session = self.get_session(
+            "test_run_leaderboard_without_password",
+            connect_via_snowpark_session=True,
+        )
+        try:
+            with self.assertRaisesRegex(
+                ValueError,
+                "SnowflakeConnector was made via an established Snowpark session which did not pass through authentication details to the SnowflakeConnector. To fix, supply password argument during SnowflakeConnector construction.",
+            ):
+                run_dashboard(session)
+        finally:
+            # Clean up.
+            try:
+                stop_dashboard(session)
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

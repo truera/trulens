@@ -11,6 +11,7 @@ from threading import Thread
 from typing import Optional
 
 from trulens.core import session as core_session
+from trulens.core.database.connector.base import DBConnector
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard.utils import notebook_utils
 from typing_extensions import Annotated
@@ -27,6 +28,14 @@ def find_unused_port() -> int:
         s.bind(("", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+def _is_snowflake_connector(connector: DBConnector):
+    try:
+        from trulens.connectors.snowflake import SnowflakeConnector
+    except ImportError:
+        return False
+    return isinstance(connector, SnowflakeConnector)
 
 
 def run_dashboard(
@@ -111,6 +120,14 @@ def run_dashboard(
         args.append(f"--server.port={port}")
     if address is not None:
         args.append(f"--server.address={address}")
+
+    if (
+        _is_snowflake_connector(session.connector)
+        and not session.connector.password_known
+    ):
+        raise ValueError(
+            "SnowflakeConnector was made via an established Snowpark session which did not pass through authentication details to the SnowflakeConnector. To fix, supply password argument during SnowflakeConnector construction."
+        )
 
     args += [
         leaderboard_path,
