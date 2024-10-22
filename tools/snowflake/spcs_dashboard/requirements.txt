@@ -1,7 +1,0 @@
-python-dotenv
-pydantic
-snowflake[ml]
-snowflake-connector-python
-snowflake-sqlalchemy
-trulens
-# trulens-connectors-snowflake
