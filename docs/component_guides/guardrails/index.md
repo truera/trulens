@@ -34,7 +34,7 @@ In many cases, you may want to go even further to block unsafe usage of the app 
 
 ![Input Blocking Guardrails Flow](input_blocking_guardrails.png)
 
-This mechanism for guardrails is supported via the `block_input` guardrail.
+This mechanism for guardrails is supported via the `block_input` guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`.
 
 !!! example "Using `block_input`"
 
