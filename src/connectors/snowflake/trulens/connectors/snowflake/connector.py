@@ -115,7 +115,7 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
-            **({"host": host} if host else {})
+            **({"host": host} if host else {}),
         }
         with Session.builder.configs(connection_parameters).create() as session:
             ServerSideEvaluationArtifacts(
