@@ -31,6 +31,7 @@ class FeedbackDisplay(BaseModel):
     calls: List[feedback_schema.FeedbackCall]
     icon: str
 
+
 def get_spcs_login_token():
     """
     Read the login token supplied automatically by Snowflake. These tokens
@@ -38,6 +39,7 @@ def get_spcs_login_token():
     """
     with open("/snowflake/session/token", "r") as f:
         return f.read()
+
 
 def init_from_args():
     """Parse command line arguments and initialize Tru with them.
@@ -63,9 +65,11 @@ def init_from_args():
         sys.exit(e.code)
 
     if args.spcs_runtime:
+        import os
+
         from snowflake.snowpark import Session
         from trulens.connectors.snowflake import SnowflakeConnector
-        import os
+
         connection_params = {
             "account": os.environ.get("SNOWFLAKE_ACCOUNT"),
             "host": os.getenv("SNOWFLAKE_HOST"),
