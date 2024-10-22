@@ -8,6 +8,7 @@ import importlib
 import inspect
 import logging
 from pprint import PrettyPrinter
+import re
 from time import sleep
 from types import ModuleType
 from typing import (
@@ -26,6 +27,7 @@ from typing import (
 import pydantic
 from pydantic import Field
 from pydantic import PrivateAttr
+import requests
 from trulens.core import experimental as core_experimental
 from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
@@ -34,6 +36,7 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,15 @@ _NO_CONTEXT_WARNING = """
 Cannot find TruLens context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 """
+
+_RE_NO_RETRY = re.compile(
+    "("
+    + ("|".join(["authentication", "unauthorized", "expired", "quota"]))
+    + ")",
+    re.IGNORECASE,
+)
+"""Pattern matched against request exceptions to determine whether they should
+be aborted right away instead of retried."""
 
 
 class EndpointCallback(serial_utils.SerialModel):
@@ -279,13 +291,27 @@ class Endpoint(
 
         return self.pace.mark()
 
-    def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
-        """
-        Run the given `func` on the given `args` and `kwargs` at pace with the
-        endpoint-specified rpm. Failures will be retried `self.retries` times.
+    async def apace_me(self) -> float:
+        yield self.pace.amark()
+
+    def _can_retry(self, e: Exception) -> bool:
+        """Determine whether a request that raised the given exception can be
+        retried.
+
+        Things like authorization errors should not be retried.
         """
 
+        if _RE_NO_RETRY.search(str(e)) is not None:
+            return False
+
+        return True
+
+    def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
+        """Run the given `func` on the given `args` and `kwargs` at pace with the
+        endpoint-specified rpm. Failures will be retried `self.retries` times."""
+
         retries = self.retries + 1
+        attempts = 0
         retry_delay = 2.0
 
         errors = []
@@ -293,6 +319,7 @@ class Endpoint(
         while retries > 0:
             try:
                 self.pace_me()
+                attempts += 1
                 ret = func(*args, **kwargs)
                 return ret
 
@@ -306,12 +333,15 @@ class Endpoint(
                     retries,
                 )
                 errors.append(e)
+                if not self._can_retry(e):
+                    break
+
                 if retries > 0:
                     sleep(retry_delay)
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"Endpoint {self.name} request failed {self.retries + 1} time(s): \n\t"
+            f"Endpoint {self.name} request failed {attempts} time(s): \n\t"
             + ("\n\t".join(map(str, errors)))
         )
 
@@ -444,8 +474,9 @@ class Endpoint(
                 m,
                 method_name,
             )
-            if python_utils.safe_hasattr(mod, m):
-                obj = python_utils.safe_getattr(mod, m)
+            obj = python_utils.safer_getattr(mod, m)
+            if obj is not None and isinstance(obj, type):
+                # Instrument only classes, not instances.
                 self._instrument_class(obj, method_name=method_name)
 
         already_instrumented.add(method_name)
@@ -845,6 +876,73 @@ class Endpoint(
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 
         return tru_wrapper
+
+
+class WithPost(Endpoint):
+    """Endpoint with post methods."""
+
+    post_headers: Dict[str, str] = Field(default_factory=dict)
+
+    def post(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: Optional[float] = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> requests.Response:
+        """Make an http post request.
+
+        Subclasses can include additional logic to handle endpoint-specific
+        responses.
+        """
+
+        self.pace_me()
+
+        return requests.post(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
+
+    async def apost(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: Optional[float] = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> requests.Response:
+        """Make an http post request.
+
+        Subclasses can include additional logic to handle endpoint-specific
+        responses.
+        """
+
+        await self.apace_me()
+
+        # TODO: use an asynchronous post method.
+        return requests.post(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
+
+    def post_json_first(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> Dict:
+        """Wraps `post` with json()[0]."""
+
+        temp = self.post(url=url, json=json, timeout=timeout)
+
+        print("temp=", type(temp), temp)
+
+        return temp.json()[0]
+
+    async def apost_json_first(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> Dict:
+        """Wraps `apost` with json()[0]."""
+
+        return (await self.apost(url=url, json=json, timeout=timeout)).json()[0]
 
 
 EndpointCallback.model_rebuild()

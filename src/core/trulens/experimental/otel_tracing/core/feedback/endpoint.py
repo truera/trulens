@@ -90,6 +90,13 @@ class _Endpoint(core_endpoint.Endpoint):
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
 
+        if self._experimental_wrapper_callback_class is None:
+            logger.warning(
+                "OTEL_TRACING costs callbacks for %s are not available. Will not track costs for this endpoint.",
+                python_utils.class_name(type(self)),
+            )
+            return func
+
         return wrap_utils.wrap_callable(
             func=func,
             func_name=python_utils.callable_name(func),

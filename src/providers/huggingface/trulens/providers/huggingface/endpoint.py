@@ -3,7 +3,6 @@ import json
 import logging
 from time import sleep
 from typing import (
-    Any,
     Callable,
     Dict,
     Optional,
@@ -36,7 +35,7 @@ class HuggingfaceCallback(core_endpoint.EndpointCallback):
                 self.cost.n_classes += len(item)
 
 
-class HuggingfaceEndpoint(core_endpoint.Endpoint):
+class HuggingfaceEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
     """Huggingface endpoint.
 
     Instruments the requests.post method for requests to
@@ -85,13 +84,12 @@ class HuggingfaceEndpoint(core_endpoint.Endpoint):
     def post(
         self,
         url: str,
-        payload: serial_utils.JSON,
+        json: serial_utils.JSON,
         timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
-    ) -> Any:
-        self.pace_me()
-        ret = requests.post(
-            url, json=payload, timeout=timeout, headers=self.post_headers
-        )
+    ) -> requests.Response:
+        """Make an http post request to the huggingface api."""
+
+        ret = super().post(url, json, timeout)
 
         j = ret.json()
 
@@ -101,7 +99,7 @@ class HuggingfaceEndpoint(core_endpoint.Endpoint):
             wait_time = j["estimated_time"]
             logger.error("Waiting for %s (%s) second(s).", j, wait_time)
             sleep(wait_time + 2)
-            return self.post(url, payload)
+            return self.post(url, json)
 
         elif isinstance(j, Dict) and "error" in j:
             error = j["error"]
@@ -110,7 +108,7 @@ class HuggingfaceEndpoint(core_endpoint.Endpoint):
             if error == "overloaded":
                 logger.error("Waiting for overloaded API before trying again.")
                 sleep(10.0)
-                return self.post(url, payload)
+                return self.post(url, json)
             else:
                 raise RuntimeError(error)
 
@@ -118,8 +116,4 @@ class HuggingfaceEndpoint(core_endpoint.Endpoint):
             isinstance(j, Sequence) and len(j) > 0
         ), f"Post did not return a sequence: {j}"
 
-        if len(j) == 1:
-            return j[0]
-
-        else:
-            return j
+        return ret

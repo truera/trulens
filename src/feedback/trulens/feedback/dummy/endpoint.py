@@ -10,16 +10,30 @@ from __future__ import annotations
 import asyncio
 from enum import Enum
 import inspect
+import io
+import json as mod_json
 import logging
 from pprint import pformat
 import random
 from time import sleep
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
+import requests
+from requests import structures as request_structures
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
@@ -135,18 +149,60 @@ class DummyAPI(pydantic.BaseModel):
             <= 1.0
         ), "Total probabilities should not exceed 1.0 ."
 
+    def _fake_post_request(
+        self, url: str, json: serial_utils.JSON, headers: Optional[Dict] = None
+    ) -> requests.Request:
+        """Fake requests.Request object for a fake post request."""
+
+        return requests.Request(
+            method="POST",
+            url=url,
+            headers=headers,
+            data=json,
+        )
+
+    def _fake_post_response(
+        self,
+        status_code: int,
+        json: serial_utils.JSON,
+        request: requests.Request,
+    ) -> requests.Response:
+        """Fake requests.Response object for a fake post request."""
+
+        res = requests.Response()
+
+        res.status_code = status_code
+
+        res._content = mod_json.dumps(json).encode()
+        res._content_consumed = True
+        res.raw = io.BytesIO(res._content)  # might not be needed
+
+        res.headers = request_structures.CaseInsensitiveDict({
+            "content-type": "application/json"
+        })
+
+        res.request = request.prepare()
+
+        return res
+
     async def apost(
         self,
         url: str,
-        payload: serial_utils.JSON,
+        json: serial_utils.JSON,
+        headers: Optional[Dict] = None,
         timeout: Optional[float] = None,
-    ) -> Any:
+    ) -> requests.Response:
         """Pretend to make an http post request to some model execution API."""
 
-        assert isinstance(payload, dict), "Payload should be a dict."
+        assert isinstance(json, dict), "json should be a dict."
 
         if timeout is None:
             timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
+
+        if headers is None:
+            headers = {}
+
+        request = self._fake_post_request(url, json=json, headers=headers)
 
         # allocate some data to pretend we are doing hard work
         temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
@@ -193,25 +249,33 @@ class DummyAPI(pydantic.BaseModel):
                 wait_time,
             )
             await asyncio.sleep(wait_time + 2)
-            return await self.apost(url, payload, timeout=timeout)
+            return await self.apost(
+                url=url, json=json, timeout=timeout, headers=headers
+            )
 
         elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             await asyncio.sleep(10)
-            return self.post(url, payload, timeout=timeout)
+            return await self.apost(
+                url=url, json=json, timeout=timeout, headers=headers
+            )
 
         elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
-                return self._fake_classification()
+                ret = self._fake_classification()
             else:
-                return self._fake_completion(
-                    model=payload["model"],
-                    prompt=payload["prompt"],
-                    temperature=payload["temperature"],
+                ret = self._fake_completion(
+                    model=json["model"],
+                    prompt=json["prompt"],
+                    temperature=json["temperature"],
                 )
+
+            return self._fake_post_response(
+                status_code=200, json=ret, request=request
+            )
 
         else:
             raise RuntimeError("Unknown random result type.")
@@ -219,15 +283,21 @@ class DummyAPI(pydantic.BaseModel):
     def post(
         self,
         url: str,
-        payload: serial_utils.JSON,
+        json: serial_utils.JSON,
+        headers: Optional[Dict] = None,
         timeout: Optional[float] = None,
-    ) -> Any:
+    ) -> requests.Response:
         """Pretend to make an http post request to some model execution API."""
 
-        assert isinstance(payload, dict), "Payload should be a dict."
+        assert isinstance(json, dict), "Payload should be a dict."
+
+        if headers is None:
+            headers = {}
 
         if timeout is None:
             timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
+
+        request = self._fake_post_request(url, json=json, headers=headers)
 
         # allocate some data to pretend we are doing hard work
         temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
@@ -274,128 +344,151 @@ class DummyAPI(pydantic.BaseModel):
                 wait_time,
             )
             sleep(wait_time + 2)
-            return self.post(url, payload, timeout=timeout)
+            return self.post(url, json=json, timeout=timeout, headers=headers)
 
         elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
-            return self.post(url, payload, timeout=timeout)
+            return self.post(url, json=json, timeout=timeout, headers=headers)
 
         elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
-                return self._fake_classification()
+                ret = self._fake_classification()
             else:
-                return self._fake_completion(
-                    model=payload["model"],
-                    prompt=payload["prompt"],
-                    temperature=payload["temperature"],
+                ret = self._fake_completion(
+                    model=json["model"],
+                    prompt=json["prompt"],
+                    temperature=json["temperature"],
                 )
+
+            return self._fake_post_response(
+                status_code=200, json=ret, request=request
+            )
 
         else:
             raise RuntimeError("Unknown random result type.")
 
     def _fake_completion(
         self, model: str, prompt: str, temperature: float
-    ) -> Dict:
+    ) -> List[serial_utils.JSON]:
         generated_text: str = f"""
 First an integer: 2 . Also, this is my response to a prompt of length
 {len(prompt)} with a model {model} with temperature {temperature}. Also, here is
 an integer in case this is being used as a score: 2
 """
 
-        return {
-            "completion": generated_text,
-            "status": "success",
-            "usage": {
-                # Fake usage information.
-                "n_tokens": len(generated_text.split()) + len(prompt.split()),
-                "n_prompt_tokens": len(prompt.split()),
-                "n_completion_tokens": len(generated_text.split()),
-                "cost": len(generated_text) * 0.0002
-                + len(prompt.split()) * 0.0001,
-            },
-        }
+        return [
+            {
+                "completion": generated_text,
+                "status": "success",
+                "usage": {
+                    # Fake usage information.
+                    "n_tokens": len(generated_text.split())
+                    + len(prompt.split()),
+                    "n_prompt_tokens": len(prompt.split()),
+                    "n_completion_tokens": len(generated_text.split()),
+                    "cost": len(generated_text) * 0.0002
+                    + len(prompt.split()) * 0.0001,
+                },
+            }
+        ]
 
     def completion(
         self, *args, model: str, temperature: float = 0.0, prompt: str
-    ) -> Dict:
+    ) -> serial_utils.JSON:
         """Fake text completion request."""
+
+        # TODO: move this to provider
 
         # Fake http post request, might raise an exception or cause delays.
         return self.post(
             url="https://fakeservice.com/completion",
-            payload={
+            json={
                 "mode": "completion",
                 "model": model,
                 "prompt": prompt,
                 "temperature": temperature,
                 "args": args,  # include extra args to see them in post span
             },
-        )
+        ).json()[0]
 
     async def acompletion(
         self, *args, model: str, temperature: float = 0.0, prompt: str
-    ) -> Dict:
+    ) -> serial_utils.JSON:
         """Fake text completion request."""
 
-        # Fake http post request, might raise an exception or cause delays.
-        return await self.apost(
-            url="https://fakeservice.com/completion",
-            payload={
-                "mode": "completion",
-                "model": model,
-                "prompt": prompt,
-                "temperature": temperature,
-                "args": args,  # include extra args to see them in post span
-            },
-        )
+        # TODO: move this to provider
 
-    def _fake_classification(self):
+        # Fake http post request, might raise an exception or cause delays.
+        return (
+            await self.apost(
+                url="https://fakeservice.com/completion",
+                json={
+                    "mode": "completion",
+                    "model": model,
+                    "prompt": prompt,
+                    "temperature": temperature,
+                    "args": args,  # include extra args to see them in post span
+                },
+            )
+        ).json()[0]
+
+    def _fake_classification(self) -> List[List[serial_utils.JSON]]:
+        """Fake classification response in the form returned by huggingface."""
+
         # Simulated success outcome with some random scores. Should add up to 1.
         r1 = self.ndt.random.uniform(0.1, 0.9)
         r2 = self.ndt.random.uniform(0.1, 0.9 - r1)
         r3 = 1 - (r1 + r2)
 
         return [
-            {"label": "LABEL_1", "score": r1},
-            {"label": "LABEL_2", "score": r2},
-            {"label": "LABEL_0", "score": r3},
+            [
+                {"label": "LABEL_1", "score": r1},
+                {"label": "LABEL_2", "score": r2},
+                {"label": "LABEL_0", "score": r3},
+            ]
         ]
 
     def classification(
         self, *args, model: str = "fakeclassier", text: str
-    ) -> Dict:
+    ) -> List[serial_utils.JSON]:
         """Fake classification request."""
+
+        # TODO: move this to provider
 
         # Fake http post request, might raise an exception or cause delays.
         return self.post(
             url="https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
-            payload={
+            json={
                 "mode": "classification",
                 "model": model,
                 "inputs": text,
                 "args": args,  # include extra args to see them in post span
             },
-        )
+        ).json()[0]
 
     async def aclassification(
         self, *args, model: str = "fakeclassier", text: str
-    ) -> Dict:
+    ) -> List[serial_utils.JSON]:
         """Fake classification request."""
 
+        # TODO: move this to provider
+
         # Fake http post request, might raise an exception or cause delays.
-        return await self.apost(
-            url="https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
-            payload={
-                "mode": "classification",
-                "model": model,
-                "inputs": text,
-                "args": args,  # include extra args to see them in post span
-            },
-        )
+        return (
+            await self.apost(
+                url="https://api-inference.huggingface.co/classify",  # url makes the fake post produce fake classification scores
+                json={
+                    "mode": "classification",
+                    "model": model,
+                    "inputs": text,
+                    "args": args,  # include extra args to see them in post span
+                },
+            )
+        ).json()[0]
 
 
 class DummyAPICreator:
@@ -431,47 +524,76 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
     )
 
     class _WrapperDummyEndpointCallback(
-        experimental_core_endpoint._WrapperEndpointCallback
+        experimental_core_endpoint._WrapperEndpointCallback[requests.Response]
     ):
         """EXPERIMENTAL(otel_tracing): Callbacks for instrumented methods in
         DummyAPI to recover costs from those calls."""
 
-        def __init__(self, func: Callable, **kwargs):
-            super().__init__(func=func, **kwargs)
+        def on_callable_call(self, bindings, **kwargs):
+            # Can now determine what type of call this was. DummyAPI post/apost
+            # requests have an arg "json" which is json dict with key named
+            # "mode".
 
-            # Increment the appropriate counter for request before we even make the
-            # request. Note that these counters do not imply success.
-            if func.__name__ in ["aclassification", "classification"]:
-                self.cost.n_classification_requests += 1
-            elif func.__name__ in ["acompletion", "completion"]:
-                self.cost.n_completion_requests += 1
-            else:
-                raise RuntimeError(f"Unknown function {func} is being called.")
+            if (json := bindings.arguments.get("json")) is not None:
+                if (mode := json.get("mode")) is not None:
+                    if mode == "completion":
+                        self.cost.n_completion_requests += 1
+                    elif mode == "classification":
+                        self.cost.n_classification_requests += 1
+                    else:
+                        logger.warning(
+                            "Unknown mode %s for post call %s.",
+                            mode,
+                            self.func.__name__,
+                        )
+                else:
+                    logger.warning(
+                        "No mode in post call %s.",
+                        self.func.__name__,
+                    )
 
-        def on_callable_return(self, ret: Any, **kwargs):
+        def on_callable_return(self, ret: requests.Response, **kwargs):
+            """Handle a requests.Response response.
+
+            The logic handles responses of the form produced by both huggingface api
+            requests and openai api.
+            """
+
             ret = super().on_callable_return(ret=ret, **kwargs)
 
-            is_success = True
+            is_success = False
 
-            if (usage := ret.get("usage")) is not None:
-                # fake completion
-                self.cost.cost += usage.get("cost", 0.0)
-                self.cost.n_tokens += usage.get("n_tokens", 0)
-                self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
-                self.cost.n_completion_tokens += usage.get(
-                    "n_completion_tokens", 0
-                )
+            json: Union[serial_utils.JSON, List[serial_utils.JSON]] = (
+                ret.json()[0]
+            )
 
-            elif (scores := ret.get("scores")) is not None:
-                # fake classification
-                self.cost.n_classes += len(scores)
+            if isinstance(json, dict):
+                # openai completion results are list of dict
 
-            else:
-                is_success = False
-                logger.warning("Could not determine cost from DummyAPI call.")
+                if (usage := json.get("usage")) is not None:
+                    # fake completion
+                    is_success = True
+
+                    self.cost.cost += usage.get("cost", 0.0)
+                    self.cost.n_tokens += usage.get("n_tokens", 0)
+                    self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
+                    self.cost.n_completion_tokens += usage.get(
+                        "n_completion_tokens", 0
+                    )
+
+            elif isinstance(json, list):
+                # huggingface classification results are list of list of dict
+                json = json[0]
+
+                if (scores := json.get("scores")) is not None:
+                    # fake classification
+                    is_success = True
+                    self.cost.n_classes += len(scores)
 
             if is_success:
                 self.cost.n_successful_requests += 1
+            else:
+                logger.warning("Could not determine cost from DummyAPI call.")
 
             return ret
 
@@ -502,7 +624,7 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             self.cost.n_successful_requests += 1
 
 
-class DummyEndpoint(core_endpoint.Endpoint):
+class DummyEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -584,11 +706,11 @@ class DummyEndpoint(core_endpoint.Endpoint):
         )
 
         # Instrument existing DummyAPI class. These are used by the custom_app
-        # example.
-        self._instrument_class(DummyAPI, "completion")
-        self._instrument_class(DummyAPI, "classification")
-        self._instrument_class(DummyAPI, "acompletion")
-        self._instrument_class(DummyAPI, "aclassification")
+        # example. Note that `completion` and `classification` use post or apost so
+        # we should not instrument both `classification` and `post` as this would
+        # double count costs.
+        self._instrument_class(DummyAPI, "post")
+        self._instrument_class(DummyAPI, "apost")
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
@@ -598,30 +720,34 @@ class DummyEndpoint(core_endpoint.Endpoint):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
-                wrapped_method_filter=lambda f: f.__name__
-                in [
-                    "completion",
-                    "classification",
-                    "acompletion",
-                    "aclassification",
-                ],
+                wrapped_method_filter=lambda f: f.__name__ in ["post", "apost"],
             )
 
+    # Overrides all of WithPost.post as we don't want to make an actual request.
     def post(
         self,
         url: str,
-        payload: serial_utils.JSON,
+        json: serial_utils.JSON,
         timeout: Optional[float] = None,
-    ) -> Dict:
-        return self.api.post(url, payload, timeout=timeout)
+    ) -> requests.Response:
+        self.pace_me()  # need this as we are not using WithPost.post
 
+        return self.api.post(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
+
+    # Overrides all of WithPost.apost as we don't want to make an actual request.
     async def apost(
         self,
         url: str,
-        payload: serial_utils.JSON,
+        json: serial_utils.JSON,
         timeout: Optional[float] = None,
-    ) -> Dict:
-        return await self.api.apost(url, payload, timeout=timeout)
+    ) -> requests.Response:
+        await self.apace_me()  # need this as we are not using WithPost.apost
+
+        return await self.api.apost(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
 
     def handle_wrapped_call(
         self,
@@ -641,6 +767,8 @@ class DummyEndpoint(core_endpoint.Endpoint):
             bindings,
             response,
         )
+
+        counted_something = False
 
         if "usage" in response:
             counted_something = True

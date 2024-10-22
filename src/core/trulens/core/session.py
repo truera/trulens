@@ -55,9 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 class TruSession(
-    core_experimental._WithExperimentalSettings,
-    pydantic.BaseModel,
-    metaclass=python_utils.PydanticSingletonMeta,
+    core_experimental._WithExperimentalSettings, python_utils.PydanticSingleton
 ):
     """TruSession is the main class that provides an entry points to trulens.
 
