@@ -1,5 +1,4 @@
-"""
-# Instrumentation
+"""Instrumentation
 
 This module contains the core of the app instrumentation scheme employed by
 trulens to track and record apps. These details should not be relevant for
@@ -8,6 +7,7 @@ typical use cases.
 
 from __future__ import annotations
 
+import contextvars
 import dataclasses
 from datetime import datetime
 import functools
@@ -19,51 +19,40 @@ import os
 import threading as th
 import traceback
 from typing import (
-    TYPE_CHECKING,
     Any,
-    Awaitable,
     Callable,
     Dict,
     Iterable,
+    List,
     Optional,
     Sequence,
     Set,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 import weakref
 
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core.feedback import Feedback
-from trulens.core.feedback import endpoint as mod_endpoint
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
+from trulens.core import experimental as core_experimental
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.containers import dict_merge_with
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Method
-from trulens.core.utils.pyschema import clean_attributes
-from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.python import callable_name
-from trulens.core.utils.python import caller_frame
-from trulens.core.utils.python import class_name
-from trulens.core.utils.python import get_first_local_in_call_stack
-from trulens.core.utils.python import id_str
-from trulens.core.utils.python import is_really_coroutinefunction
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.python import safe_signature
-from trulens.core.utils.python import wrap_awaitable
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import retab
-
-if TYPE_CHECKING:
-    from trulens.core.app import RecordingContext
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class WithInstrumentCallbacks:
@@ -73,8 +62,18 @@ class WithInstrumentCallbacks:
     Needs to be mixed into [App][trulens.core.app.App].
     """
 
+    _context_contexts = contextvars.ContextVar("context_contexts")
+    """ContextVars for storing collections of RecordingContext ."""
+    _context_contexts.set(set())
+
+    _stack_contexts = contextvars.ContextVar("stack_contexts")
+    """ContextVars for storing call stacks."""
+    _stack_contexts.set({})
+
     # Called during instrumentation.
-    def on_method_instrumented(self, obj: object, func: Callable, path: Lens):
+    def on_method_instrumented(
+        self, obj: object, func: Callable, path: serial_utils.Lens
+    ):
         """Callback to be called by instrumentation system for every function
         requested to be instrumented.
 
@@ -95,7 +94,7 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # Called during invocation.
-    def get_method_path(self, obj: object, func: Callable) -> Lens:
+    def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
         """
         Get the path of the instrumented function `func`, a member of the class
         of `obj` relative to this app.
@@ -111,9 +110,46 @@ class WithInstrumentCallbacks:
         raise NotImplementedError
 
     # WithInstrumentCallbacks requirement
+    def wrap_lazy_values(
+        self,
+        rets: Any,
+        wrap: Callable[[T], T],
+        on_done: Callable[[T], T],
+        context_vars: Optional[python_utils.ContextVarsOrValues],
+    ) -> Any:
+        """Wrap any lazy values in the return value of a method call to invoke
+        handle_done when the value is ready.
+
+        This is used to handle library-specific lazy values that are hidden in
+        containers not visible otherwise. Visible lazy values like iterators,
+        generators, awaitables, and async generators are handled elsewhere.
+
+        Args:
+            rets: The return value of the method call.
+
+            wrap: A callback to be called when the lazy value is ready. Should
+                return the input value or a wrapped version of it.
+
+            on_done: Called when the lazy values is done and is no longer lazy.
+                This as opposed to a lazy value that evaluates to another lazy
+                values. Should return the value or wrapper.
+
+            context_vars: The contextvars to be captured by the lazy value. If
+                not given, all contexts are captured.
+
+        Returns:
+            The return value with lazy values wrapped.
+        """
+
+        if python_utils.is_lazy(rets):
+            return rets
+
+        return on_done(rets)
+
+    # WithInstrumentCallbacks requirement
     def get_methods_for_func(
         self, func: Callable
-    ) -> Iterable[Tuple[int, Callable, Lens]]:
+    ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
         """
         Get the methods (rather the inner functions) matching the given `func`
         and the path of each.
@@ -137,19 +173,20 @@ class WithInstrumentCallbacks:
     # Called during invocation.
     def on_add_record(
         self,
-        ctx: "RecordingContext",
+        ctx: _RecordingContext,
         func: Callable,
         sig: Signature,
         bindings: BoundArguments,
         ret: Any,
         error: Any,
-        perf: mod_base_schema.Perf,
-        cost: mod_base_schema.Cost,
-        existing_record: Optional[mod_record_schema.Record] = None,
+        perf: base_schema.Perf,
+        cost: base_schema.Cost,
+        existing_record: Optional[record_schema.Record] = None,
+        final: bool = True,
     ):
         """
-        Called by instrumented methods if they are root calls (first instrumented
-        methods in a call stack).
+        Called by instrumented methods if they are root calls (first
+        instrumented methods in a call stack).
 
         Args:
             ctx: The context of the recording.
@@ -171,9 +208,163 @@ class WithInstrumentCallbacks:
             existing_record: If the record has already been produced (i.e.
                 because it was an awaitable), it can be passed here to avoid
                 re-creating it.
+
+            final: Whether this is record is final in that it is ready for
+                feedback evaluation.
         """
 
         raise NotImplementedError
+
+
+class _RecordingContext:
+    """Manager of the creation of records from record calls.
+
+    An instance of this class is produced when using an
+    [App][trulens.core.app.App] as a context manager, i.e.:
+
+    Example:
+        ```python
+        app = ...  # your app
+        truapp: TruChain = TruChain(app, ...) # recorder for LangChain apps
+
+        with truapp as recorder:
+            app.invoke(...) # use your app
+
+        recorder: RecordingContext
+        ```
+
+    Each instance of this class produces a record for every "root" instrumented
+    method called. Root method here means the first instrumented method in a
+    call stack. Note that there may be more than one of these contexts in play
+    at the same time due to:
+
+    - More than one wrapper of the same app.
+    - More than one context manager ("with" statement) surrounding calls to the
+      same app.
+    - Calls to "with_record" on methods that themselves contain recording.
+    - Calls to apps that use trulens internally to track records in any of the
+      supported ways.
+    - Combinations of the above.
+    """
+
+    def __init__(
+        self,
+        app: WithInstrumentCallbacks,
+        record_metadata: serial_utils.JSON = None,
+    ):
+        self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
+        """A record (in terms of its RecordAppCall) in process of being created.
+
+        Storing as a map as we want to override calls with the same id which may
+        happen due to methods producing awaitables or generators. These result
+        in calls before the awaitables are awaited and then get updated after
+        the result is ready.
+        """
+
+        self.records: List[record_schema.Record] = []
+        """Completed records."""
+
+        self.lock: th.Lock = th.Lock()
+        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
+
+        self.token: Optional[contextvars.Token] = None
+        """Token for context management."""
+
+        self.app: weakref.ProxyType[WithInstrumentCallbacks] = weakref.proxy(
+            app
+        )
+        """App for which we are recording."""
+
+        self.record_metadata = record_metadata
+        """Metadata to attach to all records produced in this context."""
+
+    def __iter__(self):
+        return iter(self.records)
+
+    def get(self) -> record_schema.Record:
+        """
+        Get the single record only if there was exactly one. Otherwise throw an error.
+        """
+
+        if len(self.records) == 0:
+            raise RuntimeError("Recording context did not record any records.")
+
+        if len(self.records) > 1:
+            raise RuntimeError(
+                "Recording context recorded more than 1 record. "
+                "You can get them with ctx.records, ctx[i], or `for r in ctx: ...`."
+            )
+
+        return self.records[0]
+
+    def __getitem__(self, idx: int) -> record_schema.Record:
+        return self.records[idx]
+
+    def __len__(self):
+        return len(self.records)
+
+    def __hash__(self) -> int:
+        # The same app can have multiple recording contexts.
+        return hash(id(self.app)) + hash(id(self.records))
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
+        # return id(self.app) == id(other.app) and id(self.records) == id(other.records)
+
+    def add_call(self, call: record_schema.RecordAppCall):
+        """
+        Add the given call to the currently tracked call list.
+        """
+        with self.lock:
+            # NOTE: This might override existing call record which happens when
+            # processing calls with awaitable or generator results.
+            self.calls[call.call_id] = call
+
+    def finish_record(
+        self,
+        calls_to_record: Callable[
+            [
+                List[record_schema.RecordAppCall],
+                types_schema.Metadata,
+                Optional[record_schema.Record],
+            ],
+            record_schema.Record,
+        ],
+        existing_record: Optional[record_schema.Record] = None,
+    ):
+        """Run the given function to build a record from the tracked calls and any
+        pre-specified metadata.
+
+        If existing_record is provided, updates that record with new data.
+        """
+
+        with self.lock:
+            current_calls = dict(self.calls)  # copy
+            self.calls = {}
+
+            if existing_record is not None:
+                for call in existing_record.calls:
+                    current_calls[call.call_id] = call
+
+            # Maintain an order in a record's calls to make sure the root call
+            # (which returns last) is also last in the calls list:
+            sorted_calls = sorted(
+                current_calls.values(),
+                key=lambda c: c.perf.end_time
+                if c.perf is not None
+                else datetime.max,
+            )
+
+            record = calls_to_record(
+                sorted_calls, self.record_metadata, existing_record
+            )
+
+            if existing_record is None:
+                # If existing record was given, we assume it was already
+                # inserted into this list.
+                self.records.append(record)
+
+        return record
 
 
 ClassFilter = Union[Type, Tuple[Type, ...]]
@@ -242,10 +433,10 @@ class Instrument:
         MODULES = {"trulens."}
         """Modules (by full name prefix) to instrument."""
 
-        CLASSES = set([Feedback])
+        CLASSES = set([core_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": Feedback}
+        METHODS: Dict[str, ClassFilter] = {"__call__": core_feedback.Feedback}
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
@@ -267,12 +458,14 @@ class Instrument:
                 if not cls.__module__.startswith(mod):
                     continue
 
-                if isinstance(cls, Dummy):
+                if isinstance(cls, import_utils.Dummy):
                     print(
                         f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
                     print(
-                        retab(tab=f"{t * 3}> ", s=str(cls.original_exception))
+                        text_utils.retab(
+                            tab=f"{t * 3}> ", s=str(cls.original_exception)
+                        )
                     )
                     continue
 
@@ -281,7 +474,7 @@ class Instrument:
                 for method, class_filter in self.include_methods.items():
                     if class_filter_matches(
                         f=class_filter, obj=cls
-                    ) and safe_hasattr(cls, method):
+                    ) and python_utils.safe_hasattr(cls, method):
                         f = getattr(cls, method)
                         print(f"{t * 2}Method {method}: {inspect.signature(f)}")
 
@@ -337,17 +530,35 @@ class Instrument:
             set(include_classes)
         )
 
-        self.include_methods = dict_merge_with(
+        self.include_methods = container_utils.dict_merge_with(
             dict1=Instrument.Default.METHODS,
             dict2=include_methods,
             merge=class_filter_disjunction,
         )
 
-        self.app = app
+        # NOTE(piotrm): This is a weakref to prevent capturing a reference to
+        # the app in method wrapper closures.
+        self.app: Optional[weakref.ProxyType[WithInstrumentCallbacks]] = (
+            weakref.proxy(app) if app is not None else None
+        )
+
+    @staticmethod
+    def _have_context() -> bool:
+        """Determine whether context vars we need for recording are available."""
+
+        try:
+            WithInstrumentCallbacks._context_contexts.get()
+            WithInstrumentCallbacks._stack_contexts.get()
+
+        except LookupError:
+            logger.warning(core_endpoint._NO_CONTEXT_WARNING)
+            return False
+
+        return True
 
     def tracked_method_wrapper(
         self,
-        query: Lens,
+        query: serial_utils.Lens,
         func: Callable,
         method_name: str,
         cls: type,
@@ -358,10 +569,26 @@ class Instrument:
         if self.app is None:
             raise ValueError("Instrumentation requires an app but is None.")
 
-        if safe_hasattr(func, "__func__"):
+        if self.app.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, lock=True
+        ):
+            from trulens.experimental.otel_tracing.core.instruments import (
+                _Instrument,
+            )
+
+            return _Instrument.tracked_method_wrapper(
+                self,
+                query=query,
+                func=func,
+                method_name=method_name,
+                cls=cls,
+                obj=obj,
+            )
+
+        if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if python_utils.safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
             # Notify the app instrumenting this method where it is located. Note
@@ -375,7 +602,8 @@ class Instrument:
             # instrumented, to the list of apps expecting to be notified of
             # calls.
             existing_apps = getattr(func, Instrument.APPS)
-            existing_apps.add(self.app)  # weakref set
+            # The __repr__.__self__ undoes weakref.proxy .
+            existing_apps.add(self.app.__repr__.__self__)  # weakref set
 
             return func
 
@@ -384,17 +612,16 @@ class Instrument:
 
         logger.debug("\t\t\t%s: instrumenting %s=%s", query, method_name, func)
 
-        sig = safe_signature(func)
-
-        def find_instrumented(f):
-            # Used for finding the wrappers methods in the call stack. Note that
-            # the sync version uses the async one internally and all of the
-            # relevant locals are in the async version. We thus don't look for
-            # sync tru_wrapper calls in the stack.
-            return id(f) == id(tru_wrapper.__code__)
+        sig = python_utils.safe_signature(func)
 
         @functools.wraps(func)
         def tru_wrapper(*args, **kwargs):
+            # NOTE(piotrm): don't capture any apps in the closure of this
+            # method. This method will override various instrumented functions
+            # in various class definitions and will never get deallocated. If
+            # there are apps in this closure, those apps will also never get
+            # deallocated.
+
             logger.debug(
                 "%s: calling instrumented sync method %s of type %s, "
                 "iscoroutinefunction=%s, "
@@ -402,25 +629,22 @@ class Instrument:
                 query,
                 func,
                 type(func),
-                is_really_coroutinefunction(func),
+                python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
 
-            apps = getattr(tru_wrapper, Instrument.APPS)
+            apps = getattr(tru_wrapper, Instrument.APPS)  # weakref
+
+            if len(apps) > 0 and not Instrument._have_context():
+                return func(*args, **kwargs)
 
             # If not within a root method, call the wrapped function without
             # any recording.
 
             # Get any contexts already known from higher in the call stack.
-            contexts = get_first_local_in_call_stack(
-                key="contexts",
-                func=find_instrumented,
-                offset=1,
-                skip=python_utils.caller_frame(),
-            )
-            # Note: are empty sets false?
-            if contexts is None:
-                contexts = set()
+            contexts = set(
+                WithInstrumentCallbacks._context_contexts.get()
+            )  # copy
 
             # And add any new contexts from all apps wishing to record this
             # function. This may produce some of the same contexts that were
@@ -441,33 +665,29 @@ class Instrument:
 
                 return func(*args, **kwargs)
 
+            else:
+                pass
+
+            context_token = WithInstrumentCallbacks._context_contexts.set(
+                contexts
+            )
+
             # If a wrapped method was called in this call stack, get the prior
             # calls from this variable. Otherwise create a new chain stack. As
             # another wrinkle, the addresses of methods in the stack may vary
             # from app to app that are watching this method. Hence we index the
             # stacks by id of the call record list which is unique to each app.
-            ctx_stacks = get_first_local_in_call_stack(
-                key="stacks",
-                func=find_instrumented,
-                offset=1,
-                skip=caller_frame(),
-            )
-            # Note: Empty dicts are false.
-            if ctx_stacks is None:
-                ctx_stacks = {}
-
-            error = None
-            rets = None
+            stacks = dict(WithInstrumentCallbacks._stack_contexts.get())  # copy
 
             # My own stacks to be looked up by further subcalls by the logic
             # right above. We make a copy here since we need subcalls to access
             # it but we don't want them to modify it.
-            stacks = dict(ctx_stacks.items())
+            stacks_token = WithInstrumentCallbacks._stack_contexts.set(stacks)
 
+            error = None
+            rets = None
             start_time = None
-
             bindings = None
-            cost = mod_base_schema.Cost()
 
             # Prepare stacks with call information of this wrapped method so
             # subsequent (inner) calls will see it. For every root_method in the
@@ -492,22 +712,25 @@ class Instrument:
                     logger.warning(
                         "App of type %s no longer knows about object %s method %s. "
                         "Something might be going wrong.",
-                        class_name(type(app)),
-                        id_str(args[0]),
-                        callable_name(func),
+                        python_utils.class_name(type(app)),
+                        python_utils.id_str(args[0]),
+                        python_utils.callable_name(func),
                     )
                     continue
 
-                if ctx not in ctx_stacks:
+                if ctx not in stacks:
                     # If we are the first instrumented method in the chain
                     # stack, make a new stack tuple for subsequent deeper calls
                     # (if any) to look up.
                     stack = ()
                 else:
-                    stack = ctx_stacks[ctx]
+                    stack = stacks[ctx]
 
-                frame_ident = mod_record_schema.RecordAppCallMethod(
-                    path=path, method=Method.of_method(func, obj=obj, cls=cls)
+                frame_ident = record_schema.RecordAppCallMethod(
+                    path=path,
+                    method=pyschema_utils.Method.of_method(
+                        func, obj=args[0], cls=cls
+                    ),  # important: don't use obj here as that would capture obj in closure of this wrapper
                 )
 
                 stack = stack + (frame_ident,)
@@ -522,16 +745,25 @@ class Instrument:
             # Create a unique call_id for this method call. This will be the
             # same across everyone Record or RecordAppCall that refers to this
             # method invocation.
-            call_id = mod_types_schema.new_call_id()
+            call_id = types_schema.new_call_id()
 
             error_str = None
+
+            tally = None
+
+            # Capture the current values of the relevant context vars before we
+            # reset them.
+            context_vars = {
+                WithInstrumentCallbacks._context_contexts: WithInstrumentCallbacks._context_contexts.get(),
+                WithInstrumentCallbacks._stack_contexts: WithInstrumentCallbacks._stack_contexts.get(),
+            }
 
             try:
                 # Using sig bind here so we can produce a list of key-value
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                rets, cost = mod_endpoint.Endpoint.track_all_costs_tally(
+                rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
 
@@ -540,7 +772,8 @@ class Instrument:
                 error_str = str(e)
 
                 logger.error(
-                    "Error calling wrapped function %s.", callable_name(func)
+                    "Error calling wrapped function %s.",
+                    python_utils.callable_name(func),
                 )
                 logger.error(traceback.format_exc())
 
@@ -549,32 +782,46 @@ class Instrument:
 
             # Don't include self in the recorded arguments.
             nonself = {
-                k: jsonify(v)
+                k: json_utils.jsonify(v)
                 for k, v in (
                     bindings.arguments.items() if bindings is not None else {}
                 )
-                if k != "self"
+                if k
+                not in ["self", "_self"]  # llama_index uses "_self" sometimes
             }
 
             records = {}
 
-            def handle_done(rets):
-                nonlocal records
-                nonlocal contexts
+            if app is None:
+                raise ValueError("Instrumentation requires an app but is None.")
 
-                # (re) generate end_time here because cases where the initial end_time was
-                # just to produce an awaitable before being awaited.
+            # We implicitly assume that all apps that have instrumented this
+            # method are of the same type. We use some classmethods of that
+            # app type below.
+
+            def update_call_info(rets, final=True):
+                """Notify the app of the call and let it update the record if
+                needed.
+
+                `final` is passed to the new record handler in the app and tells
+                it whether to the record is ready to run feedback.
+                """
+
+                # (re) generate end_time here because cases where the
+                # initial end_time was just to produce an awaitable/lazy
+                # before being awaited. If a stream is used, this will
+                # update the end_time to the last chunk.
                 end_time = datetime.now()
 
                 record_app_args = dict(
                     call_id=call_id,
                     args=nonself,
-                    perf=mod_base_schema.Perf(
+                    perf=base_schema.Perf(
                         start_time=start_time, end_time=end_time
                     ),
                     pid=os.getpid(),
                     tid=th.get_native_id(),
-                    rets=jsonify(rets),
+                    rets=json_utils.jsonify(rets),
                     error=error_str if error is not None else None,
                 )
                 # End of run wrapped block.
@@ -585,7 +832,7 @@ class Instrument:
 
                     # Note that only the stack differs between each of the records in this loop.
                     record_app_args["stack"] = stack
-                    call = mod_record_schema.RecordAppCall(**record_app_args)
+                    call = record_schema.RecordAppCall(**record_app_args)
                     ctx.add_call(call)
 
                     # If stack has only 1 thing on it, we are looking at a "root
@@ -593,9 +840,10 @@ class Instrument:
 
                     existing_record = records.get(ctx, None)
 
-                    # Async debugging work ongoing:
-                    # print("handle_done", len(stack))
-                    # print("  existing_record=", existing_record)
+                    if tally is None:
+                        cost = base_schema.Cost()
+                    else:
+                        cost = tally()  # get updated cost
 
                     if len(stack) == 1 or existing_record is not None:
                         # If this is a root call, notify app to add the completed record
@@ -608,56 +856,79 @@ class Instrument:
                             bindings=bindings,
                             ret=rets,
                             error=error,
-                            perf=mod_base_schema.Perf(
+                            perf=base_schema.Perf(
                                 start_time=start_time, end_time=end_time
                             ),
                             cost=cost,
                             existing_record=existing_record,
+                            final=final,
                         )
 
                 if error is not None:
                     raise error
 
-            if isinstance(rets, Awaitable):
-                # NOTE(piotrm): In case of producing an awaitable result, we
-                # need to insert a placeholder call/record before we return the
-                # awaitable as otherwise we might never get a chance to record
-                # anything especially if the user never awaits the return.
+                return rets
 
-                type_name = class_name(type(rets))
+            def rewrap(rets):
+                """Wrap any lazy return values with handlers to update
+                call/record when ready."""
 
-                # Async debugging work ongoing:
-                # print(path, callable_name(func), type_name)
+                if python_utils.is_lazy(rets):
+                    type_name = python_utils.class_name(type(rets))
 
-                # If method produced an awaitable
-                logger.info(
-                    "This app produced an asynchronous response of type `%s`."
-                    "This record will be updated once the response is available",
-                    type_name,
-                )
+                    logger.debug(
+                        "This app produced a lazy response of type `%s`."
+                        "This record will be updated once the response is available.",
+                        type_name,
+                    )
 
-                # TODO(piotrm): need to track costs of awaiting the ret in the
-                # below.
+                    # Placeholder:
+                    temp_rets = f"""
+    The method {python_utils.callable_name(func)} produced a lazy response of type
+    `{type_name}`. This record will be updated once the response is available. If
+    this message persists, check that you are using the correct version of the app
+    method and await and/or iterate over any results it produces.
+    """
 
-                # Placeholder:
-                handle_done(
-                    rets=f"""
-The method {callable_name(func)} produced an asynchronous response of type
-`{type_name}`. This record will be updated once the response is available. If
-this message persists, check that you are using the correct version of the app
-method and `await` any asynchronous results it produces.
-"""
-                )
+                    # Will add placeholder to the record:
+                    update_call_info(temp_rets, final=False)
 
-                return wrap_awaitable(rets, on_done=handle_done)
+                    return python_utils.wrap_lazy(
+                        rets,
+                        wrap=None,
+                        on_done=rewrap,
+                        context_vars=context_vars,
+                    )
 
-            handle_done(rets=rets)
-            return rets
+                # Handle app-specific lazy values (like llama_index StreamResponse):
+                # NOTE(piotrm): self.app is a weakref
+
+                if python_utils.WRAP_LAZY:
+                    for ctx in contexts:
+                        rets = ctx.app.wrap_lazy_values(
+                            rets,
+                            wrap=None,
+                            on_done=update_call_info,
+                            context_vars=context_vars,
+                        )
+                else:
+                    update_call_info(rets, final=True)
+
+                return rets
+
+            # HACK: disable these to debug context issues. See
+            # App._set_context_vars .
+            WithInstrumentCallbacks._stack_contexts.reset(stacks_token)
+            WithInstrumentCallbacks._context_contexts.reset(context_token)
+
+            return rewrap(rets)
 
         # Create a new set of apps expecting to be notified about calls to the
         # instrumented method. Making this a weakref set so that if the
         # recorder/app gets garbage collected, it will be evicted from this set.
-        apps = weakref.WeakSet([self.app])
+
+        # NOTE(piotrm): __repr__.__self__ undoes weakref.proxy .
+        apps = weakref.WeakSet([self.app.__repr__.__self__])
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.
@@ -666,7 +937,9 @@ method and `await` any asynchronous results it produces.
 
         return tru_wrapper
 
-    def instrument_method(self, method_name: str, obj: Any, query: Lens):
+    def instrument_method(
+        self, method_name: str, obj: Any, query: serial_utils.Lens
+    ):
         """Instrument a method."""
 
         cls = type(obj)
@@ -674,15 +947,19 @@ method and `await` any asynchronous results it produces.
         logger.debug("%s: instrumenting %s on obj %s", query, method_name, obj)
 
         for base in list(cls.__mro__):
-            logger.debug("\t%s: instrumenting base %s", query, class_name(base))
+            logger.debug(
+                "\t%s: instrumenting base %s",
+                query,
+                python_utils.class_name(base),
+            )
 
-            if safe_hasattr(base, method_name):
+            if python_utils.safe_hasattr(base, method_name):
                 original_fun = getattr(base, method_name)
 
                 logger.debug(
                     "\t\t%s: instrumenting %s.%s",
                     query,
-                    class_name(base),
+                    python_utils.class_name(base),
                     method_name,
                 )
                 setattr(
@@ -710,9 +987,10 @@ method and `await` any asynchronous results it produces.
 
         func = cls.__new__
 
-        if safe_hasattr(func, Instrument.INSTRUMENT):
+        if python_utils.safe_hasattr(func, Instrument.INSTRUMENT):
             logger.debug(
-                "Class %s __new__ is already instrumented.", class_name(cls)
+                "Class %s __new__ is already instrumented.",
+                python_utils.class_name(cls),
             )
             return
 
@@ -720,7 +998,7 @@ method and `await` any asynchronous results it produces.
         def wrapped_new(cls, *args, **kwargs):
             logger.debug(
                 "Creating a new instance of instrumented class %s.",
-                class_name(cls),
+                python_utils.class_name(cls),
             )
             # get deepest wrapped method here
             # get its self
@@ -733,7 +1011,7 @@ method and `await` any asynchronous results it produces.
         cls.__new__ = wrapped_new
 
     def instrument_object(
-        self, obj, query: Lens, done: Optional[Set[int]] = None
+        self, obj, query: serial_utils.Lens, done: Optional[Set[int]] = None
     ):
         """Instrument the given object `obj` and its components."""
 
@@ -747,8 +1025,8 @@ method and `await` any asynchronous results it produces.
         logger.debug(
             "%s: instrumenting object at %s of class %s",
             query,
-            id_str(obj),
-            class_name(cls),
+            python_utils.id_str(obj),
+            python_utils.class_name(cls),
         )
 
         if id(obj) in done:
@@ -801,7 +1079,7 @@ method and `await` any asynchronous results it produces.
                 # continue
 
             for method_name, class_filter in self.include_methods.items():
-                if safe_hasattr(base, method_name):
+                if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
 
@@ -818,7 +1096,7 @@ method and `await` any asynchronous results it produces.
                     # method is looked up from it, it actually comes from some
                     # other, even baser class which might come from builtins
                     # which we want to skip instrumenting.
-                    if safe_hasattr(original_fun, "__self__"):
+                    if python_utils.safe_hasattr(original_fun, "__self__"):
                         if not self.to_instrument_module(
                             original_fun.__self__.__class__.__module__
                         ):
@@ -866,10 +1144,15 @@ method and `await` any asynchronous results it produces.
                 # is meant to be instrumented and if so, we  walk over it manually.
                 # NOTE: some llama_index objects are using dataclasses_json but most do
                 # not so this section applies.
-                attrs = clean_attributes(obj, include_props=True).keys()
+                attrs = pyschema_utils.clean_attributes(
+                    obj, include_props=True
+                ).keys()
 
             if vals is None:
-                vals = [safe_getattr(obj, k, get_prop=True) for k in attrs]
+                vals = [
+                    python_utils.safe_getattr(obj, k, get_prop=True)
+                    for k in attrs
+                ]
 
             for k, v in zip(attrs, vals):
                 if isinstance(v, (str, bool, int, float)):
@@ -888,53 +1171,6 @@ method and `await` any asynchronous results it produces.
                 elif isinstance(v, Dict):
                     for k2, sv in v.items():
                         subquery = query[k][k2]
-                        # WORK IN PROGRESS: BUG: some methods in rails are bound with a class that we cannot instrument
-                        """
-                        if isinstance(sv, Callable):
-                            if safe_hasattr(sv, "__self__"):
-                                # Is a method with bound self.
-                                sv_self = getattr(sv, "__self__")
-
-                                if not self.to_instrument_class(type(sv_self)):
-                                    # print(f"{subquery}: Don't need to instrument class {type(sv_self)}")
-                                    continue
-
-                                if not safe_hasattr(sv, self.INSTRUMENT):
-                                    print(f"{subquery}: Trying to instrument bound methods in {sv_self}")
-
-                                if safe_hasattr(sv, "__func__"):
-                                    func = getattr(sv, "__func__")
-                                    if not safe_hasattr(func, self.INSTRUMENT):
-                                        print(f"{subquery}: Bound method {sv}, unbound {func} is not instrumented. Trying to instrument.")
-
-                                        subobj = sv.__self__
-
-                                        try:
-                                            unbound = self.tracked_method_wrapper(
-                                                query=query,
-                                                func=func,
-                                                method_name=func.__name__,
-                                                cls=type(subobj),
-                                                obj=subobj
-                                            )
-                                            if inspect.iscoroutinefunction(func):
-                                                @functools.wraps(unbound)
-                                                async def bound(*args, **kwargs):
-                                                    return await unbound(subobj, *args, **kwargs)
-                                            else:
-                                                def bound(*args, **kwargs):
-                                                    return unbound(subobj, *args, **kwargs)
-
-                                            v[k2] = bound
-
-                                            #setattr(
-                                            #    sv.__func__, "__code__", unbound.__code__
-                                            #)
-                                        except Exception as e:
-                                            print(f"\t\t\t{subquery}: could not instrument because {e}")
-                                                    #self.instrument_bound_methods(sv_self, query=subquery)
-
-                        """
                         if self.to_instrument_class(type(sv)):
                             self.instrument_object(
                                 obj=sv, query=subquery, done=done
@@ -950,79 +1186,10 @@ method and `await` any asynchronous results it produces.
             logger.debug(
                 "%s: Do not know how to instrument object of type %s.",
                 query,
-                class_name(cls),
+                python_utils.class_name(cls),
             )
 
         # Check whether bound methods are instrumented properly.
-
-    def instrument_bound_methods(self, obj: object, query: Lens):
-        """Instrument functions that may be bound methods.
-
-        Some apps include either anonymous functions or manipulates methods that
-        have self bound already. Our other instrumentation cannot handle those cases.
-
-        Warning:
-            Experimental work in progress.
-        """
-
-        for method_name, _ in self.include_methods.items():
-            if not safe_hasattr(obj, method_name):
-                pass
-            else:
-                method = safe_getattr(obj, method_name)
-                print(f"\t{query}Looking at {method}")
-
-                if safe_hasattr(method, "__func__"):
-                    func = safe_getattr(method, "__func__")
-                    print(
-                        f"\t\t{query}: Looking at bound method {method_name} with func {func}"
-                    )
-
-                    if safe_hasattr(func, Instrument.INSTRUMENT):
-                        print(
-                            f"\t\t\t{query} Bound method {func} is instrumented."
-                        )
-
-                    else:
-                        print(
-                            f"\t\t\t{query} Bound method {func} is not instrumented. Trying to instrument it"
-                        )
-
-                        try:
-                            unbound = self.tracked_method_wrapper(
-                                query=query,
-                                func=func,
-                                method_name=method_name,
-                                cls=type(obj),
-                                obj=obj,
-                            )
-                            if inspect.iscoroutinefunction(func):
-
-                                async def abound(*args, **kwargs):
-                                    return await unbound(obj, *args, **kwargs)
-
-                                setattr(obj, method_name, abound)
-
-                            else:
-
-                                def bound(*args, **kwargs):
-                                    return unbound(obj, *args, **kwargs)
-
-                                setattr(obj, method_name, bound)
-                        except Exception as e:
-                            logger.debug(
-                                f"\t\t\t{query}: could not instrument because {e}"
-                            )
-
-                else:
-                    if safe_hasattr(method, Instrument.INSTRUMENT):
-                        print(
-                            f"\t\t{query} Bound method {method} is instrumented."
-                        )
-                    else:
-                        print(
-                            f"\t\t{query} Bound method {method} is NOT instrumented."
-                        )
 
 
 class AddInstruments:

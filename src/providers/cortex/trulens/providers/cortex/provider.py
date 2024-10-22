@@ -1,8 +1,9 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
-from trulens.feedback import LLMProvider
-from trulens.providers.cortex.endpoint import CortexEndpoint
+from trulens.feedback import llm_provider
+from trulens.feedback import prompts as feedback_prompts
+from trulens.providers.cortex import endpoint as cortex_endpoint
 
 # If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
 # TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
@@ -10,14 +11,14 @@ _SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
 
 class Cortex(
-    LLMProvider
+    llm_provider.LLMProvider
 ):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
-    DEFAULT_MODEL_ENGINE: ClassVar[str] = "snowflake-arctic"
+    DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
 
     model_engine: str
-    endpoint: CortexEndpoint
+    endpoint: cortex_endpoint.CortexEndpoint
     snowflake_conn: Any
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
@@ -95,7 +96,9 @@ class Cortex(
             self.DEFAULT_MODEL_ENGINE if model_engine is None else model_engine
         )
 
-        self_kwargs["endpoint"] = CortexEndpoint(*args, **kwargs)
+        self_kwargs["endpoint"] = cortex_endpoint.CortexEndpoint(
+            *args, **kwargs
+        )
 
         # Create a Snowflake connector
         self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
@@ -173,3 +176,33 @@ class Cortex(
         completion = json.loads(res[0][0])["choices"][0]["messages"]
 
         return completion
+
+    def _get_answer_agreement(
+        self, prompt: str, response: str, check_response: str
+    ) -> str:
+        """
+        Uses chat completion model. A function that completes a template to
+        check if two answers agree.
+
+        Args:
+            text (str): A prompt to an agent.
+            response (str): The agent's response to the prompt.
+            check_response(str): The response to check against.
+
+        Returns:
+            str
+        """
+
+        assert self.endpoint is not None, "Endpoint is not set."
+
+        messages = [
+            {"role": "system", "content": feedback_prompts.AGREEMENT_SYSTEM},
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": response},
+            {"role": "user", "content": check_response},
+        ]
+
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=messages,
+        )

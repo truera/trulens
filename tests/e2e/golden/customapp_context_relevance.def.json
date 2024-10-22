@@ -1,7 +1,7 @@
 {
   "aggregator": null,
   "combinations": "product",
-  "feedback_definition_id": "feedback_definition_hash_a7593c564dfec4bb148fa890c9842671",
+  "feedback_definition_id": "feedback_definition_hash_178ad41fde59d05dfa60f6898865a00c",
   "higher_is_better": true,
   "if_exists": null,
   "if_missing": "error",
@@ -16,7 +16,7 @@
         },
         "name": "DummyProvider"
       },
-      "id": 14620673040,
+      "id": 14215409856,
       "init_bindings": {
         "args": [],
         "kwargs": {
@@ -42,7 +42,7 @@
                       },
                       "name": "RandomState"
                     },
-                    "id": 14620695872,
+                    "id": 14215940672,
                     "init_bindings": null
                   }
                 },
@@ -56,7 +56,7 @@
                       },
                       "name": "Random"
                     },
-                    "id": 14566691360,
+                    "id": 4993367072,
                     "init_bindings": null
                   }
                 },

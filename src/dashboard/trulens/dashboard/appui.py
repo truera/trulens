@@ -7,11 +7,10 @@ from ipywidgets import widgets
 import traitlets
 from traitlets import HasTraits
 from traitlets import Unicode
-from trulens.core import app as mod_app
-from trulens.core.instruments import Instrument
-from trulens.core.utils.json import JSON_BASES
-from trulens.core.utils.json import jsonify_for_ui
-from trulens.core.utils.serial import Lens
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import serial as serial_utils
 
 pp = PrettyPrinter()
 
@@ -24,13 +23,15 @@ class Selector(HasTraits):
     select = Unicode()
     jpath = traitlets.Any()
 
-    def __init__(self, select: Union[Lens, str], make_on_delete: Callable):
-        if isinstance(select, Lens):
+    def __init__(
+        self, select: Union[serial_utils.Lens, str], make_on_delete: Callable
+    ):
+        if isinstance(select, serial_utils.Lens):
             self.select = str(select)
             self.jpath = select
         else:
             self.select = select
-            self.jpath = Lens.of_string(select)
+            self.jpath = serial_utils.Lens.of_string(select)
 
         self.w_edit = widgets.Text(value=select, layout=debug_style)
         self.w_delete = widgets.Button(
@@ -44,7 +45,7 @@ class Selector(HasTraits):
 
         def on_update_select(ev):
             try:
-                jpath = Lens.of_string(ev.new)
+                jpath = serial_utils.Lens.of_string(ev.new)
                 self.jpath = jpath
                 self.w_edit.layout.border = "0px solid black"
             except Exception:
@@ -63,7 +64,7 @@ class SelectorValue(HasTraits):
         self,
         selector: Selector,
         stdout_display: widgets.Output,
-        instrument: Instrument,
+        instrument: core_instruments.Instrument,
     ):
         self.selector = selector
         self.obj = None
@@ -81,7 +82,7 @@ class SelectorValue(HasTraits):
         self.instrument = instrument
 
     def _jsonify(self, obj):
-        return jsonify_for_ui(obj=obj, instrument=self.instrument)
+        return json_utils.jsonify_for_ui(obj=obj, instrument=self.instrument)
 
     def update_selector(self, ev):
         self.update()
@@ -113,7 +114,7 @@ class SelectorValue(HasTraits):
                         # if isinstance(inner_obj, pydantic.BaseModel):
                         #    inner_obj = inner_obj.model_dump()
 
-                        if isinstance(inner_obj, JSON_BASES):
+                        if isinstance(inner_obj, serial_utils.JSON_BASES):
                             ret_html += str(inner_obj)[0:VALUE_MAX_CHARS]
 
                         elif isinstance(inner_obj, Mapping):
@@ -145,7 +146,7 @@ class RecordWidget:
     def __init__(
         self,
         record_selections,
-        instrument: Instrument,
+        instrument: core_instruments.Instrument,
         record=None,
         human_or_input=None,
         stdout_display: widgets.Output = None,
@@ -219,10 +220,10 @@ class AppUI(traitlets.HasTraits):
 
     def __init__(
         self,
-        app: mod_app.App,
+        app: core_app.App,
         use_async: bool = False,
-        app_selectors: Optional[List[Union[str, Lens]]] = None,
-        record_selectors: Optional[List[Union[str, Lens]]] = None,
+        app_selectors: Optional[List[Union[str, serial_utils.Lens]]] = None,
+        record_selectors: Optional[List[Union[str, serial_utils.Lens]]] = None,
     ):
         self.use_async = use_async
 
@@ -342,7 +343,7 @@ class AppUI(traitlets.HasTraits):
         for _, sw in self.app_selections.items():
             sw.update()
 
-    def _add_app_selector(self, selector: Union[Lens, str]):
+    def _add_app_selector(self, selector: Union[serial_utils.Lens, str]):
         with self.display_stdout:
             sel = Selector(
                 select=selector, make_on_delete=self.make_on_delete_app_selector
@@ -361,7 +362,7 @@ class AppUI(traitlets.HasTraits):
     def add_app_selection(self, w):
         self._add_app_selector(self.app_selector.value)
 
-    def _add_record_selector(self, selector: Union[Lens, str]):
+    def _add_record_selector(self, selector: Union[serial_utils.Lens, str]):
         with self.display_stdout:
             sel = Selector(
                 select=selector,

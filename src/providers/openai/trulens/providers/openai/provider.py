@@ -2,26 +2,26 @@ import logging
 from typing import ClassVar, Dict, Optional, Sequence
 
 import pydantic
-from trulens.core.feedback import Endpoint
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.pace import Pace
-from trulens.feedback import LLMProvider
-from trulens.providers.openai.endpoint import OpenAIClient
-from trulens.providers.openai.endpoint import OpenAIEndpoint
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import pace as pace_utils
+from trulens.feedback import llm_provider
+from trulens.providers.openai import endpoint as openai_endpoint
 
 import openai as oai
 
 logger = logging.getLogger(__name__)
 
 
-class OpenAI(LLMProvider):
-    """
-    Out of the box feedback functions calling OpenAI APIs. Additionally, all feedback functions listed in the base [LLMProvider class][trulens.feedback.LLMProvider] can be run with OpenAI.
+class OpenAI(llm_provider.LLMProvider):
+    """Out of the box feedback functions calling OpenAI APIs.
+
+    Additionally, all feedback functions listed in the base [LLMProvider
+    class][trulens.feedback.LLMProvider] can be run with OpenAI.
 
     Create an OpenAI Provider with out of the box feedback functions.
 
     Example:
-
         ```python
         from trulens.providers.openai import OpenAI
         openai_provider = OpenAI()
@@ -42,13 +42,13 @@ class OpenAI(LLMProvider):
 
     # Endpoint cannot presently be serialized but is constructed in __init__
     # below so it is ok.
-    endpoint: Endpoint = pydantic.Field(exclude=True)
+    endpoint: core_endpoint.Endpoint = pydantic.Field(exclude=True)
 
     def __init__(
         self,
         *args,
         endpoint=None,
-        pace: Optional[Pace] = None,
+        pace: Optional[pace_utils.Pace] = None,
         rpm: Optional[int] = None,
         model_engine: Optional[str] = None,
         **kwargs: dict,
@@ -66,7 +66,7 @@ class OpenAI(LLMProvider):
         self_kwargs.update(**kwargs)
         self_kwargs["model_engine"] = model_engine
 
-        self_kwargs["endpoint"] = OpenAIEndpoint(
+        self_kwargs["endpoint"] = openai_endpoint.OpenAIEndpoint(
             *args, pace=pace, rpm=rpm, **kwargs
         )
 
@@ -114,12 +114,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_hate(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is hate
-        speech.
+        """A function that checks if text is hate speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -131,7 +128,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not hate) and 1.0 (hate).
@@ -141,12 +138,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_hatethreatening(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is
-        threatening speech.
+        """A function that checks if text is threatening speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -158,7 +152,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not threatening) and 1.0 (threatening).
@@ -169,12 +163,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_selfharm(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        self harm.
+        """A function that checks if text is about self harm.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -186,7 +177,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not self harm) and 1.0 (self harm).
@@ -197,12 +188,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_sexual(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is sexual
-        speech.
+        """A function that checks if text is sexual speech.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -214,7 +202,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not sexual) and 1.0 (sexual).
@@ -225,12 +213,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_sexualminors(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        sexual minors.
+        """A function that checks if text is about sexual minors.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -242,7 +227,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not sexual minors) and 1.0 (sexual minors).
@@ -254,12 +239,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_violence(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        violence.
+        """A function that checks if text is about violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -271,7 +253,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not violence) and 1.0 (violence).
@@ -282,12 +264,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_violencegraphic(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        graphic violence.
+        """A function that checks if text is about graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -299,7 +278,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not graphic violence) and 1.0 (graphic violence).
@@ -310,12 +289,9 @@ class OpenAI(LLMProvider):
 
     # TODEP
     def moderation_harassment(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        graphic violence.
+        """A function that checks if text is about graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -327,7 +303,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not harassment) and 1.0 (harassment).
@@ -337,12 +313,9 @@ class OpenAI(LLMProvider):
         return float(openai_response.category_scores.harassment)
 
     def moderation_harassment_threatening(self, text: str) -> float:
-        """
-        Uses OpenAI's Moderation API. A function that checks if text is about
-        graphic violence.
+        """A function that checks if text is about graphic violence.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -354,7 +327,7 @@ class OpenAI(LLMProvider):
             ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0.0 (not harassment/threatening) and 1.0 (harassment/threatening).
@@ -391,8 +364,6 @@ class AzureOpenAI(OpenAI):
         ) # low relevance
         ```
 
-
-
     Args:
         deployment_name: The name of the deployment.
     """
@@ -404,7 +375,7 @@ class AzureOpenAI(OpenAI):
     def __init__(
         self,
         deployment_name: str,
-        endpoint: Optional[Endpoint] = None,
+        endpoint: Optional[core_endpoint.Endpoint] = None,
         **kwargs: dict,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
@@ -416,8 +387,8 @@ class AzureOpenAI(OpenAI):
         # that client and instead is an argument to each chat request. We pass
         # that through the super class's `_create_chat_completion`.
         client_kwargs = dict(kwargs)
-        if CLASS_INFO in client_kwargs:
-            del client_kwargs[CLASS_INFO]
+        if constant_utils.CLASS_INFO in client_kwargs:
+            del client_kwargs[constant_utils.CLASS_INFO]
 
         if "model_engine" in client_kwargs:
             # delete from client args
@@ -426,7 +397,9 @@ class AzureOpenAI(OpenAI):
             # but include in provider args
             kwargs["model_engine"] = deployment_name
 
-        kwargs["client"] = OpenAIClient(client=oai.AzureOpenAI(**client_kwargs))
+        kwargs["client"] = openai_endpoint.OpenAIClient(
+            client=oai.AzureOpenAI(**client_kwargs)
+        )
 
         super().__init__(
             endpoint=None, **kwargs

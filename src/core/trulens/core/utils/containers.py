@@ -4,6 +4,7 @@ Container class utilities.
 
 from __future__ import annotations
 
+import datetime
 import itertools
 import logging
 from pprint import PrettyPrinter
@@ -22,12 +23,24 @@ from typing import (
     Union,
 )
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
 
 T = TypeVar("T")
 A = TypeVar("A")
 B = TypeVar("B")
+
+
+def datetime_of_ns_timestamp(timestamp: int) -> datetime.datetime:
+    """Convert a nanosecond timestamp to a datetime."""
+    return pd.Timestamp(timestamp, unit="ns").to_pydatetime()
+
+
+def ns_timestamp_of_datetime(dt: datetime.datetime) -> int:
+    """Convert a datetime to a nanosecond timestamp."""
+    return pd.Timestamp(dt).as_unit("ns").value
 
 
 class BlockingSet(set, Generic[T]):
@@ -50,18 +63,28 @@ class BlockingSet(set, Generic[T]):
         # TODO: unsure if these 2 locks are sufficient to prevent all deadlocks
         self.read_lock = RLock()
         self.write_lock = RLock()
-        self.nonempty = Event()
-        self.nonfull = Event()
+        self.event_nonempty = Event()
+        self.event_nonfull = Event()
+        self.event_shutdown = Event()
 
         if len(self.content) > 0:
-            self.nonempty.set()
+            self.event_nonempty.set()
 
         if len(self.content) < self.max_size:
-            self.nonfull.set()
+            self.event_nonfull.set()
 
     def empty(self) -> bool:
         """Check if the set is empty."""
         return len(self.content) == 0
+
+    def __del__(self):
+        self.shutdown()
+
+    def shutdown(self):
+        """Shutdown the set."""
+
+        self.event_shutdown.set()
+        self.event_nonempty.set()  # Unblock any waiting threads
 
     def peek(self) -> T:
         """Get an item from the set.
@@ -70,7 +93,10 @@ class BlockingSet(set, Generic[T]):
         """
 
         with self.read_lock:
-            self.nonempty.wait()
+            self.event_nonempty.wait()
+            if self.event_shutdown.is_set():
+                raise StopIteration("Set is shutdown.")
+
             return next(iter(self.content))
 
     def remove(self, item: T):
@@ -78,25 +104,35 @@ class BlockingSet(set, Generic[T]):
         with self.write_lock:
             self.content.remove(item)
 
-            self.nonfull.set()
+            self.event_nonfull.set()
 
             if len(self.content) == 0:
-                self.nonempty.clear()
+                self.event_nonempty.clear()
 
-    def pop(self) -> T:
+    def pop(self, blocking: bool = True) -> Optional[T]:
         """Get and remove an item from the set.
 
-        Blocks until an item is available.
+        Blocks until an item is available, unless blocking is set to False.
+
+        Args:
+            blocking: Whether to block until an item is ready. If not blocking
+                and empty, will return None.
         """
 
         with self.read_lock:
-            self.nonempty.wait()
+            if not blocking and not self.event_nonempty.is_set():
+                return None
+
+            self.event_nonempty.wait()
+
+            if self.event_shutdown.is_set():
+                raise StopIteration("Set is shutdown.")
 
             item = next(iter(self.content))
             self.content.remove(item)
 
             if len(self.content) == 0:
-                self.nonempty.clear()
+                self.event_nonempty.clear()
 
         return item
 
@@ -107,12 +143,12 @@ class BlockingSet(set, Generic[T]):
         """
 
         with self.write_lock:
-            self.nonfull.wait()
+            self.event_nonfull.wait()
             self.content.add(item)
 
-            self.nonempty.set()
+            self.event_nonempty.set()
             if len(self.content) >= self.max_size:
-                self.nonfull.clear()
+                self.event_nonfull.clear()
 
 
 # Collection utilities

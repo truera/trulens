@@ -21,14 +21,14 @@ import requests
 import torch
 from transformers import AutoModelForSequenceClassification
 from transformers import AutoTokenizer
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import Provider
-from trulens.core.utils.python import Future
-from trulens.core.utils.python import locals_except
-from trulens.core.utils.threading import ThreadPoolExecutor
-from trulens.feedback import prompts
-from trulens.feedback.dummy.endpoint import DummyEndpoint
-from trulens.providers.huggingface.endpoint import HuggingfaceEndpoint
+from trulens.core._utils.pycompat import Future  # import style exception
+from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.feedback import provider as core_provider
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import threading as threading_utils
+from trulens.feedback import prompts as feedback_prompts
+from trulens.feedback.dummy import endpoint as dummy_endpoint
+from trulens.providers.huggingface import endpoint as huggingface_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def _tci(func):  # "typecheck inputs"
     return wrapper
 
 
-class HuggingfaceBase(Provider):
+class HuggingfaceBase(core_provider.Provider):
     """
     Out of the box feedback functions calling Huggingface.
     """
@@ -140,15 +140,14 @@ class HuggingfaceBase(Provider):
     # TODEP
     @_tci
     def language_match(self, text1: str, text2: str) -> Tuple[float, Dict]:
-        """
-        Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
-        function that uses language detection on `text1` and `text2` and
+        """Uses Huggingface's papluca/xlm-roberta-base-language-detection model.
+
+        A function that uses language detection on `text1` and `text2` and
         calculates the probit difference on the language detected on text1. The
         function is: `1.0 - (|probit_language_text1(text1) -
         probit_language_text1(text2))`
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -161,13 +160,15 @@ class HuggingfaceBase(Provider):
             Guide](https://www.trulens.org/trulens/feedback_function_guide/)
 
         Args:
-            text1 (str): Text to evaluate.
-            text2 (str): Comparative text to evaluate.
+            text1: Text to evaluate.
+
+            text2: Comparative text to evaluate.
 
         Returns:
-            float: A value between 0 and 1. 0 being "different languages" and 1 being "same languages".
+            float: A value between 0 and 1. 0 being "different languages" and 1
+                being "same languages".
         """
-        with ThreadPoolExecutor(max_workers=2) as tpool:
+        with threading_utils.ThreadPoolExecutor(max_workers=2) as tpool:
             max_length = 500
             f_scores1: Future[Dict] = tpool.submit(
                 self._language_scores_endpoint, text=text1[:max_length]
@@ -199,7 +200,6 @@ class HuggingfaceBase(Provider):
         First the response will be split into statements using a sentence tokenizer.The NLI model will process each statement using a natural language inference model, and will use the entire source.
 
         Example:
-
             ```
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -231,7 +231,7 @@ class HuggingfaceBase(Provider):
                 premise=source, hypothesis=hypothesis
             )
             reasons_str = reasons_str + str.format(
-                prompts.GROUNDEDNESS_REASON_TEMPLATE,
+                feedback_prompts.GROUNDEDNESS_REASON_TEMPLATE,
                 statement_sentence=hypothesis,
                 supporting_evidence="[Doc NLI Used full source]",
                 score=score * 10,
@@ -250,7 +250,6 @@ class HuggingfaceBase(Provider):
         The model can be found at https://huggingface.co/truera/context_relevance.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -285,7 +284,6 @@ class HuggingfaceBase(Provider):
         function that uses a sentiment classifier on `text`.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -312,7 +310,6 @@ class HuggingfaceBase(Provider):
         uses a toxic comment classifier on `text`.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.huggingface import Huggingface
@@ -357,7 +354,6 @@ class HuggingfaceBase(Provider):
         NER model to detect PII.
 
         Example:
-
             ```python
             hugs = Huggingface()
 
@@ -400,7 +396,6 @@ class HuggingfaceBase(Provider):
         NER model to detect PII, with reasons.
 
         Example:
-
             ```python
             hugs = Huggingface()
 
@@ -450,7 +445,6 @@ class HuggingfaceBase(Provider):
         less than 0.5 the statement is evaluated as a hallucination.
 
         Example:
-
             ```python
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
@@ -475,12 +469,12 @@ class Huggingface(HuggingfaceBase):
     Out of the box feedback functions calling Huggingface APIs.
     """
 
-    endpoint: Endpoint
+    endpoint: core_endpoint.Endpoint
 
     def __init__(
         self,
         name: str = "huggingface",
-        endpoint: Optional[Endpoint] = None,
+        endpoint: Optional[core_endpoint.Endpoint] = None,
         **kwargs,
     ):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
@@ -490,7 +484,6 @@ class Huggingface(HuggingfaceBase):
         Create a Huggingface Provider with out of the box feedback functions.
 
         Example:
-
             ```python
             from trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
@@ -503,12 +496,16 @@ class Huggingface(HuggingfaceBase):
 
         # TODO: figure out why all of this logic is necessary:
         if endpoint is None:
-            self_kwargs["endpoint"] = HuggingfaceEndpoint(**kwargs)
+            self_kwargs["endpoint"] = huggingface_endpoint.HuggingfaceEndpoint(
+                **kwargs
+            )
         else:
-            if isinstance(endpoint, Endpoint):
+            if isinstance(endpoint, core_endpoint.Endpoint):
                 self_kwargs["endpoint"] = endpoint
             else:
-                self_kwargs["endpoint"] = HuggingfaceEndpoint(**endpoint)
+                self_kwargs["endpoint"] = (
+                    huggingface_endpoint.HuggingfaceEndpoint(**endpoint)
+                )
 
         self_kwargs["name"] = name or "huggingface"
 
@@ -752,9 +749,11 @@ class Dummy(Huggingface):
     def __init__(
         self,
         name: str = "dummyhugs",
-        error_prob: float = 1 / 100,
+        error_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         loading_prob: float = 1 / 100,
-        freeze_prob: float = 1 / 100,
+        freeze_prob: float = 0
+        / 100,  # 0 as default; set otherwise with intention
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
         rpm: float = 600,
@@ -762,8 +761,9 @@ class Dummy(Huggingface):
         **kwargs,
     ):
         kwargs["name"] = name or "dummyhugs"
-        kwargs["endpoint"] = DummyEndpoint(
-            name="dummyendhugspoint", **locals_except("self", "name", "kwargs")
+        kwargs["endpoint"] = dummy_endpoint.DummyEndpoint(
+            name="dummyendhugspoint",
+            **python_utils.locals_except("self", "name", "kwargs"),
         )
 
         super().__init__(**kwargs)

@@ -99,9 +99,8 @@ import re
 from typing import Any, Dict, Iterable, Optional, Set, Tuple, Union
 
 import dotenv
-from trulens.core.utils.python import caller_frame
-from trulens.core.utils.text import UNICODE_CHECK
-from trulens.core.utils.text import UNICODE_STOP
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +259,7 @@ def _check_key(
 For the last two options, the name of the argument may differ from {k} (i.e. `OpenAI(api_key=)` for `OPENAI_API_KEY`).
 """
         if not silent:
-            print(f"{UNICODE_STOP} {msg}")
+            print(f"{text_utils.UNICODE_STOP} {msg}")
             if warn:
                 logger.warning(msg)
         else:
@@ -310,7 +309,7 @@ def _collect_keys(*args: str, **kwargs: Dict[str, str]) -> Dict[str, str]:
 
     config_file, config = get_config()
 
-    globs = caller_frame(offset=2).f_globals
+    globs = python_utils.caller_frame(offset=2).f_globals
 
     for k in list(args) + list(kwargs.keys()):
         valid_values = set()
@@ -362,7 +361,7 @@ def _collect_keys(*args: str, **kwargs: Dict[str, str]) -> Dict[str, str]:
         else:
             v = list(valid_values)[0]
             print(
-                f"{UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
+                f"{text_utils.UNICODE_CHECK} Key {k} set from {valid_sources[v][0]}"
                 + (
                     " (same value found in "
                     + (" and ".join(valid_sources[v][1:]))
@@ -383,16 +382,17 @@ def check_keys(*keys: str) -> None:
     Check that all keys named in `*args` are set as env vars. Will fail with a
     message on how to set missing key if one is missing. If all are provided
     somewhere, they will be set in the env var as the canonical location where
-    we should expect them subsequently. Example:
+    we should expect them subsequently.
 
-    ```python
-    from trulens.core.utils.keys import check_keys
+    Example:
+        ```python
+        from trulens.core.utils.keys import check_keys
 
-    check_keys(
-        "OPENAI_API_KEY",
-        "HUGGINGFACE_API_KEY"
-    )
-    ```
+        check_keys(
+            "OPENAI_API_KEY",
+            "HUGGINGFACE_API_KEY"
+        )
+        ```
     """
 
     kvals = _collect_keys(*keys)
@@ -416,7 +416,6 @@ def check_or_set_keys(*args: str, **kwargs: Dict[str, str]) -> None:
     env variables for each of them. We use env variables as the canonical
     storage of these keys, regardless of how they were specified. Values can
     also be specified explicitly to this method. Example:
-
     ```python
     from trulens.core.utils.keys import check_or_set_keys
 

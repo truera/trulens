@@ -1,21 +1,20 @@
 from typing import Dict, Tuple, Union
 
 import numpy as np
-from trulens.core.utils.imports import OptionalImports
-from trulens.core.utils.imports import format_import_errors
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
 
-with OptionalImports(
-    messages=format_import_errors(
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
         "scikit-learn", purpose="using embedding vector distances"
     )
 ) as opt:
     import sklearn.metrics
 opt.assert_installed(sklearn.metrics)
 
-with OptionalImports(
-    messages=format_import_errors(
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
         "llama-index", purpose="using llama-index embedding models"
     )
 ) as opt:
@@ -24,7 +23,7 @@ with OptionalImports(
 opt.assert_installed(llama_index.core.base.embeddings.base)
 
 
-class Embeddings(WithClassInfo, SerialModel):
+class Embeddings(pyschema_utils.WithClassInfo, serial_utils.SerialModel):
     """Embedding related feedback function implementations."""
 
     _embed_model: BaseEmbedding
@@ -58,7 +57,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs cosine distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -80,7 +78,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -106,7 +104,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L1 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -127,7 +124,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(
@@ -153,7 +150,6 @@ class Embeddings(WithClassInfo, SerialModel):
         Runs L2 distance on the query and document embeddings
 
         Example:
-
             Below is just one example. Embedders from llama-index are supported:
             https://docs.llamaindex.ai/en/latest/module_guides/models/embeddings/
 
@@ -174,7 +170,7 @@ class Embeddings(WithClassInfo, SerialModel):
             document (str): The document returned from the vector DB.
 
         Returns:
-            - float: the embedding vector distance
+            float: the embedding vector distance
         """
 
         query_embed = np.asarray(

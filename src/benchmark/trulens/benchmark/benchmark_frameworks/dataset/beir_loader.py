@@ -8,7 +8,7 @@ import zipfile
 import pandas as pd
 import requests
 from tqdm.autonotebook import tqdm
-from trulens.core import TruSession
+from trulens.core import session as core_session
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +129,7 @@ class TruBEIRDataLoader:
         self, split="test"
     ) -> Tuple[
         Generator[Dict[str, Dict[str, str]], None, None],
-        Generator[Dict[str, str], None, None],
+        Generator[Dict[str, Tuple[str, str]], None, None],
     ]:
         """
         Load corpus, queries, and qrels as generators.
@@ -170,7 +170,9 @@ class TruBEIRDataLoader:
                     }
                 }
 
-    def _queries_generator(self) -> Generator[Dict[str, str], None, None]:
+    def _queries_generator(
+        self,
+    ) -> Generator[Dict[str, Tuple[str, str]], None, None]:
         """
         Generator to load queries incrementally.
         """
@@ -180,7 +182,12 @@ class TruBEIRDataLoader:
             for line in fIn:
                 line = json.loads(line)
                 if line.get("_id") in self.qrels:
-                    yield {line.get("_id"): line.get("text")}
+                    yield {
+                        line.get("_id"): (
+                            line.get("text"),
+                            line.get("metadata").get("answer"),
+                        )
+                    }
 
     def _process_dataset(
         self, split="test", chunk_size=None
@@ -215,7 +222,7 @@ class TruBEIRDataLoader:
 
         # Iterate over queries generator and process entries
         for i, query in enumerate(queries_gen, 1):
-            for query_id, query_text in query.items():
+            for query_id, (query_text, answer) in query.items():
                 doc_to_rel = self.qrels.get(query_id, {})
 
                 expected_chunks = []
@@ -234,7 +241,7 @@ class TruBEIRDataLoader:
                 dataset_entries.append({
                     "query_id": query_id,
                     "query": query_text,
-                    "expected_response": None,  # expected response can be empty for IR datasets
+                    "expected_response": answer,  # expected response can be also be empty for IR datasets
                     "expected_chunks": expected_chunks,
                     "meta": {"source": self.dataset_name},
                 })
@@ -278,24 +285,33 @@ class TruBEIRDataLoader:
 
     def persist_dataset(
         self,
-        session: TruSession,
+        session: core_session.TruSession,
         dataset_name: str,
         dataset_metadata: Optional[Dict[str, Any]] = None,
         split="test",
         download=True,
         chunk_size=1000,
     ):
-        """
-        Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+        """Persist BEIR dataset into DB with pre-processed fields to match expected TruLens schemas.
+
         Note this method handle chunking of the dataset to avoid loading the entire dataset into memory at once by default.
+
         Args:
-            split (str, optional): Defaults to "test".
-            session (TruSession): TruSession instance to persist the dataset.
-            dataset_name (str): Name of the dataset to be persisted - Note this can be different from the standardized BEIR dataset names.
-            dataset_metadata (Optional[Dict[str, Any]], optional): Metadata for the dataset.
-            download (bool, optional): If False, remove the downloaded dataset file after processing. Defaults to True.
+            split: Defaults to "test".
+
+            session: TruSession instance to persist the dataset.
+
+            dataset_name: Name of the dataset to be persisted - Note this can
+              be different from the standardized BEIR dataset names.
+
+            dataset_metadata: Metadata for the dataset.
+
+            download: If False, remove the downloaded dataset file after
+              processing. Defaults to True.
+
         Returns:
-            pd.DataFrame: DataFrame with the BEIR dataset
+            DataFrame with the BEIR dataset
+
         """
         for chunk in self._process_dataset(split=split, chunk_size=chunk_size):
             df_chunk = pd.DataFrame(chunk)

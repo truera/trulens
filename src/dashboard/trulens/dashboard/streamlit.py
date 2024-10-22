@@ -1,22 +1,26 @@
+import argparse
 import asyncio
 import json
 import math
-from typing import List
+import sys
+from typing import List, Optional
 
 from pydantic import BaseModel
 import streamlit as st
 from streamlit_pills import pills
-from trulens.core import TruSession
-from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
-from trulens.core.schema.feedback import FeedbackCall
-from trulens.core.schema.record import Record
-from trulens.core.utils.json import json_str_of_obj
-from trulens.core.utils.text import format_quantity
-from trulens.dashboard.components.record_viewer import record_viewer
-from trulens.dashboard.display import get_feedback_result
-from trulens.dashboard.display import get_icon
-from trulens.dashboard.ux import styles
-from trulens.dashboard.ux.components import draw_metadata_and_tags
+from trulens.core import session as core_session
+from trulens.core.database import base as core_db
+from trulens.core.database.legacy import migration as legacy_migration
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import text as text_utils
+from trulens.dashboard import display as dashboard_display
+from trulens.dashboard.components import (
+    record_viewer as dashboard_record_viewer,
+)
+from trulens.dashboard.ux import components as dashboard_components
+from trulens.dashboard.ux import styles as dashboard_styles
 
 # https://github.com/jerryjliu/llama_index/issues/7244:
 asyncio.set_event_loop(asyncio.new_event_loop())
@@ -24,11 +28,63 @@ asyncio.set_event_loop(asyncio.new_event_loop())
 
 class FeedbackDisplay(BaseModel):
     score: float = 0
-    calls: List[FeedbackCall]
+    calls: List[feedback_schema.FeedbackCall]
     icon: str
 
+def get_spcs_login_token():
+    """
+    Read the login token supplied automatically by Snowflake. These tokens
+    are short lived and should always be read right before creating any new connection.
+    """
+    with open("/snowflake/session/token", "r") as f:
+        return f.read()
 
-def trulens_leaderboard(app_ids: List[str] = None):
+def init_from_args():
+    """Parse command line arguments and initialize Tru with them.
+
+    As Tru is a singleton, further TruSession() uses will get the same configuration.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--database-url", default=None)
+    parser.add_argument(
+        "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
+    )
+    parser.add_argument("--spcs-runtime", default=False)
+
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        print(e)
+
+        # This exception will be raised if --help or invalid command line arguments
+        # are used. Currently, streamlit prevents the program from exiting normally,
+        # so we have to do a hard exit.
+        sys.exit(e.code)
+
+    if args.spcs_runtime:
+        from snowflake.snowpark import Session
+        from trulens.connectors.snowflake import SnowflakeConnector
+        import os
+        connection_params = {
+            "account": os.environ.get("SNOWFLAKE_ACCOUNT"),
+            "host": os.getenv("SNOWFLAKE_HOST"),
+            "authenticator": "oauth",
+            "token": get_spcs_login_token(),
+            "warehouse": os.environ.get("SNOWFLAKE_WAREHOUSE"),
+            "database": os.environ.get("SNOWFLAKE_DATABASE"),
+            "schema": os.environ.get("SNOWFLAKE_SCHEMA"),
+        }
+        snowpark_session = Session.builder.configs(connection_params).create()
+        connector = SnowflakeConnector(snowpark_session=snowpark_session)
+        core_session.TruSession(connector=connector)
+    else:
+        core_session.TruSession(
+            database_url=args.database_url, database_prefix=args.database_prefix
+        )
+
+
+def trulens_leaderboard(app_ids: Optional[List[str]] = None):
     """
     Render the leaderboard page.
 
@@ -37,14 +93,13 @@ def trulens_leaderboard(app_ids: List[str] = None):
         app_ids List[str]: A list of application IDs (default is None)
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
         trulens_st.trulens_leaderboard()
         ```
     """
-    session = TruSession()
+    session = core_session.TruSession()
 
     lms = session.connector.db
     df, feedback_col_names = lms.get_records_and_feedback(app_ids=app_ids)
@@ -88,7 +143,10 @@ def trulens_leaderboard(app_ids: List[str] = None):
         app_name_version = f"{app_name} - {app_version}"
         metadata = app_json.get("metadata")
         tags = app_json.get("tags")
-        st.header(app_name_version, help=draw_metadata_and_tags(metadata, tags))
+        st.header(
+            app_name_version,
+            help=dashboard_components.draw_metadata_and_tags(metadata, tags),
+        )
         app_feedback_col_names = [
             col_name
             for col_name in feedback_col_names
@@ -99,7 +157,11 @@ def trulens_leaderboard(app_ids: List[str] = None):
         )
         latency_mean = (
             app_df["latency"]
-            .apply(lambda td: td if td != MIGRATION_UNKNOWN_STR else None)
+            .apply(
+                lambda td: td
+                if td != legacy_migration.MIGRATION_UNKNOWN_STR
+                else None
+            )
             .mean()
         )
 
@@ -107,18 +169,18 @@ def trulens_leaderboard(app_ids: List[str] = None):
         col2.metric(
             "Average Latency (Seconds)",
             (
-                f"{format_quantity(round(latency_mean, 5), precision=2)}"
+                f"{text_utils.format_quantity(round(latency_mean, 5), precision=2)}"
                 if not math.isnan(latency_mean)
                 else "nan"
             ),
         )
         col3.metric(
             "Total Cost (USD)",
-            f"${format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
+            f"${text_utils.format_quantity(round(sum(cost for cost in app_df.total_cost if cost is not None), 5), precision=2)}",
         )
         col4.metric(
             "Total Tokens",
-            format_quantity(
+            text_utils.format_quantity(
                 sum(
                     tokens
                     for tokens in app_df.total_tokens
@@ -132,20 +194,23 @@ def trulens_leaderboard(app_ids: List[str] = None):
             mean = app_df[col_name].mean()
 
             st.write(
-                styles.stmetricdelta_hidearrow,
+                dashboard_styles.stmetricdelta_hidearrow,
                 unsafe_allow_html=True,
             )
 
             higher_is_better = feedback_directions.get(col_name, True)
 
             if "distance" in col_name:
+                cat = dashboard_styles.CATEGORY.of_score(
+                    mean, higher_is_better=higher_is_better, is_distance=True
+                )
                 feedback_cols[i].metric(
                     label=col_name,
                     value=f"{round(mean, 2)}",
                     delta_color="normal",
                 )
             else:
-                cat = styles.CATEGORY.of_score(
+                cat = dashboard_styles.CATEGORY.of_score(
                     mean, higher_is_better=higher_is_better
                 )
                 feedback_cols[i].metric(
@@ -155,7 +220,10 @@ def trulens_leaderboard(app_ids: List[str] = None):
                     delta_color=(
                         "normal"
                         if cat.compare(
-                            mean, styles.CATEGORY.PASS[cat.direction].threshold
+                            mean,
+                            dashboard_styles.CATEGORY.PASS[
+                                cat.direction
+                            ].threshold,
                         )
                         else "inverse"
                     ),
@@ -164,17 +232,15 @@ def trulens_leaderboard(app_ids: List[str] = None):
         st.markdown("""---""")
 
 
-@st.experimental_fragment(run_every=2)
-def trulens_feedback(record: Record):
-    """
-    Render clickable feedback pills for a given record.
+@st.fragment(run_every=2)
+def trulens_feedback(record: record_schema.Record):
+    """Render clickable feedback pills for a given record.
 
     Args:
 
-        record (Record): A trulens record.
+        record: A trulens record.
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
@@ -189,6 +255,23 @@ def trulens_feedback(record: Record):
     feedback_cols = []
     feedbacks = {}
     icons = []
+    default_direction = "HIGHER_IS_BETTER"
+    session = core_session.TruSession()
+    lms = session.connector.db
+    feedback_defs = lms.get_feedback_defs()
+
+    feedback_directions = {
+        (
+            row.feedback_json.get("supplied_name", "")
+            or row.feedback_json["implementation"]["name"]
+        ): (
+            "HIGHER_IS_BETTER"
+            if row.feedback_json.get("higher_is_better", True)
+            else "LOWER_IS_BETTER"
+        )
+        for _, row in feedback_defs.iterrows()
+    }
+
     for feedback, feedback_result in record.wait_for_feedback_results().items():
         call_data = {
             "feedback_definition": feedback,
@@ -199,11 +282,13 @@ def trulens_feedback(record: Record):
         feedbacks[call_data["feedback_name"]] = FeedbackDisplay(
             score=call_data["result"],
             calls=[],
-            icon=get_icon(fdef=feedback, result=feedback_result.result),
+            icon=dashboard_display.get_icon(
+                fdef=feedback, result=feedback_result.result
+            ),
         )
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
-    st.write("**Feedback functions**")
+    st.header("Feedback Functions")
     selected_feedback = pills(
         "Feedback functions",
         feedback_cols,
@@ -215,23 +300,40 @@ def trulens_feedback(record: Record):
     )
 
     if selected_feedback is not None:
-        st.dataframe(
-            get_feedback_result(record, feedback_name=selected_feedback),
-            use_container_width=True,
-            hide_index=True,
+        df = dashboard_display.get_feedback_result(
+            record, feedback_name=selected_feedback
+        )
+        if "groundedness" in selected_feedback.lower():
+            df = dashboard_display.expand_groundedness_df(df)
+        else:
+            pass
+
+        # Apply the highlight function row-wise
+        styled_df = df.style.apply(
+            lambda row: dashboard_display.highlight(
+                row,
+                selected_feedback=selected_feedback,
+                feedback_directions=feedback_directions,
+                default_direction=default_direction,
+            ),
+            axis=1,
         )
 
+        # Format only numeric columns
+        for col in df.select_dtypes(include=["number"]).columns:
+            styled_df = styled_df.format({col: "{:.2f}"})
 
-def trulens_trace(record: Record):
-    """
-    Display the trace view for a record.
+        st.dataframe(styled_df, hide_index=True)
+
+
+def trulens_trace(record: record_schema.Record):
+    """Display the trace view for a record.
 
     Args:
 
-        record (Record): A trulens record.
+        record: A trulens record.
 
     Example:
-
         ```python
         from trulens.core import streamlit as trulens_st
 
@@ -244,6 +346,8 @@ def trulens_trace(record: Record):
         ```
     """
 
-    session = TruSession()
+    session = core_session.TruSession()
     app = session.get_app(app_id=record.app_id)
-    record_viewer(record_json=json.loads(json_str_of_obj(record)), app_json=app)
+    dashboard_record_viewer.record_viewer(
+        record_json=json.loads(json_utils.json_str_of_obj(record)), app_json=app
+    )

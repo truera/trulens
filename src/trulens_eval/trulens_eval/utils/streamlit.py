@@ -9,4 +9,4 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.dashboard.streamlit_utils import init_from_args
+from trulens.dashboard.streamlit import init_from_args

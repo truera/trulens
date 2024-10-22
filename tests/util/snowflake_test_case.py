@@ -4,15 +4,15 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
-from typing import Dict
+from typing import Dict, Optional
 from unittest import TestCase
 from unittest import main
 import uuid
 
 from snowflake.core import Root
 from snowflake.snowpark import Session
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.core import TruSession
+from trulens.connectors import snowflake as snowflake_connector
+from trulens.core import session as core_session
 
 
 class SnowflakeTestCase(TestCase):
@@ -36,9 +36,11 @@ class SnowflakeTestCase(TestCase):
     def tearDown(self):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
         for key in [
-            curr for curr in TruSession._instances if curr[0] == "TruSession"
+            curr
+            for curr in core_session.TruSession._instances
+            if curr[0] == "TruSession"
         ]:
-            del TruSession._instances[key]
+            del core_session.TruSession._instances[key]
         # Clean up any Snowflake schemas.
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
@@ -71,20 +73,38 @@ class SnowflakeTestCase(TestCase):
         snowflake_connection_parameters["schema"] = schema
         return Session.builder.configs(snowflake_connection_parameters).create()
 
-    def get_session(self, app_base_name: str) -> TruSession:
-        app_name = app_base_name
-        app_name += "__"
-        app_name += str(uuid.uuid4()).replace("-", "_")
-        self._schema = app_name.upper()
-        self.assertNotIn(self._schema, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(self._schema)
-        connector = SnowflakeConnector(
+    def get_session(
+        self,
+        app_base_name: Optional[str] = None,
+        schema_name: Optional[str] = None,
+        schema_already_exists: bool = False,
+    ) -> core_session.TruSession:
+        if bool(app_base_name) == bool(schema_name):
+            raise ValueError(
+                "Exactly one of `app_base_name` and `schema_name` must be supplied!"
+            )
+        if app_base_name:
+            app_name = app_base_name
+            app_name += "__"
+            app_name += str(uuid.uuid4()).replace("-", "_")
+            self._schema = app_name
+        else:
+            self._schema = schema_name
+        self._schema = self._schema.upper()
+        if not schema_already_exists:
+            self.assertNotIn(self._schema, self.list_schemas())
+            self._snowflake_schemas_to_delete.append(self._schema)
+        connector = snowflake_connector.SnowflakeConnector(
             schema=self._schema,
             **self._snowflake_connection_parameters,
+            init_server_side=True,
         )
-        session = TruSession(connector=connector)
+        session = core_session.TruSession(connector=connector)
         self.assertIn(self._schema, self.list_schemas())
         return session
+
+    def run_query(self, q: str) -> None:
+        self._snowflake_session.sql(q).collect()
 
 
 if __name__ == "__main__":

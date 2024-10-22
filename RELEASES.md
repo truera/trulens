@@ -1,9 +1,9 @@
-# Releases
+# 🏁 Release History
 
 ## 1.0.0
 
 * Major package restructuring. See
-  <https://trulens.org/docs/trulens/guides/trulens_eval_migration> for details.
+  <https://www.trulens.org/component_guides/other/trulens_eval_migration/> for details.
 
 ## 0.33.0
 

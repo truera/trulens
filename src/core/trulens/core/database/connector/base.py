@@ -18,18 +18,19 @@ from typing import (
 )
 
 import pandas
-from trulens.core.database.base import DB
-from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
-from trulens.core.utils.python import Future  # code style exception
+from trulens.core._utils.pycompat import Future  # code style exception
+from trulens.core.database import base as core_db
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
 
-class DBConnector(ABC):
+class DBConnector(ABC, text_utils.WithIdentString):
     """Base class for DB connector implementations."""
 
     RECORDS_BATCH_TIMEOUT_IN_SEC: int = 10
@@ -39,9 +40,16 @@ class DBConnector(ABC):
 
     batch_thread = None
 
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self.db})"
+
+    # for WithIdentString:
+    def _ident_str(self) -> str:
+        return self.db._ident_str()
+
     @property
     @abstractmethod
-    def db(self) -> DB:
+    def db(self) -> core_db.DB:
         """Get the database instance."""
         ...
 
@@ -68,8 +76,8 @@ class DBConnector(ABC):
         self.db.migrate_database(**kwargs)
 
     def add_record(
-        self, record: Optional[mod_record_schema.Record] = None, **kwargs
-    ) -> mod_types_schema.RecordID:
+        self, record: Optional[record_schema.Record] = None, **kwargs
+    ) -> types_schema.RecordID:
         """Add a record to the database.
 
         Args:
@@ -84,14 +92,14 @@ class DBConnector(ABC):
         """
 
         if record is None:
-            record = mod_record_schema.Record(**kwargs)
+            record = record_schema.Record(**kwargs)
         else:
             record.update(**kwargs)
         return self.db.insert_record(record=record)
 
     def add_record_nowait(
         self,
-        record: mod_record_schema.Record,
+        record: record_schema.Record,
     ) -> None:
         """Add a record to the queue to be inserted in the next batch."""
         if self.batch_thread is None:
@@ -100,6 +108,7 @@ class DBConnector(ABC):
         self.batch_record_queue.put(record)
 
     def _batch_loop(self):
+        apps = {}
         while True:
             time.sleep(self.RECORDS_BATCH_TIMEOUT_IN_SEC)
             records = []
@@ -121,15 +130,17 @@ class DBConnector(ABC):
                     )
                     continue
                 feedback_results = []
-                apps = {}
                 for record in records:
                     app_id = record.app_id
-                    app = apps.setdefault(app_id, self.get_app(app_id=app_id))
+                    if app_id not in apps:
+                        apps[app_id] = self.get_app(app_id=app_id)
+                    app = apps[app_id]
+
                     feedback_definitions = app.get("feedback_definitions", [])
                     # TODO(Dave): Modify this to add only client side feedback results
                     for feedback_definition_id in feedback_definitions:
                         feedback_results.append(
-                            mod_feedback_schema.FeedbackResult(
+                            feedback_schema.FeedbackResult(
                                 feedback_definition_id=feedback_definition_id,
                                 record_id=record.record_id,
                                 name="feedback_name",  # this will be updated later by deferred evaluator
@@ -140,9 +151,7 @@ class DBConnector(ABC):
                 except Exception as e:
                     logger.error("Failed to insert feedback results {}", e)
 
-    def add_app(
-        self, app: mod_app_schema.AppDefinition
-    ) -> mod_types_schema.AppID:
+    def add_app(self, app: app_schema.AppDefinition) -> types_schema.AppID:
         """
         Add an app to the database and return its unique id.
 
@@ -156,7 +165,7 @@ class DBConnector(ABC):
 
         return self.db.insert_app(app=app)
 
-    def delete_app(self, app_id: mod_types_schema.AppID) -> None:
+    def delete_app(self, app_id: types_schema.AppID) -> None:
         """
         Deletes an app from the database based on its app_id.
 
@@ -167,8 +176,8 @@ class DBConnector(ABC):
         logger.info(f"App with ID {app_id} has been successfully deleted.")
 
     def add_feedback_definition(
-        self, feedback_definition: mod_feedback_schema.FeedbackDefinition
-    ) -> mod_types_schema.FeedbackDefinitionID:
+        self, feedback_definition: feedback_schema.FeedbackDefinition
+    ) -> types_schema.FeedbackDefinitionID:
         """
         Add a feedback definition to the database and return its unique id.
 
@@ -187,12 +196,12 @@ class DBConnector(ABC):
         self,
         feedback_result_or_future: Optional[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ] = None,
         **kwargs: Any,
-    ) -> mod_types_schema.FeedbackResultID:
+    ) -> types_schema.FeedbackResultID:
         """Add a single feedback result or future to the database and return its unique id.
 
         Args:
@@ -216,19 +225,19 @@ class DBConnector(ABC):
         if feedback_result_or_future is None:
             if "result" in kwargs and "status" not in kwargs:
                 # If result already present, set status to done.
-                kwargs["status"] = mod_feedback_schema.FeedbackResultStatus.DONE
+                kwargs["status"] = feedback_schema.FeedbackResultStatus.DONE
 
-            feedback_result = mod_feedback_schema.FeedbackResult(**kwargs)
+            feedback_result = feedback_schema.FeedbackResult(**kwargs)
 
         elif isinstance(feedback_result_or_future, Future):
             futures.wait([feedback_result_or_future])
-            feedback_result: mod_feedback_schema.FeedbackResult = (
+            feedback_result: feedback_schema.FeedbackResult = (
                 feedback_result_or_future.result()
             )
             feedback_result.update(**kwargs)
 
         elif isinstance(
-            feedback_result_or_future, mod_feedback_schema.FeedbackResult
+            feedback_result_or_future, feedback_schema.FeedbackResult
         ):
             feedback_result = feedback_result_or_future
             feedback_result.update(**kwargs)
@@ -246,11 +255,11 @@ class DBConnector(ABC):
         self,
         feedback_results: Iterable[
             Union[
-                mod_feedback_schema.FeedbackResult,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackResult,
+                Future[feedback_schema.FeedbackResult],
             ]
         ],
-    ) -> List[mod_types_schema.FeedbackResultID]:
+    ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
 
         Args:
@@ -270,8 +279,8 @@ class DBConnector(ABC):
         ]
 
     def get_app(
-        self, app_id: mod_types_schema.AppID
-    ) -> Optional[serial.JSONized[mod_app_schema.AppDefinition]]:
+        self, app_id: types_schema.AppID
+    ) -> Optional[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up an app from the database.
 
         This method produces the JSON-ized version of the app. It can be deserialized back into an [AppDefinition][trulens.core.schema.app.AppDefinition] with [model_validate][pydantic.BaseModel.model_validate]:
@@ -296,7 +305,7 @@ class DBConnector(ABC):
 
         return self.db.get_app(app_id)
 
-    def get_apps(self) -> List[serial.JSONized[mod_app_schema.AppDefinition]]:
+    def get_apps(self) -> List[serial_utils.JSONized[app_schema.AppDefinition]]:
         """Look up all apps from the database.
 
         Returns:
@@ -310,7 +319,7 @@ class DBConnector(ABC):
 
     def get_records_and_feedback(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pandas.DataFrame, List[str]]:
@@ -345,15 +354,22 @@ class DBConnector(ABC):
 
     def get_leaderboard(
         self,
-        app_ids: Optional[List[mod_types_schema.AppID]] = None,
+        app_ids: Optional[List[types_schema.AppID]] = None,
         group_by_metadata_key: Optional[str] = None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
     ) -> pandas.DataFrame:
         """Get a leaderboard for the given apps.
 
         Args:
             app_ids: A list of app ids to filter records by. If empty or not given, all
                 apps will be included in leaderboard.
+
             group_by_metadata_key: A key included in record metadata that you want to group results by.
+
+            limit: Limit on the number of records to aggregate to produce the leaderboard.
+
+            offset: Record row offset to select which records to use to aggregate the leaderboard.
 
         Returns:
             DataFrame of apps with their feedback results aggregated.
@@ -363,7 +379,10 @@ class DBConnector(ABC):
         if app_ids is None:
             app_ids = []
 
-        df, feedback_cols = self.get_records_and_feedback(app_ids)
+        df, feedback_cols = self.get_records_and_feedback(
+            app_ids, limit=limit, offset=offset
+        )
+        feedback_cols = sorted(feedback_cols)
 
         df["app_name"] = df["app_json"].apply(
             lambda x: json.loads(x).get("app_name")

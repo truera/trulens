@@ -2,22 +2,36 @@
 
 import builtins
 from collections import namedtuple
+import ctypes
+import gc
 import importlib
 import inspect
 import pkgutil
+from queue import Queue
 from types import ModuleType
 from typing import (
+    Any,
+    Callable,
     ForwardRef,
+    Generic,
     Iterable,
     List,
     Optional,
     Set,
+    Tuple,
     TypeVar,
     Union,
     get_args,
 )
+import weakref
 
+from tqdm.auto import tqdm
+from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
+
+T = TypeVar("T")
 
 Member = namedtuple("Member", ["obj", "name", "qualname", "val", "typ"])
 """Class/module member information.
@@ -185,7 +199,7 @@ def get_module_definitions(mod: Union[str, ModuleType]) -> Iterable[Member]:
         except Exception:
             return
 
-    for item, val in python_utils.getmembers_static(mod):
+    for item, val in pycompat_utils.getmembers_static(mod):
         # Check for aliases: classes/modules defined somewhere outside of
         # mod. Note that this cannot check for aliasing of basic python
         # values which are not references.
@@ -328,7 +342,7 @@ def get_class_members(
     lows: List[Member] = []
 
     static_members = [
-        (k, v, type(v)) for k, v in python_utils.getmembers_static(class_)
+        (k, v, type(v)) for k, v in pycompat_utils.getmembers_static(class_)
     ]
 
     slot_members = []
@@ -346,7 +360,13 @@ def get_class_members(
             (name, field.default, field.annotation)
             for name, field in class_.model_fields.items()
         ]
-    elif hasattr(class_, "__fields__"):  # pydantic.v1.BaseModel
+    elif (
+        hasattr(class_, "__fields__")
+        and hasattr(
+            class_.__fields__,
+            "items",  # some pydantic versions have __fields__ as a dict, some as a mappingproxy
+        )
+    ):  # pydantic.v1.BaseModel
         fields_members = [
             (name, field.default, field.annotation)
             for name, field in class_.__fields__.items()
@@ -366,6 +386,14 @@ def get_class_members(
 
         is_def = False
         is_public = False
+        is_experimental = False
+
+        is_experimental = name.lower().startswith("experimental")
+
+        if is_experimental:
+            # Skip experimental members for now.
+            # TODO: include them as another category other than public.
+            continue
 
         if any(
             (
@@ -446,6 +474,11 @@ def get_module_members(
         try:
             mod = importlib.import_module(mod)
         except Exception as e:
+            if mod == "trulens.core.database.migrations.env":
+                # This cannot be imported except by alembic. Skip this import
+                # error.
+                return None
+
             raise ValueError(f"Could not import module {mod}.") from e
 
     definitions: List[Member] = []
@@ -461,7 +494,7 @@ def get_module_members(
 
     classes = set()
 
-    for name, val in python_utils.getmembers_static(mod):
+    for name, val in pycompat_utils.getmembers_static(mod):
         qualname = mod.__name__ + "." + name
         member = Member(
             mod, name=name, qualname=qualname, val=val, typ=type(val)
@@ -471,6 +504,10 @@ def get_module_members(
         is_public = False
         is_export = False
         is_base = False
+        is_experimental = False
+
+        if name.lower().startswith("experimental"):
+            is_experimental = True
 
         if aliases_are_defs or _isdefinedin(val, mod):
             is_def = True
@@ -497,10 +534,8 @@ def get_module_members(
                 "__cached__",
                 "__builtins__",
                 "__warningregistry__",
+                "__path__",
             ]
-            and (
-                len(name) > 1 and not isinstance(val, TypeVar)
-            )  # skip generic type vars
         ):
             # Checking if name is in builtins filters out standard module
             # attributes like __package__. A few other standard attributes are
@@ -515,8 +550,16 @@ def get_module_members(
             group = friends
 
         else:
-            is_public = True
-            group = publics
+            if (
+                not is_experimental
+                and name not in ["TYPE_CHECKING"]  # skip this common value
+                and (len(name) > 1 or not isinstance(val, TypeVar))
+            ):  # skip generic type vars
+                is_public = True
+                group = publics
+            else:
+                is_public = False
+                group = privates
 
         group.append(member)
 
@@ -542,3 +585,231 @@ def get_module_members(
         api_highs=highs,
         api_lows=lows,
     )
+
+
+# Reference and garbage collection related utilities
+
+
+def deref(obj_id: int) -> Any:
+    """Dereference an object from its id.
+
+    Will crash the interpreter if the id is invalid.
+    """
+
+    return ctypes.cast(obj_id, ctypes.py_object).value
+
+
+class RefLike(Generic[T]):
+    """Container for objects that try to put them in a weakref if possible."""
+
+    def __init__(
+        self,
+        ref_id: Optional[int] = None,
+        obj: Optional[Union[weakref.ReferenceType[T], T]] = None,
+    ):
+        if ref_id is None:
+            assert obj is not None
+            ref_id = id(obj)
+
+        if obj is None:
+            ref_or_val = deref(ref_id)
+            assert ref_or_val is not None
+        else:
+            ref_or_val = obj
+
+        assert ref_or_val is not None
+        if gc.is_tracked(obj):
+            try:
+                self.ref_or_val = weakref.ref(obj)
+            except Exception:
+                self.ref_or_val = obj
+        else:
+            self.ref_or_val = obj
+
+        self.ref_id = ref_id
+        self.ref_or_val = ref_or_val
+
+    def get(self) -> T:
+        try:
+            if weakref.ReferenceType.__instancecheck__(self.ref_or_val):
+                return self.ref_or_val()
+        except Exception:
+            return None
+
+        return self.ref_or_val
+
+
+class GetReferent(serial_utils.Step):
+    """A lens step which represents a GC referent which cannot be determined to
+    be an item/index/attribute yet is still a referent according to the garbage
+    collector.
+
+    This is only used for debugging purposes.
+    """
+
+    ref_id: int
+
+    def __hash__(self) -> int:
+        return hash(self.ref_id)
+
+    def get(self, obj: Any) -> Iterable[Any]:
+        yield deref(self.ref_id)
+
+    def set(self, obj: Any, val: Any) -> Any:
+        raise NotImplementedError("Cannot set a reference.")
+
+    def __repr__(self) -> str:
+        val = deref(self.ref_id)
+        typ = type(val).__name__
+        return f"/{typ}@{self.ref_id:08x}"
+
+
+def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
+    """Find the reference path between two python objects by their id.
+
+    Returns None if a path is not found. Tries to describe the path in terms of
+    dictionary or array lookups but may fall back to referents which only
+    indicate that an object is linked to another as per python's GC but how the
+    link is represented is not known to us.
+    """
+
+    visited: Set[int] = set()
+    queue: Queue[Tuple[serial_utils.Lens, List[RefLike]]] = Queue()
+
+    source_ref = RefLike(ref_id=source_id)
+    queue.put((serial_utils.Lens(), [source_ref]))
+
+    prog = tqdm(total=len(gc.get_objects()))
+
+    def skip_val(val):
+        if val is None:
+            return True
+        if not gc.is_tracked(val):
+            return True
+        if gc.is_finalized(val):
+            return True
+        try:
+            if weakref.CallableProxyType.__instancecheck__(val):
+                return True
+            if weakref.ReferenceType.__instancecheck__(val):
+                return True
+            if weakref.ProxyType.__instancecheck__(val):
+                return True
+        except Exception:
+            return False
+        if id(val) in visited:
+            return True
+
+        return False
+
+    biggest_len = 0
+
+    while not queue.empty():
+        lens, path = queue.get()
+
+        prog.update(len(visited) - prog.n)
+
+        if len(path) > biggest_len:
+            biggest_len = len(path)
+
+            if len(path) < 15:
+                prog.set_description_str(str(lens))
+            else:
+                prog.set_description_str(f"lens with {len(path)} steps")
+            prog.set_postfix_str(
+                text_utils.format_size(len(visited)) + " reference(s) visited"
+            )
+
+        final_ref = path[-1]
+        if final_ref.ref_id == target_id:
+            return lens
+
+        final = final_ref.get()
+
+        if isinstance(final, dict):
+            for key, value in list(final.items()):
+                if skip_val(value):
+                    continue
+
+                value_ref = RefLike(obj=value)
+                visited.add(value_ref.ref_id)
+
+                if isinstance(key, str):
+                    queue.put((
+                        lens + serial_utils.GetItem(item=key),
+                        path + [value_ref],
+                    ))
+                else:
+                    queue.put((
+                        lens + GetReferent(ref_id=value_ref.ref_id),
+                        path + [value_ref],
+                    ))
+
+        elif isinstance(final, (list, tuple)):
+            for index, value in enumerate(final):
+                if skip_val(value):
+                    continue
+
+                value_ref = RefLike(obj=value)
+                visited.add(value_ref.ref_id)
+
+                queue.put((
+                    lens + serial_utils.GetIndex(index=index),
+                    path + [value_ref],
+                ))
+
+                del value
+
+        else:
+            for value in gc.get_referents(final):
+                if skip_val(value):
+                    continue
+
+                value_ref = RefLike(obj=value)
+                visited.add(value_ref.ref_id)
+
+                queue.put((
+                    lens + GetReferent(ref_id=value_ref.ref_id),
+                    path + [value_ref],
+                ))
+
+                del value
+
+    return None
+
+
+def print_referent_lens(lens: Optional[serial_utils.Lens], origin) -> None:
+    """Print a lens that may contain GetReferent steps.
+
+    Prints part of the referent string representation.
+    """
+
+    if lens is None:
+        print("no path")
+
+    print(lens)
+
+    obj = origin
+
+    for step in lens.path:
+        obj = step.get_sole_item(obj)
+
+        obj_ident = (
+            type(obj).__module__ + "." + python_utils.class_name(type(obj))
+        )
+
+        if isinstance(obj, Callable):
+            obj_ident += (
+                " = " + obj.__module__ + "." + python_utils.callable_name(obj)
+            )
+
+        if isinstance(step, GetReferent):
+            print(
+                "  ",
+                type(step).__name__,
+                repr(step),
+                obj_ident,
+                str(obj)[0:1024],
+            )
+        else:
+            print("  ", type(step).__name__, repr(step), obj_ident)

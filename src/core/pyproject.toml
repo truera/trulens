@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-core"
-version = "1.0.1"
+version = "1.0.2a0"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -17,7 +17,7 @@ packages = [
   { include = "trulens" },
 ]
 homepage = "https://trulens.org/"
-documentation = "https://trulens.org/trulens/getting_started/"
+documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -30,20 +30,18 @@ classifiers = [
 python = "^3.9"
 numpy = ">=1.23"
 munch = "^2.5"
-dill = "^0.3.8"
+dill = ">=0.3.8"
 typing_extensions = "^4.9"
 pydantic = "^2"
-pandas = "^2.1"
+pandas = ">=1.0.0"
 rich = "^13.6"
 sqlalchemy = "^2.0"
 alembic = "^1.8.1"
 nest-asyncio = "^1.5"
 python-dotenv = ">=0.21,<2.0"
-tqdm = { version = ">=4.2.0", optional = true }
 
-[tool.poetry.group.openai]
+[tool.poetry.group.tqdm]
 optional = true
 
-[tool.poetry.group.openai.dependencies]
-openai = "^1.37"
-httpx = "^0.27"
+[tool.poetry.group.tqdm.dependencies]
+tqdm = { version = ">=4.2.0", optional = true }

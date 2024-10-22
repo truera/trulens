@@ -13,12 +13,12 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
-from trulens.core.database import base as mod_db
+from trulens.core.database import base as core_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
 from trulens.core.database.exceptions import DatabaseVersionException
 from trulens.core.database.sqlalchemy import SQLAlchemyDB
-from trulens.core.utils.python import OpaqueWrapper
+from trulens.core.utils import python as python_utils
 
 from snowflake.core import CreateMode
 from snowflake.core import Root
@@ -34,77 +34,19 @@ class SnowflakeConnector(DBConnector):
 
     def __init__(
         self,
-        account: str,
-        user: str,
-        password: str,
-        database: str,
-        schema: str,
-        warehouse: str,
-        role: str,
-        host: Optional[str] = None,
-        init_server_side: bool = True,
+        account: Optional[str] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        database: Optional[str] = None,
+        schema: Optional[str] = None,
+        warehouse: Optional[str] = None,
+        role: Optional[str] = None,
+        snowpark_session: Optional[Session] = None,
+        init_server_side: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
-    ):
-        database_args = database_args or {}
-
-        self._validate_schema_name(schema)
-        database_url = self._create_snowflake_database_url(
-            account=account,
-            user=user,
-            password=password,
-            database=database,
-            schema=schema,
-            warehouse=warehouse,
-            role=role,
-        )
-        database_args.update({
-            k: v
-            for k, v in {
-                "database_url": database_url,
-                "database_redact_keys": database_redact_keys,
-            }.items()
-            if v is not None
-        })
-        database_args["database_prefix"] = (
-            database_prefix or mod_db.DEFAULT_DATABASE_PREFIX
-        )
-        self._db: Union[SQLAlchemyDB, OpaqueWrapper] = (
-            SQLAlchemyDB.from_tru_args(**database_args)
-        )
-
-        if database_check_revision:
-            try:
-                self._db.check_db_revision()
-            except DatabaseVersionException as e:
-                print(e)
-                self._db = OpaqueWrapper(obj=self._db, e=e)
-
-        if init_server_side:
-            self._initialize_snowflake_server_side_feedback_evaluations(
-                account,
-                user,
-                password,
-                database,
-                schema,
-                warehouse,
-                role,
-                database_args["database_prefix"],
-                host,
-            )
-
-    def _initialize_snowflake_server_side_feedback_evaluations(
-        self,
-        account: str,
-        user: str,
-        password: str,
-        database: str,
-        schema: str,
-        warehouse: str,
-        role: str,
-        database_prefix: str,
         host: Optional[str] = None,
     ):
         connection_parameters = {
@@ -117,16 +59,126 @@ class SnowflakeConnector(DBConnector):
             "role": role,
             **({"host": host} if host else {}),
         }
-        with Session.builder.configs(connection_parameters).create() as session:
+
+        if snowpark_session is None:
+            kwargs_to_set = []
+            for k, v in connection_parameters.items():
+                if v is None:
+                    kwargs_to_set.append(k)
+            if kwargs_to_set:
+                raise ValueError(
+                    f"If not supplying `snowpark_session` then must set `{kwargs_to_set}`!"
+                )
+
+            del connection_parameters["schema"]
+            snowpark_session = Session.builder.configs(
+                connection_parameters
+            ).create()
+            self._validate_schema_name(schema)
+            self._create_snowflake_schema_if_not_exists(
+                snowpark_session, database, schema
+            )
+            snowpark_session.use_schema(schema)
+            connection_parameters["schema"] = schema
+        else:
+            snowpark_connection_parameters = {
+                "account": snowpark_session.get_current_account(),
+                "user": snowpark_session.get_current_user(),
+                "database": snowpark_session.get_current_database(),
+                "schema": snowpark_session.get_current_schema(),
+                "warehouse": snowpark_session.get_current_warehouse(),
+                "role": snowpark_session.get_current_role(),
+            }
+            missing_snowpark_params = []
+            mismatched_kwargs = []
+            for k, v in snowpark_connection_parameters.items():
+                if not v:
+                    missing_snowpark_params.append(k)
+                if connection_parameters[k] is None:
+                    connection_parameters[k] = v
+                elif connection_parameters[k] != v:
+                    mismatched_kwargs.append(k)
+
+            if missing_snowpark_params:
+                raise ValueError(
+                    f"Connection parameters missing from provided `snowpark_session`: {missing_snowpark_params}"
+                )
+            if mismatched_kwargs:
+                raise ValueError(
+                    f"Connection parameters mismatch between provided `snowpark_session` and args passed to `SnowflakeConnector`: {mismatched_kwargs}"
+                )
+
+            if connection_parameters["password"] is None:
+                # NOTE: user passwords are inaccessible from the `snowpark_session` object.
+                logger.warning(
+                    "Running the TruLens dashboard requires providing a `password` to the `SnowflakeConnector`."
+                )
+                connection_parameters["password"] = "password"
+
+        self._init_with_snowpark_session(
+            snowpark_session,
+            init_server_side,
+            database_redact_keys,
+            database_prefix,
+            database_args,
+            database_check_revision,
+            connection_parameters,
+        )
+
+    def _init_with_snowpark_session(
+        self,
+        snowpark_session: Session,
+        init_server_side: bool,
+        database_redact_keys: bool,
+        database_prefix: Optional[str],
+        database_args: Optional[Dict[str, Any]],
+        database_check_revision: bool,
+        connection_parameters: Dict[str, Optional[str]],
+    ):
+        database_args = database_args or {}
+        if "engine_params" not in database_args:
+            database_args["engine_params"] = {}
+        if "creator" in database_args["engine_params"]:
+            raise ValueError(
+                "Cannot set `database_args['engine_params']['creator']!"
+            )
+        database_args["engine_params"]["creator"] = (
+            lambda: snowpark_session.connection
+        )
+        if "paramstyle" in database_args["engine_params"]:
+            raise ValueError(
+                "Cannot set `database_args['engine_params']['paramstyle']!"
+            )
+        database_args["engine_params"]["paramstyle"] = "qmark"
+
+        database_url = URL(
+            **connection_parameters,
+        )
+        database_args.update({
+            k: v
+            for k, v in {
+                "database_url": database_url,
+                "database_redact_keys": database_redact_keys,
+            }.items()
+            if v is not None
+        })
+        database_args["database_prefix"] = (
+            database_prefix or core_db.DEFAULT_DATABASE_PREFIX
+        )
+        self._db: Union[SQLAlchemyDB, python_utils.OpaqueWrapper] = (
+            SQLAlchemyDB.from_tru_args(**database_args)
+        )
+
+        if database_check_revision:
+            try:
+                self._db.check_db_revision()
+            except DatabaseVersionException as e:
+                print(e)
+                self._db = python_utils.OpaqueWrapper(obj=self._db, e=e)
+
+        if init_server_side:
             ServerSideEvaluationArtifacts(
-                session,
-                account,
-                user,
-                database,
-                schema,
-                warehouse,
-                role,
-                database_prefix,
+                snowpark_session, database_args["database_prefix"]
             ).set_up_all()
 
     @classmethod
@@ -137,32 +189,21 @@ class SnowflakeConnector(DBConnector):
             )
 
     @classmethod
-    def _create_snowflake_database_url(cls, **kwargs) -> str:
-        kwargs = {k: v for k, v in kwargs.items() if v}
-        cls._create_snowflake_schema_if_not_exists(kwargs)
-        return URL(**kwargs)
-
-    @classmethod
     def _create_snowflake_schema_if_not_exists(
-        cls, connection_parameters: Dict[str, str]
+        cls,
+        snowpark_session: Session,
+        database_name: str,
+        schema_name: str,
     ):
-        with Session.builder.configs(connection_parameters).create() as session:
-            root = Root(session)
-            schema_name = connection_parameters.get("schema", None)
-            if schema_name is None:
-                raise ValueError("Schema name must be provided.")
-
-            database_name = connection_parameters.get("database", None)
-            if database_name is None:
-                raise ValueError("Database name must be provided.")
-            schema = Schema(name=schema_name)
-            root.databases[database_name].schemas.create(
-                schema, mode=CreateMode.if_not_exists
-            )
+        root = Root(snowpark_session)
+        schema = Schema(name=schema_name)
+        root.databases[database_name].schemas.create(
+            schema, mode=CreateMode.if_not_exists
+        )
 
     @cached_property
     def db(self) -> DB:
-        if isinstance(self._db, OpaqueWrapper):
+        if isinstance(self._db, python_utils.OpaqueWrapper):
             self._db = self._db.unwrap()
         if not isinstance(self._db, DB):
             raise RuntimeError("Unhandled database type.")

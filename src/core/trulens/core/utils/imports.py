@@ -401,6 +401,7 @@ class Dummy(type):
 
             message = src.message
             importer = src.importer
+
             original_exception = src.original_exception
             exception_class = src.exception_class
 
@@ -423,7 +424,13 @@ class Dummy(type):
         self.message = message
         self.importer = importer
         self.exception_class = exception_class
-        self.original_exception = original_exception
+
+        if original_exception is not None:
+            # Intentionally not including traceback as it includes frames which include references to
+            # objects we don't want to reference:
+            original_exception = original_exception.with_traceback(None)
+
+        self.original_exception: Optional[Exception] = original_exception
 
     def __call__(self, *args, **kwargs):
         raise self.exception_class(self.message) from self.original_exception
@@ -563,7 +570,7 @@ class OptionalImports:
         while frame.f_code == self.__import__.__code__:
             frame = frame.f_back
 
-        module_name = frame.f_globals["__name__"]
+        module_name = frame.f_globals.get("__name__", "")
 
         if not module_name.startswith("trulens"):
             return self.imp(name, globals, locals, fromlist, level)

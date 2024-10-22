@@ -26,12 +26,45 @@ env:
 env-%:
 	poetry install --with $*
 
-env-required:
-	poetry install --only required,tests --sync
+env-tests:
+	poetry run pip install \
+		pytest \
+		nbconvert \
+		nbformat \
+		pytest-subtests \
+		pytest-azurepipelines \
+		ruff \
+		pre-commit \
+		pytest-cov \
+		jsondiff
 
-env-optional:
-	poetry install --with tests,tests-optional --sync --verbose
+env-tests-required:
+	poetry install --only required
+	make env-tests
 
+# Note: in the below, there are a few pinned langchain versions to make sure they don't have updated
+# to broken versions which are a few versions after the pinned ones.
+env-tests-optional: env env-tests
+	poetry run pip install \
+		langchain==0.2.11 \
+		langchain-core==0.2.24 \
+		llama-index-embeddings-huggingface \
+		llama-index-embeddings-openai \
+		langchain-openai \
+		unstructured \
+		chromadb \
+
+env-tests-db: env-tests
+	poetry run pip install \
+		cryptography \
+		psycopg2-binary \
+		pymysql
+
+env-tests-notebook: env-tests env-tests-optional
+	poetry run pip install \
+		faiss-cpu \
+		ipytree \
+		llama-index-readers-web
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -106,9 +139,9 @@ test-static:
 # are part of only the less frequently run release tests.
 
 # API tests.
-test-api:
+test-api: env-tests
 	TEST_OPTIONAL=1 $(PYTEST) tests/unit/static/test_api.py
-write-api: env
+write-api: env-tests
 	TEST_OPTIONAL=1 WRITE_GOLDEN=1 $(PYTEST) tests/unit/static/test_api.py || true
 test-write-api:
 	@echo "The 'test-write-api' target has been renamed to 'write-api'."
@@ -129,7 +162,7 @@ _trulens_eval:
 		docs/trulens_eval/tracking
 	git worktree prune
 test-legacy-notebooks: _trulens_eval
-	TEST_OPTIONAL=1 $(PYTEST) -s tests/e2e/test_trulens_eval_notebooks.py
+	TEST_OPTIONAL=1 $(PYTEST) -s tests/legacy/test_trulens_eval_notebooks.py
 
 # Dummy and serial e2e tests do not involve any costly requests.
 test-golden-%: tests/e2e/test_%.py # has golden file
@@ -156,7 +189,7 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-required
+test-%-required: env-tests-required
 	make test-$*
 
 # Runs required tests, but allows optional dependencies to be installed.
@@ -164,7 +197,7 @@ test-%-allow-optional: env
 	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
-test-%-optional: env-optional
+test-%-optional: env-tests-optional
 	TEST_OPTIONAL=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
@@ -186,7 +219,7 @@ install-wheels:
 # Release Steps:
 ## Step: Clean repo:
 clean:
-	git clean --dry-run -fxdpoe
+	git clean --dry-run -fxd
 	@read -p "Do you wish to remove these files? (y/N)" -n 1 -r
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \

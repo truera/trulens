@@ -6,13 +6,14 @@ import datetime
 from typing import Optional
 
 import pydantic
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import serial as serial_utils
 
 MAX_DILL_SIZE: int = 1024 * 1024  # 1MB
 """Max size in bytes of pickled objects."""
 
 
-class Cost(SerialModel, pydantic.BaseModel):
+class Cost(serial_utils.SerialModel, pydantic.BaseModel):
     """Costs associated with some call or set of calls."""
 
     n_requests: int = 0
@@ -21,8 +22,20 @@ class Cost(SerialModel, pydantic.BaseModel):
     n_successful_requests: int = 0
     """Number of successful requests."""
 
+    n_completion_requests: int = 0
+    """Number of completion requests."""
+
+    n_classification_requests: int = 0
+    """Number of classification requests."""
+
     n_classes: int = 0
     """Number of class scores retrieved."""
+
+    n_embedding_requests: int = 0
+    """Number of embedding requests."""
+
+    n_embeddings: int = 0
+    """Number of embeddings retrieved."""
 
     n_tokens: int = 0
     """Total tokens processed."""
@@ -63,7 +76,7 @@ class Cost(SerialModel, pydantic.BaseModel):
         return self.__add__(other)
 
 
-class Perf(SerialModel, pydantic.BaseModel):
+class Perf(serial_utils.SerialModel, pydantic.BaseModel):
     """Performance information.
 
     Presently only the start and end times, and thus latency.
@@ -104,6 +117,40 @@ class Perf(SerialModel, pydantic.BaseModel):
     def latency(self):
         """Latency in seconds."""
         return self.end_time - self.start_time
+
+    @staticmethod
+    def of_ns_timestamps(
+        start_ns_timestamp: int, end_ns_timestamp: Optional[int] = None
+    ) -> Perf:
+        """EXPERIMENTAL: otel-tracing
+
+        Create a `Perf` instance from start and end times in nanoseconds
+        since the epoch."""
+
+        return Perf(
+            start_time=container_utils.datetime_of_ns_timestamp(
+                start_ns_timestamp
+            ),
+            end_time=container_utils.datetime_of_ns_timestamp(end_ns_timestamp)
+            if end_ns_timestamp is not None
+            else datetime.datetime.max,
+        )
+
+    @property
+    def start_ns_timestamp(self) -> int:
+        """EXPERIMENTAL: otel-tracing
+
+        Start time in number of nanoseconds since the epoch."""
+
+        return container_utils.ns_timestamp_of_datetime(self.start_time)
+
+    @property
+    def end_ns_timestamp(self) -> int:
+        """EXPERIMENTAL: otel-tracing
+
+        End time in number of nanoseconds since the epoch."""
+
+        return container_utils.ns_timestamp_of_datetime(self.end_time)
 
 
 # HACK013: Need these if using __future__.annotations .

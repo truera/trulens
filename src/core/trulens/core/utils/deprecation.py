@@ -8,13 +8,13 @@ import logging
 from typing import Any, Callable, Dict, Iterable, Optional, Type, Union
 import warnings
 
-from trulens.core.utils import imports as imports_utils
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
 PACKAGES_MIGRATION_LINK = (
-    "https://trulens.org/docs/trulens/guides/trulens_eval_migration"
+    "https://www.trulens.org/trulens/guides/trulens_eval_migration/"
 )
 
 
@@ -25,27 +25,28 @@ def module_getattr_override(
     looking up attributes.
 
     This expects deprecated names to be prefixed with `DEP_` followed by their
-    original pre-deprecation name. For example:
+    original pre-deprecation name.
 
-    - Before deprecation
-        ```python
-        # issue module import warning:
-        package_dep_warn()
+    !!! example
+        === "Before deprecation"
+            ```python
+            # issue module import warning:
+            package_dep_warn()
 
-        # define temporary implementations of to-be-deprecated attributes:
-        something = ... actual working implementation or alias
-        ```
+            # define temporary implementations of to-be-deprecated attributes:
+            something = ... actual working implementation or alias
+            ```
 
-    - After deprecation
-        ```python
-        # define deprecated attribute with None/any value but name with "DEP_"
-        # prefix:
-        DEP_something = None
+        === "After deprecation"
+            ```python
+            # define deprecated attribute with None/any value but name with "DEP_"
+            # prefix:
+            DEP_something = None
 
-        # issue module deprecation warning and override __getattr__ to issue
-        # deprecation errors for the above:
-        module_getattr_override()
-        ```
+            # issue module deprecation warning and override __getattr__ to issue
+            # deprecation errors for the above:
+            module_getattr_override()
+            ```
 
     Also issues a deprecation warning for the module itself. This will be used
     in the next deprecation stage for throwing errors after deprecation errors.
@@ -76,7 +77,7 @@ def module_getattr_override(
 def deprecated_str(s: str, reason: str):
     """Decorator for deprecated string literals."""
 
-    return imports_utils.Dummy(
+    return import_utils.Dummy(
         s, message=reason, original_exception=DeprecationWarning(reason)
     )
 
@@ -87,7 +88,7 @@ def is_deprecated(obj: Any):
     Presently only supports values created by `deprecated_str`.
     """
 
-    if imports_utils.is_dummy(obj):
+    if import_utils.is_dummy(obj):
         ex = inspect.getattr_static(obj, "original_exception")
         if isinstance(ex, DeprecationWarning):
             return True
@@ -337,7 +338,7 @@ def moved(
 
     for name in names:
         val = globals_dict[name]
-        if isinstance(val, imports_utils.Dummy):
+        if isinstance(val, import_utils.Dummy):
             # skip dummies
             continue
 

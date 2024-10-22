@@ -1,16 +1,14 @@
-"""
-Utilities for user-facing text generation.
-"""
+"""Utilities for user-facing text generation."""
 
 import logging
 import math
 import sys
 
-from trulens.core.utils.python import safe_hasattr
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
-if safe_hasattr(sys.stdout, "reconfigure"):
+if python_utils.safe_hasattr(sys.stdout, "reconfigure"):
     # Some stdout can't handle the below emojis (like terminal). This will skip over the emoji printing
     sys.stdout.reconfigure(errors="replace")
 
@@ -21,6 +19,16 @@ UNICODE_HOURGLASS = "⏳"
 UNICODE_CLOCK = "⏰"
 UNICODE_SQUID = "🦑"
 UNICODE_LOCK = "🔒"
+
+
+class WithIdentString:  # want to be a Protocol but having metaclass conflicts
+    """Mixin to indicate _ident_str is provided."""
+
+    def _ident_str(self) -> str:
+        """Get a string to identify this instance in some way without
+        overburdening the output with details."""
+
+        return f"{self.__class__.__name__} instance"
 
 
 def make_retab(tab):
@@ -78,6 +86,31 @@ def format_quantity(quantity: float, precision: int = 2) -> str:
     result = "{:.{precision}f}".format(
         quantity / 10 ** (3 * unit_idx), precision=precision
     )
+    return f"{result}{units[unit_idx]}"
+
+
+def format_size(size: int) -> str:
+    """Format a size (in bytes) into a human-readable string. This will use SI
+    prefixes. Implementation details are largely copied from
+    [millify](https://github.com/azaitsev/millify).
+
+    Args:
+        size: The quantity to format.
+
+    Returns:
+        str: The formatted quantity.
+    """
+
+    units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    unit_idx = max(
+        0,
+        min(
+            len(units) - 1,
+            int(math.floor(0 if size == 0 else math.log10(abs(size)) / 3)),
+        ),
+    )
+    result = f"{int(size / 10 ** (3 * unit_idx)):d}"
+
     return f"{result}{units[unit_idx]}"
 
 

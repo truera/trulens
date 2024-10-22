@@ -11,11 +11,11 @@ from typing import Callable, List
 import uuid
 
 import pydantic
-from trulens.core.schema import app as mod_app_schema
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import record as mod_record_schema
-from trulens.core.utils.pyschema import FunctionOrMethod
+from trulens.core.schema import app as app_schema
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import record as record_schema
+from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
 """
@@ -259,13 +259,13 @@ def _check_needs_migration(version: str, warn=False) -> None:
         if _upgrade_possible(compat_version):
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release. "
-                f"You can either reset your db with `TruSession.reset_database()`, "
-                f"or you can initiate a db migration with `TruSession.migrate_database()`"
+                f"You can either reset your db with `TruSession().reset_database()`, "
+                f"or you can initiate a db migration with `TruSession().migrate_database()`"
             )
         else:
             msg = (
                 f"Detected that your db version {version} is from an older release that is incompatible with this release and cannot be migrated. "
-                f"Reset your db with `TruSession.reset_database()`"
+                f"Reset your db with `TruSession().reset_database()`"
             )
         if warn:
             print(f"Warning! {msg}")
@@ -315,7 +315,7 @@ def _serialization_asserts(db) -> None:
                         # special implementation checks for serialized classes
                         if "implementation" in test_json:
                             try:
-                                FunctionOrMethod.model_validate(
+                                pyschema_utils.FunctionOrMethod.model_validate(
                                     test_json["implementation"]
                                 ).load()
                             except ImportError:
@@ -324,24 +324,22 @@ def _serialization_asserts(db) -> None:
                                 pass
 
                         if col_name == "record_json":
-                            mod_record_schema.Record.model_validate(test_json)
+                            record_schema.Record.model_validate(test_json)
                         elif col_name == "cost_json":
-                            mod_base_schema.Cost.model_validate(test_json)
+                            base_schema.Cost.model_validate(test_json)
                         elif col_name == "perf_json":
-                            mod_base_schema.Perf.model_validate(test_json)
+                            base_schema.Perf.model_validate(test_json)
                         elif col_name == "calls_json":
                             for record_app_call_json in test_json["calls"]:
-                                mod_feedback_schema.FeedbackCall.model_validate(
+                                feedback_schema.FeedbackCall.model_validate(
                                     record_app_call_json
                                 )
                         elif col_name == "feedback_json":
-                            mod_feedback_schema.FeedbackDefinition.model_validate(
+                            feedback_schema.FeedbackDefinition.model_validate(
                                 test_json
                             )
                         elif col_name == "app_json":
-                            mod_app_schema.AppDefinition.model_validate(
-                                test_json
-                            )
+                            app_schema.AppDefinition.model_validate(test_json)
                         else:
                             # If this happens, trulens needs to add a migration
 

@@ -10,10 +10,9 @@ import threading
 from threading import Thread
 from typing import Optional
 
-from trulens.core import TruSession
-from trulens.core.utils.imports import static_resource
-from trulens.dashboard.notebook_utils import is_notebook
-from trulens.dashboard.notebook_utils import setup_widget_stdout_stderr
+from trulens.core import session as core_session
+from trulens.core.utils import imports as import_utils
+from trulens.dashboard.utils import notebook_utils
 from typing_extensions import Annotated
 from typing_extensions import Doc
 
@@ -31,32 +30,36 @@ def find_unused_port() -> int:
 
 
 def run_dashboard(
-    session: Optional[TruSession] = None,
+    session: Optional[core_session.TruSession] = None,
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
     _dev: Optional[Path] = None,
     spcs_runtime: Optional[bool] = False,
+    _watch_changes: bool = False,
 ) -> Process:
     """Run a streamlit dashboard to view logged results and apps.
 
     Args:
-        port: Port number to pass to streamlit through `server.port`.
+        port (Optional[int]): Port number to pass to streamlit through `server.port`.
 
-        address: Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
+        address (Optional[str]): Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
 
-        force: Stop existing dashboard(s) first. Defaults to `False`. If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder.
+        force (bool): Stop existing dashboard(s) first. Defaults to `False`.
+
+        _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
+
+        _watch_changes (bool): If `True`, the dashboard will watch for changes in the code and update the dashboard accordingly. Defaults to `False`.
 
     Returns:
-        The [Process][multiprocessing.Process] executing the streamlit
-        dashboard.
+        The [Process][multiprocessing.Process] executing the streamlit dashboard.
 
     Raises:
-        RuntimeError: Dashboard is already running. Can be avoided if `force`
-            is set.
+        RuntimeError: Dashboard is already running. Can be avoided if `force` is set.
 
     """
-    session = session or TruSession()
+    session = session or core_session.TruSession()
+    session.connector.db.check_db_revision()
 
     IN_COLAB = "google.colab" in sys.modules
     if IN_COLAB and address is not None:
@@ -67,38 +70,10 @@ def run_dashboard(
 
     print("Starting dashboard ...")
 
-    # Create .streamlit directory if it doesn't exist
-    streamlit_dir = os.path.join(os.getcwd(), ".streamlit")
-    os.makedirs(streamlit_dir, exist_ok=True)
-
-    # Create config.toml file path
-    config_path = os.path.join(streamlit_dir, "config.toml")
-
-    # Check if the file already exists
-    if not os.path.exists(config_path):
-        with open(config_path, "w") as f:
-            f.write("[theme]\n")
-            f.write('primaryColor="#0A2C37"\n')
-            f.write('backgroundColor="#FFFFFF"\n')
-            f.write('secondaryBackgroundColor="F5F5F5"\n')
-            f.write('textColor="#0A2C37"\n')
-            f.write('font="sans serif"\n')
-    else:
-        print("Config file already exists. Skipping writing process.")
-
-    # Create credentials.toml file path
-    cred_path = os.path.join(streamlit_dir, "credentials.toml")
-
-    # Check if the file already exists
-    if not os.path.exists(cred_path):
-        with open(cred_path, "w") as f:
-            f.write("[general]\n")
-            f.write('email=""\n')
-    else:
-        print("Credentials file already exists. Skipping writing process.")
-
     # run leaderboard with subprocess
-    leaderboard_path = static_resource("dashboard", "Leaderboard.py")
+    leaderboard_path = import_utils.static_resource(
+        "dashboard", "Leaderboard.py"
+    )
 
     if session._dashboard_proc is not None:
         print("Dashboard already running at path:", session._dashboard_urls)
@@ -112,7 +87,27 @@ def run_dashboard(
     if port is None:
         port = find_unused_port()
 
-    args = ["streamlit", "run", "--server.headless=True"]
+    args = [
+        "streamlit",
+        "run",
+        "--server.headless=True",
+        "--theme.base=dark",
+        "--theme.primaryColor=#E0735C",
+        "--theme.font=sans serif",
+    ]
+    if _watch_changes:
+        args.extend([
+            "--server.fileWatcherType=auto",
+            "--client.toolbarMode=auto",
+            "--global.disableWidgetStateDuplicationWarning=false",
+        ])
+    else:
+        args.extend([
+            "--server.fileWatcherType=none",
+            "--client.toolbarMode=viewer",
+            "--global.disableWidgetStateDuplicationWarning=true",
+        ])
+
     if port is not None:
         args.append(f"--server.port={port}")
     if address is not None:
@@ -138,8 +133,8 @@ def run_dashboard(
 
     started = threading.Event()
     tunnel_started = threading.Event()
-    if is_notebook():
-        out_stdout, out_stderr = setup_widget_stdout_stderr()
+    if notebook_utils.is_notebook():
+        out_stdout, out_stderr = notebook_utils.setup_widget_stdout_stderr()
     else:
         out_stdout = None
         out_stderr = None
@@ -255,7 +250,7 @@ def run_dashboard(
 
 
 def stop_dashboard(
-    session: Optional[TruSession] = None, force: bool = False
+    session: Optional[core_session.TruSession] = None, force: bool = False
 ) -> None:
     """
     Stop existing dashboard(s) if running.
@@ -269,7 +264,7 @@ def stop_dashboard(
     Raises:
             RuntimeError: Dashboard is not running in the current process. Can be avoided with `force`.
     """
-    session = session or TruSession()
+    session = session or core_session.TruSession()
     if session._dashboard_proc is None:
         if not force:
             raise RuntimeError(

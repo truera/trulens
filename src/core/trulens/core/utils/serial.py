@@ -1,5 +1,4 @@
-"""
-Serialization utilities.
+"""Serialization utilities.
 
 TODO: Lens class: can we store just the python AST instead of building up our
 own "Step" classes to hold the same data? We are already using AST for parsing.
@@ -39,8 +38,8 @@ from pydantic.v1 import BaseModel as v1BaseModel
 from pydantic_core import CoreSchema
 from pydantic_core import core_schema
 import rich.repr
-from trulens.core.utils.containers import iterable_peek
-from trulens.core.utils.python import class_name
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +158,16 @@ class Step(pydantic.BaseModel, Hashable):
         """
         raise NotImplementedError()
 
+    def get_sole_item(self, obj: Any) -> Any:
+        all_objects = list(self.get(obj))
+
+        if len(all_objects) != 1:
+            raise ValueError(
+                f"Step {self} did not address exactly a single object."
+            )
+
+        return all_objects[0]
+
 
 class Collect(Step):
     # Need something for `Step.validate` to tell that it is looking at Collect.
@@ -188,6 +197,8 @@ class StepItemOrAttribute(Step):
 
 
 class GetAttribute(StepItemOrAttribute):
+    """An attribute lookup step as in `someobject.someattribute`."""
+
     attribute: str
 
     # Hashable requirement.
@@ -228,6 +239,8 @@ class GetAttribute(StepItemOrAttribute):
 
 
 class GetIndex(Step):
+    """An index lookup step as in `someobject[5]`."""
+
     index: int
 
     # Hashable requirement
@@ -266,6 +279,8 @@ class GetIndex(Step):
 
 
 class GetItem(StepItemOrAttribute):
+    """An item lookup step as in `someobject["somestring"]`."""
+
     item: str
 
     # Hashable requirement
@@ -538,7 +553,7 @@ class SerialModel(pydantic.BaseModel):
     def __rich_repr__(self) -> rich.repr.Result:
         """Requirement for pretty printing using the rich package."""
 
-        # yield class_name(type(self))
+        # yield python_utils.class_name(type(self))
 
         # If this is a root repr, create a new set for already-formatted objects.
         tok = None
@@ -551,7 +566,7 @@ class SerialModel(pydantic.BaseModel):
             formatted_objects = set()
 
         if id(self) in formatted_objects:
-            yield f"{class_name(type(self))}@0x{id(self):x}"
+            yield f"{python_utils.class_name(type(self))}@0x{id(self):x}"
 
             if tok is not None:
                 SerialModel.formatted_objects.reset(tok)
@@ -638,7 +653,6 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     Lenses into python objects.
 
     Example:
-
         ```python
         path = Lens().record[5]['somekey']
 
@@ -928,15 +942,18 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
     def __len__(self):
         return len(self.path)
 
-    def __add__(self, other: "Lens"):
-        return Lens(path=self.path + other.path)
+    def __add__(self, other: Union[Lens, Step]) -> Lens:
+        if isinstance(other, Step):
+            return Lens(path=self.path + (other,))
+        else:
+            return Lens(path=self.path + other.path)
 
-    def is_immediate_prefix_of(self, other: "Lens"):
+    def is_immediate_prefix_of(self, other: Lens):
         return self.is_prefix_of(other) and len(self.path) + 1 == len(
             other.path
         )
 
-    def is_prefix_of(self, other: "Lens"):
+    def is_prefix_of(self, other: Lens):
         p = self.path
         pother = other.path
 
@@ -986,7 +1003,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         try:
             firsts = first.get(obj)
-            first_obj, firsts = iterable_peek(firsts)
+            first_obj, firsts = container_utils.iterable_peek(firsts)
 
         except (ValueError, IndexError, KeyError, AttributeError):
             # `first` points to an element that does not exist, use `set` to create a spot for it.
@@ -1051,7 +1068,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
     def __getitem__(
         self, item: Union[int, str, slice, Sequence[int], Sequence[str]]
-    ) -> "Lens":
+    ) -> Lens:
         if isinstance(item, int):
             return self._append(GetIndex(index=item))
         if isinstance(item, str):
@@ -1074,7 +1091,7 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
         raise TypeError(f"Unhandled item type {type(item)}.")
 
-    def __getattr__(self, attr: str) -> "Lens":
+    def __getattr__(self, attr: str) -> Lens:
         if attr == "_ipython_canary_method_should_not_exist_":
             # NOTE(piotrm): when displaying objects, ipython checks whether they
             # have overwritten __getattr__ by looking up this attribute. If it
@@ -1090,6 +1107,29 @@ class Lens(pydantic.BaseModel, Sized, Hashable):
 
 
 Lens.model_rebuild()
+
+
+class LensedDict(dict, Generic[T]):
+    """A dictionary which can be accessed using lenses."""
+
+    def __setitem__(self, __name: Union[str, Lens], __value: T) -> None:
+        """Allow setitem to work on Lenses instead of just strings. Uses `Lens.set`
+        if a lens is given."""
+
+        if isinstance(__name, Lens):
+            # Does not mutate so need to use dict.update .
+            temp = __name.set(self, __value)
+            self.update(temp)
+            return None
+
+        return super().__setitem__(__name, __value)
+
+    def __getitem__(self, __name: Union[Any, Lens]) -> T:
+        if isinstance(__name, Lens):
+            return __name.get_sole_item(self)
+
+        return super().__getitem__(__name)
+
 
 # TODO: Deprecate old name.
 JSONPath = Lens

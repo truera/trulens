@@ -8,17 +8,19 @@ import unittest
 from unittest import TestCase
 from unittest import main
 
-from trulens.core.utils.keys import check_keys
-from trulens.feedback import LLMProvider
-from trulens.providers.huggingface import Huggingface
-from trulens.providers.openai import OpenAI
+from trulens.core.utils import keys as key_utils
+from trulens.feedback import llm_provider
+from trulens.providers.huggingface import provider as huggingface_provider
+from trulens.providers.openai import provider as openai_provider
 
-from tests.test import optional_test
+from tests import test as mod_test
 
 pp = PrettyPrinter()
 
 
-def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
+def get_openai_tests(
+    o: openai_provider.OpenAI,
+) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
             o.moderation_hate,
@@ -94,7 +96,7 @@ def get_openai_tests(o: OpenAI) -> List[Tuple[Callable, Dict, float]]:
 
 
 def get_llmprovider_tests(
-    provider: LLMProvider,
+    provider: llm_provider.LLMProvider,
 ) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
@@ -459,7 +461,9 @@ def get_llmprovider_tests(
     ]
 
 
-def get_huggingface_tests(h: Huggingface) -> List[Tuple[Callable, Dict, float]]:
+def get_huggingface_tests(
+    h: huggingface_provider.Huggingface,
+) -> List[Tuple[Callable, Dict, float]]:
     return [
         (
             h.language_match,
@@ -539,20 +543,17 @@ get_langchain_tests = get_llmprovider_tests
 
 class TestProviders(TestCase):
     def setUp(self):
-        check_keys(
+        key_utils.check_keys(
             "OPENAI_API_KEY",
             "HUGGINGFACE_API_KEY",
         )
 
-    @optional_test
+    @mod_test.optional_test
     def test_openai_moderation(self):
-        """
-        Check that OpenAI moderation feedback functions produce a value in the
-        0-1 range only. Only checks each feedback function once.
-        """
-        from trulens.providers.openai import OpenAI
+        """Check that OpenAI moderation feedback functions produce a value in the
+        0-1 range only. Only checks each feedback function once."""
 
-        o = OpenAI()
+        o = openai_provider.OpenAI()
 
         tests = get_openai_tests(o)
         funcs = set()
@@ -568,19 +569,20 @@ class TestProviders(TestCase):
                 self.assertGreaterEqual(actual, 0.0)
                 self.assertLessEqual(actual, 1.0)
 
-    @optional_test
+    @mod_test.optional_test
     def test_llmcompletion(self):
+        """Check that LLMProvider feedback functions produce a value in the 0-1
+        range only.
+
+        Also check to make sure chain of thought reasons feedback functions
+        produce criteria and supporting evidence. Only checks each feedback
+        function once for each model.
         """
-        Check that LLMProvider feedback functions produce a value in the 0-1
-        range only. Also check to make sure chain of thought reasons feedback functions
-        produce criteria and supporting evidence. Only checks each feedback function
-        once for each model.
-        """
-        from trulens.providers.openai import OpenAI
 
         models = ["gpt-3.5-turbo"]
         provider_models = [
-            (OpenAI(model_engine=model), model) for model in models
+            (openai_provider.OpenAI(model_engine=model), model)
+            for model in models
         ]
         for provider, model in provider_models:
             with self.subTest(f"{provider.__class__.__name__}-{model}"):
@@ -679,16 +681,12 @@ class TestProviders(TestCase):
                                 "First element of tuple should be less than or equal to 1.0.",
                             )
 
-    @optional_test
+    @mod_test.optional_test
     @unittest.skip("too many failures")
     def test_openai_moderation_calibration(self):
-        """
-        Check that OpenAI moderation feedback functions produce reasonable
-        values.
-        """
-        from trulens.providers.openai import OpenAI
+        """Check that OpenAI moderation feedback functions produce reasonable values."""
 
-        o = OpenAI()
+        o = openai_provider.OpenAI()
 
         tests = get_openai_tests(o)
 
@@ -697,15 +695,12 @@ class TestProviders(TestCase):
                 actual = imp(**args)
                 self.assertAlmostEqual(actual, expected, delta=0.2)
 
-    @optional_test
+    @mod_test.optional_test
     def test_llmcompletion_calibration(self):
-        """
-        Check that LLMProvider feedback functions produce reasonable values.
-        """
-        from trulens.providers.openai import OpenAI
+        """Check that LLMProvider feedback functions produce reasonable values."""
 
         provider_models = [
-            (OpenAI(model_engine=model), model)
+            (openai_provider.OpenAI(model_engine=model), model)
             for model in ["gpt-3.5-turbo", "gpt-4"]
         ]
         for provider, model in provider_models:
@@ -750,7 +745,7 @@ class TestProviders(TestCase):
                     f"{provider_name}-{model}: {total_tests}/{total_tests} tests passed."
                 )
 
-    @optional_test
+    @mod_test.optional_test
     def test_hugs(self):
         """
         Check that Huggingface moderation feedback functions produce a value in the
@@ -758,9 +753,7 @@ class TestProviders(TestCase):
         Only checks each feedback function once.
         """
 
-        from trulens.providers.huggingface import Huggingface
-
-        h = Huggingface()
+        h = huggingface_provider.Huggingface()
 
         tests = get_huggingface_tests(h)
         funcs = set()
@@ -816,15 +809,11 @@ class TestProviders(TestCase):
                         "First element of tuple should be less than or equal to 1.0.",
                     )
 
-    @optional_test
+    @mod_test.optional_test
     def test_hugs_calibration(self):
-        """
-        Check that Huggingface moderation feedback functions produce reasonable
-        values.
-        """
-        from trulens.providers.huggingface import Huggingface
+        """Check that Huggingface moderation feedback functions produce reasonable values."""
 
-        h = Huggingface()
+        h = huggingface_provider.Huggingface()
 
         tests = get_huggingface_tests(h)
 
@@ -859,7 +848,7 @@ class TestProviders(TestCase):
         else:
             print(f"{h}: {total_tests}/{total_tests} tests passed.")
 
-    @optional_test
+    @mod_test.optional_test
     def test_langchain_feedback(self):
         """
         Check that LangChain feedback functions produce values within the expected range

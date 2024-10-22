@@ -5,28 +5,30 @@ from __future__ import annotations
 import logging
 from typing import Hashable, Optional
 
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import serial
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
 
-class Dataset(serial.SerialModel, Hashable):
+class Dataset(serial_utils.SerialModel, Hashable):
     """The class that holds the metadata of a dataset stored in the DB."""
 
-    dataset_id: mod_types_schema.DatasetID  # str
+    dataset_id: types_schema.DatasetID  # str
+    """The unique identifier for the dataset."""
 
     name: str
+    """The name of the dataset."""
 
-    meta: mod_types_schema.Metadata  # dict
+    meta: types_schema.Metadata  # dict
+    """Metadata associated with the dataset."""
 
     def __init__(
         self,
         name: str,
-        dataset_id: Optional[mod_types_schema.DatasetID] = None,
-        meta: Optional[mod_types_schema.Metadata] = None,
+        dataset_id: Optional[types_schema.DatasetID] = None,
+        meta: Optional[types_schema.Metadata] = None,
         **kwargs,
     ):
         kwargs["name"] = name
@@ -36,7 +38,9 @@ class Dataset(serial.SerialModel, Hashable):
         )  # dataset_id will be updated below
 
         if dataset_id is None:
-            dataset_id = obj_id_of_obj(jsonify(self), prefix="dataset")
+            dataset_id = json_utils.obj_id_of_obj(
+                json_utils.jsonify(self), prefix="dataset"
+            )
 
         self.dataset_id = dataset_id
 

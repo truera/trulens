@@ -6,8 +6,8 @@ from langchain_core.language_models.llms import BaseLLM
 from langchain_core.messages import AIMessage
 from langchain_core.messages import BaseMessage
 from langchain_core.messages import HumanMessage
-from trulens.feedback import LLMProvider
-from trulens.providers.langchain.endpoint import LangchainEndpoint
+from trulens.feedback import llm_provider
+from trulens.providers.langchain import endpoint as langchain_endpoint
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +19,12 @@ def _convert_message(message: Dict) -> BaseMessage:
     return AIMessage(content=message["content"])
 
 
-class Langchain(LLMProvider):
+class Langchain(llm_provider.LLMProvider):
     """Out of the box feedback functions using LangChain LLMs and ChatModels
 
     Create a LangChain Provider with out of the box feedback functions.
 
     Example:
-
         ```python
         from trulens.providers.langchain import LangChain
         from langchain_community.llms import OpenAI
@@ -38,7 +37,7 @@ class Langchain(LLMProvider):
         chain: LangChain LLM.
     """
 
-    endpoint: LangchainEndpoint
+    endpoint: langchain_endpoint.LangchainEndpoint
 
     def __init__(
         self,
@@ -49,7 +48,7 @@ class Langchain(LLMProvider):
     ):
         self_kwargs = dict(kwargs)
         self_kwargs["model_engine"] = model_engine or type(chain).__name__
-        self_kwargs["endpoint"] = LangchainEndpoint(
+        self_kwargs["endpoint"] = langchain_endpoint.LangchainEndpoint(
             *args, chain=chain, **kwargs
         )
 
@@ -66,7 +65,20 @@ class Langchain(LLMProvider):
 
         elif messages is not None:
             messages = [_convert_message(message) for message in messages]
-            predict = self.endpoint.chain.invoke(messages, **kwargs).content
+            predict = self.endpoint.chain.invoke(messages, **kwargs)
+            if isinstance(self.endpoint.chain, BaseChatModel):
+                if not isinstance(predict, BaseMessage):
+                    raise ValueError(
+                        "`chain.invoke` did not return a `langchain_core.messages.BaseMessage` as expected!"
+                    )
+                predict = predict.content
+            elif isinstance(self.endpoint.chain, BaseLLM):
+                if not isinstance(predict, str):
+                    raise ValueError(
+                        "`chain.invoke` did not return a `str` as expected!"
+                    )
+            else:
+                raise ValueError("Unexpected `chain` type!")
 
         else:
             raise ValueError("`prompt` or `messages` must be specified.")

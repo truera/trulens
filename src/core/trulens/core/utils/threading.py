@@ -1,6 +1,4 @@
-"""
-# Threading Utilities
-"""
+"""Threading Utilities."""
 
 from __future__ import annotations
 
@@ -8,31 +6,33 @@ from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor as fThreadPoolExecutor
 from concurrent.futures import TimeoutError
 import contextvars
-from inspect import stack
+import inspect
 import logging
 import threading
 from threading import Thread as fThread
 from typing import Callable, Optional, TypeVar
 
-from trulens.core.utils.python import Future
-from trulens.core.utils.python import SingletonPerName
-from trulens.core.utils.python import T
-from trulens.core.utils.python import _future_target_wrapper
-from trulens.core.utils.python import code_line
-from trulens.core.utils.python import safe_hasattr
+from trulens.core._utils.pycompat import Future  # import style exception
+from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_NETWORK_TIMEOUT: float = 10.0  # seconds
 
 A = TypeVar("A")
+T = TypeVar("T")
 
 
 class Thread(fThread):
-    """Thread that wraps target with stack/context tracking.
+    """Thread that wraps target with copy of context and stack.
 
     App components that do not use this thread class might not be properly
-    tracked."""
+    tracked.
+
+    Some libraries are doing something similar so this class may be less and
+    less needed over time but is still needed at least for our own uses of
+    threads.
+    """
 
     def __init__(
         self,
@@ -43,23 +43,23 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
-        present_stack = stack()
+        present_stack = python_utils.WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
 
         fThread.__init__(
             self,
             name=name,
             group=group,
-            target=_future_target_wrapper,
-            args=(present_stack, present_context, target, *args),
+            target=present_context.run,
+            args=(
+                python_utils._future_target_wrapper,
+                present_stack,
+                target,
+                *args,
+            ),
             kwargs=kwargs,
             daemon=daemon,
         )
-
-
-# HACK007: Attempt to force other users of Thread to use our version instead.
-
-threading.Thread = Thread
 
 
 class ThreadPoolExecutor(fThreadPoolExecutor):
@@ -73,17 +73,22 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         super().__init__(*args, **kwargs)
 
     def submit(self, fn, /, *args, **kwargs):
-        present_stack = stack()
+        present_stack = python_utils.WeakWrapper(inspect.stack())
         present_context = contextvars.copy_context()
+
         return super().submit(
-            _future_target_wrapper,
+            present_context.run,
+            python_utils._future_target_wrapper,
             present_stack,
-            present_context,
             fn,
             *args,
             **kwargs,
         )
 
+
+# HACK007: Attempt to force other users of Thread to use our version instead.
+
+threading.Thread = Thread
 
 # HACK002: Attempt to make other users of ThreadPoolExecutor use our version
 # instead. TODO: this may be redundant with the thread override above.
@@ -91,29 +96,8 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
 futures.ThreadPoolExecutor = ThreadPoolExecutor
 futures.thread.ThreadPoolExecutor = ThreadPoolExecutor
 
-# HACK003: Hack to try to make langchain use our ThreadPoolExecutor as the above doesn't
-# seem to do the trick.
-try:
-    from langchain_core.runnables import config as lc_config
 
-    lc_config.ThreadPoolExecutor = ThreadPoolExecutor
-
-    # Newer langchain_core uses ContextThreadPoolExecutor extending
-    # ThreadPoolExecutor. We cannot reliable override
-    # concurrent.futures.ThreadPoolExecutor before langchain_core is loaded so
-    # lets just retrofit the base class afterwards:
-    from langchain_core.runnables.config import ContextThreadPoolExecutor
-
-    ContextThreadPoolExecutor.__bases__ = (ThreadPoolExecutor,)
-
-    # TODO: ContextThreadPoolExecutor already maintains context so we no longer
-    # need to do it for them but we still need to maintain call stack.
-
-except Exception:
-    pass
-
-
-class TP(SingletonPerName):  # "thread processing"
+class TP(metaclass=python_utils.SingletonPerNameMeta):  # "thread processing"
     """Manager of thread pools.
 
     Singleton.
@@ -125,19 +109,9 @@ class TP(SingletonPerName):  # "thread processing"
     DEBUG_TIMEOUT: Optional[float] = 600.0  # [seconds], None to disable
     """How long to wait (seconds) for any task before restarting it."""
 
-    def __new__(cls) -> TP:
-        """Override __new__ of SingletonPerName to ensure valid typing of the TP object."""
-        inst = super().__new__(cls)
-        assert isinstance(inst, TP)
-        return inst
-
     def __init__(self):
-        if safe_hasattr(self, "thread_pool"):
-            # Already initialized as per SingletonPerName mechanism.
-            return
-
         # Run tasks started with this class using this pool.
-        self.thread_pool = fThreadPoolExecutor(
+        self.thread_pool = ThreadPoolExecutor(
             max_workers=TP.MAX_THREADS, thread_name_prefix="TP.submit"
         )
 
@@ -172,16 +146,23 @@ class TP(SingletonPerName):  # "thread processing"
 
         except TimeoutError as e:
             logger.error(
-                f"Run of {func.__name__} in {threading.current_thread()} timed out after {TP.DEBUG_TIMEOUT} second(s).\n"
-                f"{code_line(func)}"
+                "Run of %s in %s timed out after %s second(s).\n%s",
+                func.__name__,
+                threading.current_thread(),
+                TP.DEBUG_TIMEOUT,
+                python_utils.code_line(func),
             )
 
             raise e
 
         except Exception as e:
             logger.warning(
-                f"Run of {func.__name__} in {threading.current_thread()} failed with: {e}"
+                "Run of %s in %s failed with: %s",
+                {func.__name__},
+                threading.current_thread(),
+                e,
             )
+
             raise e
 
     def submit(
@@ -191,6 +172,18 @@ class TP(SingletonPerName):  # "thread processing"
         timeout: Optional[float] = None,
         **kwargs,
     ) -> Future[T]:
+        """Submit a task to run.
+
+        Args:
+            func: Function to run.
+
+            *args: Positional arguments to pass to the function.
+
+            timeout: How long to wait for the task to complete before killing it.
+
+            **kwargs: Keyword arguments to pass to the function.
+        """
+
         if timeout is None:
             timeout = TP.DEBUG_TIMEOUT
 
@@ -220,3 +213,9 @@ class TP(SingletonPerName):  # "thread processing"
         return self.thread_pool_debug_tasks.submit(
             self._run_with_timeout, func, *args, timeout=timeout, **kwargs
         )
+
+    def shutdown(self):
+        """Shutdown the pools."""
+
+        self.thread_pool.shutdown()
+        self.thread_pool_debug_tasks.shutdown()

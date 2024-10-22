@@ -12,10 +12,10 @@ from trulens.core.utils import deprecation as deprecation_utils
 deprecation_utils.packages_dep_warn()
 
 from trulens.core._utils.optional import (
-    REQUIREMENT_INSTRUMENT_LLAMA as REQUIREMENT_LLAMA,
+    REQUIREMENT_APPS_LLAMA as REQUIREMENT_LLAMA,
 )
 from trulens.core._utils.optional import (
-    REQUIREMENT_INSTRUMENT_NEMO as REQUIREMENT_RAILS,
+    REQUIREMENT_APPS_NEMO as REQUIREMENT_RAILS,
 )
 from trulens.core.utils.imports import MESSAGE_DEBUG_OPTIONAL_PACKAGE_NOT_FOUND
 from trulens.core.utils.imports import MESSAGE_ERROR_REQUIRED_PACKAGE_NOT_FOUND

@@ -2,45 +2,60 @@
 
 from __future__ import annotations
 
+from concurrent.futures import as_completed
 import datetime
 import logging
-from typing import ClassVar, Dict, Hashable, List, Optional, Tuple, TypeVar
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Hashable,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+)
 
 from munch import Munch as Bunch
 import pydantic
-from trulens.core.schema import base as mod_base_schema
-from trulens.core.schema import feedback as mod_feedback_schema
-from trulens.core.schema import types as mod_types_schema
-from trulens.core.utils import pyschema
-from trulens.core.utils import serial
-from trulens.core.utils import threading as mod_threading_utils
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.json import obj_id_of_obj
-from trulens.core.utils.python import Future
+from trulens.core._utils.pycompat import Future  # import style exception
+from trulens.core.schema import base as base_schema
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
+from trulens.core.schema import types as types_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
 
-class RecordAppCallMethod(serial.SerialModel):
+class RecordAppCallMethod(serial_utils.SerialModel):
     """Method information for the stacks inside `RecordAppCall`."""
 
-    path: serial.Lens
+    def __str__(self):
+        return f"{self.path}.{self.method.name}"
+
+    path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema.Method
+    method: pyschema_utils.Method
     """The method that was called."""
 
 
-class RecordAppCall(serial.SerialModel):
+class RecordAppCall(serial_utils.SerialModel):
     """Info regarding each instrumented method call."""
 
     def __str__(self):
-        return f"RecordAppCall({self.top.path} {self.top.method.name})"
+        stack = " -> ".join(map(str, self.stack))
+        return f"RecordAppCall: {stack}"
 
-    call_id: mod_types_schema.CallID = pydantic.Field(
-        default_factory=mod_types_schema.new_call_id
+    call_id: types_schema.CallID = pydantic.Field(
+        default_factory=types_schema.new_call_id
     )
     """Unique identifier for this call.
 
@@ -56,10 +71,10 @@ class RecordAppCall(serial.SerialModel):
     stack: List[RecordAppCallMethod]
     """Call stack but only containing paths of instrumented apps/other objects."""
 
-    args: serial.JSON
+    args: serial_utils.JSON
     """Arguments to the instrumented method."""
 
-    rets: Optional[serial.JSON] = None
+    rets: Optional[serial_utils.JSON] = None
     """Returns of the instrumented method if successful.
 
     Sometimes this is a dict, sometimes a sequence, and sometimes a base value.
@@ -68,7 +83,7 @@ class RecordAppCall(serial.SerialModel):
     error: Optional[str] = None
     """Error message if call raised exception."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Timestamps tracking entrance and exit of the instrumented method."""
 
     pid: int
@@ -84,13 +99,13 @@ class RecordAppCall(serial.SerialModel):
         return self.stack[-1]
 
     @property
-    def method(self) -> pyschema.Method:
+    def method(self) -> pyschema_utils.Method:
         """The method at the top of the stack."""
 
         return self.top.method
 
 
-class Record(serial.SerialModel, Hashable):
+class Record(serial_utils.SerialModel, Hashable):
     """The record of a single main method call.
 
     Note:
@@ -109,16 +124,16 @@ class Record(serial.SerialModel, Hashable):
         "arbitrary_types_allowed": True
     }
 
-    record_id: mod_types_schema.RecordID
+    record_id: types_schema.RecordID
     """Unique identifier for this record."""
 
-    app_id: mod_types_schema.AppID
+    app_id: types_schema.AppID
     """The app that produced this record."""
 
-    cost: Optional[mod_base_schema.Cost] = None
+    cost: Optional[base_schema.Cost] = None
     """Costs associated with the record."""
 
-    perf: Optional[mod_base_schema.Perf] = None
+    perf: Optional[base_schema.Perf] = None
     """Performance information."""
 
     ts: datetime.datetime = pydantic.Field(
@@ -131,16 +146,16 @@ class Record(serial.SerialModel, Hashable):
     tags: Optional[str] = ""
     """Tags for the record."""
 
-    meta: Optional[serial.JSON] = None
+    meta: Optional[serial_utils.JSON] = None
     """Metadata for the record."""
 
-    main_input: Optional[serial.JSON] = None
+    main_input: Optional[serial_utils.JSON] = None
     """The app's main input."""
 
-    main_output: Optional[serial.JSON] = None  # if no error
+    main_output: Optional[serial_utils.JSON] = None  # if no error
     """The app's main output if there was no error."""
 
-    main_error: Optional[serial.JSON] = None  # if error
+    main_error: Optional[serial_utils.JSON] = None  # if error
     """The app's main error if there was an error."""
 
     calls: List[RecordAppCall] = []
@@ -148,13 +163,23 @@ class Record(serial.SerialModel, Hashable):
 
     Note that these can be converted into a json structure with the same paths
     as the app that generated this record via `layout_calls_as_app`.
+
+    Invariant: calls are ordered by `.perf.end_time`.
+    """
+
+    experimental_otel_spans: List[
+        Any
+    ] = []  # actually trulens.experimental.otel_tracing.core.trace.Span
+    """EXPERIMENTAL(otel-tracing): OTEL spans representation of this record.
+
+    This will be filled in only if the otel-tracing experimental feature is enabled.
     """
 
     feedback_and_future_results: Optional[
         List[
             Tuple[
-                mod_feedback_schema.FeedbackDefinition,
-                Future[mod_feedback_schema.FeedbackResult],
+                feedback_schema.FeedbackDefinition,
+                Future[feedback_schema.FeedbackResult],
             ]
         ]
     ] = pydantic.Field(None, exclude=True)
@@ -165,20 +190,53 @@ class Record(serial.SerialModel, Hashable):
     `FeedbackMode.DEFERRED`.
     """
 
-    feedback_results: Optional[
-        List[Future[mod_feedback_schema.FeedbackResult]]
-    ] = pydantic.Field(None, exclude=True)
+    feedback_results: Optional[List[Future[feedback_schema.FeedbackResult]]] = (
+        pydantic.Field(None, exclude=True)
+    )
     """Only the futures part of the above for backwards compatibility."""
 
+    @property
+    def feedback_results_as_completed(
+        self,
+    ) -> Iterable[feedback_schema.FeedbackResult]:
+        """Generate feedback results as they are completed.
+
+        Wraps
+        [feedback_results][trulens.core.schema.record.Record.feedback_results]
+        in [as_completed][concurrent.futures.as_completed].
+        """
+
+        if self.feedback_results is None:
+            return
+
+        for f in as_completed(self.feedback_results):
+            yield f.result()
+
     def __init__(
-        self, record_id: Optional[mod_types_schema.RecordID] = None, **kwargs
+        self,
+        record_id: Optional[types_schema.RecordID] = None,
+        calls: Optional[List[RecordAppCall]] = None,
+        **kwargs,
     ):
-        super(serial.SerialModel, self).__init__(
-            record_id="temporary", **kwargs
+        super(serial_utils.SerialModel, self).__init__(
+            record_id="temporary", calls=calls, **kwargs
         )
 
+        # Resetting the calls in sorted order here. Note that we are calling
+        # init with calls above to make sure they get converted to RecordAppCall
+        # from dicts. We then sort those in the next step:
+        if calls is not None:
+            self.calls = sorted(
+                self.calls,
+                key=lambda call: call.perf.end_time
+                if call.perf is not None
+                else datetime.datetime.max,
+            )
+
         if record_id is None:
-            record_id = obj_id_of_obj(jsonify(self), prefix="record")
+            record_id = json_utils.obj_id_of_obj(
+                json_utils.jsonify(self), prefix="record"
+            )
 
         self.record_id = record_id
 
@@ -188,8 +246,8 @@ class Record(serial.SerialModel, Hashable):
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
     ) -> Dict[
-        mod_feedback_schema.FeedbackDefinition,
-        mod_feedback_schema.FeedbackResult,
+        feedback_schema.FeedbackDefinition,
+        feedback_schema.FeedbackResult,
     ]:
         """Wait for feedback results to finish.
 
@@ -203,7 +261,7 @@ class Record(serial.SerialModel, Hashable):
         """
 
         if feedback_timeout is None:
-            feedback_timeout = mod_threading_utils.TP.DEBUG_TIMEOUT
+            feedback_timeout = threading_utils.TP.DEBUG_TIMEOUT
 
         if self.feedback_and_future_results is None:
             return {}
@@ -221,6 +279,25 @@ class Record(serial.SerialModel, Hashable):
                 )
 
         return ret
+
+    def get(self, path: serial_utils.Lens) -> Optional[T]:
+        """Get a value from the record using a path.
+
+        Args:
+            path: Path to the value.
+        """
+
+        layout = self.layout_calls_as_app()
+
+        if len(path.path) == 0:
+            return layout
+
+        if path.path[0] == select_schema.Select.App.path[0]:
+            raise ValueError("This path references an app, not a record.")
+        elif path.path[0] == select_schema.Select.Record.path[0]:
+            path = serial_utils.Lens(path.path[1:])
+
+        return path.get_sole_item(obj=layout)
 
     def layout_calls_as_app(self) -> Bunch:
         """Layout the calls in this record into the structure that follows that of
@@ -248,10 +325,8 @@ class Record(serial.SerialModel, Hashable):
             frame_info = call.top
 
             # Adds another attribute to path, from method name:
-            path = frame_info.path._append(
-                serial.GetItemOrAttribute(
-                    item_or_attribute=frame_info.method.name
-                )
+            path = frame_info.path + serial_utils.GetItemOrAttribute(
+                item_or_attribute=frame_info.method.name
             )
 
             if path.exists(obj=ret):
@@ -259,6 +334,24 @@ class Record(serial.SerialModel, Hashable):
                 ret = path.set(obj=ret, val=existing + [call])
             else:
                 ret = path.set(obj=ret, val=[call])
+
+        ret.spans = {}
+        spans_path = serial_utils.Lens() + serial_utils.GetItemOrAttribute(
+            item_or_attribute="spans"
+        )
+
+        for span in self.experimental_otel_spans:
+            path = spans_path
+            for step in span.name.split(
+                "."
+            ):  # interpret dots in name as elements of a path
+                path += serial_utils.GetItemOrAttribute(item_or_attribute=step)
+
+            if path.exists(obj=ret):
+                existing = path.get_sole_item(obj=ret)
+                ret = path.set(obj=ret, val=existing + [span])
+            else:
+                ret = path.set(obj=ret, val=[span])
 
         return ret
 

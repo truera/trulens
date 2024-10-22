@@ -1,33 +1,43 @@
-"""
-# LlamaIndex instrumentation.
-"""
+"""LlamaIndex instrumentation."""
 
 from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional, Union
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    ClassVar,
+    Dict,
+    Generator,
+    Optional,
+    TypeVar,
+    Union,
+)
 
 import llama_index
 from pydantic import Field
-from trulens.apps.langchain import LangChainInstrument
-from trulens.core import app as mod_app
-from trulens.core.instruments import ClassFilter
-from trulens.core.instruments import Instrument
+from trulens.apps.langchain import tru_chain as mod_tru_chain
+from trulens.core import app as core_app
+from trulens.core import instruments as core_instruments
+from trulens.core._utils.pycompat import EmptyType  # import style exception
+from trulens.core._utils.pycompat import (
+    getmembers_static,  # import style exception
+)
 
 # TODO: Do we need to depend on this?
-from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.imports import Dummy
-from trulens.core.utils.imports import get_package_version
-from trulens.core.utils.imports import parse_version
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.python import EmptyType
-from trulens.core.utils.serial import Lens
+from trulens.core.utils import containers as container_utils
+from trulens.core.utils import imports as import_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+
+T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
-version = get_package_version("llama_index")
+version = import_utils.get_package_version("llama_index")
 
 # If llama index is not installed, will get a dummy for llama_index. In that
 # case or if it is installed and sufficiently new version, continue with
@@ -36,8 +46,8 @@ version = get_package_version("llama_index")
 
 legacy = (
     version is None
-    or isinstance(llama_index, Dummy)
-    or version < parse_version("0.10.0")
+    or isinstance(llama_index, import_utils.Dummy)
+    or version < import_utils.parse_version("0.10.0")
 )
 
 if not legacy:
@@ -46,6 +56,7 @@ if not legacy:
     from llama_index.core.base.embeddings.base import BaseEmbedding
     from llama_index.core.base.llms.base import BaseLLM
     from llama_index.core.base.llms.types import LLMMetadata
+    from llama_index.core.base.response.schema import AsyncStreamingResponse
     from llama_index.core.base.response.schema import Response
     from llama_index.core.base.response.schema import StreamingResponse
     from llama_index.core.chat_engine.types import AgentChatResponse
@@ -62,12 +73,16 @@ if not legacy:
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import BaseComponent
     from llama_index.core.schema import QueryBundle
+    from llama_index.core.service_context_elements.llm_predictor import (
+        BaseLLMPredictor,
+    )
+    from llama_index.core.service_context_elements.llm_predictor import (
+        LLMPredictor,
+    )
     from llama_index.core.tools.types import AsyncBaseTool
     from llama_index.core.tools.types import BaseTool
     from llama_index.core.tools.types import ToolMetadata
     from llama_index.core.vector_stores.types import VectorStore
-    from llama_index.legacy.llm_predictor import LLMPredictor
-    from llama_index.legacy.llm_predictor.base import BaseLLMPredictor
 
     # These exist in the bridge but not here so define placeholders.
     RetrieverComponent = EmptyType
@@ -118,14 +133,14 @@ else:
 pp = PrettyPrinter()
 
 
-class LlamaInstrument(Instrument):
+class LlamaInstrument(core_instruments.Instrument):
     """Instrumentation for LlamaIndex apps."""
 
     class Default:
         """Instrumentation specification for LlamaIndex apps."""
 
         MODULES = {"llama_index.", "llama_hub."}.union(
-            LangChainInstrument.Default.MODULES
+            mod_tru_chain.LangChainInstrument.Default.MODULES
         )
         """Modules by prefix to instrument.
 
@@ -156,47 +171,68 @@ class LlamaInstrument(Instrument):
             BaseNodePostprocessor,
             QueryEngineComponent,
             RetrieverComponent,
-        }.union(LangChainInstrument.Default.CLASSES())
+        }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            dict(LangChainInstrument.Default.METHODS),
-            {
-                # LLM:
-                (
-                    "complete",
-                    "stream_complete",
-                    "acomplete",
-                    "astream_complete",
-                ): BaseLLM,
-                # BaseTool/AsyncBaseTool:
-                ("__call__", "call"): BaseTool,
-                ("acall"): AsyncBaseTool,
-                # Memory:
-                ("put"): BaseMemory,
-                # Misc.:
-                ("get_response"): Refine,
-                ("predict"): BaseLLMPredictor,
-                # BaseQueryEngine:
-                ("query", "aquery"): BaseQueryEngine,
-                # BaseChatEngine/LLM:
-                ("chat", "achat", "stream_chat", "astream_achat"): (
-                    BaseLLM,
-                    BaseChatEngine,
-                ),
-                # BaseRetriever/BaseQueryEngine:
-                ("retrieve", "_retrieve", "_aretrieve"): (
-                    BaseQueryEngine,
-                    BaseRetriever,
-                    WithFeedbackFilterNodes,
-                ),
-                # BaseQueryEngine:
-                ("synthesize"): BaseQueryEngine,
-                # BaseNodePostProcessor
-                ("_postprocess_nodes"): BaseNodePostprocessor,
-                # Components
-                ("_run_component"): (QueryEngineComponent, RetrieverComponent),
-            },
+        METHODS: Dict[str, core_instruments.ClassFilter] = (
+            container_utils.dict_set_with_multikey(
+                dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
+                {
+                    # LLM:
+                    (
+                        "chat",
+                        "complete",
+                        "stream_chat",
+                        "stream_complete",
+                        "achat",
+                        "acomplete",
+                        "astream_chat",
+                        "astream_complete",
+                    ): BaseLLM,
+                    # BaseTool/AsyncBaseTool:
+                    ("__call__", "call"): BaseTool,
+                    ("acall"): AsyncBaseTool,
+                    # Memory:
+                    ("put"): BaseMemory,
+                    # Misc.:
+                    ("get_response"): Refine,
+                    (
+                        "predict",
+                        "apredict",
+                        "stream",
+                        "astream",
+                    ): BaseLLMPredictor,
+                    (
+                        "query",
+                        "aquery",
+                        "synthesize",
+                        "asynthesize",
+                    ): BaseQueryEngine,
+                    (
+                        "chat",
+                        "achat",
+                        "stream_chat",
+                        "astream_chat",
+                        "complete",
+                        "acomplete",
+                        "stream_complete",
+                        "astream_complete",
+                    ): (BaseChatEngine,),
+                    # BaseRetriever/BaseQueryEngine:
+                    ("retrieve", "_retrieve", "_aretrieve"): (
+                        BaseQueryEngine,
+                        BaseRetriever,
+                        WithFeedbackFilterNodes,
+                    ),
+                    # BaseNodePostProcessor
+                    ("_postprocess_nodes"): BaseNodePostprocessor,
+                    # Components
+                    ("_run_component"): (
+                        QueryEngineComponent,
+                        RetrieverComponent,
+                    ),
+                },
+            )
         )
         """Methods to instrument."""
 
@@ -210,7 +246,7 @@ class LlamaInstrument(Instrument):
         )
 
 
-class TruLlama(mod_app.App):
+class TruLlama(core_app.App):
     """Recorder for _LlamaIndex_ applications.
 
     This recorder is designed for LlamaIndex apps, providing a way to
@@ -291,36 +327,133 @@ class TruLlama(mod_app.App):
 
     app: Union[BaseQueryEngine, BaseChatEngine]
 
-    root_callable: ClassVar[FunctionOrMethod] = Field(
-        default_factory=lambda: FunctionOrMethod.of_callable(TruLlama.query)
-    )
+    # TODEP
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(
         self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
     ):
         # TruLlama specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["root_class"] = pyschema_utils.Class.of_object(
+            app
+        )  # TODO: make class property
         kwargs["instrument"] = LlamaInstrument(app=self)
 
         super().__init__(**kwargs)
 
     @classmethod
-    def select_source_nodes(cls) -> Lens:
+    def select_source_nodes(cls) -> serial_utils.Lens:
         """
         Get the path to the source nodes in the query output.
         """
         return cls.select_outputs().source_nodes[:]
 
+    # WithInstrumentCallbacks requirement:
+    def wrap_lazy_values(
+        self,
+        rets: Any,
+        wrap: Callable[[T], T],
+        on_done: Optional[Callable[[T], T]],
+        context_vars: Optional[python_utils.ContextVarsOrValues] = None,
+    ) -> Any:
+        """Wrap any llamaindex specific lazy values with wrappers that have callback wrap."""
+
+        # NOTE(piotrm): This is all very frail. We need to make sure we call
+        # on_done on things which are not lazy and wrap things which are lazy.
+        # It is not easy to tell which is which sometimes in llamaindex.
+
+        was_lazy = False
+
+        members = {k: v for k, v in getmembers_static(rets)}
+
+        if hasattr(rets, "is_done") and rets.is_done:
+            return on_done(rets)
+
+        if isinstance(rets, (Response)):
+            return on_done(rets)
+
+        if isinstance(rets, (AgentChatResponse)):
+            return on_done(rets)
+
+        if "async_response_gen" in members and isinstance(
+            rets.async_response_gen, AsyncGenerator
+        ):
+            rets.async_response_gen = python_utils.wrap_async_generator(
+                rets.async_response_gen,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            was_lazy = True
+
+        if "achat_stream" in members and isinstance(
+            rets.achat_stream, AsyncGenerator
+        ):
+            rets.achat_stream = python_utils.wrap_async_generator(
+                rets.achat_stream,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            was_lazy = True
+
+        if "chat_stream" in members and isinstance(rets.chat_stream, Generator):
+            rets.chat_stream = python_utils.wrap_generator(
+                rets.chat_stream,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            was_lazy = True
+
+        if "response_gen" in members and isinstance(
+            rets.response_gen, Generator
+        ):
+            wrapped_response_gen = python_utils.wrap_generator(
+                rets.response_gen,
+                wrap=wrap,
+                on_done=on_done,
+                context_vars=context_vars,
+            )
+            if isinstance(members["response_gen"], property):
+                # NOTE(piotrm): problem here as this is a property in
+                # StramingAgentChatResponse so we cannot set it. Instead we override the
+                # class which has an overridden property.
+
+                # TODO(piotrm): Figure out if there is an easier way to override
+                # an attribute which is a property.
+
+                class Wrappable(rets.__class__):
+                    @property
+                    def response_gen(self):
+                        return wrapped_response_gen
+
+                Wrappable.__name__ = rets.__class__.__name__
+                rets.__class__ = Wrappable
+
+            else:
+                rets.response_gen = wrapped_response_gen
+
+            was_lazy = True
+
+        if was_lazy:
+            return rets
+
+        else:
+            return on_done(rets)
+
+    # App override:
     @classmethod
     def select_context(
         cls, app: Optional[Union[BaseQueryEngine, BaseChatEngine]] = None
-    ) -> Lens:
+    ) -> serial_utils.Lens:
         """
         Get the path to the context in the query output.
         """
         return cls.select_outputs().source_nodes[:].node.text
 
+    # App override:
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
@@ -329,6 +462,13 @@ class TruLlama(mod_app.App):
         signature `sig` if it is to be called with the given bindings
         `bindings`.
         """
+
+        if "messages" in bindings.arguments:
+            if len(bindings.arguments["messages"]) == 0:
+                raise NotImplementedError(
+                    "Cannot handle no messages in TruLens."
+                )
+            return str(bindings.arguments["messages"])
 
         if "str_or_query_bundle" in bindings.arguments:
             # llama_index specific
@@ -343,8 +483,9 @@ class TruLlama(mod_app.App):
             return bindings.arguments["message"]
 
         else:
-            return mod_app.App.main_input(self, func, sig, bindings)
+            return core_app.App.main_input(self, func, sig, bindings)
 
+    # App override:
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
     ) -> Optional[str]:
@@ -358,30 +499,41 @@ class TruLlama(mod_app.App):
             attr = self._main_output_attribute(ret)
 
             if attr is not None:
-                return getattr(ret, attr)
+                val = getattr(ret, attr)
+                if attr == "response_txt":
+                    if val is None:
+                        # Return a placeholder value for now.
+                        return (
+                            f"TruLens: this app produced a streaming response of type {python_utils.class_name(type(ret))}. "
+                            "The main output will not be available in TruLens."
+                        )
+
+                return val
+
             else:  # attr is None
-                return mod_app.App.main_output(self, func, sig, bindings, ret)
+                return core_app.App.main_output(self, func, sig, bindings, ret)
 
         except NotImplementedError:
             return None
 
     def _main_output_attribute(self, ret: Any) -> Optional[str]:
-        """
-        Which attribute in ret contains the main output of this llama_index app.
+        """Which attribute in ret contains the main output of this llama_index
+        app.
         """
 
         if isinstance(ret, Response):  # query, aquery
             return "response"
 
-        elif isinstance(ret, AgentChatResponse):  #  chat, achat
+        elif isinstance(
+            ret, (AgentChatResponse, StreamingAgentChatResponse)
+        ):  #  chat, achat, stream_chat
             return "response"
 
-        elif isinstance(ret, (StreamingResponse, StreamingAgentChatResponse)):
-            raise NotImplementedError(
-                "App produced a streaming response. "
-                "Tracking content of streams in llama_index is not yet supported. "
-                "App main_output will be None."
-            )
+        elif isinstance(
+            ret,
+            (StreamingResponse, AsyncStreamingResponse),
+        ):
+            return "response_txt"  # note that this is only available after the stream has been iterated over
 
         return None
 
@@ -431,86 +583,6 @@ class TruLlama(mod_app.App):
             raise NotImplementedError(
                 f"Do not know what in object of type {type(ret).__name__} is the main app output."
             )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    def chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="chat", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    async def achat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="achat", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    def stream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="stream_chat", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.chat_engine.types.BaseChatEngine
-    async def astream_chat(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.indices.query.base.BaseQueryEngine
-    def query(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="query", is_async=False, with_record=False
-        )
-
-    # TOREMOVE
-    # llama_index.indices.query.base.BaseQueryEngine
-    async def aquery(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="aquery", is_async=True, with_record=False
-        )
-
-    # TOREMOVE
-    # Mirrors llama_index.indices.query.base.BaseQueryEngine.query .
-    def query_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="query", is_async=False, with_record=True
-        )
-
-    # TOREMOVE
-    # Mirrors llama_index.indices.query.base.BaseQueryEngine.aquery .
-    async def aquery_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="aquery", is_async=True, with_record=True
-        )
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.chat .
-    def chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="chat", is_async=False, with_record=True)
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.achat .
-    async def achat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(method="achat", is_async=True, with_record=True)
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.stream_chat .
-    def stream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="stream", is_async=False, with_record=True
-        )
-
-    # TOREMOVE
-    # Compatible with llama_index.chat_engine.types.BaseChatEngine.astream_chat .
-    async def astream_chat_with_record(self, *args, **kwargs) -> None:
-        self._throw_dep_message(
-            method="astream_chat", is_async=True, with_record=True
-        )
 
 
 TruLlama.model_rebuild()

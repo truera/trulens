@@ -1,24 +1,26 @@
+import json
 import logging
 from typing import ClassVar, Dict, Optional, Sequence, Tuple, Union
 
-from trulens.feedback import LLMProvider
-from trulens.feedback.generated import re_configured_rating
-from trulens.providers.bedrock.endpoint import BedrockEndpoint
+from trulens.feedback import generated as feedback_generated
+from trulens.feedback import llm_provider
+from trulens.providers.bedrock import endpoint as bedrock_endpoint
 
 logger = logging.getLogger(__name__)
 
 
-class Bedrock(LLMProvider):
-    """
-    A set of AWS Feedback Functions.
+class Bedrock(llm_provider.LLMProvider):
+    """A set of AWS Feedback Functions.
 
-    Parameters:
+    Args:
+        model_id: The specific model id. Defaults to
+            "amazon.titan-text-express-v1".
 
-    - model_id (str, optional): The specific model id. Defaults to
-        "amazon.titan-text-express-v1".
+        *args: args passed to BedrockEndpoint and subsequently to boto3 client
+            constructor.
 
-    - All other args/kwargs passed to BedrockEndpoint and subsequently
-        to boto3 client constructor.
+        **kwargs: kwargs passed to BedrockEndpoint and subsequently to boto3
+            client constructor.
     """
 
     DEFAULT_MODEL_ID: ClassVar[str] = "amazon.titan-text-express-v1"
@@ -27,7 +29,7 @@ class Bedrock(LLMProvider):
     model_engine: str = "Bedrock"
 
     model_id: str
-    endpoint: BedrockEndpoint
+    endpoint: bedrock_endpoint.BedrockEndpoint
 
     def __init__(
         self,
@@ -39,17 +41,15 @@ class Bedrock(LLMProvider):
         if model_id is None:
             model_id = self.DEFAULT_MODEL_ID
 
-        # SingletonPerName: return singleton unless client provided
-        if hasattr(self, "model_id") and "client" not in kwargs:
-            return
-
         # Pass kwargs to Endpoint. Self has additional ones.
         self_kwargs = dict()
         self_kwargs.update(**kwargs)
 
         self_kwargs["model_id"] = model_id
 
-        self_kwargs["endpoint"] = BedrockEndpoint(*args, **kwargs)
+        self_kwargs["endpoint"] = bedrock_endpoint.BedrockEndpoint(
+            *args, **kwargs
+        )
 
         super().__init__(
             **self_kwargs
@@ -63,8 +63,6 @@ class Bedrock(LLMProvider):
         **kwargs,
     ) -> str:
         assert self.endpoint is not None
-
-        import json
 
         if messages:
             messages_str = " ".join([
@@ -87,11 +85,21 @@ class Bedrock(LLMProvider):
                 },
             })
         elif self.model_id.startswith("anthropic"):
+            if not messages:
+                raise ValueError(
+                    "`messages` argument must be supplied for Anthropic Bedrock models."
+                )
+            if messages[0]["role"] == "system":
+                system_prompt = messages[0]["content"]
+            _messages = messages[1:] if len(messages) > 1 else []
+
             body = json.dumps({
-                "prompt": f"\n\nHuman:{messages_str}\n\nAssistant:",
+                "system": system_prompt,
+                "messages": _messages,
                 "temperature": 0,
                 "top_p": 1,
-                "max_tokens_to_sample": 4095,
+                "max_tokens": 4095,
+                "anthropic_version": "bedrock-2023-05-31",
             })
         elif self.model_id.startswith("cohere"):
             body = json.dumps({
@@ -125,7 +133,7 @@ class Bedrock(LLMProvider):
             })
         else:
             raise NotImplementedError(
-                f"The model selected, {self.model_id}, is not yet implemented as a feedback provider"
+                f"The Bedrock model selected, `{self.model_id}`, is not yet implemented as a feedback provider"
             )
 
         # TODO: make textGenerationConfig available for user
@@ -144,25 +152,25 @@ class Bedrock(LLMProvider):
                 "results"
             )[0]["outputText"]
 
-        if self.model_id.startswith("anthropic"):
+        elif self.model_id.startswith("anthropic"):
             response_body = json.loads(response.get("body").read()).get(
-                "completion"
-            )
+                "content"
+            )[0]["text"]
 
-        if self.model_id.startswith("cohere"):
+        elif self.model_id.startswith("cohere"):
             response_body = json.loads(response.get("body").read()).get(
                 "generations"
             )[0]["text"]
 
-        if self.model_id.startswith("mistral"):
+        elif self.model_id.startswith("mistral"):
             response_body = json.loads(response.get("body").read()).get(
                 "output"
             )[0]["text"]
-        if self.model_id.startswith("meta"):
+        elif self.model_id.startswith("meta"):
             response_body = json.loads(response.get("body").read()).get(
                 "generation"
             )
-        if self.model_id.startswith("ai21"):
+        elif self.model_id.startswith("ai21"):
             response_body = (
                 json.loads(response.get("body").read())
                 .get("completions")[0]
@@ -208,9 +216,9 @@ class Bedrock(LLMProvider):
             func=self._create_chat_completion, messages=llm_messages
         )
 
-        return (re_configured_rating(response) - min_score_val) / (
-            max_score_val - min_score_val
-        )
+        return (
+            feedback_generated.re_configured_rating(response) - min_score_val
+        ) / (max_score_val - min_score_val)
 
     # overwrite base to use prompt instead of messages
     def generate_score_and_reasons(
@@ -256,7 +264,7 @@ class Bedrock(LLMProvider):
             for line in response.split("\n"):
                 if "Score" in line:
                     score = (
-                        re_configured_rating(
+                        feedback_generated.re_configured_rating(
                             line,
                             min_score_val=min_score_val,
                             max_score_val=max_score_val,
@@ -281,7 +289,7 @@ class Bedrock(LLMProvider):
             return score, reasons
         else:
             return (
-                re_configured_rating(
+                feedback_generated.re_configured_rating(
                     response,
                     min_score_val=min_score_val,
                     max_score_val=max_score_val,

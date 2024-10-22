@@ -44,29 +44,18 @@ else:
 # `declare_component` and call it done. The wrapper allows us to customize
 # our component's API: we can pre-process its input args, post-process its
 # output value, and add a docstring for users.
-def record_viewer(record_json, app_json, key=None):
+def record_viewer(record_json, app_json, key=None) -> str:
     """Create a new instance of "record_viewer", which produces a timeline
 
-    Parameters
-    ----------
-    record_json: obj
-        JSON of the record serialized by `json.loads`.
+    Args:
+        record_json: JSON of the record serialized by `json.loads`.
 
-    app_json: obj
-        JSON of the app serialized by `json.loads`.
+        app_json: JSON of the app serialized by `json.loads`.
 
-    key: str or None
-        An optional key that uniquely identifies this component. If this is
-        None, and the component's arguments are changed, the component will
-        be re-mounted in the Streamlit frontend and lose its current state.
-
-    Returns
-    -------
-    string
+    Returns:
         Start time of the selected component in the application. If the whole app is selected,
-        this returns a JavaScript null, which is interpreted in python as a 0.
-
     """
+
     # Call through to our private component function. Arguments we pass here
     # will be sent to the frontend, where they'll be available in an "args"
     # dictionary.

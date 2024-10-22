@@ -1,11 +1,12 @@
-"""
-Utilities related to core python functionalities.
-"""
+"""Utilities related to core python functionalities."""
 
 from __future__ import annotations
 
 import asyncio
-from concurrent import futures
+from collections import defaultdict
+from contextlib import asynccontextmanager
+from contextlib import contextmanager
+import contextvars
 import dataclasses
 import inspect
 import logging
@@ -17,12 +18,13 @@ from types import ModuleType
 import typing
 from typing import (
     Any,
+    AsyncGenerator,
     Awaitable,
     Callable,
     Dict,
     Generator,
     Generic,
-    Hashable,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -31,97 +33,16 @@ from typing import (
     TypeVar,
     Union,
 )
+import weakref
+
+import pydantic
 
 T = TypeVar("T")
 
+WRAP_LAZY: bool = True
+
 Thunk = Callable[[], T]
 """A function that takes no arguments."""
-
-if sys.version_info >= (3, 11):
-    getmembers_static = inspect.getmembers_static
-else:
-
-    def getmembers_static(obj, predicate=None):
-        """Implementation of inspect.getmembers_static for python < 3.11."""
-
-        if predicate is None:
-            predicate = lambda name, value: True
-
-        return [
-            (name, value)
-            for name in dir(obj)
-            if hasattr(obj, name)
-            and predicate(name, value := getattr(obj, name))
-        ]
-
-
-if sys.version_info >= (3, 9):
-    Future = futures.Future
-    """Alias for [concurrent.futures.Future][].
-
-    In python < 3.9, a sublcass of [concurrent.futures.Future][] with
-    `Generic[A]` is used instead.
-    """
-
-    Queue = queue.Queue
-    """Alias for [queue.Queue][] .
-
-    In python < 3.9, a sublcass of [queue.Queue][] with
-    `Generic[A]` is used instead.
-    """
-
-else:
-    # Fake classes which can have type args. In python earlier than 3.9, the
-    # classes imported above cannot have type args which is annoying for type
-    # annotations. We use these fake ones instead.
-
-    A = TypeVar("A")
-
-    # HACK011
-    class Future(Generic[A], futures.Future):
-        """Alias for [concurrent.futures.Future][].
-
-        In python < 3.9, a sublcass of [concurrent.futures.Future][] with
-        `Generic[A]` is used instead.
-        """
-
-    # HACK012
-    class Queue(Generic[A], queue.Queue):
-        """Alias for [queue.Queue][] .
-
-        In python < 3.9, a sublcass of [queue.Queue][] with
-        `Generic[A]` is used instead.
-        """
-
-
-class EmptyType(type):
-    """A type that cannot be instantiated or subclassed."""
-
-    def __new__(mcs, *args, **kwargs):
-        raise ValueError("EmptyType cannot be instantiated.")
-
-    def __instancecheck__(cls, __instance: Any) -> bool:
-        return False
-
-    def __subclasscheck__(cls, __subclass: Type) -> bool:
-        return False
-
-
-if sys.version_info >= (3, 10):
-    import types
-
-    NoneType = types.NoneType
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
-
-else:
-    NoneType = type(None)
-    """Alias for [types.NoneType][] .
-
-    In python < 3.10, it is defined as `type(None)` instead.
-    """
 
 logger = logging.getLogger(__name__)
 pp = PrettyPrinter()
@@ -234,6 +155,39 @@ def safe_signature(func_or_obj: Any):
             raise e
 
 
+def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
+    """Try to get the attribute `k` of the given object.
+
+    This may evaluate some code if the attribute is a property and may fail. If
+    `get_prop` is False, will not return contents of properties (will raise
+    `ValueException`).
+    """
+
+    v = inspect.getattr_static(obj, k)
+
+    is_prop = False
+    try:
+        # OpenAI version 1 classes may cause this isinstance test to raise an
+        # exception.
+        is_prop = isinstance(v, property)
+    except Exception as e:
+        raise RuntimeError(f"Failed to check if {k} is a property.") from e
+
+    if is_prop:
+        if not get_prop:
+            raise ValueError(f"{k} is a property")
+
+        try:
+            v = v.fget(obj)
+            return v
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to get property {k}.") from e
+
+    else:
+        return v
+
+
 def safe_hasattr(obj: Any, k: str) -> bool:
     """Check if the given object has the given attribute.
 
@@ -282,7 +236,7 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
 
     if isinstance(func, inspect.FrameInfo):
         ret = f"{func.filename}:{func.lineno}"
-        if show_source:
+        if show_source and func.code_context is not None:
             ret += "\n"
             for line in func.code_context:
                 ret += "\t" + line
@@ -372,7 +326,8 @@ def superstack() -> Iterator[FrameType]:
     across Tasks and threads.
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames = stack_with_tasks()
+    next(iter(frames))  # skip this method itself
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
@@ -391,7 +346,7 @@ def superstack() -> Iterator[FrameType]:
             assert (
                 "pre_start_stack" in locs
             ), "Pre thread start stack expected but not found."
-            for fi in locs["pre_start_stack"]:
+            for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 
             continue
@@ -403,8 +358,8 @@ def caller_module_name(offset=0) -> str:
     """
     Get the caller's (of this function) module name.
     """
-
-    return inspect.stack()[offset + 1].frame.f_globals["__name__"]
+    frame = caller_frame(offset=offset + 1)
+    return frame.f_globals["__name__"]
 
 
 def caller_module(offset=0) -> ModuleType:
@@ -420,8 +375,33 @@ def caller_frame(offset=0) -> FrameType:
     Get the caller's (of this function) frame. See
     https://docs.python.org/3/reference/datamodel.html#frame-objects .
     """
+    caller_frame = inspect.currentframe()
+    for _ in range(offset + 1):
+        if caller_frame is None:
+            raise RuntimeError("No current frame found.")
+        caller_frame = caller_frame.f_back
 
-    return inspect.stack()[offset + 1].frame
+    if caller_frame is None:
+        raise RuntimeError("No caller frame found.")
+
+    return caller_frame
+
+
+def external_caller_frame(offset=0) -> FrameType:
+    """Get the caller's (of this function) frame that is not in the trulens
+    namespace.
+
+    Raises:
+        RuntimeError: If no such frame is found.
+    """
+    frame = inspect.currentframe()
+    gen = stack_generator(frame=frame, offset=offset + 1)
+    for f_info in gen:
+        name = f_info.f_globals["__name__"]
+        if not (name.startswith("trulens") or name.startswith("pydantic")):
+            return f_info
+
+    raise RuntimeError("No external caller frame found.")
 
 
 def caller_frameinfo(
@@ -437,28 +417,34 @@ def caller_frameinfo(
         skip_module: Skip frames from the given module. Default is "trulens".
     """
 
-    for finfo in inspect.stack()[offset + 1 :]:
+    for f_info in inspect.stack(0)[offset + 1 :]:
         if skip_module is None:
-            return finfo
-        if not finfo.frame.f_globals["__name__"].startswith(skip_module):
-            return finfo
+            return f_info
+        if not f_info.frame.f_globals["__name__"].startswith(skip_module):
+            return f_info
 
     return None
 
 
 def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
-    """
-    A task factory that annotates created tasks with stacks of their parents.
+    """A task factory that annotates created tasks with stacks and context of
+    their parents.
 
     All of such annotated stacks can be retrieved with
     [stack_with_tasks][trulens.core.utils.python.stack_with_tasks] as one merged
     stack.
     """
 
+    if "context" in kwargs:
+        logger.warning(
+            "Context is being overwritten, TruLens may not be able to record traces."
+        )
+
     parent_task = asyncio.current_task(loop=loop)
     task = asyncio.tasks.Task(coro=coro, loop=loop, *args, **kwargs)
 
-    stack = [fi.frame for fi in inspect.stack()[2:]]
+    frame = inspect.currentframe()
+    stack = stack_generator(frame=frame, offset=3)
 
     if parent_task is not None:
         stack = merge_stacks(stack, parent_task.get_stack()[::-1])
@@ -469,25 +455,20 @@ def task_factory_with_stack(loop, coro, *args, **kwargs) -> asyncio.Task:
     return task
 
 
+# If there is already a loop running, try to patch its task factory.
 try:
     loop = asyncio.get_running_loop()
     loop.set_task_factory(task_factory_with_stack)
-    # Async debugging work ongoing:
-    # print("Patched existing running loop.")
 except Exception:
     pass
 
 # Instrument new_event_loop to set the above task_factory upon creation:
 original_new_event_loop = asyncio.new_event_loop
-# Async debugging work ongoing:
-# print("Patched new loops")
 
 
 def tru_new_event_loop():
-    """
-    Replacement for [new_event_loop][asyncio.new_event_loop] that sets
-    the task factory to make tasks that copy the stack from their creators.
-    """
+    """Replacement for [new_event_loop][asyncio.new_event_loop] that sets
+    the task factory to make tasks that copy the stack from their creators."""
 
     loop = original_new_event_loop()
     loop.set_task_factory(task_factory_with_stack)
@@ -498,9 +479,8 @@ asyncio.new_event_loop = tru_new_event_loop
 
 
 def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
-    """
-    Get the annotated stack (if available) on the given task.
-    """
+    """Get the annotated stack (if available) on the given task."""
+
     if safe_hasattr(task, STACK):
         return getattr(task, STACK)
     else:
@@ -509,7 +489,7 @@ def get_task_stack(task: asyncio.Task) -> Sequence[FrameType]:
 
 
 def merge_stacks(
-    s1: Sequence[FrameType], s2: Sequence[FrameType]
+    s1: Iterable[FrameType], s2: Sequence[FrameType]
 ) -> Sequence[FrameType]:
     """
     Assuming `s1` is a subset of `s2`, combine the two stacks in presumed call
@@ -518,56 +498,110 @@ def merge_stacks(
 
     ret = []
 
-    while len(s1) > 1:
-        f = s1[0]
-        s1 = s1[1:]
-
+    for f in s1:
         ret.append(f)
         try:
             s2i = s2.index(f)
             for _ in range(s2i):
                 ret.append(s2[0])
                 s2 = s2[1:]
-
         except Exception:
             pass
 
     return ret
 
 
-def stack_with_tasks() -> Sequence[FrameType]:
-    """
-    Get the current stack (not including this function) with frames reaching
+def stack_generator(
+    frame: Optional[FrameType] = None, offset: int = 0
+) -> Iterable[FrameType]:
+    if frame is None:
+        frame = inspect.currentframe()
+    for _ in range(offset):
+        if frame is None:
+            raise ValueError("No frame found.")
+        frame = frame.f_back
+    while frame is not None:
+        yield frame
+        frame = frame.f_back
+
+
+def stack_with_tasks() -> Iterable[FrameType]:
+    """Get the current stack (not including this function) with frames reaching
     across Tasks.
     """
-
-    ret = [fi.frame for fi in inspect.stack()[1:]]  # skip stack_with_task_stack
-
+    frame = inspect.currentframe()
+    frame_gen = stack_generator(frame=frame, offset=1)
     try:
         task_stack = get_task_stack(asyncio.current_task())
 
-        return merge_stacks(ret, task_stack)
+        return merge_stacks(frame_gen, task_stack)
 
     except Exception:
-        return ret
+        return frame_gen
 
 
-def _future_target_wrapper(stack, context, func, *args, **kwargs):
-    """
-    Wrapper for a function that is started by threads. This is needed to
-    record the call stack prior to thread creation as in python threads do
-    not inherit the stack. Our instrumentation, however, relies on walking
-    the stack and need to do this to the frames prior to thread starts.
+class _Wrap(Generic[T]):
+    """Wrap an object.
+
+    See WeakWrapper for explanation.
     """
 
-    # TODO: See if threading.stack_size([size]) can be used instead.
+    def __init__(self, obj: T):
+        self.obj: T = obj
+
+    def get(self) -> T:
+        return self.obj
+
+
+@dataclasses.dataclass
+class WeakWrapper(Generic[T]):
+    """Wrap an object with a weak reference.
+
+    This is to be able to use weakref.ref on objects like lists which are
+    otherwise not weakly referenceable. The goal of this class is to generalize
+    weakref.ref to work with any object."""
+
+    obj: weakref.ReferenceType[Union[_Wrap[T], T]]
+
+    def __init__(self, obj: Union[weakref.ReferenceType[T], WeakWrapper[T], T]):
+        if isinstance(obj, weakref.ReferenceType):
+            self.obj = obj
+
+        else:
+            if isinstance(obj, WeakWrapper):
+                obj = obj.get()
+
+            try:
+                # Try to make reference to obj directly.
+                self.obj = weakref.ref(obj)
+
+            except Exception:
+                # If its a list or other non-weakly referenceable object, wrap it.
+                self.obj = weakref.ref(_Wrap(obj))
+
+    def get(self) -> T:
+        """Get the wrapped object."""
+
+        temp = self.obj()  # undo weakref.ref
+        if isinstance(temp, _Wrap):
+            return temp.get()  # undo _Wrap if needed
+        else:
+            return temp
+
+
+def _future_target_wrapper(stack, func, *args, **kwargs):
+    """Wrapper for a function that is started by threads.
+
+    This is needed to record the call stack prior to thread creation as in
+    python threads do not inherit the stack. Our instrumentation, however,
+    relies on walking the stack and need to do this to the frames prior to
+    thread starts.
+    """
 
     # Keep this for looking up via get_first_local_in_call_stack .
-    pre_start_stack = stack  # noqa: F841
+    pre_start_stack = WeakWrapper(stack)  # noqa: F841 # pylint: disable=W0612
 
-    for var, value in context.items():
-        var.set(value)
-
+    # with with_context(context):
     return func(*args, **kwargs)
 
 
@@ -608,13 +642,16 @@ def get_all_local_in_call_stack(
     [TP][trulens.core.utils.threading.TP].
     """
 
-    frames = stack_with_tasks()[1:]  # + 1 to skip this method itself
+    frames_gen = stack_with_tasks()
     # NOTE: skipping offset frames is done below since the full stack may need
     # to be reconstructed there.
 
     # Using queue for frames as additional frames may be added due to handling threads.
     q = queue.Queue()
-    for f in frames:
+    for i, f in enumerate(frames_gen):
+        if i == 0:
+            # skip this method itself
+            continue
         q.put(f)
 
     while not q.empty():
@@ -625,7 +662,7 @@ def get_all_local_in_call_stack(
             assert (
                 "pre_start_stack" in locs
             ), "Pre thread start stack expected but not found."
-            for fi in locs["pre_start_stack"]:
+            for fi in locs["pre_start_stack"].get():  # is WeakWrapper
                 q.put(fi.frame)
 
             continue
@@ -635,7 +672,9 @@ def get_all_local_in_call_stack(
             continue
 
         if func(f.f_code):
-            logger.debug(f"Looking via {func.__name__}; found {f}")
+            logger.debug(
+                "Looking via %s; found %s", callable_name(func), str(f)
+            )
             if skip is not None and f == skip:
                 logger.debug("Skipping.")
                 continue
@@ -719,13 +758,97 @@ class OpaqueWrapper(Generic[T]):
         raise self._e
 
 
+ContextVarsOrValues = Union[
+    Iterable[contextvars.ContextVar],
+    contextvars.Context,
+    Dict[contextvars.ContextVar, Any],
+]
+
+
+def set_context_vars_or_values(
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> Dict[contextvars.ContextVar, contextvars.Token]:
+    """Get the tokens for the given context variables or values.
+
+    Args:
+        context_vars: The context variables or values to get tokens for.
+
+    Returns:
+        A dictionary of context variables to tokens.
+    """
+
+    if context_vars is None:
+        return {}
+
+    if isinstance(context_vars, (dict, contextvars.Context)):
+        return {cv: cv.set(v) for cv, v in context_vars.items()}
+
+    return {cv: cv.set(cv.get()) for cv in context_vars}
+
+
+@contextmanager
+def with_context(context_vars: Optional[ContextVarsOrValues] = None):
+    """Context manager to set context variables to given values.
+
+    Args:
+        context_vars: The context variables to set. If a dictionary is given,
+            the keys are the context variables and the values are the values to
+            set them to. If an iterable is given, it should be a list of context
+            variables to set to their current value.
+    """
+
+    tokens = set_context_vars_or_values(context_vars)
+
+    try:
+        yield
+
+    finally:
+        for cv, v in tokens.items():
+            try:
+                cv.reset(v)
+            except Exception:
+                # TODO: Figure out if this is bad.
+                pass
+
+
+@asynccontextmanager
+async def awith_context(context_vars: Optional[ContextVarsOrValues] = None):
+    """Context manager to set context variables to given values.
+
+    Args:
+        context_vars: The context variables to set. If a dictionary is given,
+            the keys are the context variables and the values are the values to
+            set them to. If an iterable is given, it should be a list of context
+            variables to set to their current value.
+    """
+
+    tokens = set_context_vars_or_values(context_vars)
+
+    try:
+        yield
+
+    finally:
+        for cv, v in tokens.items():
+            try:
+                cv.reset(v)
+            except Exception:
+                # TODO: Figure out if this is bad.
+                pass
+
+
 def wrap_awaitable(
     awaitable: Awaitable[T],
     on_await: Optional[Callable[[], Any]] = None,
-    on_done: Optional[Callable[[T], Any]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[T], T]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Awaitable[T]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
+
+    !!! Important
+        This method captures a [Context][contextvars.Context] at the time this
+        method is called and copies it over to the wrapped awaitable.
 
     Note that the resulting awaitable needs to be awaited for the callback to
     eventually trigger.
@@ -736,20 +859,32 @@ def wrap_awaitable(
         on_await: The callback to call when the wrapper awaitable is awaited but
             before the wrapped awaitable is awaited.
 
-        on_done: The callback to call with the result of the wrapped awaitable
-            once it is ready.
+        wrap: The callback to call with the result of the wrapped awaitable
+            once it is ready. This should return the value or a wrapped version.
+
+        on_done: For compatibility with generators, this is called after wrap.
+
+        context_vars: The context variables to copy over to the wrapped
+            awaitable. If None, all context variables are copied. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     async def wrapper(awaitable):
-        if on_await is not None:
-            on_await()
+        async with awith_context(context_vars):
+            if on_await is not None:
+                on_await()
 
-        val = await awaitable
+            val = await awaitable
 
-        if on_done is not None:
-            on_done(val)
+            if wrap is not None:
+                val = wrap(val)  # allow handlers to transform the value
 
-        return val
+            if on_done is not None:
+                val = on_done(val)
+
+            return val
+
+    wrapper.__name__ = f"tru_wrapped_{awaitable.__class__.__name__}"
 
     return wrapper(awaitable)
 
@@ -757,8 +892,9 @@ def wrap_awaitable(
 def wrap_generator(
     gen: Generator[T, None, None],
     on_iter: Optional[Callable[[], Any]] = None,
-    on_next: Optional[Callable[[T], Any]] = None,
-    on_done: Optional[Callable[[], Any]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[List[T]], Any]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
 ) -> Generator[T, None, None]:
     """Wrap a generator in another generator that will call callbacks at various
     points in the generation process.
@@ -769,140 +905,236 @@ def wrap_generator(
         on_iter: The callback to call when the wrapper generator is created but
             before a first iteration is produced.
 
-        on_next: The callback to call with the result of each iteration of the
-            wrapped generator.
+        wrap: The callback to call with the result of each iteration of the
+            wrapped generator. This should return the value or a wrapped
+            version.
 
         on_done: The callback to call when the wrapped generator is exhausted.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
     def wrapper(gen):
-        if on_iter is not None:
-            on_iter()
+        with with_context(context_vars):
+            if on_iter is not None:
+                on_iter()
 
-        for val in gen:
-            if on_next is not None:
-                on_next(val)
-            yield val
+            vals = []
 
-        if on_done is not None:
-            on_done()
+            for val in gen:
+                if wrap is not None:
+                    # Allow handlers to transform the value.
+                    val = wrap(val)
+
+                vals.append(val)
+                yield val
+
+            if on_done is not None:
+                on_done(vals)
+
+    wrapper.__name__ = f"tru_wrapped_{gen.__class__.__name__}"
 
     return wrapper(gen)
 
 
-# Class utilities
+def wrap_async_generator(
+    gen: AsyncGenerator[T, None],
+    on_iter: Optional[Callable[[], Any]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[List[T]], Any]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> AsyncGenerator[T, None]:
+    """Wrap a generator in another generator that will call callbacks at various
+    points in the generation process.
 
+    Args:
+        gen: The generator to wrap.
 
-@dataclasses.dataclass
-class SingletonInfo(Generic[T]):
+        on_iter: The callback to call when the wrapper generator is created but
+            before a first iteration is produced.
+
+        wrap: The callback to call with the result of each iteration of the
+            wrapped generator.
+
+        on_done: The callback to call when the wrapped generator is exhausted.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
-    Information about a singleton instance.
+
+    async def wrapper(gen):
+        with with_context(context_vars):
+            if on_iter is not None:
+                on_iter()
+
+            vals = []
+
+            async for val in gen:
+                if wrap is not None:
+                    val = wrap(val)  # allow handlers to rewrap the value
+
+                vals.append(val)
+
+                yield val
+
+            if on_done is not None:
+                on_done(vals)
+
+    wrapper.__name__ = f"tru_wrapped_{gen.__class__.__name__}"
+
+    return wrapper(gen)
+
+
+def is_lazy(obj):
+    """Check if the given object is lazy.
+
+    An object is considered lazy if it is a generator or an awaitable.
     """
 
-    val: T
-    """The singleton instance."""
+    return (
+        inspect.isawaitable(obj)
+        or inspect.isgenerator(obj)
+        or inspect.isasyncgen(obj)
+    )
 
-    cls: Type[T]
-    """The class of the singleton instance."""
 
-    frame: Any
-    """The frame where the singleton was created.
+def wrap_lazy(
+    obj: Any,
+    on_start: Optional[Callable[[], None]] = None,
+    wrap: Optional[Callable[[T], T]] = None,
+    on_done: Optional[Callable[[Any], Any]] = None,  # Any may be T or List[T]
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> Any:
+    """Wrap a lazy value in one that will call
+    callbacks at various points in the generation process.
 
-    This is used for showing "already created" warnings.
+    Args:
+        obj: The lazy value.
+
+        on_start: The callback to call when the wrapper is created.
+
+        wrap: The callback to call with the result of each iteration of the
+            wrapped generator or the result of an awaitable. This should return
+            the value or a wrapped version.
+
+        on_done: The callback to call when the wrapped generator is exhausted or
+            awaitable is ready.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
 
-    name: Optional[str] = None
-    """The name of the singleton instance.
+    if not WRAP_LAZY:
+        return obj
 
-    This is used for the SingletonPerName mechanism to have a separate singleton
-    for each unique name (and class).
-    """
-
-    def __init__(self, name: str, val: Any):
-        self.val = val
-        self.cls = val.__class__
-        self.name = name
-        self.frameinfo = caller_frameinfo(offset=2)
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        logger.warning(
-            (
-                "Singleton instance of type %s already created at:\n%s\n"
-                "You can delete the singleton by calling `<instance>.delete_singleton()` or \n"
-                f"""  ```python
-  from trulens.core.utils.python import SingletonPerName
-  SingletonPerName.delete_singleton_by_name(name="{self.name}", cls={self.cls.__name__})
-  ```
-            """
-            ),
-            self.cls.__name__,
-            code_line(self.frameinfo, show_source=True),
+    if inspect.isasyncgen(obj):
+        return wrap_async_generator(
+            obj,
+            on_iter=on_start,
+            wrap=wrap,
+            on_done=on_done,
+            context_vars=context_vars,
         )
 
+    if inspect.isgenerator(obj):
+        return wrap_generator(
+            obj,
+            on_iter=on_start,
+            wrap=wrap,
+            on_done=on_done,
+            context_vars=context_vars,
+        )
 
-class SingletonPerName:
+    if inspect.isawaitable(obj):
+        return wrap_awaitable(
+            obj,
+            on_await=on_start,
+            wrap=wrap,
+            on_done=on_done,
+            context_vars=context_vars,
+        )
+
+    raise ValueError(f"Object of type {type(obj)} is not lazy.")
+
+
+def wrap_until_eager(
+    obj,
+    on_eager: Optional[Callable[[Any], T]] = None,
+    context_vars: Optional[ContextVarsOrValues] = None,
+) -> T | Sequence[T]:
+    """Wrap a lazy value in one that will call callbacks one the final non-lazy
+    values.
+
+    Arts:
+        obj: The lazy value.
+
+        on_eager: The callback to call with the final value of the wrapped
+            generator or the result of an awaitable. This should return the
+            value or a wrapped version.
+
+        context_vars: The context variables to copy over to the wrapped
+            generator. If None, all context variables are taken with their
+            present values. See
+            [with_context][trulens.core.utils.python.with_context].
     """
-    Class for creating singleton instances except there being one instance max,
+
+    def rewrap(obj_):
+        if is_lazy(obj_):
+            return wrap_lazy(
+                obj_, wrap=rewrap, on_done=rewrap, context_vars=context_vars
+            )
+
+        if on_eager is not None:
+            return on_eager(obj_)
+
+        return obj_
+
+    return rewrap(obj)
+
+
+# Class utilities
+class SingletonPerNameMeta(type):
+    """
+    Metaclass for creating singleton instances except there being one instance max,
     there is one max per different `name` argument. If `name` is never given,
     reverts to normal singleton behavior.
     """
 
-    # Hold singleton instances here.
-    _instances: Dict[Hashable, SingletonInfo[SingletonPerName]] = {}
+    _singleton_instances = {}
 
-    # Need some way to look up the name of the singleton instance. Cannot attach
-    # a new attribute to instance since some metaclasses don't allow this (like
-    # pydantic). We instead create a map from instance address to name.
-    _id_to_name_map: Dict[int, Optional[str]] = {}
-
-    def warning(self):
-        """Issue warning that this singleton already exists."""
-
-        name = SingletonPerName._id_to_name_map[id(self)]
-        k = self.__class__.__name__, name
-        if k in SingletonPerName._instances:
-            SingletonPerName._instances[k].warning()
-        else:
-            raise RuntimeError(
-                f"Instance of singleton type/name {k} does not exist."
-            )
-
-    def __new__(
-        cls: Type[SingletonPerName],
-        *args,
-        name: Optional[str] = None,
-        **kwargs,
-    ) -> SingletonPerName:
+    def __call__(cls, *args, name: Optional[str] = None, **kwargs):
         """
         Create the singleton instance if it doesn't already exist and return it.
         """
+        k = f"{cls.__module__}.{cls.__name__}", name
 
-        k = cls.__name__, name
-
-        if k not in cls._instances:
+        if k not in cls._singleton_instances:
             logger.debug(
-                "*** Creating new %s singleton instance for name = %s ***",
+                "Creating new %s singleton instance for name = %s.",
                 cls.__name__,
                 name,
             )
-            # If exception happens here, the instance should not be added to
-            # _instances.
-            instance = super().__new__(cls)
-
-            SingletonPerName._id_to_name_map[id(instance)] = name
-            info: SingletonInfo = SingletonInfo(name=name, val=instance)
-            SingletonPerName._instances[k] = info
-        else:
-            info = SingletonPerName._instances[k]
-        obj = info.val
-        assert isinstance(obj, cls)
-        return obj
+            cls._singleton_instances[k] = super(
+                SingletonPerNameMeta, cls
+            ).__call__(*args, **kwargs)
+        elif args or kwargs:
+            logger.warning(
+                "Singleton instance %s already exists for name = %s.",
+                cls.__name__,
+                name,
+            )
+        return cls._singleton_instances[k]
 
     @staticmethod
     def delete_singleton_by_name(
-        name: str, cls: Optional[Type[SingletonPerName]] = None
+        name: str, cls: Optional[Type[SingletonPerNameMeta]] = None
     ):
         """
         Delete the singleton instance with the given name.
@@ -915,24 +1147,55 @@ class SingletonPerName:
             cls: The class of the singleton instance to delete. If not given, all
                 instances with the given name are deleted.
         """
-        for k, v in list(SingletonPerName._instances.items()):
+
+        for k, v in list(SingletonPerNameMeta._singleton_instances.items()):
             if k[1] == name:
-                if cls is not None and v.cls != cls:
+                if cls is not None and v.__class__ is not cls:
                     continue
 
-                del SingletonPerName._instances[k]
-                del SingletonPerName._id_to_name_map[id(v.val)]
+                del SingletonPerNameMeta._singleton_instances[k]
 
-    def delete_singleton(self):
+    @staticmethod
+    def delete_singleton(
+        obj: Type[SingletonPerNameMeta], name: Optional[str] = None
+    ):
         """
         Delete the singleton instance. Can be used for testing to create another
         singleton.
         """
-        id_ = id(self)
-
-        if id_ in SingletonPerName._id_to_name_map:
-            name = SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._id_to_name_map[id_]
-            del SingletonPerName._instances[(self.__class__.__name__, name)]
+        cls_name = (
+            getattr(obj.__class__, "__name__")
+            if hasattr(obj.__class__, "__name__")
+            else None
+        )
+        k = cls_name, name
+        if k in SingletonPerNameMeta._singleton_instances:
+            del SingletonPerNameMeta._singleton_instances[k]
         else:
-            logger.warning("Instance %s not found in our records.", self)
+            logger.warning("Instance %s not found:", obj)
+
+
+class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
+    """This is the metaclass for creating Pydantic models that are also required to be singletons"""
+
+    pass
+
+
+class InstanceRefMixin:
+    """Mixin for classes that need to keep track of their instances."""
+
+    _instance_refs: Dict[
+        Type, List[weakref.ReferenceType[InstanceRefMixin]]
+    ] = defaultdict(list)
+
+    def __init__(self, register_instance: bool = True):
+        if register_instance:
+            self._instance_refs[self.__class__].append(weakref.ref(self))
+
+    @classmethod
+    def get_instances(cls) -> Generator[InstanceRefMixin]:
+        """Get all instances of the class."""
+        for inst_ref in cls._instance_refs[cls]:
+            inst = inst_ref()
+            if inst is not None:
+                yield inst

@@ -7,10 +7,9 @@ import pandas as pd
 import sqlalchemy
 from sqlalchemy import Engine
 from sqlalchemy import inspect as sql_inspect
-from trulens.core.database import base as mod_db
-from trulens.core.database.exceptions import DatabaseVersionException
-from trulens.core.database.migrations import DbRevisions
-from trulens.core.database.migrations import upgrade_db
+from trulens.core.database import base as core_db
+from trulens.core.database import exceptions as db_exceptions
+from trulens.core.database import migrations as db_migrations
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,8 @@ def is_legacy_sqlite(engine: Engine) -> bool:
     This database was removed since trulens 0.29.0 .
     """
 
+    if engine.url.get_dialect().name != "sqlite":
+        return False
     inspector = sql_inspect(engine)
     tables = list(inspector.get_table_names())
 
@@ -65,7 +66,7 @@ def is_memory_sqlite(
 
 def check_db_revision(
     engine: Engine,
-    prefix: str = mod_db.DEFAULT_DATABASE_PREFIX,
+    prefix: str = core_db.DEFAULT_DATABASE_PREFIX,
     prior_prefix: Optional[str] = None,
 ):
     """
@@ -100,7 +101,7 @@ def check_db_revision(
     if prior_prefix is not None:
         # Check if tables using the old/empty prefix exist.
         if prior_prefix + "alembic_version" in version_tables:
-            raise DatabaseVersionException.reconfigured(
+            raise db_exceptions.DatabaseVersionException.reconfigured(
                 prior_prefix=prior_prefix
             )
     else:
@@ -120,7 +121,7 @@ def check_db_revision(
                     )
 
                 # Guess prior prefix as the single one with version table name.
-                raise DatabaseVersionException.reconfigured(
+                raise db_exceptions.DatabaseVersionException.reconfigured(
                     prior_prefix=version_tables[0].replace(
                         "alembic_version", ""
                     )
@@ -128,13 +129,13 @@ def check_db_revision(
 
     if is_legacy_sqlite(engine):
         logger.info("Found legacy SQLite file: %s", engine.url)
-        raise DatabaseVersionException.behind()
+        raise db_exceptions.DatabaseVersionException.behind()
 
-    revisions = DbRevisions.load(engine, prefix=prefix)
+    revisions = db_migrations.DbRevisions.load(engine, prefix=prefix)
 
     if revisions.current is None:
         logger.debug("Creating database")
-        upgrade_db(
+        db_migrations.upgrade_db(
             engine, revision="head", prefix=prefix
         )  # create automatically if it doesn't exist
 
@@ -142,10 +143,10 @@ def check_db_revision(
         logger.debug("Database schema is up to date: %s", revisions)
 
     elif revisions.behind:
-        raise DatabaseVersionException.behind()
+        raise db_exceptions.DatabaseVersionException.behind()
 
     elif revisions.ahead:
-        raise DatabaseVersionException.ahead()
+        raise db_exceptions.DatabaseVersionException.ahead()
 
     else:
         raise NotImplementedError(

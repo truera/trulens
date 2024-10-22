@@ -9,6 +9,5 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.providers.bedrock.endpoint import INSTRUMENT
 from trulens.providers.bedrock.endpoint import BedrockCallback
 from trulens.providers.bedrock.endpoint import BedrockEndpoint

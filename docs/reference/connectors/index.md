@@ -9,7 +9,7 @@ Abstract interface: [DBConnector][trulens.core.database.connector.base.DBConnect
 ## Optional Implementations
 
 - 📦 [SnowflakeConnector][trulens.connectors.snowflake.connector.SnowflakeConnector] in
-  package `trulens-connectors-snowlake`.
+  package `trulens-connectors-snowflake`.
 
     ```bash
     pip install trulens-connectors-snowflake

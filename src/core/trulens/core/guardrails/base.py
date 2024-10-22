@@ -3,23 +3,23 @@ import inspect
 import logging
 from typing import Optional
 
-from trulens.core import Feedback
-from trulens.core.utils.threading import ThreadPoolExecutor
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
 
 class context_filter:
-    """
-    Provides a decorator to filter contexts based on a given feedback and threshold.
+    """Provides a decorator to filter contexts based on a given feedback and threshold.
 
-    Parameters:
-    feedback (Feedback): The feedback object to use for filtering.
-    threshold (float): The minimum feedback value required for a context to be included.
-    keyword_for_prompt (str): Keyword argument to decorator to use for prompt.
+    Args:
+        feedback: The feedback object to use for filtering.
+
+        threshold: The minimum feedback value required for a context to be included.
+
+        keyword_for_prompt: Keyword argument to decorator to use for prompt.
 
     Example:
-
         ```python
         feedback = Feedback(provider.context_relevance, name="Context Relevance")
         class RAG_from_scratch:
@@ -37,7 +37,7 @@ class context_filter:
 
     def __init__(
         self,
-        feedback: Feedback,
+        feedback: core_feedback.Feedback,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
     ):
@@ -66,7 +66,9 @@ class context_filter:
             bindings = sig.bind(*args, **kwargs)
 
             contexts = func(*args, **kwargs)
-            with ThreadPoolExecutor(max_workers=max(1, len(contexts))) as ex:
+            with threading_utils.ThreadPoolExecutor(
+                max_workers=max(1, len(contexts))
+            ) as ex:
                 future_to_context = {
                     ex.submit(
                         lambda context=context: self.feedback(

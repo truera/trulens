@@ -8,5 +8,5 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.dashboard.Leaderboard import MIGRATION_UNKNOWN_STR
-from trulens.dashboard.Leaderboard import leaderboard
+from trulens.core.database.legacy.migration import MIGRATION_UNKNOWN_STR
+from trulens.dashboard.Leaderboard import render_leaderboard as leaderboard

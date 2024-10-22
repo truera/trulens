@@ -8,7 +8,12 @@ Create Date: 2024-08-16 12:46:49.510690
 from alembic import op
 from sqlalchemy.orm.session import Session
 from trulens.core.database.orm import make_orm_for_prefix
-from trulens.core.schema.app import AppDefinition
+from trulens.core.schema import app as app_schema
+
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
 
 # revision identifiers, used by Alembic.
 revision = "6"
@@ -27,12 +32,16 @@ def upgrade(config) -> None:
     with Session(bind=op.get_bind()) as session:
         orm = make_orm_for_prefix(table_prefix=prefix)
         apps = session.query(orm.AppDefinition).all()
+        if tqdm is not None:
+            apps = tqdm(
+                apps, desc="Updating app_name and app_version in apps table"
+            )
         for app in apps:
             if app.app_name is None:
                 app.app_name = "default_app"
             if app.app_version is None:
                 app.app_version = app.app_id
-            app.app_id = AppDefinition._compute_app_id(
+            app.app_id = app_schema.AppDefinition._compute_app_id(
                 app.app_name, app.app_version
             )
         session.commit()

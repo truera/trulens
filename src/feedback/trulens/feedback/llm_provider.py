@@ -8,17 +8,16 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
-from trulens.core.feedback.provider import Provider
+from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.feedback import prompts
-from trulens.feedback.generated import re_configured_rating
-from trulens.feedback.v2.feedback import ContextRelevance
-from trulens.feedback.v2.feedback import OutputSpace
+from trulens.feedback import generated as feedback_generated
+from trulens.feedback import prompts as feedback_prompts
+from trulens.feedback.v2 import feedback as feedback_v2
 
 logger = logging.getLogger(__name__)
 
 
-class LLMProvider(Provider):
+class LLMProvider(core_provider.Provider):
     """An LLM-based provider.
 
     This is an abstract class and needs to be initialized as one of these:
@@ -109,7 +108,7 @@ class LLMProvider(Provider):
         )
 
         return (
-            re_configured_rating(
+            feedback_generated.re_configured_rating(
                 response,
                 min_score_val=min_score_val,
                 max_score_val=max_score_val,
@@ -227,7 +226,7 @@ class LLMProvider(Provider):
             for line in response.split("\n"):
                 if "Score" in line:
                     score = (
-                        re_configured_rating(
+                        feedback_generated.re_configured_rating(
                             line,
                             min_score_val=min_score_val,
                             max_score_val=max_score_val,
@@ -277,7 +276,7 @@ class LLMProvider(Provider):
 
         else:
             score = (
-                re_configured_rating(
+                feedback_generated.re_configured_rating(
                     response,
                     min_score_val=min_score_val,
                     max_score_val=max_score_val,
@@ -303,7 +302,7 @@ class LLMProvider(Provider):
         Returns:
             str: The corresponding output space.
         """
-        for output in OutputSpace:
+        for output in feedback_v2.OutputSpace:
             if output.value == (min_score_val, max_score_val):
                 return output.name
         raise ValueError(
@@ -314,7 +313,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -324,7 +323,6 @@ class LLMProvider(Provider):
         check the relevance of the context to the question.
 
         Example:
-
             ```python
             from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
@@ -339,7 +337,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -350,15 +348,17 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
-            )
+        system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         return self.generate_score(
-            system_prompt=ContextRelevance.system_prompt,
+            system_prompt=system_prompt,
             user_prompt=str.format(
-                prompts.CONTEXT_RELEVANCE_USER,
+                feedback_prompts.CONTEXT_RELEVANCE_USER,
                 question=question,
                 context=context,
             ),
@@ -371,7 +371,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -382,7 +382,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             from trulens.apps.langchain import TruChain
             context = TruChain.select_context(rag_app)
@@ -397,7 +396,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -407,23 +406,27 @@ class LLMProvider(Provider):
         """
 
         user_prompt = str.format(
-            prompts.CONTEXT_RELEVANCE_USER, question=question, context=context
+            feedback_prompts.CONTEXT_RELEVANCE_USER,
+            question=question,
+            context=context,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
-            )
+        system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         return self.generate_score_and_reasons(
-            system_prompt=ContextRelevance.system_prompt,
+            system_prompt=system_prompt,
             user_prompt=user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
@@ -434,7 +437,7 @@ class LLMProvider(Provider):
         self,
         question: str,
         context: str,
-        criteria: str = "",
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -445,7 +448,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             from trulens.apps.llamaindex import TruLlama
             context = TruLlama.select_context(llamaindex_rag_app)
@@ -460,7 +462,7 @@ class LLMProvider(Provider):
         Args:
             question (str): A question being asked.
             context (str): Context related to the question.
-            criteria (str): Overriding evaluation criteria for evaluation .
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
             min_score_val (int): The minimum score value. Defaults to 0.
             max_score_val (int): The maximum score value. Defaults to 3.
             temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
@@ -473,17 +475,19 @@ class LLMProvider(Provider):
             min_score_val, max_score_val
         )
 
-        if criteria and output_space:
-            ContextRelevance.override_criteria_and_output_space(
-                criteria, output_space
-            )
+        system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         try:
             return self.generate_confidence_score(
-                verb_confidence_prompt=ContextRelevance.system_prompt
-                + ContextRelevance.verb_confidence_prompt,
+                verb_confidence_prompt=system_prompt
+                + feedback_v2.ContextRelevance.verb_confidence_prompt,
                 user_prompt=str.format(
-                    prompts.CONTEXT_RELEVANCE_USER,
+                    feedback_prompts.CONTEXT_RELEVANCE_USER,
                     question=question,
                     context=context,
                 ),
@@ -495,13 +499,20 @@ class LLMProvider(Provider):
             logger.error(e)
             return None, None
 
-    def relevance(self, prompt: str, response: str) -> float:
+    def relevance(
+        self,
+        prompt: str,
+        response: str,
+        criteria: Optional[str] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a
         template to check the relevance of the response to a prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.relevance).on_input_output()
             ```
@@ -513,24 +524,48 @@ class LLMProvider(Provider):
             ).aggregate(np.mean)
             ```
 
-        Parameters:
+        Args:
             prompt (str): A text prompt to an agent.
-
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
-            float: A value between 0 and 1. 0 being "not relevant" and 1 being
-                "relevant".
+            float: A value between 0 and 1. 0 being "not relevant" and 1 being "relevant".
         """
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.PromptResponseRelevance.generate_system_prompt(
+                min_score_val, max_score_val, criteria, output_space
+            )
+        )
+
         return self.generate_score(
-            system_prompt=prompts.ANSWER_RELEVANCE_SYSTEM,
+            system_prompt=system_prompt,
             user_prompt=str.format(
-                prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+                feedback_prompts.ANSWER_RELEVANCE_USER,
+                prompt=prompt,
+                response=response,
             ),
+            max_score_val=max_score_val,
+            min_score_val=min_score_val,
+            temperature=temperature,
         )
 
     def relevance_with_cot_reasons(
-        self, prompt: str, response: str
+        self,
+        prompt: str,
+        response: str,
+        criteria: Optional[str] = None,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion Model. A function that completes a template to
@@ -538,7 +573,6 @@ class LLMProvider(Provider):
         thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = (
                 Feedback(provider.relevance_with_cot_reasons)
@@ -549,66 +583,116 @@ class LLMProvider(Provider):
         Args:
             prompt (str): A text prompt to an agent.
             response (str): The agent's response to the prompt.
+            criteria (Optional[str]): If provided, overrides the evaluation criteria for evaluation. Defaults to None.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0 and 1. 0 being "not relevant" and 1 being
                 "relevant".
         """
-        system_prompt = prompts.ANSWER_RELEVANCE_SYSTEM
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = (
+            feedback_v2.PromptResponseRelevance.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+            )
+        )
 
         user_prompt = str.format(
-            prompts.ANSWER_RELEVANCE_USER, prompt=prompt, response=response
+            feedback_prompts.ANSWER_RELEVANCE_USER,
+            prompt=prompt,
+            response=response,
         )
         user_prompt = user_prompt.replace(
-            "RELEVANCE:", prompts.COT_REASONS_TEMPLATE
+            "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        return self.generate_score_and_reasons(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
 
-    def sentiment(self, text: str) -> float:
+    def sentiment(
+        self, text: str, min_score_val: int = 0, max_score_val: int = 3
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the sentiment of some text.
 
         Example:
-
             ```python
             feedback = Feedback(provider.sentiment).on_output()
             ```
 
         Args:
-            text: The text to evaluate sentiment of.
+            text (str): The text to evaluate sentiment of.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             A value between 0 and 1. 0 being "negative sentiment" and 1
                 being "positive sentiment".
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM
-        user_prompt = prompts.SENTIMENT_USER + text
-        return self.generate_score(system_prompt, user_prompt)
+        system_prompt = feedback_prompts.SENTIMENT_SYSTEM.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
+        user_prompt = feedback_prompts.SENTIMENT_USER + text
+        return self.generate_score(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+        )
 
-    def sentiment_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def sentiment_with_cot_reasons(
+        self,
+        text: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the sentiment of some text.
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.sentiment_with_cot_reasons).on_output()
             ```
 
         Args:
             text (str): Text to evaluate.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-        system_prompt = prompts.SENTIMENT_SYSTEM
+        system_prompt = feedback_prompts.SENTIMENT_SYSTEM
         user_prompt = (
-            prompts.SENTIMENT_USER + text + prompts.COT_REASONS_TEMPLATE
+            feedback_prompts.SENTIMENT_USER
+            + text
+            + feedback_prompts.COT_REASONS_TEMPLATE
         )
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        return self.generate_score_and_reasons(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
 
     def model_agreement(self, prompt: str, response: str) -> float:
         """
@@ -618,7 +702,6 @@ class LLMProvider(Provider):
         correct, and measures whether previous chat completion response is similar.
 
         Example:
-
             ```python
             feedback = Feedback(provider.model_agreement).on_input_output()
             ```
@@ -637,19 +720,25 @@ class LLMProvider(Provider):
             DeprecationWarning,
         )
         chat_response = self._create_chat_completion(
-            prompt=prompts.CORRECT_SYSTEM
+            prompt=feedback_prompts.CORRECT_SYSTEM
         )
         agreement_txt = self._get_answer_agreement(
             prompt, response, chat_response
         )
         return (
-            re_configured_rating(
+            feedback_generated.re_configured_rating(
                 agreement_txt, min_score_val=0, max_score_val=3
             )
             / 3
         )
 
-    def _langchain_evaluate(self, text: str, criteria: str) -> float:
+    def _langchain_evaluate(
+        self,
+        text: str,
+        criteria: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+    ) -> float:
         """
         Uses chat completion model. A general function that completes a template
         to evaluate different aspects of some text. Prompt credit to Langchain.
@@ -657,23 +746,38 @@ class LLMProvider(Provider):
         Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             float: A value between 0.0 and 1.0, representing the specified
                 evaluation.
         """
+        criteria = criteria.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
 
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
 
-        return self.generate_score(system_prompt, user_prompt)
+        return self.generate_score(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+        )
 
     def _langchain_evaluate_with_cot_reasons(
-        self, text: str, criteria: str
+        self,
+        text: str,
+        criteria: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
@@ -682,19 +786,32 @@ class LLMProvider(Provider):
         Args:
             text (str): A prompt to an agent.
             criteria (str): The specific criteria for evaluation.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
         """
 
+        criteria = criteria.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
+
         system_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
             criteria=criteria,
         )
         user_prompt = str.format(
-            prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        return self.generate_score_and_reasons(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
 
     def conciseness(self, text: str) -> float:
         """
@@ -702,7 +819,6 @@ class LLMProvider(Provider):
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.conciseness).on_output()
             ```
@@ -715,7 +831,8 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
         )
 
     def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -724,7 +841,6 @@ class LLMProvider(Provider):
         check the conciseness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.conciseness).on_output()
             ```
@@ -735,7 +851,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
         )
 
     def correctness(self, text: str) -> float:
@@ -744,7 +861,6 @@ class LLMProvider(Provider):
         check the correctness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.correctness).on_output()
             ```
@@ -756,7 +872,8 @@ class LLMProvider(Provider):
             A value between 0.0 (not correct) and 1.0 (correct).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
         )
 
     def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -766,7 +883,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.correctness_with_cot_reasons).on_output()
             ```
@@ -778,7 +894,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
         )
 
     def coherence(self, text: str) -> float:
@@ -787,7 +904,6 @@ class LLMProvider(Provider):
         template to check the coherence of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.coherence).on_output()
             ```
@@ -799,7 +915,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
         )
 
     def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -809,7 +926,6 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.coherence_with_cot_reasons).on_output()
             ```
@@ -821,7 +937,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
         )
 
     def harmfulness(self, text: str) -> float:
@@ -830,7 +947,6 @@ class LLMProvider(Provider):
         check the harmfulness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.harmfulness).on_output()
             ```
@@ -842,7 +958,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
         )
 
     def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -852,7 +969,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.harmfulness_with_cot_reasons).on_output()
             ```
@@ -865,7 +981,8 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
         )
 
     def maliciousness(self, text: str) -> float:
@@ -874,7 +991,6 @@ class LLMProvider(Provider):
         check the maliciousness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.maliciousness).on_output()
             ```
@@ -887,7 +1003,8 @@ class LLMProvider(Provider):
         """
 
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
         )
 
     def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -897,7 +1014,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.maliciousness_with_cot_reasons).on_output()
             ```
@@ -909,7 +1025,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
         )
 
     def helpfulness(self, text: str) -> float:
@@ -918,7 +1035,6 @@ class LLMProvider(Provider):
         check the helpfulness of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.helpfulness).on_output()
             ```
@@ -930,7 +1046,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
         )
 
     def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -940,7 +1057,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.helpfulness_with_cot_reasons).on_output()
             ```
@@ -952,7 +1068,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
         )
 
     def controversiality(self, text: str) -> float:
@@ -962,7 +1079,6 @@ class LLMProvider(Provider):
         Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.controversiality).on_output()
             ```
@@ -975,7 +1091,8 @@ class LLMProvider(Provider):
                 (controversial).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
         )
 
     def controversiality_with_cot_reasons(
@@ -987,7 +1104,6 @@ class LLMProvider(Provider):
         Eval. Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.controversiality_with_cot_reasons).on_output()
             ```
@@ -999,7 +1115,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
         )
 
     def misogyny(self, text: str) -> float:
@@ -1008,7 +1125,6 @@ class LLMProvider(Provider):
         check the misogyny of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.misogyny).on_output()
             ```
@@ -1020,7 +1136,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
         )
 
     def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1030,7 +1147,6 @@ class LLMProvider(Provider):
         uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.misogyny_with_cot_reasons).on_output()
             ```
@@ -1042,7 +1158,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
         )
 
     def criminality(self, text: str) -> float:
@@ -1051,7 +1168,6 @@ class LLMProvider(Provider):
         check the criminality of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.criminality).on_output()
             ```
@@ -1064,7 +1180,8 @@ class LLMProvider(Provider):
 
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
         )
 
     def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1074,7 +1191,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.criminality_with_cot_reasons).on_output()
             ```
@@ -1086,7 +1202,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
         )
 
     def insensitivity(self, text: str) -> float:
@@ -1095,7 +1212,6 @@ class LLMProvider(Provider):
         check the insensitivity of some text. Prompt credit to LangChain Eval.
 
         Example:
-
             ```python
             feedback = Feedback(provider.insensitivity).on_output()
             ```
@@ -1107,7 +1223,8 @@ class LLMProvider(Provider):
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
         return self._langchain_evaluate(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
         )
 
     def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
@@ -1117,7 +1234,6 @@ class LLMProvider(Provider):
         Also uses chain of thought methodology and emits the reasons.
 
         Example:
-
             ```python
             feedback = Feedback(provider.insensitivity_with_cot_reasons).on_output()
             ```
@@ -1129,7 +1245,8 @@ class LLMProvider(Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
         """
         return self._langchain_evaluate_with_cot_reasons(
-            text=text, criteria=prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
+            text=text,
+            criteria=feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
         )
 
     def _get_answer_agreement(
@@ -1152,11 +1269,15 @@ class LLMProvider(Provider):
 
         return self.endpoint.run_in_pace(
             func=self._create_chat_completion,
-            prompt=(prompts.AGREEMENT_SYSTEM % (prompt, check_response))
+            prompt=(
+                feedback_prompts.AGREEMENT_SYSTEM % (prompt, check_response)
+            )
             + response,
         )
 
-    def _generate_key_points(self, source: str):
+    def _generate_key_points(
+        self, source: str, temperature: float = 0.0
+    ) -> str:
         """
         Uses chat completion model. A function that tries to distill main points
         to be used by the comprehensiveness feedback function.
@@ -1167,14 +1288,34 @@ class LLMProvider(Provider):
         Returns:
             (str) key points of the source text.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+        llm_messages = [
+            {
+                "role": "system",
+                "content": feedback_prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": str.format(
+                    feedback_prompts.GENERATE_KEY_POINTS_USER_PROMPT,
+                    source=source,
+                ),
+            },
+        ]
 
-        return self._create_chat_completion(
-            prompt=prompts.GENERATE_KEY_POINTS_SYSTEM_PROMPT
-            + str.format(prompts.GENERATE_KEY_POINTS_USER_PROMPT, source=source)
+        return self.endpoint.run_in_pace(
+            func=self._create_chat_completion,
+            messages=llm_messages,
+            temperature=temperature,
         )
 
     def _assess_key_point_inclusion(
-        self, key_points: str, summary: str
+        self,
+        key_points: str,
+        summary: str,
+        min_score: int = 0,
+        max_score: int = 3,
+        temperature: float = 0.0,
     ) -> List:
         """
         Splits key points by newlines and assesses if each one is included in the summary.
@@ -1186,25 +1327,38 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of strings indicating whether each key point is included in the summary.
         """
-        key_points_list = key_points.split("\n")
+        assert self.endpoint is not None, "Endpoint is not set."
+        key_points_list = [
+            point.strip() for point in key_points.split("\n") if point.strip()
+        ]
 
-        system_prompt = prompts.COMPREHENSIVENESS_SYSTEM_PROMPT
+        system_prompt = feedback_prompts.COMPREHENSIVENESS_SYSTEM_PROMPT.format(
+            min_score=min_score, max_score=max_score
+        )
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
-                prompts.COMPREHENSIVENESS_USER_PROMPT,
+                feedback_prompts.COMPREHENSIVENESS_USER_PROMPT,
                 key_point=key_point,
                 summary=summary,
             )
-            inclusion_assessment = self._create_chat_completion(
-                prompt=system_prompt + user_prompt
+
+            llm_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+
+            inclusion_assessment = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
             )
             inclusion_assessments.append(inclusion_assessment)
 
         return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str
+        self, source: str, summary: str, min_score: int = 0, max_score: int = 3
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1213,7 +1367,6 @@ class LLMProvider(Provider):
         in function assessment.
 
         Example:
-
             ```python
             feedback = Feedback(provider.comprehensiveness_with_cot_reasons).on_input_output()
             ```
@@ -1228,7 +1381,7 @@ class LLMProvider(Provider):
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
-            key_points, summary
+            key_points, summary, min_score=min_score, max_score=max_score
         )
         scores = []
         reasons = ""
@@ -1236,12 +1389,9 @@ class LLMProvider(Provider):
             reasons += assessment + "\n\n"
             if assessment:
                 first_line = assessment.split("\n")[0]
-                score = (
-                    re_configured_rating(
-                        first_line, min_score_val=0, max_score_val=3
-                    )
-                    / 3
-                )
+                score = feedback_generated.re_configured_rating(
+                    first_line, min_score_val=min_score, max_score_val=max_score
+                ) / (max_score - min_score)
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
@@ -1257,34 +1407,49 @@ class LLMProvider(Provider):
             "summarization_with_cot_reasons is deprecated and not implemented. Please use comprehensiveness_with_cot_reasons instead."
         )
 
-    def stereotypes(self, prompt: str, response: str) -> float:
+    def stereotypes(
+        self,
+        prompt: str,
+        response: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check adding assumed stereotypes in the response when not present in the
         prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.stereotypes).on_input_output()
             ```
 
         Args:
             prompt (str): A text prompt to an agent.
-
             response (str): The agent's response to the prompt.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
 
         Returns:
             A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
-        system_prompt = prompts.STEREOTYPES_SYSTEM_PROMPT
+        system_prompt = feedback_prompts.STEREOTYPES_SYSTEM_PROMPT.format(
+            min_score=min_score_val, max_score=max_score_val
+        )
         user_prompt = str.format(
-            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
+            feedback_prompts.STEREOTYPES_USER_PROMPT,
+            prompt=prompt,
+            response=response,
         )
         return self.generate_score(system_prompt, user_prompt)
 
     def stereotypes_with_cot_reasons(
-        self, prompt: str, response: str
+        self,
+        prompt: str,
+        response: str,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1292,27 +1457,37 @@ class LLMProvider(Provider):
         prompt.
 
         Example:
-
             ```python
             feedback = Feedback(provider.stereotypes_with_cot_reasons).on_input_output()
             ```
 
         Args:
             prompt (str): A text prompt to an agent.
-
             response (str): The agent's response to the prompt.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
 
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
         system_prompt = (
-            prompts.STEREOTYPES_SYSTEM_PROMPT + prompts.COT_REASONS_TEMPLATE
+            feedback_prompts.STEREOTYPES_SYSTEM_PROMPT
+            + feedback_prompts.COT_REASONS_TEMPLATE
         )
         user_prompt = str.format(
-            prompts.STEREOTYPES_USER_PROMPT, prompt=prompt, response=response
+            feedback_prompts.STEREOTYPES_USER_PROMPT,
+            prompt=prompt,
+            response=response,
         )
 
-        return self.generate_score_and_reasons(system_prompt, user_prompt)
+        return self.generate_score_and_reasons(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
 
     def _remove_trivial_statements(self, statements: List[str]) -> List[str]:
         """
@@ -1324,24 +1499,42 @@ class LLMProvider(Provider):
         Returns:
             List[str]: A list of statements with trivial statements removed.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
+        system_prompt = feedback_prompts.LLM_TRIVIAL_SYSTEM
 
-        system_prompt = prompts.LLM_TRIVIAL_SYSTEM
-
-        user_prompt = prompts.LLM_TRIVIAL_USER.format(
+        user_prompt = feedback_prompts.LLM_TRIVIAL_USER.format(
             statements=str(statements)
         )
 
         llm_messages = [{"role": "system", "content": system_prompt}]
         llm_messages.append({"role": "user", "content": user_prompt})
 
-        return eval(
-            self.endpoint.run_in_pace(
-                func=self._create_chat_completion, messages=llm_messages
+        try:
+            result = eval(
+                self.endpoint.run_in_pace(
+                    func=self._create_chat_completion, messages=llm_messages
+                )
             )
-        )
+            if isinstance(result, list):
+                return result
+        except Exception:
+            warnings.warn(
+                "Failed to process and remove trivial statements. Proceeding with all statements."
+            )
+            pass
+
+        return statements
 
     def groundedness_measure_with_cot_reasons(
-        self, source: str, statement: str, use_sent_tokenize: bool = True
+        self,
+        source: str,
+        statement: str,
+        criteria: Optional[str] = None,
+        use_sent_tokenize: bool = True,
+        filter_trivial_statements: bool = True,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1355,7 +1548,6 @@ class LLMProvider(Provider):
         Abstentions will be considered as grounded.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -1392,12 +1584,19 @@ class LLMProvider(Provider):
         Then, the scores are normalized, and averaged to give a final groundedness score of 0.5.
 
         Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
-            use_sent_tokenize: Whether to split the statement into sentences using punkt sentence tokenizer. If False, use LLM to split the statement.
+            source (str): The source that should support the statement.
+            statement (str): The statement to check groundedness.
+            criteria (str): The specific criteria for evaluation. Defaults to None.
+            use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+
+        assert self.endpoint is not None, "Endpoint is not set."
 
         groundedness_scores = {}
         reasons_str = ""
@@ -1406,27 +1605,67 @@ class LLMProvider(Provider):
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
         else:
-            hypotheses = self._create_chat_completion(
-                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
-                messages=[{"role": "user", "content": statement}],
-            ).split("\n")
-        try:
-            hypotheses = self._remove_trivial_statements(hypotheses)
-        except Exception as e:
-            logger.error(
-                f"Error removing trivial statements: {e}. Proceeding with all statements."
-            )
+            llm_messages = [
+                {
+                    "role": "system",
+                    "content": feedback_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                },
+                {"role": "user", "content": statement},
+            ]
 
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+            hypotheses = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
+            ).split("\n")
+
+        if filter_trivial_statements:
+            hypotheses = self._remove_trivial_statements(hypotheses)
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.Groundedness.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         def evaluate_hypothesis(index, hypothesis):
-            user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+            user_prompt = feedback_prompts.LLM_GROUNDEDNESS_USER.format(
                 premise=f"{source}", hypothesis=f"{hypothesis}"
             )
             score, reason = self.generate_score_and_reasons(
-                system_prompt, user_prompt
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                min_score_val=min_score_val,
+                max_score_val=max_score_val,
+                temperature=temperature,
             )
-            return index, score, reason
+
+            score_pattern = re.compile(r"Score:\s*([0-9.]+)")
+            match = score_pattern.search(reason.get("reason", ""))
+            normalized_reason = None
+            if match:
+                original_reason_score = float(match.group(1))
+                normalized_reason_score = (
+                    original_reason_score - min_score_val
+                ) / (max_score_val - min_score_val)
+
+                # Ensure the formatting matches exactly
+                original_string = f"Score: {int(original_reason_score)}"
+                replacement_string = f"Score: {normalized_reason_score}"
+                normalized_reason = reason.copy()
+                normalized_reason["reason"] = normalized_reason[
+                    "reason"
+                ].replace(original_string, replacement_string)
+
+            if normalized_reason is not None:
+                return index, score, normalized_reason
+            else:
+                return index, score, reason
 
         results = []
 
@@ -1445,7 +1684,7 @@ class LLMProvider(Provider):
             groundedness_scores[f"statement_{i}"] = score
             reason_str = (
                 reason["reason"]
-                if "reason" in reason
+                if reason is not None and "reason" in reason
                 else "reason not generated"
             )
             reasons_str += f"STATEMENT {i}:\n{reason_str}\n"
@@ -1476,7 +1715,12 @@ class LLMProvider(Provider):
         source: str,
         statement: str,
         question: str,
+        criteria: Optional[str] = None,
         use_sent_tokenize: bool = True,
+        filter_trivial_statements: bool = True,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        temperature: float = 0.0,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1492,7 +1736,6 @@ class LLMProvider(Provider):
         If the question is considered answerable, abstentions will be considered as not grounded and punished with low scores. Otherwise, unanswerable abstentions will be considered grounded.
 
         Example:
-
             ```python
             from trulens.core import Feedback
             from trulens.providers.openai import OpenAI
@@ -1508,46 +1751,84 @@ class LLMProvider(Provider):
             ```
 
         Args:
-            source: The source that should support the statement.
-            statement: The statement to check groundedness.
-            question: The question to check answerability.
-            use_sent_tokenize: Whether to split the statement into sentences using punkt sentence tokenizer. If False, use LLM to split the statement.
+            source (str): The source that should support the statement.
+            statement (str): The statement to check groundedness.
+            question (str): The question to check answerability.
+            criteria (str): The specific criteria for evaluation. Defaults to None.
+            use_sent_tokenize (bool): Whether to split the statement into sentences using punkt sentence tokenizer. If `False`, use an LLM to split the statement. Defaults to False. Note this might incur additional costs and reach context window limits in some cases.
+            min_score_val (int): The minimum score value used by the LLM before normalization. Defaults to 0.
+            max_score_val (int): The maximum score value used by the LLM before normalization. Defaults to 3.
+            temperature (float): The temperature for the LLM response, which might have impact on the confidence level of the evaluation. Defaults to 0.0.
+
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+        assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
         else:
-            hypotheses = self._create_chat_completion(
-                prompt=prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
-                messages=[{"role": "user", "content": statement}],
+            llm_messages = [
+                {
+                    "role": "system",
+                    "content": feedback_prompts.LLM_GROUNDEDNESS_SENTENCES_SPLITTER,
+                },
+                {"role": "user", "content": statement},
+            ]
+
+            hypotheses = self.endpoint.run_in_pace(
+                func=self._create_chat_completion,
+                messages=llm_messages,
+                temperature=temperature,
             ).split("\n")
 
         groundedness_scores = {}
         reasons_str = ""
 
         def evaluate_abstention(statement):
-            user_prompt = prompts.LLM_ABSTENTION_USER.format(
+            user_prompt = feedback_prompts.LLM_ABSTENTION_USER.format(
                 statement=statement
             )
-            score = self.generate_score(
-                prompts.LLM_ABSTENTION_SYSTEM, user_prompt
-            )
+            try:
+                score = self.generate_score(
+                    feedback_prompts.LLM_ABSTENTION_SYSTEM.format(
+                        min_score=0, max_score=1
+                    ),
+                    user_prompt,
+                    min_score_val=0,
+                    max_score_val=1,
+                )
+            except Exception:
+                score = 0  # assume not abstention if abstention scoring fails
             return score
 
         def evaluate_answerability(question, source):
-            user_prompt = prompts.LLM_ANSWERABILITY_USER.format(
+            user_prompt = feedback_prompts.LLM_ANSWERABILITY_USER.format(
                 question=question, source=source
             )
             score = self.generate_score(
-                prompts.LLM_ANSWERABILITY_SYSTEM, user_prompt
+                feedback_prompts.LLM_ANSWERABILITY_SYSTEM.format(
+                    min_score=0, max_score=1
+                ),
+                user_prompt,
+                min_score_val=0,
+                max_score_val=1,
             )
             return score
 
-        hypotheses = self._remove_trivial_statements(hypotheses)
+        if filter_trivial_statements:
+            hypotheses = self._remove_trivial_statements(hypotheses)
 
-        system_prompt = prompts.LLM_GROUNDEDNESS_SYSTEM
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.Groundedness.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
 
         def evaluate_hypothesis(index, hypothesis):
             abstention_score = evaluate_abstention(hypothesis)
@@ -1558,13 +1839,38 @@ class LLMProvider(Provider):
                 else:
                     return index, 1.0, {"reason": "Unanswerable abstention"}
             else:
-                user_prompt = prompts.LLM_GROUNDEDNESS_USER.format(
+                user_prompt = feedback_prompts.LLM_GROUNDEDNESS_USER.format(
                     premise=f"{source}", hypothesis=f"{hypothesis}"
                 )
                 score, reason = self.generate_score_and_reasons(
-                    system_prompt, user_prompt
+                    system_prompt,
+                    user_prompt,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
+                    temperature=temperature,
                 )
-                return index, score, reason
+
+                score_pattern = re.compile(r"Score:\s*([0-9.]+)")
+                match = score_pattern.search(reason.get("reason", ""))
+                normalized_reason = None
+                if match:
+                    original_reason_score = float(match.group(1))
+                    normalized_reason_score = (
+                        original_reason_score - min_score_val
+                    ) / (max_score_val - min_score_val)
+
+                    # Ensure the formatting matches exactly
+                    original_string = f"Score: {int(original_reason_score)}"
+                    replacement_string = f"Score: {normalized_reason_score}"
+                    normalized_reason = reason.copy()
+                    normalized_reason["reason"] = normalized_reason[
+                        "reason"
+                    ].replace(original_string, replacement_string)
+
+                if normalized_reason is not None:
+                    return index, score, normalized_reason
+                else:
+                    return index, score, reason
 
         results = []
 

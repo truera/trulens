@@ -17,7 +17,7 @@ packages = [
   { include = "trulens" },
 ]
 homepage = "https://trulens.org/"
-documentation = "https://trulens.org/trulens/getting_started/"
+documentation = "https://trulens.org/getting_started/"
 repository = "https://github.com/truera/trulens"
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -31,7 +31,7 @@ python = ">=3.9,<3.12"
 trulens-core = { version = "^1.0.0" }
 trulens-apps-langchain = { version = "^1.0.0", python = "<3.13" }
 pydantic = "^2"
-nemoguardrails = "^0.9"
+nemoguardrails = ">=0.9"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }

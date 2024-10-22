@@ -16,29 +16,37 @@ are expected.
 from pathlib import Path
 from unittest import main
 
-from trulens.apps.custom import TruCustomApp
-from trulens.core import Feedback
-from trulens.feedback.dummy.provider import DummyProvider
-from trulens.providers.huggingface.provider import Dummy
+from trulens.apps import custom as custom_app
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.utils import threading as threading_utils
+from trulens.feedback.dummy import provider as dummy_provider
+from trulens.providers.huggingface import provider as huggingface_provider
 
 from examples.dev.dummy_app.app import DummyApp
-from tests.test import JSONTestCase
+from tests import test as mod_test
 
 _GOLDEN_PATH = Path("tests") / "e2e" / "golden"
 
 
-class TestSerial(JSONTestCase):
+class TestSerial(mod_test.TruTestCase):
     """Tests for cost tracking of endpoints."""
 
     def setUp(self):
         pass
+
+    def tearDown(self):
+        # Need to shutdown threading pools as otherwise the thread cleanup
+        # checks will fail.
+        threading_utils.TP().shutdown()
+
+        super().tearDown()
 
     def test_app_serial(self):
         """Check that the custom app and products are serialized consistently."""
 
         ca = DummyApp(delay=0.0, alloc=0, use_parallel=False)
 
-        d = DummyProvider(
+        d = dummy_provider.DummyProvider(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
@@ -48,7 +56,7 @@ class TestSerial(JSONTestCase):
             delay=0.0,
         )
 
-        d_hugs = Dummy(
+        d_hugs = huggingface_provider.Dummy(
             loading_prob=0.0,
             freeze_prob=0.0,
             error_prob=0.0,
@@ -58,14 +66,14 @@ class TestSerial(JSONTestCase):
             delay=0.0,
         )
 
-        feedback_language_match = Feedback(
+        feedback_language_match = core_feedback.Feedback(
             d_hugs.language_match
         ).on_input_output()
-        feedback_context_relevance = Feedback(
+        feedback_context_relevance = core_feedback.Feedback(
             d.context_relevance
         ).on_input_output()
 
-        ta = TruCustomApp(
+        ta = custom_app.TruCustomApp(
             ca,
             app_name="customapp",
             feedbacks=[feedback_language_match, feedback_context_relevance],
@@ -110,8 +118,10 @@ class TestSerial(JSONTestCase):
             )
 
         feedbacks = record.wait_for_feedback_results()
+
         for fdef, fres in feedbacks.items():
             name = fdef.name
+
             with self.subTest(step=f"feedback definition {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fdef.model_dump(),
@@ -121,6 +131,7 @@ class TestSerial(JSONTestCase):
                         "id",
                     ]),
                 )
+
             with self.subTest(step=f"feedback result {name} serialization"):
                 self.assertGoldenJSONEqual(
                     actual=fres.model_dump(),
