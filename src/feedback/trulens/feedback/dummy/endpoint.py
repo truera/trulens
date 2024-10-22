@@ -552,7 +552,9 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                         self.func.__name__,
                     )
 
-        def on_callable_return(self, ret: requests.Response, **kwargs):
+        def on_callable_return(
+            self, ret: requests.Response, **kwargs
+        ) -> requests.Response:
             """Handle a requests.Response response.
 
             The logic handles responses of the form produced by both huggingface api
