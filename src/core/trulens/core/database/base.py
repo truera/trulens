@@ -91,6 +91,15 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_db_revision(self) -> Optional[str]:
+        """Get the current revision of the database.
+
+        Returns:
+            The current revision of the database.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def insert_record(
         self,
         record: record_schema.Record,
