@@ -353,6 +353,10 @@ class Span(serial_utils.SerialModel, trace_api.Span):
 
         return self._start_timestamp
 
+    @start_timestamp.setter
+    def start_timestamp(self, value: int):
+        self._start_timestamp = value
+
     _end_timestamp: Optional[int] = pydantic.PrivateAttr(None)
 
     @property
@@ -360,6 +364,10 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         """End time in nanoseconds since epoch. None if not yet finished."""
 
         return self._end_timestamp
+
+    @end_timestamp.setter
+    def end_timestamp(self, value: Optional[int]):
+        self._end_timestamp = value
 
     _record_exception: bool = pydantic.PrivateAttr(True)
     """Whether to record exceptions in the span."""

@@ -688,50 +688,6 @@ class Tracer(core_otel.Tracer):
         return self._aspan(name="trulens.phantom", cls=PhantomSpan)
 
 
-class NullTracer(Tracer):
-    """Tracer that does not save the spans it makes."""
-
-    @contextlib.contextmanager
-    def _span(self, cls, **kwargs):
-        # TODO: this adds span to global list, don't do this
-        span = self.start_span(cls=cls, **kwargs)
-
-        token = self.context.set(span.context)
-
-        error = None
-
-        try:
-            yield span
-        except BaseException as e:
-            # ignore exception since spans are also ignored/not recorded
-            error = e
-        finally:
-            self.context.reset(token)
-            if error is not None:
-                raise error
-
-    @contextlib.asynccontextmanager
-    async def _aspan(self, cls, **kwargs):
-        span = self.start_span(cls=cls, **kwargs)
-        token = self.context.set(span.context)
-
-        error = None
-
-        try:
-            yield span
-        except BaseException as e:
-            # ignore exception since spans are also ignored/not recorded
-            error = e
-        finally:
-            self.context.reset(token)
-            if error is not None:
-                raise error
-
-    @property
-    def spans(self):
-        return []
-
-
 class TracerProvider(
     core_otel.TracerProvider, metaclass=python_utils.PydanticSingletonMeta
 ):
@@ -842,9 +798,12 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T], Generic[T, S]):
         temp = super().on_callable_call(bindings=bindings, **kwargs)
 
         if "self" in bindings.arguments:
+            # TODO: need some generalization
             self.obj = bindings.arguments["self"]
             self.obj_cls = type(self.obj)
             self.obj_id = id(self.obj)
+        else:
+            logger.warning("No self in bindings for %s.", self)
 
         span = self.span
         span.pid = os.getpid()

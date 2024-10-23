@@ -1,11 +1,9 @@
 import inspect
-import json
 import logging
 from time import sleep
 from typing import (
     Callable,
     Dict,
-    List,
     Optional,
     Sequence,
 )
@@ -30,7 +28,7 @@ class HuggingfaceCallback(core_endpoint.EndpointCallback):
 
         if response.ok:
             self.cost.n_successful_requests += 1
-            content = json.loads(response.text)
+            content = response.json()
 
             # Handle case when multiple items returned by hf api
             for item in content:
@@ -43,7 +41,9 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
     )
 
     class _WrapperHuggingfaceEndpointCallback(
-        experimental_core_endpoint._WrapperEndpointCallback[requests.Response]
+        experimental_core_endpoint._WrapperEndpointCallback[
+            requests.Response, serial_utils.JSON
+        ]
     ):
         """EXPERIMENTAL(otel_tracing): process huggingface wrapped calls to
         extract cost information.
@@ -93,18 +93,22 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
             return ret
 
         def on_endpoint_classification(
-            self, response: List[List[serial_utils.JSON]]
+            self, response: serial_utils.JSON
         ) -> None:
             """Process a classification response."""
 
             super().on_endpoint_classification(response)
 
+            if not isinstance(response, Sequence):
+                logger.warning("Unexpected response: %s", response)
+                return
+
             # Handle case when multiple items returned by hf api
             for item in response:
                 if not isinstance(item, Sequence):
                     logger.warning("Unexpected response item: %s", item)
-
-                self.cost.n_classes += len(item)
+                else:
+                    self.cost.n_classes += len(item)
 
 
 class HuggingfaceEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
@@ -139,6 +143,9 @@ class HuggingfaceEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
         response: requests.Response,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> requests.Response:
+        # TODELETE(otel_tracing). Delete once otel_tracing is no longer
+        # experimental.
+
         # Call here can only be requests.post .
 
         if "url" not in bindings.arguments:
@@ -165,7 +172,15 @@ class HuggingfaceEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
         json: serial_utils.JSON,
         timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
     ) -> requests.Response:
-        """Make an http post request to the huggingface api."""
+        """Make an http post request to the huggingface api.
+
+        This adds some additional logic beyond WithPost.post to handle
+        huggingface-specific responses:
+
+        - Model loading delay.
+        - Overloaded API.
+        - API error.
+        """
 
         ret = super().post(url, json, timeout)
 

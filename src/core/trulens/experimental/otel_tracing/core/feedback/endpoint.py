@@ -2,11 +2,7 @@ from __future__ import annotations
 
 import logging
 from pprint import PrettyPrinter
-from typing import (
-    Any,
-    Tuple,
-    TypeVar,
-)
+from typing import Generic, Tuple, TypeVar
 
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
@@ -19,17 +15,23 @@ logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
 
-A = TypeVar("A")
-B = TypeVar("B")
-T = TypeVar("T")
+Args = TypeVar("Args")
+Ret = TypeVar("Ret")
+Res = TypeVar("Res")
 
 
 class _WrapperEndpointCallback(
-    mod_trace.TracingCallbacks[T, mod_trace.LiveSpanCallWithCost]
+    mod_trace.TracingCallbacks[Ret, mod_trace.LiveSpanCallWithCost],
+    Generic[Ret, Res],
 ):
-    """EXPERIMENTAL(otel_tracing).
+    """EXPERIMENTAL(otel_tracing): Extension to TracingCallbacks that tracks
+    costs.
 
-    Extension to TracingCallbacks that tracks costs.
+    Type Args:
+        Ret: The return type of the wrapped callable.
+
+        Res: The response type of the endpoint. This can be the same as Ret but
+            does not need to.
     """
 
     # overriding CallableCallbacks
@@ -41,46 +43,50 @@ class _WrapperEndpointCallback(
 
         self.cost: base_schema.Cost = self.span.cost
         self.cost.n_requests += 1
-        # Subclasses need to fill in n_classification_requests and/or n_completion_requests .
-        # self.cost.n_classification_requests += 1
-        # self.cost.n_completion_requests += 1
+        # Subclasses need to fill in n_*_requests either in their init or
+        # on_callable_call when bindings are available.
 
     # overriding CallableCallbacks
-    def on_callable_return(self, ret: T, **kwargs) -> T:
+    def on_callable_return(self, ret: Ret, **kwargs) -> Ret:
         """Called after a request returns.
 
         A return does not mean the request was successful. The return value can
         indicate failure of some sort.
+
+        Subclasses need to override this method and extract response: Res to
+        invoke on_endpoint_response on it.
         """
 
-        ret = super().on_callable_return(ret=ret, **kwargs)
+        return super().on_callable_return(ret=ret, **kwargs)
         # Fills in some general attributes from kwargs before the next callback
         # is called.
 
-        self.on_endpoint_response(response=ret)
-
-        return ret
-
     # our optional
-    def on_endpoint_response(self, response: Any) -> None:
+    def on_endpoint_response(self, response: Res) -> None:
         """Called after each non-error response."""
 
         logger.warning("No on_endpoint_response method defined for %s.", self)
 
     # our optional
-    def on_endpoint_generation(self, response: Any) -> None:
+    def on_endpoint_generation(self, response: Res) -> None:
         """Called after each completion request received a response."""
 
         self.cost.n_successful_requests += 1
 
     # our optional
-    def on_endpoint_generation_chunk(self, response: Any) -> None:
+    def on_endpoint_embedding(self, response: Res) -> None:
+        """Called after each embedding request received a response."""
+
+        self.cost.n_successful_requests += 1
+
+    # our optional
+    def on_endpoint_generation_chunk(self, response: Res) -> None:
         """Called after receiving a chunk from a completion request."""
 
         self.cost.n_stream_chunks += 1
 
     # our optional
-    def on_endpoint_classification(self, response: Any) -> None:
+    def on_endpoint_classification(self, response: Res) -> None:
         """Called after each classification request receives a response."""
 
         self.cost.n_successful_requests += 1
@@ -106,10 +112,10 @@ class _Endpoint(core_endpoint.Endpoint):
 
     @staticmethod
     def track_all_costs_tally(
-        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[Args, Ret],
         *args,
         **kwargs,
-    ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
+    ) -> Tuple[Ret, python_utils.Thunk[base_schema.Cost]]:
         with mod_trace.trulens_tracer().cost(
             method_name=__func.__name__
         ) as span:

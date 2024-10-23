@@ -18,6 +18,7 @@ import random
 from time import sleep
 from typing import (
     Any,
+    Awaitable,
     Callable,
     Dict,
     List,
@@ -35,6 +36,7 @@ from pydantic import Field
 import requests
 from requests import structures as request_structures
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -524,7 +526,9 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
     )
 
     class _WrapperDummyEndpointCallback(
-        experimental_core_endpoint._WrapperEndpointCallback[requests.Response]
+        experimental_core_endpoint._WrapperEndpointCallback[
+            asynchro_utils.MaybeAwaitable[requests.Response], serial_utils.JSON
+        ]
     ):
         """EXPERIMENTAL(otel_tracing): Callbacks for instrumented methods in
         DummyAPI to recover costs from those calls."""
@@ -533,6 +537,10 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
             # Can now determine what type of call this was. DummyAPI post/apost
             # requests have an arg "json" which is json dict with key named
             # "mode".
+
+            super().on_callable_call(
+                bindings, **kwargs
+            )  # increments n_requests
 
             if (json := bindings.arguments.get("json")) is not None:
                 if (mode := json.get("mode")) is not None:
@@ -552,50 +560,76 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                         self.func.__name__,
                     )
 
+        def on_endpoint_generation(self, response: serial_utils.JSON) -> None:
+            super().on_endpoint_generation(
+                response
+            )  # increments n_successful_requests
+
+            if isinstance(response, dict):
+                self.cost.cost += response.get("cost", 0.0)
+                self.cost.n_tokens += response.get("n_tokens", 0)
+                self.cost.n_prompt_tokens += response.get("n_prompt_tokens", 0)
+                self.cost.n_completion_tokens += response.get(
+                    "n_completion_tokens", 0
+                )
+            else:
+                logger.warning(
+                    "Unexpected response for generation: %s",
+                    response,
+                )
+
+        def on_endpoint_classification(
+            self, response: serial_utils.JSON
+        ) -> None:
+            super().on_endpoint_classification(
+                response
+            )  # increments n_successful_requests
+
+            if isinstance(response, Sequence):
+                self.cost.n_classes += len(response)
+            else:
+                logger.warning(
+                    "Unexpected response for classification: %s",
+                    response,
+                )
+
         def on_callable_return(
-            self, ret: requests.Response, **kwargs
-        ) -> requests.Response:
+            self,
+            ret: asynchro_utils.MaybeAwaitable[requests.Response],
+            **kwargs,
+        ) -> asynchro_utils.MaybeAwaitable[requests.Response]:
             """Handle a requests.Response response.
 
             The logic handles responses of the form produced by both huggingface api
             requests and openai api.
             """
 
-            ret = super().on_callable_return(ret=ret, **kwargs)
-
-            is_success = False
+            if isinstance(ret, Awaitable):
+                # Wraps awaitable to arrange to call us later.
+                return super().on_callable_return(ret=ret, **kwargs)
+            else:
+                ret = super().on_callable_return(ret=ret, **kwargs)
 
             json: Union[serial_utils.JSON, List[serial_utils.JSON]] = (
                 ret.json()[0]
             )
 
-            if isinstance(json, dict):
+            if isinstance(json, dict) and "usage" in json:
                 # openai completion results are list of dict
-
-                if (usage := json.get("usage")) is not None:
-                    # fake completion
-                    is_success = True
-
-                    self.cost.cost += usage.get("cost", 0.0)
-                    self.cost.n_tokens += usage.get("n_tokens", 0)
-                    self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
-                    self.cost.n_completion_tokens += usage.get(
-                        "n_completion_tokens", 0
-                    )
+                self.on_endpoint_generation(response=json["usage"])
 
             elif isinstance(json, list):
                 # huggingface classification results are list of list of dict
                 json = json[0]
 
-                if (scores := json.get("scores")) is not None:
-                    # fake classification
-                    is_success = True
-                    self.cost.n_classes += len(scores)
-
-            if is_success:
-                self.cost.n_successful_requests += 1
+                if isinstance(json, dict) and "scores" in json:
+                    self.on_endpoint_classification(response=json["scores"])
             else:
-                logger.warning("Could not determine cost from DummyAPI call.")
+                logger.warning(
+                    "Unknown response format for %s: %s.",
+                    self.func.__name__,
+                    json,
+                )
 
             return ret
 

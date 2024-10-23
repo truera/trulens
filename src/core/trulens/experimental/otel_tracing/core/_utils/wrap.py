@@ -75,6 +75,27 @@ class AwaitableCallbacks(Generic[T]):
         return error
 
 
+class AwaitableCallbacksFromCallableCallbacks(AwaitableCallbacks[T]):
+    def __init__(
+        self,
+        awaitable: Awaitable[T],
+        wrapper: Awaitable[T],
+        callbacks: CallableCallbacks[T],
+        **kwargs: Dict[str, Any],
+    ):
+        super().__init__(awaitable, wrapper, **kwargs)
+        self._callable_callbacks = callbacks
+
+    def on_awaitable_end(self):
+        return self._callable_callbacks.on_callable_end()
+
+    def on_awaitable_result(self, result: T) -> T:
+        return self._callable_callbacks.on_callable_return(ret=result)
+
+    def on_awaitable_exception(self, error: Exception) -> Exception:
+        return self._callable_callbacks.on_callable_exception(error=error)
+
+
 def wrap_awaitable(
     awaitable: Awaitable[T],
     callback_class: Type[AwaitableCallbacks] = AwaitableCallbacks,
@@ -364,6 +385,7 @@ class CallableCallbacks(Generic[T]):
             ```
         """
         self.ret = ret
+
         return ret
 
     def on_callable_exception(self, *, error: Exception) -> Exception:
@@ -452,11 +474,19 @@ def wrap_callable(
             # Get the result of the wrapped function.
             ret = func(*args, **kwargs)
 
+            if isinstance(ret, Awaitable):
+                # Arranges to call on_callable_return and on_callable_end after
+                # the awaitable is done.
+                return wrap_awaitable(
+                    ret,
+                    callback_class=AwaitableCallbacksFromCallableCallbacks,
+                    callbacks=callback,
+                )
+
             ret = callback.on_callable_return(ret=ret)
             # Can override ret.
 
             callback.on_callable_end()
-
             return ret
 
         except Exception as e:

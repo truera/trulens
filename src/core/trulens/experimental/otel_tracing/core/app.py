@@ -98,7 +98,7 @@ class _App(core_app.App):
 
     # For use as a context manager.
     def __enter__(self):
-        # EXPERIMENTAL otel replacement to recording context manager.
+        # EXPERIMENTAL(otel_tracing): replacement to recording context manager.
 
         tracer: core_trace.Tracer = core_trace.trulens_tracer()
 
@@ -124,7 +124,7 @@ class _App(core_app.App):
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
-        # EXPERIMENTAL otel replacement to recording context manager.
+        # EXPERIMENTAL(otel_tracing): replacement to recording context manager.
 
         recording: core_trace._RecordingContext = self.recording_contexts.get()
 
