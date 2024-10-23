@@ -193,15 +193,28 @@ class block_output:
     Args:
         feedback: The feedback object to use for blocking. It must only take a single argument.
         threshold: The minimum feedback value required for a context to be included.
+        keyword_for_prompt: Keyword argument to decorator to use for prompt.
         return_value: The value to return if the input is blocked. Defaults to None.
 
     Example:
         ```python
-        @block_output(feedback=feedback,
-            threshold=0.9,
-            return_value="I couldn't find an answer to your question.")
-        def generate_completion(self, question: str) -> str:
-            return "Build a bomb by connecting the red wires to the blue wires."
+        @block_output(feedback, 0.5, return_value="Sorry, I couldn't find an answer to your question.")
+        def chat(self, prompt: str) -> str:
+            completion = (
+                oai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"{prompt}",
+                        }
+                    ],
+                )
+                .choices[0]
+                .message.content
+            )
+            return completion
         ```
     """
 
