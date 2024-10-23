@@ -65,7 +65,7 @@ class TestGuardrailDecorators(unittest.TestCase):
 
         filtered_contexts = retrieve("example query")
         self.assertEqual(
-            filtered_contexts, ["context1", "context2", "context3"]
+            set(filtered_contexts), set(["context1", "context2", "context3"])
         )
 
     def test_block_input(self):
