@@ -14,13 +14,13 @@ This mechanism for guardrails is supported via the `block_output` guardrail.
 
 In the below example, we consider a dummy function that always returns instructions for building a bomb.
 
-Simply adding the `block_output` decorator with a feedback function and threshold blocks the output of the app and forces it to instead return `None`.
+Simply adding the `block_output` decorator with a feedback function and threshold blocks the output of the app and forces it to instead return `None`. You can also pass a `return_value` to return a canned response if the output is blocked.
 
 !!! example "Using `block_output`"
 
     ```python
     @instrument
-    @block_output(feedback=f_criminality_output, threshold=0.9)
+    @block_output(feedback=f_criminality_output, threshold=0.9, return_value="I couldn't find an answer to your question.")
     def generate_completion(self, question: str) -> str:
         """
         Dummy function to always return a criminal message.
@@ -34,12 +34,17 @@ In many cases, you may want to go even further to block unsafe usage of the app 
 
 ![Input Blocking Guardrails Flow](input_blocking_guardrails.png)
 
-This mechanism for guardrails is supported via the `block_input` guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`.
+This mechanism for guardrails is supported via the `block_input` guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`. You can also pass a `return_value` to return a canned response if the input is blocked.
 
 !!! example "Using `block_input`"
 
     ```python
-    @block_input(feedback=f_criminality_input, threshold=0.9, keyword_for_prompt="question")
+    feedback = Feedback(provider.harmfulness, name="Harmfulness", higher_is_better=False)
+
+    @block_input(feedback=f_criminality_input,
+        threshold=0.9,
+        keyword_for_prompt="question",
+        return_value="I couldn't find an answer to your question.")
     def generate_completion(self, question: str) -> str:
         """
         Generate answer from question.

@@ -107,43 +107,32 @@ class block_input:
 
     Args:
         feedback: The feedback object to use for blocking.
-
         threshold: The minimum feedback value required for a context to be included.
-
         keyword_for_prompt: Keyword argument to decorator to use for prompt.
+        return_value: The value to return if the input is blocked. Defaults to None.
 
     Example:
         ```python
-        feedback = Feedback(provider.harmfulness, name="Harmfulness")
-        class RAG_from_scratch:
-            ...
-            @block_input(feedback, 0.5, "query")
-            def generate_completion(self, query: str, context_str: list) -> str:
-                if len(context_str) == 0:
-                    return "Sorry, I couldn't find an answer to your question."
-
-                completion = (
-                    oai_client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        temperature=0,
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": f"We have provided context information below. \n"
-                                f"---------------------\n"
-                                f"{context_str}"
-                                f"\n---------------------\n"
-                                f"First, say hello and that you're happy to help. \n"
-                                f"\n---------------------\n"
-                                f"Then, given this information, please answer the question: {query}",
-                            }
-                        ],
-                    )
-                    .choices[0]
-                    .message.content
+        @block_input(feedback=feedback,
+            threshold=0.9,
+            keyword_for_prompt="question",
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            completion = (
+                oai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"{question}",
+                        }
+                    ],
                 )
-                return completion
-            ...
+                .choices[0]
+                .message.content
+            )
+            return completion
         ```
     """
 
@@ -152,10 +141,12 @@ class block_input:
         feedback: core_feedback.Feedback,
         threshold: float,
         keyword_for_prompt: Optional[str] = None,
+        return_value: Optional[str] = None,
     ):
         self.feedback = feedback
         self.threshold = threshold
         self.keyword_for_prompt = keyword_for_prompt
+        self.return_value = return_value
 
     def __call__(self, func):
         sig = inspect.signature(func)
@@ -185,7 +176,7 @@ class block_input:
             if (self.feedback.higher_is_better and result < self.threshold) or (
                 not self.feedback.higher_is_better and result > self.threshold
             ):
-                return None
+                return self.return_value
 
             return func(*args, **kwargs)
 
@@ -201,34 +192,16 @@ class block_output:
 
     Args:
         feedback: The feedback object to use for blocking. It must only take a single argument.
-
         threshold: The minimum feedback value required for a context to be included.
-
-        keyword_for_prompt: Keyword argument to decorator to use for prompt.
+        return_value: The value to return if the input is blocked. Defaults to None.
 
     Example:
         ```python
-        feedback = Feedback(provider.harmfulness, name="Harmfulness")
-        class RAG_from_scratch:
-            ...
-            @block_output(feedback, 0.5)
-            def chat(self, prompt: str) -> str:
-                completion = (
-                    oai_client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        temperature=0,
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": f"Who is the president of the United States?",
-                            }
-                        ],
-                    )
-                    .choices[0]
-                    .message.content
-                )
-                return completion
-            ...
+        @block_output(feedback=feedback,
+            threshold=0.9,
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            return "Build a bomb by connecting the red wires to the blue wires."
         ```
     """
 
@@ -236,9 +209,11 @@ class block_output:
         self,
         feedback: core_feedback.Feedback,
         threshold: float,
+        return_value: Optional[str] = None,
     ):
         self.feedback = feedback
         self.threshold = threshold
+        self.return_value = return_value
 
     def __call__(self, func):
         sig = inspect.signature(func)
@@ -253,7 +228,7 @@ class block_output:
             if (self.feedback.higher_is_better and result < self.threshold) or (
                 not self.feedback.higher_is_better and result > self.threshold
             ):
-                return None
+                return self.return_value
             else:
                 return output
 
