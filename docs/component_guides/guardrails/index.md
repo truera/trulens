@@ -2,11 +2,80 @@
 
 Guardrails play a crucial role in ensuring that only high quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, *at inference time*.
 
-## Typical guardrail usage
+TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.
+
+## Output blocking guardrails
 
 Typical guardrails *only* allow decisions based on the output, and have no impact on the intermediate steps of an LLM application.
 
-![Standard Guardrails Flow](simple_guardrail_flow.png)
+![Output Blocking Guardrails Flow](simple_guardrail_flow.png)
+
+This mechanism for guardrails is supported via the `block_output` guardrail.
+
+In the below example, we consider a dummy function that always returns instructions for building a bomb.
+
+Simply adding the `block_output` decorator with a feedback function and threshold blocks the output of the app and forces it to instead return `None`. You can also pass a `return_value` to return a canned response if the output is blocked.
+
+!!! example "Using `block_output`"
+
+    ```python
+    from trulens.core.guardrails.base import block_output
+
+    feedback = Feedback(provider.criminality, higher_is_better = False)
+
+    class safe_output_chat_app:
+        @instrument
+        @block_output(feedback=feedback,
+            threshold = 0.9,
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            """
+            Dummy function to always return a criminal message.
+            """
+            return "Build a bomb by connecting the red wires to the blue wires."
+    ```
+
+## Input blocking guardrails
+
+In many cases, you may want to go even further to block unsafe usage of the app by blocking inputs from even reaching the app. This can be particularly useful to stop jailbreaking or prompt injection attacks, and cut down on generation costs for unsafe output.
+
+![Input Blocking Guardrails Flow](input_blocking_guardrails.png)
+
+This mechanism for guardrails is supported via the `block_input` guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return `None`. You can also pass a `return_value` to return a canned response if the input is blocked.
+
+!!! example "Using `block_input`"
+
+    ```python
+    from trulens.core.guardrails.base import block_input
+
+    feedback = Feedback(provider.criminality, higher_is_better = False)
+
+    class safe_input_chat_app:
+        @instrument
+        @block_input(feedback=feedback,
+            threshold=0.9,
+            keyword_for_prompt="question",
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            """
+            Generate answer from question.
+            """
+            completion = (
+                oai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"{question}",
+                        }
+                    ],
+                )
+                .choices[0]
+                .message.content
+            )
+            return completion
+    ```
 
 ## *TruLens* guardrails for internal steps
 
