@@ -20,7 +20,9 @@ Simply adding the `block_output` decorator with a feedback function and threshol
 
     ```python
     @instrument
-    @block_output(feedback=f_criminality_output, threshold=0.9, return_value="I couldn't find an answer to your question.")
+    @block_output(feedback=f_criminality_output,
+        threshold = 0.9,
+        return_value="I couldn't find an answer to your question.")
     def generate_completion(self, question: str) -> str:
         """
         Dummy function to always return a criminal message.
