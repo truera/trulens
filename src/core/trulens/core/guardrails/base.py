@@ -170,7 +170,7 @@ class block_input:
             first_arg = list(k for k in sig.parameters.keys() if k != "self")[0]
             self.keyword_for_prompt = first_arg
             logger.warning(
-                f"Assuming `{self.keyword_for_prompt}` is the `{func.__name__}` arg to filter. "
+                f"Assuming `{self.keyword_for_prompt}` is the `{func.__name__}` arg to block on. "
                 "Specify `keyword_for_prompt` to avoid this warning."
             )
 
