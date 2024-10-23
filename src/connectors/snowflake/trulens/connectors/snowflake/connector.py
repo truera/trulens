@@ -204,6 +204,25 @@ class SnowflakeConnector(DBConnector):
                 init_server_side_with_staged_packages,
             ).set_up_all()
 
+        # Add "trulens_workspace_version" tag to the current schema
+        schema = snowpark_session.get_current_schema()
+        db = snowpark_session.get_current_database()
+        TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
+
+        res = snowpark_session.sql(
+            f"create tag if not exists {TRULENS_WORKSPACE_VERSION_TAG}"
+        ).collect()
+        res = snowpark_session.sql(
+            "ALTER schema {}.{} SET TAG {}='{}'".format(
+                db,
+                schema,
+                TRULENS_WORKSPACE_VERSION_TAG,
+                self.db.get_db_revision(),
+            )
+        ).collect()
+
+        print(f"Set TruLens workspace version tag: {res}")
+
     @classmethod
     def _validate_schema_name(cls, name: str) -> None:
         if not re.match(r"^[A-Za-z0-9_]+$", name):
