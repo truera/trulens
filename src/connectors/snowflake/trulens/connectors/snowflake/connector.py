@@ -13,7 +13,6 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
-from trulens.core import __version__ as trulens_version
 from trulens.core.database import base as core_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
@@ -191,7 +190,10 @@ class SnowflakeConnector(DBConnector):
         ).collect()
         res = snowpark_session.sql(
             "ALTER schema {}.{} SET TAG {}='{}'".format(
-                db, schema, TRULENS_WORKSPACE_VERSION_TAG, trulens_version
+                db,
+                schema,
+                TRULENS_WORKSPACE_VERSION_TAG,
+                self.db.get_db_revision(),
             )
         ).collect()
 
