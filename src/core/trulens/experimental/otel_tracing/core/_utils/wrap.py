@@ -76,6 +76,23 @@ class AwaitableCallbacks(Generic[T]):
 
 
 class AwaitableCallbacksFromCallableCallbacks(AwaitableCallbacks[T]):
+    """Wraps a CallableCallbacks instance to provide AwaitableCallbacks.
+
+    This assumes that the input instances was the one that handled the wrapping
+    of the function that produced the awaitable result.
+
+    Callbacks are invoked like this:
+
+    - on_callable_return with on_awaitable_result with ret as result,
+
+    - on_callable_end with on_awaitable_end,
+
+    - on_callable_exception with on_awaitable_exception.
+
+    - on_callable_call is not used as it was assumed to have already been
+      called.
+    """
+
     def __init__(
         self,
         awaitable: Awaitable[T],
