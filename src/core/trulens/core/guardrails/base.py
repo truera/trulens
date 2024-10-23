@@ -21,7 +21,10 @@ class context_filter:
 
     Example:
         ```python
+        from trulens.core.guardrails.base import context_filter
+
         feedback = Feedback(provider.context_relevance, name="Context Relevance")
+
         class RAG_from_scratch:
             ...
             @context_filter(feedback, 0.5, "query")
@@ -113,26 +116,32 @@ class block_input:
 
     Example:
         ```python
-        @block_input(feedback=feedback,
-            threshold=0.9,
-            keyword_for_prompt="question",
-            return_value="I couldn't find an answer to your question.")
-        def generate_completion(self, question: str) -> str:
-            completion = (
-                oai_client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    temperature=0,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": f"{question}",
-                        }
-                    ],
+        from trulens.core.guardrails.base import block_input
+
+        feedback = Feedback(provider.criminality, higher_is_better = False)
+
+        class safe_input_chat_app:
+            @instrument
+            @block_input(feedback=feedback,
+                threshold=0.9,
+                keyword_for_prompt="question",
+                return_value="I couldn't find an answer to your question.")
+            def generate_completion(self, question: str) -> str:
+                completion = (
+                    oai_client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        temperature=0,
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": f"{question}",
+                            }
+                        ],
+                    )
+                    .choices[0]
+                    .message.content
                 )
-                .choices[0]
-                .message.content
-            )
-            return completion
+                return completion
         ```
     """
 
@@ -197,25 +206,31 @@ class block_output:
 
     Example:
         ```python
-        @block_output(feedback = feedback,
-            threshold = 0.5,
-            return_value = "Sorry, I couldn't find an answer to your question.")
-        def chat(self, question: str) -> str:
-            completion = (
-                oai_client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    temperature=0,
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": f"{question}",
-                        }
-                    ],
+        from trulens.core.guardrails.base import block_output
+
+        feedback = Feedback(provider.criminality, higher_is_better = False)
+
+        class safe_output_chat_app:
+            @instrument
+            @block_output(feedback = feedback,
+                threshold = 0.5,
+                return_value = "Sorry, I couldn't find an answer to your question.")
+            def chat(self, question: str) -> str:
+                completion = (
+                    oai_client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        temperature=0,
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": f"{question}",
+                            }
+                        ],
+                    )
+                    .choices[0]
+                    .message.content
                 )
-                .choices[0]
-                .message.content
-            )
-            return completion
+                return completion
         ```
     """
 

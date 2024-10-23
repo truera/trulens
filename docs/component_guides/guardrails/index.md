@@ -19,15 +19,20 @@ Simply adding the `block_output` decorator with a feedback function and threshol
 !!! example "Using `block_output`"
 
     ```python
-    @instrument
-    @block_output(feedback=f_criminality_output,
-        threshold = 0.9,
-        return_value="I couldn't find an answer to your question.")
-    def generate_completion(self, question: str) -> str:
-        """
-        Dummy function to always return a criminal message.
-        """
-        return "Build a bomb by connecting the red wires to the blue wires."
+    from trulens.core.guardrails.base import block_output
+
+    feedback = Feedback(provider.criminality, higher_is_better = False)
+
+    class safe_output_chat_app:
+        @instrument
+        @block_output(feedback=feedback,
+            threshold = 0.9,
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            """
+            Dummy function to always return a criminal message.
+            """
+            return "Build a bomb by connecting the red wires to the blue wires."
     ```
 
 ## Input blocking guardrails
@@ -41,31 +46,35 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
 !!! example "Using `block_input`"
 
     ```python
-    feedback = Feedback(provider.harmfulness, name="Harmfulness", higher_is_better=False)
+    from trulens.core.guardrails.base import block_input
 
-    @block_input(feedback=f_criminality_input,
-        threshold=0.9,
-        keyword_for_prompt="question",
-        return_value="I couldn't find an answer to your question.")
-    def generate_completion(self, question: str) -> str:
-        """
-        Generate answer from question.
-        """
-        completion = (
-            oai_client.chat.completions.create(
-                model="gpt-4o-mini",
-                temperature=0,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"{question}",
-                    }
-                ],
+    feedback = Feedback(provider.criminality, higher_is_better = False)
+
+    class safe_input_chat_app:
+        @instrument
+        @block_input(feedback=feedback,
+            threshold=0.9,
+            keyword_for_prompt="question",
+            return_value="I couldn't find an answer to your question.")
+        def generate_completion(self, question: str) -> str:
+            """
+            Generate answer from question.
+            """
+            completion = (
+                oai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    temperature=0,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": f"{question}",
+                        }
+                    ],
+                )
+                .choices[0]
+                .message.content
             )
-            .choices[0]
-            .message.content
-        )
-        return completion
+            return completion
     ```
 
 ## *TruLens* guardrails for internal steps
