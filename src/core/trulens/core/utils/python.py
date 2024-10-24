@@ -13,6 +13,7 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
+import threading
 from types import FrameType
 from types import ModuleType
 import typing
@@ -1109,6 +1110,24 @@ def wrap_until_eager(
         return obj_
 
     return rewrap(obj)
+
+
+# Context utilities
+
+
+def context_id() -> str:
+    """Return a short representation of context that includes the thread and
+    async task identifiers."""
+
+    ret = "T[" + threading.current_thread().name + "]"
+    try:
+        task = asyncio.current_task()
+        if task is not None:
+            ret += " K[" + task.name + "]"
+    except Exception:
+        pass
+
+    return ret
 
 
 # Class utilities

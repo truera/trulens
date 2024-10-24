@@ -712,7 +712,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
         pydantic.PrivateAttr(
             default_factory=lambda: contextvars.ContextVar(
-                f"context_Tracer_{asyncio.current_task()}", default=None
+                f"context_Tracer_{python_utils.context_id()}", default=None
             )
         )
     )
@@ -854,7 +854,8 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
     _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
         pydantic.PrivateAttr(
             default_factory=lambda: contextvars.ContextVar(
-                f"context_TracerProvider_{asyncio.current_task()}", default=None
+                f"context_TracerProvider_{asyncio.current_task().name}",
+                default=None,
             )
         )
     )

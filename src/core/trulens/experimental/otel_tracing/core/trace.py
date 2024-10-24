@@ -658,6 +658,7 @@ class Tracer(core_otel.Tracer):
             exit_task = ("_aspan", asyncio.current_task())
             if enter_task != exit_task:
                 print("ENTER/EXIT tasks differ:\n", enter_task, "\n", exit_task)
+
             self.context_cvar.reset(token)
 
     # context manager
