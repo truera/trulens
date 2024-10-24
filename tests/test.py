@@ -57,6 +57,13 @@ WITH_REF_PATH_VAR = "WITH_REF_PATH"
 """Env var that when set to true will print out the reference path to the given
 object that was not garbage collected in the `assertCollected` test."""
 
+USE_OTEL_TRACING = "USE_OTEL_TRACING"
+"""Whether to use the experimental otel tracing capability.
+
+Note that currently we cannot have tests run both with and without this feature
+in the same python instance hence these tests need to be run separately.
+"""
+
 
 def async_test(func):
     """Decorator for running async tests.

@@ -25,6 +25,7 @@ from trulens.core._utils.pycompat import Future  # import style exception
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
 from trulens.feedback import prompts as feedback_prompts
 from trulens.feedback.dummy import endpoint as dummy_endpoint
@@ -305,18 +306,16 @@ class HuggingfaceBase(core_provider.Provider):
     # TODEP
     @_tci
     def toxic(self, text: str) -> float:
-        """
-        Uses Huggingface's martin-ha/toxic-comment-model model. A function that
-        uses a toxic comment classifier on `text`.
+        """A function that uses a toxic comment classifier on `text`.
+
+        Uses Huggingface's martin-ha/toxic-comment-model model.
 
         Example:
-            ```python
-            from trulens.core import Feedback
-            from trulens.providers.huggingface import Huggingface
+            ```python from trulens.core import Feedback from
+            trulens.providers.huggingface import Huggingface
             huggingface_provider = Huggingface()
 
-            feedback = Feedback(huggingface_provider.toxic).on_output()
-            ```
+            feedback = Feedback(huggingface_provider.toxic).on_output() ```
 
         Args:
             text (str): Text to evaluate.
@@ -333,12 +332,13 @@ class HuggingfaceBase(core_provider.Provider):
     # TODEP
     @_tci
     def _summarized_groundedness(self, premise: str, hypothesis: str) -> float:
-        """A groundedness measure best used for summarized premise against simple hypothesis.
+        """A groundedness measure best used for summarized premise against
+        simple hypothesis.
+
         This Huggingface implementation uses NLI.
 
         Args:
-            premise (str): NLI Premise
-            hypothesis (str): NLI Hypothesis
+            premise (str): NLI Premise hypothesis (str): NLI Hypothesis
 
         Returns:
             float: NLI Entailment
@@ -469,7 +469,9 @@ class Huggingface(HuggingfaceBase):
     Out of the box feedback functions calling Huggingface APIs.
     """
 
-    endpoint: core_endpoint.Endpoint
+    endpoint: (
+        core_endpoint.WithPost
+    )  # can work with HuggingfaceEndpoint or DummyEndpoint
 
     def __init__(
         self,
@@ -480,8 +482,7 @@ class Huggingface(HuggingfaceBase):
         # NOTE(piotrm): HACK006: pydantic adds endpoint to the signature of this
         # constructor if we don't include it explicitly, even though we set it
         # down below. Adding it as None here as a temporary hack.
-        """
-        Create a Huggingface Provider with out of the box feedback functions.
+        """Create a Huggingface Provider with out of the box feedback functions.
 
         Example:
             ```python
@@ -513,17 +514,26 @@ class Huggingface(HuggingfaceBase):
             **self_kwargs
         )  # need to include pydantic.BaseModel.__init__
 
+    def _post_scores(
+        self, url: str, json: Dict[str, Any], timeout: float = 30.0
+    ) -> List[serial_utils.JSON]:
+        """Wrap `post` with .json()[0] to extract score list from response."""
+
+        response = self.endpoint.post(url=url, json=json, timeout=timeout)
+
+        return response.json()[0]
+
     def _language_scores_endpoint(self, text: str) -> Dict[str, float]:
-        payload = {"inputs": text}
-        hf_response = self.endpoint.post(
-            url=HUGS_LANGUAGE_API_URL, payload=payload, timeout=30
+        json = {"inputs": text}
+        hf_response = self._post_scores(
+            url=HUGS_LANGUAGE_API_URL, json=json, timeout=30
         )
         return {r["label"]: r["score"] for r in hf_response}
 
     def _context_relevance_endpoint(self, input: str) -> float:
-        payload = {"inputs": input}
-        hf_response = self.endpoint.post(
-            url=HUGS_CONTEXT_RELEVANCE_API_URL, payload=payload
+        json = {"inputs": input}
+        hf_response = self._post_scores(
+            url=HUGS_CONTEXT_RELEVANCE_API_URL, json=json
         )
         for label in hf_response:
             if label["label"] == "context_relevance":
@@ -533,28 +543,24 @@ class Huggingface(HuggingfaceBase):
         )
 
     def _positive_sentiment_endpoint(self, input: str) -> float:
-        payload = {"inputs": input}
-        hf_response = self.endpoint.post(
-            url=HUGS_SENTIMENT_API_URL, payload=payload
-        )
+        json = {"inputs": input}
+        hf_response = self._post_scores(url=HUGS_SENTIMENT_API_URL, json=json)
         for label in hf_response:
             if label["label"] == "LABEL_2":
                 return float(label["score"])
         raise RuntimeError("LABEL_2 not found in huggingface api response.")
 
     def _toxic_endpoint(self, input: str) -> float:
-        payload = {"inputs": input}
-        hf_response = self.endpoint.post(
-            url=HUGS_TOXIC_API_URL, payload=payload
-        )
+        json = {"inputs": input}
+        hf_response = self._post_scores(url=HUGS_TOXIC_API_URL, json=json)
         for label in hf_response:
             if label["label"] == "toxic":
                 return label["score"]
         raise RuntimeError("toxic not found in huggingface api response.")
 
     def _summarized_groundedness_endpoint(self, input: str) -> float:
-        payload = {"inputs": input}
-        hf_response = self.endpoint.post(url=HUGS_NLI_API_URL, payload=payload)
+        json = {"inputs": input}
+        hf_response = self._post_scores(url=HUGS_NLI_API_URL, json=json)
         for label in hf_response:
             if label["label"] == "entailment":
                 return label["score"]
@@ -564,10 +570,8 @@ class Huggingface(HuggingfaceBase):
     @_tci
     def _doc_groundedness(self, premise: str, hypothesis: str) -> float:
         nli_string = premise + " [SEP] " + hypothesis
-        payload = {"inputs": nli_string}
-        hf_response = self.endpoint.post(
-            url=HUGS_DOCNLI_API_URL, payload=payload
-        )
+        json = {"inputs": nli_string}
+        hf_response = self._post_scores(url=HUGS_DOCNLI_API_URL, json=json)
         for label in hf_response:
             if label["label"] == "entailment":
                 return label["score"]
@@ -575,9 +579,9 @@ class Huggingface(HuggingfaceBase):
 
     def _pii_detection_endpoint(self, input: str) -> List[float]:
         likelihood_scores = []
-        payload = {"inputs": input}
-        hf_response = self.endpoint.post(
-            url=HUGS_PII_DETECTION_API_URL, payload=payload
+        json = {"inputs": input}
+        hf_response = self._post_scores(
+            url=HUGS_PII_DETECTION_API_URL, json=json
         )
         # If the response is a dictionary, convert it to a list. This is for when only one name is identified.
         if isinstance(hf_response, dict):
@@ -598,10 +602,10 @@ class Huggingface(HuggingfaceBase):
         reasons = {}
         # Initialize a list to store scores for "NAME" entities
         likelihood_scores = []
-        payload = {"inputs": input}
+        json = {"inputs": input}
         try:
-            hf_response = self.endpoint.post(
-                url=HUGS_PII_DETECTION_API_URL, payload=payload
+            hf_response = self._post_scores(
+                url=HUGS_PII_DETECTION_API_URL, json=json
             )
         # TODO: Make error handling more granular so it's not swallowed.
         except Exception:
@@ -632,10 +636,8 @@ class Huggingface(HuggingfaceBase):
         return likelihood_scores, reasons
 
     def _hallucination_evaluator_endpoint(self, input: str) -> float:
-        payload = {"inputs": input}
-        response = self.endpoint.post(
-            url=HUGS_HALLUCINATION_API_URL, payload=payload
-        )
+        json = {"inputs": input}
+        response = self._post_scores(url=HUGS_HALLUCINATION_API_URL, json=json)
         if isinstance(response, list):
             # Assuming the list contains the result, check if the first element has a 'score' key
             if "score" not in response[0]:
