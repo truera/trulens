@@ -70,11 +70,6 @@ TOpenAIReturn = Union[
 """Types that openai respones can attain, or at least the ones we handle in cost tracking."""
 
 TOpenAIResponse = TOpenAIReturn
-# Union[
-#    List[openai.types.embedding.Embedding], # embedding response
-#    LLMResult,
-#    serial_utils.JSON
-# ]
 
 T = TypeVar("T")  # TODO bound
 
