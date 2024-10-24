@@ -86,6 +86,27 @@ pre-commit install
 
 For more information on pre-commit, see [pre-commit.com](https://pre-commit.com/).
 
+## Install ggshield
+
+TruLens developers use ggshield to scan for secrets locally in addition to gitguardian in CLI. Install and authenticate to ggshield with the following commands:
+
+```bash
+brew install gitguardian/tap/ggshield
+ggshield auth login
+```
+
+Then, ggshield can be run with the following command from trulens root directory to scan the full repository:
+
+```bash
+ggshield secret scan repo ./
+```
+
+It can also be run with smaller scope, such as only for docs with the following as included in `make docs-upload`
+
+```bash
+ggshield secret scan repo ./docs/
+```
+
 ## Helpful commands
 
 ### Formatting
