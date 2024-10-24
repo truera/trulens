@@ -547,7 +547,7 @@ class SerialModel(pydantic.BaseModel):
     """
 
     formatted_objects: ClassVar[ContextVar[Set[int]]] = ContextVar(
-        "formatted_objects"
+        "formatted_objects", default=set()
     )
 
     def __rich_repr__(self) -> rich.repr.Result:
