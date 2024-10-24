@@ -62,11 +62,13 @@ class WithInstrumentCallbacks:
     Needs to be mixed into [App][trulens.core.app.App].
     """
 
-    _context_contexts = contextvars.ContextVar("context_contexts")
+    _context_contexts = contextvars.ContextVar(
+        "context_contexts", default=set()
+    )
     """ContextVars for storing collections of RecordingContext ."""
     _context_contexts.set(set())
 
-    _stack_contexts = contextvars.ContextVar("stack_contexts")
+    _stack_contexts = contextvars.ContextVar("stack_contexts", default={})
     """ContextVars for storing call stacks."""
     _stack_contexts.set({})
 

@@ -208,7 +208,7 @@ class Endpoint(
     """Name of variable that stores the callback noted above."""
 
     _context_endpoints: ClassVar[contextvars.ContextVar] = (
-        contextvars.ContextVar("endpoints")
+        contextvars.ContextVar("endpoints", default={})
     )
     _context_endpoints.set({})
 

@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.1.0
+  __version__: 1.0.2a0
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -231,6 +231,7 @@ trulens.core.database.base.DB:
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
+    get_db_revision: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function

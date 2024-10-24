@@ -437,7 +437,7 @@ class App(
             kwargs["connector"] = connector
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
-            "recording_contexts"
+            "recording_contexts", default=None
         )
 
         super().__init__(**kwargs)
