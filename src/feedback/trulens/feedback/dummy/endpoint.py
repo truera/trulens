@@ -542,6 +542,8 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                 bindings, **kwargs
             )  # increments n_requests
 
+            # Requests made by DummyProvider have "mode" in their data portion
+            # to indicate whether they are classification or completion.
             if (json := bindings.arguments.get("json")) is not None:
                 if (mode := json.get("mode")) is not None:
                     if mode == "completion":
@@ -555,10 +557,19 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                             self.func.__name__,
                         )
                 else:
-                    logger.warning(
-                        "No mode in post call %s.",
-                        self.func.__name__,
-                    )
+                    # Requests made by huggingface provider do not have the
+                    # "mode" but only make classification requests presently.
+                    url = bindings.arguments["url"]
+                    if not url.startswith(
+                        "https://api-inference.huggingface.co"
+                    ):
+                        logger.debug(
+                            "Unknown dummy huggingface api request: %s. Cost tracking will not be available.",
+                            url,
+                        )
+                        return
+
+                    self.cost.n_classification_requests += 1
 
         def on_endpoint_generation(self, response: serial_utils.JSON) -> None:
             super().on_endpoint_generation(
@@ -605,31 +616,33 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
             """
 
             if isinstance(ret, Awaitable):
-                # Wraps awaitable to arrange to call us later.
-                return super().on_callable_return(ret=ret, **kwargs)
-            else:
-                ret = super().on_callable_return(ret=ret, **kwargs)
+                # Note that awaitable returns are handled by wrap_callable so we
+                # should never get here.
+                raise RuntimeError("Awaitable return not expected.")
 
-            json: Union[serial_utils.JSON, List[serial_utils.JSON]] = (
-                ret.json()[0]
-            )
+            json: Union[serial_utils.JSON, List[serial_utils.JSON]] = ret.json()
 
-            if isinstance(json, dict) and "usage" in json:
-                # openai completion results are list of dict
-                self.on_endpoint_generation(response=json["usage"])
+            if not isinstance(json, list):
+                logger.warning("List of json expected but got: %s", json)
+                return ret
 
-            elif isinstance(json, list):
-                # huggingface classification results are list of list of dict
-                json = json[0]
+            for item in json:
+                if isinstance(item, dict) and "usage" in item:
+                    # openai completion results are list of dict
+                    self.on_endpoint_generation(response=item["usage"])
 
-                if isinstance(json, dict) and "scores" in json:
-                    self.on_endpoint_classification(response=json["scores"])
-            else:
-                logger.warning(
-                    "Unknown response format for %s: %s.",
-                    self.func.__name__,
-                    json,
-                )
+                elif isinstance(item, list) and all(
+                    isinstance(i, dict) for i in item
+                ):
+                    # huggingface classification results are list of list of dict
+                    self.on_endpoint_classification(response=item)
+
+                else:
+                    logger.warning(
+                        "Unknown response format for %s: %s.",
+                        self.func.__name__,
+                        item,
+                    )
 
             return ret
 

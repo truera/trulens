@@ -12,6 +12,7 @@ components or implementations that are compatible with its API.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import contextvars
 import functools
@@ -20,7 +21,6 @@ import logging
 import os
 import threading as th
 from threading import Lock
-from types import TracebackType
 from typing import (
     Any,
     Callable,
@@ -106,19 +106,24 @@ class SpanContext(core_otel.SpanContext, Hashable):
                 span_id=span_context.span_id,
                 is_remote=span_context.is_remote,
             )
+        elif isinstance(span_context, Dict):
+            return SpanContext.model_validate(span_context)
         else:
             raise ValueError(f"Unrecognized span context type: {span_context}")
 
 
 SpanContextLike = Union[
-    SpanContext, core_otel.SpanContext, span_api.SpanContext
+    SpanContext, core_otel.SpanContext, span_api.SpanContext, serial_utils.JSON
 ]
 
 
 class Span(core_otel.Span):
     """TruLens additions on top of OTEL spans."""
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True,
+        use_enum_values=True,  # model_validate will fail without this
+    )
 
     def __str__(self):
         return (
@@ -141,6 +146,9 @@ class Span(core_otel.Span):
         if self.parent is None:
             return None
 
+        if self._tracer is None:
+            return None
+
         if (span := self._tracer.spans.get(self.parent)) is None:
             return None
 
@@ -157,10 +165,10 @@ class Span(core_otel.Span):
 
     def __init__(self, **kwargs):
         # Convert any contexts to our hashable context class:
-        if (context := kwargs["_context"]) is not None:
-            kwargs["_context"] = SpanContext.of_spancontextlike(context)
-        if (parent := kwargs.get("_parent", None)) is not None:
-            kwargs["_parent"] = SpanContext.of_spancontextlike(parent)
+        if (context := kwargs.get("context")) is not None:
+            kwargs["context"] = SpanContext.of_spancontextlike(context)
+        if (parent := kwargs.get("parent", None)) is not None:
+            kwargs["parent"] = SpanContext.of_spancontextlike(parent)
 
         super().__init__(**kwargs)
 
@@ -214,17 +222,6 @@ class Span(core_otel.Span):
                 total += span.cost
 
         return total
-
-    async def __aenter__(self) -> Span:
-        return self.__enter__()
-
-    async def __aexit__(
-        self,
-        exc_type: Optional[BaseException],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> None:
-        return self.__exit__(exc_type, exc_val, exc_tb)
 
 
 class PhantomSpan(Span):
@@ -501,7 +498,11 @@ class Tracer(core_otel.Tracer):
                 del args["self"]  # remove self
 
         assert span.start_timestamp is not None
-        assert span.end_timestamp is not None
+        if span.end_timestamp is None:
+            logger.warning(
+                "Span %s has no end timestamp. It might not have yet finished recording.",
+                span,
+            )
 
         return record_schema.RecordAppCall(
             call_id=str(span.call_id),
@@ -589,7 +590,9 @@ class Tracer(core_otel.Tracer):
         )
 
         # record_id determinism
-        record.record_id = json_utils.obj_id_of_obj(record, prefix="record")
+        record.record_id = json_utils.obj_id_of_obj(
+            record.model_dump(), prefix="record"
+        )
 
         return record
 
@@ -619,25 +622,43 @@ class Tracer(core_otel.Tracer):
 
     @contextlib.contextmanager
     def _span(self, cls: Type[S], **kwargs) -> ContextManager[S]:
-        with self.start_span(cls=cls, **kwargs) as span:
-            token = self.context_cvar.set(span.context)
+        span = self.start_span(cls=cls, **kwargs)
+        token = self.context_cvar.set(span.context)
 
-            try:
-                yield span
+        enter_task = ("_span", asyncio.current_task())
 
-            finally:
-                self.context_cvar.reset(token)
+        try:
+            yield span.__enter__()
+
+        except Exception as e:
+            span.__exit__(type(e), e, e.__traceback__)
+
+        finally:
+            exit_task = ("_span", asyncio.current_task())
+
+            if enter_task != exit_task:
+                print("ENTER/EXIT tasks differ:\n", enter_task, "\n", exit_task)
+
+            self.context_cvar.reset(token)
 
     @contextlib.asynccontextmanager
     async def _aspan(self, cls: Type[S], **kwargs) -> ContextManager[S]:
-        async with self.start_span(cls=cls, **kwargs) as span:
-            token = self.context_cvar.set(span.context)
+        span = self.start_span(cls=cls, **kwargs)
+        token = self.context_cvar.set(span.context)
 
-            try:
-                yield span
+        enter_task = ("_aspan", asyncio.current_task())
 
-            finally:
-                self.context_cvar.reset(token)
+        try:
+            yield await span.__aenter__()
+
+        except Exception as e:
+            await span.__aexit__(type(e), e, e.__traceback__)
+
+        finally:
+            exit_task = ("_aspan", asyncio.current_task())
+            if enter_task != exit_task:
+                print("ENTER/EXIT tasks differ:\n", enter_task, "\n", exit_task)
+            self.context_cvar.reset(token)
 
     # context manager
     def recording(self) -> ContextManager[PhantomSpanRecordingContext]:

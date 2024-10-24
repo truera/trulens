@@ -509,7 +509,7 @@ class App(
 
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
-    ) -> List[record_schema.Record]:
+    ) -> Iterable[record_schema.Record]:
         """Wait for all feedbacks functions to complete.
 
         Args:
@@ -518,7 +518,7 @@ class App(
                 total timeout for this entire blocking call.
 
         Returns:
-            A list of records that have been waited on. Note a record will be
+            An iterable of records that have been waited on. Note a record will be
                 included even if a feedback computation for it failed or
                 timed out.
 
@@ -527,17 +527,20 @@ class App(
         this is running, it will include them.
         """
 
-        records = []
+        # records = []
 
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
             )
         ) is not None:
+            print(
+                f"Waiting for feedback results for record: {record.record_id}"
+            )
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
-            records.append(record)
+            yield record
 
-        return records
+        # return records
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:

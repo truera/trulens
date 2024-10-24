@@ -28,6 +28,7 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.experimental.otel_tracing import feature as otel_tracing_feature
 
 T = TypeVar("T")
 
@@ -174,6 +175,40 @@ class Record(serial_utils.SerialModel, Hashable):
 
     This will be filled in only if the otel_tracing experimental feature is enabled.
     """
+
+    @pydantic.field_validator("experimental_otel_spans", mode="before")
+    @classmethod
+    def validate_experimental_otel_spans(cls, spans: List[Any]) -> List[Any]:
+        """Deserialize spans if otel_tracing is enabled.
+
+        We need to do this manually as the experimental_otel_spans field is
+        declared as containing `Any` but we want to have `Span`s there instead.
+        We cannot declare the field having `Span`s because we are not sure
+        otel_tracing is available.
+        """
+
+        ret = []
+
+        if len(spans) > 0:
+            if otel_tracing_feature._FeatureSetup.are_optionals_installed():
+                from trulens.experimental.otel_tracing.core.trace import Span
+
+                for span in spans:
+                    if isinstance(span, dict):
+                        ret.append(Span.model_validate(span))
+                    else:
+                        ret.append(span)
+            else:
+                logger.warning(
+                    "Read record with otel_tracing spans but otel_tracing cannot "
+                    "be used in the current environment due to missing modules.\n%s",
+                    otel_tracing_feature._FeatureSetup.REQUIREMENT.module_not_found,
+                )
+                # Set to empty None to prevent errors downstream where Span
+                # instances are expected.
+                ret = []
+
+        return ret
 
     feedback_and_future_results: Optional[
         List[
