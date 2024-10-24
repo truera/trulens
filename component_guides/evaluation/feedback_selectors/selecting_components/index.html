@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -539,6 +539,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -584,6 +592,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -710,6 +739,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -1720,6 +1812,15 @@
   <a href="#trulens.core.schema.Record.feedback_results" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;feedback_results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.core.schema.Record.feedback_results_as_completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;feedback_results_as_completed
     </span>
   </a>
   
@@ -7872,7 +7973,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9653,6 +9754,8 @@
       
         
       
+        
+      
     
     
       
@@ -9708,6 +9811,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -10240,6 +10364,15 @@
   <a href="#trulens.core.schema.Record.feedback_results" class="md-nav__link">
     <span class="md-ellipsis">
       <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;feedback_results
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trulens.core.schema.Record.feedback_results_as_completed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <code class="doc-symbol doc-symbol-toc doc-symbol-attribute"></code>&nbsp;feedback_results_as_completed
     </span>
   </a>
   
@@ -11067,6 +11200,32 @@ be filled in when read from database. Also, will not fill in when using
     <div class="doc doc-contents ">
 
         <p>Only the futures part of the above for backwards compatibility.</p>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="trulens.core.schema.Record.feedback_results_as_completed" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">feedback_results_as_completed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#trulens.core.schema.Record.feedback_results_as_completed" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">feedback_results_as_completed</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Iterable" href="https://docs.python.org/3/library/typing.html#typing.Iterable">Iterable</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.feedback.FeedbackResult" href="../../../../reference/trulens/core/schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a></span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate feedback results as they are completed.</p>
+<p>Wraps
+<a class="autorefs autorefs-internal" href="../../../../reference/trulens/core/schema/record/#trulens.core.schema.record.Record.feedback_results">feedback_results</a>
+in <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.as_completed">as_completed</a>.</p>
     </div>
 
 </div>

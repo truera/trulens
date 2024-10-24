@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -5309,15 +5401,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trulens.core.session-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -7829,7 +7912,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9610,6 +9693,8 @@
       
         
       
+        
+      
     
     
       
@@ -9665,6 +9750,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -10456,15 +10562,6 @@
         
       </ul>
     </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trulens.core.session-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
   
 </li>
         
@@ -11465,7 +11562,7 @@ given record or a new record if no <code>record</code> provided.</p>
 <a href="#trulens.core.session.TruSession.run_feedback_functions" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run_feedback_functions</span><span class="p">(</span>
     <span class="n">record</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../schema/record/#trulens.core.schema.record.Record">Record</a></span><span class="p">,</span>
-    <span class="n">feedback_functions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.Feedback" href="../feedback/#trulens.core.feedback.Feedback">Feedback</a></span><span class="p">],</span>
+    <span class="n">feedback_functions</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="../feedback/feedback/#trulens.core.feedback.feedback.Feedback">Feedback</a></span><span class="p">],</span>
     <span class="n">app</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.app.AppDefinition" href="../schema/app/#trulens.core.schema.app.AppDefinition">AppDefinition</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">wait</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#bool">bool</a></span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a></span><span class="p">[</span>
@@ -11531,7 +11628,7 @@ functions to evaluate.</p>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
-                      <code><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a>[<a class="autorefs autorefs-internal" title="trulens.core.feedback.Feedback" href="../feedback/#trulens.core.feedback.Feedback">Feedback</a>]</code>
+                      <code><a class="autorefs autorefs-external" title="typing.Sequence" href="https://docs.python.org/3/library/typing.html#typing.Sequence">Sequence</a>[<a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="../feedback/feedback/#trulens.core.feedback.feedback.Feedback">Feedback</a>]</code>
                   </span>
               </p>
             </td>
@@ -12576,7 +12673,7 @@ that is executing the deferred feedback evaluator.</p>
     </div>
 
 </div>
-<h3 id="trulens.core.session-functions">Functions<a href="#trulens.core.session-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
 
 
 

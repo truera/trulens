@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -539,6 +539,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -584,6 +592,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -710,6 +739,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -7344,7 +7436,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9125,6 +9217,8 @@
       
         
       
+        
+      
     
     
       
@@ -9180,6 +9274,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -9545,9 +9660,18 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#typical-guardrail-usage" class="md-nav__link">
+  <a href="#output-blocking-guardrails" class="md-nav__link">
     <span class="md-ellipsis">
-      Typical guardrail usage
+      Output blocking guardrails
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#input-blocking-guardrails" class="md-nav__link">
+    <span class="md-ellipsis">
+      Input blocking guardrails
     </span>
   </a>
   
@@ -9591,9 +9715,68 @@
 
 <h1 id="guardrails">Guardrails<a class="headerlink" href="#guardrails" title="Permanent link">&para;</a></h1>
 <p>Guardrails play a crucial role in ensuring that only high quality output is produced by LLM apps. By setting guardrail thresholds based on feedback functions, we can directly leverage the same trusted evaluation metrics used for observability, <em>at inference time</em>.</p>
-<h2 id="typical-guardrail-usage">Typical guardrail usage<a class="headerlink" href="#typical-guardrail-usage" title="Permanent link">&para;</a></h2>
+<p>TruLens guardrails can be invoked at different points in your application to address issues with input, output and even internal steps of an LLM app.</p>
+<h2 id="output-blocking-guardrails">Output blocking guardrails<a class="headerlink" href="#output-blocking-guardrails" title="Permanent link">&para;</a></h2>
 <p>Typical guardrails <em>only</em> allow decisions based on the output, and have no impact on the intermediate steps of an LLM application.</p>
-<p><img alt="Standard Guardrails Flow" src="simple_guardrail_flow.png" /></p>
+<p><img alt="Output Blocking Guardrails Flow" src="simple_guardrail_flow.png" /></p>
+<p>This mechanism for guardrails is supported via the <code>block_output</code> guardrail.</p>
+<p>In the below example, we consider a dummy function that always returns instructions for building a bomb.</p>
+<p>Simply adding the <code>block_output</code> decorator with a feedback function and threshold blocks the output of the app and forces it to instead return <code>None</code>. You can also pass a <code>return_value</code> to return a canned response if the output is blocked.</p>
+<div class="admonition example">
+<p class="admonition-title">Using <code>block_output</code></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core.guardrails.base</span> <span class="kn">import</span> <span class="n">block_output</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality</span><span class="p">,</span> <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">safe_output_chat_app</span><span class="p">:</span>
+    <span class="nd">@instrument</span>
+    <span class="nd">@block_output</span><span class="p">(</span><span class="n">feedback</span><span class="o">=</span><span class="n">feedback</span><span class="p">,</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">return_value</span><span class="o">=</span><span class="s2">&quot;I couldn&#39;t find an answer to your question.&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">generate_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dummy function to always return a criminal message.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;Build a bomb by connecting the red wires to the blue wires.&quot;</span>
+</code></pre></div>
+</div>
+<h2 id="input-blocking-guardrails">Input blocking guardrails<a class="headerlink" href="#input-blocking-guardrails" title="Permanent link">&para;</a></h2>
+<p>In many cases, you may want to go even further to block unsafe usage of the app by blocking inputs from even reaching the app. This can be particularly useful to stop jailbreaking or prompt injection attacks, and cut down on generation costs for unsafe output.</p>
+<p><img alt="Input Blocking Guardrails Flow" src="input_blocking_guardrails.png" /></p>
+<p>This mechanism for guardrails is supported via the <code>block_input</code> guardrail. If the feedback score of the input exceeds the provided threshold, the decorated function itself will not be invoked and instead simply return <code>None</code>. You can also pass a <code>return_value</code> to return a canned response if the input is blocked.</p>
+<div class="admonition example">
+<p class="admonition-title">Using <code>block_input</code></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core.guardrails.base</span> <span class="kn">import</span> <span class="n">block_input</span>
+
+<span class="n">feedback</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">criminality</span><span class="p">,</span> <span class="n">higher_is_better</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">safe_input_chat_app</span><span class="p">:</span>
+    <span class="nd">@instrument</span>
+    <span class="nd">@block_input</span><span class="p">(</span><span class="n">feedback</span><span class="o">=</span><span class="n">feedback</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span>
+        <span class="n">keyword_for_prompt</span><span class="o">=</span><span class="s2">&quot;question&quot;</span><span class="p">,</span>
+        <span class="n">return_value</span><span class="o">=</span><span class="s2">&quot;I couldn&#39;t find an answer to your question.&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">generate_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate answer from question.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">completion</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">oai_client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">,</span>
+                <span class="n">temperature</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">question</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">choices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">content</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">completion</span>
+</code></pre></div>
+</div>
 <h2 id="trulens-guardrails-for-internal-steps"><em>TruLens</em> guardrails for internal steps<a class="headerlink" href="#trulens-guardrails-for-internal-steps" title="Permanent link">&para;</a></h2>
 <p>While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, <em>TruLens</em> guardrails can also be leveraged to improve the internal processing of LLM apps.</p>
 <p>If we consider a RAG, context filter guardrails can be used to evaluate the <em>context relevance</em> of each context chunk, and only pass relevant chunks to the LLM for generation. Doing so reduces the chance of hallucination and reduces token usage.</p>

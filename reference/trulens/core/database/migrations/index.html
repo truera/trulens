@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -7349,7 +7441,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9130,6 +9222,8 @@
       
         
       
+        
+      
     
     
       
@@ -9185,6 +9279,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -9722,7 +9837,7 @@ installed version. The changes to database schemas is handled by
 handled by converters in <a class="autorefs autorefs-internal" href="data/#trulens.core.database.migrations.data">the data
 module</a>.</p>
 <h4 id="trulens.core.database.migrations--upgrading-to-the-latest-schema-revision">Upgrading to the latest schema revision<a class="headerlink" href="#trulens.core.database.migrations--upgrading-to-the-latest-schema-revision" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">TruSession</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core.session</span> <span class="kn">import</span> <span class="n">TruSession</span>
 
 <span class="n">session</span> <span class="o">=</span> <span class="n">TruSession</span><span class="p">(</span>
    <span class="n">database_url</span><span class="o">=</span><span class="s2">&quot;&lt;sqlalchemy_url&gt;&quot;</span><span class="p">,</span>
@@ -9845,7 +9960,7 @@ items under the section <code>Important considerations</code>:</p>
 <a href="#trulens.core.database.migrations.get_revision_history" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_revision_history</span><span class="p">(</span>
     <span class="n">engine</span><span class="p">:</span> <span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">,</span>
-    <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n">mod_db</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n">core_db</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span>
 </code></pre></div>
 

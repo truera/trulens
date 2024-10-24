@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -5918,15 +6010,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trulens.feedback.dummy.provider-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -7867,7 +7950,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9648,6 +9731,8 @@
       
         
       
+        
+      
     
     
       
@@ -9703,6 +9788,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -10533,15 +10639,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trulens.feedback.dummy.provider-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -10607,6 +10704,188 @@
         <p>Fake LLM provider.</p>
 <p>Does not make any networked requests but pretends to. Uses
 <a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyEndpoint">DummyEndpoint</a>.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code>name</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Name of the provider. Defaults to "dummyhugs".</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>&#39;dummyhugs&#39;</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>rpm</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Requests per minute. Defaults to 600.
+<a class="autorefs autorefs-internal" href="../../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>600</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>error_prob</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Probability of an error occurring.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1 / 100</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>loading_prob</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Probability of loading.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1 / 100</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>freeze_prob</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Probability of freezing.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1 / 100</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>overloaded_prob</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Probability of being overloaded.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1 / 100</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>alloc</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Amount of memory allocated.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1024 * 1024</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>delay</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Delay in seconds to add to requests.
+<a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a> argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#float">float</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>1.0</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>seed</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Random seed. <a class="autorefs autorefs-internal" href="../endpoint/#trulens.feedback.dummy.endpoint.DummyAPI">DummyAPI</a>
+argument.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>3735928559</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
 
@@ -14839,7 +15118,7 @@ the statement using an LLM provider.</p>
     </div>
 
 </div>
-<h3 id="trulens.feedback.dummy.provider-functions">Functions<a href="#trulens.feedback.dummy.provider-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
 
 
 

@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -7347,7 +7439,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9128,6 +9220,8 @@
       
         
       
+        
+      
     
     
       
@@ -9183,6 +9277,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -9896,15 +10011,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trulens.providers.huggingface-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -10102,8 +10208,8 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
-function that uses language detection on <code>text1</code> and <code>text2</code> and
+        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model.</p>
+<p>A function that uses language detection on <code>text1</code> and <code>text2</code> and
 calculates the probit difference on the language detected on text1. The
 function is: <code>1.0 - (|probit_language_text1(text1) -
 probit_language_text1(text2))</code></p>
@@ -10175,7 +10281,8 @@ Guide</a></p>
             </td>
             <td class="doc-returns-details">
               <div class="doc-md-description">
-                <p>A value between 0 and 1. 0 being "different languages" and 1 being "same languages".</p>
+                <p>A value between 0 and 1. 0 being "different languages" and 1
+being "same languages".</p>
               </div>
                 <p>
                   <span class="doc-returns-annotation">
@@ -10793,7 +10900,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
 <a href="#trulens.providers.huggingface.Huggingface.__init__" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="fm">__init__</span><span class="p">(</span>
     <span class="nf">name</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
-    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.Endpoint" href="../../core/feedback/#trulens.core.feedback.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.endpoint.Endpoint" href="../../core/feedback/endpoint/#trulens.core.feedback.endpoint.Endpoint">Endpoint</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -10990,8 +11097,8 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
 
     <div class="doc doc-contents ">
 
-        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model. A
-function that uses language detection on <code>text1</code> and <code>text2</code> and
+        <p>Uses Huggingface's papluca/xlm-roberta-base-language-detection model.</p>
+<p>A function that uses language detection on <code>text1</code> and <code>text2</code> and
 calculates the probit difference on the language detected on text1. The
 function is: <code>1.0 - (|probit_language_text1(text1) -
 probit_language_text1(text2))</code></p>
@@ -11063,7 +11170,8 @@ Guide</a></p>
             </td>
             <td class="doc-returns-details">
               <div class="doc-md-description">
-                <p>A value between 0 and 1. 0 being "different languages" and 1 being "same languages".</p>
+                <p>A value between 0 and 1. 0 being "different languages" and 1
+being "same languages".</p>
               </div>
                 <p>
                   <span class="doc-returns-annotation">
@@ -11678,7 +11786,7 @@ less than 0.5 the statement is evaluated as a hallucination.</p>
     </div>
 
 </div>
-<h3 id="trulens.providers.huggingface-functions">Functions<a href="#trulens.providers.huggingface-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
 
 
 

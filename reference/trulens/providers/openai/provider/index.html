@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -8443,7 +8535,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -10224,6 +10316,8 @@
       
         
       
+        
+      
     
     
       
@@ -10279,6 +10373,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -11753,10 +11868,12 @@
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><a class="autorefs autorefs-internal" title="trulens.feedback.LLMProvider" href="../../../feedback/#trulens.feedback.LLMProvider">LLMProvider</a></code></p>
+              Bases: <code><a class="autorefs autorefs-internal" title="trulens.feedback.llm_provider.LLMProvider" href="../../../feedback/llm_provider/#trulens.feedback.llm_provider.LLMProvider">LLMProvider</a></code></p>
 
 
-        <p>Out of the box feedback functions calling OpenAI APIs. Additionally, all feedback functions listed in the base <a class="autorefs autorefs-internal" href="../../../feedback/#trulens.feedback.LLMProvider">LLMProvider class</a> can be run with OpenAI.</p>
+        <p>Out of the box feedback functions calling OpenAI APIs.</p>
+<p>Additionally, all feedback functions listed in the base <a class="autorefs autorefs-internal" href="../../../feedback/#trulens.feedback.LLMProvider">LLMProvider
+class</a> can be run with OpenAI.</p>
 <p>Create an OpenAI Provider with out of the box feedback functions.</p>
 
 
@@ -16031,8 +16148,7 @@ the statement using an LLM provider.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is hate
-speech.</p>
+        <p>A function that checks if text is hate speech.</p>
 
 
 <details class="example" open>
@@ -16117,8 +16233,7 @@ speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is
-threatening speech.</p>
+        <p>A function that checks if text is threatening speech.</p>
 
 
 <details class="example" open>
@@ -16203,8 +16318,7 @@ threatening speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-self harm.</p>
+        <p>A function that checks if text is about self harm.</p>
 
 
 <details class="example" open>
@@ -16289,8 +16403,7 @@ self harm.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is sexual
-speech.</p>
+        <p>A function that checks if text is sexual speech.</p>
 
 
 <details class="example" open>
@@ -16375,8 +16488,7 @@ speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-sexual minors.</p>
+        <p>A function that checks if text is about sexual minors.</p>
 
 
 <details class="example" open>
@@ -16461,8 +16573,7 @@ sexual minors.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-violence.</p>
+        <p>A function that checks if text is about violence.</p>
 
 
 <details class="example" open>
@@ -16547,8 +16658,7 @@ violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>
@@ -16633,8 +16743,7 @@ graphic violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>
@@ -16719,8 +16828,7 @@ graphic violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>
@@ -21082,8 +21190,7 @@ the statement using an LLM provider.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is hate
-speech.</p>
+        <p>A function that checks if text is hate speech.</p>
 
 
 <details class="example" open>
@@ -21168,8 +21275,7 @@ speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is
-threatening speech.</p>
+        <p>A function that checks if text is threatening speech.</p>
 
 
 <details class="example" open>
@@ -21254,8 +21360,7 @@ threatening speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-self harm.</p>
+        <p>A function that checks if text is about self harm.</p>
 
 
 <details class="example" open>
@@ -21340,8 +21445,7 @@ self harm.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is sexual
-speech.</p>
+        <p>A function that checks if text is sexual speech.</p>
 
 
 <details class="example" open>
@@ -21426,8 +21530,7 @@ speech.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-sexual minors.</p>
+        <p>A function that checks if text is about sexual minors.</p>
 
 
 <details class="example" open>
@@ -21512,8 +21615,7 @@ sexual minors.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-violence.</p>
+        <p>A function that checks if text is about violence.</p>
 
 
 <details class="example" open>
@@ -21598,8 +21700,7 @@ violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>
@@ -21684,8 +21785,7 @@ graphic violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>
@@ -21770,8 +21870,7 @@ graphic violence.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses OpenAI's Moderation API. A function that checks if text is about
-graphic violence.</p>
+        <p>A function that checks if text is about graphic violence.</p>
 
 
 <details class="example" open>

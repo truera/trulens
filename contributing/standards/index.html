@@ -11,14 +11,14 @@
       
       
       
-        <link rel="prev" href="../design/">
+        <link rel="prev" href="../policies/">
       
       
         <link rel="next" href="../techdebt/">
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -7317,7 +7409,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9100,6 +9192,8 @@
       
         
       
+        
+      
     
     
       
@@ -9158,6 +9252,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -9968,10 +10083,10 @@ apply when referring to things like package names, classes, methods.</p>
 <p>Generally import modules only as per
   <a href="https://google.github.io/styleguide/pyguide.html#22-imports">https://google.github.io/styleguide/pyguide.html#22-imports</a>. That us:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.schema.record</span> <span class="kn">import</span> <span class="n">Record</span> <span class="c1"># don&#39;t do this</span>
-<span class="kn">from</span> <span class="nn">trulens.schema</span> <span class="kn">import</span> <span class="n">record</span> <span class="k">as</span> <span class="n">mod_record</span> <span class="c1"># do this instead</span>
+<span class="kn">from</span> <span class="nn">trulens.schema</span> <span class="kn">import</span> <span class="n">record</span> <span class="k">as</span> <span class="n">record_schema</span> <span class="c1"># do this instead</span>
 </code></pre></div>
 <p>This prevents the <code>record</code> module from being loaded until something inside it
-is needed. If your uses of <code>mod_record.Record</code> are inside functions, this
+is needed. If your uses of <code>record_schema.Record</code> are inside functions, this
 loading can be delayed as far as the execution of that function.</p>
 </li>
 <li>
@@ -9983,14 +10098,44 @@ loading can be delayed as far as the execution of that function.</p>
 collisions with other things such as variables named <code>record</code>.</p>
 </li>
 <li>
-<p>Keep module renames consistent:</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.schema</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_schema</span>
-<span class="kn">from</span> <span class="nn">trulens.utils</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_utils</span>
+<p>Keep module renames consistent using the following patterns (see <code>src/core/trulens/_mods.py</code> for the full list):</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># schema</span>
+<span class="kn">from</span> <span class="nn">trulens.schema</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_schema</span>
+
+<span class="c1"># utils</span>
+<span class="kn">from</span> <span class="nn">trulens.utils</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_utils</span> <span class="c1"># if X was plural, make X singular in rename</span>
+
+<span class="c1"># providers</span>
+<span class="kn">from</span> <span class="nn">trulens.providers.X</span> <span class="kn">import</span> <span class="n">provider</span> <span class="k">as</span> <span class="n">X_provider</span>
+<span class="kn">from</span> <span class="nn">trulens.providers.X</span> <span class="kn">import</span> <span class="n">endpoint</span> <span class="k">as</span> <span class="n">X_endpoint</span>
+
+<span class="c1"># apps</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.X</span> <span class="kn">import</span> <span class="n">Y</span> <span class="k">as</span> <span class="n">Y_app</span>
+
+<span class="c1"># connectors</span>
+<span class="kn">from</span> <span class="nn">trulens.connector</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_connector</span>
+
+<span class="c1"># core modules</span>
+<span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">core_X</span>
+
+<span class="c1"># core.feedback modules</span>
+<span class="kn">from</span> <span class="nn">trulens.core.feedback</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">core_X</span>
+
+<span class="c1"># core.database modules</span>
+<span class="kn">from</span> <span class="nn">trulens.core.database</span> <span class="kn">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">core_db</span>
+<span class="kn">from</span> <span class="nn">trulens.core.database</span> <span class="kn">import</span> <span class="n">connector</span> <span class="k">as</span> <span class="n">core_connector</span>
+<span class="kn">from</span> <span class="nn">trulens.core.database</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_db</span>
+
+<span class="c1"># dashboard modules</span>
+<span class="kn">from</span> <span class="nn">trulens.dashboard.X</span> <span class="kn">import</span> <span class="n">Y</span> <span class="k">as</span> <span class="n">dashboard_Y</span>
 
 <span class="c1"># if X is inside some category of module Y:</span>
-<span class="kn">from</span> <span class="nn">trulens...Y</span> <span class="kn">import</span> <span class="n">Y</span> <span class="k">as</span> <span class="n">X_Y</span>
+<span class="kn">from</span> <span class="nn">trulens...Y</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">X_Y</span>
 <span class="c1"># otherwise if X is not in some category of modules:</span>
 <span class="kn">from</span> <span class="nn">trulens...</span> <span class="kn">import</span> <span class="n">X</span> <span class="k">as</span> <span class="n">mod_X</span>
+
+<span class="c1"># Some modules do not need renaming:</span>
+<span class="kn">from</span> <span class="nn">trulens.feedback</span> <span class="kn">import</span> <span class="n">llm_provider</span>
 </code></pre></div>
 </li>
 <li>

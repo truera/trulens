@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.39">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
     
     
       
@@ -537,6 +537,14 @@
       
         
       
+        
+      
+        
+      
+        
+      
+        
+      
     
     
       
@@ -582,6 +590,27 @@
   
   <span class="md-ellipsis">
     📓 TruLens Quickstart
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/add_dataframe_quickstart/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Add Dataframe Quickstart
   </span>
   
 
@@ -708,6 +737,69 @@
   
   <span class="md-ellipsis">
     📓 Logging Human Feedback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/groundtruth_evals_for_retrieval_systems/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Groundtruth Evaluations for Retrieval Systems
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/groundtruth_dataset_persistence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Persist Groundtruth Datasets
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting_started/quickstarts/custom_stream/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Evaluate Streaming Apps
   </span>
   
 
@@ -7345,7 +7437,7 @@
         
   
   <span class="md-ellipsis">
-    Groundtruth evaluation for LlamaIndex applications
+    GroundTruth evaluation for LlamaIndex applications
   </span>
   
 
@@ -9126,6 +9218,8 @@
       
         
       
+        
+      
     
     
       
@@ -9181,6 +9275,27 @@
   
   <span class="md-ellipsis">
     🧭 Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contributing/policies/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📦 Release Policies
   </span>
   
 
@@ -10515,15 +10630,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trulens.feedback-functions" class="md-nav__link">
-    <span class="md-ellipsis">
-      Functions
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -11556,44 +11662,57 @@ and handled by <a class="autorefs autorefs-internal" href="../core/utils/pyschem
     <div class="doc doc-contents ">
 
         <p>Measures Agreement against a Ground Truth.</p>
-<p>Usage 1:
-<div class="highlight"><pre><span></span><code>from trulens.feedback import GroundTruthAgreement
-from trulens.providers.openai import OpenAI
-golden_set = [
-    {&quot;query&quot;: &quot;who invented the lightbulb?&quot;, &quot;expected_response&quot;: &quot;Thomas Edison&quot;},
-    {&quot;query&quot;: &quot;¿quien invento la bombilla?&quot;, &quot;expected_response&quot;: &quot;Thomas Edison&quot;}
-]
-ground_truth_collection = GroundTruthAgreement(golden_set, provider=OpenAI())
-</code></pre></div></p>
-<p>Usage 2:
-from trulens.feedback import GroundTruthAgreement
-from trulens.providers.openai import OpenAI</p>
-<p>session = TruSession()
-ground_truth_dataset = session.get_ground_truths_by_dataset("hotpotqa") # assuming a dataset "hotpotqa" has been created and persisted in the DB</p>
-<p>ground_truth_collection = GroundTruthAgreement(ground_truth_dataset, provider=OpenAI())</p>
-<p>Usage 3:
-<div class="highlight"><pre><span></span><code>from trulens.feedback import GroundTruthAgreement
-from trulens.providers.cortex import Cortex
-ground_truth_imp = llm_app
-response = llm_app(prompt)
 
-snowflake_connection_parameters = {
-    &quot;account&quot;: os.environ[&quot;SNOWFLAKE_ACCOUNT&quot;],
-    &quot;user&quot;: os.environ[&quot;SNOWFLAKE_USER&quot;],
-    &quot;password&quot;: os.environ[&quot;SNOWFLAKE_USER_PASSWORD&quot;],
-    &quot;database&quot;: os.environ[&quot;SNOWFLAKE_DATABASE&quot;],
-    &quot;schema&quot;: os.environ[&quot;SNOWFLAKE_SCHEMA&quot;],
-    &quot;warehouse&quot;: os.environ[&quot;SNOWFLAKE_WAREHOUSE&quot;],
-}
-ground_truth_collection = GroundTruthAgreement(
-    ground_truth_imp,
-    provider=Cortex(
-        snowflake.connector.connect(**snowflake_connection_parameters),
-        model_engine=&quot;mistral-7b&quot;,
-    ),
-)
-</code></pre></div></p>
 
+<details class="usage-1" open>
+  <summary>Usage 1</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span>
+<span class="kn">from</span> <span class="nn">trulens.providers.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="n">golden_set</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;who invented the lightbulb?&quot;</span><span class="p">,</span> <span class="s2">&quot;expected_response&quot;</span><span class="p">:</span> <span class="s2">&quot;Thomas Edison&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;¿quien invento la bombilla?&quot;</span><span class="p">,</span> <span class="s2">&quot;expected_response&quot;</span><span class="p">:</span> <span class="s2">&quot;Thomas Edison&quot;</span><span class="p">}</span>
+<span class="p">]</span>
+<span class="n">ground_truth_collection</span> <span class="o">=</span> <span class="n">GroundTruthAgreement</span><span class="p">(</span><span class="n">golden_set</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">OpenAI</span><span class="p">())</span>
+</code></pre></div>
+</details>
+
+<details class="usage-2" open>
+  <summary>Usage 2</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span>
+<span class="kn">from</span> <span class="nn">trulens.providers.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens.core.session</span> <span class="kn">import</span> <span class="n">TruSession</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">TruSession</span><span class="p">()</span>
+<span class="n">ground_truth_dataset</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get_ground_truths_by_dataset</span><span class="p">(</span><span class="s2">&quot;hotpotqa&quot;</span><span class="p">)</span> <span class="c1"># assuming a dataset &quot;hotpotqa&quot; has been created and persisted in the DB</span>
+
+<span class="n">ground_truth_collection</span> <span class="o">=</span> <span class="n">GroundTruthAgreement</span><span class="p">(</span><span class="n">ground_truth_dataset</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">OpenAI</span><span class="p">())</span>
+</code></pre></div>
+</details>
+
+<details class="usage-3" open>
+  <summary>Usage 3</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.feedback</span> <span class="kn">import</span> <span class="n">GroundTruthAgreement</span>
+<span class="kn">from</span> <span class="nn">trulens.providers.cortex</span> <span class="kn">import</span> <span class="n">Cortex</span>
+<span class="n">ground_truth_imp</span> <span class="o">=</span> <span class="n">llm_app</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">llm_app</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+
+<span class="n">snowflake_connection_parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_ACCOUNT&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_USER&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_USER_PASSWORD&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_DATABASE&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_SCHEMA&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;warehouse&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SNOWFLAKE_WAREHOUSE&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+<span class="n">ground_truth_collection</span> <span class="o">=</span> <span class="n">GroundTruthAgreement</span><span class="p">(</span>
+    <span class="n">ground_truth_imp</span><span class="p">,</span>
+    <span class="n">provider</span><span class="o">=</span><span class="n">Cortex</span><span class="p">(</span>
+        <span class="n">snowflake</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="o">**</span><span class="n">snowflake_connection_parameters</span><span class="p">),</span>
+        <span class="n">model_engine</span><span class="o">=</span><span class="s2">&quot;mistral-7b&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div>
+</details>
 
 <table>
       <thead>
@@ -11607,15 +11726,52 @@ ground_truth_collection = GroundTruthAgreement(
             <td><code>ground_truth</code></td>
             <td class="doc-param-details">
               <div class="doc-md-description">
-                <p>A list of query/response pairs or a function, or a dataframe containing ground truth dataset,
-or callable that returns a ground truth string given a prompt string.
-provider (LLMProvider): The provider to use for agreement measures.
-bert_scorer (Optional[&quot;BERTScorer&quot;], optional): Internal Usage for DB serialization.</p>
+                <p>A list of query/response pairs or a function, or a
+dataframe containing ground truth dataset, or callable that
+returns a ground truth string given a prompt string.</p>
               </div>
               <p>
                   <span class="doc-param-annotation">
                     <b>TYPE:</b>
                       <code><a class="autorefs autorefs-external" title="typing.Union" href="https://docs.python.org/3/library/typing.html#typing.Union">Union</a>[<a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a>[<a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a>], <a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a>, <a class="autorefs autorefs-external" title="pandas.DataFrame" href="http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame">DataFrame</a>, <a class="autorefs autorefs-internal" title="trulens.core.utils.pyschema.FunctionOrMethod" href="../core/utils/pyschema/#trulens.core.utils.pyschema.FunctionOrMethod">FunctionOrMethod</a>]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>provider</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The provider to use for
+agreement measures.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<a class="autorefs autorefs-internal" title="trulens.feedback.llm_provider.LLMProvider" href="llm_provider/#trulens.feedback.llm_provider.LLMProvider">LLMProvider</a>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code>bert_scorer</code></td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Internal Usage for
+DB serialization.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a>[<span title="bert_score.BERTScorer">BERTScorer</span>]</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
                   </span>
               </p>
             </td>
@@ -12517,8 +12673,8 @@ being "in agreement".</p>
 
     <div class="doc doc-contents ">
 
-        <p>Uses BLEU Score. A function that that measures
-similarity to ground truth using token overlap.</p>
+        <p>Uses BLEU Score. A function that that measures similarity to ground
+truth using token overlap.</p>
 
 
 <details class="example" open>
@@ -17509,7 +17665,7 @@ and handled by <a class="autorefs autorefs-internal" href="../core/utils/pyschem
     </div>
 
 </div>
-<h3 id="trulens.feedback-functions">Functions<a href="#trulens.feedback-functions" class="headerlink" title="Permanent link">&para;</a></h3>
+
 
 
 
