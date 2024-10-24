@@ -6655,6 +6655,7 @@ trulens_eval.schema.record.Record:
       builtins.NoneType]
     feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens.core.schema.feedback.FeedbackResult]],
       builtins.NoneType]
+    feedback_results_as_completed: builtins.property
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get: builtins.function
@@ -7639,6 +7640,7 @@ trulens_eval.tru_virtual.VirtualRecord:
       builtins.NoneType]
     feedback_results: typing.Optional[typing.List[concurrent.futures._base.Future[trulens.core.schema.feedback.FeedbackResult]],
       builtins.NoneType]
+    feedback_results_as_completed: builtins.property
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get: builtins.function

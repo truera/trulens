@@ -249,6 +249,13 @@ class SQLAlchemyDB(core_db.DB):
 
         db_utils.check_db_revision(self.engine, self.table_prefix)
 
+    def get_db_revision(self) -> Optional[str]:
+        if self.engine is None:
+            raise ValueError("Database engine not initialized.")
+        return db_migrations.get_current_db_revision(
+            self.engine, self.table_prefix
+        )
+
     def migrate_database(self, prior_prefix: Optional[str] = None):
         """See [DB.migrate_database][trulens.core.database.base.DB.migrate_database]."""
 
