@@ -12,7 +12,6 @@ components or implementations that are compatible with its API.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import contextvars
 import functools
@@ -622,44 +621,17 @@ class Tracer(core_otel.Tracer):
 
     @contextlib.contextmanager
     def _span(self, cls: Type[S], **kwargs) -> ContextManager[S]:
-        span = self.start_span(cls=cls, **kwargs)
-        token = self.context_cvar.set(span.context)
-
-        enter_task = ("_span", asyncio.current_task())
-
-        try:
-            yield span.__enter__()
-
-        except Exception as e:
-            span.__exit__(type(e), e, e.__traceback__)
-
-        finally:
-            exit_task = ("_span", asyncio.current_task())
-
-            if enter_task != exit_task:
-                print("ENTER/EXIT tasks differ:\n", enter_task, "\n", exit_task)
-
-            self.context_cvar.reset(token)
+        with self.start_span(cls=cls, **kwargs) as span:
+            with python_utils.with_context({self.context_cvar: span.context}):
+                yield span
 
     @contextlib.asynccontextmanager
     async def _aspan(self, cls: Type[S], **kwargs) -> ContextManager[S]:
-        span = self.start_span(cls=cls, **kwargs)
-        token = self.context_cvar.set(span.context)
-
-        enter_task = ("_aspan", asyncio.current_task())
-
-        try:
-            yield await span.__aenter__()
-
-        except Exception as e:
-            await span.__aexit__(type(e), e, e.__traceback__)
-
-        finally:
-            exit_task = ("_aspan", asyncio.current_task())
-            if enter_task != exit_task:
-                print("ENTER/EXIT tasks differ:\n", enter_task, "\n", exit_task)
-
-            self.context_cvar.reset(token)
+        async with self.start_span(cls=cls, **kwargs) as span:
+            async with python_utils.awith_context({
+                self.context_cvar: span.context
+            }):
+                yield span
 
     # context manager
     def recording(self) -> ContextManager[PhantomSpanRecordingContext]:

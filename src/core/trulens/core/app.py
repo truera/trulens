@@ -527,20 +527,13 @@ class App(
         this is running, it will include them.
         """
 
-        # records = []
-
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
             )
         ) is not None:
-            print(
-                f"Waiting for feedback results for record: {record.record_id}"
-            )
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
             yield record
-
-        # return records
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:

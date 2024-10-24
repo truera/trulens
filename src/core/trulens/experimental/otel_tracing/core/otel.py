@@ -9,7 +9,6 @@ are found in `traces.py`.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import contextvars
 import logging
@@ -563,8 +562,6 @@ class Span(
 
         self.end_timestamp = end_time
 
-        print(f"ending {self.name}, {self.status}, {self.end_timestamp}")
-
         if self.is_recording():
             self.set_status(
                 trace_api.status.Status(trace_api.status.StatusCode.OK)
@@ -854,7 +851,7 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
     _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
         pydantic.PrivateAttr(
             default_factory=lambda: contextvars.ContextVar(
-                f"context_TracerProvider_{asyncio.current_task().name}",
+                f"context_TracerProvider_{python_utils.context_id()}",
                 default=None,
             )
         )
