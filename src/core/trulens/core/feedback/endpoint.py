@@ -928,11 +928,7 @@ class WithPost(Endpoint):
     ) -> Dict:
         """Wraps `post` with json()[0]."""
 
-        temp = self.post(url=url, json=json, timeout=timeout)
-
-        print("temp=", type(temp), temp)
-
-        return temp.json()[0]
+        return self.post(url=url, json=json, timeout=timeout).json()[0]
 
     async def apost_json_first(
         self,
