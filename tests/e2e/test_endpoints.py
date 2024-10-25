@@ -47,12 +47,12 @@ class TestEndpoints(test_utils.TruTestCase):
             "AZURE_OPENAI_ENDPOINT",
             "AZURE_OPENAI_DEPLOYMENT_NAME",
             # for snowflake cortex
-            #            "SNOWFLAKE_ACCOUNT",
-            #            "SNOWFLAKE_USER",
-            #            "SNOWFLAKE_USER_PASSWORD",
-            #            "SNOWFLAKE_DATABASE",
-            #            "SNOWFLAKE_SCHEMA",
-            #            "SNOWFLAKE_WAREHOUSE",
+            "SNOWFLAKE_ACCOUNT",
+            "SNOWFLAKE_USER",
+            "SNOWFLAKE_USER_PASSWORD",
+            "SNOWFLAKE_DATABASE",
+            "SNOWFLAKE_SCHEMA",
+            "SNOWFLAKE_WAREHOUSE",
         )
 
     def _test_hugs_provider_endpoint(self, provider, with_cost: bool = True):
