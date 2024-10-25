@@ -110,7 +110,7 @@ docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
 docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
-	poetry run ggshield secret scan repo ./docs || exit 1
+	poetry run ggshield secret scan repo ./docs
 	poetry run mkdocs gh-deploy
 
 # Check that links in the documentation are valid. Requires the lychee tool.
