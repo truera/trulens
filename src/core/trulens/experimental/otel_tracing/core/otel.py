@@ -223,7 +223,7 @@ class SpanContext(serial_utils.SerialModel):
 
     @pydantic.field_validator("trace_flags", mode="before")
     @classmethod
-    def validate_trace_flags(cls, v):
+    def _validate_trace_flags(cls, v):
         """Validate trace flags.
 
         Pydantic does not seem to like classes that inherit from int without this.

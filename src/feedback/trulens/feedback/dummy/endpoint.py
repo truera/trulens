@@ -673,7 +673,7 @@ class DummyEndpointCallback(core_endpoint.EndpointCallback):
             self.cost.n_successful_requests += 1
 
 
-class DummyEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
+class DummyEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.

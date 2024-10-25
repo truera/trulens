@@ -69,7 +69,7 @@ class Feature(str, Enum):
         )
 
 
-FEATURE_SETUPS: Dict[Feature, str] = {
+_FEATURE_SETUPS: Dict[Feature, str] = {
     Feature.OTEL_TRACING: "trulens.experimental.otel_tracing.feature"
 }
 """Mapping from experimental flags to their setup class module by name (module
@@ -110,7 +110,7 @@ class _FeatureSetup(pydantic.BaseModel):
         enabling the feature flags.
         """
 
-        if (modname := FEATURE_SETUPS.get(feature)) is None:
+        if (modname := _FEATURE_SETUPS.get(feature)) is None:
             return
 
         return _FeatureSetup.load_setup(modname).assert_optionals_installed()
@@ -123,7 +123,7 @@ class _FeatureSetup(pydantic.BaseModel):
         enabling the feature flags.
         """
 
-        if (modname := FEATURE_SETUPS.get(feature)) is None:
+        if (modname := _FEATURE_SETUPS.get(feature)) is None:
             return True
 
         return _FeatureSetup.load_setup(modname).are_optionals_installed()

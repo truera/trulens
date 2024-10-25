@@ -472,7 +472,7 @@ class Huggingface(HuggingfaceBase):
     """
 
     endpoint: (
-        core_endpoint.WithPost
+        core_endpoint._WithPost
     )  # can work with HuggingfaceEndpoint or DummyEndpoint
 
     def __init__(

@@ -878,7 +878,7 @@ class Endpoint(
         return tru_wrapper
 
 
-class WithPost(Endpoint):
+class _WithPost(Endpoint):
     """Endpoint with post methods."""
 
     post_headers: Dict[str, str] = Field(default_factory=dict)

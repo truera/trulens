@@ -111,7 +111,7 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                     self.cost.n_classes += len(item)
 
 
-class HuggingfaceEndpoint(core_endpoint.WithPost, core_endpoint.Endpoint):
+class HuggingfaceEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
     """Huggingface endpoint.
 
     Instruments the requests.post method for requests to

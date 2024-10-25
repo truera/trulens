@@ -178,7 +178,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
     @pydantic.field_validator("experimental_otel_spans", mode="before")
     @classmethod
-    def validate_experimental_otel_spans(cls, spans: List[Any]) -> List[Any]:
+    def _validate_experimental_otel_spans(cls, spans: List[Any]) -> List[Any]:
         """Deserialize spans if otel_tracing is enabled.
 
         We need to do this manually as the experimental_otel_spans field is
