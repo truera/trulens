@@ -1,13 +1,12 @@
 ---
 categories:
   - General
-date: 2024-09-25
+date: 2024-10-09
 ---
 
 # What's new in TruLens 1.1: Dashboard Comparison View, Multi-App Support, Metadata Editing, and More!
 
-TruLens 1.1.0 has been released! This release includes a number of improvements to the TruLens dashboard, including a new comparison view and a more intuitive user interface. We have also made several improvements performance and usability.
-
+In TruLens 1.1, we re-imagined the dashboard with a focus on making it easy to track large numbers of experiments, make comparisons and improve your apps for production. We also made several improvements performance and usability.
 <!-- more -->
 
 ## Dashboard Highlights
@@ -20,7 +19,7 @@ An overhaul of the TruLens dashboard has been released with major features and i
 
 #### Global app selector
 
-TruLens 1.0 introduced app versioning, allowing performance of their LLM apps to be tracked across different versions. On multi-app tables, the dashboard sidebar now includes an app selector to quickly navigate to the desired application.
+TruLens 1.0 introduced app versioning, allowing performance of their LLM apps to be tracked across different versions. Now in 1.1 when you're tracking more than one app, the dashboard sidebar now includes an app selector to quickly navigate to the desired application.
 
 #### App version and Record search and filtering
 
@@ -84,13 +83,14 @@ The records page has been updated to include a more intuitive flow for viewing a
 
 #### Try it out!
 
-We hope you enjoy the new features and improvements in TruLens 1.1.0! To get started, use [`run_dashboard`][trulens.dashboard.run.run_dashboard] with a TruSession object:
+We hope you enjoy the new features and improvements in TruLens 1.1! To get started, use [`run_dashboard`][trulens.dashboard.run.run_dashboard] with a TruSession object:
 
+!!! example
 
-```python
-from trulens.core import TruSession
-from trulens.dashboard import run_dashboard
+  ```python
+  from trulens.core import TruSession
+  from trulens.dashboard import run_dashboard
 
-session = TruSession(...)
-run_dashboard(session)
-```
+  session = TruSession(...)
+  run_dashboard(session)
+  ```

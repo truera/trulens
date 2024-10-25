@@ -650,29 +650,30 @@ class Endpoint(
         # following call to retrieve.
         endpoints_token = Endpoint._context_endpoints.set(endpoints)  # noqa: F841
 
-        # context_vars = contextvars.copy_context()
-        context_vars = {
-            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
-        }
+        try:
+            # context_vars = contextvars.copy_context()
+            context_vars = {
+                Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+            }
 
-        # Call the function.
-        result: T = __func(*args, **kwargs)
+            # Call the function.
+            result: T = __func(*args, **kwargs)
 
-        def rewrap(result):
-            if python_utils.is_lazy(result):
-                return python_utils.wrap_lazy(
-                    result,
-                    wrap=rewrap,
-                    context_vars=context_vars,
-                )
+            def rewrap(result):
+                if python_utils.is_lazy(result):
+                    return python_utils.wrap_lazy(
+                        result,
+                        wrap=rewrap,
+                        context_vars=context_vars,
+                    )
 
-            return result
+                return result
 
-        result = rewrap(result)
-
-        # Pop the endpoints from the contextvars.
-        # Optionally disable to debug context issues. See App._set_context_vars.
-        Endpoint._context_endpoints.reset(endpoints_token)
+            result = rewrap(result)
+        finally:
+            # Pop the endpoints from the contextvars.
+            # Optionally disable to debug context issues. See App._set_context_vars.
+            Endpoint._context_endpoints.reset(endpoints_token)
 
         # Return result and only the callbacks created here. Outer thunks might
         # return others.
