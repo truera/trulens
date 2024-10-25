@@ -6,7 +6,7 @@ from typing import Any, Callable, ClassVar, Optional
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
-from trulens.experimental.otel_tracing import feature as otel_tracing_feature
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 import litellm
 from litellm import completion_cost

@@ -8,7 +8,7 @@ from botocore.client import ClientCreator
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import python as python_utils
-from trulens.experimental.otel_tracing import feature as otel_tracing_feature
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 logger = logging.getLogger(__name__)
 

@@ -36,9 +36,9 @@ from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing import feature
+from trulens.experimental.otel_tracing import _feature
 
-feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api

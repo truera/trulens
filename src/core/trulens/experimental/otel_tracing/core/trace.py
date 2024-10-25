@@ -45,11 +45,11 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing import feature
+from trulens.experimental.otel_tracing import _feature
 from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
-feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import span as span_api

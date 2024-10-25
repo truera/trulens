@@ -42,7 +42,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.experimental.otel_tracing import feature as otel_tracing_feature
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
     from trulens.core import app as base_app

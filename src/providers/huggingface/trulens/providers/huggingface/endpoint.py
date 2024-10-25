@@ -13,7 +13,7 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.experimental.otel_tracing import feature as otel_tracing_feature
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 logger = logging.getLogger(__name__)
 

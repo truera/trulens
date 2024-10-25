@@ -47,7 +47,7 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing import feature as otel_tracing_feature
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 import openai
 from openai import resources
