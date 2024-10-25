@@ -311,14 +311,16 @@ class HuggingfaceBase(core_provider.Provider):
         Uses Huggingface's martin-ha/toxic-comment-model model.
 
         Example:
-            ```python from trulens.core import Feedback from
-            trulens.providers.huggingface import Huggingface
-            huggingface_provider = Huggingface()
+            ```python
+            from trulens.core import Feedback
+            from trulens.providers.huggingface import Huggingface
 
-            feedback = Feedback(huggingface_provider.toxic).on_output() ```
+            huggingface_provider = Huggingface()
+            feedback = Feedback(huggingface_provider.toxic).on_output()
+            ```
 
         Args:
-            text (str): Text to evaluate.
+            text: Text to evaluate.
 
         Returns:
             float: A value between 0 (not toxic) and 1 (toxic).
