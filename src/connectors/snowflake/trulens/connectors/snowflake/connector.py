@@ -74,7 +74,7 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
             database_args,
             database_check_revision,
-            connection_parameters=connection_parameters,
+            URL(**connection_parameters),
         )
 
     def _create_snowpark_session(
