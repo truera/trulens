@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextvars
 import functools
 import inspect
 import logging
@@ -136,20 +135,18 @@ def wrap_awaitable(
 
     init_args: Dict[str, Any] = {"awaitable": awaitable, **kwargs}
 
-    context = contextvars.copy_context()
-
     async def wrapper(awaitable):
         cb: AwaitableCallbacks = callback_class(**init_args)
 
         try:
             result = await awaitable
-            result = context.run(cb.on_awaitable_result, result=result)
-            context.run(cb.on_awaitable_end)
+            result = cb.on_awaitable_result(result=result)
+            cb.on_awaitable_end()
             return result
 
         except Exception as e:
-            e_wrapped = context.run(cb.on_awaitable_exception, error=e)
-            context.run(cb.on_awaitable_end)
+            e_wrapped = cb.on_awaitable_exception(error=e)
+            cb.on_awaitable_end()
 
             if e == e_wrapped:
                 raise e
