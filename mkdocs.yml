@@ -218,12 +218,16 @@ nav:
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
           - getting_started/quickstarts/quickstart.ipynb
+          - getting_started/quickstarts/add_dataframe_quickstart.ipynb
           - getting_started/quickstarts/existing_data_quickstart.ipynb
           - getting_started/quickstarts/langchain_quickstart.ipynb
           - getting_started/quickstarts/llama_index_quickstart.ipynb
           - getting_started/quickstarts/text2text_quickstart.ipynb
           - getting_started/quickstarts/groundtruth_evals.ipynb
           - getting_started/quickstarts/human_feedback.ipynb
+          - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
+          - getting_started/quickstarts/groundtruth_dataset_persistence.ipynb
+          - getting_started/quickstarts/custom_stream.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
@@ -278,6 +282,7 @@ nav:
   - 🤝 Contributing:
       - contributing/index.md
       - 🧭 Design: contributing/design.md
+      - 📦 Release Policies: contributing/policies.md
       - ✅ Standards: contributing/standards.md
       - 💣 Tech Debt: contributing/techdebt.md
       - ⛅ Optional Packages: contributing/optional.md

@@ -1,24 +1,16 @@
-"""
-Tests for Feedback class.
-"""
+"""Tests for Feedback class."""
 
 from unittest import TestCase
 from unittest import main
 
 import numpy as np
-from trulens.apps.basic import TruBasicApp
-from trulens.core import Feedback
-from trulens.core.schema.feedback import FeedbackMode
-from trulens.core.schema.feedback import FeedbackResultStatus
-from trulens.core.schema.select import Select
+from trulens.apps import basic as basic_app
+from trulens.core.feedback import feedback as core_feedback
+from trulens.core.schema import feedback as feedback_schema
+from trulens.core.schema import select as select_schema
 
 # Get the "globally importable" feedback implementations.
-from tests.unit.feedbacks import CustomClassNoArgs
-from tests.unit.feedbacks import CustomClassWithArgs
-from tests.unit.feedbacks import CustomProvider
-from tests.unit.feedbacks import custom_feedback_function
-from tests.unit.feedbacks import make_nonglobal_feedbacks
-from tests.unit.feedbacks import skip_if_odd
+from tests.unit import feedbacks as test_feedbacks
 
 
 class TestFeedbackEval(TestCase):
@@ -27,8 +19,8 @@ class TestFeedbackEval(TestCase):
     def test_skipeval(self) -> None:
         """Test the SkipEval capability."""
 
-        f = Feedback(imp=skip_if_odd).on(
-            val=Select.RecordCalls.somemethod.args.num[:]
+        f = core_feedback.Feedback(imp=test_feedbacks.skip_if_odd).on(
+            val=select_schema.Select.RecordCalls.somemethod.args.num[:]
         )
 
         # Create source data that looks like real source data for a record
@@ -51,14 +43,14 @@ class TestFeedbackEval(TestCase):
         self.assertAlmostEqual(res.result, (2 + 4 + 6) / 3)
         # Odds should have been skipped.
 
-        self.assertEqual(res.status, FeedbackResultStatus.DONE)
+        self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # Status should be DONE.
 
     def test_skipeval_all(self) -> None:
         """Test the SkipEval capability for when all evals are skipped"""
 
-        f = Feedback(imp=skip_if_odd).on(
-            val=Select.RecordCalls.somemethod.args.num[:]
+        f = core_feedback.Feedback(imp=test_feedbacks.skip_if_odd).on(
+            val=select_schema.Select.RecordCalls.somemethod.args.num[:]
         )
 
         # Create source data that looks like real source data for a record
@@ -77,7 +69,7 @@ class TestFeedbackEval(TestCase):
         )  # NOTE: cannot use assertEqual for nans.
         # Result should be nan if all evals were skipped.
 
-        self.assertEqual(res.status, FeedbackResultStatus.DONE)
+        self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # But status should be DONE (as opposed to SKIPPED or ERROR)
 
 
@@ -85,26 +77,28 @@ class TestFeedbackConstructors(TestCase):
     """Test for feedback function serialization/deserialization."""
 
     def setUp(self) -> None:
-        self.app = TruBasicApp(text_to_text=lambda t: f"returning {t}")
+        self.app = basic_app.TruBasicApp(
+            text_to_text=lambda t: f"returning {t}"
+        )
         _, self.record = self.app.with_record(self.app.app, t="hello")
 
     def test_global_feedback_functions(self) -> None:
         # NOTE: currently static methods and class methods are not supported
 
         for imp, target in [
-            (custom_feedback_function, 0.1),
-            # (CustomProvider.static_method, 0.2),
-            # (CustomProvider.class_method, 0.3),
-            (CustomProvider(attr=0.37).method, 0.4 + 0.37),
-            # (CustomClassNoArgs.static_method, 0.5),
-            # (CustomClassNoArgs.class_method, 0.6),
-            (CustomClassNoArgs().method, 0.7),
-            # (CustomClassWithArgs.static_method, 0.8),
-            # (CustomClassWithArgs.class_method, 0.9),
-            # (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
+            (test_feedbacks.custom_feedback_function, 0.1),
+            # (test_feedbacks.CustomProvider.static_method, 0.2),
+            # (test_feedbacks.CustomProvider.class_method, 0.3),
+            (test_feedbacks.CustomProvider(attr=0.37).method, 0.4 + 0.37),
+            # (test_feedbacks.CustomClassNoArgs.static_method, 0.5),
+            # (test_feedbacks.CustomClassNoArgs.class_method, 0.6),
+            (test_feedbacks.CustomClassNoArgs().method, 0.7),
+            # (test_feedbacks.CustomClassWithArgs.static_method, 0.8),
+            # (test_feedbacks.CustomClassWithArgs.class_method, 0.9),
+            # (test_feedbacks.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
             with self.subTest(imp=imp, target=target):
-                f = Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
 
                 # Run the feedback function.
                 res = f.run(record=self.record, app=self.app)
@@ -114,7 +108,7 @@ class TestFeedbackConstructors(TestCase):
                 # Serialize and deserialize the feedback function.
                 fs = f.model_dump()
 
-                fds = Feedback.model_validate(fs)
+                fds = core_feedback.Feedback.model_validate(fs)
 
                 # Run it again.
                 res = fds.run(record=self.record, app=self.app)
@@ -125,27 +119,27 @@ class TestFeedbackConstructors(TestCase):
         # Each of these should fail when trying to serialize/deserialize.
 
         for imp, target in [
-            # (custom_feedback_function, 0.1),
-            # (CustomProvider.static_method, 0.2), # TODO
-            (CustomProvider.class_method, 0.3),
-            # (CustomProvider(attr=0.37).method, 0.4 + 0.37),
-            # (CustomClassNoArgs.static_method, 0.5), # TODO
-            (CustomClassNoArgs.class_method, 0.6),
-            # (CustomClassNoArgs().method, 0.7),
-            # (CustomClassWithArgs.static_method, 0.8), # TODO
-            (CustomClassWithArgs.class_method, 0.9),
-            (CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
+            # (test_feedbacks.custom_feedback_function, 0.1),
+            # (test_feedbacks.CustomProvider.static_method, 0.2), # TODO
+            (test_feedbacks.CustomProvider.class_method, 0.3),
+            # (test_feedbacks.CustomProvider(attr=0.37).method, 0.4 + 0.37),
+            # (test_feedbacks.CustomClassNoArgs.static_method, 0.5), # TODO
+            (test_feedbacks.CustomClassNoArgs.class_method, 0.6),
+            # (test_feedbacks.CustomClassNoArgs().method, 0.7),
+            # (test_feedbacks.CustomClassWithArgs.static_method, 0.8), # TODO
+            (test_feedbacks.CustomClassWithArgs.class_method, 0.9),
+            (test_feedbacks.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73),
         ]:
             with self.subTest(imp=imp, target=target):
-                f = Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
                 with self.assertRaises(Exception):
-                    Feedback.model_validate(f.model_dump())
+                    core_feedback.Feedback.model_validate(f.model_dump())
 
     def test_nonglobal_feedback_functions(self) -> None:
         # Set up the same feedback functions as in feedback.py but locally here.
         # This makes them non-globally-importable.
 
-        NG = make_nonglobal_feedbacks()
+        NG = test_feedbacks.make_nonglobal_feedbacks()
 
         for imp, target in [
             (NG.NGcustom_feedback_function, 0.1),
@@ -160,7 +154,7 @@ class TestFeedbackConstructors(TestCase):
             # (NG.CustomClassWithArgs(attr=0.37).method, 1.0 + 0.73)
         ]:
             with self.subTest(imp=imp, target=target):
-                f = Feedback(imp).on_default()
+                f = core_feedback.Feedback(imp).on_default()
 
                 # Run the feedback function.
                 res = f.run(record=self.record, app=self.app)
@@ -172,29 +166,29 @@ class TestFeedbackConstructors(TestCase):
 
                 # This should fail:
                 with self.assertRaises(Exception):
-                    Feedback.model_validate(fs)
+                    core_feedback.Feedback.model_validate(fs)
 
                 # OK to use with App as long as not deferred mode:
-                TruBasicApp(
+                basic_app.TruBasicApp(
                     text_to_text=lambda t: f"returning {t}",
                     feedbacks=[f],
-                    feedback_mode=FeedbackMode.WITH_APP,
+                    feedback_mode=feedback_schema.FeedbackMode.WITH_APP,
                 )
 
                 # OK to use with App as long as not deferred mode:
-                TruBasicApp(
+                basic_app.TruBasicApp(
                     text_to_text=lambda t: f"returning {t}",
                     feedbacks=[f],
-                    feedback_mode=FeedbackMode.WITH_APP_THREAD,
+                    feedback_mode=feedback_schema.FeedbackMode.WITH_APP_THREAD,
                 )
 
                 # Trying these feedbacks with an app with deferred mode should
                 # fail at app construction:
                 with self.assertRaises(Exception):
-                    TruBasicApp(
+                    basic_app.TruBasicApp(
                         text_to_text=lambda t: f"returning {t}",
                         feedbacks=[f],
-                        feedback_mode=FeedbackMode.DEFERRED,
+                        feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
                     )
 
 

@@ -37,9 +37,7 @@ zip_wheel() {
 # Zip wheels.
 rm -rf ${OUTPUT_DIRECTORY}
 mkdir -p ${OUTPUT_DIRECTORY}
-zip_wheel trulens-connectors-snowflake ${OUTPUT_DIRECTORY}/trulens_connectors_snowflake.zip
-zip_wheel trulens-core ${OUTPUT_DIRECTORY}/trulens_core.zip
-zip_wheel trulens-feedback ${OUTPUT_DIRECTORY}/trulens_feedback.zip
-zip_wheel trulens-providers-cortex ${OUTPUT_DIRECTORY}/trulens_providers_cortex.zip
-snow snowpark package create snowflake-sqlalchemy==1.6.1
-mv snowflake_sqlalchemy.zip ${OUTPUT_DIRECTORY}
+zip_wheel trulens-connectors-snowflake ${OUTPUT_DIRECTORY}/trulens-connectors-snowflake.zip
+zip_wheel trulens-core ${OUTPUT_DIRECTORY}/trulens-core.zip
+zip_wheel trulens-feedback ${OUTPUT_DIRECTORY}/trulens-feedback.zip
+zip_wheel trulens-providers-cortex ${OUTPUT_DIRECTORY}/trulens-providers-cortex.zip

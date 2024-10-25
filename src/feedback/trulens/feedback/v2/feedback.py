@@ -6,9 +6,9 @@ from string import Formatter
 from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import pydantic
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.text import make_retab
-from trulens.feedback.generated import re_configured_rating
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import text as text_utils
+from trulens.feedback import generated as feedback_generated
 
 
 # Level 1 abstraction
@@ -35,8 +35,8 @@ class Feedback(pydantic.BaseModel):
             f for f in cls.model_fields if f not in ["examples", "prompt"]
         )
 
-        onetab = make_retab("   ")
-        twotab = make_retab("      ")
+        onetab = text_utils.make_retab("   ")
+        twotab = text_utils.make_retab("      ")
 
         # feedback hierarchy location
         for parent in typ.__mro__[::-1]:
@@ -51,12 +51,15 @@ class Feedback(pydantic.BaseModel):
             for f in list(fields):
                 if f in parent.model_fields:
                     fields.remove(f)
-                    if safe_hasattr(cls, f):
+                    if python_utils.safe_hasattr(cls, f):
                         ret += twotab(f"{f} = {getattr(cls, f)}") + "\n"
                     else:
                         ret += twotab(f"{f} = instance specific") + "\n"
 
-        if safe_hasattr(typ, "__doc__") and typ.__doc__ is not None:
+        if (
+            python_utils.safe_hasattr(typ, "__doc__")
+            and typ.__doc__ is not None
+        ):
             ret += "\nDocstring\n"
             ret += onetab(typ.__doc__) + "\n"
 
@@ -318,7 +321,7 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Hypothesis: {hypothesis}
 
-        Please answer with the template below for all statement sentences:
+        Please meticulously answer with the template below for ALL statement sentences:
 
         Criteria: <Statement Sentence>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
@@ -771,7 +774,7 @@ class COTExplained(Feedback):
                     for line in response.split("\n"):
                         if "Score" in line:
                             score = (
-                                re_configured_rating(
+                                feedback_generated.re_configured_rating(
                                     line,
                                     min_score_val=0,
                                     max_score_val=normalize,
@@ -781,7 +784,7 @@ class COTExplained(Feedback):
                     return score, {"reason": response}
                 else:
                     return (
-                        re_configured_rating(
+                        feedback_generated.re_configured_rating(
                             response, min_score_val=0, max_score_val=normalize
                         )
                         / normalize

@@ -33,8 +33,8 @@ import logging
 from threading import current_thread
 from typing import Awaitable, Callable, TypeVar, Union
 
-from trulens.core.utils import python as mod_python_utils
-from trulens.core.utils import threading as mod_threading_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ CallableAwaitable = Callable[[A], Awaitable[B]]
 """Function that produces an awaitable / coroutine function."""
 
 ThunkMaybeAwaitable = Union[
-    mod_python_utils.Thunk[T], mod_python_utils.Thunk[Awaitable[T]]
+    python_utils.Thunk[T], python_utils.Thunk[Awaitable[T]]
 ]
 """Thunk or coroutine thunk.
 
@@ -79,7 +79,7 @@ async def desync(
     run asynchronously.
     """
 
-    if mod_python_utils.is_really_coroutinefunction(func):
+    if python_utils.is_really_coroutinefunction(func):
         return await func(*args, **kwargs)
 
     else:
@@ -98,7 +98,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
     block until it is finished. Runs in a new thread in such cases.
     """
 
-    if mod_python_utils.is_really_coroutinefunction(func):
+    if python_utils.is_really_coroutinefunction(func):
         func: Callable[[A], Awaitable[T]]
         awaitable: Awaitable[T] = func(*args, **kwargs)
 
@@ -126,7 +126,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
         # new thread to run the awaitable until completion.
 
         def run_in_new_loop():
-            th: mod_threading_utils.Thread = current_thread()
+            th: threading_utils.Thread = current_thread()
             # Attach return value and possibly exception to thread object so we
             # can retrieve from the starter of the thread.
             th.ret = None
@@ -139,7 +139,7 @@ def sync(func: CallableMaybeAwaitable[A, T], *args, **kwargs) -> T:
             except Exception as e:
                 th.error = e
 
-        thread = mod_threading_utils.Thread(target=run_in_new_loop)
+        thread = threading_utils.Thread(target=run_in_new_loop)
 
         # Start thread and wait for it to finish.
         thread.start()

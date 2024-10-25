@@ -25,20 +25,12 @@ from typing import (
 
 import pydantic
 from pydantic import Field
-from trulens.core.schema.base import Cost
+from trulens.core.schema import base as base_schema
 from trulens.core.utils import asynchro as mod_asynchro_utils
-from trulens.core.utils import pace as mod_pace
+from trulens.core.utils import pace as pace_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.pyschema import WithClassInfo
-from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.python import InstanceRefMixin
-from trulens.core.utils.python import Thunk
-from trulens.core.utils.python import callable_name
-from trulens.core.utils.python import class_name
-from trulens.core.utils.python import is_really_coroutinefunction
-from trulens.core.utils.python import module_name
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +45,13 @@ INSTRUMENT = "__tru_instrument"
 DEFAULT_RPM = 60
 """Default requests per minute for endpoints."""
 
+_NO_CONTEXT_WARNING = """
+Cannot find TruLens context. See
+https://www.trulens.org/component_guides/other/no_context_warning for more information.
+"""
 
-class EndpointCallback(SerialModel):
+
+class EndpointCallback(serial_utils.SerialModel):
     """
     Callbacks to be invoked after various API requests and track various metrics
     like token usage.
@@ -63,7 +60,7 @@ class EndpointCallback(SerialModel):
     endpoint: Endpoint = Field(exclude=True)
     """The endpoint owning this callback."""
 
-    cost: Cost = Field(default_factory=Cost)
+    cost: base_schema.Cost = Field(default_factory=base_schema.Cost)
     """Costs tracked by this callback."""
 
     def handle(self, response: Any) -> None:
@@ -99,7 +96,11 @@ class EndpointCallback(SerialModel):
         self.cost.n_embedding_requests += 1
 
 
-class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
+class Endpoint(
+    pyschema_utils.WithClassInfo,
+    serial_utils.SerialModel,
+    python_utils.InstanceRefMixin,
+):
     """API usage, pacing, and utilities for API endpoints."""
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
@@ -145,6 +146,11 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             module_name="trulens.providers.cortex.endpoint",
             class_name="CortexEndpoint",
         ),
+        EndpointSetup(
+            arg_flag="with_dummy",
+            module_name="trulens.feedback.dummy.endpoint",
+            class_name="DummyEndpoint",
+        ),
     ]
 
     instrumented_methods: ClassVar[
@@ -177,8 +183,8 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
     post_headers: Dict[str, str] = Field(default_factory=dict, exclude=True)
     """Optional post headers for post requests if done by this class."""
 
-    pace: mod_pace.Pace = Field(
-        default_factory=lambda: mod_pace.Pace(
+    pace: pace_utils.Pace = Field(
+        default_factory=lambda: pace_utils.Pace(
             marks_per_second=DEFAULT_RPM / 60.0, seconds_per_period=60.0
         ),
         exclude=True,
@@ -223,7 +229,9 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         _register_instance: bool = True,
         **kwargs,
     ):
-        InstanceRefMixin.__init__(self, register_instance=_register_instance)
+        python_utils.InstanceRefMixin.__init__(
+            self, register_instance=_register_instance
+        )
 
         if callback_class is None:
             # Some old databases do not have this serialized so lets set it to
@@ -242,7 +250,7 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         kwargs["callback_class"] = callback_class
         kwargs["global_callback"] = callback_class(endpoint=self)
         kwargs["callback_name"] = f"callback_{name}"
-        kwargs["pace"] = mod_pace.Pace(
+        kwargs["pace"] = pace_utils.Pace(
             seconds_per_period=60.0,  # 1 minute
             marks_per_second=rpm / 60.0,
         )
@@ -299,7 +307,7 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             + ("\n\t".join(map(str, errors)))
         )
 
-    def run_me(self, thunk: Thunk[T]) -> T:
+    def run_me(self, thunk: python_utils.Thunk[T]) -> T:
         """
         DEPRECATED: Run the given thunk, returning itse output, on pace with the api.
         Retries request multiple times if self.retries > 0.
@@ -312,10 +320,10 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         )
 
     def _instrument_module(self, mod: ModuleType, method_name: str) -> None:
-        if safe_hasattr(mod, method_name):
+        if python_utils.safe_hasattr(mod, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
-                module_name(mod),
+                python_utils.module_name(mod),
                 method_name,
                 self.name,
             )
@@ -327,10 +335,10 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             Endpoint.instrumented_methods[mod].append((func, w, type(self)))
 
     def _instrument_class(self, cls, method_name: str) -> None:
-        if safe_hasattr(cls, method_name):
+        if python_utils.safe_hasattr(cls, method_name):
             logger.debug(
                 "Instrumenting %s.%s for %s",
-                class_name(cls),
+                python_utils.class_name(cls),
                 method_name,
                 self.name,
             )
@@ -371,7 +379,7 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         that the produced method gets instrumented. Only instruments the
         produced methods if they are matched by named `wrapped_method_filter`.
         """
-        if safe_hasattr(cls, wrapper_method_name):
+        if python_utils.safe_hasattr(cls, wrapper_method_name):
             logger.debug(
                 "Instrumenting method creator %s.%s for %s",
                 cls.__name__,
@@ -385,7 +393,8 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
 
                 if wrapped_method_filter(produced_func):
                     logger.debug(
-                        "Instrumenting %s", callable_name(produced_func)
+                        "Instrumenting %s",
+                        python_utils.callable_name(produced_func),
                     )
 
                     instrumented_produced_func = self.wrap_function(
@@ -409,10 +418,10 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             setattr(cls, wrapper_method_name, metawrap)
 
     def _instrument_module_members(self, mod: ModuleType, method_name: str):
-        if not safe_hasattr(mod, INSTRUMENT):
+        if not python_utils.safe_hasattr(mod, INSTRUMENT):
             setattr(mod, INSTRUMENT, set())
 
-        already_instrumented = safe_getattr(mod, INSTRUMENT)
+        already_instrumented = python_utils.safe_getattr(mod, INSTRUMENT)
 
         if method_name in already_instrumented:
             logger.debug(
@@ -427,8 +436,8 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
                 m,
                 method_name,
             )
-            if safe_hasattr(mod, m):
-                obj = safe_getattr(mod, m)
+            if python_utils.safe_hasattr(mod, m):
+                obj = python_utils.safe_getattr(mod, m)
                 self._instrument_class(obj, method_name=method_name)
 
         already_instrumented.add(method_name)
@@ -442,6 +451,7 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
         """
@@ -455,7 +465,9 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             if locals().get(endpoint.arg_flag):
                 try:
                     mod = importlib.import_module(endpoint.module_name)
-                    cls: Type[Endpoint] = safe_getattr(mod, endpoint.class_name)
+                    cls: Type[Endpoint] = python_utils.safe_getattr(
+                        mod, endpoint.class_name
+                    )
                 except ImportError:
                     # If endpoint uses optional packages, will get either module
                     # not found error, or we will have a dummy which will fail
@@ -506,8 +518,9 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         with_litellm: bool = True,
         with_bedrock: bool = True,
         with_cortex: bool = True,
+        with_dummy: bool = True,
         **kwargs,
-    ) -> Tuple[T, Thunk[Cost]]:
+    ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
         """
         Track costs of all of the apis we can currently track, over the
         execution of thunk.
@@ -528,12 +541,13 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
             with_litellm=with_litellm,
             with_bedrock=with_bedrock,
             with_cortex=with_cortex,
+            with_dummy=with_dummy,
             **kwargs,
         )
 
         if len(cbs) == 0:
             # Otherwise sum returns "0" below.
-            tally = lambda: Cost()
+            tally = lambda: base_schema.Cost()
         else:
             tally = lambda: sum(cb.cost for cb in cbs)
 
@@ -551,6 +565,16 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         Runs the given `thunk`, tracking costs using each of the provided
         endpoints' callbacks.
         """
+
+        if (
+            with_endpoints is not None
+            and len(with_endpoints) > 0
+            and not Endpoint._have_context()
+        ):
+            # If we cannot access the context vars, we cannot track costs, the
+            # last condition issues a warning with more info.
+            return __func(*args, **kwargs), []
+
         # Check to see if this call is within another _track_costs call:
         endpoints = dict(Endpoint._context_endpoints.get())  # copy
 
@@ -652,10 +676,23 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
         """
         return response
 
+    @staticmethod
+    def _have_context() -> bool:
+        """Determine whether we can access the context vars needed for cost tracking."""
+
+        try:
+            Endpoint._context_endpoints.get()
+
+        except LookupError:
+            logger.warning(_NO_CONTEXT_WARNING)
+            return False
+
+        return True
+
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
 
-        if safe_hasattr(func, INSTRUMENT):
+        if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
             # wrapped function in the INSTRUMENT attribute. This will be used to
             # invoke appropriate callbacks when the wrapped function gets
@@ -695,9 +732,12 @@ class Endpoint(WithClassInfo, SerialModel, InstanceRefMixin):
                 "isasyncgeneratorfunction=%s",
                 func,
                 type(func),
-                is_really_coroutinefunction(func),
+                python_utils.is_really_coroutinefunction(func),
                 inspect.isasyncgenfunction(func),
             )
+
+            if not Endpoint._have_context():
+                return func(*args, **kwargs)
 
             endpoints = Endpoint._context_endpoints.get()
 

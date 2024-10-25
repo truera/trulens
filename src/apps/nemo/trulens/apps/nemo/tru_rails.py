@@ -19,24 +19,22 @@ from nemoguardrails.actions.llm.generation import LLMGenerationActions
 from nemoguardrails.kb.kb import KnowledgeBase
 from pydantic import Field
 from trulens.apps.langchain import LangChainInstrument
-from trulens.core import app as mod_app
-from trulens.core import feedback
+from trulens.core import app as core_app
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
-from trulens.core.schema import Select
+from trulens.core.schema import select as select_schema
+from trulens.core.utils import json as json_utils
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 from trulens.core.utils.containers import dict_set_with_multikey
-from trulens.core.utils.json import jsonify
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import FunctionOrMethod
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.serial import Lens
-from trulens.core.utils.text import retab
 
 logger = logging.getLogger(__name__)
 
 
-class RailsActionSelect(Select):
+class RailsActionSelect(select_schema.Select):
     """Selector shorthands for _NeMo Guardrails_ apps when used for evaluating
     feedback in actions.
 
@@ -45,7 +43,7 @@ class RailsActionSelect(Select):
     rails app.
     """
 
-    Action = Lens().action
+    Action = serial_utils.Lens().action
     """Selector for action call parameters."""
 
     Events = Action.events
@@ -104,8 +102,8 @@ class FeedbackActions:
 
     @staticmethod
     def register_feedback_functions(
-        *args: Tuple[feedback.Feedback, ...],
-        **kwargs: Dict[str, feedback.Feedback],
+        *args: Tuple[core_feedback.Feedback, ...],
+        **kwargs: Dict[str, core_feedback.Feedback],
     ):
         """Register one or more feedback functions to use in rails `feedback`
         action.
@@ -115,7 +113,7 @@ class FeedbackActions:
         """
 
         for name, feedback_instance in kwargs.items():
-            if not isinstance(feedback_instance, feedback.Feedback):
+            if not isinstance(feedback_instance, core_feedback.Feedback):
                 raise ValueError(
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
@@ -124,7 +122,7 @@ class FeedbackActions:
             registered_feedback_functions[name] = feedback_instance
 
         for feedback_instance in args:
-            if not isinstance(feedback_instance, feedback.Feedback):
+            if not isinstance(feedback_instance, core_feedback.Feedback):
                 raise ValueError(
                     f"Invalid feedback function: {feedback_instance}; "
                     f"expected a Feedback class instance."
@@ -132,11 +130,13 @@ class FeedbackActions:
             print(
                 f"registered feedback function under name {feedback_instance.name}"
             )
-            registered_feedback_functions[feedback_instance.name] = feedback
+            registered_feedback_functions[feedback_instance.name] = (
+                feedback_instance
+            )
 
     @staticmethod
     def action_of_feedback(
-        feedback_instance: feedback.Feedback, verbose: bool = False
+        feedback_instance: core_feedback.Feedback, verbose: bool = False
     ) -> Callable:
         """Create a custom rails action for the given feedback function.
 
@@ -150,7 +150,7 @@ class FeedbackActions:
                 the same as the feedback function's name.
         """
 
-        if not isinstance(feedback_instance, feedback.Feedback):
+        if not isinstance(feedback_instance, core_feedback.Feedback):
             raise ValueError(
                 f"Invalid feedback function: {feedback_instance}; "
                 f"expected a Feedback class instance."
@@ -184,7 +184,7 @@ class FeedbackActions:
         config: Optional[RailsConfig] = None,
         # Rest of arguments are specific to this action.
         function: Optional[str] = None,
-        selectors: Optional[Dict[str, Union[str, Lens]]] = None,
+        selectors: Optional[Dict[str, Union[str, serial_utils.Lens]]] = None,
         verbose: bool = False,
     ) -> ActionResult:
         """Run the specified feedback function from trulens.
@@ -268,7 +268,9 @@ class FeedbackActions:
 
         selectors = {
             argname: (
-                Lens.of_string(arglens) if isinstance(arglens, str) else arglens
+                serial_utils.Lens.of_string(arglens)
+                if isinstance(arglens, str)
+                else arglens
             )
             for argname, arglens in selectors.items()
         }
@@ -285,7 +287,7 @@ class FeedbackActions:
                 print(f"  {argname} = ", end=None)
                 # use pretty print for the potentially big thing here:
                 print(
-                    retab(
+                    text_utils.retab(
                         tab="    ", s=pformat(lens.get_sole_item(source_data))
                     )
                 )
@@ -371,7 +373,7 @@ class RailsInstrument(Instrument):
         )
 
 
-class TruRails(mod_app.App):
+class TruRails(core_app.App):
     """Recorder for apps defined using _NeMo Guardrails_.
 
     Args:
@@ -383,19 +385,21 @@ class TruRails(mod_app.App):
     app: LLMRails
 
     # TODEP
-    root_callable: ClassVar[FunctionOrMethod] = Field(None)
+    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(self, app: LLMRails, **kwargs):
         # TruLlama specific:
         kwargs["app"] = app
-        kwargs["root_class"] = Class.of_object(app)  # TODO: make class property
+        kwargs["root_class"] = pyschema_utils.Class.of_object(
+            app
+        )  # TODO: make class property
         kwargs["instrument"] = RailsInstrument(app=self)
 
         super().__init__(**kwargs)
 
     def main_output(
         self, func: Callable, sig: Signature, bindings: BoundArguments, ret: Any
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main out string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -406,11 +410,11 @@ class TruRails(mod_app.App):
             if "content" in ret:
                 return ret["content"]
 
-        return jsonify(ret)
+        return json_utils.jsonify(ret)
 
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
-    ) -> JSON:
+    ) -> serial_utils.JSON:
         """
         Determine the main input string for the given function `func` with
         signature `sig` after it is called with the given `bindings` and has
@@ -424,19 +428,23 @@ class TruRails(mod_app.App):
                 if "content" in message:
                     return message["content"]
 
-        return jsonify(bindings.arguments)
+        return json_utils.jsonify(bindings.arguments)
 
     @classmethod
-    def select_context(cls, app: Optional[LLMRails] = None) -> Lens:
+    def select_context(
+        cls, app: Optional[LLMRails] = None
+    ) -> serial_utils.Lens:
         """
         Get the path to the context in the query output.
         """
-        return Select.RecordCalls.kb.search_relevant_chunks.rets[:].body
+        return select_schema.Select.RecordCalls.kb.search_relevant_chunks.rets[
+            :
+        ].body
 
     def __getattr__(self, name):
         if name == "__name__":
             return self.__class__.__name__  # Return the class name of TruRails
-        elif safe_hasattr(self.app, name):
+        elif python_utils.safe_hasattr(self.app, name):
             return getattr(
                 self.app, name
             )  # Delegate to the wrapped app if it has the attribute

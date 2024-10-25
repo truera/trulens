@@ -29,7 +29,7 @@ from tqdm.auto import tqdm
 from trulens.core._utils import pycompat as pycompat_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.core.utils.text import format_size
+from trulens.core.utils import text as text_utils
 
 T = TypeVar("T")
 
@@ -110,7 +110,11 @@ def get_submodule_names(mod: ModuleType) -> Iterable[str]:
     Args:
         mod: The base module over which to look.
     """
+
     if isinstance(mod, str):
+        if mod == "_mods":
+            # Not meant to be imported.
+            return
         try:
             mod = importlib.import_module(mod)
         except Exception:
@@ -121,12 +125,17 @@ def get_submodule_names(mod: ModuleType) -> Iterable[str]:
     yield mod.__name__
 
     for modname in get_module_names_of_path(path, prefix=mod.__name__ + "."):
-        if modname.endswith("._bundle") or modname.startswith(
-            "trulens.dashboard.pages"
+        if (
+            modname.endswith("._bundle")
+            or modname.startswith("trulens.dashboard.pages")
+            or modname.endswith("_mods")
         ):
             # Skip _bundle this as it is not a real module/package.
 
             # Skip trulens.dashboard.pages* because importing them executes a lot of stuff.
+
+            # Skip _mods because it is a special module for static tools is not
+            # meant to be imported.
 
             # TODO: figure out how to prevent it from being installed to begin with.
             continue
@@ -717,7 +726,7 @@ def find_path(source_id: int, target_id: int) -> Optional[serial_utils.Lens]:
             else:
                 prog.set_description_str(f"lens with {len(path)} steps")
             prog.set_postfix_str(
-                format_size(len(visited)) + " reference(s) visited"
+                text_utils.format_size(len(visited)) + " reference(s) visited"
             )
 
         final_ref = path[-1]

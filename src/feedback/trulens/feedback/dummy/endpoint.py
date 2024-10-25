@@ -7,6 +7,8 @@ randomness is introduced to simulate the behavior of real APIs.
 
 from __future__ import annotations
 
+import asyncio
+from enum import Enum
 import inspect
 import logging
 from pprint import pformat
@@ -18,21 +20,36 @@ import numpy as np
 from numpy import random as np_random
 import pydantic
 from pydantic import Field
-from trulens.core.feedback.endpoint import DEFAULT_RPM
-from trulens.core.feedback.endpoint import INSTRUMENT
-from trulens.core.feedback.endpoint import Endpoint
-from trulens.core.feedback.endpoint import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import deprecation as deprecation_utils
-from trulens.core.utils.python import locals_except
-from trulens.core.utils.python import safe_hasattr
-from trulens.core.utils.serial import JSON
-from trulens.core.utils.threading import DEFAULT_NETWORK_TIMEOUT
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
 A = TypeVar("A")
 B = TypeVar("B")
 T = TypeVar("T")
+
+
+class _DummyOutcome(Enum):
+    """Outcomes of a dummy API call."""
+
+    NORMAL = "normal"
+    """Normal response."""
+
+    FREEZE = "freeze"
+    """Simulated freeze outcome."""
+
+    ERROR = "error"
+    """Simulated error outcome."""
+
+    LOADING = "loading"
+    """Simulated loading model outcome."""
+
+    OVERLOADED = "overloaded"
+    """Simulated overloaded outcome."""
 
 
 class NonDeterminism(pydantic.BaseModel):
@@ -118,31 +135,28 @@ class DummyAPI(pydantic.BaseModel):
         ), "Total probabilities should not exceed 1.0 ."
 
     async def apost(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
-    ) -> Any:
-        # TODO: use async inside post
-        return self.post(url=url, payload=payload, timeout=timeout)
-
-    def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Any:
         """Pretend to make an http post request to some model execution API."""
 
         assert isinstance(payload, dict), "Payload should be a dict."
 
         if timeout is None:
-            timeout = DEFAULT_NETWORK_TIMEOUT
+            timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
 
         # allocate some data to pretend we are doing hard work
         temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
 
         if self.delay > 0.0:
-            sleep(
+            await asyncio.sleep(
                 max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2))
             )
 
         r = self.ndt.discrete_choice(
-            seq=["normal", "freeze", "error", "loading", "overloaded"],
+            seq=list(_DummyOutcome),
             probs=[
                 1
                 - self.freeze_prob
@@ -156,18 +170,99 @@ class DummyAPI(pydantic.BaseModel):
             ],
         )
 
-        if r == "freeze":
+        if r == _DummyOutcome.FREEZE:
+            # Simulated freeze outcome.
+
+            while True:
+                await asyncio.sleep(timeout)
+
+        elif r == _DummyOutcome.ERROR:
+            # Simulated error outcome.
+
+            raise RuntimeError("Simulated error happened.")
+
+        elif r == _DummyOutcome.LOADING:
+            # Simulated loading model outcome.
+
+            wait_time = self.ndt.np_random.uniform(
+                *self.loading_time_uniform_params
+            )
+            logger.warning(
+                "Waiting for model to load (%s) second(s).",
+                wait_time,
+            )
+            await asyncio.sleep(wait_time + 2)
+            return await self.apost(url, payload, timeout=timeout)
+
+        elif r == _DummyOutcome.OVERLOADED:
+            # Simulated overloaded outcome.
+
+            logger.warning("Waiting for overloaded API before trying again.")
+            await asyncio.sleep(10)
+            return self.post(url, payload, timeout=timeout)
+
+        elif r == _DummyOutcome.NORMAL:
+            if "api-inference.huggingface.co" in url:
+                # pretend to produce huggingface api classification results
+                return self._fake_classification()
+            else:
+                return self._fake_completion(
+                    model=payload["model"],
+                    prompt=payload["prompt"],
+                    temperature=payload["temperature"],
+                )
+
+        else:
+            raise RuntimeError("Unknown random result type.")
+
+    def post(
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
+    ) -> Any:
+        """Pretend to make an http post request to some model execution API."""
+
+        assert isinstance(payload, dict), "Payload should be a dict."
+
+        if timeout is None:
+            timeout = threading_utils.DEFAULT_NETWORK_TIMEOUT
+
+        # allocate some data to pretend we are doing hard work
+        temporary = np.empty(self.alloc, dtype=np.int8)  # noqa: F841
+
+        if self.delay > 0.0:
+            sleep(
+                max(0.0, self.ndt.np_random.normal(self.delay, self.delay / 2))
+            )
+
+        r = self.ndt.discrete_choice(
+            seq=list(_DummyOutcome),
+            probs=[
+                1
+                - self.freeze_prob
+                - self.error_prob
+                - self.loading_prob
+                - self.overloaded_prob,
+                self.freeze_prob,
+                self.error_prob,
+                self.loading_prob,
+                self.overloaded_prob,
+            ],
+        )
+
+        if r == _DummyOutcome.FREEZE:
             # Simulated freeze outcome.
 
             while True:
                 sleep(timeout)
 
-        elif r == "error":
+        elif r == _DummyOutcome.ERROR:
             # Simulated error outcome.
 
             raise RuntimeError("Simulated error happened.")
 
-        elif r == "loading":
+        elif r == _DummyOutcome.LOADING:
             # Simulated loading model outcome.
 
             wait_time = self.ndt.np_random.uniform(
@@ -180,14 +275,14 @@ class DummyAPI(pydantic.BaseModel):
             sleep(wait_time + 2)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "overloaded":
+        elif r == _DummyOutcome.OVERLOADED:
             # Simulated overloaded outcome.
 
             logger.warning("Waiting for overloaded API before trying again.")
             sleep(10)
             return self.post(url, payload, timeout=timeout)
 
-        elif r == "normal":
+        elif r == _DummyOutcome.NORMAL:
             if "api-inference.huggingface.co" in url:
                 # pretend to produce huggingface api classification results
                 return self._fake_classification()
@@ -329,7 +424,7 @@ class DummyAPICreator:
         )
 
 
-class DummyEndpointCallback(EndpointCallback):
+class DummyEndpointCallback(core_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
     def handle_classification(self, response: Sequence) -> None:
@@ -338,6 +433,8 @@ class DummyEndpointCallback(EndpointCallback):
         if "scores" in response:
             # fake classification
             self.cost.n_classes += len(response)
+
+            self.cost.n_successful_requests += 1
 
     def handle_generation(self, response: Dict) -> None:
         super().handle_generation(response=response)
@@ -350,8 +447,10 @@ class DummyEndpointCallback(EndpointCallback):
             self.cost.n_prompt_tokens += usage.get("n_prompt_tokens", 0)
             self.cost.n_completion_tokens += usage.get("n_completion_tokens", 0)
 
+            self.cost.n_successful_requests += 1
 
-class DummyEndpoint(Endpoint):
+
+class DummyEndpoint(core_endpoint.Endpoint):
     """Endpoint for testing purposes.
 
     Does not make any network calls and just pretends to.
@@ -405,7 +504,7 @@ class DummyEndpoint(Endpoint):
     def __init__(
         self,
         name: str = "dummyendpoint",
-        rpm: float = DEFAULT_RPM * 10,
+        rpm: float = core_endpoint.DEFAULT_RPM * 10,
         **kwargs,
     ):
         assert rpm > 0
@@ -417,31 +516,44 @@ class DummyEndpoint(Endpoint):
         # Will use fake api for fake feedback evals.
 
         super().__init__(
-            **kwargs, **locals_except("self", "name", "kwargs", "__class__")
+            **kwargs,
+            **python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         logger.info(
             "Using DummyEndpoint with %s",
-            locals_except("self", "name", "kwargs", "__class__"),
+            python_utils.locals_except("self", "name", "kwargs", "__class__"),
         )
 
         # Instrument existing DummyAPI class. These are used by the custom_app
         # example.
         self._instrument_class(DummyAPI, "completion")
-        self._instrument_class(DummyAPI, "classify")
+        self._instrument_class(DummyAPI, "classification")
+        self._instrument_class(DummyAPI, "acompletion")
+        self._instrument_class(DummyAPI, "aclassification")
 
         # Also instrument any dynamically created DummyAPI methods like we do
         # for boto3.ClientCreator.
-        if not safe_hasattr(DummyAPICreator.create_method, INSTRUMENT):
+        if not python_utils.safe_hasattr(
+            DummyAPICreator.create_method, core_endpoint.INSTRUMENT
+        ):
             self._instrument_class_wrapper(
                 DummyAPICreator,
                 wrapper_method_name="create_method",
                 wrapped_method_filter=lambda f: f.__name__
-                in ["completion", "classify"],
+                in [
+                    "completion",
+                    "classification",
+                    "acompletion",
+                    "aclassification",
+                ],
             )
 
     def post(
-        self, url: str, payload: JSON, timeout: Optional[float] = None
+        self,
+        url: str,
+        payload: serial_utils.JSON,
+        timeout: Optional[float] = None,
     ) -> Dict:
         return self.api.post(url, payload, timeout=timeout)
 
@@ -450,7 +562,7 @@ class DummyEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         logger.debug(
             "Handling dummyapi instrumented call to func: %s,\n"
