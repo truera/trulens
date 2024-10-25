@@ -525,12 +525,12 @@ description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.35.39-py3-none-any.whl", hash = "sha256:5970b62c1ec8177501e02520f0d41839ca5fc549b30bac4e8c0c0882ae776217"},
-    {file = "boto3-1.35.39.tar.gz", hash = "sha256:670f811c65e3c5fe4ed8c8d69be0b44b1d649e992c0fc16de43816d1188f88f1"},
+    {file = "boto3-1.35.37-py3-none-any.whl", hash = "sha256:385ca77bf8ea4ab2d97f6e2435bdb29f77d9301e2f7ac796c2f465753c2adf3c"},
+    {file = "boto3-1.35.37.tar.gz", hash = "sha256:470d981583885859fed2fd1c185eeb01cc03e60272d499bafe41b12625b158c8"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.39,<1.36.0"
+botocore = ">=1.35.37,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -4310,12 +4310,12 @@ test = ["pep440", "pre-commit", "pytest", "testpath"]
 
 [[package]]
 name = "nemoguardrails"
-version = "0.9.1.1"
-description = "NeMo Guardrails is an open-source toolkit for easily adding programmagle guardrails to LLM-based conversational systems."
+version = "0.10.1"
+description = "NeMo Guardrails is an open-source toolkit for easily adding programmable guardrails to LLM-based conversational systems."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nemoguardrails-0.9.1.1-py3-none-any.whl", hash = "sha256:2d6aed9c7ecec9434b3018ffbbfc863b1c51141bd2086443361b9ea73cd1ac03"},
+    {file = "nemoguardrails-0.10.1-py3-none-any.whl", hash = "sha256:11b7db76337365adea33567d6a35299b34903174253083ac984d1a16953e2fc2"},
 ]
 
 [package.dependencies]
@@ -4324,10 +4324,10 @@ annoy = ">=1.17.3"
 fastapi = ">=0.103.0"
 fastembed = ">=0.2.2"
 httpx = ">=0.24.1"
-jinja2 = ">=3.1.3"
-langchain = ">=0.1.0,<0.1.9 || >0.1.9,<0.3.0"
+jinja2 = ">=3.1.4"
+langchain = ">=0.2.14,<0.3.0"
 langchain-community = ">=0.0.16,<0.3.0"
-langchain-core = ">=0.1.0,<0.1.26 || >0.1.26,<0.3.0"
+langchain-core = ">=0.2.14,<0.3.0"
 lark = ">=1.1.7,<1.2.0"
 nest-asyncio = ">=1.5.6"
 prompt-toolkit = ">=3.0"
@@ -4341,9 +4341,10 @@ uvicorn = ">=0.23"
 watchdog = ">=3.0.0"
 
 [package.extras]
-all = ["nemoguardrails[eval,openai,sdd]"]
-dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0)"]
-eval = ["numpy (>=1.24,<2.0)", "tqdm (>=4.65,<5.0)"]
+all = ["nemoguardrails[eval,gcp,openai,sdd]"]
+dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0,<0.32.0)", "streamlit (>=1.37.0)"]
+eval = ["numpy (>=1.24,<2.0)", "streamlit (>=1.37.0)", "tqdm (>=4.65,<5.0)"]
+gcp = ["google-cloud-language (>=2.14.0)"]
 openai = ["langchain-openai (>=0.0.5)"]
 sdd = ["presidio-analyzer (>=2.2)", "presidio-anonymizer (>=2.2)", "spacy (>=3.7.2)"]
 
@@ -6670,6 +6671,11 @@ files = [
     {file = "scikit_learn-1.5.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f60021ec1574e56632be2a36b946f8143bf4e5e6af4a06d85281adc22938e0dd"},
     {file = "scikit_learn-1.5.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:394397841449853c2290a32050382edaec3da89e35b3e03d6cc966aebc6a8ae6"},
     {file = "scikit_learn-1.5.2-cp312-cp312-win_amd64.whl", hash = "sha256:57cc1786cfd6bd118220a92ede80270132aa353647684efa385a74244a41e3b1"},
+    {file = "scikit_learn-1.5.2-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:e9a702e2de732bbb20d3bad29ebd77fc05a6b427dc49964300340e4c9328b3f5"},
+    {file = "scikit_learn-1.5.2-cp313-cp313-macosx_12_0_arm64.whl", hash = "sha256:b0768ad641981f5d3a198430a1d31c3e044ed2e8a6f22166b4d546a5116d7908"},
+    {file = "scikit_learn-1.5.2-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:178ddd0a5cb0044464fc1bfc4cca5b1833bfc7bb022d70b05db8530da4bb3dd3"},
+    {file = "scikit_learn-1.5.2-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f7284ade780084d94505632241bf78c44ab3b6f1e8ccab3d2af58e0e950f9c12"},
+    {file = "scikit_learn-1.5.2-cp313-cp313-win_amd64.whl", hash = "sha256:b7b0f9a0b1040830d38c39b91b3a44e1b643f4b36e36567b80b7c6bd2202a27f"},
     {file = "scikit_learn-1.5.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:757c7d514ddb00ae249832fe87100d9c73c6ea91423802872d9e74970a0e40b9"},
     {file = "scikit_learn-1.5.2-cp39-cp39-macosx_12_0_arm64.whl", hash = "sha256:52788f48b5d8bca5c0736c175fa6bdaab2ef00a8f536cda698db61bd89c551c1"},
     {file = "scikit_learn-1.5.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:643964678f4b5fbdc95cbf8aec638acc7aa70f5f79ee2cdad1eec3df4ba6ead8"},
@@ -7873,7 +7879,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,<3.13"
@@ -7892,7 +7898,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7911,7 +7917,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-nemo"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -7930,7 +7936,7 @@ url = "src/apps/nemo"
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -7946,7 +7952,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -7992,7 +7998,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.0.2a0"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -8019,7 +8025,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "1.0.1"
+version = "1.1.0"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.9,!=3.9.7"
@@ -8035,7 +8041,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.0.1"
+version = "1.1.0"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.9"
@@ -8056,7 +8062,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8075,7 +8081,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.0.1"
+version = "1.1.0"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = ">=3.9,<3.12"
@@ -8094,7 +8100,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8116,7 +8122,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
@@ -8134,7 +8140,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.0.1"
+version = "1.1.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"
