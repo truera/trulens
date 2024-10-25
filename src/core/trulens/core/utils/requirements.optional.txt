@@ -82,10 +82,6 @@ kaggle   >= 1.5.13
 snowflake-core >= 0.8.0
 snowflake-sqlalchemy >= 1.6.0
 
-# EXPERIMENTAL(otel_tracing):
-opentelemetry-api >= 1.0.0
-opentelemetry-sdk >= 1.0.0
-
 # Optional trulens packages
 trulens-apps-llamaindex >= 1.0.0
 trulens-apps-langchain >= 1.0.0

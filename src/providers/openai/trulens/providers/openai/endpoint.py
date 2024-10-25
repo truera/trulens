@@ -316,6 +316,7 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
                 ):
                     # Don't bother processing these and instead wait for chunks to be processed.
                     self.on_endpoint_generation(response=ret)
+                    # TODO: implement this.
                 else:
                     logger.warning(
                         "Unknown openai completion response type %s.",
@@ -367,112 +368,6 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
             super().on_endpoint_classification(response)
 
             self.cost.n_classes += len(response.categories.model_fields)
-
-        # TODO: Finish integrating the below into the other methods here.
-        """
-        # _WrapperEndpointCallback optional
-        def on_endpoint_generation(
-            self,
-            response: Union[
-                openai.types.completion.Completion,
-                openai.types.chat.chat_completion.ChatCompletion,
-            ],
-        ) -> None:
-            super().on_endpoint_generation(response)
-
-            bindings = self.bindings
-
-            model_name = ""
-            if "model" in bindings.kwargs:
-                model_name = bindings.kwargs["model"]
-
-            if isinstance(response, openai.Stream):
-                # NOTE(piotrm): Merely checking membership in these will exhaust internal
-                # genertors or iterators which will break users' code. While we work
-                # out something, I'm disabling any cost-tracking for these streams.
-                logger.warning("Cannot track costs from a OpenAI Stream.")
-                return
-
-            counted_something = False
-            if hasattr(response, "usage"):
-                counted_something = True
-
-                if isinstance(response.usage, pydantic.BaseModel):
-                    usage = response.usage.model_dump()
-                elif isinstance(ret.usage, pydantic.v1.BaseModel):
-                    usage = ret.usage.dict()
-                elif isinstance(ret.usage, Dict):
-                    usage = ret.usage
-                else:
-                    usage = None
-
-                # See how to construct in langchain.llms.openai.OpenAIChat._generate
-                llm_res = LLMResult(
-                    generations=[[]],
-                    llm_output=dict(token_usage=usage, model_name=model_name),
-                    run=None,
-                )
-
-                self.on_endpoint_generation(response=llm_res)
-
-            if "choices" in ret and "delta" in ret.choices[0]:
-                # Streaming data.
-                content = ret.choices[0].delta.content
-
-                gen = Generation(text=content or "", generation_info=ret)
-                self.on_endpoint_generation_chunk(gen)
-
-                counted_something = True
-
-            if not counted_something:
-                logger.warning(
-                    "Could not find usage information in openai response:\n%s",
-                    pp.pformat(ret),
-                )
-
-            return
-        """
-
-        # WrapperEndpointCallback optional
-        def on_endpoint_generation_chunk(
-            self, response: TOpenAIResponse
-        ) -> None:
-            """Process a generation chunk."""
-
-            super().on_endpoint_generation_chunk(response=response)
-
-            self.chunks.append(response)
-
-            if response.choices[0].finish_reason == "stop":
-                llm_result = LLMResult(
-                    llm_output=dict(
-                        token_usage=dict(), model_name=response.model
-                    ),
-                    generations=[self.chunks],
-                )
-                self.chunks = []
-                self.on_endpoint_generation(response=llm_result)
-
-        # WrapperEndpointCallback optional
-        def on_endpoint_generation(self, response: TOpenAIResponse) -> None:
-            """Process a generation/completion."""
-
-            super().on_endpoint_generation(response)
-
-            self.langchain_handler.on_llm_end(response)
-
-            assert self.cost is not None
-
-            self.cost += base_schema.Cost(**{
-                cost_field: getattr(self.langchain_handler, langchain_field, 0)
-                for cost_field, langchain_field in [
-                    ("cost", "total_cost"),
-                    ("n_tokens", "total_tokens"),
-                    ("n_successful_requests", "successful_requests"),
-                    ("n_prompt_tokens", "prompt_tokens"),
-                    ("n_completion_tokens", "completion_tokens"),
-                ]
-            })
 
 
 class OpenAIEndpoint(core_endpoint.Endpoint):
