@@ -255,9 +255,12 @@ def code_line(func, show_source: bool = False) -> Optional[str]:
         return None
 
     if show_source:
-        ret += "\n"
-        for line in inspect.getsourcelines(func)[0]:
-            ret += "\t" + str(line)
+        try:
+            ret += "\n"
+            for line in inspect.getsourcelines(func)[0]:
+                ret += "\t" + str(line)
+        except OSError as e:
+            ret += f"Source code cannot be retrieved: {e}"
 
     return ret
 
