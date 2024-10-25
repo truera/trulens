@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.0.1
+  __version__: 1.1.0
   highs: {}
   lows:
     __version__: builtins.str
@@ -231,6 +231,7 @@ trulens.core.database.base.DB:
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
+    get_db_revision: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -1628,7 +1629,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.0.2a0
+  __version__: 1.1.0
   highs:
     run_dashboard: builtins.function
     stop_dashboard: builtins.function
@@ -1902,7 +1903,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.0.1
+  __version__: 1.1.0
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
