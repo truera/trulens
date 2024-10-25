@@ -1062,15 +1062,13 @@ Feedback function signature:
                 feedback_result_id=feedback_result_id
             )
 
-        except Exception as e:
+        except Exception:
             # Convert traceback to a UTF-8 string, replacing errors to avoid encoding issues
-            print(f"run_and_log exception {e}")
             exc_tb = (
                 traceback.format_exc()
                 .encode("utf-8", errors="replace")
                 .decode("utf-8")
             )
-            print(exc_tb)
             db.insert_feedback(
                 feedback_result.update(
                     error=exc_tb,
