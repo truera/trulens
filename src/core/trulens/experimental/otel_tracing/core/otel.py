@@ -11,6 +11,7 @@ import contextlib
 import contextvars
 import logging
 import random
+import threading
 import time
 from types import TracebackType
 from typing import (
@@ -27,6 +28,8 @@ from typing import (
     Union,
 )
 
+from flask import Flask
+from flask import request
 from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk import resources as resources_sdk
@@ -780,3 +783,26 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         )
 
         return tracer
+
+
+class Collector:
+    def _process_route(self):
+        print("hello")
+        print(request.get_json())
+        return {"status": 200}, 200
+
+    def __init__(self):
+        self.app = Flask("TruLens Collector")
+        self.process_route = self.app.route("/", methods=["POST"])(
+            self._process_route
+        )
+        self.server_thread = threading.Thread(target=self._run)
+
+    def _run(self):
+        self.app.run()
+
+    def start(self):
+        self.server_thread.start()
+
+    def stop(self):
+        self.app.shutdown()
