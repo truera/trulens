@@ -8,13 +8,16 @@
     ```
 """
 
+# WARNING: This file does not follow the no-init aliases import standard.
+
 from importlib.metadata import version
 
 from trulens.connectors.snowflake.connector import SnowflakeConnector
-from trulens.core.utils.imports import safe_importlib_package_name
+from trulens.core.utils import imports as import_utils
 
-__version__ = version(safe_importlib_package_name(__package__ or __name__))
-
+__version__ = version(
+    import_utils.safe_importlib_package_name(__package__ or __name__)
+)
 
 __all__ = [
     "SnowflakeConnector",

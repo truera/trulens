@@ -1,16 +1,43 @@
 import json
 from typing import Dict, Optional, Sequence
 
-from trulens.core.utils.python import locals_except
+from trulens.core.utils import python as python_utils
+from trulens.feedback import llm_provider
 from trulens.feedback.dummy.endpoint import DummyEndpoint
-from trulens.feedback.llm_provider import LLMProvider
 
 
-class DummyProvider(LLMProvider):
+class DummyProvider(llm_provider.LLMProvider):
     """Fake LLM provider.
 
     Does not make any networked requests but pretends to. Uses
     [DummyEndpoint][trulens.feedback.dummy.endpoint.DummyEndpoint].
+
+    Args:
+        name: Name of the provider. Defaults to "dummyhugs".
+
+        rpm: Requests per minute. Defaults to 600.
+            [Endpoint][trulens.core.feedback.endpoint.Endpoint] argument.
+
+        error_prob: Probability of an error occurring.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        loading_prob: Probability of loading.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        freeze_prob: Probability of freezing.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        overloaded_prob: Probability of being overloaded.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        alloc: Amount of memory allocated.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        delay: Delay in seconds to add to requests.
+            [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI] argument.
+
+        seed: Random seed. [DummyAPI][trulens.feedback.dummy.endpoint.DummyAPI]
+            argument.
     """
 
     model_engine: str = "dummymodel"
@@ -18,19 +45,20 @@ class DummyProvider(LLMProvider):
     def __init__(
         self,
         name: str = "dummyhugs",
+        rpm: float = 600,
         error_prob: float = 1 / 100,
         loading_prob: float = 1 / 100,
         freeze_prob: float = 1 / 100,
         overloaded_prob: float = 1 / 100,
         alloc: int = 1024 * 1024,
-        rpm: float = 600,
         delay: float = 1.0,
         seed: int = 0xDEADBEEF,
         **kwargs,
     ):
         kwargs["name"] = name
         kwargs["endpoint"] = DummyEndpoint(
-            name="dummyendpoint", **locals_except("self", "name", "kwargs")
+            name="dummyendpoint",
+            **python_utils.locals_except("self", "name", "kwargs"),
         )
 
         super().__init__(**kwargs)

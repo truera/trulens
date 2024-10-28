@@ -9,7 +9,6 @@ from trulens.core.utils import deprecation as deprecation_utils
 
 deprecation_utils.packages_dep_warn()
 
-from trulens.core.database.migrations.data import MIGRATION_UNKNOWN_STR
 from trulens.core.database.migrations.data import data_migrate
 from trulens.core.database.migrations.data import sql_alchemy_migration_versions
 from trulens.core.database.migrations.data import sqlalchemy_upgrade_paths

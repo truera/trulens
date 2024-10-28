@@ -40,15 +40,13 @@ from langchain.schema import LLMResult
 from langchain_community.callbacks.openai_info import OpenAICallbackHandler
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
-from trulens.core.feedback import Endpoint
-from trulens.core.feedback import EndpointCallback
+from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
+from trulens.core.utils import constants as constant_utils
+from trulens.core.utils import pace as pace_utils
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
-from trulens.core.utils.constants import CLASS_INFO
-from trulens.core.utils.pace import Pace
-from trulens.core.utils.pyschema import Class
-from trulens.core.utils.pyschema import safe_getattr
-from trulens.core.utils.serial import SerialModel
+from trulens.core.utils import serial as serial_utils
 
 import openai
 from openai import resources
@@ -63,7 +61,7 @@ pp = pprint.PrettyPrinter()
 T = TypeVar("T")
 
 
-class OpenAIClient(SerialModel):
+class OpenAIClient(serial_utils.SerialModel):
     """A wrapper for openai clients.
 
     This class allows wrapped clients to be serialized into json. Does not
@@ -84,7 +82,7 @@ class OpenAIClient(SerialModel):
     )
     """Deserialized representation."""
 
-    client_cls: Class
+    client_cls: pyschema_utils.Class
     """Serialized representation class."""
 
     client_kwargs: dict
@@ -93,7 +91,7 @@ class OpenAIClient(SerialModel):
     def __init__(
         self,
         client: Optional[Union[openai.OpenAI, openai.AzureOpenAI]] = None,
-        client_cls: Optional[Class] = None,
+        client_cls: Optional[pyschema_utils.Class] = None,
         client_kwargs: Optional[dict] = None,
     ):
         if client_kwargs is not None:
@@ -121,7 +119,7 @@ class OpenAIClient(SerialModel):
                 if isinstance(client_cls, dict):
                     # TODO: figure out proper pydantic way of doing these things. I
                     # don't think we should be required to parse args like this.
-                    client_cls = Class.model_validate(client_cls)
+                    client_cls = pyschema_utils.Class.model_validate(client_cls)
 
                 cls = client_cls.load()
 
@@ -149,10 +147,10 @@ class OpenAIClient(SerialModel):
                     continue
 
                 if python_utils.safe_hasattr(client, k):
-                    client_kwargs[k] = safe_getattr(client, k)
+                    client_kwargs[k] = pyschema_utils.safe_getattr(client, k)
 
             # Create serializable class description.
-            client_cls = Class.of_class(client_class)
+            client_cls = pyschema_utils.Class.of_class(client_class)
 
         super().__init__(
             client=client, client_cls=client_cls, client_kwargs=client_kwargs
@@ -162,14 +160,14 @@ class OpenAIClient(SerialModel):
         # Pass through attribute lookups to `self.client`, the openai.OpenAI
         # instance.
         if python_utils.safe_hasattr(self.client, k):
-            return safe_getattr(self.client, k)
+            return pyschema_utils.safe_getattr(self.client, k)
 
         raise AttributeError(
             f"No attribute {k} in wrapper OpenAiClient nor the wrapped OpenAI client."
         )
 
 
-class OpenAICallback(EndpointCallback):
+class OpenAICallback(core_endpoint.EndpointCallback):
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
 
     langchain_handler: OpenAICallbackHandler = pydantic.Field(
@@ -240,7 +238,7 @@ class OpenAICallback(EndpointCallback):
         # TODO: there seems to be usage info in these responses sometimes as well
 
 
-class OpenAIEndpoint(Endpoint):
+class OpenAIEndpoint(core_endpoint.Endpoint):
     """OpenAI endpoint.
 
     Instruments "create" methods in openai client.
@@ -262,7 +260,7 @@ class OpenAIEndpoint(Endpoint):
             Union[openai.OpenAI, openai.AzureOpenAI, OpenAIClient]
         ] = None,
         rpm: Optional[int] = None,
-        pace: Optional[Pace] = None,
+        pace: Optional[pace_utils.Pace] = None,
         **kwargs: dict,
     ):
         self_kwargs = {
@@ -273,8 +271,8 @@ class OpenAIEndpoint(Endpoint):
 
         self_kwargs["callback_class"] = OpenAICallback
 
-        if CLASS_INFO in kwargs:
-            del kwargs[CLASS_INFO]
+        if constant_utils.CLASS_INFO in kwargs:
+            del kwargs[constant_utils.CLASS_INFO]
 
         if client is None:
             # Pass kwargs to client.
@@ -310,7 +308,7 @@ class OpenAIEndpoint(Endpoint):
         func: Callable,
         bindings: inspect.BoundArguments,
         response: Any,
-        callback: Optional[EndpointCallback],
+        callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
         # TODO: cleanup/refactor. This method inspects the results of an
         # instrumented call made by an openai client. As there are multiple
@@ -321,7 +319,7 @@ class OpenAIEndpoint(Endpoint):
         assert not python_utils.is_lazy(response)
 
         context_vars = {
-            Endpoint._context_endpoints: Endpoint._context_endpoints.get()
+            core_endpoint.Endpoint._context_endpoints: core_endpoint.Endpoint._context_endpoints.get()
         }
 
         if isinstance(response, (openai.AsyncStream, openai.Stream)):

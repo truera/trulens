@@ -1,27 +1,26 @@
-"""# Trulens Core LLM Evaluation Library
+"""Trulens Core LLM Evaluation Library."""
 
-The `trulens-core` library includes everything to get started.
-
-"""
+# WARNING: This file does not follow the no-init aliases import standard.
 
 from importlib.metadata import version
 import os
 
-from trulens.core.feedback import Feedback
-from trulens.core.feedback import Provider
-from trulens.core.feedback import SnowflakeFeedback
-from trulens.core.schema import FeedbackMode
-from trulens.core.schema import Select
+from trulens.core.feedback.feedback import Feedback
+from trulens.core.feedback.feedback import SnowflakeFeedback
+from trulens.core.feedback.provider import Provider
+from trulens.core.schema.feedback import FeedbackMode
+from trulens.core.schema.select import Select
 from trulens.core.session import Tru
 from trulens.core.session import TruSession
-from trulens.core.utils.imports import safe_importlib_package_name
+from trulens.core.utils import imports as import_utils
 
 # NOTE: workaround for MKL and multiprocessing
 # https://github.com/pytorch/csprng/issues/115
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-__version__ = version(safe_importlib_package_name(__package__ or __name__))
-
+__version__ = version(
+    import_utils.safe_importlib_package_name(__package__ or __name__)
+)
 
 __all__ = [
     "Tru",  # aliases TruSession for backwards compatibility

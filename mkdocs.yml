@@ -218,12 +218,16 @@ nav:
           # Title labels of these notebooks come from within the notebooks
           # themselves and will be overridden if specified here.
           - getting_started/quickstarts/quickstart.ipynb
+          - getting_started/quickstarts/add_dataframe_quickstart.ipynb
           - getting_started/quickstarts/existing_data_quickstart.ipynb
           - getting_started/quickstarts/langchain_quickstart.ipynb
           - getting_started/quickstarts/llama_index_quickstart.ipynb
           - getting_started/quickstarts/text2text_quickstart.ipynb
           - getting_started/quickstarts/groundtruth_evals.ipynb
           - getting_started/quickstarts/human_feedback.ipynb
+          - getting_started/quickstarts/groundtruth_evals_for_retrieval_systems.ipynb
+          - getting_started/quickstarts/groundtruth_dataset_persistence.ipynb
+          - getting_started/quickstarts/custom_stream.ipynb
       - ⭐ Core Concepts:
           - getting_started/core_concepts/index.md
           - ☔ Feedback Functions: getting_started/core_concepts/feedback_functions.md
@@ -231,7 +235,7 @@ nav:
           - 🏆 Honest, Harmless, Helpful Evals: getting_started/core_concepts/honest_harmless_helpful_evals.md
       - 🎈Viewing Results:
           - getting_started/dashboard/index.md
-  - Component Guides:
+  - 🗺️ Component Guides:
     - Instrumentation:
         - component_guides/instrumentation/index.md
         # Titles set inside notebooks and will be overridden if provider here.
@@ -273,17 +277,18 @@ nav:
     - Other:
       - Moving from TruLens Eval: component_guides/other/trulens_eval_migration.md
       - Uninstalling TruLens: component_guides/other/uninstalling.md
-  - API Reference: reference/
+  - 📚 API Reference: reference/
   - 🧑‍🍳 Cookbook: cookbook/
   - 🤝 Contributing:
       - contributing/index.md
       - 🧭 Design: contributing/design.md
+      - 📦 Release Policies: contributing/policies.md
       - ✅ Standards: contributing/standards.md
       - 💣 Tech Debt: contributing/techdebt.md
       - ⛅ Optional Packages: contributing/optional.md
       - ✨ Database Migration: contributing/migration.md
       - 🏁 Release History: contributing/release_history.md
-  - Blog:
+  - ✍️ Blog:
       - blog/index.md
 
 #  - Resources:
