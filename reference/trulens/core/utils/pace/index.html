@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -10028,6 +10028,11 @@
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -10058,6 +10063,11 @@
 constraint: the number of returns in the given period of time cannot exceed
 <code>marks_per_second * seconds_per_period</code>. This means the average number of
 returns in that period is bounded above exactly by <code>marks_per_second</code>.</p>
+
+
+
+
+
 
 
 
@@ -10136,7 +10146,7 @@ will be allowed initially and after long periods of no marks.</p>
 
 <a href="#trulens.core.utils.pace.Pace.seconds_per_period_timedelta" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">seconds_per_period_timedelta</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.timedelta" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta">timedelta</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span>
-    <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.timedelta" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta">timedelta</a></span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mf">60.0</span><span class="p">)</span>
+    <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.timedelta" href="https://docs.python.org/3/library/datetime.html#datetime.timedelta">timedelta</a></span><span class="p">(</span><span class="n"><span title="datetime.timedelta(seconds)">seconds</span></span><span class="o">=</span><span class="mf">60.0</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -10162,7 +10172,7 @@ will be allowed initially and after long periods of no marks.</p>
 
 <a href="#trulens.core.utils.pace.Pace.mark_expirations" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">mark_expirations</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Deque" href="https://docs.python.org/3/library/typing.html#typing.Deque">Deque</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span>
-    <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="collections.deque" href="https://docs.python.org/3/library/collections.html#collections.deque">deque</a></span>
+    <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="collections.deque" href="https://docs.python.org/3/library/collections.html#collections.deque">deque</a></span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -10215,7 +10225,7 @@ returns_per_second.</p>
   </span>
 
 <a href="#trulens.core.utils.pace.Pace.last_mark" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">last_mark</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">last_mark</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10239,7 +10249,7 @@ returns_per_second.</p>
   </span>
 
 <a href="#trulens.core.utils.pace.Pace.lock" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">lock</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="_thread.LockType" href="https://docs.python.org/3/library/_thread.html#thread.LockType">LockType</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="threading.Lock" href="https://docs.python.org/3/library/threading.html#threading.Lock">Lock</a></span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">lock</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="_thread.LockType" href="https://docs.python.org/3/library/_thread.html#thread.LockType">LockType</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" title="threading.Lock" href="https://docs.python.org/3/library/threading.html#threading.Lock">Lock</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10339,7 +10349,7 @@ appropriate pace. Returns time in seconds since last mark returned.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

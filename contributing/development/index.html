@@ -14,7 +14,7 @@
       
       
       <link rel="icon" href="../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -22,7 +22,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
@@ -9722,6 +9722,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-ggshield" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install ggshield
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#helpful-commands" class="md-nav__link">
     <span class="md-ellipsis">
       Helpful commands
@@ -9889,6 +9898,17 @@ pyenv<span class="w"> </span><span class="nb">local</span><span class="w"> </spa
 <div class="highlight"><pre><span></span><code>pre-commit<span class="w"> </span>install
 </code></pre></div>
 <p>For more information on pre-commit, see <a href="https://pre-commit.com/">pre-commit.com</a>.</p>
+<h4 id="install-ggshield">Install ggshield<a class="headerlink" href="#install-ggshield" title="Permanent link">&para;</a></h4>
+<p>TruLens developers use ggshield to scan for secrets locally in addition to gitguardian in CLI. Install and authenticate to ggshield with the following commands:</p>
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>gitguardian/tap/ggshield
+ggshield<span class="w"> </span>auth<span class="w"> </span>login
+</code></pre></div>
+<p>Then, ggshield can be run with the following command from trulens root directory to scan the full repository:</p>
+<div class="highlight"><pre><span></span><code>ggshield<span class="w"> </span>secret<span class="w"> </span>scan<span class="w"> </span>repo<span class="w"> </span>./
+</code></pre></div>
+<p>It can also be run with smaller scope, such as only for docs with the following as included in <code>make docs-upload</code></p>
+<div class="highlight"><pre><span></span><code>ggshield<span class="w"> </span>secret<span class="w"> </span>scan<span class="w"> </span>repo<span class="w"> </span>./docs/
+</code></pre></div>
 <h4 id="helpful-commands">Helpful commands<a class="headerlink" href="#helpful-commands" title="Permanent link">&para;</a></h4>
 <h5 id="formatting">Formatting<a class="headerlink" href="#formatting" title="Permanent link">&para;</a></h5>
 <p>Runs <a href="https://docs.astral.sh/ruff/formatter/">ruff formatter</a> to format all python and notebook files in the repository.</p>
@@ -9999,7 +10019,7 @@ poetry<span class="w"> </span>version<span class="w"> </span><span class="o">[</
     <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../../javascript/config.js"></script>
       

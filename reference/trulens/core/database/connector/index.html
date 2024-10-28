@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -10086,6 +10086,11 @@
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -10112,6 +10117,11 @@
 
 
         <p>Base class for DB connector implementations.</p>
+
+
+
+
+
 
 
 
@@ -10221,7 +10231,9 @@ created with an older version of <em>trulens</em>.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Keyword arguments to pass to
@@ -10275,7 +10287,9 @@ of the current database.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>record</code></td>
+            <td>
+                <code>record</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The record to add.</p>
@@ -10293,7 +10307,9 @@ of the current database.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p><a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> fields to add to the
@@ -10382,7 +10398,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app</code></td>
+            <td>
+                <code>app</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The app to add to the database.</p>
@@ -10451,7 +10469,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_id</code></td>
+            <td>
+                <code>app_id</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The unique identifier of the app to be deleted.</p>
@@ -10498,7 +10518,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_definition</code></td>
+            <td>
+                <code>feedback_definition</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The feedback definition to add to the database.</p>
@@ -10572,7 +10594,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_result_or_future</code></td>
+            <td>
+                <code>feedback_result_or_future</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>If a <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future">Future</a>
@@ -10597,7 +10621,9 @@ constructor.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Fields to add to the given feedback result or to create a
@@ -10675,7 +10701,9 @@ new <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.c
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_results</code></td>
+            <td>
+                <code>feedback_results</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>An iterable with each iteration being a <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> or
@@ -10761,7 +10789,9 @@ its implementations feature attributes not meant to be deserialized.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_id</code></td>
+            <td>
+                <code>app_id</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The unique identifier <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> of the app to look up.</p>
@@ -10882,7 +10912,9 @@ its implementations feature attributes not meant to be deserialized.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_ids</code></td>
+            <td>
+                <code>app_ids</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A list of app ids to filter records by. If empty or not given, all
@@ -10901,7 +10933,9 @@ apps' records will be returned.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Record row offset.</p>
@@ -10919,7 +10953,9 @@ apps' records will be returned.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Limit on the number of records to return.</p>
@@ -11009,7 +11045,9 @@ apps' records will be returned.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_ids</code></td>
+            <td>
+                <code>app_ids</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A list of app ids to filter records by. If empty or not given, all
@@ -11028,7 +11066,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>group_by_metadata_key</code></td>
+            <td>
+                <code>group_by_metadata_key</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A key included in record metadata that you want to group results by.</p>
@@ -11046,7 +11086,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Limit on the number of records to aggregate to produce the leaderboard.</p>
@@ -11064,7 +11106,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Record row offset to select which records to use to aggregate the leaderboard.</p>
@@ -11151,6 +11195,11 @@ apps will be included in leaderboard.</p>
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -11232,7 +11281,9 @@ created with an older version of <em>trulens</em>.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Keyword arguments to pass to
@@ -11286,7 +11337,9 @@ of the current database.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>record</code></td>
+            <td>
+                <code>record</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The record to add.</p>
@@ -11304,7 +11357,9 @@ of the current database.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p><a class="autorefs autorefs-internal" href="../../schema/record/#trulens.core.schema.record.Record">Record</a> fields to add to the
@@ -11393,7 +11448,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app</code></td>
+            <td>
+                <code>app</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The app to add to the database.</p>
@@ -11462,7 +11519,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_id</code></td>
+            <td>
+                <code>app_id</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The unique identifier of the app to be deleted.</p>
@@ -11509,7 +11568,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_definition</code></td>
+            <td>
+                <code>feedback_definition</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The feedback definition to add to the database.</p>
@@ -11583,7 +11644,9 @@ given record or a new record if no <code>record</code> provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_result_or_future</code></td>
+            <td>
+                <code>feedback_result_or_future</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>If a <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future">Future</a>
@@ -11608,7 +11671,9 @@ constructor.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Fields to add to the given feedback result or to create a
@@ -11686,7 +11751,9 @@ new <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.c
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_results</code></td>
+            <td>
+                <code>feedback_results</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>An iterable with each iteration being a <a class="autorefs autorefs-internal" href="../../schema/feedback/#trulens.core.schema.feedback.FeedbackResult">FeedbackResult</a> or
@@ -11772,7 +11839,9 @@ its implementations feature attributes not meant to be deserialized.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_id</code></td>
+            <td>
+                <code>app_id</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The unique identifier <a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a> of the app to look up.</p>
@@ -11893,7 +11962,9 @@ its implementations feature attributes not meant to be deserialized.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_ids</code></td>
+            <td>
+                <code>app_ids</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A list of app ids to filter records by. If empty or not given, all
@@ -11912,7 +11983,9 @@ apps' records will be returned.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Record row offset.</p>
@@ -11930,7 +12003,9 @@ apps' records will be returned.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Limit on the number of records to return.</p>
@@ -12020,7 +12095,9 @@ apps' records will be returned.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_ids</code></td>
+            <td>
+                <code>app_ids</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A list of app ids to filter records by. If empty or not given, all
@@ -12039,7 +12116,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>group_by_metadata_key</code></td>
+            <td>
+                <code>group_by_metadata_key</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A key included in record metadata that you want to group results by.</p>
@@ -12057,7 +12136,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>limit</code></td>
+            <td>
+                <code>limit</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Limit on the number of records to aggregate to produce the leaderboard.</p>
@@ -12075,7 +12156,9 @@ apps will be included in leaderboard.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>offset</code></td>
+            <td>
+                <code>offset</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Record row offset to select which records to use to aggregate the leaderboard.</p>
@@ -12170,7 +12253,9 @@ or <code>database_engine</code> must be provided.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>database</code></td>
+            <td>
+                <code>database</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The database object to use.</p>
@@ -12188,7 +12273,9 @@ or <code>database_engine</code> must be provided.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_url</code></td>
+            <td>
+                <code>database_url</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The database URL to connect to. To connect to a local
@@ -12207,7 +12294,9 @@ file-based SQLite database, use <code>sqlite:///path/to/database.db</code>.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_engine</code></td>
+            <td>
+                <code>database_engine</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The SQLAlchemy engine object to use.</p>
@@ -12225,7 +12314,9 @@ file-based SQLite database, use <code>sqlite:///path/to/database.db</code>.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_redact_keys</code></td>
+            <td>
+                <code>database_redact_keys</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Whether to redact keys in the database.</p>
@@ -12243,7 +12334,9 @@ file-based SQLite database, use <code>sqlite:///path/to/database.db</code>.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_prefix</code></td>
+            <td>
+                <code>database_prefix</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The database prefix to use to separate tables in
@@ -12262,7 +12355,9 @@ the database.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_args</code></td>
+            <td>
+                <code>database_args</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Additional arguments to pass to the database.</p>
@@ -12280,7 +12375,9 @@ the database.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>database_check_revision</code></td>
+            <td>
+                <code>database_check_revision</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Whether to compare the database revision
@@ -12373,7 +12470,7 @@ with the expected TruLens revision.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       

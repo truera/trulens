@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -11210,6 +11210,11 @@
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -11248,6 +11253,11 @@ to get the correct signature. See note there.</p>
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -11283,6 +11293,11 @@ to get the correct signature. See note there.</p>
 
 
         <p>Basic app instrumentation.</p>
+
+
+
+
+
 
 
 
@@ -11359,6 +11374,11 @@ to get the correct signature. See note there.</p>
 
 
         <p>Default instrumentation specification for basic apps.</p>
+
+
+
+
+
 
 
 
@@ -11610,7 +11630,9 @@ instantiating feedback functions.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>text_to_text</code></td>
+            <td>
+                <code>text_to_text</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A str to str callable.</p>
@@ -11628,7 +11650,9 @@ instantiating feedback functions.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>app</code></td>
+            <td>
+                <code>app</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A TruWrapperApp instance. If not provided, <code>text_to_text</code> must
@@ -11647,7 +11671,9 @@ be provided.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>**kwargs</code></td>
+            <td>
+                <code>**kwargs</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Additional arguments to pass to <a class="autorefs autorefs-internal" href="../../core/app/#trulens.core.app.App">App</a>
@@ -11667,6 +11693,11 @@ and <a class="autorefs autorefs-internal" href="../../core/schema/app/#trulens.c
           </tr>
       </tbody>
     </table>
+
+
+
+
+
 
 
 
@@ -11718,7 +11749,7 @@ this into. Should be the same as CLASS_INFO.</p>
   </span>
 
 <a href="#trulens.apps.basic.TruBasicApp.app_id" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../core/schema/types/#trulens.core.schema.types.AppID">AppID</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">app_id</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.types.AppID" href="../../core/schema/types/#trulens.core.schema.types.AppID">AppID</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(frozen)">frozen</span></span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11993,7 +12024,7 @@ of about the app.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.feedbacks" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">feedbacks</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.List" href="https://docs.python.org/3/library/typing.html#typing.List">List</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.feedback.feedback.Feedback" href="../../core/feedback/feedback/#trulens.core.feedback.feedback.Feedback">Feedback</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span>
-    <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span>
+    <span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#list">list</a></span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12019,7 +12050,7 @@ of about the app.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.session" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">session</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.session.TruSession" href="../../core/session/#trulens.core.session.TruSession">TruSession</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span>
-    <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.session.TruSession" href="../../core/session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.session.TruSession" href="../../core/session/#trulens.core.session.TruSession">TruSession</a></span><span class="p">,</span> <span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12090,7 +12121,7 @@ of about the app.</p>
   </span>
 
 <a href="#trulens.apps.basic.TruBasicApp.instrument" class="headerlink" title="Permanent link">&para;</a></h6>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.instruments.Instrument" href="../../core/instruments/#trulens.core.instruments.Instrument">Instrument</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">instrument</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.instruments.Instrument" href="../../core/instruments/#trulens.core.instruments.Instrument">Instrument</a></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12117,7 +12148,7 @@ included in the json representation of this app.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.recording_contexts" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">recording_contexts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="contextvars.ContextVar" href="https://docs.python.org/3/library/contextvars.html#contextvars.ContextVar">ContextVar</a></span><span class="p">[</span><span class="n"><span title="trulens.core.instruments._RecordingContext">_RecordingContext</span></span><span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span>
-    <span class="kc">None</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="kc">True</span>
+    <span class="kc">None</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12145,7 +12176,7 @@ are stored in a RecordingContext.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.instrumented_methods" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">instrumented_methods</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/functions.html#int">int</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Dict" href="https://docs.python.org/3/library/typing.html#typing.Dict">Dict</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" title="typing.Callable" href="https://docs.python.org/3/library/typing.html#typing.Callable">Callable</a></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.serial.Lens" href="../../core/utils/serial/#trulens.core.utils.serial.Lens">Lens</a></span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">)</span>
+    <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#dict">dict</a></span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12173,7 +12204,7 @@ function) to their path in this app.</p>
 <a href="#trulens.apps.basic.TruBasicApp.records_with_pending_feedback_results" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">records_with_pending_feedback_results</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.containers.BlockingSet" href="../../core/utils/containers/#trulens.core.utils.containers.BlockingSet">BlockingSet</a></span><span class="p">[</span>
     <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.record.Record" href="../../core/schema/record/#trulens.core.schema.record.Record">Record</a></span>
-<span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.containers.BlockingSet" href="../../core/utils/containers/#trulens.core.utils.containers.BlockingSet">BlockingSet</a></span><span class="p">)</span>
+<span class="p">]</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(default_factory)">default_factory</span></span><span class="o">=</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.containers.BlockingSet" href="../../core/utils/containers/#trulens.core.utils.containers.BlockingSet">BlockingSet</a></span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12199,7 +12230,7 @@ feedback runs.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.manage_pending_feedback_results_thread" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">manage_pending_feedback_results_thread</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.utils.threading.Thread" href="../../core/utils/threading/#trulens.core.utils.threading.Thread">Thread</a></span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n"><a class="autorefs autorefs-external" title="pydantic.Field" href="https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field">Field</a></span><span class="p">(</span><span class="n"><span title="pydantic.Field(exclude)">exclude</span></span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n"><span title="pydantic.Field(default)">default</span></span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
 
@@ -12387,7 +12418,9 @@ generators, awaitables, and async generators are handled elsewhere.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>rets</code></td>
+            <td>
+                <code>rets</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The return value of the method call.</p>
@@ -12401,7 +12434,9 @@ generators, awaitables, and async generators are handled elsewhere.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>wrap</code></td>
+            <td>
+                <code>wrap</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>A callback to be called when the lazy value is ready. Should
@@ -12416,7 +12451,9 @@ return the input value or a wrapped version of it.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>on_done</code></td>
+            <td>
+                <code>on_done</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Called when the lazy values is done and is no longer lazy.
@@ -12432,7 +12469,9 @@ values. Should return the value or wrapper.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>context_vars</code></td>
+            <td>
+                <code>context_vars</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The contextvars to be captured by the lazy value. If
@@ -12664,7 +12703,9 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>app_definition_json</code></td>
+            <td>
+                <code>app_definition_json</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The json serialized app.</p>
@@ -12678,7 +12719,9 @@ and handled by <a class="autorefs autorefs-internal" href="../../core/utils/pysc
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>app</code></td>
+            <td>
+                <code>app</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The app to continue the session with.</p>
@@ -12878,7 +12921,9 @@ blank memory).</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>feedback_timeout</code></td>
+            <td>
+                <code>feedback_timeout</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Timeout in seconds for waiting for feedback
@@ -13012,7 +13057,9 @@ components to execute.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>func</code></td>
+            <td>
+                <code>func</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The main function whose main output we are guessing.</p>
@@ -13026,7 +13073,9 @@ components to execute.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>sig</code></td>
+            <td>
+                <code>sig</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The signature of the above function.</p>
@@ -13040,7 +13089,9 @@ components to execute.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>bindings</code></td>
+            <td>
+                <code>bindings</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The arguments that were passed to that function.</p>
@@ -13054,7 +13105,9 @@ components to execute.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>ret</code></td>
+            <td>
+                <code>ret</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>The return value of the function.</p>
@@ -13214,9 +13267,9 @@ its results as well as a record of the execution.</p>
 
 <a href="#trulens.apps.basic.TruBasicApp.dummy_record" class="headerlink" title="Permanent link">&para;</a></h6>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">dummy_record</span><span class="p">(</span>
-    <span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Cost" href="../../core/schema/base/#trulens.core.schema.base.Cost">Cost</a></span> <span class="o">=</span> <span class="n">base_schema</span><span class="o">.</span><span class="n">Cost</span><span class="p">(),</span>
-    <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Perf" href="../../core/schema/base/#trulens.core.schema.base.Perf">Perf</a></span> <span class="o">=</span> <span class="n">base_schema</span><span class="o">.</span><span class="n">Perf</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
-    <span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+    <span class="n">cost</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Cost" href="../../core/schema/base/#trulens.core.schema.base.Cost">Cost</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Cost" href="../../core/schema/base/#trulens.core.schema.base.Cost">Cost</a></span><span class="p">(),</span>
+    <span class="n">perf</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Perf" href="../../core/schema/base/#trulens.core.schema.base.Perf">Perf</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.schema.base.Perf.now" href="../../core/schema/base/#trulens.core.schema.base.Perf.now">now</a></span><span class="p">(),</span>
+    <span class="n">ts</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime" href="https://docs.python.org/3/library/datetime.html#datetime.datetime">datetime</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-external" title="datetime.datetime.now" href="https://docs.python.org/3/library/datetime.html#datetime.datetime.now">now</a></span><span class="p">(),</span>
     <span class="n">main_input</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;main_input are strings.&quot;</span><span class="p">,</span>
     <span class="n">main_output</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;main_output are strings.&quot;</span><span class="p">,</span>
     <span class="n">main_error</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="s2">&quot;main_error are strings.&quot;</span><span class="p">,</span>
@@ -13404,7 +13457,7 @@ be missing information that can only be determined after a call is made.</p>
     <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../../../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../../../../javascript/config.js"></script>
       

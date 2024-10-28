@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.40">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.8c3ca2c6.min.css">
+      <link rel="stylesheet" href="../../../../../assets/stylesheets/main.0253249f.min.css">
       
         
         <link rel="stylesheet" href="../../../../../assets/stylesheets/palette.06af60db.min.css">
@@ -10034,6 +10034,11 @@
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -10159,6 +10164,11 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
 
 
 
+
+
+
+
+
   <div class="doc doc-children">
 
 
@@ -10194,6 +10204,11 @@ setting <code>_table_prefix</code> as in <code>make_orm_for_prefix</code>.</p>
 
 
         <p>Abstract definition of a container for ORM classes.</p>
+
+
+
+
+
 
 
 
@@ -10282,7 +10297,7 @@ configuration to another.</p>
 <a href="#trulens.core.database.orm.make_base_for_prefix" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_base_for_prefix</span><span class="p">(</span>
     <span class="n">base</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">],</span>
-    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n">core_db</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">,</span>
+    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]</span>
 </code></pre></div>
 
@@ -10300,7 +10315,9 @@ configuration to another.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>base</code></td>
+            <td>
+                <code>base</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Base class to extend. Should be a subclass of
@@ -10315,7 +10332,9 @@ configuration to another.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>table_prefix</code></td>
+            <td>
+                <code>table_prefix</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Prefix to use for table names.</p>
@@ -10376,7 +10395,7 @@ configuration to another.</p>
 
 <a href="#trulens.core.database.orm.make_orm_for_prefix" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">make_orm_for_prefix</span><span class="p">(</span>
-    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n">core_db</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">,</span>
+    <span class="n">table_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Type" href="https://docs.python.org/3/library/typing.html#typing.Type">Type</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.orm.ORM" href="#trulens.core.database.orm.ORM">ORM</a></span><span class="p">[</span><span class="n"><span title="trulens.core.database.orm.T">T</span></span><span class="p">]]</span>
 </code></pre></div>
 
@@ -10396,7 +10415,9 @@ classes based on that.</p>
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td><code>table_prefix</code></td>
+            <td>
+                <code>table_prefix</code>
+            </td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Prefix to use for table names.</p>
@@ -10479,7 +10500,7 @@ classes based on that.</p>
     <script id="__config" type="application/json">{"base": "../../../../..", "features": ["navigation.indexes", "navigation.top", "navigation.tabs", "navigation.sections", "navigation.tracking", "navigation.path", "search.share", "search.suggest", "search.highlight", "toc.follow", "content.code.copy", "content.tabs"], "search": "../../../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../../../../../assets/javascripts/bundle.525ec568.min.js"></script>
+      <script src="../../../../../assets/javascripts/bundle.83f73b43.min.js"></script>
       
         <script src="../../../../../javascript/config.js"></script>
       
