@@ -29,6 +29,15 @@ git clone git@github.com:truera/trulens.git
 cd trulens
 ```
 
+## Install Git LFS
+
+Git LFS is used avoid tracking larger files directly in the repository.
+
+```bash
+brew install git-lfs
+git lfs install && git lfs pull
+```
+
 ## (Optional) Install PyEnv for environment management
 
 Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple python versions which can be useful for local testing.
