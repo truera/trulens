@@ -24,9 +24,10 @@ from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
-R = TypeVar("R")  # callable's return type
-A = TypeVar("A")  # awaitable's result type
-E = TypeVar("E")  # iterator/generator element type
+T = TypeVar("T")
+E = TypeVar("E")  # iterator/generator element
+A = TypeVar("A")  # awaitable result
+R = TypeVar("R")  # callable return value
 
 
 class AwaitableCallbacks(Generic[A]):
@@ -68,11 +69,13 @@ class AwaitableCallbacks(Generic[A]):
         !!! Important
             This should return the result or some wrapper of the result.
         """
+
         self.result = result
         return result
 
     def on_awaitable_exception(self, error: Exception) -> Exception:
         """Called if awaiting for the wrapped awaitable raised an exception."""
+
         self.error = error
         return error
 
@@ -237,7 +240,7 @@ class IterableCallbacks(Generic[E]):
 
 def wrap_iterable(
     itb: Iterable[E],
-    callback_class: Type[IterableCallbacks] = IterableCallbacks,
+    callback_class: Type[IterableCallbacks[E]] = IterableCallbacks,
     **kwargs: Dict[str, Any],
 ) -> Iterable[E]:
     """Wrap an iterable to invoke various callbacks.
