@@ -956,10 +956,10 @@ Feedback function signature:
                 feedback_calls.append(feedback_call)
 
             # Warn that there were some skipped evals.
-            num_skipped = len(skipped_exceptions)
-            num_eval = len(result_vals)
-            num_total = num_skipped + num_eval
-            if num_skipped > 0 and num_total > 0:
+            if len(skipped_exceptions) > 0:
+                num_skipped = len(skipped_exceptions)
+                num_evaled = len(result_vals)
+                num_total = num_skipped + num_evaled
                 warnings.warn(
                     (
                         f"{num_skipped}/{num_total}={100.0 * num_skipped / num_total:0.1f}"
@@ -970,13 +970,15 @@ Feedback function signature:
                     stacklevel=1,
                 )
 
-            if num_eval == 0:
+            if len(result_vals) == 0:
                 warnings.warn(
                     f"Feedback function {self.supplied_name if self.supplied_name is not None else self.name} with aggregation {self.agg} had no inputs.",
                     UserWarning,
                     stacklevel=1,
                 )
-                result = float("nan")
+
+                result = np.nan
+
             else:
                 if isinstance(result_vals[0], float):
                     result_vals = np.array(result_vals)
