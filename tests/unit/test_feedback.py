@@ -64,10 +64,7 @@ class TestFeedbackEval(TestCase):
 
         self.assertIsInstance(res.result, float)
 
-        self.assertIs(
-            res.result, np.nan
-        )  # NOTE: cannot use assertEqual for nans.
-        # Result should be nan if all evals were skipped.
+        self.assertTrue(np.isnan(res.result))
 
         self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # But status should be DONE (as opposed to SKIPPED or ERROR)
