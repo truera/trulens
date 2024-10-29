@@ -467,10 +467,12 @@ class Span(
 
     # ORM interfacing
 
-    def to_orm(self) -> otel_db_orm.SpanORM.Span:
+    def to_orm(
+        self, typ: Type[otel_db_orm.SpanORM]
+    ) -> otel_db_orm.SpanORM.Span:
         """Convert span to ORM class"""
 
-        return otel_db_orm.SpanORM.Span(
+        return typ(
             span_id=self.context.span_id,
             trace_id=self.context.trace_id,
             parent_span_id=self.parent.span_id if self.parent else None,
@@ -485,7 +487,7 @@ class Span(
         )
 
     @classmethod
-    def from_orm(cls, orm: otel_db_orm.SpanORM.Span) -> Span:
+    def of_orm(cls, orm: otel_db_orm.SpanORM.Span) -> Span:
         """Convert ORM class to span"""
 
         context = SpanContext(
@@ -503,14 +505,14 @@ class Span(
         )
 
         return cls(
-            _name=orm.name,
-            _context=context,
-            _parent=parent,
-            _kind=trace_api.SpanKind.INTERNAL,
-            _attributes=orm.attributes,
-            _start_timestamp=orm.start_time,
-            _end_timestamp=orm.end_time,
-            _status=trace_api.status,
+            name=orm.name,
+            context=context,
+            parent=parent,
+            kind=trace_api.SpanKind.INTERNAL,
+            attributes=orm.attributes,
+            start_timestamp=orm.start_time,
+            end_timestamp=orm.end_time,
+            status=trace_api.status,
         )
 
     # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.

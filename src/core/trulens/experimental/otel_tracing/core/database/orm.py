@@ -6,8 +6,8 @@ from typing import Dict, Generic, Type, TypeVar
 
 from sqlalchemy import BINARY
 from sqlalchemy import DATETIME
+from sqlalchemy import JSON
 from sqlalchemy import VARCHAR
-from sqlalchemy import VARIANT
 from sqlalchemy import Column
 from sqlalchemy.orm import configure_mappers
 from sqlalchemy.schema import MetaData
@@ -75,7 +75,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             name: Column = Column(VARCHAR(32), nullable=False)
             start_time: Column = Column(DATETIME, nullable=False)
             end_time: Column = Column(DATETIME, nullable=False)
-            attributes: Column = Column(VARIANT)
+            attributes: Column = Column(JSON)
             span_kind: Column = Column(VARCHAR(32), nullable=False)
             status: Column = Column(VARCHAR(32), nullable=False)
 
