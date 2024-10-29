@@ -226,6 +226,13 @@ class SnowflakeConnector(DBConnector):
         default_engine_params = {
             "creator": lambda: snowpark_session.connection,
             "paramstyle": "qmark",
+            # The following parameters ensure the pool does not allocate new
+            # connections that it will close. This is a problem because the
+            # "creator" does not create new connections, it only passes around
+            # the single one it has.
+            "max_overflow": 0,
+            "pool_recycle": -1,
+            "pool_timeout": 120,
         }
         if "engine_params" not in database_args:
             database_args["engine_params"] = default_engine_params
