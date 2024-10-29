@@ -611,8 +611,8 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
         ) -> asynchro_utils.MaybeAwaitable[requests.Response]:
             """Handle a requests.Response response.
 
-            The logic handles responses of the form produced by both huggingface api
-            requests and openai api.
+            The logic handles responses of the form produced by huggingface api
+            and dummy completion api superficially resembling openai completion.
             """
 
             if isinstance(ret, Awaitable):

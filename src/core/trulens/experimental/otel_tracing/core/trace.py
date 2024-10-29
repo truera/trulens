@@ -36,6 +36,7 @@ from typing import (
     Union,
 )
 import uuid
+import weakref
 
 import pydantic
 from trulens.core.schema import base as base_schema
@@ -56,7 +57,8 @@ from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
 
 T = TypeVar("T")
-S = TypeVar("S", bound=core_otel.Span)
+R = TypeVar("R")  # callable return type
+E = TypeVar("E")  # iterator/generator element type
 
 logger = logging.getLogger(__name__)
 
@@ -396,6 +398,9 @@ class LiveSpanCall(LiveSpan, SpanCall):
             self.set_attribute(
                 "trulens.error", json_utils.jsonify(self.live_error)
             )
+
+
+S = TypeVar("S", bound=LiveSpanCall)
 
 
 class WithCost(LiveSpan):
@@ -751,18 +756,9 @@ def trulens_tracer():
     )
 
 
-T = TypeVar("T")
-
-
-class TracingCallbacks(wrap_utils.CallableCallbacks[T], Generic[T, S]):
+class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
     """Extension of CallableCallbacks that adds tracing to the wrapped callable
     as implemented using tracer and spans."""
-
-    @classmethod
-    def on_callable_wrapped(
-        cls, wrapper: Callable[..., Any], **kwargs: Dict[str, Any]
-    ):
-        return super().on_callable_wrapped(wrapper=wrapper, **kwargs)
 
     def __init__(
         self,
@@ -781,7 +777,7 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T], Generic[T, S]):
         if not issubclass(span_type, LiveSpanCall):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
 
-        self.span_context = trulens_tracer()._span(
+        self.span_context: ContextManager = trulens_tracer()._span(
             span_type, name="trulens.call." + func_name
         )
         self.span: S = self.span_context.__enter__()
@@ -806,6 +802,8 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T], Generic[T, S]):
         return temp
 
     def on_callable_end(self):
+        super().on_callable_end()
+
         span = self.span
 
         # SpanCall attributes
@@ -1060,26 +1058,26 @@ class _WithInstrumentCallbacks:
         raise NotImplementedError
 
 
-class AppTracingCallbacks(TracingCallbacks[T, S]):
+class AppTracingCallbacks(TracingCallbacks[R, S]):
     """Extension to TracingCallbacks that keep track of apps that are
     instrumenting their constituent calls."""
 
     @classmethod
     def on_callable_wrapped(
         cls,
-        wrapper: Callable[..., Any],
+        wrapper: Callable[..., R],
         app: _WithInstrumentCallbacks,
         **kwargs: Dict[str, Any],
     ):
         if not python_utils.safe_hasattr(wrapper, APPS):
-            apps = set()
+            apps: weakref.WeakSet[_WithInstrumentCallbacks] = weakref.WeakSet()
             setattr(wrapper, APPS, apps)
         else:
             apps = python_utils.safe_getattr(wrapper, APPS)
 
         apps.add(app)
 
-        return super().on_callable_wrapped(wrapper, **kwargs)
+        return super().on_callable_wrapped(wrapper=wrapper, **kwargs)
 
     def __init__(
         self,

@@ -464,6 +464,8 @@ def wrap_callable(
         call_id: uuid.UUID = uuid.uuid4()
 
         callback_class, other_callback_init_kwargs = getattr(wrapper, CALLBACKS)
+
+        # callback step 0: create the callback instance
         callback = callback_class(
             call_id=call_id,
             call_args=args,
@@ -474,9 +476,12 @@ def wrap_callable(
 
         try:
             bindings = sig.bind(*args, **kwargs)  # save and reuse sig
+
+            # callback step 1: call on_callable_call
             callback.on_callable_call(bindings=bindings)
 
         except TypeError as e:
+            # callback step 2a: call on_callable_bind_error
             callback.on_callable_bind_error(error=e)
 
             # NOTE: Not raising e here to make sure the exception raised by the
