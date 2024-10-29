@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
+import json
 import logging
+from pprint import pprint
 import random
 import threading
 import time
@@ -28,8 +30,6 @@ from typing import (
     Union,
 )
 
-from flask import Flask
-from flask import request
 from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk import resources as resources_sdk
@@ -41,6 +41,7 @@ from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+import uvicorn
 
 logger = logging.getLogger(__name__)
 
@@ -785,24 +786,109 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         return tracer
 
 
+class CollectorRequest(pydantic.BaseModel):
+    payload: str = "notset"
+
+
+class CollectorResponse(pydantic.BaseModel):
+    status: int = 404
+
+
 class Collector:
-    def _process_route(self):
-        print("hello")
-        print(request.get_json())
-        return {"status": 200}, 200
+    """OTLP Traces Collector.
+
+    See [specification](https://opentelemetry.io/docs/specs/otlp/). See also the
+    other side of this connection in
+    [OTLPSpanExporter][opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter].
+
+    Not all of the specification is currently supported. Please update this
+    docstring as more of the spec is handled.
+
+    - Ignores most of http spec including path.
+
+    - Only proto payloads are supported.
+
+    - No compression is supported.
+
+    - Only spans are supported.
+    """
+
+    @staticmethod
+    async def _uvicorn_handle(scope, receive, send):
+        """Main uvicorn handler."""
+
+        print("scope:")
+        pprint(scope)
+        if scope.get("type") != "http":
+            return
+
+        request = await receive()
+        print("request:")
+        pprint(request)
+
+        if request.get("type") != "http.request":
+            return
+
+        headers = dict(scope.get("headers", {}))
+        method = scope.get("method", None)
+        if method != "POST":
+            return
+
+        body = request.get("body", None)
+        if body is None:
+            return
+        content_type = headers.get(b"content-type", None)
+
+        if content_type == b"application/json":
+            body = json.loads(body.decode("utf-8"))
+        elif content_type == b"application/x-protobuf":
+            from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+                ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
+            )
+
+            body = PB2ExportTraceServiceRequest().FromString(body)
+
+            for resource_and_span in body.resource_spans:
+                resource = resource_and_span.resource
+                print("resource:")
+                pprint(resource)
+                spans = resource_and_span.scope_spans
+                for span in spans:
+                    print("span:")
+                    pprint(span)
+
+        else:
+            return
+
+        await send({
+            "type": "http.response.start",
+            "status": 200,
+            "headers": [
+                [b"content-type", b"application/json"],
+            ],
+        })
+
+        await send({
+            "type": "http.response.body",
+            "body": CollectorResponse(status=200)
+            .model_dump_json()
+            .encode("utf-8"),
+        })
 
     def __init__(self):
-        self.app = Flask("TruLens Collector")
-        self.process_route = self.app.route("/", methods=["POST"])(
-            self._process_route
-        )
+        self.app = self._uvicorn_handle
         self.server_thread = threading.Thread(target=self._run)
 
     def _run(self):
-        self.app.run()
+        self.config = uvicorn.Config(app=self.app, port=5000)
+        self.server = uvicorn.Server(self.config)
+        import asyncio
+
+        self.loop = asyncio.new_event_loop()
+        self.loop.run_until_complete(self.server.serve())
 
     def start(self):
         self.server_thread.start()
 
     def stop(self):
-        self.app.shutdown()
+        self.loop.close()
