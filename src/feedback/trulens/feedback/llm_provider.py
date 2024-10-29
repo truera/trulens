@@ -219,6 +219,7 @@ class LLMProvider(core_provider.Provider):
             messages=llm_messages,
             temperature=temperature,
         )
+
         if "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
@@ -1535,6 +1536,7 @@ class LLMProvider(core_provider.Provider):
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
+        system_prompt_override: Optional[str] = None,
     ) -> Tuple[float, dict]:
         """A measure to track if the source material supports each sentence in
         the statement using an LLM provider.
@@ -1625,13 +1627,15 @@ class LLMProvider(core_provider.Provider):
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
-
-        system_prompt = feedback_v2.Groundedness.generate_system_prompt(
-            min_score=min_score_val,
-            max_score=max_score_val,
-            criteria=criteria,
-            output_space=output_space,
-        )
+        if system_prompt_override is not None:
+            system_prompt = system_prompt_override
+        else:
+            system_prompt = feedback_v2.Groundedness.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+            )
 
         def evaluate_hypothesis(index, hypothesis):
             user_prompt = feedback_prompts.LLM_GROUNDEDNESS_USER.format(
