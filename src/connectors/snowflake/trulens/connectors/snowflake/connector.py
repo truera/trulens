@@ -119,6 +119,12 @@ class SnowflakeConnector(DBConnector):
         missing_snowpark_session_parameters = []
         mismatched_parameters = []
         for k, v in snowpark_session_connection_parameters.items():
+            if k in ["account", "user"] and not v:
+                # Streamlit apps may hide these values so we don't check them.
+                # They are required for a Snowpark Session anyway so this isn't
+                # a problem (though we can't check consistency with
+                # `connection_parameters`).
+                continue
             if not v:
                 missing_snowpark_session_parameters.append(k)
             elif connection_parameters[k] not in [None, v]:
