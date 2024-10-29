@@ -64,7 +64,7 @@ class TestFeedbackEval(TestCase):
 
         self.assertIsInstance(res.result, float)
 
-        assert np.isnan(res.result)
+        self.assertTrue(np.isnan(res.result))
 
         self.assertEqual(res.status, feedback_schema.FeedbackResultStatus.DONE)
         # But status should be DONE (as opposed to SKIPPED or ERROR)
