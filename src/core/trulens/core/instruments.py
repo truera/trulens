@@ -1129,13 +1129,13 @@ class Instrument:
                 attrs = obj.keys()
                 vals = obj.values()
 
-            if isinstance(obj, pydantic.BaseModel):
+            elif isinstance(obj, pydantic.BaseModel):
                 # NOTE(piotrm): This will not include private fields like
                 # llama_index's LLMPredictor._llm which might be useful to
                 # include:
                 attrs = obj.model_fields.keys()
 
-            if isinstance(obj, v1BaseModel):
+            elif isinstance(obj, v1BaseModel):
                 attrs = obj.__fields__.keys()
 
             elif dataclasses.is_dataclass(type(obj)):
@@ -1146,9 +1146,11 @@ class Instrument:
                 # is meant to be instrumented and if so, we  walk over it manually.
                 # NOTE: some llama_index objects are using dataclasses_json but most do
                 # not so this section applies.
-                attrs = pyschema_utils.clean_attributes(
+                attrs_map = pyschema_utils.clean_attributes(
                     obj, include_props=True
-                ).keys()
+                )
+                attrs = attrs_map.keys()
+                vals = attrs_map.values()
 
             if vals is None:
                 vals = [
