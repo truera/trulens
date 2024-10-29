@@ -38,6 +38,7 @@ from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing.core.database import orm as otel_db_orm
 
 logger = logging.getLogger(__name__)
 
@@ -508,6 +509,54 @@ class Span(serial_utils.SerialModel, trace_api.Span):
                 raise exc_val
         finally:
             self.end()
+
+    # To/from ORM
+
+    def to_orm(self) -> otel_db_orm.SpanORM.Span:
+        """Convert span to ORM class"""
+
+        return otel_db_orm.SpanORM.Span(
+            span_id=self.context.span_id,
+            trace_id=self.context.trace_id,
+            parent_span_id=self.parent.span_id if self.parent else None,
+            parent_trace_id=None,
+            name=self.name,
+            start_time=self.start_timestamp,
+            end_time=self.end_timestamp,
+            attributes=self.attributes,
+            span_kind=self.kind.name,
+            status=self.status.name,
+            span_type="trace",
+        )
+
+    @classmethod
+    def from_orm(cls, orm: otel_db_orm.SpanORM.Span) -> Span:
+        """Convert ORM class to span"""
+
+        context = SpanContext(
+            trace_id=orm.trace_id,
+            span_id=orm.span_id,
+        )
+
+        parent = (
+            SpanContext(
+                trace_id=orm.parent_trace_id,
+                span_id=orm.parent_span_id,
+            )
+            if orm.parent_span_id
+            else None
+        )
+
+        return cls(
+            _name=orm.name,
+            _context=context,
+            _parent=parent,
+            _kind=trace_api.SpanKind.INTERNAL,
+            _attributes=orm.attributes,
+            _start_timestamp=orm.start_time,
+            _end_timestamp=orm.end_time,
+            _status=trace_api.status,
+        )
 
     # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.
 
