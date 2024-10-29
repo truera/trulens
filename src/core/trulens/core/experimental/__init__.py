@@ -70,7 +70,7 @@ class Feature(str, Enum):
 
 
 _FEATURE_SETUPS: Dict[Feature, str] = {
-    Feature.OTEL_TRACING: "trulens.experimental.otel_tracing.feature"
+    Feature.OTEL_TRACING: "trulens.experimental.otel_tracing._feature"
 }
 """Mapping from experimental flags to their setup class module by name (module
 containing _FeatureSetup class).
