@@ -6,7 +6,7 @@
 
 SHELL := /bin/bash
 REPO_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-PYTEST := poetry run pytest --rootdir=. -s
+PYTEST := poetry run pytest -n auto --rootdir=. -s
 POETRY_DIRS := $(shell find . \
 	-not -path "./dist/*" \
 	-maxdepth 4 \
@@ -29,6 +29,7 @@ env-%:
 env-tests:
 	poetry run pip install \
 		pytest \
+		pytest-xdist[psutil] \
 		nbconvert \
 		nbformat \
 		pytest-subtests \
@@ -127,7 +128,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	ALLOW_OPTIONALS=true poetry run pytest -n auto --rootdir=. tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -204,15 +205,15 @@ test-%-optional: env-tests-optional
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 test-unit:
-	poetry run pytest --rootdir=. tests/unit/*
+	poetry run pytest -n auto --rootdir=. tests/unit/*
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
-	poetry run pytest --rootdir=. tests/e2e/*
+	poetry run pytest -n auto --rootdir=. tests/e2e/*
 
 # Runs the notebook test
 test-notebook:
-	poetry run pytest --rootdir=. tests/docs_notebooks/*
+	poetry run pytest -n auto --rootdir=. tests/docs_notebooks/*
 
 install-wheels:
 	pip install dist/*/*.whl
