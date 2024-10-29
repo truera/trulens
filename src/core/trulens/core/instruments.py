@@ -267,7 +267,8 @@ class _RecordingContext:
         """Completed records."""
 
         self.lock: th.Lock = th.Lock()
-        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
+        """Lock blocking access to `calls` and `records` when adding calls or
+        finishing a record."""
 
         self.token: Optional[contextvars.Token] = None
         """Token for context management."""

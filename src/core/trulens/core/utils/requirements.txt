@@ -3,3 +3,9 @@
 trulens-feedback >= 1.0.0
 trulens-core >= 1.0.0
 trulens-dashboard >= 1.0.0
+
+# EXPERIMENTAL(otel_tracing): even though otel is an optional feature, we
+# include them in the required packages because if the feature is enabled, we
+# talk about these packages as required.
+opentelemetry-api >= 1.0.0
+opentelemetry-sdk >= 1.0.0

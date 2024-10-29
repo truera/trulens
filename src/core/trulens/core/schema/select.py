@@ -54,7 +54,7 @@ class Select:
     """Selector for the whole output of the first called / last returned method call."""
 
     RecordSpans: Lens = Record.spans
-    """EXPERIMENTAL(otel-tracing): OTEL spans produced during tracing of a record.
+    """EXPERIMENTAL(otel_tracing): OTEL spans produced during tracing of a record.
 
     This can include spans not created by trulens.
     """

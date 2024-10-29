@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """OTEL Compatibility Classes
 
 This module contains classes to support interacting with the OTEL ecosystem.
@@ -27,18 +29,23 @@ from typing import (
     Union,
 )
 
+import pydantic
+from trulens.core._utils.pycompat import NoneType  # import style exception
+from trulens.core._utils.pycompat import TypeAlias  # import style exception
+from trulens.core._utils.pycompat import TypeAliasType  # import style exception
+from trulens.core.utils import pyschema as pyschema_utils
+from trulens.core.utils import python as python_utils
+from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing import _feature
+from trulens.experimental.otel_tracing.core.database import orm as otel_db_orm
+
+_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+
 from opentelemetry import context as context_api
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk import resources as resources_sdk
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.util import types as types_api
-import pydantic
-from trulens.core._utils.pycompat import NoneType  # import style exception
-from trulens.core._utils.pycompat import TypeAlias  # import style exception
-from trulens.core._utils.pycompat import TypeAliasType  # import style exception
-from trulens.core.utils import python as python_utils
-from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing.core.database import orm as otel_db_orm
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +202,10 @@ class TraceState(serial_utils.SerialModel, trace_api.span.TraceState):
 class SpanContext(serial_utils.SerialModel):
     """[OTEL SpanContext][opentelemetry.trace.SpanContext] requirements."""
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True,
+        use_enum_values=True,  # needed for enums that do not inherit from str
+    )
 
     trace_id: int = pydantic.Field(default_factory=new_trace_id)
     """Unique identifier for the trace.
@@ -211,6 +221,15 @@ class SpanContext(serial_utils.SerialModel):
     trace_flags: trace_api.TraceFlags = pydantic.Field(
         trace_api.DEFAULT_TRACE_OPTIONS
     )
+
+    @pydantic.field_validator("trace_flags", mode="before")
+    @classmethod
+    def _validate_trace_flags(cls, v):
+        """Validate trace flags.
+
+        Pydantic does not seem to like classes that inherit from int without this.
+        """
+        return trace_api.TraceFlags(v)
 
     trace_state: TraceState = pydantic.Field(default_factory=TraceState)
 
@@ -241,7 +260,9 @@ def lens_of_flat_key(key: str) -> serial_utils.Lens:
     return lens
 
 
-class Span(serial_utils.SerialModel, trace_api.Span):
+class Span(
+    pyschema_utils.WithClassInfo, serial_utils.SerialModel, trace_api.Span
+):
     """[OTEL Span][opentelemetry.trace.Span] requirements.
 
     See also [OpenTelemetry
@@ -250,117 +271,35 @@ class Span(serial_utils.SerialModel, trace_api.Span):
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
     """
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    _name: str = pydantic.PrivateAttr(None)
-
-    @property
-    def name(self) -> str:
-        """Name of the span."""
-
-        return self._name
-
-    _kind: trace_api.SpanKind = pydantic.PrivateAttr(
-        trace_api.SpanKind.INTERNAL
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True,
+        use_enum_values=True,  # model_validate will fail without this
     )
 
-    @property
-    def kind(self) -> trace_api.SpanKind:
-        """Kind of span."""
+    name: Optional[str] = None
 
-        return self._kind
+    kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL
 
-    _context: SpanContext = pydantic.PrivateAttr(None)
+    context: SpanContext = pydantic.Field(default_factory=SpanContext)
+    parent: Optional[SpanContext] = None
 
-    @property
-    def context(self) -> SpanContext:
-        """Trace/span identifiers."""
+    status: trace_api.status.StatusCode = trace_api.status.StatusCode.UNSET
+    status_description: Optional[str] = None
 
-        return self._context
-
-    _parent: Optional[SpanContext] = pydantic.PrivateAttr(None)
-
-    @property
-    def parent(self) -> Optional[SpanContext]:
-        """Optional parent identifiers."""
-
-        return self._parent
-
-    _status: trace_api.status.StatusCode = pydantic.PrivateAttr(
-        default=trace_api.status.StatusCode.UNSET
+    events: List[Tuple[str, trace_api.types.Attributes, TTimestamp]] = (
+        pydantic.Field(default_factory=list)
     )
+    links: trace_api._Links = pydantic.Field(default_factory=dict)
 
-    @property
-    def status(self) -> trace_api.status.StatusCode:
-        """Status of the span as per OpenTelemetry Span requirements."""
+    #    attributes: trace_api.types.Attributes = pydantic.Field(default_factory=dict)
+    attributes: Dict = pydantic.Field(default_factory=dict)
 
-        return self._status
+    start_timestamp: int = pydantic.Field(default_factory=time.time_ns)
 
-    _status_description: Optional[str] = pydantic.PrivateAttr(None)
-
-    @property
-    def status_description(self) -> Optional[str]:
-        """Status description as per OpenTelemetry Span requirements."""
-
-        return self._status_description
-
-    _events: List[Tuple[str, trace_api.types.Attributes, TTimestamp]] = (
-        pydantic.PrivateAttr(default_factory=list)
-    )
-
-    @property
-    def events(
-        self,
-    ) -> List[Tuple[str, trace_api.types.Attributes, TTimestamp]]:
-        """Events recorded in the span.
-
-        !!! Warning
-
-            Events in OpenTelemetry seem to be synonymous to logs. Do not store
-            anything we want to query or process in events.
-        """
-        return self._events
-
-    _links: Dict[SpanContext, trace_api.types.Attributes] = (
-        pydantic.PrivateAttr(default_factory=dict)
-    )
-
-    @property
-    def links(self) -> trace_api._Links:
-        """Relationships to other spans with attributes on each link."""
-
-        return self._links
-
-    _attributes: trace_api.types.Attributes = pydantic.PrivateAttr(
-        default_factory=dict
-    )
-
-    @property
-    def attributes(self) -> trace_api.types.Attributes:
-        """Data fields."""
-        return self._attributes
-
-    _start_timestamp: int = pydantic.PrivateAttr(default_factory=time.time_ns)
-
-    @property
-    def start_timestamp(self) -> int:
-        """Start time in nanoseconds since epoch."""
-
-        return self._start_timestamp
-
-    _end_timestamp: Optional[int] = pydantic.PrivateAttr(None)
-
-    @property
-    def end_timestamp(self) -> Optional[int]:
-        """End time in nanoseconds since epoch. None if not yet finished."""
-
-        return self._end_timestamp
+    end_timestamp: Optional[int] = None
 
     _record_exception: bool = pydantic.PrivateAttr(True)
-    """Whether to record exceptions in the span."""
-
     _set_status_on_exception: bool = pydantic.PrivateAttr(True)
-    """Whether to set status to ERROR on exception."""
 
     _tracer: Tracer = pydantic.PrivateAttr(None)
     """NON-STANDARD: The Tracer that produced this span."""
@@ -370,7 +309,11 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         return self._tracer
 
     def __init__(self, **kwargs):
+        if kwargs.get("start_timestamp") is None:
+            kwargs["start_timestamp"] = time.time_ns()
+
         super().__init__(**kwargs)
+
         for k, v in kwargs.items():
             if v is None:
                 continue
@@ -378,13 +321,10 @@ class Span(serial_utils.SerialModel, trace_api.Span):
             if k.startswith("_") and hasattr(self, k):
                 setattr(self, k, v)
 
-        if self._start_timestamp is None:
-            self._start_timestamp = time.time_ns()
-
     def update_name(self, name: str) -> None:
         """See [OTEL update_name][opentelemetry.trace.span.Span.update_name]."""
 
-        self._name = name
+        self.name = name
 
     def get_span_context(self) -> trace_api.span.SpanContext:
         """See [OTEL get_span_context][opentelemetry.trace.span.Span.get_span_context]."""
@@ -404,11 +344,11 @@ class Span(serial_utils.SerialModel, trace_api.Span):
                     "Ambiguous status description provided both in `status.description` and in `description`."
                 )
 
-            self._status = status.status_code
-            self._status_description = status.description
+            self.status = status.status_code
+            self.status_description = status.description
         else:
-            self._status = status
-            self._status_description = description
+            self.status = status
+            self.status_description = description
 
     def add_event(
         self,
@@ -418,7 +358,7 @@ class Span(serial_utils.SerialModel, trace_api.Span):
     ) -> None:
         """See [OTEL add_event][opentelemetry.trace.span.Span.add_event]."""
 
-        self._events.append((name, attributes, timestamp or time.time_ns()))
+        self.events.append((name, attributes, timestamp or time.time_ns()))
 
     def add_link(
         self,
@@ -430,12 +370,12 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         if attributes is None:
             attributes = {}
 
-        self._links[context] = attributes
+        self.links[context] = attributes
 
     def is_recording(self) -> bool:
         """See [OTEL is_recording][opentelemetry.trace.span.Span.is_recording]."""
 
-        return self._status == trace_api.status.StatusCode.UNSET
+        return self.status == trace_api.status.StatusCode.UNSET
 
     def set_attributes(
         self, attributes: Dict[str, types_api.AttributeValue]
@@ -483,18 +423,20 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         if end_time is None:
             end_time = time.time_ns()
 
-        self._end_timestamp = end_time
+        self.end_timestamp = end_time
 
         if self.is_recording():
             self.set_status(
                 trace_api.status.Status(trace_api.status.StatusCode.OK)
             )
 
+    # context manager requirement
     def __enter__(self) -> Span:
         """See [OTEL __enter__][opentelemetry.trace.span.Span.__enter__]."""
 
         return self
 
+    # context manager requirement
     def __exit__(
         self,
         exc_type: Optional[BaseException],
@@ -510,7 +452,20 @@ class Span(serial_utils.SerialModel, trace_api.Span):
         finally:
             self.end()
 
-    # To/from ORM
+    # async context manager requirement
+    async def __aenter__(self) -> Span:
+        return self.__enter__()
+
+    # async context manager requirement
+    async def __aexit__(
+        self,
+        exc_type: Optional[BaseException],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        return self.__exit__(exc_type, exc_val, exc_tb)
+
+    # ORM interfacing
 
     def to_orm(self) -> otel_db_orm.SpanORM.Span:
         """Convert span to ORM class"""
@@ -654,8 +609,9 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     _span_context_class: Type[SpanContext] = pydantic.PrivateAttr(SpanContext)
     """NON-STANDARD: The default span context class to use when creating spans."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, _context: context_api.context.Context, **kwargs):
         super().__init__(**kwargs)
+
         for k, v in kwargs.items():
             if v is None:
                 continue
@@ -663,11 +619,23 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             if k.startswith("_") and hasattr(self, k):
                 setattr(self, k, v)
 
+        self._context_cvar.set(_context)
+
+    _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
+        pydantic.PrivateAttr(
+            default_factory=lambda: contextvars.ContextVar(
+                f"context_Tracer_{python_utils.context_id()}", default=None
+            )
+        )
+    )
+
     @property
     def context_cvar(
         self,
     ) -> contextvars.ContextVar[context_api.context.Context]:
-        return self._tracer_provider.context_cvar
+        """NON-STANDARD: The context variable to store the current span context."""
+
+        return self._context_cvar
 
     @property
     def trace_id(self) -> int:
@@ -676,7 +644,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     def start_span(
         self,
         name: Optional[str] = None,
-        *,
+        *args,  # non-standard
         context: Optional[context_api.context.Context] = None,
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
         attributes: trace_api.types.Attributes = None,
@@ -685,6 +653,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         record_exception: bool = True,
         set_status_on_exception: bool = True,
         cls: Optional[Type[Span]] = None,  # non-standard
+        **kwargs,  # non-standard
     ) -> Span:
         """See [OTEL
         Tracer.start_span][opentelemetry.trace.Tracer.start_span]."""
@@ -704,7 +673,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             )
 
         new_context = self._span_context_class(
-            trace_id=self.trace_id, _tracer=self
+            *args, trace_id=self.trace_id, _tracer=self, **kwargs
         )
 
         if name is None:
@@ -720,15 +689,15 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             cls = self._span_class
 
         new_span = cls(
-            _name=name,
-            _context=new_context,
-            _parent=parent_context,
-            _kind=kind,
-            _attributes=attributes,
-            _links=links,
-            _start_timestamp=start_time,
+            name=name,
+            context=new_context,
+            parent=parent_context,
+            kind=kind,
+            attributes=attributes,
+            links=links,
+            start_timestamp=start_time,
             _record_exception=record_exception,
-            _set_status_on_exception=set_status_on_exception,
+            _status_on_exception=set_status_on_exception,
             _tracer=self,
         )
 
@@ -789,7 +758,8 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
     _context_cvar: contextvars.ContextVar[context_api.context.Context] = (
         pydantic.PrivateAttr(
             default_factory=lambda: contextvars.ContextVar(
-                "context", default=None
+                f"context_TracerProvider_{python_utils.context_id()}",
+                default=None,
             )
         )
     )
@@ -826,6 +796,7 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
             _attributes=attributes,
             _schema_url=schema_url,
             _tracer_provider=self,
+            _context=self.context_cvar.get(),
         )
 
         return tracer
