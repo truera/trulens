@@ -6,6 +6,7 @@ import re
 from typing import (
     Any,
     Dict,
+    List,
     Optional,
     Union,
 )
@@ -74,7 +75,7 @@ class SnowflakeConnector(DBConnector):
             database_prefix,
             database_args,
             database_check_revision,
-            URL(**connection_parameters),
+            connection_parameters,
         )
 
     def _create_snowpark_session(
@@ -163,7 +164,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
-        database_url: str,
+        connection_parameters: Dict[str, str],
     ):
         database_args = database_args or {}
         if "engine_params" not in database_args:
@@ -184,7 +185,7 @@ class SnowflakeConnector(DBConnector):
         database_args.update({
             k: v
             for k, v in {
-                "database_url": database_url,
+                "database_url": URL(**connection_parameters),
                 "database_redact_keys": database_redact_keys,
             }.items()
             if v is not None
@@ -206,28 +207,44 @@ class SnowflakeConnector(DBConnector):
         if init_server_side:
             ServerSideEvaluationArtifacts(
                 snowpark_session,
+                connection_parameters["database"],
+                connection_parameters["schema"],
+                connection_parameters["warehouse"],
                 database_args["database_prefix"],
                 init_server_side_with_staged_packages,
             ).set_up_all()
 
         # Add "trulens_workspace_version" tag to the current schema
-        schema = snowpark_session.get_current_schema()
-        db = snowpark_session.get_current_database()
         TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
 
-        res = snowpark_session.sql(
-            f"create tag if not exists {TRULENS_WORKSPACE_VERSION_TAG}"
-        ).collect()
-        res = snowpark_session.sql(
-            "ALTER schema {}.{} SET TAG {}='{}'".format(
-                db,
-                schema,
+        self._run_query(
+            snowpark_session,
+            f"CREATE TAG IF NOT EXISTS {TRULENS_WORKSPACE_VERSION_TAG}",
+        )
+        res = self._run_query(
+            snowpark_session,
+            "ALTER SCHEMA {}.{} SET TAG {}='{}'".format(
+                connection_parameters["database"],
+                connection_parameters["schema"],
                 TRULENS_WORKSPACE_VERSION_TAG,
                 self.db.get_db_revision(),
-            )
-        ).collect()
+            ),
+        )
 
         print(f"Set TruLens workspace version tag: {res}")
+
+    @staticmethod
+    def _run_query(
+        snowpark_session: Session,
+        q: str,
+        bindings: Optional[List[Any]] = None,
+    ) -> List[Any]:
+        cursor = snowpark_session.connection.cursor()
+        if bindings:
+            cursor.execute(q, bindings)
+        else:
+            cursor.execute(q)
+        return cursor.fetchall()
 
     @classmethod
     def _validate_schema_name(cls, name: str) -> None:
@@ -242,9 +259,11 @@ class SnowflakeConnector(DBConnector):
         snowpark_session: Session,
         schema_name: str,
     ):
-        snowpark_session.sql(
-            "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)", [schema_name]
-        ).collect()
+        SnowflakeConnector._run_query(
+            snowpark_session,
+            "CREATE SCHEMA IF NOT EXISTS IDENTIFIER(?)",
+            [schema_name],
+        )
         snowpark_session.use_schema(schema_name)
 
     @cached_property
