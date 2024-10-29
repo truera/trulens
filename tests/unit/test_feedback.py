@@ -3,7 +3,6 @@
 from unittest import TestCase
 from unittest import main
 
-import numpy as np
 from trulens.apps import basic as basic_app
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import feedback as feedback_schema
@@ -65,7 +64,7 @@ class TestFeedbackEval(TestCase):
         self.assertIsInstance(res.result, float)
 
         self.assertIs(
-            res.result, np.nan
+            res.result, float("nan")
         )  # NOTE: cannot use assertEqual for nans.
         # Result should be nan if all evals were skipped.
 
