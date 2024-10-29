@@ -25,9 +25,12 @@ from trulens.core.utils import python as python_utils
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
+E = TypeVar("E")  # iterator/generator element
+A = TypeVar("A")  # awaitable result
+R = TypeVar("R")  # callable return value
 
 
-class AwaitableCallbacks(Generic[T]):
+class AwaitableCallbacks(Generic[A]):
     """Callbacks for wrapped awaitables.
 
     This class is intentially not an ABC so as to make default callbacks no-ops.
@@ -35,57 +38,65 @@ class AwaitableCallbacks(Generic[T]):
 
     @staticmethod
     def on_awaitable_wrapped(
-        awaitable: Awaitable[T], wrapper: Awaitable[T], **kwargs
+        awaitable: Awaitable[A], wrapper: Awaitable[A], **kwargs
     ) -> None:
         """Called immediately after the wrapper is produced."""
 
     def __init__(
         self,
-        awaitable: Awaitable[T],
-        wrapper: Awaitable[T],
+        awaitable: Awaitable[A],
+        wrapper: Awaitable[A],
         **kwargs: Dict[str, Any],
     ):
-        """Called/constructed when wrapper awaitable is awaited but before the wrapped awaitable is awaited."""
+        """Called/constructed when wrapper awaitable is awaited but before the
+        wrapped awaitable is awaited."""
 
         # Subclasses can use kwargs.
 
-        self.awaitable: Awaitable[T] = awaitable
-        self.wrapper: Awaitable[T] = wrapper
+        self.awaitable: Awaitable[A] = awaitable
+        self.wrapper: Awaitable[A] = wrapper
 
-        self.result: Optional[T] = None
+        self.result: Optional[A] = None
         self.error: Optional[Exception] = None
 
     def on_awaitable_end(self):
         """Called after the last callback is called."""
 
-    def on_awaitable_result(self, result: T) -> T:
+    def on_awaitable_result(self, result: A) -> A:
         """Called with the result of the wrapped awaitable once it is ready.
 
         !!! Important
             This should return the result or some wrapper of the result.
         """
+
         self.result = result
         return result
 
     def on_awaitable_exception(self, error: Exception) -> Exception:
         """Called if awaiting for the wrapped awaitable raised an exception."""
+
         self.error = error
         return error
 
 
 def wrap_awaitable(
-    awaitable: Awaitable[T],
-    callback_class: Type[AwaitableCallbacks] = AwaitableCallbacks,
+    awaitable: Awaitable[A],
+    callback_class: Type[AwaitableCallbacks[A]] = AwaitableCallbacks,
     **kwargs: Dict[str, Any],
-) -> Awaitable[T]:
+) -> Awaitable[A]:
     """Wrap an awaitable in another awaitable that will call callbacks before
     and after the given awaitable finishes.
+
     Note that the resulting awaitable needs to be awaited for all but the
     `on_now` callback to trigger.
+
     Args:
         awaitable: The awaitable to wrap.
+
         callback_class: The class that provides callbacks.
-        **kwargs: All other arguments are passed in as they are to all callbacks.
+
+        **kwargs: All other arguments are passed in as they are to all
+        callbacks.
     """
 
     init_args: Dict[str, Any] = {"awaitable": awaitable, **kwargs}
@@ -116,7 +127,7 @@ def wrap_awaitable(
     return w
 
 
-class IterableCallbacks(Generic[T]):
+class IterableCallbacks(Generic[E]):
     """Callbacks for wrapped iterables.
 
     This class is intentially not an ABC so as to make default callbacks no-ops.
@@ -124,12 +135,12 @@ class IterableCallbacks(Generic[T]):
 
     @staticmethod
     def on_iterable_wrapped(
-        itb: Iterable[T], wrapper: Iterable[T], **kwargs: Dict[str, Any]
+        itb: Iterable[E], wrapper: Iterable[E], **kwargs: Dict[str, Any]
     ):
         """Called immediately after wrapper is made."""
 
     def __init__(
-        self, itb: Iterable[T], wrapper: Iterable[T], **kwargs: Dict[str, Any]
+        self, itb: Iterable[E], wrapper: Iterable[E], **kwargs: Dict[str, Any]
     ):
         """Called/constructed when the wrapped iterable is iterated (__iter__ is
         called) but before the wrapped iterable is iterated (__iter__ is
@@ -137,10 +148,10 @@ class IterableCallbacks(Generic[T]):
 
         # Subclasses can use kwargs.
 
-        self.itb: Iterable[T] = itb
-        self.wrapper: Iterable[T] = wrapper
+        self.itb: Iterable[E] = itb
+        self.wrapper: Iterable[E] = wrapper
 
-        self.it: Optional[Iterator[T]] = None
+        self.it: Optional[Iterator[E]] = None
         self.error: Optional[Exception] = None
 
     def on_iterable_end(self):
@@ -148,8 +159,8 @@ class IterableCallbacks(Generic[T]):
 
     def on_iterable_iter(
         self,
-        it: Iterator[T],
-    ) -> Iterator[T]:
+        it: Iterator[E],
+    ) -> Iterator[E]:
         """Called after the wrapped iterator is produced (but before any items are produced).
 
         !!! Important
@@ -167,7 +178,7 @@ class IterableCallbacks(Generic[T]):
     def on_iterable_next(self):
         """Called when the next item from the iterator is requested (but before it is produced)."""
 
-    def on_iterable_next_result(self, val: T) -> T:
+    def on_iterable_next_result(self, val: E) -> E:
         """Called after the next item from the iterator is produced.
 
         !!! Important
@@ -185,15 +196,17 @@ class IterableCallbacks(Generic[T]):
 
 
 def wrap_iterable(
-    itb: Iterable[T],
-    callback_class: Type[IterableCallbacks] = IterableCallbacks,
+    itb: Iterable[E],
+    callback_class: Type[IterableCallbacks[E]] = IterableCallbacks,
     **kwargs: Dict[str, Any],
-) -> Iterator[T]:
+) -> Iterator[E]:
     """Wrap an iterable to invoke various callbacks.
 
     See `IterableCallbacks` for callbacks.
+
     Args:
         itb: The iterator to wrap.
+
         **kwargs: All other arguments are passed in as they are to all callbacks.
     """
 
@@ -246,7 +259,7 @@ def wrap_iterable(
     return w
 
 
-class CallableCallbacks(Generic[T]):
+class CallableCallbacks(Generic[R]):
     """Callbacks for wrapped callables.
 
     This class is intentially not an ABC so as to make default callbacks no-ops.
@@ -254,7 +267,11 @@ class CallableCallbacks(Generic[T]):
 
     @classmethod
     def on_callable_wrapped(
-        cls, *, func: Callable, wrapper: Callable, **kwargs: Dict[str, Any]
+        cls,
+        *,
+        func: Callable[..., R],
+        wrapper: Callable[..., R],
+        **kwargs: Dict[str, Any],
     ):
         """Called immediately after the wrapper is produced.
 
@@ -268,9 +285,9 @@ class CallableCallbacks(Generic[T]):
         self,
         *,
         call_id: uuid.UUID,
-        func: Callable,
+        func: Callable[..., R],
         sig: inspect.Signature,
-        wrapper: Callable,
+        wrapper: Callable[..., R],
         call_args: Tuple[Any, ...],
         call_kwargs: Dict[str, Any],
     ):
@@ -280,9 +297,9 @@ class CallableCallbacks(Generic[T]):
         # Subclasses can use kwargs.
 
         self.call_id: uuid.UUID = call_id
-        self.func: Callable = func
+        self.func: Callable[..., R] = func
         self.sig: inspect.Signature = sig
-        self.wrapper: Callable = wrapper
+        self.wrapper: Callable[..., R] = wrapper
         self.call_args: Optional[Tuple[Any, ...]] = call_args
         self.call_kwargs: Optional[Dict[str, Any]] = call_kwargs
 
@@ -291,7 +308,7 @@ class CallableCallbacks(Generic[T]):
 
         self.error: Optional[Exception] = None
 
-        self.ret: Optional[T] = None
+        self.ret: Optional[R] = None
 
     def on_callable_end(self):
         """Called after the last callback is called."""
@@ -327,11 +344,12 @@ class CallableCallbacks(Generic[T]):
         """
         self.bind_error = error
 
-    def on_callable_return(self, *, ret: T) -> T:
+    def on_callable_return(self, *, ret: R) -> R:
         """Called after wrapped method returns without error.
 
         !!! Important
             This callback must return the return value or some wrapper of that value.
+
         Example:
             ```python
             if isinstance(ret, Awaitable):
@@ -355,12 +373,13 @@ CALLBACKS = "__tru_callbacks"
 
 
 def wrap_callable(
-    func: Callable,
-    callback_class: Type[CallableCallbacks],
+    func: Callable[..., R],
+    callback_class: Type[CallableCallbacks[R]],
     **kwargs: Dict[str, Any],
 ) -> Callable:
     """Create a wrapper of the given function to emit various callbacks at
     different stages of its evaluation.
+
     !!! Warning
         Note that we only allow a single wrapper and a callback class to be used
         at once. Managing multiple receivers of the data collected must be
@@ -368,7 +387,9 @@ def wrap_callable(
 
     Args:
         func: The function to wrap.
+
         callback_class: The class that provides callbacks.
+
         **kwargs: All other arguments are passed in as they are to the
             callback_class constructor upon the call to the wrapped func.
     """
