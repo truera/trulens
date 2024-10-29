@@ -1590,4 +1590,9 @@ header h1 {
   }
 }
 
+.logos-container img {
+  box-shadow: none;
+}
+
+
 /*# sourceMappingURL=style.css.map */
