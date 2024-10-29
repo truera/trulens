@@ -27,10 +27,6 @@ from snowflake.sqlalchemy import URL
 logger = logging.getLogger(__name__)
 
 
-# TODO(this_pr): get rid of snowpark_session.sql uses.
-# TODO(this_pr): get rid of snowpark_session.use_* uses.
-# TODO(this_pr): get rid of these things in notebooks.
-# TODO(this_pr): get rid of these things in tests.
 class SnowflakeConnector(DBConnector):
     """Connector to snowflake databases."""
 
@@ -114,12 +110,12 @@ class SnowflakeConnector(DBConnector):
     ) -> Dict[str, Optional[str]]:
         # Validate.
         snowpark_session_connection_parameters = {
-            "account": snowpark_session.get_current_account(),  # TODO(this_pr): get rid of this!
-            "user": snowpark_session.get_current_user(),  # TODO(this_pr): get rid of this!
-            "database": snowpark_session.get_current_database(),  # TODO(this_pr): get rid of this!
-            "schema": snowpark_session.get_current_schema(),  # TODO(this_pr): get rid of this!
-            "warehouse": snowpark_session.get_current_warehouse(),  # TODO(this_pr): get rid of this!
-            "role": snowpark_session.get_current_role(),  # TODO(this_pr): get rid of this!
+            "account": snowpark_session.get_current_account(),
+            "user": snowpark_session.get_current_user(),
+            "database": snowpark_session.get_current_database(),
+            "schema": snowpark_session.get_current_schema(),
+            "warehouse": snowpark_session.get_current_warehouse(),
+            "role": snowpark_session.get_current_role(),
         }
         missing_snowpark_session_parameters = []
         mismatched_parameters = []
