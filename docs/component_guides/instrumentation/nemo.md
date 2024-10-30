@@ -38,7 +38,7 @@ Below is a quick example of usage. First, we'll create a standard Nemo app.
     models:
     - type: main
         engine: openai
-        model: gpt-3.5-turbo-instruct
+        model: gpt-4o-mini
 
     %%writefile config.co
     # Adapted from NeMo-Guardrails/tests/test_configs/with_kb_openai_embeddings/config.co
