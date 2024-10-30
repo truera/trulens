@@ -27,13 +27,16 @@ class ServerSideEvaluationArtifacts:
     def __init__(
         self,
         session: Session,
+        database: str,
+        schema: str,
+        warehouse: str,
         database_prefix: str,
         use_staged_packages: bool,
     ) -> None:
         self._session = session
-        self._database = session.get_current_database()
-        self._schema = session.get_current_schema()
-        self._warehouse = session.get_current_warehouse()
+        self._database = database
+        self._schema = schema
+        self._warehouse = warehouse
         self._database_prefix = database_prefix
         self._use_staged_packages = use_staged_packages
 
@@ -46,7 +49,9 @@ class ServerSideEvaluationArtifacts:
         self._set_up_task()
 
     def _run_query(self, q: str) -> None:
-        self._session.sql(q).collect()
+        cursor = self._session.connection.cursor()
+        cursor.execute(q)
+        cursor.fetchall()
 
     def _set_up_stage(self) -> None:
         self._run_query(f"CREATE STAGE IF NOT EXISTS {_STAGE_NAME}")
@@ -54,10 +59,8 @@ class ServerSideEvaluationArtifacts:
             os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
         for trulens_package in _TRULENS_PACKAGES:
-            self._session.file.put(
-                os.path.join(data_directory, f"{trulens_package}.zip"),
-                f"@{_STAGE_NAME}",
-            )
+            file_path = os.path.join(data_directory, f"{trulens_package}.zip")
+            self._run_query(f"PUT file://{file_path} @{_STAGE_NAME}")
 
     def _set_up_stream(self) -> None:
         self._run_query(
