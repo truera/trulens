@@ -4,13 +4,13 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from unittest import TestCase
 from unittest import main
 import uuid
 
-from snowflake.core import Root
 from snowflake.snowpark import Session
+from snowflake.snowpark.row import Row
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as core_session
 
@@ -30,7 +30,6 @@ class SnowflakeTestCase(TestCase):
         self._snowpark_session = Session.builder.configs(
             self._snowflake_connection_parameters
         ).create()
-        self._snowflake_root = Root(self._snowpark_session)
         self._snowflake_schemas_to_delete = []
 
     def tearDown(self):
@@ -45,10 +44,9 @@ class SnowflakeTestCase(TestCase):
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
             try:
-                schema = self._snowflake_root.databases[
-                    self._snowflake_connection_parameters["database"]
-                ].schemas[curr]
-                schema.delete()
+                self.run_query(
+                    f"DROP SCHEMA {self._snowflake_connection_parameters['database']}.{curr}"
+                )
             except Exception:
                 schemas_not_deleted.append(curr)
                 self._logger.error(f"Failed to clean up schema {curr}!")
@@ -61,10 +59,10 @@ class SnowflakeTestCase(TestCase):
         self._snowpark_session.close()
 
     def list_schemas(self):
-        schemas = self._snowflake_root.databases[
-            self._snowflake_connection_parameters["database"]
-        ].schemas.iter()
-        return [curr.name for curr in schemas]
+        res = self.run_query(
+            f"SHOW SCHEMAS IN DATABASE {self._snowflake_connection_parameters['database']}"
+        )
+        return [curr["name"] for curr in res]
 
     def get_snowpark_session_with_schema(self, schema: str) -> Session:
         snowflake_connection_parameters = (
@@ -116,8 +114,8 @@ class SnowflakeTestCase(TestCase):
         self.assertIn(self._schema, self.list_schemas())
         return session
 
-    def run_query(self, q: str) -> None:
-        self._snowpark_session.sql(q).collect()
+    def run_query(self, q: str) -> List[Row]:
+        return self._snowpark_session.sql(q).collect()
 
 
 if __name__ == "__main__":
