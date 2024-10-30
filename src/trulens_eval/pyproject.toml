@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens_eval"
-version = "1.2.1"
+version = "1.2.2"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
