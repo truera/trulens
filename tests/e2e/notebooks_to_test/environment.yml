@@ -3,3 +3,4 @@ channels:
   - snowflake
 dependencies:
   - trulens-core=*
+  - trulens-connectors-snowflake=*
