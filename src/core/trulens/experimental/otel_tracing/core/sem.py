@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import ClassVar, List, Optional, TypeVar
+from typing import List, Optional, TypeVar
 
 from semconv.trulens.semconv import trace
 from trulens.experimental.otel_tracing.core.trace import Span
@@ -11,29 +11,54 @@ class SpanType(str, Enum):
     TRACE_ROOT = "trace"
     """Spans as collected by tracing system."""
 
-    SEM_ROOT = "sem"
-    """Tracing spans converted into "semantic spans", organizing the collected
-    spans into more meaningful types and relationships.
-    """
-
     EVAL_ROOT = "eval"
     """Feedback function evaluation span.
 
-    Children of this span will include spans of the other types.
+    Will include a TRACE_ROOT span as a child.
     """
+
+    RETRIEVAL = "retrieval"
+    """A retrieval."""
+
+    RERANKING = "reranking"
+    """A reranker call."""
+
+    GENERATION = "generation"
+    """A generation call to an LLM."""
+
+    MEMORIZATION = "memorization"
+    """A memory call."""
+
+    EMBEDDING = "embedding"
+    """An embedding call."""
+
+    TOOL_INVOCATION = "tool_invocation"
+    """A tool invocation."""
+
+    AGENT_INVOCATION = "agent_invocation"
+    """An agent invocation."""
 
 
 class EvalRoot(Span):
     """Root of feedback function evaluation."""
 
-    ATTR: ClassVar[str] = "eval"
-    _prop = Span.attribute_property_factory(base=ATTR)
+    typ: SpanType = SpanType.EVAL_ROOT
+
+    # feedback result fields
+
+
+class TraceRoot(Span):
+    """Root of a trace."""
+
+    typ: SpanType = SpanType.TRACE_ROOT
+
+    # record fields
 
 
 class Retrieval(Span):
     """A retrieval."""
 
-    _prop = Span.attribute_property
+    typ: SpanType = SpanType.RETRIEVAL
 
     query_text = Span.attribute_property(
         trace.SpanAttributes.RETRIEVAL.QUERY_TEXT, str
@@ -74,6 +99,8 @@ class Retrieval(Span):
 class Reranking(Span):
     """A reranker call."""
 
+    typ: SpanType = SpanType.RERANKING
+
     query_text = Span.attribute_property(
         trace.SpanAttributes.RERANKING.QUERY_TEXT, str
     )
@@ -106,6 +133,8 @@ class Reranking(Span):
 
 class Generation(Span):
     """A generation call to an LLM."""
+
+    typ: SpanType = SpanType.GENERATION
 
     model_name = Span.attribute_property(
         trace.SpanAttributes.GENERATION.MODEL_NAME, str
@@ -149,6 +178,8 @@ class Generation(Span):
 class Memorization(Span):
     """A memory call."""
 
+    typ: SpanType = SpanType.MEMORIZATION
+
     memory_type = Span.attribute_property(
         trace.SpanAttributes.MEMORIZATION.MEMORY_TYPE, str
     )
@@ -162,6 +193,8 @@ class Memorization(Span):
 
 class Embedding(Span):
     """An embedding call."""
+
+    typ: SpanType = SpanType.EMBEDDING
 
     input_text = Span.attribute_property(
         trace.SpanAttributes.EMBEDDING.INPUT_TEXT, str
@@ -182,10 +215,10 @@ class Embedding(Span):
 class ToolInvocation(Span):
     """A tool invocation."""
 
-    ATTR: ClassVar[str] = "tool_invocation"
+    typ: SpanType = SpanType.TOOL_INVOCATION
 
     description = Span.attribute_property(
-        trace.SpanAttributes.TOOLINVOCATION.DESCRIPTION, str
+        trace.SpanAttributes.TOOL_INVOCATION.DESCRIPTION, str
     )
     """The description of the tool."""
 
@@ -193,9 +226,9 @@ class ToolInvocation(Span):
 class AgentInvocation(Span):
     """An agent invocation."""
 
-    ATTR: ClassVar[str] = "agent_invocation"
+    typ: SpanType = SpanType.AGENT_INVOCATION
 
     description = Span.attribute_property(
-        trace.SpanAttributes.AGENTINVOCATION.DESCRIPTION, str
+        trace.SpanAttributes.AGENT_INVOCATION.DESCRIPTION, str
     )
     """The description of the agent."""

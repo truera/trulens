@@ -129,7 +129,7 @@ class SpanAttributes:
         EMBEDDING = base + ".embedding"
         """The embedding of the input text."""
 
-    class TOOLINVOCATION:
+    class TOOL_INVOCATION:
         """A tool invocation."""
 
         base = "tool_invocation"
@@ -137,7 +137,7 @@ class SpanAttributes:
         DESCRIPTION = base + ".description"
         """The description of the tool."""
 
-    class AGENTINVOCATION:
+    class AGENT_INVOCATION:
         """An agent invocation."""
 
         base = "agent_invocation"
