@@ -11,8 +11,7 @@ achieved through a simple dictionary or by utilizing the `VirtualApp` class,
 which allows for a more structured approach to storing application
 information relevant for feedback evaluation.
 
-Example: "Constructing a Virtual Application"
-
+Example: Constructing a Virtual Application
     ```python
     virtual_app = {
         'llm': {'modelname': 'some llm component model name'},
@@ -31,8 +30,7 @@ Incorporate components into the virtual app for evaluation by utilizing the
 `Select` class. This approach allows for the reuse of setup configurations
 when defining feedback functions.
 
-Example: "Incorporating Components into the Virtual App"
-
+Example: Incorporating Components into the Virtual App
     ```python
     # Setting up a virtual app with a retriever component
     from trulens.core import Select
@@ -49,8 +47,7 @@ Below is an example of adding records for a context retrieval component,
 emphasizing that only the data intended for tracking or evaluation needs to
 be provided.
 
-Example: "Adding Records for a Context Retrieval Component"
-
+Example: Adding Records for a Context Retrieval Component
     ```python
     from trulens.apps.virtual import VirtualRecord
 
@@ -86,8 +83,7 @@ For existing datasets, such as a dataframe of prompts, contexts, and
 responses, iterate through the dataframe to create virtual records for each
 entry.
 
-Example: "Creating Virtual Records from a DataFrame"
-
+Example: Creating Virtual Records from a DataFrame
     ```python
     import pandas as pd
 
@@ -122,10 +118,10 @@ Example: "Creating Virtual Records from a DataFrame"
 
 After constructing the virtual records, feedback functions can be developed
 in the same manner as with non-virtual applications, using the newly added
-`context_call` selector for reference.
+`context_call` selector for reference. The same process can be repeated for
+any additional selector you add.
 
-Example: "Developing Feedback Functions"
-
+Example: Developing Feedback Functions
     ```python
     from trulens.providers.openai import OpenAI
     from trulens.core.feedback.feedback import Feedback
@@ -144,8 +140,7 @@ These feedback functions are then integrated into `TruVirtual` to construct
 the recorder, which can handle most configurations applicable to non-virtual
 apps.
 
-Example: "Integrating Feedback Functions into TruVirtual"
-
+Example: Integrating Feedback Functions into TruVirtual
     ```python
     from trulens.apps.virtual import TruVirtual
 
@@ -173,8 +168,7 @@ Metadata about your application can also be included in the `VirtualApp` for
 evaluation purposes, offering a flexible way to store additional information
 about the components of an LLM app.
 
-Example: "Storing metadata in a VirtualApp"
-
+Example: Storing metadata in a VirtualApp
     ```python
     # Example of storing metadata in a VirtualApp
     virtual_app = {
@@ -192,8 +186,7 @@ Example: "Storing metadata in a VirtualApp"
 
 This approach is particularly beneficial for evaluating the components of an LLM app.
 
-Example: "Evaluating components of an LLM application"
-
+Example: Evaluating components of an LLM application
     ```python
     # Adding a retriever component to the virtual app
     retriever_component = Select.RecordCalls.retriever
