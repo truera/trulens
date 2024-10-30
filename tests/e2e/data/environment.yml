@@ -2,5 +2,7 @@ name: app_environment
 channels:
   - snowflake
 dependencies:
-  - trulens-core=*
   - trulens-connectors-snowflake=*
+  - trulens-core=*
+  - trulens-feedback=*
+  - trulens-providers-cortex=*
