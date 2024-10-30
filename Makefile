@@ -64,8 +64,12 @@ env-tests-db: env-tests
 env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
+		langchainhub \
+		llama-hub \
+		rank_bm25 \
 		ipytree \
-		llama-index-readers-web
+		llama-index-readers-web \
+		llama-index-vector-stores-milvus
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -201,6 +205,9 @@ test-%-allow-optional: env
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
 	TEST_OPTIONAL=true make test-$*
+
+test-notebook: env-tests-notebook
+	make test-notebook-optional
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.

@@ -80,7 +80,7 @@ class DBMigrationPreprocessor(VariableSettingPreprocessor):
 
 
 NOTEBOOKS_TO_TEST = glob.glob(
-    "./tests/docs_notebooks/notebooks_to_test/**/*.ipynb"
+    "./tests/docs_notebooks/notebooks_to_test/**/*.ipynb", recursive=True
 )
 
 
