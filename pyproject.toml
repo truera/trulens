@@ -67,6 +67,9 @@ mkdocs-gen-files = ">=0.5"
 mkdocs-literate-nav = ">=0.6"
 mkdocs-section-index = ">=0.3"
 
+[tool.poetry.group.otel.dependencies]
+trulens-semconv = { path = "src/semconv", develop = true }
+
 [tool.poetry.group.apps.dependencies]
 trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }

@@ -728,7 +728,7 @@ sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
 name = "trulens-core"
-version = "1.1.0"
+version = "1.2.0"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.9"

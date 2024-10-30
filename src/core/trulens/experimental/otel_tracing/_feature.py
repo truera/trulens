@@ -8,7 +8,7 @@ FEATURE = experimental.Feature.OTEL_TRACING
 """Feature controlling the use of this module."""
 
 REQUIREMENT = import_utils.format_import_errors(
-    ["opentelemetry-api", "opentelemetry-sdk"],
+    ["opentelemetry-api", "opentelemetry-sdk", "trulens-semconv"],
     purpose="otel_tracing experimental feature",
 )
 """Optional modules required for the otel_tracing experimental feature."""
@@ -16,6 +16,7 @@ REQUIREMENT = import_utils.format_import_errors(
 with import_utils.OptionalImports(REQUIREMENT) as oi:
     from opentelemetry import sdk
     from opentelemetry import trace
+    from trulens.semconv import trace as trulens_semconv_trace
 
 
 class _FeatureSetup(experimental._FeatureSetup):
@@ -28,10 +29,13 @@ class _FeatureSetup(experimental._FeatureSetup):
     def assert_optionals_installed():
         """Asserts that the optional requirements for the otel_tracing feature are
         installed."""
-        oi.assert_installed([sdk, trace])
+        oi.assert_installed([sdk, trace, trulens_semconv_trace])
 
     @staticmethod
     def are_optionals_installed():
         """Checks if the optional requirements for the otel_tracing feature are
         installed."""
-        return not any(import_utils.is_dummy(m) for m in [sdk, trace])
+        return not any(
+            import_utils.is_dummy(m)
+            for m in [sdk, trace, trulens_semconv_trace]
+        )

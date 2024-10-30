@@ -180,7 +180,7 @@ class TruSession(
     def experimental_otel_exporter(
         self, value: Optional[Any]
     ):  # Any = otel_export_sdk.SpanExporter
-        otel_tracing_feature.assert_optionals_installed()
+        otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
         from trulens.experimental.otel_tracing.core.session import _TruSession
 

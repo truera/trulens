@@ -480,43 +480,46 @@ class Span(
             span_id=self.context.span_id,
             trace_id=self.context.trace_id,
             parent_span_id=self.parent.span_id if self.parent else None,
-            parent_trace_id=None,
+            parent_trace_id=self.parent.trace_id if self.parent else None,
             name=self.name,
-            start_time=self.start_timestamp,
-            end_time=self.end_timestamp,
+            start_timestamp=self.start_timestamp,
+            end_timestamp=self.end_timestamp,
             attributes=self.attributes,
-            span_kind=self.kind.name,
-            status=self.status.name,
+            kind=self.kind,
+            status=self.status,
+            status_description=self.status_description,
             span_type="trace",
         )
 
     @classmethod
-    def of_orm(cls, orm: otel_db_orm.SpanORM.Span) -> Span:
+    def of_orm(cls, obj: otel_db_orm.SpanORM.Span) -> Span:
         """Convert ORM class to span"""
 
         context = SpanContext(
-            trace_id=orm.trace_id,
-            span_id=orm.span_id,
+            trace_id=obj.trace_id,
+            span_id=obj.span_id,
         )
 
         parent = (
             SpanContext(
-                trace_id=orm.parent_trace_id,
-                span_id=orm.parent_span_id,
+                trace_id=obj.parent_trace_id,
+                span_id=obj.parent_span_id,
             )
-            if orm.parent_span_id
+            if obj.parent_span_id
             else None
         )
 
         return cls(
-            name=orm.name,
+            name=obj.name,
             context=context,
             parent=parent,
-            kind=trace_api.SpanKind.INTERNAL,
-            attributes=orm.attributes,
-            start_timestamp=orm.start_time,
-            end_timestamp=orm.end_time,
-            status=trace_api.status,
+            kind=obj.kind,
+            attributes=obj.attributes,
+            start_timestamp=obj.start_timestamp,
+            end_timestamp=obj.end_timestamp,
+            status=obj.status,
+            status_description=obj.status_description,
+            links=[],  # we dont keep links
         )
 
     # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.

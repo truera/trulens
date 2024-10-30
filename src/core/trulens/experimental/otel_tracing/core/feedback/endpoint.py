@@ -44,7 +44,7 @@ class _WrapperEndpointCallback(
         self.cost: base_schema.Cost = self.span.cost
         self.cost.n_requests += 1
         # Subclasses need to fill in n_*_requests either in their init or
-        # on_callable_call when bindings are available.
+        # on_callable_call when4 "bindings are available.
 
     # overriding CallableCallbacks
     def on_callable_return(self, ret: Ret, **kwargs) -> Ret:

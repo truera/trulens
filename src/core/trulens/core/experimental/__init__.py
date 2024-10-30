@@ -142,6 +142,16 @@ class _FeatureSetup(pydantic.BaseModel):
         return getattr(mod, "_FeatureSetup")
 
 
+def can_enable(feature: Feature) -> bool:
+    """Check if the given feature can be enabled.
+
+    This is used to check if the optional imports are available before
+    enabling the feature flags.
+    """
+
+    return _FeatureSetup.can_enable(feature)
+
+
 class _Setting(Generic[T]):
     """A setting that attains some value and can be locked from changing."""
 

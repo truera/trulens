@@ -1,0 +1,35 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = [
+  "poetry-core",
+]
+
+[tool.poetry]
+name = "trulens-semconv"
+version = "1.2.0"
+description = "Semantic conventions for spans produced by TruLens."
+authors = [
+  "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
+]
+license = "MIT"
+readme = "README.md"
+packages = [
+  { include = "trulens" },
+]
+homepage = "https://trulens.org/"
+documentation = "https://trulens.org/getting_started/"
+repository = "https://github.com/truera/trulens"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4"
+opentelemetry-semantic-conventions = { version = ">=0.48b0", allow-prereleases = true }
+# The above package only has pre-releases.
+opentelemetry-semantic-conventions-ai = ">=0.4.2"
+
+[tool.poetry.group.dev.dependencies]

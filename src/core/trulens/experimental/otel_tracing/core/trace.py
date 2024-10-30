@@ -49,10 +49,12 @@ from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing import _feature
 from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
+from trulens.semconv import trace as truconv
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
 
@@ -118,6 +120,99 @@ SpanContextLike = Union[
 ]
 
 
+class AttributeProperty(property, Generic[T]):
+    """Property that stores its value in the attributes dictionary.
+
+    Validates default and on assignment. This is meant to be used only in
+    Span instances (or subclasses).
+
+        Args:
+            name: The name of the property. The key used for storage will be
+                this with the vendor prefix.
+
+            typ: The type of the property.
+
+            typ_factory: A factory function that returns the type of the
+                property. This can be used for forward referenced types.
+
+            default: The default value of the property.
+
+            default_factory: A factory function that returns the default value
+                of the property. This can be used for defaults that make use of
+                forward referenced types.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        typ: Optional[Type[T]] = None,
+        typ_factory: Optional[Callable[[], Type[T]]] = None,
+        default: Optional[T] = None,
+        default_factory: Optional[Callable[[], T]] = None,
+    ):
+        self.name = name
+        self.typ = typ
+        self.typ_factory = typ_factory
+        self.default = default
+        self.default_factory = default_factory
+
+        self.forward_initialized = False
+
+    def init_forward(self):
+        if self.forward_initialized:
+            return
+
+        self.forward_initialized = True
+
+        if self.typ is None and self.typ_factory is not None:
+            self.typ = self.typ_factory()
+
+        if self.default is None and self.default_factory is not None:
+            self.default = self.default_factory()
+
+        if self.typ is None and self.default is not None:
+            self.typ = type(self.default)
+
+        if self.typ is None:
+            self.tadapter = None
+        else:
+            self.tadapter = pydantic.TypeAdapter(self.typ)
+            if self.default is not None:
+                self.tadapter.validate_python(self.default)
+
+    def __get__(self, obj: Any, objtype: Optional[Type]) -> Optional[T]:
+        if obj is None:
+            return self
+
+        self.init_forward()
+        return obj.attributes.get(self.name, self.default)
+
+    def __set__(self, obj, value: T) -> None:
+        self.init_forward()
+
+        if self.tadapter is not None:
+            self.tadapter.validate_python(value)
+
+        obj.attributes[self.name] = value
+
+    def __delete__(self, obj):
+        del obj.attributes[self.name]
+
+    def __set_name__(self, cls, name):
+        if name in cls.__annotations__:
+            # If type is specified in annotation, take it from there.
+            self.typ = cls.__annotations__[name]
+            self.tadapter = pydantic.TypeAdapter(self.typ)
+
+            # Update the recorded return type as well.
+            # TODO: cannot do this at this point as the below dict is not yet populated
+            # if name in cls.model_computed_fields:
+            #     cls.model_computed_fields[name].return_type = self.typ
+
+            # Have to remove it as pydantic will complain about overriding fields with computed fields.
+            del cls.__annotations__[name]
+
+
 class Span(core_otel.Span):
     """TruLens additions on top of OTEL spans."""
 
@@ -125,6 +220,40 @@ class Span(core_otel.Span):
         arbitrary_types_allowed=True,
         use_enum_values=True,  # model_validate will fail without this
     )
+
+    @staticmethod
+    def attribute_property_factory(base: str) -> Callable:
+        def prop_factory(
+            name: str,
+            typ: Optional[Type[T]] = None,
+            typ_factory: Optional[Callable[[], Type[T]]] = None,
+            default: Optional[T] = None,
+            default_factory: Optional[Callable[[], T]] = None,
+        ) -> property:
+            return Span.attribute_property(
+                name=base + "." + name,
+                typ=typ,
+                typ_factory=typ_factory,
+                default=default,
+                default_factory=default_factory,
+            )
+
+        return prop_factory
+
+    @staticmethod
+    def attribute_property(
+        name: str,
+        typ: Optional[Type[T]] = None,
+        typ_factory: Optional[Callable[[], Type[T]]] = None,
+        default: Optional[T] = None,
+        default_factory: Optional[Callable[[], T]] = None,
+    ) -> property:
+        """See AttributeProperty."""
+
+        return pydantic.computed_field(
+            AttributeProperty(name, typ, typ_factory, default, default_factory),
+            return_type=typ,
+        )
 
     def __str__(self):
         return (
@@ -319,11 +448,15 @@ class SpanCall(Span):
         super().end()
 
         self.set_attribute(ResourceAttributes.PROCESS_PID, self.pid)
-        self.set_attribute("thread.id", self.tid)  # TODO: semconv
+        self.set_attribute(SpanAttributes.THREAD_ID, self.tid)
 
-        self.set_attribute("trulens.call_id", str(self.call_id))
-        self.set_attribute("trulens.stack", json_utils.jsonify(self.stack))
-        self.set_attribute("trulens.sig", str(self.sig))
+        self.set_attribute(
+            truconv.SpanAttributes.CALL.CALL_ID, str(self.call_id)
+        )
+        self.set_attribute(
+            truconv.SpanAttributes.CALL.STACK, json_utils.jsonify(self.stack)
+        )
+        self.set_attribute(truconv.SpanAttributes.CALL.SIG, str(self.sig))
 
     def otel_name(self) -> str:
         return f"trulens.call.{self.func_name}"
