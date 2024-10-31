@@ -4,6 +4,8 @@ import contextvars
 import time
 from typing import (
     Iterable,
+    List,
+    Optional,
 )
 
 from trulens.core import app as core_app
@@ -37,14 +39,21 @@ class _App(core_app.App):
         recording_span: core_trace.Span,
     ):
         if self.session._experimental_otel_exporter is not None:
-            # Export to otel exporter if exporter was set in workspace.
-            to_export = []
-            for span in recording_span.iter_family(include_phantom=True):
+            to_export: Optional[List] = []
+        else:
+            to_export = None
+
+        for span in recording_span.iter_family(include_phantom=True):
+            self.connector.db.insert_span(span=span)
+            if to_export is not None:
                 if isinstance(span, core_otel.Span):
                     e_span = span.otel_freeze()
                     to_export.append(e_span)
                 else:
                     print(f"Warning, span {span.name} is not exportable.")
+
+        if to_export is not None:
+            # Export to otel exporter if exporter was set in workspace.
 
             print(
                 f"{text_utils.UNICODE_CHECK} Exporting {len(to_export)} spans to {python_utils.class_name(self.session._experimental_otel_exporter)}."

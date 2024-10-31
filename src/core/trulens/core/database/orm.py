@@ -110,6 +110,8 @@ class ORM(abc.ABC, Generic[T]):
     registry: Dict[str, Type[T]]
     metadata: MetaData
 
+    base: Type[T]
+
     AppDefinition: Type[T]
     FeedbackDefinition: Type[T]
     Record: Type[T]
@@ -118,7 +120,7 @@ class ORM(abc.ABC, Generic[T]):
     Dataset: Type[T]
 
 
-def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
+def new_orm(base_: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
     """Create a new orm container from the given base table class."""
 
     class NewORM(ORM):
@@ -132,6 +134,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             important and need to stay consistent between definition of one and
             relationships in another.
         """
+
+        base = base_
+        """Declerative table base for the other table classes."""
 
         registry: Dict[str, base] = base.registry._class_registry
         """Table name to ORM class mapping for tables used by trulens.

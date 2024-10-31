@@ -16,6 +16,7 @@ from typing import (
     Sequence,
     Tuple,
     Type,
+    TypeAlias,
     Union,
 )
 import warnings
@@ -64,6 +65,8 @@ class SQLAlchemyDB(core_db.DB):
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True
     )
+
+    Q: ClassVar[TypeAlias] = sa.sql.expression.Select
 
     table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX
     """The prefix to use for all table names.
@@ -147,8 +150,8 @@ class SQLAlchemyDB(core_db.DB):
         database_prefix: Optional[str] = core_db.DEFAULT_DATABASE_PREFIX,
         **kwargs: Dict[str, Any],
     ) -> SQLAlchemyDB:
-        """Process database-related configuration provided to the [Tru][trulens.core.session.TruSession] class to
-        create a database.
+        """Process database-related configuration provided to the
+        [Tru][trulens.core.session.TruSession] class to create a database.
 
         Emits warnings if appropriate.
         """
@@ -231,9 +234,12 @@ class SQLAlchemyDB(core_db.DB):
     ) -> SQLAlchemyDB:
         """
         Create a database for the given engine.
+
         Args:
             engine: The database engine.
+
             kwargs: Additional arguments to pass to the database constructor.
+
         Returns:
             A database instance.
         """
@@ -319,12 +325,14 @@ class SQLAlchemyDB(core_db.DB):
                 )
                 # logger.warning("Please ignore these warnings: \"SAWarning: This declarative base already contains...\"")
 
+                all_tables = [
+                    c._table_base_name
+                    for c in self.orm.registry.values()
+                    if hasattr(c, "_table_base_name")
+                ]
+
                 with self.engine.connect() as c:
-                    for table_name in ["alembic_version"] + [
-                        c._table_base_name
-                        for c in self.orm.registry.values()
-                        if hasattr(c, "_table_base_name")
-                    ]:
+                    for table_name in ["alembic_version"] + all_tables:
                         old_version_table = f"{prior_prefix}{table_name}"
                         new_version_table = f"{self.table_prefix}{table_name}"
 
@@ -346,10 +354,17 @@ class SQLAlchemyDB(core_db.DB):
     def reset_database(self):
         """See [DB.reset_database][trulens.core.database.base.DB.reset_database]."""
 
-        # meta = MetaData()
-        meta = self.orm.metadata  #
+        meta = self.orm.metadata
         meta.reflect(bind=self.engine)
         meta.drop_all(bind=self.engine)
+
+        # EXPERIMENTAL(otel_tracing): Spans table is hacked in and needs special
+        # handling here. We remove the meta data that was reflected back from DB
+        # schema so that the Span schema can be created when otel_tracing is
+        # being enabled.
+        spans_table = self.table_prefix + "spans"
+        if spans_table in meta.tables:
+            meta.remove(meta.tables[spans_table])
 
         self.migrate_database()
 
@@ -403,6 +418,8 @@ class SQLAlchemyDB(core_db.DB):
             ):
                 return json.loads(_app.app_json)
 
+        return None
+
     def update_app_metadata(
         self, app_id: types_schema.AppID, metadata: Dict[str, Any]
     ) -> Optional[app_schema.AppDefinition]:
@@ -426,6 +443,8 @@ class SQLAlchemyDB(core_db.DB):
                     app_json["metadata"] = {}
                 nested_update(app_json["metadata"], metadata)
                 _app.app_json = json.dumps(app_json)
+
+        return None
 
     def get_apps(
         self, app_name: Optional[types_schema.AppName] = None
@@ -486,7 +505,8 @@ class SQLAlchemyDB(core_db.DB):
     def insert_feedback_definition(
         self, feedback_definition: feedback_schema.FeedbackDefinition
     ) -> types_schema.FeedbackDefinitionID:
-        """See [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
+        """See
+        [DB.insert_feedback_definition][trulens.core.database.base.DB.insert_feedback_definition]."""
 
         # TODO: thread safety
 
@@ -586,7 +606,9 @@ class SQLAlchemyDB(core_db.DB):
     def batch_insert_feedback(
         self, feedback_results: List[feedback_schema.FeedbackResult]
     ) -> List[types_schema.FeedbackResultID]:
-        """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
+        """See
+        [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
+
         with self.session.begin() as session:
             feedback_results_list = [
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
@@ -681,7 +703,7 @@ class SQLAlchemyDB(core_db.DB):
         feedback_result_id: Optional[types_schema.FeedbackResultID] = None,
         feedback_definition_id: Optional[
             types_schema.FeedbackDefinitionID
-        ] = None,
+        ] = None,  # pylint: disable=W0613
         status: Optional[
             Union[
                 feedback_schema.FeedbackResultStatus,
@@ -694,7 +716,8 @@ class SQLAlchemyDB(core_db.DB):
         shuffle: bool = False,
         run_location: Optional[feedback_schema.FeedbackRunLocation] = None,
     ) -> Dict[feedback_schema.FeedbackResultStatus, int]:
-        """See [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
+        """See
+        [DB.get_feedback_count_by_status][trulens.core.database.base.DB.get_feedback_count_by_status]."""
 
         with self.session.begin() as session:
             q = self._feedback_query(
@@ -745,7 +768,8 @@ class SQLAlchemyDB(core_db.DB):
         offset: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Tuple[pd.DataFrame, Sequence[str]]:
-        """See [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
+        """See
+        [DB.get_records_and_feedback][trulens.core.database.base.DB.get_records_and_feedback]."""
 
         # TODO: Add pagination to this method. Currently the joinedload in
         # select below disables lazy loading of records which will be a problem
@@ -801,7 +825,8 @@ class SQLAlchemyDB(core_db.DB):
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
     ) -> types_schema.GroundTruthID:
-        """See [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
+        """See
+        [DB.insert_ground_truth][trulens.core.database.base.DB.insert_ground_truth]."""
 
         # TODO: thread safety
         with self.session.begin() as session:
@@ -828,7 +853,9 @@ class SQLAlchemyDB(core_db.DB):
     def batch_insert_ground_truth(
         self, ground_truths: List[groundtruth_schema.GroundTruth]
     ) -> List[types_schema.GroundTruthID]:
-        """See [DB.batch_insert_ground_truth][trulens.core.database.base.DB.batch_insert_ground_truth]."""
+        """See
+        [DB.batch_insert_ground_truth][trulens.core.database.base.DB.batch_insert_ground_truth]."""
+
         with self.session.begin() as session:
             ground_truth_ids = [gt.ground_truth_id for gt in ground_truths]
 
@@ -877,10 +904,14 @@ class SQLAlchemyDB(core_db.DB):
             ):
                 return json.loads(_ground_truth)
 
+        return None
+
     def get_ground_truths_by_dataset(
         self, dataset_name: str
     ) -> pd.DataFrame | None:
-        """See [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
+        """See
+        [DB.get_ground_truths_by_dataset][trulens.core.database.base.DB.get_ground_truths_by_dataset]."""
+
         with self.session.begin() as session:
             q = sa.select(self.orm.Dataset)
             all_datasets = (row[0] for row in session.execute(q))

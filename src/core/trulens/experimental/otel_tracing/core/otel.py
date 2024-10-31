@@ -40,7 +40,6 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing import _feature
-from trulens.experimental.otel_tracing.core.database import orm as otel_db_orm
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
@@ -58,26 +57,6 @@ logger = logging.getLogger(__name__)
 A = TypeVar("A")
 B = TypeVar("B")
 
-TSpanID: TypeAlias = int
-"""Type of span identifiers.
-64 bit int as per OpenTelemetry.
-"""
-NUM_SPANID_BITS: int = 64
-"""Number of bits in a span identifier."""
-
-TTraceID: TypeAlias = int
-"""Type of trace identifiers.
-128 bit int as per OpenTelemetry.
-"""
-NUM_TRACEID_BITS: int = 128
-"""Number of bits in a trace identifier."""
-
-TTimestamp: TypeAlias = int
-"""Type of timestamps in spans.
-
-64 bit int representing nanoseconds since epoch as per OpenTelemetry.
-"""
-NUM_TIMESTAMP_BITS = 64
 
 TLensedBaseType: TypeAlias = Union[str, int, float, bool]
 """Type of base types in span attributes.
@@ -185,14 +164,15 @@ def flatten_lensed_attributes(
 
 def new_trace_id():
     return int(
-        random.getrandbits(NUM_TRACEID_BITS)
+        random.getrandbits(128)  # TODO: hook to otel api
         & trace_api.span._TRACE_ID_MAX_VALUE
     )
 
 
 def new_span_id():
     return int(
-        random.getrandbits(NUM_SPANID_BITS) & trace_api.span._SPAN_ID_MAX_VALUE
+        random.getrandbits(64)  # TODO: hook to otel api
+        & trace_api.span._SPAN_ID_MAX_VALUE
     )
 
 
@@ -290,9 +270,9 @@ class Span(
     status: trace_api.status.StatusCode = trace_api.status.StatusCode.UNSET
     status_description: Optional[str] = None
 
-    events: List[Tuple[str, trace_api.types.Attributes, TTimestamp]] = (
-        pydantic.Field(default_factory=list)
-    )
+    events: List[
+        Tuple[str, trace_api.types.Attributes, int]  # get int from otel spec
+    ] = pydantic.Field(default_factory=list)
     links: trace_api._Links = pydantic.Field(default_factory=dict)
 
     #    attributes: trace_api.types.Attributes = pydantic.Field(default_factory=dict)
@@ -358,7 +338,7 @@ class Span(
         self,
         name: str,
         attributes: types_api.Attributes = None,
-        timestamp: Optional[TTimestamp] = None,
+        timestamp: Optional[int] = None,  # TODO: get int from otel spec
     ) -> None:
         """See [OTEL add_event][opentelemetry.trace.span.Span.add_event]."""
 
@@ -398,7 +378,7 @@ class Span(
         self,
         exception: BaseException,
         attributes: types_api.Attributes = None,
-        timestamp: Optional[TTimestamp] = None,
+        timestamp: Optional[int] = None,  # TODO: get int from otel spec
         escaped: bool = False,  # purpose unknown
     ) -> None:
         """See [OTEL record_exception][opentelemetry.trace.span.Span.record_exception]."""
@@ -421,7 +401,9 @@ class Span(
 
             self.add_event("trulens.exception", attributes, timestamp)
 
-    def end(self, end_time: Optional[TTimestamp] = None):
+    def end(
+        self, end_time: Optional[int] = None
+    ):  # TODO: get int from otel spec
         """See [OTEL end][opentelemetry.trace.span.Span.end]"""
 
         if end_time is None:
@@ -468,59 +450,6 @@ class Span(
         exc_tb: Optional[TracebackType],
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
-
-    # ORM interfacing
-
-    def to_orm(
-        self, typ: Type[otel_db_orm.SpanORM]
-    ) -> otel_db_orm.SpanORM.Span:
-        """Convert span to ORM class"""
-
-        return typ(
-            span_id=self.context.span_id,
-            trace_id=self.context.trace_id,
-            parent_span_id=self.parent.span_id if self.parent else None,
-            parent_trace_id=self.parent.trace_id if self.parent else None,
-            name=self.name,
-            start_timestamp=self.start_timestamp,
-            end_timestamp=self.end_timestamp,
-            attributes=self.attributes,
-            kind=self.kind,
-            status=self.status,
-            status_description=self.status_description,
-            span_type="trace",
-        )
-
-    @classmethod
-    def of_orm(cls, obj: otel_db_orm.SpanORM.Span) -> Span:
-        """Convert ORM class to span"""
-
-        context = SpanContext(
-            trace_id=obj.trace_id,
-            span_id=obj.span_id,
-        )
-
-        parent = (
-            SpanContext(
-                trace_id=obj.parent_trace_id,
-                span_id=obj.parent_span_id,
-            )
-            if obj.parent_span_id
-            else None
-        )
-
-        return cls(
-            name=obj.name,
-            context=context,
-            parent=parent,
-            kind=obj.kind,
-            attributes=obj.attributes,
-            start_timestamp=obj.start_timestamp,
-            end_timestamp=obj.end_timestamp,
-            status=obj.status,
-            status_description=obj.status_description,
-            links=[],  # we dont keep links
-        )
 
     # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.
 

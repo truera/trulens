@@ -24,6 +24,8 @@ from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 
+# from trulens.core import session as core_session # circular import
+
 T = TypeVar("T")
 
 
@@ -103,6 +105,13 @@ class _FeatureSetup(pydantic.BaseModel):
         """Check if the optional requirements for the feature are installed."""
 
     @staticmethod
+    @abstractmethod
+    def enable(
+        session: _WithExperimentalSettings,
+    ) -> None:  # actually TruSession
+        """Callback to call for the feature when enabled."""
+
+    @staticmethod
     def assert_can_enable(feature: Feature) -> None:
         """Asserts that the given feature can be enabled.
 
@@ -129,10 +138,13 @@ class _FeatureSetup(pydantic.BaseModel):
         return _FeatureSetup.load_setup(modname).are_optionals_installed()
 
     @staticmethod
-    def load_setup(modname: str) -> Type[_FeatureSetup]:
+    def load_setup(modname_or_flag: Union[str, Feature]) -> Type[_FeatureSetup]:
         """Load the setup class for the given module."""
 
-        mod = importlib.import_module(modname)
+        if isinstance(modname_or_flag, Feature):
+            modname_or_flag = _FEATURE_SETUPS[modname_or_flag]
+
+        mod = importlib.import_module(modname_or_flag)
 
         if not hasattr(mod, "_FeatureSetup"):
             raise ImportError(
@@ -140,6 +152,15 @@ class _FeatureSetup(pydantic.BaseModel):
             )
 
         return getattr(mod, "_FeatureSetup")
+
+    @staticmethod
+    def call_enable(
+        flag: Feature, session: _WithExperimentalSettings
+    ) -> None:  # actually TruSession
+        """Called when the feature is enabled for the session."""
+
+        setup = _FeatureSetup.load_setup(flag)
+        setup.enable(session=session)
 
 
 def can_enable(feature: Feature) -> bool:
@@ -381,6 +402,9 @@ class _WithExperimentalSettings(
 
         if value is not None and changed:
             if val:
+                # call_enable and print message only if was not previously enabled.
+                _FeatureSetup.call_enable(flag=flag, session=self)
+
                 print(
                     f"{text_utils.UNICODE_CHECK} experimental {flag} enabled for {self._ident_str()}."
                 )
