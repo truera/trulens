@@ -69,7 +69,9 @@ env-tests-notebook: env-tests env-tests-optional
 		rank_bm25 \
 		ipytree \
 		llama-index-readers-web \
-		llama-index-vector-stores-milvus
+		llama-index-vector-stores-milvus \
+		llama-index-retrievers-bm25 \
+		llama-index-tools-yelp
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
