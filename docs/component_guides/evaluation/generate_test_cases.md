@@ -8,18 +8,18 @@ tailored to your app and data. Resulting test set will be a list of test prompts
 of length `depth`, for `breadth` categories of prompts. Resulting test set will
 be made up of `breadth` X `depth` prompts organized by prompt category.
 
-Example:
+!!! example
 
-```python
-from trulens.benchmark.generate.generate_test_set import GenerateTestSet
+    ```python
+    from trulens.benchmark.generate.generate_test_set import GenerateTestSet
 
-test = GenerateTestSet(app_callable = rag_chain.invoke)
-test_set = test.generate_test_set(
-  test_breadth = 3,
-  test_depth = 2
-)
-test_set
-```
+    test = GenerateTestSet(app_callable = rag_chain.invoke)
+    test_set = test.generate_test_set(
+      test_breadth = 3,
+      test_depth = 2
+    )
+    test_set
+    ```
 
 Returns:
 
@@ -42,21 +42,21 @@ Returns:
 Optionally, you can also provide a list of examples (few-shot) to guide the LLM
 app to a particular type of question.
 
-Example:
+!!! example
 
-```python
-examples = [
-  "What is sensory memory?",
-  "How much information can be stored in short term memory?"
-]
+    ```python
+    examples = [
+      "What is sensory memory?",
+      "How much information can be stored in short term memory?"
+    ]
 
-fewshot_test_set = test.generate_test_set(
-  test_breadth = 3,
-  test_depth = 2,
-  examples = examples
-)
-fewshot_test_set
-```
+    fewshot_test_set = test.generate_test_set(
+      test_breadth = 3,
+      test_depth = 2,
+      examples = examples
+    )
+    fewshot_test_set
+    ```
 
 Returns:
 
@@ -80,11 +80,13 @@ In combination with record metadata logging, this gives you the ability to
 understand the performance of your application across different prompt
 categories.
 
-```python
-with tru_recorder as recording:
-    for category in test_set:
-        recording.record_metadata=dict(prompt_category=category)
-        test_prompts = test_set[category]
-        for test_prompt in test_prompts:
-            llm_response = rag_chain.invoke(test_prompt)
-```
+!!! example
+
+    ```python
+    with tru_recorder as recording:
+        for category in test_set:
+            recording.record_metadata=dict(prompt_category=category)
+            test_prompts = test_set[category]
+            for test_prompt in test_prompts:
+                llm_response = rag_chain.invoke(test_prompt)
+    ```

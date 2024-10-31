@@ -1,9 +1,11 @@
 As a reminder, a typical feedback definition looks like this:
 
-```python
-f_lang_match = Feedback(hugs.language_match)
-    .on_input_output()
-```
+!!! example
+
+    ```python
+    f_lang_match = Feedback(hugs.language_match)
+          .on_input_output()
+    ```
 
 `on_input_output` is one of many available shortcuts to simplify the selection
 of components for evaluation.
@@ -33,36 +35,36 @@ Several utility methods starting with `.on` provide shorthands:
 
 Some wrappers include additional shorthands:
 
-### LlamaIndex specific selectors
+## LlamaIndex specific selectors
 
-- `TruLlama.select_source_nodes()` -- outputs the selector of the source
+`TruLlama.select_source_nodes()` -- outputs the selector of the source
   documents part of the engine output.
 
-  Usage:
+!!! example
 
-  ```python
-  from trulens.apps.llamaindex import TruLlama
-  source_nodes = TruLlama.select_source_nodes(query_engine)
-  ```
+    ```python
+    from trulens.apps.llamaindex import TruLlama
+    source_nodes = TruLlama.select_source_nodes(query_engine)
+    ```
 
-- `TruLlama.select_context()` -- outputs the selector of the context part of the
+`TruLlama.select_context()` -- outputs the selector of the context part of the
   engine output.
 
-  Usage:
+!!! example
 
-  ```python
-  from trulens.apps.llamaindex import TruLlama
-  context = TruLlama.select_context(query_engine)
-  ```
+    ```python
+    from trulens.apps.llamaindex import TruLlama
+    context = TruLlama.select_context(query_engine)
+    ```
 
-### _LangChain_ specific selectors
+## _LangChain_ specific selectors
 
-- `TruChain.select_context()` -- outputs the selector of the context part of the
+`TruChain.select_context()` -- outputs the selector of the context part of the
   engine output.
 
-  Usage:
+!!! example
 
-  ```python
-  from trulens.apps.langchain import TruChain
-  context = TruChain.select_context(retriever_chain)
-  ```
+    ```python
+    from trulens.apps.langchain import TruChain
+    context = TruChain.select_context(retriever_chain)
+    ```
