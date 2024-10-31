@@ -51,7 +51,10 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 
 @dataclass
 class PageSelect:
-    """EXPERIMENTAL(otel_tracing): Pagination information for a database query."""
+    """EXPERIMENTAL(otel_tracing): Pagination information for a database query.
+
+    This is expected to be obtuse as it is DB implementation independent.
+    """
 
     offset: Optional[int] = None
     """The offset of the first row to return.
@@ -65,19 +68,31 @@ class PageSelect:
     None means no limit.
     """
 
-    after_index: Optional[int] = None
-    """The index of the row to start after.
-
-    Note that this column is auto incrementing.
-    """
-
     shuffle: bool = False
     """Shuffle the rows before returning them."""
 
-    after_created_timestamp: Optional[int] = None
+    before_index: Optional[int] = None
+    """The index of the row to start before.
+
+    Note that the index column is auto incrementing.
+    """
+
+    after_index: Optional[int] = None
+    """The index of the row to start after.
+
+    Note that the index column is auto incrementing.
+    """
+
+    before_created_timestamp: Optional[datetime] = None
+    """The created timestamp of the row to start before."""
+
+    after_created_timestamp: Optional[datetime] = None
     """The created timestamp of the row to start after."""
 
-    after_updated_timestamp: Optional[int] = None
+    before_updated_timestamp: Optional[datetime] = None
+    """The updated timestamp of the row to start before."""
+
+    after_updated_timestamp: Optional[datetime] = None
     """The updated timestamp of the row to start after."""
 
 

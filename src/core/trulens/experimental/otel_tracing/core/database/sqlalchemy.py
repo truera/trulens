@@ -53,14 +53,27 @@ class _SQLAlchemyDB(core_sqlalchemy.SQLAlchemyDB):
         if page.after_index is not None:
             query = query.where(self.orm.Span.index > page.after_index)
 
+        if page.before_index is not None:
+            query = query.where(self.orm.Span.index < page.before_index)
+
         if page.after_created_timestamp:
             query = query.where(
                 self.orm.Span.created_timestamp > page.after_created_timestamp
             )
 
+        if page.before_created_timestamp:
+            query = query.where(
+                self.orm.Span.created_timestamp < page.before_created_timestamp
+            )
+
         if page.after_updated_timestamp:
             query = query.where(
                 self.orm.Span.updated_timestamp > page.after_updated_timestamp
+            )
+
+        if page.before_updated_timestamp:
+            query = query.where(
+                self.orm.Span.updated_timestamp < page.before_updated_timestamp
             )
 
         return query
