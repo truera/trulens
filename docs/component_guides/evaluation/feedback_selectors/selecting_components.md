@@ -56,17 +56,20 @@ calls to a `retrieve` method to complete the task required.
 For example, the following method returns only the returned context documents from
 the first invocation of `retrieve`.
 
-```python
-context = Select.RecordCalls.retrieve.rets.rets[:]
-# Same as context = context_method[0].rets[:]
-```
+!!! example
+
+    ```python
+    context = Select.RecordCalls.retrieve.rets.rets[:]
+    ```
 
 Alternatively, adding `[:]` after the method name `retrieve` returns context documents
 from all invocations of `retrieve`.
 
-```python
-context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
-```
+!!! example
+
+    ```python
+    context_all_calls = Select.RecordCalls.retrieve[:].rets.rets[:]
+    ```
 
 See also other [Select][trulens.core.Select] shortcuts.
 
@@ -79,33 +82,37 @@ of your application.
 In python, you can access the JSON structure with `with_record` methods and then calling
 `layout_calls_as_app`.
 
-For example:
+!!! example
 
-```python
-response = my_llm_app(query)
+    ```python
+    response = my_llm_app(query)
 
-from trulens.apps.langchain import TruChain
-tru_recorder = TruChain(
-    my_llm_app,
-    app_name='ChatApplication',
-    app_version="Chain1",
-)
+    from trulens.apps.langchain import TruChain
+    tru_recorder = TruChain(
+        my_llm_app,
+        app_name='ChatApplication',
+        app_version="Chain1",
+    )
 
-response, tru_record = tru_recorder.with_record(my_llm_app, query)
-json_like = tru_record.layout_calls_as_app()
-```
+    response, tru_record = tru_recorder.with_record(my_llm_app, query)
+    json_like = tru_record.layout_calls_as_app()
+    ```
 
-If a selector looks like the below
+If a selector looks like the below:
 
-```python
-Select.Record.app.combine_documents_chain._call
-```
+!!! example
 
-It can be accessed via the JSON-like via
+    ```python
+    Select.Record.app.combine_documents_chain._call
+    ```
 
-```python
-json_like['app']['combine_documents_chain']['_call']
-```
+It can be accessed via the JSON-like via:
+
+!!! example
+
+    ```python
+    json_like['app']['combine_documents_chain']['_call']
+    ```
 
 The application structure can also be viewed in the TruLens user interface.
 You can view this structure on the `Evaluations` page by scrolling down to the
@@ -155,10 +162,12 @@ For an App:
 For your app, you can inspect the JSON-like structure by using the `dict`
 method:
 
-```python
-tru = ... # your app, extending App
-print(tru.dict())
-```
+!!! example
+
+    ```python
+    json_like = ... # your app, extending App
+    print(json_like.dict())
+    ```
 
 ### Calls made by App Components
 
