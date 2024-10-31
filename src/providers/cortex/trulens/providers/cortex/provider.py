@@ -77,7 +77,7 @@ class Cortex(
             ```
 
     Args:
-        snowflake_conn (Any): Snowflake connection.
+        snowflake_conn (Any): Snowflake connection. Note: This is not a snowflake session.
 
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
@@ -104,7 +104,10 @@ class Cortex(
         self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
         if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
             self_kwargs["snowflake_conn"] = snowflake_conn
-
+        if not callable(getattr(self_kwargs["snowflake_conn"], "cursor", None)):
+            raise ValueError(
+                "Invalid snowflake_conn: Expected a Snowflake connection object with a 'cursor' method. Please ensure you are not passing a session object."
+            )
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(
