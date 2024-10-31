@@ -140,9 +140,7 @@ class TruBenchmarkExperiment:
 
             log.error(f"Row generated an exception: {e}")
             traceback.print_exc()
-            return (
-                0.0  # hack to make sure we always return a value for each row
-            )
+            return float("nan")  # return NaN to indicate an invalid result
 
     @custom_app.instrument
     def __call__(
