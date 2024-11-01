@@ -3206,6 +3206,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens.apps.custom--examplepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      example.py
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.apps.custom--instrumenting-3rd-party-classes" class="md-nav__link">
     <span class="md-ellipsis">
       Instrumenting 3rd party classes
@@ -10443,6 +10452,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#trulens.apps.custom--examplepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      example.py
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#trulens.apps.custom--instrumenting-3rd-party-classes" class="md-nav__link">
     <span class="md-ellipsis">
       Instrumenting 3rd party classes
@@ -11164,7 +11182,7 @@ can be used to instrument any custom python class.</p>
 
 
 <details class="example" open>
-  <summary>Example</summary>
+  <summary>Instrumenting a custom class</summary>
   <p>Consider a mock question-answering app with a context retriever component coded
 up as two classes in two python, <code>CustomApp</code> and <code>CustomRetriever</code>:</p>
 <h5 id="trulens.apps.custom--custom_apppy"><code>custom_app.py</code><a class="headerlink" href="#trulens.apps.custom--custom_apppy" title="Permanent link">&para;</a></h5>
@@ -11205,35 +11223,38 @@ app: components and methods used by components. The <code>instrument</code> must
 each method that the user wishes to track.</p>
 <p>The owner classes of any decorated method is then viewed as an app component. In
 this example, case <code>CustomApp</code> and <code>CustomRetriever</code> are components.</p>
-<pre><code>Example:
-    ### `example.py`
 
-    ```python
-    from custom_app import CustomApp
-    from trulens.apps.custom import TruCustomApp
 
-    custom_app = CustomApp()
+<details class="example" open>
+  <summary>Example</summary>
+  <h5 id="trulens.apps.custom--examplepy"><code>example.py</code><a class="headerlink" href="#trulens.apps.custom--examplepy" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">custom_app</span> <span class="kn">import</span> <span class="n">CustomApp</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.custom</span> <span class="kn">import</span> <span class="n">TruCustomApp</span>
 
-    # Normal app Usage:
-    response = custom_app.respond_to_query("What is the capital of Indonesia?")
+<span class="n">custom_app</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
 
-    # Wrapping app with `TruCustomApp`:
-    tru_recorder = TruCustomApp(ca)
+<span class="c1"># Normal app Usage:</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">custom_app</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span><span class="p">)</span>
 
-    # Tracked usage:
-    with tru_recorder:
-        custom_app.respond_to_query, input="What is the capital of Indonesia?")
-    ```
+<span class="c1"># Wrapping app with `TruCustomApp`:</span>
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">ca</span><span class="p">)</span>
 
-`TruCustomApp` constructor arguments are like in those higher-level
-</code></pre>
-<p>apps as well including the feedback functions, metadata, etc.</p>
-<h5 id="trulens.apps.custom--instrumenting-3rd-party-classes">Instrumenting 3rd party classes<a class="headerlink" href="#trulens.apps.custom--instrumenting-3rd-party-classes" title="Permanent link">&para;</a></h5>
+<span class="c1"># Tracked usage:</span>
+<span class="k">with</span> <span class="n">tru_recorder</span><span class="p">:</span>
+    <span class="n">custom_app</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><code>TruCustomApp</code> constructor arguments are like in those higher-level</p>
+</details>        <p>apps as well including the feedback functions, metadata, etc.</p>
+<h4 id="trulens.apps.custom--instrumenting-3rd-party-classes">Instrumenting 3rd party classes<a class="headerlink" href="#trulens.apps.custom--instrumenting-3rd-party-classes" title="Permanent link">&para;</a></h4>
 <p>In cases you do not have access to a class to make the necessary decorations for
 tracking, you can instead use one of the static methods of <code>instrument</code>, for
 example, the alternative for making sure the custom retriever gets instrumented
 is via:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># custom_app.py`:</span>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><span class="c1"># custom_app.py`:</span>
 
 <span class="kn">from</span> <span class="nn">trulens.apps.custom</span> <span class="kn">import</span> <span class="n">instrument</span>
 <span class="kn">from</span> <span class="nn">some_package.from</span> <span class="n">custom_retriever</span> <span class="kn">import</span> <span class="nn">CustomRetriever</span>
@@ -11242,12 +11263,14 @@ is via:</p>
 
 <span class="c1"># ... rest of the custom class follows ...</span>
 </code></pre></div>
-<h4 id="trulens.apps.custom--api-usage-tracking">API Usage Tracking<a class="headerlink" href="#trulens.apps.custom--api-usage-tracking" title="Permanent link">&para;</a></h4>
+</details>        <h4 id="trulens.apps.custom--api-usage-tracking">API Usage Tracking<a class="headerlink" href="#trulens.apps.custom--api-usage-tracking" title="Permanent link">&para;</a></h4>
 <p>Uses of python libraries for common LLMs like OpenAI are tracked in custom class
 apps.</p>
 <h5 id="trulens.apps.custom--covered-llm-libraries">Covered LLM Libraries<a class="headerlink" href="#trulens.apps.custom--covered-llm-libraries" title="Permanent link">&para;</a></h5>
 <ul>
 <li>Official OpenAI python package (<a href="https://github.com/openai/openai-python">https://github.com/openai/openai-python</a>).</li>
+<li>Snowflake Cortex (<a href="https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex.html">https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex.html</a>).</li>
+<li>Amazon Bedrock (<a href="https://docs.aws.amazon.com/code-library/latest/ug/python_3_bedrock_code_examples.html">https://docs.aws.amazon.com/code-library/latest/ug/python_3_bedrock_code_examples.html</a>).</li>
 </ul>
 <h5 id="trulens.apps.custom--huggingface">Huggingface<a class="headerlink" href="#trulens.apps.custom--huggingface" title="Permanent link">&para;</a></h5>
 <p>Uses of huggingface inference APIs are tracked as long as requests are made
@@ -11368,63 +11391,65 @@ through the <code>requests</code> class's <code>post</code> method to the URL
 and can be used to instrument any custom python class.</p>
 <p>Track any custom app using methods decorated with <code>@instrument</code>, or whose
 methods are instrumented after the fact by <code>instrument.method</code>.</p>
-<p>Example: "Using the <code>@instrument</code> decorator"</p>
-<pre><code>```python
-from trulens.core import instrument
 
-class CustomApp:
 
-    def __init__(self):
-        self.retriever = CustomRetriever()
-        self.llm = CustomLLM()
-        self.template = CustomTemplate(
-            "The answer to {question} is probably {answer} or something ..."
-        )
+<details class="example" open>
+  <summary>Using the <code>@instrument</code> decorator</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">instrument</span>
 
-    @instrument
-    def retrieve_chunks(self, data):
-        return self.retriever.retrieve_chunks(data)
+<span class="k">class</span> <span class="nc">CustomApp</span><span class="p">:</span>
 
-    @instrument
-    def respond_to_query(self, input):
-        chunks = self.retrieve_chunks(input)
-        answer = self.llm.generate(",".join(chunks))
-        output = self.template.fill(question=input, answer=answer)
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="o">=</span> <span class="n">CustomRetriever</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">CustomLLM</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template</span> <span class="o">=</span> <span class="n">CustomTemplate</span><span class="p">(</span>
+            <span class="s2">&quot;The answer to </span><span class="si">{question}</span><span class="s2"> is probably </span><span class="si">{answer}</span><span class="s2"> or something ...&quot;</span>
+        <span class="p">)</span>
 
-        return output
+    <span class="nd">@instrument</span>
+    <span class="k">def</span> <span class="nf">retrieve_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-ca = CustomApp()
-```
-</code></pre>
-<p>Example: "Using <code>instrument.method</code>"</p>
-<pre><code>```python
-from trulens.core import instrument
+    <span class="nd">@instrument</span>
+    <span class="k">def</span> <span class="nf">respond_to_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="p">)</span>
 
-class CustomApp:
+        <span class="k">return</span> <span class="n">output</span>
 
-    def __init__(self):
-        self.retriever = CustomRetriever()
-        self.llm = CustomLLM()
-        self.template = CustomTemplate(
-            "The answer to {question} is probably {answer} or something ..."
-        )
+<span class="n">ca</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
+</code></pre></div>
+</details>
 
-    def retrieve_chunks(self, data):
-        return self.retriever.retrieve_chunks(data)
+<details class="example" open>
+  <summary>Using <code>instrument.method</code></summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">instrument</span>
 
-    def respond_to_query(self, input):
-        chunks = self.retrieve_chunks(input)
-        answer = self.llm.generate(",".join(chunks))
-        output = self.template.fill(question=input, answer=answer)
+<span class="k">class</span> <span class="nc">CustomApp</span><span class="p">:</span>
 
-        return output
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="o">=</span> <span class="n">CustomRetriever</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">CustomLLM</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template</span> <span class="o">=</span> <span class="n">CustomTemplate</span><span class="p">(</span>
+            <span class="s2">&quot;The answer to </span><span class="si">{question}</span><span class="s2"> is probably </span><span class="si">{answer}</span><span class="s2"> or something ...&quot;</span>
+        <span class="p">)</span>
 
-custom_app = CustomApp()
+    <span class="k">def</span> <span class="nf">retrieve_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
-instrument.method(CustomApp, "retrieve_chunks")
-```
-</code></pre>
-<p>Once a method is tracked, its arguments and returns are available to be used
+    <span class="k">def</span> <span class="nf">respond_to_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_chunks</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="nb">input</span><span class="p">,</span> <span class="n">answer</span><span class="o">=</span><span class="n">answer</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">output</span>
+
+<span class="n">custom_app</span> <span class="o">=</span> <span class="n">CustomApp</span><span class="p">()</span>
+
+<span class="n">instrument</span><span class="o">.</span><span class="n">method</span><span class="p">(</span><span class="n">CustomApp</span><span class="p">,</span> <span class="s2">&quot;retrieve_chunks&quot;</span><span class="p">)</span>
+</code></pre></div>
+</details>        <p>Once a method is tracked, its arguments and returns are available to be used
 in feedback functions. This is done by using the <code>Select</code> class to select
 the arguments and returns of the method.</p>
 <p>Doing so follows the structure:</p>
@@ -11448,24 +11473,24 @@ f_context_relevance = (
 </code></pre>
 <p>Last, the <code>TruCustomApp</code> recorder can wrap our custom application, and
 provide logging and evaluation upon its use.</p>
-<p>Example: "Using the <code>TruCustomApp</code> recorder"</p>
-<pre><code>```python
-from trulens.apps.custom import TruCustomApp
 
-tru_recorder = TruCustomApp(custom_app,
-    app_name="Custom Application",
-    app_version="base",
-    feedbacks=[f_context_relevance])
 
-with tru_recorder as recording:
-    custom_app.respond_to_query("What is the capital of Indonesia?")
-```
+<details class="example" open>
+  <summary>Using the <code>TruCustomApp</code> recorder</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.custom</span> <span class="kn">import</span> <span class="n">TruCustomApp</span>
 
-See [Feedback
-Functions](https://www.trulens.org/trulens/api/feedback/) for
-instantiating feedback functions.
-</code></pre>
+<span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">custom_app</span><span class="p">,</span>
+    <span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;Custom Application&quot;</span><span class="p">,</span>
+    <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_context_relevance</span><span class="p">])</span>
 
+<span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
+    <span class="n">custom_app</span><span class="o">.</span><span class="n">respond_to_query</span><span class="p">(</span><span class="s2">&quot;What is the capital of Indonesia?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>See <a href="https://www.trulens.org/trulens/api/feedback/">Feedback
+Functions</a> for
+instantiating feedback functions.</p>
+</details>
 
 <table>
       <thead>

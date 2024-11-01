@@ -10755,13 +10755,18 @@ this is an increasingly common practice. For example, an agent could complete mu
 calls to a <code>retrieve</code> method to complete the task required.</p>
 <p>For example, the following method returns only the returned context documents from
 the first invocation of <code>retrieve</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">context</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">rets</span><span class="p">[:]</span>
-<span class="c1"># Same as context = context_method[0].rets[:]</span>
 </code></pre></div>
+</div>
 <p>Alternatively, adding <code>[:]</code> after the method name <code>retrieve</code> returns context documents
 from all invocations of <code>retrieve</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">context_all_calls</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retrieve</span><span class="p">[:]</span><span class="o">.</span><span class="n">rets</span><span class="o">.</span><span class="n">rets</span><span class="p">[:]</span>
 </code></pre></div>
+</div>
 <p>See also other <a class="autorefs autorefs-internal" href="../../../../reference/trulens/core/#trulens.core.Select">Select</a> shortcuts.</p>
 <h3 id="understanding-the-structure-of-your-app">Understanding the structure of your app<a class="headerlink" href="#understanding-the-structure-of-your-app" title="Permanent link">&para;</a></h3>
 <p>Because LLM apps have a wide variation in their structure, the feedback selector construction
@@ -10769,7 +10774,8 @@ can also vary widely. To construct the feedback selector, you must first underst
 of your application.</p>
 <p>In python, you can access the JSON structure with <code>with_record</code> methods and then calling
 <code>layout_calls_as_app</code>.</p>
-<p>For example:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">response</span> <span class="o">=</span> <span class="n">my_llm_app</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 
 <span class="kn">from</span> <span class="nn">trulens.apps.langchain</span> <span class="kn">import</span> <span class="n">TruChain</span>
@@ -10782,12 +10788,19 @@ of your application.</p>
 <span class="n">response</span><span class="p">,</span> <span class="n">tru_record</span> <span class="o">=</span> <span class="n">tru_recorder</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="n">my_llm_app</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
 <span class="n">json_like</span> <span class="o">=</span> <span class="n">tru_record</span><span class="o">.</span><span class="n">layout_calls_as_app</span><span class="p">()</span>
 </code></pre></div>
-<p>If a selector looks like the below</p>
+</div>
+<p>If a selector looks like the below:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">combine_documents_chain</span><span class="o">.</span><span class="n">_call</span>
 </code></pre></div>
-<p>It can be accessed via the JSON-like via</p>
+</div>
+<p>It can be accessed via the JSON-like via:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">json_like</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">][</span><span class="s1">&#39;combine_documents_chain&#39;</span><span class="p">][</span><span class="s1">&#39;_call&#39;</span><span class="p">]</span>
 </code></pre></div>
+</div>
 <p>The application structure can also be viewed in the TruLens user interface.
 You can view this structure on the <code>Evaluations</code> page by scrolling down to the
 <code>Timeline</code>.</p>
@@ -12100,9 +12113,12 @@ blank memory).</p>
 
 </div><p>For your app, you can inspect the JSON-like structure by using the <code>dict</code>
 method:</p>
-<div class="highlight"><pre><span></span><code><span class="n">tru</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># your app, extending App</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">tru</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="n">json_like</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># your app, extending App</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json_like</span><span class="o">.</span><span class="n">dict</span><span class="p">())</span>
 </code></pre></div>
+</div>
 <h3 id="calls-made-by-app-components">Calls made by App Components<a class="headerlink" href="#calls-made-by-app-components" title="Permanent link">&para;</a></h3>
 <p>When evaluating a feedback function, Records are augmented with
 app/component calls. For example, if the instrumented app

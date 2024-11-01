@@ -9678,18 +9678,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#trulens-guardrails-for-internal-steps" class="md-nav__link">
+  <a href="#context-filter-guardrails" class="md-nav__link">
     <span class="md-ellipsis">
-      TruLens guardrails for internal steps
+      Context filter guardrails
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-trulens-guardrails" class="md-nav__link">
+  <a href="#using-context-filters" class="md-nav__link">
     <span class="md-ellipsis">
-      Using TruLens guardrails
+      Using context filters
     </span>
   </a>
   
@@ -9777,11 +9777,11 @@
         <span class="k">return</span> <span class="n">completion</span>
 </code></pre></div>
 </div>
-<h2 id="trulens-guardrails-for-internal-steps"><em>TruLens</em> guardrails for internal steps<a class="headerlink" href="#trulens-guardrails-for-internal-steps" title="Permanent link">&para;</a></h2>
+<h2 id="context-filter-guardrails">Context filter guardrails<a class="headerlink" href="#context-filter-guardrails" title="Permanent link">&para;</a></h2>
 <p>While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, <em>TruLens</em> guardrails can also be leveraged to improve the internal processing of LLM apps.</p>
 <p>If we consider a RAG, context filter guardrails can be used to evaluate the <em>context relevance</em> of each context chunk, and only pass relevant chunks to the LLM for generation. Doing so reduces the chance of hallucination and reduces token usage.</p>
 <p><img alt="Context Filtering with Guardrails" src="guardrail_context_filtering.png" /></p>
-<h2 id="using-trulens-guardrails">Using <em>TruLens</em> guardrails<a class="headerlink" href="#using-trulens-guardrails" title="Permanent link">&para;</a></h2>
+<h2 id="using-context-filters">Using context filters<a class="headerlink" href="#using-context-filters" title="Permanent link">&para;</a></h2>
 <p><em>TruLens</em> context filter guardrails are easy to add to your app built with custom python, <em>Langchain</em>, or <em>Llama-Index</em>.</p>
 <div class="admonition example">
 <p class="admonition-title">Using context filter guardrails</p>

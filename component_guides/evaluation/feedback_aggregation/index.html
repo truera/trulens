@@ -9684,7 +9684,8 @@
 <h1 id="feedback-aggregation">Feedback Aggregation<a class="headerlink" href="#feedback-aggregation" title="Permanent link">&para;</a></h1>
 <p>For cases where argument specification names more than one value as an input,
 aggregation can be used.</p>
-<p>Consider this feedback example:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># Context relevance between question and each context chunk.</span>
 <span class="n">f_context_relevance</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Feedback</span><span class="p">(</span><span class="n">provider</span><span class="o">.</span><span class="n">context_relevance_with_cot_reasons</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Context Relevance&quot;</span><span class="p">)</span>
@@ -9693,6 +9694,7 @@ aggregation can be used.</p>
     <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>The last line <code>aggregate(numpy.min)</code> specifies how feedback outputs are to be aggregated.
 This only applies to cases where the argument specification names more than one value
 for an input. The second specification, for <code>statement</code> was of this type.</p>

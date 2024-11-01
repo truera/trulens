@@ -10685,14 +10685,22 @@ session.reset_database()</div>
 <span class="s2">            Given this information, please answer the question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span>
 <span class="s2">        """</span><span class="p">)</span>
 
-        <span class="n">res</span> <span class="o">=</span> <span class="n">snowflake_session</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""SELECT SNOWFLAKE.CORTEX.COMPLETE(</span>
-<span class="s2">            'snowflake-arctic',</span>
-<span class="s2">            [</span>
-<span class="s2">            </span><span class="se">{{</span><span class="s2">'role': 'user', 'content': '</span><span class="si">{</span><span class="n">prompt</span><span class="si">}</span><span class="s2">'</span><span class="se">}}</span>
-<span class="s2">            ], </span><span class="se">{{</span>
-<span class="s2">                'temperature': 0</span>
-<span class="s2">            </span><span class="se">}}</span>
-<span class="s2">            )"""</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>    
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">snowflake_session</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># We use `snowflake.connector.cursor.SnowflakeCursor::execute` to</span>
+            <span class="c1"># execute the query instead of</span>
+            <span class="c1"># `snowflake.snowpark.session.Session::sql` since the latter is not</span>
+            <span class="c1"># thread-safe.</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""SELECT SNOWFLAKE.CORTEX.COMPLETE(</span>
+<span class="s2">                'snowflake-arctic',</span>
+<span class="s2">                [</span>
+<span class="s2">                </span><span class="se">{{</span><span class="s2">'role': 'user', 'content': '</span><span class="si">{</span><span class="n">prompt</span><span class="si">}</span><span class="s2">'</span><span class="se">}}</span>
+<span class="s2">                ], </span><span class="se">{{</span>
+<span class="s2">                    'temperature': 0</span>
+<span class="s2">                </span><span class="se">}}</span>
+<span class="s2">                )"""</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">"No response from cortex function"</span>
@@ -10742,14 +10750,22 @@ class RAG_from_scratch:
             Given this information, please answer the question: {query}
         """)
 
-        res = snowflake_session.sql(f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
-            'snowflake-arctic',
-            [
-            {{'role': 'user', 'content': '{prompt}'}}
-            ], {{
-                'temperature': 0
-            }}
-            )""").collect()    
+        cursor = snowflake_session.connection.cursor()
+        try:
+            # We use `snowflake.connector.cursor.SnowflakeCursor::execute` to
+            # execute the query instead of
+            # `snowflake.snowpark.session.Session::sql` since the latter is not
+            # thread-safe.
+            res = cursor.execute(f"""SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                'snowflake-arctic',
+                [
+                {{'role': 'user', 'content': '{prompt}'}}
+                ], {{
+                    'temperature': 0
+                }}
+                )""").fetchall()
+        finally:
+            cursor.close()
 
         if len(res) == 0:
             return "No response from cortex function"
@@ -10779,7 +10795,7 @@ rag = RAG_from_scratch()</div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h3 id="dev-note-as-of-june-2024">Dev Note as of June 2024:<a class="anchor-link" href="#dev-note-as-of-june-2024">¶</a></h3><p>Alternatively, we can use Cortex's Python API (<a href="https://docs.snowflake.com/user-guide/snowflake-cortex/llm-functions#using-snowflake-cortex-llm-functions-with-python">documentation</a>) directly to have cleaner interface and avoid constructing SQL commands ourselves.
-The reason we are invoking the SQL function directly via <code>snowflake_session.sql()</code> is that the response from Cortex's Python API is still experimental and not as feature-rich as the one from SQL function as of the time of writing. i.e. inconsistency issues with structured json outputs and missing usage information have been observed, lack of support for advanced chat-style (multi-message), etc.
+The reason we are invoking the SQL function directly via <code>cursor.execute()</code> is that the response from Cortex's Python API is still experimental and not as feature-rich as the one from SQL function as of the time of writing. i.e. inconsistency issues with structured json outputs and missing usage information have been observed, lack of support for advanced chat-style (multi-message), etc.
 Below is a minimal example of using Python API instead.</p>
 </div>
 </div>

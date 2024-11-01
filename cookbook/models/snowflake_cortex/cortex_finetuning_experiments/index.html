@@ -10352,19 +10352,27 @@ run_dashboard(session)</div>
             <span class="n">escaped_string</span> <span class="o">=</span> <span class="n">escaped_string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"''"</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">escaped_string</span>
 
-        <span class="n">prompt</span> <span class="o">=</span> <span class="n">escape_string_for_sql</span><span class="p">(</span><span class="n">rendered_prompt</span><span class="p">)</span>
+        <span class="n">rendered_prompt</span> <span class="o">=</span> <span class="n">escape_string_for_sql</span><span class="p">(</span><span class="n">rendered_prompt</span><span class="p">)</span>
 
-        <span class="n">res</span> <span class="o">=</span> <span class="n">snowpark_session</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
-<span class="s2">            SELECT SNOWFLAKE.CORTEX.COMPLETE(</span>
-<span class="s2">                '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">',</span>
-<span class="s2">                [</span>
-<span class="s2">                    </span><span class="se">{{</span><span class="s2">'role': 'user', 'content': '</span><span class="si">{</span><span class="n">rendered_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span><span class="w"> </span><span class="s2">"''"</span><span class="p">)</span><span class="si">}</span><span class="s2">' </span><span class="se">}}</span>
-<span class="s2">                ], </span>
-<span class="s2">                </span><span class="se">{{</span>
-<span class="s2">                    'temperature': 0</span>
-<span class="s2">                </span><span class="se">}}</span>
-<span class="s2">            )</span>
-<span class="s2">        """</span><span class="p">)</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span> 
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">snowpark_session</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># We use `snowflake.connector.cursor.SnowflakeCursor::execute` to</span>
+            <span class="c1"># execute the query instead of</span>
+            <span class="c1"># `snowflake.snowpark.session.Session::sql` since the latter is not</span>
+            <span class="c1"># thread-safe.</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">"""</span>
+<span class="s2">                SELECT SNOWFLAKE.CORTEX.COMPLETE(</span>
+<span class="s2">                    '</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">',</span>
+<span class="s2">                    [</span>
+<span class="s2">                        </span><span class="se">{{</span><span class="s2">'role': 'user', 'content': '</span><span class="si">{</span><span class="n">rendered_prompt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span><span class="w"> </span><span class="s2">"''"</span><span class="p">)</span><span class="si">}</span><span class="s2">' </span><span class="se">}}</span>
+<span class="s2">                    ], </span>
+<span class="s2">                    </span><span class="se">{{</span>
+<span class="s2">                        'temperature': 0</span>
+<span class="s2">                    </span><span class="se">}}</span>
+<span class="s2">                )</span>
+<span class="s2">            """</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span> 
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">"No response from cortex function"</span>
@@ -10401,19 +10409,27 @@ class Support_Ticket_Classifier:
             escaped_string = escaped_string.replace("'", "''")
             return escaped_string
 
-        prompt = escape_string_for_sql(rendered_prompt)
+        rendered_prompt = escape_string_for_sql(rendered_prompt)
 
-        res = snowpark_session.sql(f"""
-            SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                '{self.model}',
-                [
-                    {{'role': 'user', 'content': '{rendered_prompt.replace("'", "''")}' }}
-                ], 
-                {{
-                    'temperature': 0
-                }}
-            )
-        """).collect() 
+        cursor = snowpark_session.connection.cursor()
+        try:
+            # We use `snowflake.connector.cursor.SnowflakeCursor::execute` to
+            # execute the query instead of
+            # `snowflake.snowpark.session.Session::sql` since the latter is not
+            # thread-safe.
+            res = cursor.execute(f"""
+                SELECT SNOWFLAKE.CORTEX.COMPLETE(
+                    '{self.model}',
+                    [
+                        {{'role': 'user', 'content': '{rendered_prompt.replace("'", "''")}' }}
+                    ], 
+                    {{
+                        'temperature': 0
+                    }}
+                )
+            """).fetchall() 
+        finally:
+            cursor.close()
 
         if len(res) == 0:
             return "No response from cortex function"

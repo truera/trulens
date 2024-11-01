@@ -9679,6 +9679,8 @@ your app.</p>
 <p>To do so, you first need to define the wrap the specified feedback
 implementation with <code>Feedback</code> and select what components of your app to
 evaluate. Optionally, you can also select an aggregation method.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">f_context_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input</span><span class="p">()</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
@@ -9687,9 +9689,12 @@ evaluate. Optionally, you can also select an aggregation method.</p>
 <span class="c1"># Implementation signature:</span>
 <span class="c1"># def context_relevance(self, question: str, statement: str) -&gt; float:</span>
 </code></pre></div>
+</div>
 <p>Once you've defined the feedback functions to run with your application, you can
 then pass them as a list to the instrumentation class of your choice, along with
 the app itself. These make up the <code>recorder</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.langchain</span> <span class="kn">import</span> <span class="n">TruChain</span>
 <span class="c1"># f_lang_match, f_qa_relevance, f_context_relevance are feedback functions</span>
 <span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
@@ -9698,16 +9703,22 @@ the app itself. These make up the <code>recorder</code>.</p>
     <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;Chain1&quot;</span><span class="p">,</span>
     <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 </code></pre></div>
+</div>
 <p>Now that you've included the evaluations as a component of your <code>recorder</code>, they
 are able to be run with your application. By default, feedback functions will be
 run in the same process as the app. This is known as the feedback mode:
 <code>with_app_thread</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="n">chain</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="n">What</span> <span class="ow">is</span> <span class="n">langchain</span><span class="err">?</span><span class="s2">&quot;)</span>
 </code></pre></div>
+</div>
 <p>In addition to <code>with_app_thread</code>, there are a number of other manners of running
 feedback functions. These are accessed by the feedback mode and included when
-you construct the recorder, like so:</p>
+you construct the recorder.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">FeedbackMode</span>
 
 <span class="n">tru_recorder</span> <span class="o">=</span> <span class="n">TruChain</span><span class="p">(</span>
@@ -9718,6 +9729,7 @@ you construct the recorder, like so:</p>
     <span class="n">feedback_mode</span><span class="o">=</span><span class="n">FeedbackMode</span><span class="o">.</span><span class="n">DEFERRED</span>
     <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>Here are the different feedback modes you can use:</p>
 <ul>
 <li><code>WITH_APP_THREAD</code>: This is the default mode. Feedback functions will run in the

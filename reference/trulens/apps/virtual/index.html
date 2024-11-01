@@ -11599,142 +11599,149 @@ within the TruLens framework.</p>
 achieved through a simple dictionary or by utilizing the <code>VirtualApp</code> class,
 which allows for a more structured approach to storing application
 information relevant for feedback evaluation.</p>
-<p>Example: "Constructing a Virtual Application"</p>
-<pre><code>```python
-virtual_app = {
-    'llm': {'modelname': 'some llm component model name'},
-    'template': 'information about the template used in the app',
-    'debug': 'optional fields for additional debugging information'
-}
-# Converting the dictionary to a VirtualApp instance
-from trulens.core import Select
-from trulens.apps.virtual import VirtualApp
 
-virtual_app = VirtualApp(virtual_app)
-virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-```
-</code></pre>
-<p>Incorporate components into the virtual app for evaluation by utilizing the
+
+<details class="example" open>
+  <summary>Constructing a Virtual Application</summary>
+  <div class="highlight"><pre><span></span><code><span class="n">virtual_app</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;llm&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;modelname&#39;</span><span class="p">:</span> <span class="s1">&#39;some llm component model name&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;template&#39;</span><span class="p">:</span> <span class="s1">&#39;information about the template used in the app&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;optional fields for additional debugging information&#39;</span>
+<span class="p">}</span>
+<span class="c1"># Converting the dictionary to a VirtualApp instance</span>
+<span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Select</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">VirtualApp</span>
+
+<span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
+</code></pre></div>
+</details>        <p>Incorporate components into the virtual app for evaluation by utilizing the
 <code>Select</code> class. This approach allows for the reuse of setup configurations
 when defining feedback functions.</p>
-<p>Example: "Incorporating Components into the Virtual App"</p>
-<pre><code>```python
-# Setting up a virtual app with a retriever component
-from trulens.core import Select
-retriever_component = Select.RecordCalls.retriever
-virtual_app[retriever_component] = 'this is the retriever component'
-```
-</code></pre>
-<p>With your virtual app configured, it's ready to store logged data.
+
+
+<details class="example" open>
+  <summary>Incorporating Components into the Virtual App</summary>
+  <div class="highlight"><pre><span></span><code><span class="c1"># Setting up a virtual app with a retriever component</span>
+<span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Select</span>
+<span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;this is the retriever component&#39;</span>
+</code></pre></div>
+</details>        <p>With your virtual app configured, it's ready to store logged data.
 <code>VirtualRecord</code> offers a structured way to build records from your data for
 ingestion into TruLens, distinguishing itself from direct <code>Record</code> creation
 by specifying calls through selectors.</p>
 <p>Below is an example of adding records for a context retrieval component,
 emphasizing that only the data intended for tracking or evaluation needs to
 be provided.</p>
-<p>Example: "Adding Records for a Context Retrieval Component"</p>
-<pre><code>```python
-from trulens.apps.virtual import VirtualRecord
 
-# Selector for the context retrieval component's `get_context` call
-context_call = retriever_component.get_context
 
-# Creating virtual records
-rec1 = VirtualRecord(
-    main_input='Where is Germany?',
-    main_output='Germany is in Europe',
-    calls={
-        context_call: {
-            'args': ['Where is Germany?'],
-            'rets': ['Germany is a country located in Europe.']
-        }
-    }
-)
-rec2 = VirtualRecord(
-    main_input='Where is Germany?',
-    main_output='Poland is in Europe',
-    calls={
-        context_call: {
-            'args': ['Where is Germany?'],
-            'rets': ['Poland is a country located in Europe.']
-        }
-    }
-)
+<details class="example" open>
+  <summary>Adding Records for a Context Retrieval Component</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">VirtualRecord</span>
 
-data = [rec1, rec2]
-```
-</code></pre>
-<p>For existing datasets, such as a dataframe of prompts, contexts, and
+<span class="c1"># Selector for the context retrieval component&#39;s `get_context` call</span>
+<span class="n">context_call</span> <span class="o">=</span> <span class="n">retriever_component</span><span class="o">.</span><span class="n">get_context</span>
+
+<span class="c1"># Creating virtual records</span>
+<span class="n">rec1</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
+    <span class="n">main_input</span><span class="o">=</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span>
+    <span class="n">main_output</span><span class="o">=</span><span class="s1">&#39;Germany is in Europe&#39;</span><span class="p">,</span>
+    <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Germany is a country located in Europe.&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">rec2</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
+    <span class="n">main_input</span><span class="o">=</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span>
+    <span class="n">main_output</span><span class="o">=</span><span class="s1">&#39;Poland is in Europe&#39;</span><span class="p">,</span>
+    <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
+        <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Poland is a country located in Europe.&#39;</span><span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">rec1</span><span class="p">,</span> <span class="n">rec2</span><span class="p">]</span>
+</code></pre></div>
+</details>        <p>For existing datasets, such as a dataframe of prompts, contexts, and
 responses, iterate through the dataframe to create virtual records for each
 entry.</p>
-<p>Example: "Creating Virtual Records from a DataFrame"</p>
-<pre><code>```python
-import pandas as pd
 
-# Example dataframe
-data = {
-    'prompt': ['Where is Germany?', 'What is the capital of France?'],
-    'response': ['Germany is in Europe', 'The capital of France is Paris'],
-    'context': [
-        'Germany is a country located in Europe.',
-        'France is a country in Europe and its capital is Paris.'
-    ]
-}
-df = pd.DataFrame(data)
 
-# Ingesting data from the dataframe into virtual records
-data_dict = df.to_dict('records')
-data = []
+<details class="example" open>
+  <summary>Creating Virtual Records from a DataFrame</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
-for record in data_dict:
-    rec = VirtualRecord(
-        main_input=record['prompt'],
-        main_output=record['response'],
-        calls={
-            context_call: {
-                'args': [record['prompt']],
-                'rets': [record['context']]
-            }
-        }
-    )
-    data.append(rec)
-```
-</code></pre>
-<p>After constructing the virtual records, feedback functions can be developed
+<span class="c1"># Example dataframe</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;prompt&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Where is Germany?&#39;</span><span class="p">,</span> <span class="s1">&#39;What is the capital of France?&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;response&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Germany is in Europe&#39;</span><span class="p">,</span> <span class="s1">&#39;The capital of France is Paris&#39;</span><span class="p">],</span>
+    <span class="s1">&#39;context&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;Germany is a country located in Europe.&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;France is a country in Europe and its capital is Paris.&#39;</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Ingesting data from the dataframe into virtual records</span>
+<span class="n">data_dict</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data_dict</span><span class="p">:</span>
+    <span class="n">rec</span> <span class="o">=</span> <span class="n">VirtualRecord</span><span class="p">(</span>
+        <span class="n">main_input</span><span class="o">=</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;prompt&#39;</span><span class="p">],</span>
+        <span class="n">main_output</span><span class="o">=</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;response&#39;</span><span class="p">],</span>
+        <span class="n">calls</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">context_call</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;prompt&#39;</span><span class="p">]],</span>
+                <span class="s1">&#39;rets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="s1">&#39;context&#39;</span><span class="p">]]</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+</code></pre></div>
+</details>        <p>After constructing the virtual records, feedback functions can be developed
 in the same manner as with non-virtual applications, using the newly added
-<code>context_call</code> selector for reference.</p>
-<p>Example: "Developing Feedback Functions"</p>
-<pre><code>```python
-from trulens.providers.openai import OpenAI
-from trulens.core.feedback.feedback import Feedback
+<code>context_call</code> selector for reference. The same process can be repeated for
+any additional selector you add.</p>
 
-# Initializing the feedback provider
-openai = OpenAI()
 
-# Defining the context for feedback using the virtual `get_context` call
-context = context_call.rets[:]
+<details class="example" open>
+  <summary>Developing Feedback Functions</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.providers.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
+<span class="kn">from</span> <span class="nn">trulens.core.feedback.feedback</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
-# Creating a feedback function for context relevance
-f_context_relevance = Feedback(openai.context_relevance).on_input().on(context)
-```
-</code></pre>
-<p>These feedback functions are then integrated into <code>TruVirtual</code> to construct
+<span class="c1"># Initializing the feedback provider</span>
+<span class="n">openai</span> <span class="o">=</span> <span class="n">OpenAI</span><span class="p">()</span>
+
+<span class="c1"># Defining the context for feedback using the virtual `get_context` call</span>
+<span class="n">context</span> <span class="o">=</span> <span class="n">context_call</span><span class="o">.</span><span class="n">rets</span><span class="p">[:]</span>
+
+<span class="c1"># Creating a feedback function for context relevance</span>
+<span class="n">f_context_relevance</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">openai</span><span class="o">.</span><span class="n">context_relevance</span><span class="p">)</span><span class="o">.</span><span class="n">on_input</span><span class="p">()</span><span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</code></pre></div>
+</details>        <p>These feedback functions are then integrated into <code>TruVirtual</code> to construct
 the recorder, which can handle most configurations applicable to non-virtual
 apps.</p>
-<p>Example: "Integrating Feedback Functions into TruVirtual"</p>
-<pre><code>```python
-from trulens.apps.virtual import TruVirtual
 
-# Setting up the virtual recorder
-virtual_recorder = TruVirtual(
-    app_name='a virtual app',
-    app_version='base',
-    app=virtual_app,
-    feedbacks=[f_context_relevance]
-)
-```
-</code></pre>
-<p>To process the records and run any feedback functions associated with the
+
+<details class="example" open>
+  <summary>Integrating Feedback Functions into TruVirtual</summary>
+  <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">TruVirtual</span>
+
+<span class="c1"># Setting up the virtual recorder</span>
+<span class="n">virtual_recorder</span> <span class="o">=</span> <span class="n">TruVirtual</span><span class="p">(</span>
+    <span class="n">app_name</span><span class="o">=</span><span class="s1">&#39;a virtual app&#39;</span><span class="p">,</span>
+    <span class="n">app_version</span><span class="o">=</span><span class="s1">&#39;base&#39;</span><span class="p">,</span>
+    <span class="n">app</span><span class="o">=</span><span class="n">virtual_app</span><span class="p">,</span>
+    <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_context_relevance</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+</details>        <p>To process the records and run any feedback functions associated with the
 recorder, use the <code>add_record</code> method.</p>
 <p>Example: "Logging records and running feedback functions"</p>
 <pre><code>```python
@@ -11746,31 +11753,33 @@ for record in data:
 <p>Metadata about your application can also be included in the <code>VirtualApp</code> for
 evaluation purposes, offering a flexible way to store additional information
 about the components of an LLM app.</p>
-<p>Example: "Storing metadata in a VirtualApp"</p>
-<pre><code>```python
-# Example of storing metadata in a VirtualApp
-virtual_app = {
-    'llm': {'modelname': 'some llm component model name'},
-    'template': 'information about the template used in the app',
-    'debug': 'optional debugging information'
-}
 
-from trulens.core import Select
-from trulens.apps.virtual import VirtualApp
 
-virtual_app = VirtualApp(virtual_app)
-virtual_app[Select.RecordCalls.llm.maxtokens] = 1024
-```
-</code></pre>
-<p>This approach is particularly beneficial for evaluating the components of an LLM app.</p>
-<p>Example: "Evaluating components of an LLM application"</p>
-<pre><code>```python
-# Adding a retriever component to the virtual app
-retriever_component = Select.RecordCalls.retriever
-virtual_app[retriever_component] = 'this is the retriever component'
-```
-</code></pre>
+<details class="example" open>
+  <summary>Storing metadata in a VirtualApp</summary>
+  <div class="highlight"><pre><span></span><code><span class="c1"># Example of storing metadata in a VirtualApp</span>
+<span class="n">virtual_app</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;llm&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;modelname&#39;</span><span class="p">:</span> <span class="s1">&#39;some llm component model name&#39;</span><span class="p">},</span>
+    <span class="s1">&#39;template&#39;</span><span class="p">:</span> <span class="s1">&#39;information about the template used in the app&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;debug&#39;</span><span class="p">:</span> <span class="s1">&#39;optional debugging information&#39;</span>
+<span class="p">}</span>
 
+<span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Select</span>
+<span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">VirtualApp</span>
+
+<span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
+</code></pre></div>
+</details>        <p>This approach is particularly beneficial for evaluating the components of an LLM app.</p>
+
+
+<details class="example" open>
+  <summary>Evaluating components of an LLM application</summary>
+  <div class="highlight"><pre><span></span><code><span class="c1"># Adding a retriever component to the virtual app</span>
+<span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
+<span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;this is the retriever component&#39;</span>
+</code></pre></div>
+</details>
 
 
 

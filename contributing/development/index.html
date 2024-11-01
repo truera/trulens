@@ -9686,6 +9686,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#install-git-lfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install Git LFS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#optional-install-pyenv-for-environment-management" class="md-nav__link">
     <span class="md-ellipsis">
       (Optional) Install PyEnv for environment management
@@ -9867,6 +9876,11 @@
 <h4 id="clone-the-repository">Clone the repository<a class="headerlink" href="#clone-the-repository" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:truera/trulens.git
 <span class="nb">cd</span><span class="w"> </span>trulens
+</code></pre></div>
+<h4 id="install-git-lfs">Install Git LFS<a class="headerlink" href="#install-git-lfs" title="Permanent link">&para;</a></h4>
+<p>Git LFS is used avoid tracking larger files directly in the repository.</p>
+<div class="highlight"><pre><span></span><code>brew<span class="w"> </span>install<span class="w"> </span>git-lfs
+git<span class="w"> </span>lfs<span class="w"> </span>install<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>git<span class="w"> </span>lfs<span class="w"> </span>pull
 </code></pre></div>
 <h4 id="optional-install-pyenv-for-environment-management">(Optional) Install PyEnv for environment management<a class="headerlink" href="#optional-install-pyenv-for-environment-management" title="Permanent link">&para;</a></h4>
 <p>Optionally install a Python runtime manager like PyEnv. This helps install and switch across multiple python versions which can be useful for local testing.</p>

@@ -10765,64 +10765,105 @@ this into. Should be the same as CLASS_INFO.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Snowflake's Cortex COMPLETE endpoint. Defaults to <code>snowflake-arctic</code>.
-   Reference: <a href="https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex">https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex</a></p>
-<pre><code>!!! example
-=== Connecting with user/password:
+        <p>Snowflake's Cortex COMPLETE endpoint. Defaults to <code>snowflake-arctic</code>.</p>
+<p>Reference: <a href="https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex">https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex</a></p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_1" name="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1" type="radio" /><input id="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_2" name="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1" type="radio" /><input id="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_3" name="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_1">Connecting with user/password</label><label for="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_2">Connecting with private key</label><label for="trulens.providers.cortex.provider.Cortex.snowflake_conn--__tabbed_1_3">Connecting with a private key file</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">connection_parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">account</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">user</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">password</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">role</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">database</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">schema</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;warehouse&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">warehouse</span><span class="o">&gt;</span>
+<span class="p">}</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span><span class="n">snowflake</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="o">**</span><span class="n">connection_parameters</span>
+<span class="p">))</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">connection_parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">account</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">user</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;private_key&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">private_key</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">role</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">database</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">schema</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;warehouse&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">warehouse</span><span class="o">&gt;</span>
+<span class="p">}</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span><span class="n">snowflake</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="o">**</span><span class="n">connection_parameters</span>
+<span class="p">))</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="n">connection_parameters</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">account</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">user</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;private_key_file&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">private_key_file</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;private_key_file_pwd&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">private_key_file_pwd</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">role</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">database</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;schema&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">schema</span><span class="o">&gt;</span><span class="p">,</span>
+    <span class="s2">&quot;warehouse&quot;</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">warehouse</span><span class="o">&gt;</span>
+<span class="p">}</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span><span class="n">snowflake</span><span class="o">.</span><span class="n">connector</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="o">**</span><span class="n">connection_parameters</span>
+<span class="p">))</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+</div>
 
-    ```python
-    connection_parameters = {
-        "account": &lt;account&gt;,
-        "user": &lt;user&gt;,
-        "password": &lt;password&gt;,
-        "role": &lt;role&gt;,
-        "database": &lt;database&gt;,
-        "schema": &lt;schema&gt;,
-        "warehouse": &lt;warehouse&gt;
-    }
-    provider = Cortex(snowflake.connector.connect(
-        **connection_parameters
-    ))
-    ```
 
-=== Connecting with private key:
-
-    ```python
-    connection_parameters = {
-        "account": &lt;account&gt;,
-        "user": &lt;user&gt;,
-        "private_key": &lt;private_key&gt;,
-        "role": &lt;role&gt;,
-        "database": &lt;database&gt;,
-        "schema": &lt;schema&gt;,
-        "warehouse": &lt;warehouse&gt;
-    }
-    provider = Cortex(snowflake.connector.connect(
-        **connection_parameters
-    ))
-
-=== Connecting with a private key file:
-
-    ```python
-    connection_parameters = {
-        "account": &lt;account&gt;,
-        "user": &lt;user&gt;,
-        "private_key_file": &lt;private_key_file&gt;,
-        "private_key_file_pwd": &lt;private_key_file_pwd&gt;,
-        "role": &lt;role&gt;,
-        "database": &lt;database&gt;,
-        "schema": &lt;schema&gt;,
-        "warehouse": &lt;warehouse&gt;
-    }
-    provider = Cortex(snowflake.connector.connect(
-        **connection_parameters
-    ))
-    ```
-</code></pre>
-<p>Args:
-    snowflake_conn (Any): Snowflake connection.</p>
-<pre><code>model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
-</code></pre>
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>snowflake_conn</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Snowflake connection. Note: This is not a snowflake session.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" title="typing.Any" href="https://docs.python.org/3/library/typing.html#typing.Any">Any</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_engine</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Model engine to use. Defaults to <code>snowflake-arctic</code>.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
     </div>
 
 </div>

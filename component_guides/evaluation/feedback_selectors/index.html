@@ -9680,9 +9680,12 @@ synthesis, and more; each component can be a source of error.</p>
 <p>This also makes the instrumentation and evaluation of LLM applications inseparable.
 To evaluate the inner components of an application, we first need access to them.</p>
 <p>As a reminder, a typical feedback definition looks like this:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
 </code></pre></div>
+</div>
 <p><code>on_input_output</code> is one of many available shortcuts to simplify the selection
 of components for evaluation. We'll cover that in a later section.</p>
 <p>The selector, <code>on_input_output</code>, specifies how the <code>language_match</code> arguments

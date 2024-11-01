@@ -9688,7 +9688,8 @@ development phase.</p>
 tailored to your app and data. Resulting test set will be a list of test prompts
 of length <code>depth</code>, for <code>breadth</code> categories of prompts. Resulting test set will
 be made up of <code>breadth</code> X <code>depth</code> prompts organized by prompt category.</p>
-<p>Example:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.benchmark.generate.generate_test_set</span> <span class="kn">import</span> <span class="n">GenerateTestSet</span>
 
 <span class="n">test</span> <span class="o">=</span> <span class="n">GenerateTestSet</span><span class="p">(</span><span class="n">app_callable</span> <span class="o">=</span> <span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">)</span>
@@ -9698,6 +9699,7 @@ be made up of <code>breadth</code> X <code>depth</code> prompts organized by pro
 <span class="p">)</span>
 <span class="n">test_set</span>
 </code></pre></div>
+</div>
 <p>Returns:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s1">&#39;Code implementation&#39;</span><span class="p">:</span> <span class="p">[</span>
   <span class="s1">&#39;What are the steps to follow when implementing code based on the provided instructions?&#39;</span><span class="p">,</span>
@@ -9715,7 +9717,8 @@ be made up of <code>breadth</code> X <code>depth</code> prompts organized by pro
 </code></pre></div>
 <p>Optionally, you can also provide a list of examples (few-shot) to guide the LLM
 app to a particular type of question.</p>
-<p>Example:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">examples</span> <span class="o">=</span> <span class="p">[</span>
   <span class="s2">&quot;What is sensory memory?&quot;</span><span class="p">,</span>
   <span class="s2">&quot;How much information can be stored in short term memory?&quot;</span>
@@ -9728,6 +9731,7 @@ app to a particular type of question.</p>
 <span class="p">)</span>
 <span class="n">fewshot_test_set</span>
 </code></pre></div>
+</div>
 <p>Returns:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span><span class="s1">&#39;Code implementation&#39;</span><span class="p">:</span> <span class="p">[</span>
   <span class="s1">&#39;What are the subcategories of sensory memory?&#39;</span><span class="p">,</span>
@@ -9746,6 +9750,8 @@ app to a particular type of question.</p>
 <p>In combination with record metadata logging, this gives you the ability to
 understand the performance of your application across different prompt
 categories.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="k">with</span> <span class="n">tru_recorder</span> <span class="k">as</span> <span class="n">recording</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">test_set</span><span class="p">:</span>
         <span class="n">recording</span><span class="o">.</span><span class="n">record_metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">prompt_category</span><span class="o">=</span><span class="n">category</span><span class="p">)</span>
@@ -9753,6 +9759,7 @@ categories.</p>
         <span class="k">for</span> <span class="n">test_prompt</span> <span class="ow">in</span> <span class="n">test_prompts</span><span class="p">:</span>
             <span class="n">llm_response</span> <span class="o">=</span> <span class="n">rag_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">test_prompt</span><span class="p">)</span>
 </code></pre></div>
+</div>
 
 
 

@@ -9714,6 +9714,8 @@ with the original target being the first argument to <code>run</code>:</p>
 <h2 id="async-tasks">Async Tasks<a class="headerlink" href="#async-tasks" title="Permanent link">&para;</a></h2>
 <p>If using async Tasks, make sure that the default <code>copy_context</code> behaviour of
 <code>Task</code> is being used. This only applies to python &gt;= 3.11:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">contextvars</span> <span class="kn">import</span> <span class="n">copy_context</span>
 <span class="kn">from</span> <span class="nn">asyncio</span> <span class="kn">import</span> <span class="n">get_running_loop</span>
 
@@ -9727,6 +9729,7 @@ with the original target being the first argument to <code>run</code>:</p>
 <span class="c1"># or:</span>
 <span class="n">task</span> <span class="o">=</span> <span class="n">loop</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">your_coroutine</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="c1"># use default context behaviour</span>
 </code></pre></div>
+</div>
 <p>If you are using python prior to 3.11, <code>copy_context</code> is the fixed behaviour
 which cannot be changed.</p>
 <h2 id="other-issues">Other issues<a class="headerlink" href="#other-issues" title="Permanent link">&para;</a></h2>

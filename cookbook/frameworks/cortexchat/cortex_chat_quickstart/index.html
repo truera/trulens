@@ -10721,7 +10721,7 @@ session.reset_database()</div>
 
 <span class="n">snowpark_session</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">configs</span><span class="p">(</span><span class="n">connection_params</span><span class="p">)</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
 
-<span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span><span class="n">snowpark_session</span><span class="p">,</span> <span class="s2">"llama3.1-8b"</span><span class="p">)</span>
+<span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span><span class="n">snowpark_session</span><span class="o">.</span><span class="n">connection</span><span class="p">,</span> <span class="s2">"llama3.1-8b"</span><span class="p">)</span>
 
 <span class="c1"># Question/answer relevance between overall question and answer.</span>
 <span class="n">f_answer_relevance</span> <span class="o">=</span> <span class="p">(</span>
@@ -10757,7 +10757,7 @@ from snowflake.snowpark.session import Session
 
 snowpark_session = Session.builder.configs(connection_params).create()
 
-provider = Cortex(snowpark_session, "llama3.1-8b")
+provider = Cortex(snowpark_session.connection, "llama3.1-8b")
 
 # Question/answer relevance between overall question and answer.
 f_answer_relevance = (

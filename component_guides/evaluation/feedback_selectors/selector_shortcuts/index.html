@@ -9752,9 +9752,12 @@
   <h1>Selector Shortcuts</h1>
 
 <p>As a reminder, a typical feedback definition looks like this:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">f_lang_match</span> <span class="o">=</span> <span class="n">Feedback</span><span class="p">(</span><span class="n">hugs</span><span class="o">.</span><span class="n">language_match</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
+      <span class="o">.</span><span class="n">on_input_output</span><span class="p">()</span>
 </code></pre></div>
+</div>
 <p><code>on_input_output</code> is one of many available shortcuts to simplify the selection
 of components for evaluation.</p>
 <p>The selector, <code>on_input_output</code>, specifies how the <code>language_match</code> arguments
@@ -9785,32 +9788,32 @@ respectively.</p>
 </li>
 </ul>
 <p>Some wrappers include additional shorthands:</p>
-<h3 id="llamaindex-specific-selectors">LlamaIndex specific selectors<a class="headerlink" href="#llamaindex-specific-selectors" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>TruLlama.select_source_nodes()</code> -- outputs the selector of the source
-  documents part of the engine output.</li>
-</ul>
-<p>Usage:</p>
+<h2 id="llamaindex-specific-selectors">LlamaIndex specific selectors<a class="headerlink" href="#llamaindex-specific-selectors" title="Permanent link">&para;</a></h2>
+<p><code>TruLlama.select_source_nodes()</code> -- outputs the selector of the source
+  documents part of the engine output.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.llamaindex</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 <span class="n">source_nodes</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_source_nodes</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 </code></pre></div>
-<ul>
-<li><code>TruLlama.select_context()</code> -- outputs the selector of the context part of the
-  engine output.</li>
-</ul>
-<p>Usage:</p>
+</div>
+<p><code>TruLlama.select_context()</code> -- outputs the selector of the context part of the
+  engine output.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.llamaindex</span> <span class="kn">import</span> <span class="n">TruLlama</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">TruLlama</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">query_engine</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="langchain-specific-selectors"><em>LangChain</em> specific selectors<a class="headerlink" href="#langchain-specific-selectors" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>TruChain.select_context()</code> -- outputs the selector of the context part of the
-  engine output.</li>
-</ul>
-<p>Usage:</p>
+</div>
+<h2 id="langchain-specific-selectors"><em>LangChain</em> specific selectors<a class="headerlink" href="#langchain-specific-selectors" title="Permanent link">&para;</a></h2>
+<p><code>TruChain.select_context()</code> -- outputs the selector of the context part of the
+  engine output.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.langchain</span> <span class="kn">import</span> <span class="n">TruChain</span>
 <span class="n">context</span> <span class="o">=</span> <span class="n">TruChain</span><span class="o">.</span><span class="n">select_context</span><span class="p">(</span><span class="n">retriever_chain</span><span class="p">)</span>
 </code></pre></div>
+</div>
 
 
 

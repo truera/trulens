@@ -9735,23 +9735,31 @@
 
 <p>In many cases, developers have already logged runs of an LLM app they wish to evaluate or wish to log their app using another system. Feedback functions can also be run on existing data, independent of the <code>recorder</code>.</p>
 <p>At the most basic level, feedback implementations are simple callables that can be run on any arguments
-matching their signatures like so:</p>
+matching their signatures.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">feedback_result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">relevance</span><span class="p">(</span><span class="s2">&quot;&lt;some prompt&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;some response&gt;&quot;</span><span class="p">)</span>
 </code></pre></div>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Running the feedback implementation in isolation will not log the evaluation results in TruLens.</p>
 </div>
 <p>In the case that you have already logged a run of your application with TruLens and have the record available, the process for running an (additional) evaluation on that record is by using <code>tru.run_feedback_functions</code>:</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">tru_rag</span> <span class="o">=</span> <span class="n">TruCustomApp</span><span class="p">(</span><span class="n">rag</span><span class="p">,</span> <span class="n">app_name</span><span class="o">=</span><span class="s2">&quot;RAG&quot;</span><span class="p">,</span> <span class="n">app_version</span><span class="o">=</span><span class="s2">&quot;v1&quot;</span><span class="p">)</span>
 
 <span class="n">result</span><span class="p">,</span> <span class="n">record</span> <span class="o">=</span> <span class="n">tru_rag</span><span class="o">.</span><span class="n">with_record</span><span class="p">(</span><span class="n">rag</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="s2">&quot;How many professors are at UW in Seattle?&quot;</span><span class="p">)</span>
 <span class="n">feedback_results</span> <span class="o">=</span> <span class="n">tru</span><span class="o">.</span><span class="n">run_feedback_functions</span><span class="p">(</span><span class="n">record</span><span class="p">,</span> <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_lang_match</span><span class="p">,</span> <span class="n">f_qa_relevance</span><span class="p">,</span> <span class="n">f_context_relevance</span><span class="p">])</span>
 <span class="n">tru</span><span class="o">.</span><span class="n">add_feedbacks</span><span class="p">(</span><span class="n">feedback_results</span><span class="p">)</span>
 </code></pre></div>
+</div>
 <h3 id="truvirtual">TruVirtual<a class="headerlink" href="#truvirtual" title="Permanent link">&para;</a></h3>
 <p>If your application was run (and logged) outside of TruLens, <code>TruVirtual</code> can be used to ingest and evaluate the logs.</p>
 <p>The first step to loading your app logs into TruLens is creating a virtual app. This virtual app can be a plain dictionary or use our <code>VirtualApp</code> class to store any information you would like. You can refer to these values for evaluating feedback.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">virtual_app</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
     <span class="n">llm</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">modelname</span><span class="o">=</span><span class="s2">&quot;some llm component model name&quot;</span>
@@ -9764,15 +9772,21 @@ matching their signatures like so:</p>
 <span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span> <span class="c1"># can start with the prior dictionary</span>
 <span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
 </code></pre></div>
+</div>
 <p>When setting up the virtual app, you should also include any components that you would like to evaluate in the virtual app. This can be done using the <code>Select</code> class. Using selectors here lets use reuse the setup you use to define feedback functions. Below you can see how to set up a virtual app with a retriever component, which will be used later in the example for feedback evaluation.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Select</span>
 <span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
 <span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;this is the retriever component&quot;</span>
 </code></pre></div>
+</div>
 <p>Now that you've set up your virtual app, you can use it to store your logged data.</p>
 <p>To incorporate your data into TruLens, you have two options. You can either create a <code>Record</code> directly, or you can use the <code>VirtualRecord</code> class, which is designed to help you build records so they can be ingested to TruLens.</p>
 <p>The parameters you'll use with <code>VirtualRecord</code> are the same as those for <code>Record</code>, with one key difference: calls are specified using selectors.</p>
 <p>In the example below, we add two records. Each record includes the inputs and outputs for a context retrieval component. Remember, you only need to provide the information that you want to track or evaluate. The selectors are references to methods that can be selected for feedback, as we'll demonstrate below.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">VirtualRecord</span>
 
 <span class="c1"># The selector for a presumed context retrieval component&#39;s call to</span>
@@ -9805,7 +9819,10 @@ matching their signatures like so:</p>
 
 <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">rec1</span><span class="p">,</span> <span class="n">rec2</span><span class="p">]</span>
 </code></pre></div>
+</div>
 <p>Alternatively, suppose we have an existing dataframe of prompts, contexts and responses we wish to ingest.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
@@ -9816,7 +9833,10 @@ matching their signatures like so:</p>
 <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 <span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </code></pre></div>
+</div>
 <p>To ingest the data in this form, we can iterate through the dataframe to ingest each prompt, context and response into virtual records.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">data_dict</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s1">&#39;records&#39;</span><span class="p">)</span>
 
 <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
@@ -9835,7 +9855,10 @@ matching their signatures like so:</p>
         <span class="p">)</span>
     <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </code></pre></div>
+</div>
 <p>Now that we've ingested constructed the virtual records, we can build our feedback functions. This is done just the same as normal, except the context selector will instead refer to the new <code>context_call</code> we added to the virtual record.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.providers.openai</span> <span class="kn">import</span> <span class="n">OpenAI</span>
 <span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">Feedback</span>
 
@@ -9854,7 +9877,10 @@ matching their signatures like so:</p>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>Then, the feedback functions can be passed to <code>TruVirtual</code> to construct the <code>recorder</code>. Most of the fields that other non-virtual apps take can also be specified here.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">trulens.apps.virtual</span> <span class="kn">import</span> <span class="n">TruVirtual</span>
 
 <span class="n">virtual_recorder</span> <span class="o">=</span> <span class="n">TruVirtual</span><span class="p">(</span>
@@ -9863,11 +9889,17 @@ matching their signatures like so:</p>
     <span class="n">feedbacks</span><span class="o">=</span><span class="p">[</span><span class="n">f_context_relevance</span><span class="p">]</span>
 <span class="p">)</span>
 </code></pre></div>
+</div>
 <p>To finally ingest the record and run feedbacks, we can use <code>add_record</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
     <span class="n">virtual_recorder</span><span class="o">.</span><span class="n">add_record</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
 </code></pre></div>
+</div>
 <p>To optionally store metadata about your application, you can also pass an arbitrary <code>dict</code> to <code>VirtualApp</code>. This information can also be used in evaluation.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">virtual_app</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
     <span class="n">llm</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
         <span class="n">modelname</span><span class="o">=</span><span class="s2">&quot;some llm component model name&quot;</span>
@@ -9881,13 +9913,20 @@ matching their signatures like so:</p>
 
 <span class="n">virtual_app</span> <span class="o">=</span> <span class="n">VirtualApp</span><span class="p">(</span><span class="n">virtual_app</span><span class="p">)</span>
 </code></pre></div>
+</div>
 <p>The <code>VirtualApp</code> metadata can also be appended.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">virtual_app</span><span class="p">[</span><span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">maxtokens</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1024</span>
 </code></pre></div>
+</div>
 <p>This can be particularly useful for storing the components of an LLM app to be later used for evaluation.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
 <div class="highlight"><pre><span></span><code><span class="n">retriever_component</span> <span class="o">=</span> <span class="n">Select</span><span class="o">.</span><span class="n">RecordCalls</span><span class="o">.</span><span class="n">retriever</span>
 <span class="n">virtual_app</span><span class="p">[</span><span class="n">retriever_component</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;this is the retriever component&quot;</span>
 </code></pre></div>
+</div>
 
 
 

@@ -10378,7 +10378,7 @@ actual score and expected score.</p>
 <span class="c1"># Call the numeric_difference method with app and record and aggregate to get</span>
 <span class="c1"># the mean absolute error</span>
 <span class="n">f_mae</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">Feedback</span><span class="p">(</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">mae</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Mean Absolute Error"</span><span class="p">)</span>
+    <span class="n">Feedback</span><span class="p">(</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">absolute_error</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"Mean Absolute Error"</span><span class="p">)</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="o">.</span><span class="n">on</span><span class="p">(</span><span class="n">Select</span><span class="o">.</span><span class="n">Record</span><span class="o">.</span><span class="n">calls</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="o">.</span><span class="n">on_output</span><span class="p">()</span>
@@ -10393,7 +10393,7 @@ ground_truth = GroundTruthAgreement(
 # Call the numeric_difference method with app and record and aggregate to get
 # the mean absolute error
 f_mae = (
-    Feedback(ground_truth.mae, name="Mean Absolute Error")
+    Feedback(ground_truth.absolute_error, name="Mean Absolute Error")
     .on(Select.Record.calls[0].args.args[0])
     .on(Select.Record.calls[0].args.args[1])
     .on_output()
