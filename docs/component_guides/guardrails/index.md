@@ -77,7 +77,7 @@ This mechanism for guardrails is supported via the `block_input` guardrail. If t
             return completion
     ```
 
-## *TruLens* guardrails for internal steps
+## Context filter guardrails
 
 While it is commonly discussed to use guardrails for blocking unsafe or inappropriate output from reaching the end user, *TruLens* guardrails can also be leveraged to improve the internal processing of LLM apps.
 
@@ -85,7 +85,7 @@ If we consider a RAG, context filter guardrails can be used to evaluate the *con
 
 ![Context Filtering with Guardrails](guardrail_context_filtering.png)
 
-## Using *TruLens* guardrails
+## Using context filters
 
 *TruLens* context filter guardrails are easy to add to your app built with custom python, *Langchain*, or *Llama-Index*.
 
