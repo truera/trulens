@@ -225,6 +225,9 @@ clean:
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
+	else \
+		echo "Did not clean!"; \
+		exit 1; \
 	fi;
 
 ## Step: Build wheels
