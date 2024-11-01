@@ -628,17 +628,24 @@ class App(
         for f in self.feedbacks:
             if (
                 self.feedback_mode == feedback_schema.FeedbackMode.DEFERRED
-                and f.run_location
-                != feedback_schema.FeedbackRunLocation.SNOWFLAKE
+                or f.run_location
+                == feedback_schema.FeedbackRunLocation.SNOWFLAKE
             ):
+                # To correctly deserialize a Cortex provider, we assume that
+                # trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION
+                # is set (as in a Snowflake stored procedure). So we don't check
+                # it here as there are other ways to initialize the Cortex
+                # provider out of convenience.
+                if (
+                    isinstance(f.implementation, pyschema_utils.Method)
+                    and f.implementation.obj.cls.module.module_name
+                    == "trulens.providers.cortex.provider"
+                    and f.implementation.obj.cls.name == "Cortex"
+                ):
+                    continue
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
-                # If we're running on Snowflake, the Cortex provider (which is
-                # the only allowed provider) will receive its Snowflake
-                # connection from trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION
-                # so it cannot be hydrated correctly here and so we skip the
-                # following check.
                 try:
                     f.implementation.load()
                 except Exception as e:
