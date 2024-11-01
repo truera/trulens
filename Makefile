@@ -52,7 +52,7 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		langchain-openai \
 		unstructured \
-		chromadb \
+		chromadb
 
 env-tests-db: env-tests
 	poetry run pip install \
