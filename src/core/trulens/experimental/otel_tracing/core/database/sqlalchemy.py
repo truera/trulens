@@ -91,7 +91,7 @@ class _SQLAlchemyDB(core_sqlalchemy.SQLAlchemyDB):
                 index=orm.index, span_id=orm.span_id, trace_id=orm.trace_id
             )
 
-    def batch_insert_span(
+    def insert_spans(
         self, spans: Iterable[core_otel.Span]
     ) -> List[otel_core_db.SpanIndex]:
         """Insert a batch of spans into the database."""

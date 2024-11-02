@@ -4,26 +4,154 @@ This file should not have any dependencies so it can be easily imported by tools
 that want to read TruLens data but not use TruLens otherwise.
 """
 
+from enum import Enum
+
+from opentelemetry.semconv.resource import (
+    ResourceAttributes as otel_ResourceAttributes,
+)
+from opentelemetry.semconv.trace import SpanAttributes as otel_SpanAttributes
+
+
+class ResourceAttributes:
+    pass
+
 
 class SpanAttributes:
+    SPAN_TYPE = "trulens.span_type"
+
+    class SpanType(str, Enum):
+        """Span type attribute values.
+
+        The root types indicate the process that initiating the tracking of
+        spans (either app tracing or feedback evaluation). Call indicates a
+        method/function call whereas the other types are semantic app steps. A
+        span can be multiple of these types at once except for the roots and
+        unknown.
+        """
+
+        UNKNOWN = "unknown"
+        """Unknown span type."""
+
+        TRACE_ROOT = "trace_root"
+        """Spans as collected by tracing system."""
+
+        EVAL_ROOT = "eval_root"
+        """Feedback function evaluation span."""
+
+        CALL = "call"
+        """A function call."""
+
+        RETRIEVAL = "retrieval"
+        """A retrieval."""
+
+        RERANKING = "reranking"
+        """A reranker call."""
+
+        GENERATION = "generation"
+        """A generation call to an LLM."""
+
+        MEMORIZATION = "memorization"
+        """A memory call."""
+
+        EMBEDDING = "embedding"
+        """An embedding call."""
+
+        TOOL_INVOCATION = "tool_invocation"
+        """A tool invocation."""
+
+        AGENT_INVOCATION = "agent_invocation"
+        """An agent invocation."""
+
+    class UNKNOWN:
+        base = "trulens.unknown"
+
+    class TRACE_ROOT:
+        """Attributes for the root span of a trace."""
+
+        base = "trulens.record"
+
+    class EVAL_ROOT:
+        """Attributes for the root span of a feedback evaluation."""
+
+        base = "trulens.eval"
+
     class CALL:
         """Instrumented method call attributes."""
 
-        base = "call"
+        base = "trulens.call"
 
         CALL_ID = base + ".call_id"
-        """Attribute key for call id."""
+        """Unique identifier for the call."""
 
         STACK = base + ".stack"
-        """Attribute key for call stack."""
+        """Call stack."""
 
-        SIG = base + ".sig"
-        """Attribute key for function signature."""
+        SIGNATURE = base + ".signature"
+        """Signature of the function being tracked.
+
+        Serialization of[inspect.Signature][inspect.Signature]."""
+
+        FUNCTION = base + ".function"
+        """Function being tracked.
+
+        Serialized from
+        [trulens.core.utils.pyschema.FunctionOrMethod][trulens.core.utils.pyschema.FunctionOrMethod]."""
+
+        CLASS = base + ".class"
+        """Class owning this function if it is a method.
+
+        Serialized from
+        [trulens.core.utils.pyschema.Class][trulens.core.utils.pyschema.Class]."""
+
+        ARGS = base + ".args"
+        """Arguments of the function.
+
+        Serialized using
+        [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify]. If
+        the function was a method, self will NOT be included in this list.
+        """
+
+        KWARGS = base + ".kwargs"
+        """Keyword arguments of the function.
+
+        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
+        """
+
+        BINDINGS = base + ".bindings"
+        """Bindings of the function if arguments were able to be bound.
+
+        Serialized from [trulens.core.utils.pyschema.Bindings][trulens.core.utils.pyschema.Bindings].
+        """
+
+        RETURN = base + ".return"
+        """Return value of the function if it executed without error.
+
+        Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
+        """
+
+        ERROR = base + ".error"
+        """Error raised by the function if it executed with an error.
+
+        Serialized using [str][builtins.str].
+        """
+
+        # TODO: move to ResourceAttributes
+        PROCESS_ID = otel_ResourceAttributes.PROCESS_PID
+        """Process ID.
+
+        Integer.
+        """
+
+        THREAD_ID = otel_SpanAttributes.THREAD_ID
+        """Thread ID.
+
+        Integer.
+        """
 
     class RETRIEVAL:
         """A retrieval."""
 
-        base = "retrieval"
+        base = "trulens.sem.retrieval"
 
         QUERY_TEXT = base + ".query_text"
         """Input text whose related contexts are being retrieved."""
@@ -49,7 +177,7 @@ class SpanAttributes:
     class RERANKING:
         """A reranker call."""
 
-        base = "reranking"
+        base = "trulens.sem.reranking"
 
         QUERY_TEXT = base + ".query_text"
         """The query text."""
@@ -70,7 +198,7 @@ class SpanAttributes:
         """Reranked indexes into `input_context_texts`."""
 
     class GENERATION:
-        base = "generation"
+        base = "trulens.sem.generation"
 
         # GEN_AI_*
 
@@ -107,7 +235,7 @@ class SpanAttributes:
     class MEMORIZATION:
         """A memory saving call."""
 
-        base = "memorization"
+        base = "trulens.sem.memorization"
 
         MEMORY_TYPE = base + ".memory_type"
         """The type of memory."""
@@ -118,7 +246,7 @@ class SpanAttributes:
     class EMBEDDING:
         """An embedding call."""
 
-        base = "embedding"
+        base = "trulens.sem.embedding"
 
         INPUT_TEXT = base + ".input_text"
         """The text being embedded."""
@@ -132,7 +260,7 @@ class SpanAttributes:
     class TOOL_INVOCATION:
         """A tool invocation."""
 
-        base = "tool_invocation"
+        base = "trulens.sem.tool_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the tool."""
@@ -140,7 +268,7 @@ class SpanAttributes:
     class AGENT_INVOCATION:
         """An agent invocation."""
 
-        base = "agent_invocation"
+        base = "trulens.sem.agent_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the agent."""

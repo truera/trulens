@@ -50,5 +50,5 @@ class _Instrument(core_instruments.Instrument):
             func=func,
             callback_class=mod_trace.AppTracingCallbacks,
             func_name=method_name,
-            app=deproxy(self.app),
+            app=deproxy(self.app),  # gets rewrapped in weakref later
         )

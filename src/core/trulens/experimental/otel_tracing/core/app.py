@@ -14,7 +14,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing.core import trace as core_otel
+from trulens.experimental.otel_tracing.core import sem as core_sem
 from trulens.experimental.otel_tracing.core import trace as core_trace
 
 
@@ -44,9 +44,8 @@ class _App(core_app.App):
             to_export = None
 
         for span in recording_span.iter_family(include_phantom=True):
-            self.connector.db.insert_span(span=span)
             if to_export is not None:
-                if isinstance(span, core_otel.Span):
+                if isinstance(span, core_trace.Span):
                     e_span = span.otel_freeze()
                     to_export.append(e_span)
                 else:
@@ -73,6 +72,10 @@ class _App(core_app.App):
         )
         recording.records.append(record)
         # need to jsonify?
+
+        typed_spans = core_sem.typed_spans_of_record_spans(record=record)
+
+        self.connector.db.insert_spans(spans=typed_spans)
 
         error = root_span.error
 

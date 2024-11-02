@@ -338,6 +338,7 @@ class CallableCallbacks(Generic[R]):
         wrapper: Callable[..., R],
         call_args: Tuple[Any, ...],
         call_kwargs: Dict[str, Any],
+        **kwargs,
     ):
         """Called/constructed when the wrapper function is called but before
         arguments are bound to the wrapped function's signature."""

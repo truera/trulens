@@ -435,6 +435,20 @@ def _self_arg(bindings: inspect.BoundArguments) -> Optional[str]:
     return None
 
 
+class Signature(serial_utils.SerialModel):
+    """Function or method signature.
+
+    Just a str for now.
+    """
+
+    sig_str: str
+    """inspect.Signature.__str__"""
+
+    @staticmethod
+    def of_signature(sig: inspect.Signature) -> Signature:
+        return Signature(sig_str=str(sig))
+
+
 class Bindings(serial_utils.SerialModel):
     args: Tuple
     kwargs: Dict[str, Any]

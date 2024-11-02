@@ -107,11 +107,7 @@ class RecordAppCall(serial_utils.SerialModel):
 
 
 class Record(serial_utils.SerialModel, Hashable):
-    """The record of a single main method call.
-
-    Note:
-        This class will be renamed to `Trace` in the future.
-    """
+    """The record of a single main method call."""
 
     def __str__(self):
         ret = f"Record({self.record_id}) with {len(self.calls)} calls:\n"
@@ -120,10 +116,10 @@ class Record(serial_utils.SerialModel, Hashable):
 
         return ret
 
-    model_config: ClassVar[dict] = {
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         # for `Future[FeedbackResult]`
-        "arbitrary_types_allowed": True
-    }
+        arbitrary_types_allowed=True
+    )
 
     record_id: types_schema.RecordID
     """Unique identifier for this record."""

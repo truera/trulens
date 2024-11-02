@@ -49,12 +49,10 @@ from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing import _feature
 from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
-from trulens.semconv import trace as truconv
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
 from opentelemetry.semconv.resource import ResourceAttributes
-from opentelemetry.semconv.trace import SpanAttributes
 from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
 
@@ -178,6 +176,23 @@ class Span(core_otel.Span):
         if (parent_span := self.parent_span) is not None:
             parent_span.children_spans.append(self)
 
+    def iter_ancestors(self) -> Iterable[Span]:
+        """Iterate over all ancestors of this span."""
+
+        yield self
+
+        if self.parent_span is not None:
+            yield from self.parent_span.iter_ancestors()
+
+    def has_ancestor_of_type(self, span_type: Type[Span]) -> bool:
+        """Check if this span has an ancestor of the given type."""
+
+        for ancestor in self.iter_ancestors():
+            if isinstance(ancestor, span_type):
+                return True
+
+        return False
+
     def iter_children(
         self, transitive: bool = True, include_phantom: bool = False
     ) -> Iterable[Span]:
@@ -282,7 +297,7 @@ class PhantomSpanRecordingContext(PhantomSpan):
         app = self.recording.app
 
         for span in Tracer.find_each_child(
-            span=self, span_filter=lambda s: isinstance(s, LiveSpanCall)
+            span=self, span_filter=lambda s: isinstance(s, LiveTraceRoot)
         ):
             app._on_new_root_span(recording=self.recording, root_span=span)
 
@@ -292,53 +307,22 @@ class PhantomSpanRecordingContext(PhantomSpan):
         return "trulens.recording"
 
 
-class SpanCall(Span):
-    """Non-live fields of a function call span."""
+class LiveSpanCall(LiveSpan):
+    """Track a function call."""
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
     call_id: Optional[uuid.UUID] = pydantic.Field(None)
-    """Unique identifier for the call."""
+    """Unique call identifiers."""
 
-    stack: Optional[List[record_schema.RecordAppCallMethod]] = pydantic.Field(
-        None
-    )
-    """Call stack of instrumented methods only."""
+    process_id: Optional[int] = pydantic.Field(None, exclude=True)
+    """Process ID of the call."""
 
-    sig: Optional[inspect.Signature] = pydantic.Field(None)
-    """Signature of the function."""
+    thread_id: Optional[int] = pydantic.Field(None, exclude=True)
+    """Thread ID of the call."""
 
-    func_name: Optional[str] = None
-    """Function name."""
-
-    pid: Optional[int] = None
-    """Process id."""
-
-    tid: Optional[int] = None
-    """Thread id."""
-
-    def end(self):
-        super().end()
-
-        self.set_attribute(ResourceAttributes.PROCESS_PID, self.pid)
-        self.set_attribute(SpanAttributes.THREAD_ID, self.tid)
-
-        self.set_attribute(
-            truconv.SpanAttributes.CALL.CALL_ID, str(self.call_id)
-        )
-        self.set_attribute(
-            truconv.SpanAttributes.CALL.STACK, json_utils.jsonify(self.stack)
-        )
-        self.set_attribute(truconv.SpanAttributes.CALL.SIG, str(self.sig))
-
-    def otel_name(self) -> str:
-        return f"trulens.call.{self.func_name}"
-
-
-class LiveSpanCall(LiveSpan, SpanCall):
-    """Track a function call."""
-
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    live_sig: Optional[inspect.Signature] = pydantic.Field(None, exclude=True)
+    """Called function's signature."""
 
     live_obj: Optional[Any] = pydantic.Field(None, exclude=True)
     """Self object if method call."""
@@ -375,6 +359,8 @@ class LiveSpanCall(LiveSpan, SpanCall):
     def end(self):
         super().end()
 
+        # TODO: move this to serialization:
+        """
         if self.live_cls is not None:
             self.set_attribute(
                 "trulens.cls",
@@ -404,6 +390,27 @@ class LiveSpanCall(LiveSpan, SpanCall):
             self.set_attribute(
                 "trulens.error", json_utils.jsonify(self.live_error)
             )
+        """
+
+
+class WithApps(LiveSpan):
+    apps: weakref.WeakSet = pydantic.Field(
+        default_factory=weakref.WeakSet, exclude=True
+    )
+    """Apps for which this span is recording trace info for."""
+
+
+class LiveAppCall(LiveSpanCall, WithApps):
+    """Call to an app method."""
+
+    pass
+
+
+class LiveTraceRoot(WithApps):
+    """Wrapper for first app calls."""
+
+    def end(self, *args, **kwargs):
+        super().end(*args, **kwargs)
 
 
 S = TypeVar("S", bound=LiveSpanCall)
@@ -451,6 +458,13 @@ class Tracer(core_otel.Tracer):
     def spans(self) -> Dict[SpanContext, Span]:
         return self._tracer_provider.spans
 
+    @property
+    def current_span(self) -> Optional[Span]:
+        if (context := self.span_context) is None:
+            return None
+
+        return self.spans.get(context)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -471,6 +485,7 @@ class Tracer(core_otel.Tracer):
     def _fill_stacks(
         span: Span,
         get_method_path: Callable,
+        span_stacks: Dict[Span, List[record_schema.RecordAppCallMethod]],
         stack: List[record_schema.RecordAppCallMethod] = [],
     ):
         if isinstance(span, LiveSpanCall):
@@ -486,17 +501,20 @@ class Tracer(core_otel.Tracer):
             )
 
             stack = stack + [frame_ident]
-            span.stack = stack
+            span_stacks[span] = stack
 
         for subspan in span.iter_children(transitive=False):
             Tracer._fill_stacks(
-                subspan, stack=stack, get_method_path=get_method_path
+                subspan,
+                stack=stack,
+                get_method_path=get_method_path,
+                span_stacks=span_stacks,
             )
 
     def _call_of_spancall(
-        self, span: LiveSpanCall
+        self, span: LiveSpanCall, stack: List[record_schema.RecordAppCallMethod]
     ) -> record_schema.RecordAppCall:
-        """Convert a SpanCall to a RecordAppCall."""
+        """Convert a LiveSpanCall to a RecordAppCall."""
 
         args = (
             dict(span.live_bindings.arguments)
@@ -516,7 +534,7 @@ class Tracer(core_otel.Tracer):
 
         return record_schema.RecordAppCall(
             call_id=str(span.call_id),
-            stack=span.stack,
+            stack=stack,
             args=args,
             rets=json_utils.jsonify(span.live_ret),
             error=str(span.live_error),
@@ -524,23 +542,32 @@ class Tracer(core_otel.Tracer):
                 start_ns_timestamp=span.start_timestamp,
                 end_ns_timestamp=span.end_timestamp,
             ),
-            pid=span.pid,
-            tid=span.tid,
+            pid=span.process_id,
+            tid=span.thread_id,
         )
 
     def record_of_root_span(
-        self, recording: Any, root_span: LiveSpanCall
-    ) -> record_schema.Record:
+        self, recording: Any, root_span: LiveTraceRoot
+    ) -> Tuple[record_schema.Record]:
         """Convert a root span to a record.
 
         This span has to be a call span so we can extract things like main input and output.
         """
 
-        assert isinstance(root_span, LiveSpanCall), type(root_span)
+        assert isinstance(root_span, LiveTraceRoot), type(root_span)
+
+        # avoiding circular imports
+        from trulens.experimental.otel_tracing.core import sem as core_sem
 
         app = recording.app
 
-        self._fill_stacks(root_span, get_method_path=app.get_method_path)
+        span_stacks = {}
+
+        self._fill_stacks(
+            root_span,
+            span_stacks=span_stacks,
+            get_method_path=app.get_method_path,
+        )
 
         root_perf = (
             base_schema.Perf.of_ns_timestamps(
@@ -554,32 +581,35 @@ class Tracer(core_otel.Tracer):
         total_cost = root_span.total_cost()
 
         calls = []
-        if isinstance(root_span, LiveSpanCall):
-            calls.append(self._call_of_spancall(root_span))
-
         spans = [root_span]
 
         for span in root_span.iter_children(include_phantom=True):
             if isinstance(span, LiveSpanCall):
-                calls.append(self._call_of_spancall(span))
+                calls.append(
+                    self._call_of_spancall(span, stack=span_stacks[span])
+                )
 
-            spans.append(span)
+            spans.append(core_sem.TypedSpan.semanticize(span))
 
-        bindings = root_span.live_bindings
-        main_error = root_span.live_error
+        root_call_span = root_span.children_spans[
+            0
+        ]  # there should be exactly one
+
+        bindings = root_call_span.live_bindings
+        main_error = root_call_span.live_error
 
         if bindings is not None:
             main_input = app.main_input(
-                func=root_span.live_func,
-                sig=root_span.sig,
-                bindings=root_span.live_bindings,
+                func=root_call_span.live_func,
+                sig=root_call_span.live_sig,
+                bindings=root_call_span.live_bindings,
             )
             if main_error is None:
                 main_output = app.main_output(
-                    func=root_span.live_func,
-                    sig=root_span.sig,
-                    bindings=root_span.live_bindings,
-                    ret=root_span.live_ret,
+                    func=root_call_span.live_func,
+                    sig=root_call_span.live_sig,
+                    bindings=root_call_span.live_bindings,
+                    ret=root_call_span.live_ret,
                 )
             else:
                 main_output = None
@@ -623,9 +653,9 @@ class Tracer(core_otel.Tracer):
         """Convert a recording based on spans to a list of records."""
 
         for root_span in Tracer.find_each_child(
-            span=recording, span_filter=lambda s: isinstance(s, LiveSpanCall)
+            span=recording, span_filter=lambda s: isinstance(s, LiveTraceRoot)
         ):
-            assert isinstance(root_span, LiveSpanCall)
+            assert isinstance(root_span, LiveTraceRoot), type(root_span)
             yield self.record_of_root_span(
                 recording=recording, root_span=root_span
             )
@@ -633,14 +663,16 @@ class Tracer(core_otel.Tracer):
     @contextlib.contextmanager
     def _span(self, cls: Type[S], **kwargs) -> ContextManager[S]:
         with self.start_span(cls=cls, **kwargs) as span:
-            with python_utils.with_context({self.context_cvar: span.context}):
+            with python_utils.with_context({
+                self._span_context_cvar: span.context
+            }):
                 yield span
 
     @contextlib.asynccontextmanager
     async def _aspan(self, cls: Type[S], **kwargs) -> ContextManager[S]:
         async with self.start_span(cls=cls, **kwargs) as span:
             async with python_utils.awith_context({
-                self.context_cvar: span.context
+                self._span_context_cvar: span.context
             }):
                 yield span
 
@@ -779,14 +811,41 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
         self.obj: Optional[object] = None
         self.obj_cls: Optional[Type] = None
         self.obj_id: Optional[int] = None
+        self.trace_root_span: Optional[Span] = None
+        self.trace_root_span_context: Optional[ContextManager] = None
 
         if not issubclass(span_type, LiveSpanCall):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
+
+        if issubclass(span_type, LiveAppCall):
+            # Special handling of app calls: if they are the first app call in
+            # the stack, they are wrapped in a trace root span. Note that this
+            # check is equivalent to checking whether they already have a trace
+            # root span as an ancestor but is faster.
+            current_span = trulens_tracer().current_span
+            if current_span is None or not current_span.has_ancestor_of_type(
+                LiveAppCall
+            ):
+                if current_span is not None:
+                    print(
+                        "adding trace root, ancestors:",
+                        list(current_span.iter_ancestors()),
+                    )
+                # from .sem import TraceRoot
+                self.trace_root_span_context = trulens_tracer()._span(
+                    cls=LiveTraceRoot,
+                    name="trulens.trace.root",
+                    trace_id=core_otel.new_trace_id(),
+                )
+                self.trace_root_span = self.trace_root_span_context.__enter__()
 
         self.span_context: ContextManager = trulens_tracer()._span(
             span_type, name="trulens.call." + func_name
         )
         self.span: S = self.span_context.__enter__()
+
+        if self.trace_root_span is not None:
+            self.trace_root_span.apps = self.span.apps
 
     def on_callable_call(
         self, bindings: inspect.BoundArguments, **kwargs: Dict[str, Any]
@@ -802,8 +861,8 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
             logger.warning("No self in bindings for %s.", self)
 
         span = self.span
-        span.pid = os.getpid()
-        span.tid = th.get_native_id()
+        span.process_id = os.getpid()
+        span.thread_id = th.get_native_id()
 
         return temp
 
@@ -812,27 +871,28 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
 
         span = self.span
 
-        # SpanCall attributes
-        span.call_id = self.call_id
-        span.func_name = self.func_name
-        span.sig = self.sig
-
         # LiveSpanCall attributes
+        span.call_id = self.call_id
         span.live_obj = self.obj
         span.live_cls = self.obj_cls
         span.live_func = self.func
         span.live_args = self.call_args
         span.live_kwargs = self.call_kwargs
         span.live_bindings = self.bindings
+        span.live_sig = self.sig
         span.live_ret = self.ret
         span.live_error = self.error
 
-        if self.error is not None:
-            self.span_context.__exit__(
-                type(self.error), self.error, self.error.__traceback__
-            )
-        else:
-            self.span_context.__exit__(None, None, None)
+        try:
+            if self.error is not None:
+                self.span_context.__exit__(
+                    type(self.error), self.error, self.error.__traceback__
+                )
+            else:
+                self.span_context.__exit__(None, None, None)
+        finally:
+            if self.trace_root_span_context is not None:
+                self.trace_root_span_context.__exit__(None, None, None)
 
 
 class _RecordingContext:
@@ -1075,6 +1135,9 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
         app: _WithInstrumentCallbacks,
         **kwargs: Dict[str, Any],
     ):
+        # Adds the requesting app to the list of apps the wrapper is
+        # instrumented for.
+
         if not python_utils.safe_hasattr(wrapper, APPS):
             apps: weakref.WeakSet[_WithInstrumentCallbacks] = weakref.WeakSet()
             setattr(wrapper, APPS, apps)
@@ -1087,11 +1150,12 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
 
     def __init__(
         self,
-        app: _WithInstrumentCallbacks,
-        span_type: Type[Span] = LiveSpanCall,
+        span_type: Type[Span] = LiveAppCall,
         **kwargs: Dict[str, Any],
     ):
         super().__init__(span_type=span_type, **kwargs)
 
-        self.app = app
         self.apps = python_utils.safe_getattr(self.wrapper, APPS)
+
+        if issubclass(span_type, LiveAppCall):
+            self.span.apps = self.apps

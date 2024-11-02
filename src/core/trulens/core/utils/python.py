@@ -190,6 +190,9 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
         if not get_prop:
             raise ValueError(f"{k} is a property")
 
+        if v.fget is None:
+            raise ValueError(f"{k} property does not have a getter.")
+
         try:
             v = v.fget(obj)
             return v
