@@ -554,9 +554,25 @@ class SQLAlchemyDB(core_db.DB):
             ):
                 session.merge(_feedback_result)  # update existing
             else:
-                session.merge(
-                    _feedback_result
-                )  # insert new result # .add was not thread safe
+                if (
+                    self.engine.dialect.name == "snowflake"
+                    and _feedback_result.result is None
+                ):
+                    # The Snowflake stored procedure connector isn't currently
+                    # capable of handling None qmark-bound to an `INSERT INTO`
+                    # statement (even for a nullable column). Thus, as a hack,
+                    # we get around this by first inserting a non-null value
+                    # then updating it to a null value.
+                    _feedback_result.result = -1
+                    session.merge(
+                        _feedback_result
+                    )  # insert new result # .add was not thread safe
+                    _feedback_result.result = None
+                    session.merge(_feedback_result)
+                else:
+                    session.merge(
+                        _feedback_result
+                    )  # insert new result # .add was not thread safe
 
             status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
