@@ -52,7 +52,7 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		langchain-openai \
 		unstructured \
-		chromadb \
+		chromadb
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -109,7 +109,7 @@ docs-serve-debug: env-docs
 docs-serve-dirty: env-docs
 	poetry run mkdocs serve --dirty -a 127.0.0.1:8000
 
-docs-upload: env-docs $(shell find docs -type f) mkdocs.yml
+docs-upload: clean env-docs $(shell find docs -type f) mkdocs.yml
 	poetry run ggshield secret scan repo ./docs
 	poetry run mkdocs gh-deploy
 
@@ -225,6 +225,9 @@ clean:
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
+	else \
+		echo "Did not clean!"; \
+		exit 1; \
 	fi;
 
 ## Step: Build wheels

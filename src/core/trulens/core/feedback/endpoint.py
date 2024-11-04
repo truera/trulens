@@ -228,7 +228,7 @@ class Endpoint(
     """EXPERIMENTAL(otel_tracing): callback class to use for usage tracking."""
 
     _context_endpoints: ClassVar[contextvars.ContextVar] = (
-        contextvars.ContextVar("endpoints")
+        contextvars.ContextVar("endpoints", default={})
     )
     _context_endpoints.set({})
 
