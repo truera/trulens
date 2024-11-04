@@ -564,15 +564,11 @@ class SQLAlchemyDB(core_db.DB):
                     # we get around this by first inserting a non-null value
                     # then updating it to a null value.
                     _feedback_result.result = -1
-                    session.merge(
-                        _feedback_result
-                    )  # insert new result # .add was not thread safe
+                    session.merge(_feedback_result)  # .add was not thread safe
                     _feedback_result.result = None
                     session.merge(_feedback_result)
                 else:
-                    session.merge(
-                        _feedback_result
-                    )  # insert new result # .add was not thread safe
+                    session.merge(_feedback_result)  # .add was not thread safe
 
             status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
