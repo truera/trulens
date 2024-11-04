@@ -5,7 +5,6 @@ Tests for context variable issues.
 import os
 import unittest
 
-import openai
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.custom import instrument
@@ -37,8 +36,6 @@ class TestContextVariables(unittest.TestCase):
     @optional_test
     def test_endpoint_contextvar_always_cleaned(self):
         class FailingRAG:
-            oai_client = openai.OpenAI()
-
             @instrument
             def retrieve(self, query: str) -> list:
                 return ["A", "B", "C"]

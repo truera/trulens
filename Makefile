@@ -52,7 +52,7 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		langchain-openai \
 		unstructured \
-		chromadb \
+		chromadb
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -225,6 +225,9 @@ clean:
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
+	else \
+		echo "Did not clean!"; \
+		exit 1; \
 	fi;
 
 ## Step: Build wheels
