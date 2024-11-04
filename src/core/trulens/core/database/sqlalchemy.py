@@ -1222,7 +1222,7 @@ class AppsExtractor:
                             if (
                                 val is not None
                             ):  # avoid getting Nones into np.mean
-                                name = f"{_res.name}:::{key}"
+                                name = f"{_res.name}{core_db.MULTI_CALL_NAME_DELIMITER}{key}"
                                 values[name] = val
                                 self.feedback_columns.add(name)
                     elif (
