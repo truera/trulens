@@ -64,14 +64,17 @@ env-tests-db: env-tests
 env-tests-notebook: env-tests env-tests-optional
 	poetry run pip install \
 		faiss-cpu \
-		langchainhub \
 		llama-hub \
 		rank_bm25 \
 		ipytree \
+		sentencepiece \
+		langchainhub \
 		llama-index-readers-web \
 		llama-index-vector-stores-milvus \
 		llama-index-retrievers-bm25 \
-		llama-index-tools-yelp
+		llama-index-tools-yelp \
+		llama-index-vector-stores-mongodb \
+		langchain-huggingface
 
 # Lock the poetry dependencies for all the subprojects.
 lock: $(POETRY_DIRS)
@@ -208,9 +211,6 @@ test-%-allow-optional: env
 test-%-optional: env-tests-optional
 	TEST_OPTIONAL=true make test-$*
 
-test-notebook: env-tests-notebook
-	make test-notebook-optional
-
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 test-unit:
@@ -221,8 +221,8 @@ test-e2e:
 	poetry run pytest -n auto --rootdir=. tests/e2e/*
 
 # Runs the notebook test
-test-notebook:
-	poetry run pytest -n auto --rootdir=. tests/docs_notebooks/*
+test-notebook: env-tests-notebook
+	poetry run pytest --rootdir=. tests/docs_notebooks/*
 
 install-wheels:
 	pip install dist/*/*.whl
