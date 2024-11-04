@@ -1,4 +1,4 @@
-"""Semantic conventions for TruLens data.
+"""Semantic conventions for TruLens spans.
 
 This file should not have any dependencies so it can be easily imported by tools
 that want to read TruLens data but not use TruLens otherwise.
