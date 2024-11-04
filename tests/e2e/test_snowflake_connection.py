@@ -40,7 +40,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         schema_name += str(uuid.uuid4()).replace("-", "_")
         schema_name = schema_name.upper()
         self.assertNotIn(schema_name, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(schema_name)
+        self._snowflake_schemas_to_delete.add(schema_name)
         self.run_query(f"CREATE SCHEMA {schema_name}")
         self.run_query(
             f"CREATE TABLE {self._database}.{schema_name}.MY_TABLE (TEST_COLUMN NUMBER)"
