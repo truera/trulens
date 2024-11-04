@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import sys
+import dotenv
 from surprise_travel.crew import SurpriseTravelCrew
+
+dotenv.load_dotenv()
 
 surprise_travel_crew = SurpriseTravelCrew()
 
@@ -31,6 +34,7 @@ def run():
     }
     with tru_suprise_travel_crew as recorder:
         result = SurpriseTravelCrew().crew().kickoff(inputs=inputs)
+
     print(result)
 
 
@@ -47,7 +51,14 @@ def train():
         'trip_duration': '14 days'
     }
     try:
-        surprise_travel_crew.crew().train(n_iterations=int(sys.argv[1]), inputs=inputs)
+        surprise_travel_crew.crew().train(n_iterations=int(sys.argv[2] if len(sys.argv) >= 3 else 10), inputs=inputs)
 
     except Exception as e:
         raise Exception(f"An error occurred while training the crew: {e}")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "train":
+        train()
+    else:
+        run()
