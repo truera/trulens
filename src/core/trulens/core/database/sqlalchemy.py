@@ -545,30 +545,31 @@ class SQLAlchemyDB(core_db.DB):
             feedback_result, redact_keys=self.redact_keys
         )
         with self.session.begin() as session:
-            if (
-                session.query(self.orm.FeedbackResult)
-                .filter_by(
-                    feedback_result_id=feedback_result.feedback_result_id
-                )
-                .first()
-            ):
-                session.merge(_feedback_result)  # update existing
+            # The Snowflake stored procedure connector isn't currently capable
+            # of handling None qmark-bound to an `INSERT INTO` or `UPDATE`
+            # statement for nullable numeric columns. Thus, as a hack, we get
+            # around this by first inserting a non-null value then updating it
+            # to a null value.
+            use_snowflake_hack = (
+                self.engine.dialect.name == "snowflake"
+                and _feedback_result.result is None
+            )
+            if not use_snowflake_hack:
+                session.merge(_feedback_result)
             else:
-                if (
-                    self.engine.dialect.name == "snowflake"
-                    and _feedback_result.result is None
-                ):
-                    # The Snowflake stored procedure connector isn't currently
-                    # capable of handling None qmark-bound to an `INSERT INTO`
-                    # statement (even for a nullable column). Thus, as a hack,
-                    # we get around this by first inserting a non-null value
-                    # then updating it to a null value.
-                    _feedback_result.result = -1
-                    session.merge(_feedback_result)  # .add was not thread safe
-                    _feedback_result.result = None
-                    session.merge(_feedback_result)
-                else:
-                    session.merge(_feedback_result)  # .add was not thread safe
+                _feedback_result.result = -1
+                session.merge(_feedback_result)
+                _feedback_result.result = None
+                session.execute(
+                    sql_text(
+                        """
+                    UPDATE trulens_feedbacks
+                    SET result=NULL
+                    WHERE trulens_feedbacks.feedback_result_id = :feedback_result_id
+                        """.replace("\n", " ")
+                    ),
+                    {"feedback_result_id": feedback_result.feedback_result_id},
+                )
 
             status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
@@ -599,6 +600,15 @@ class SQLAlchemyDB(core_db.DB):
         self, feedback_results: List[feedback_schema.FeedbackResult]
     ) -> List[types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
+        # The Snowflake stored procedure connector isn't currently capable of
+        # handling None qmark-bound to an `INSERT INTO` or `UPDATE` statement
+        # for nullable numeric columns. Thus, as a hack, we get around this by
+        # first inserting a non-null value then updating it to a null value.
+        if any([curr.result is None for curr in feedback_results]):
+            ret = []
+            for curr in feedback_results:
+                ret.append(self.insert_feedback(curr))
+            return ret
         with self.session.begin() as session:
             feedback_results_list = [
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
