@@ -1,0 +1,24 @@
+name: app_environment
+channels:
+  - snowflake
+dependencies:
+  - alembic=*
+  - dill=*
+  - munch=*
+  - nest-asyncio=*
+  - nltk=*
+  - numpy=*
+  - packaging=*
+  - pandas=*
+  - pip=*
+  - pydantic=*
+  - python-dotenv=*
+  - requests=*
+  - rich=*
+  - scikit-learn=*
+  - scipy=*
+  - snowflake-snowpark-python=*
+  - snowflake-sqlalchemy=*
+  - sqlalchemy=*
+  - tqdm=*
+  - typing_extensions=*

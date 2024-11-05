@@ -20,6 +20,30 @@ _TRULENS_PACKAGES = [
     "trulens-providers-cortex",
 ]
 
+# TODO(dkurokawa): get these package versions automatically.
+_TRULENS_PACKAGE_DEPENDENCIES = [
+    "alembic",
+    "dill",
+    "munch",
+    "nest-asyncio",
+    "nltk",
+    "numpy",
+    "packaging",
+    "pandas",
+    "pip",
+    "pydantic",
+    "python-dotenv",
+    "requests",
+    "rich",
+    "scikit-learn",
+    "scipy",
+    "snowflake-snowpark-python",
+    "snowflake-sqlalchemy",
+    "sqlalchemy",
+    "tqdm",
+    "typing_extensions",
+]
+
 
 class ServerSideEvaluationArtifacts:
     """This class is used to set up any Snowflake server side artifacts for feedback evaluation."""
@@ -79,11 +103,13 @@ class ServerSideEvaluationArtifacts:
                 f"'@{_STAGE_NAME}/{curr}.zip'" for curr in _TRULENS_PACKAGES
             ])
             import_statement = f"IMPORTS = ({import_packages})"
-            trulens_packages = ""
+            packages_statement = ",".join([
+                f"'{curr}'" for curr in _TRULENS_PACKAGE_DEPENDENCIES
+            ])
         else:
             import_statement = ""
-            trulens_packages = "".join([
-                f"'{curr}'," for curr in _TRULENS_PACKAGES
+            packages_statement = ",".join([
+                f"'{curr}'" for curr in _TRULENS_PACKAGES
             ])
         with open(_PYTHON_STORED_PROCEDURE_CODE_FILENAME, "r") as fh:
             python_code = fh.read()
@@ -94,28 +120,7 @@ class ServerSideEvaluationArtifacts:
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
                 PACKAGES = (
-                    {trulens_packages}
-                    -- TODO(dkurokawa): get these package versions automatically.
-                    'alembic',
-                    'dill',
-                    'munch',
-                    'nest-asyncio',
-                    'nltk',
-                    'numpy',
-                    'packaging',
-                    'pandas',
-                    'pip',
-                    'pydantic',
-                    'python-dotenv',
-                    'requests',
-                    'rich',
-                    'scikit-learn',
-                    'scipy',
-                    'snowflake-snowpark-python',
-                    'snowflake-sqlalchemy',
-                    'sqlalchemy',
-                    'tqdm',
-                    'typing_extensions'
+                    {packages_statement}
                 )
                 {import_statement}
                 HANDLER = 'run'
