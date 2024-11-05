@@ -60,7 +60,9 @@ class ServerSideEvaluationArtifacts:
         )
         for trulens_package in _TRULENS_PACKAGES:
             file_path = os.path.join(data_directory, f"{trulens_package}.zip")
-            self._run_query(f"PUT file://{file_path} @{_STAGE_NAME}")
+            self._run_query(
+                f"PUT file://{file_path} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
+            )
 
     def _set_up_stream(self) -> None:
         self._run_query(
