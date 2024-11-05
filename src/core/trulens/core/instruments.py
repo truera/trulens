@@ -1064,10 +1064,14 @@ class Instrument:
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
             if not self.to_instrument_module(base.__module__):
+                print(
+                    f"skipping base {base} because of module {base.__module__}"
+                )
                 continue
 
             try:
                 if not self.to_instrument_class(base):
+                    print(f"skipping base {base} because of class")
                     continue
 
             except Exception as e:
@@ -1082,6 +1086,8 @@ class Instrument:
 
                 # continue
 
+            print(f"instrumenting {obj} for base {base}")
+
             for method_name, class_filter in self.include_methods.items():
                 if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
@@ -1093,8 +1099,8 @@ class Instrument:
                     # their methods, the wrapper will capture an un-instrumented
                     # version of the inner method which we may fail to
                     # instrument.
-                    if hasattr(original_fun, "__wrapped__"):
-                        original_fun = original_fun.__wrapped__
+                    # if hasattr(original_fun, "__wrapped__"):
+                    #    original_fun = original_fun.__wrapped__
 
                     # Sometimes the base class may be in some module but when a
                     # method is looked up from it, it actually comes from some
@@ -1203,6 +1209,8 @@ class AddInstruments:
     def method(cls, of_cls: type, name: str) -> None:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
+
+        print("adding method", of_cls, name, of_cls.__module__)
 
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
