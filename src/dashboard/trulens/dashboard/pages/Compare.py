@@ -653,6 +653,99 @@ def _reset_page_state():
             del st.session_state[key]
 
 
+def compare_retrieval_rankings(selected_records: List[dict]):
+    st.write("Retrieval Comparison")
+
+    r1, r2 = selected_records
+    tmp = r2
+    r2 = r1
+    r1 = tmp
+
+    calls1: list[dict] = r1["Context Relevance_calls"]
+    calls2: list[dict] = r2["Context Relevance_calls"]
+    rand = np.random.RandomState(42)
+
+    c1_final_ranking_score = rand.rand(len(calls1))
+    for call, score in zip(calls1, c1_final_ranking_score):
+        call["ranking_score"] = score
+
+    c2_final_ranking_score = rand.rand(len(calls2))
+    for call, score in zip(calls2, c2_final_ranking_score):
+        call["ranking_score"] = score
+
+    calls1.sort(key=lambda x: x["ranking_score"], reverse=True)
+    calls2.sort(key=lambda x: x["ranking_score"], reverse=True)
+
+    i = j = 0
+    ranks1 = []
+    ranks2 = []
+    scores1 = []
+    scores2 = []
+    contexts1 = []
+    contexts2 = []
+
+    n_iters = 0
+    while i < len(calls1) or j < len(calls2):
+        n_iters += 1
+        c1 = calls1[i] if i < len(calls1) else None
+        c2 = calls2[j] if j < len(calls2) else None
+
+        if c1 is not None:
+            c1_rank = i + 1
+            c1_score = c1["ranking_score"]
+            c1_context = c1["args"]["context"]
+        else:
+            c1_rank = c1_score = c1_context = None
+        if c2 is not None:
+            c2_rank = j + 1
+            c2_score = c2["ranking_score"]
+            c2_context = c2["args"]["context"]
+        else:
+            c2_rank = c2_score = c2_context = None
+
+        if c1 is None and c2 is None:
+            # this shouldn't happen
+            break
+        elif c1 is None:
+            # push c2
+            j += 1
+        elif c2 is None:
+            # push c1
+            i += 1
+        elif c1_context == c2_context:
+            # same contexts, push both
+            i += 1
+            j += 1
+        elif c1_score and c2_score and c1_score <= c2_score:
+            # do c2 first
+            c1_rank = c1_score = c1_context = None
+            j += 1
+        elif c1_score and c2_score and c1_score > c2_score:
+            # do c1, null c2
+            c2_rank = c2_score = c2_context = None
+            i += 1
+        else:
+            st.write("somehow ended up here")
+
+        ranks1.append(c1_rank)
+        scores1.append(c1_score)
+        contexts1.append(c1_context)
+        ranks2.append(c2_rank)
+        scores2.append(c2_score)
+        contexts2.append(c2_context)
+
+    sxs_contexts = pd.DataFrame({
+        "rank_1": ranks1,
+        "score_1": scores1,
+        "context_1": contexts1,
+        "context_2": contexts2,
+        "score_2": scores2,
+        "rank_2": ranks2,
+    })
+    st.write(n_iters)
+    st.dataframe(sxs_contexts, hide_index=True)
+
+
 def render_app_comparison(app_name: str):
     """Render the Compare page.
 
@@ -738,6 +831,7 @@ def render_app_comparison(app_name: str):
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
         ):
+            selected_records = []
             feedback_selector_cols = record_feedback_selector_container.columns(
                 len(record_data), gap="large"
             )
@@ -748,6 +842,9 @@ def render_app_comparison(app_name: str):
                     _render_feedback_call(
                         selected_ff, selected_row, feedback_directions
                     )
+                    selected_records.append(selected_row)
+            if selected_ff == "Context Relevance":
+                compare_retrieval_rankings(selected_records)
 
     with trace_viewer_container:
         trace_cols = trace_viewer_container.columns(
