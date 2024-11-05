@@ -560,6 +560,7 @@ class SQLAlchemyDB(core_db.DB):
                 _feedback_result.result = -1
                 session.merge(_feedback_result)
                 _feedback_result.result = None
+                session.flush()  # Ensure the merge is executed before the update.
                 session.execute(
                     sql_text(
                         """
@@ -570,6 +571,7 @@ class SQLAlchemyDB(core_db.DB):
                     ),
                     {"feedback_result_id": feedback_result.feedback_result_id},
                 )
+                session.flush()
 
             status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
@@ -604,7 +606,9 @@ class SQLAlchemyDB(core_db.DB):
         # handling None qmark-bound to an `INSERT INTO` or `UPDATE` statement
         # for nullable numeric columns. Thus, as a hack, we get around this by
         # first inserting a non-null value then updating it to a null value.
-        if any([curr.result is None for curr in feedback_results]):
+        if self.engine.dialect == "snowflake" and any([
+            curr.result is None for curr in feedback_results
+        ]):
             ret = []
             for curr in feedback_results:
                 ret.append(self.insert_feedback(curr))
