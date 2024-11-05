@@ -460,8 +460,8 @@ class Tracer(core_otel.Tracer):
                 path=path
                 if path is not None
                 else serial_utils.Lens().static,  # placeholder path for functions
-                method=pyschema_utils.Method.of_method(
-                    span.live_func, obj=span.live_obj, cls=span.live_cls
+                method=pyschema_utils.FunctionOrMethod.of_callable(
+                    c=span.live_func
                 ),
             )
 

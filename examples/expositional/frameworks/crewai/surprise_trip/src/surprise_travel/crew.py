@@ -38,6 +38,18 @@ class Itinerary(BaseModel):
     day_plans: List[DayPlan] = Field(..., description="List of day plans")
     hotel: str = Field(..., description="Hotel information")
 
+"""
+# Instrument some Crew class methods:
+from crewai.crew import Crew
+instrument.method(Crew, "kickoff")
+instrument.method(Crew, "kickoff_async")
+instrument.method(Crew, "train")
+from crewai.agent import Agent
+instrument.method(Agent, "execute_task")
+from crewai.task import Task
+instrument.method(Task, "execute_sync")
+instrument.method(Task, "execute_async")
+"""
 
 @CrewBase
 class SurpriseTravelCrew:

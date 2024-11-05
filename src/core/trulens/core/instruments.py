@@ -765,6 +765,8 @@ class Instrument:
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
+                print(f"calling {func} with {args}")
+
                 rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
@@ -1226,6 +1228,7 @@ class instrument(AddInstruments):
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
     def __init__(self, func: Callable):
+        print("decorating", func)
         self.func = func
 
     def __set_name__(self, cls: type, name: str):
@@ -1235,6 +1238,11 @@ class instrument(AddInstruments):
 
         # Important: do this first:
         setattr(cls, name, self.func)
+
+        if self.func is not getattr(cls, name):
+            print(
+                "Warning. Method to be instrumented does not belong to a class. It may not be instrumented."
+            )
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.

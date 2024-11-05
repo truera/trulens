@@ -524,12 +524,17 @@ class FunctionOrMethod(serial_utils.SerialModel):
 
     @staticmethod
     def of_callable(c: Callable, loadable: bool = False) -> "FunctionOrMethod":
-        """
-        Serialize the given callable. If `loadable` is set, tries to add enough
-        info for the callable to be deserialized.
+        """Serialize the given callable.
+
+        If `loadable` is set, tries to add enough info for the callable to be
+        deserialized.
         """
 
         if inspect.ismethod(c):
+            if not hasattr(c, "__self__"):
+                raise ValueError(
+                    f"Method {c} does not have a self object. Cannot serialize."
+                )
             self = c.__self__
             return Method.of_method(c, obj=self, loadable=loadable)
 
