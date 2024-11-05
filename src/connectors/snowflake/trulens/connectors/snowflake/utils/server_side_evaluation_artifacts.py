@@ -21,7 +21,7 @@ _TRULENS_PACKAGES = [
 ]
 
 # TODO(dkurokawa): get these package versions automatically.
-_TRULENS_PACKAGE_DEPENDENCIES = [
+_TRULENS_PACKAGES_DEPENDENCIES = [
     "alembic",
     "dill",
     "munch",
@@ -104,7 +104,7 @@ class ServerSideEvaluationArtifacts:
             ])
             import_statement = f"IMPORTS = ({import_packages})"
             packages_statement = ",".join([
-                f"'{curr}'" for curr in _TRULENS_PACKAGE_DEPENDENCIES
+                f"'{curr}'" for curr in _TRULENS_PACKAGES_DEPENDENCIES
             ])
         else:
             import_statement = ""
