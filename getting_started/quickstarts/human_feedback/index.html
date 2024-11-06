@@ -10294,13 +10294,15 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="kn">from</span> <span class="nn">trulens.core</span> <span class="kn">import</span> <span class="n">TruSession</span>
 
 <span class="n">session</span> <span class="o">=</span> <span class="n">TruSession</span><span class="p">()</span>
+<span class="n">session</span><span class="o">.</span><span class="n">start_dashboard</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">import os
 
 from trulens.apps.custom import TruCustomApp
 from trulens.core import TruSession
 
-session = TruSession()</div>
+session = TruSession()
+session.start_dashboard()</div>
 </div>
 </div>
 </div>
@@ -10541,51 +10543,83 @@ record = recording.get()</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">Button</span>
 <span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">HBox</span>
+<span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">Label</span>
+<span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">Textarea</span>
+<span class="kn">from</span> <span class="nn">ipywidgets</span> <span class="kn">import</span> <span class="n">VBox</span>
+<span class="kn">from</span> <span class="nn">trulens.core.schema.feedback</span> <span class="kn">import</span> <span class="n">FeedbackCall</span>
 
 <span class="n">thumbs_up_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"👍"</span><span class="p">)</span>
 <span class="n">thumbs_down_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"👎"</span><span class="p">)</span>
 
-<span class="n">human_feedback</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">def</span> <span class="nf">update_feedback</span><span class="p">(</span><span class="n">human_feedback</span><span class="p">):</span>
+    <span class="c1"># add the human feedback to a particular app and record</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Human Feedack"</span><span class="p">,</span>
+        <span class="n">record_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">record_id</span><span class="p">,</span>
+        <span class="n">app_id</span><span class="o">=</span><span class="n">tru_app</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
+        <span class="n">result</span><span class="o">=</span><span class="n">human_feedback</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">on_thumbs_up_button_clicked</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
-    <span class="k">global</span> <span class="n">human_feedback</span>
-    <span class="n">human_feedback</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">update_feedback</span><span class="p">(</span><span class="n">human_feedback</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"👍"</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">on_thumbs_down_button_clicked</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
-    <span class="k">global</span> <span class="n">human_feedback</span>
-    <span class="n">human_feedback</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">update_feedback</span><span class="p">(</span><span class="n">human_feedback</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"👎"</span><span class="p">)</span>
 
 
 <span class="n">thumbs_up_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">on_thumbs_up_button_clicked</span><span class="p">)</span>
 <span class="n">thumbs_down_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">on_thumbs_down_button_clicked</span><span class="p">)</span>
 
-<span class="n">HBox</span><span class="p">([</span><span class="n">thumbs_up_button</span><span class="p">,</span> <span class="n">thumbs_down_button</span><span class="p">])</span>
+<span class="n">VBox</span><span class="p">([</span>
+    <span class="n">Label</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">main_input</span><span class="p">),</span>
+    <span class="n">Label</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">main_output</span><span class="p">),</span>
+    <span class="n">HBox</span><span class="p">([</span><span class="n">thumbs_up_button</span><span class="p">,</span> <span class="n">thumbs_down_button</span><span class="p">]),</span>
+<span class="p">])</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-7">from ipywidgets import Button
 from ipywidgets import HBox
+from ipywidgets import Label
+from ipywidgets import Textarea
+from ipywidgets import VBox
+from trulens.core.schema.feedback import FeedbackCall
 
 thumbs_up_button = Button(description="👍")
 thumbs_down_button = Button(description="👎")
 
-human_feedback = None
+
+def update_feedback(human_feedback):
+    # add the human feedback to a particular app and record
+    session.add_feedback(
+        name="Human Feedack",
+        record_id=record.record_id,
+        app_id=tru_app.app_id,
+        result=human_feedback,
+    )
 
 
 def on_thumbs_up_button_clicked(b):
-    global human_feedback
-    human_feedback = 1
+    update_feedback(human_feedback=1)
+    print("👍")
 
 
 def on_thumbs_down_button_clicked(b):
-    global human_feedback
-    human_feedback = 0
+    update_feedback(human_feedback=0)
+    print("👎")
 
 
 thumbs_up_button.on_click(on_thumbs_up_button_clicked)
 thumbs_down_button.on_click(on_thumbs_down_button_clicked)
 
-HBox([thumbs_up_button, thumbs_down_button])</div>
+VBox([
+    Label(record.main_input),
+    Label(record.main_output),
+    HBox([thumbs_up_button, thumbs_down_button]),
+])</div>
 </div>
 </div>
 </div>
@@ -10610,21 +10644,111 @@ HBox([thumbs_up_button, thumbs_down_button])</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># add the human feedback to a particular app and record</span>
-<span class="n">session</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"Human Feedack"</span><span class="p">,</span>
-    <span class="n">record_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">record_id</span><span class="p">,</span>
-    <span class="n">app_id</span><span class="o">=</span><span class="n">tru_app</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
-    <span class="n">result</span><span class="o">=</span><span class="n">human_feedback</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Use Feedback call to attach more than one human feedback and optionally</span>
+<span class="c1"># metadata. Here we allow the user to press the feedback buttons multiple times</span>
+<span class="c1"># and give a reason for their feedback. The aggregate feedback result is</span>
+<span class="c1"># computed in the code below as the mean of the human feedback results.</span>
+
+<span class="n">calls</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="n">thumbs_up_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"👍"</span><span class="p">)</span>
+<span class="n">thumbs_down_button</span> <span class="o">=</span> <span class="n">Button</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"👎"</span><span class="p">)</span>
+<span class="n">reason_area</span> <span class="o">=</span> <span class="n">Textarea</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Reason"</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">add_human_feedback</span><span class="p">(</span><span class="n">human_feedback</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reason</span><span class="p">:</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="s2">"No reason provided"</span>
+
+    <span class="n">calls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">FeedbackCall</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">{},</span> <span class="n">ret</span><span class="o">=</span><span class="n">human_feedback</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="p">{</span><span class="s2">"reason"</span><span class="p">:</span> <span class="n">reason</span><span class="p">})</span>
+    <span class="p">)</span>
+
+    <span class="n">session</span><span class="o">.</span><span class="n">add_feedback</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Human Feedack with Metadata"</span><span class="p">,</span>
+        <span class="n">record_id</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">record_id</span><span class="p">,</span>
+        <span class="n">app_id</span><span class="o">=</span><span class="n">tru_app</span><span class="o">.</span><span class="n">app_id</span><span class="p">,</span>
+        <span class="n">result</span><span class="o">=</span><span class="nb">sum</span><span class="p">([</span><span class="n">call</span><span class="o">.</span><span class="n">ret</span> <span class="k">for</span> <span class="n">call</span> <span class="ow">in</span> <span class="n">calls</span><span class="p">])</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">calls</span><span class="p">),</span>
+        <span class="n">calls</span><span class="o">=</span><span class="n">calls</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">human_feedback</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"👍"</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"👎"</span><span class="p">,</span> <span class="n">reason</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">on_thumbs_up_button_clicked</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+    <span class="n">add_human_feedback</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">reason_area</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">reason_area</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">""</span>
+
+
+<span class="k">def</span> <span class="nf">on_thumbs_down_button_clicked</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+    <span class="n">add_human_feedback</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">reason_area</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">reason_area</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="s2">""</span>
+
+
+<span class="n">thumbs_up_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">on_thumbs_up_button_clicked</span><span class="p">)</span>
+<span class="n">thumbs_down_button</span><span class="o">.</span><span class="n">on_click</span><span class="p">(</span><span class="n">on_thumbs_down_button_clicked</span><span class="p">)</span>
+
+<span class="n">VBox</span><span class="p">([</span>
+    <span class="n">Label</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">main_input</span><span class="p">),</span>
+    <span class="n">Label</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">main_output</span><span class="p">),</span>
+    <span class="n">HBox</span><span class="p">([</span><span class="n">thumbs_up_button</span><span class="p">,</span> <span class="n">thumbs_down_button</span><span class="p">,</span> <span class="n">reason_area</span><span class="p">]),</span>
+<span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># add the human feedback to a particular app and record
-session.add_feedback(
-    name="Human Feedack",
-    record_id=record.record_id,
-    app_id=tru_app.app_id,
-    result=human_feedback,
-)</div>
+<div class="clipboard-copy-txt" id="cell-8"># Use Feedback call to attach more than one human feedback and optionally
+# metadata. Here we allow the user to press the feedback buttons multiple times
+# and give a reason for their feedback. The aggregate feedback result is
+# computed in the code below as the mean of the human feedback results.
+
+calls = []
+
+thumbs_up_button = Button(description="👍")
+thumbs_down_button = Button(description="👎")
+reason_area = Textarea(description="Reason")
+
+
+def add_human_feedback(human_feedback, reason):
+    if not reason:
+        reason = "No reason provided"
+
+    calls.append(
+        FeedbackCall(args={}, ret=human_feedback, meta={"reason": reason})
+    )
+
+    session.add_feedback(
+        name="Human Feedack with Metadata",
+        record_id=record.record_id,
+        app_id=tru_app.app_id,
+        result=sum([call.ret for call in calls]) / len(calls),
+        calls=calls,
+    )
+
+    if human_feedback == 1:
+        print("👍", reason)
+    else:
+        print("👎", reason)
+
+
+def on_thumbs_up_button_clicked(b):
+    add_human_feedback(1.0, reason_area.value)
+    reason_area.value = ""
+
+
+def on_thumbs_down_button_clicked(b):
+    add_human_feedback(0.0, reason_area.value)
+    reason_area.value = ""
+
+
+thumbs_up_button.on_click(on_thumbs_up_button_clicked)
+thumbs_down_button.on_click(on_thumbs_down_button_clicked)
+
+VBox([
+    Label(record.main_input),
+    Label(record.main_output),
+    HBox([thumbs_up_button, thumbs_down_button, reason_area]),
+])</div>
 </div>
 </div>
 </div>
@@ -10660,9 +10784,15 @@ session.add_feedback(
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">session</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="n">tru_app</span><span class="o">.</span><span class="n">app_id</span><span class="p">])</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Note that individual FeedbackCall are not shown in leaderboard and nor is</span>
+<span class="c1"># their metadata.</span>
+
+<span class="n">session</span><span class="o">.</span><span class="n">get_leaderboard</span><span class="p">(</span><span class="n">app_ids</span><span class="o">=</span><span class="p">[</span><span class="n">tru_app</span><span class="o">.</span><span class="n">app_id</span><span class="p">])</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9">session.get_leaderboard(app_ids=[tru_app.app_id])</div>
+<div class="clipboard-copy-txt" id="cell-9"># Note that individual FeedbackCall are not shown in leaderboard and nor is
+# their metadata.
+
+session.get_leaderboard(app_ids=[tru_app.app_id])</div>
 </div>
 </div>
 </div>
