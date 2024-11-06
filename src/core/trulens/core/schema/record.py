@@ -43,7 +43,7 @@ class RecordAppCallMethod(serial_utils.SerialModel):
     path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema_utils.FunctionOrMethod
+    method: pyschema_utils.Method
     """The method that was called."""
 
 

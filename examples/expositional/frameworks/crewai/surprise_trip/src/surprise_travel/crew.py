@@ -38,7 +38,7 @@ class Itinerary(BaseModel):
     day_plans: List[DayPlan] = Field(..., description="List of day plans")
     hotel: str = Field(..., description="Hotel information")
 
-"""
+
 # Instrument some Crew class methods:
 from crewai.crew import Crew
 instrument.method(Crew, "kickoff")
@@ -49,7 +49,9 @@ instrument.method(Agent, "execute_task")
 from crewai.task import Task
 instrument.method(Task, "execute_sync")
 instrument.method(Task, "execute_async")
-"""
+instrument.method(Task, "_execute_core")
+from crewai.agents.crew_agent_executor import CrewAgentExecutor
+instrument.method(CrewAgentExecutor, "invoke")
 
 @CrewBase
 class SurpriseTravelCrew:
@@ -58,7 +60,6 @@ class SurpriseTravelCrew:
     agents_config = "config/agents.yaml"
     tasks_config = "config/tasks.yaml"
 
-    @instrument
     @agent
     def personalized_activity_planner(self) -> Agent:
         return Agent(
@@ -71,7 +72,6 @@ class SurpriseTravelCrew:
             allow_delegation=False,
         )
 
-    @instrument
     @agent
     def restaurant_scout(self) -> Agent:
         return Agent(
@@ -81,7 +81,6 @@ class SurpriseTravelCrew:
             allow_delegation=False,
         )
 
-    @instrument
     @agent
     def itinerary_compiler(self) -> Agent:
         return Agent(
@@ -91,7 +90,6 @@ class SurpriseTravelCrew:
             allow_delegation=False,
         )
 
-    @instrument
     @task
     def personalized_activity_planning_task(self) -> Task:
         return Task(
@@ -99,7 +97,6 @@ class SurpriseTravelCrew:
             agent=self.personalized_activity_planner(),
         )
 
-    @instrument
     @task
     def restaurant_scenic_location_scout_task(self) -> Task:
         return Task(
@@ -107,7 +104,6 @@ class SurpriseTravelCrew:
             agent=self.restaurant_scout(),
         )
 
-    @instrument
     @task
     def itinerary_compilation_task(self) -> Task:
         return Task(
@@ -116,14 +112,17 @@ class SurpriseTravelCrew:
             output_json=Itinerary,
         )
 
-    @instrument
     @crew
-    def crew(self) -> Crew:
+    def create_crew(self) -> Crew:
         """Creates the SurpriseTravel crew"""
+        # Important: Before wrapping this app with TruCustomApp, assign the
+        # result of this method to an attribute of this class as otherwise the
+        # Crew class methods will not be instrumented.
+
         return Crew(
             agents=self.agents,  # Automatically created by the @agent decorator
             tasks=self.tasks,  # Automatically created by the @task decorator
             process=Process.sequential,
-            verbose=True,
+            verbose=False,
             # process=Process.hierarchical, # In case you want to use that instead https://docs.crewai.com/how-to/Hierarchical/
         )

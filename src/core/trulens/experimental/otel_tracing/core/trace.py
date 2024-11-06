@@ -460,8 +460,8 @@ class Tracer(core_otel.Tracer):
                 path=path
                 if path is not None
                 else serial_utils.Lens().static,  # placeholder path for functions
-                method=pyschema_utils.FunctionOrMethod.of_callable(
-                    c=span.live_func
+                method=pyschema_utils.Method.of_method(
+                    cls=span.live_cls, obj=span.live_obj, meth=span.live_func
                 ),
             )
 
@@ -609,6 +609,8 @@ class Tracer(core_otel.Tracer):
 
     @contextlib.contextmanager
     def _span(self, cls, **kwargs):
+        print("starting span of type", cls, kwargs)
+
         with self.start_span(cls=cls, **kwargs) as span:
             token = self.context_cvar.set(span.context)
 
