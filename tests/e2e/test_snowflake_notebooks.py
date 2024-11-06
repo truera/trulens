@@ -1,33 +1,46 @@
+import tempfile
+from typing import Sequence
 from unittest import main
 import uuid
+
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    _TRULENS_PACKAGES,
+)
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    _TRULENS_PACKAGES_DEPENDENCIES,
+)
 
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 _STAGE_NAME = "SNOWFLAKE_NOTEBOOKS"
+_DATA_DIRECTORY = "tests/e2e/data/"
 
 
 class TestSnowflakeNotebooks(SnowflakeTestCase):
-    def test_simple_notebook(self) -> None:
+    def test_simple(self) -> None:
+        schema_name = f"test_simple_{str(uuid.uuid4()).replace('-', '_')}"
+        self.create_and_use_schema(schema_name)
+        self._upload_and_run_notebook("simple", _TRULENS_PACKAGES)
+
+    def test_staged_packages(self) -> None:
+        self.get_session("test_staged_packages")
         self._upload_and_run_notebook(
-            "test_simple_notebook",
-            "simple",
-            "tests/e2e/data/",
+            "staged_packages", _TRULENS_PACKAGES_DEPENDENCIES
         )
 
     def _upload_and_run_notebook(
-        self, schema_base_name: str, name: str, path: str
+        self,
+        name: str,
+        conda_dependencies: Sequence[str],
     ) -> None:
+        tmp_directory = tempfile.TemporaryDirectory()
         try:
-            schema_name = (
-                f"{schema_base_name}_{str(uuid.uuid4()).replace('-', '_')}"
-            )
-            self.create_and_use_schema(schema_name)
             self.run_query(f"CREATE STAGE {_STAGE_NAME}")
             self.run_query(
-                f"PUT file://{path}/{name}.ipynb @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
+                f"PUT file://{_DATA_DIRECTORY}/{name}.ipynb @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
             )
-            self.run_query(
-                f"PUT file://{path}/environment.yml @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
+            self._create_and_upload_environment_yml(
+                conda_dependencies, tmp_directory.name
             )
             self.run_query(
                 f"""
@@ -40,8 +53,24 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
             self.run_query(f"ALTER NOTEBOOK {name} ADD LIVE VERSION FROM LAST")
             self.run_query(f"EXECUTE NOTEBOOK {name}()")
         finally:
+            tmp_directory.cleanup()
             self.run_query(f"DROP STAGE IF EXISTS {_STAGE_NAME}")
             self.run_query(f"DROP NOTEBOOK IF EXISTS {name}")
+
+    def _create_and_upload_environment_yml(
+        self, conda_dependencies: Sequence[str], directory: str
+    ) -> None:
+        filename = f"{directory}/environment.yml"
+        with open(filename, "w") as fh:
+            fh.write("name: app_environment\n")
+            fh.write("channels:\n")
+            fh.write("- snowflake\n")
+            fh.write("dependencies:\n")
+            for curr in conda_dependencies:
+                fh.write(f"  - {curr}=*\n")
+        self.run_query(
+            f"PUT file://{filename} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
+        )
 
 
 if __name__ == "__main__":
