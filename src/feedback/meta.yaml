@@ -1,5 +1,5 @@
 {% set name = "trulens-feedback" %}
-{% set version = "1.2.5" %}
+{% set version = "1.2.6" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 631aea2a5257a62ac2396362cb992d683aaaaad518385219c366e480a4fa6285
+  sha256: 54a41bf58fe821a78f9405098de3259be9d3327003a4bc93e44c6befe9f51646
 
 build:
   noarch: python
