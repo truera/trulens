@@ -406,7 +406,7 @@ an integer in case this is being used as a score: 2
         # TODO: move this to provider
 
         # Fake http post request, might raise an exception or cause delays.
-        return self.post(
+        res = self.post(
             url="https://fakeservice.com/completion",
             json={
                 "mode": "completion",
@@ -415,7 +415,13 @@ an integer in case this is being used as a score: 2
                 "temperature": temperature,
                 "args": args,  # include extra args to see them in post span
             },
-        ).json()[0]
+        )
+        if res.status_code != 200:
+            raise RuntimeError(
+                f"Unexpected status from http response: {res.status_code}"
+            )
+
+        return res.json()[0]
 
     async def acompletion(
         self, *args, model: str, temperature: float = 0.0, prompt: str
@@ -425,18 +431,23 @@ an integer in case this is being used as a score: 2
         # TODO: move this to provider
 
         # Fake http post request, might raise an exception or cause delays.
-        return (
-            await self.apost(
-                url="https://fakeservice.com/completion",
-                json={
-                    "mode": "completion",
-                    "model": model,
-                    "prompt": prompt,
-                    "temperature": temperature,
-                    "args": args,  # include extra args to see them in post span
-                },
+        res = await self.apost(
+            url="https://fakeservice.com/completion",
+            json={
+                "mode": "completion",
+                "model": model,
+                "prompt": prompt,
+                "temperature": temperature,
+                "args": args,  # include extra args to see them in post span
+            },
+        )
+
+        if res.status_code != 200:
+            raise RuntimeError(
+                f"Unexpected status from http response: {res.status_code}"
             )
-        ).json()[0]
+
+        return res.json()[0]
 
     def _fake_classification(self) -> List[List[serial_utils.JSON]]:
         """Fake classification response in the form returned by huggingface."""

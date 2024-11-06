@@ -143,81 +143,83 @@ class _FeatureSetup(pydantic.BaseModel):
 
 
 class _Setting(Generic[T]):
-    """A setting that attains some value and can be locked from changing."""
+    """A setting that attains some value and can be prevented from further
+    changes ("frozen")."""
 
     def __init__(self, default: T):
         self.value: T = default
         """The stored value."""
 
-        self.locked_by: Set[str] = set()
-        """Set of representations of frames (not in trulens) that have locked this value.
+        self.frozen_by: Set[str] = set()
+        """Set of representations of frames (not in trulens) that have frozen this value.
 
-        If empty, it has not been locked and can be changed.
+        If empty, it has not been frozen and can be changed.
         """
 
     @property
-    def is_locked(self) -> bool:
-        """Determine if the setting is locked."""
+    def is_frozen(self) -> bool:
+        """Determine if the setting is frozen."""
 
-        return len(self.locked_by) > 0
+        return len(self.frozen_by) > 0
 
-    def set(self, value: Optional[T] = None, lock: bool = False) -> T:
+    def set(self, value: Optional[T] = None, freeze: bool = False) -> T:
         """Set/Get the value.
 
-        Set the value first if a value is provided. Lock if lock is set.
+        Set the value first if a value is provided. Make it unchangeable if
+        freeze is set.
 
         Raises:
-            ValueError: If the setting has already been locked and the value is
+            ValueError: If the setting has already been frozen and the value is
                 different from the current value.
         """
 
         if value is not None:
-            if len(self.locked_by) > 0 and value != self.value:
-                locked_frames = ""
-                for frame_str in self.locked_by:
-                    locked_frames += f"  {frame_str}\n"
+            if len(self.frozen_by) > 0 and value != self.value:
+                freezing_frames = ""
+                for frame_str in self.frozen_by:
+                    freezing_frames += f"  {frame_str}\n"
 
                 raise ValueError(
                     f"Feature flag has already been set to {self.value} and cannot be changed. "
-                    f"It has been locked here:\n{locked_frames}"
+                    f"It has been frozen here:\n{freezing_frames}"
                 )
 
             self.value = value
 
-        if lock:
+        if freeze:
             frame = python_utils.external_caller_frame(offset=1)
             frame_str = python_utils.code_line(frame, show_source=True)
             # Store representation instead of frame to avoid keeping references
             # that would prevent GC.
-            self.locked_by.add(frame_str)
+            self.frozen_by.add(frame_str)
 
         return self.value
 
-    def get(self, lock: bool = False) -> T:
+    def get(self, freeze: bool = False) -> T:
         """Get the value of this setting.
 
-        If lock is True, lock the setting.
+        If freeze is True, freeze the setting so it cannot be changed.
         """
 
-        return self.set(lock=lock)
+        return self.set(freeze=freeze)
 
-    def lock(self, value: Optional[T] = None) -> T:
+    def freeze(self, value: Optional[T] = None) -> T:
         """Lock the value of this setting.
 
         If a value is provided, attempt to set the setting first to that value.
 
         Raises:
-            ValueError: If the setting has already been locked and the value is
+            ValueError: If the setting has already been frozen and the value is
                 different from the current value.
         """
 
-        return self.set(value, lock=True)
+        return self.set(value, freeze=True)
 
 
 class _Settings:
     """A collection of settings to enable/disable experimental features.
 
-    A feature can be enabled/disabled and/or locked so that once it is set, it
+    A feature can be enabled/disabled and/or frozen so that once it is set, it
     cannot be changed again. Locking is necessary for some features like OTEL
     tracing as once components have been instrumented with old or new tracing,
     the instrumentation cannot be changed.
@@ -229,72 +231,72 @@ class _Settings:
         )
         """The settings for the experimental features."""
 
-    def is_locked(self, flag: Union[Feature, str]) -> bool:
-        """Determine if the given setting is locked."""
+    def is_frozen(self, flag: Union[Feature, str]) -> bool:
+        """Determine if the given setting is frozen."""
 
-        return self.settings[Feature(flag)].is_locked
+        return self.settings[Feature(flag)].is_frozen
 
     def set(
         self,
         flag: Union[Feature, str],
         *,
         value: Optional[bool] = None,
-        lock: bool = False,
+        freeze: bool = False,
     ) -> bool:
         """Get/Set the given feature flag to the given value.
 
-        Sets the flag to the given value if the value parameter is set. Locks
-        the flag if the lock parameter is set to True.
+        Sets the flag to the given value if the value parameter is set. Freezes
+        the flag if the freeze parameter is set to True.
 
         Raises:
-            ValueError: If the flag was already locked to a different value.
+            ValueError: If the flag was already frozen to a different value.
         """
 
-        return self.settings[Feature(flag)].set(value=value, lock=lock)
+        return self.settings[Feature(flag)].set(value=value, freeze=freeze)
 
-    def lock(
+    def freeze(
         self, flag: Union[Feature, str], *, value: Optional[bool] = None
     ) -> bool:
         """Lock the given feature flag to the given value.
 
-        If the value is not provided, lock the flag to its current value.
+        If the value is not provided, freeze the flag to its current value.
 
         Raises:
-            ValueError: If the flag has already been locked to a different value.
+            ValueError: If the flag has already been frozen to a different value.
         """
 
-        return self.set(flag, value=value, lock=True)
+        return self.set(flag, value=value, freeze=True)
 
-    def get(self, flag: Union[str, Feature], *, lock: bool = False) -> bool:
-        """Determine the value of the given feature flag by checking both global
-        and instance flags.
+    def get(self, flag: Union[str, Feature], *, freeze: bool = False) -> bool:
+        """Determine the value of the given feature flag."""
 
-        Instance value takes precedence over the global value.
-        """
+        return self.set(flag, freeze=freeze)
 
-        return self.set(flag, lock=lock)
-
-    def enable(self, flag: Union[Feature, str], *, lock: bool = False) -> bool:
+    def enable(
+        self, flag: Union[Feature, str], *, freeze: bool = False
+    ) -> bool:
         """Enable the given feature flag.
 
-        Locks the flag if the lock parameter is set to True.
+        Freeze the flag if the freeze parameter is set to True.
 
         Raises:
-            ValueError: If the flag was already locked to disabled.
+            ValueError: If the flag was already frozen to disabled.
         """
 
-        return self.set(flag, value=True, lock=lock)
+        return self.set(flag, value=True, freeze=freeze)
 
-    def disable(self, flag: Union[Feature, str], *, lock: bool = False) -> bool:
+    def disable(
+        self, flag: Union[Feature, str], *, freeze: bool = False
+    ) -> bool:
         """Disable the given feature flag.
 
-        Locks the flag if the lock parameter is set to True.
+        Freezes the flag if the freeze parameter is set to True.
 
         Raises:
-            ValueError: If the flag was already locked to enabled.
+            ValueError: If the flag was already frozen to enabled.
         """
 
-        return self.set(flag, value=False, lock=lock)
+        return self.set(flag, value=False, freeze=freeze)
 
     def set_multiple(
         self,
@@ -302,25 +304,25 @@ class _Settings:
             Iterable[Union[str, Feature]],
             Mapping[Union[str, Feature], bool],
         ],
-        lock: bool = False,
+        freeze: bool = False,
     ):
         """Set multiple feature flags.
 
-        If lock is set, lock the flags. If a dictionary is passed, the keys are
-        the feature flags and the values are the values to set them to. If a
+        If freeze is set, freeze the flags. If a dictionary is passed, the keys
+        are the feature flags and the values are the values to set them to. If a
         list is passed, the flags are set to True.
 
         Raises:
-            ValueError: If any of the flags are already locked to a different
+            ValueError: If any of the flags are already frozen to a different
                 value than specified.
         """
 
         if isinstance(flags, dict):
             for flag, val in flags.items():
-                self.set(flag, value=val, lock=lock)
+                self.set(flag, value=val, freeze=freeze)
         else:
             for flag in flags:
-                self.set(flag, value=True, lock=lock)
+                self.set(flag, value=True, freeze=freeze)
 
 
 class _WithExperimentalSettings(
@@ -329,8 +331,8 @@ class _WithExperimentalSettings(
 ):
     """Mixin to add experimental flags and control methods.
 
-    Prints out messages when features are enabled/disabled locked and when
-    a setting fails to take up due to locking.
+    Prints out messages when features are enabled/disabled, frozen, and when a
+    setting fails to take up due to earlier freeze.
     """
 
     _experimental_feature_flags: _Settings = pydantic.PrivateAttr(
@@ -343,14 +345,14 @@ class _WithExperimentalSettings(
         flag: Union[str, Feature],
         *,
         value: Optional[bool] = None,
-        lock: bool = False,
+        freeze: bool = False,
     ) -> bool:
         """Get and/or set the value of the given feature flag.
 
-        Set it first if value is given. Lock it if lock is set.
+        Set it first if value is given. Freeze it if `freeze` is set.
 
         Raises:
-            ValueError: If the flag is locked to a different value.
+            ValueError: If the flag is frozen to a different value.
         """
 
         # NOTE(piotrm): The printouts are important as we want to make sure the
@@ -358,7 +360,7 @@ class _WithExperimentalSettings(
 
         flag = Feature(flag)
 
-        was_locked = self._experimental_feature_flags.is_locked(flag)
+        was_frozen = self._experimental_feature_flags.is_frozen(flag)
 
         if value:
             # If the feature has optional requirements, this checks that they
@@ -366,7 +368,9 @@ class _WithExperimentalSettings(
             _FeatureSetup.assert_can_enable(flag)
 
         original_value = self._experimental_feature_flags.get(flag)
-        val = self._experimental_feature_flags.set(flag, value=value, lock=lock)
+        val = self._experimental_feature_flags.set(
+            flag, value=value, freeze=freeze
+        )
         changed = val != original_value
 
         if value is not None and changed:
@@ -379,23 +383,23 @@ class _WithExperimentalSettings(
                     f"{text_utils.UNICODE_STOP} experimental {flag} disabled for {self._ident_str()}"
                 )
 
-        if val and lock and not was_locked:
+        if val and freeze and not was_frozen:
             print(
                 f"{text_utils.UNICODE_LOCK} experimental {flag} is enabled and cannot be changed."
             )
 
         return val
 
-    def _experimental_lock_feature(self, flag: Union[str, Feature]) -> bool:
-        """Get and lock the given feature flag."""
+    def _experimental_freeze_feature(self, flag: Union[str, Feature]) -> bool:
+        """Get and freeze the given feature flag."""
 
-        return self._experimental_feature(flag, lock=True)
+        return self._experimental_feature(flag, freeze=True)
 
     def experimental_enable_feature(self, flag: Union[str, Feature]) -> bool:
         """Enable the given feature flag.
 
         Raises:
-            ValueError: If the flag is already locked to disabled.
+            ValueError: If the flag is already frozen to disabled.
         """
 
         return self._experimental_feature(flag, value=True)
@@ -404,20 +408,20 @@ class _WithExperimentalSettings(
         """Disable the given feature flag.
 
         Raises:
-            ValueError: If the flag is already locked to enabled.
+            ValueError: If the flag is already frozen to enabled.
         """
 
         return self._experimental_feature(flag, value=False)
 
     def experimental_feature(
-        self, flag: Union[str, Feature], *, lock: bool = False
+        self, flag: Union[str, Feature], *, freeze: bool = False
     ) -> bool:
         """Determine the value of the given feature flag.
 
-        If lock is set, the flag will be locked to the value returned.
+        If `freeze` is set, the flag will be frozen to the value returned.
         """
 
-        return self._experimental_feature(flag, lock=lock)
+        return self._experimental_feature(flag, freeze=freeze)
 
     def experimental_set_features(
         self,
@@ -425,23 +429,23 @@ class _WithExperimentalSettings(
             Iterable[Union[str, Feature]],
             Mapping[Union[str, Feature], bool],
         ],
-        lock: bool = False,
+        freeze: bool = False,
     ):
         """Set multiple feature flags.
 
-        If lock is set, the flags will be locked to the values given.
+        If `freeze` is set, the flags will be frozen to the values given.
 
         Raises:
-            ValueError: If any flag is already locked to a different value than
+            ValueError: If any flag is already frozen to a different value than
             provided.
         """
 
         if isinstance(flags, dict):
             for flag, val in flags.items():
-                self._experimental_feature(flag, value=val, lock=lock)
+                self._experimental_feature(flag, value=val, freeze=freeze)
         else:
             for flag in flags:
-                self._experimental_feature(flag, value=True, lock=lock)
+                self._experimental_feature(flag, value=True, freeze=freeze)
 
     def _experimental_assert_feature(
         self, flag: Feature, purpose: Optional[str] = None
@@ -475,20 +479,20 @@ class _WithExperimentalSettings(
 
     @staticmethod
     def _experimental_method_override(
-        flag: Feature, enabled: T, lock: bool = False
+        flag: Feature, enabled: T, freeze: bool = False
     ) -> T:
         """Decorator to replace the decorated method with the given one if the
         specified feature is enabled.
 
-        Locks the flag if the lock parameter is set to True.
+        Freezes the flag if the `frozen` parameter is set.
 
         Example:
             ```python
-            class MyClass(WithExperimentalSettings, ...):
+            class MyClass(_WithExperimentalSettings, ...):
 
                 def my_method_experimental(self, ...): ...
 
-                @MyClass.experimental_method_override(
+                @MyClass._experimental_method_override(
                     flag=Feature.OTEL_TRACING,
                     enabled=my_method_experimental
                 )
@@ -499,7 +503,7 @@ class _WithExperimentalSettings(
         def wrapper(func: T) -> T:
             @functools.wraps(func)
             def wrapped(self: _WithExperimentalSettings, *args, **kwargs):
-                if self.experimental_feature(flag, lock=lock):
+                if self.experimental_feature(flag, freeze=freeze):
                     return enabled(*args, **kwargs)
 
                 return func(self, *args, **kwargs)
@@ -510,21 +514,24 @@ class _WithExperimentalSettings(
 
     @staticmethod
     def _experimental_method(
-        flag: Feature, enabled: Callable, disabled: Callable, lock: bool = False
+        flag: Feature,
+        enabled: Callable,
+        disabled: Callable,
+        freeze: bool = False,
     ) -> Callable:
         """Select between two methods based on the status of a feature flag.
 
-        The selection happens after the method is called. Locks the flag if the lock
-        parameter is set to True.
+        The selection happens after the method is called. Freezes the flag if
+        the `freeze` parameter is set.
 
         Example:
             ```python
-            class MyClass(WithExperimentalSettings, ...):
+            class MyClass(_WithExperimentalSettings, ...):
                 ...
                 def my_method_default(self, ...): ...
                 def my_method_experimental(self, ...): ...
                 ...
-                my_method = MyClass.experimental_method(
+                my_method = MyClass._experimental_method(
                     flag=Feature.OTEL_TRACING,
                     enabled=my_method_experimental,
                     disabled=my_method_default
@@ -534,7 +541,7 @@ class _WithExperimentalSettings(
 
         @functools.wraps(enabled)  # or disabled
         def wrapper(self: _WithExperimentalSettings, *args, **kwargs):
-            if self.experimental_feature(flag, lock=lock):
+            if self.experimental_feature(flag, freeze=freeze):
                 return enabled(*args, **kwargs)
 
             return disabled(*args, **kwargs)

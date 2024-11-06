@@ -1221,7 +1221,7 @@ class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
 class PydanticSingleton(metaclass=PydanticSingletonMeta):
     """A Pydantic model that is also a singleton by name.
 
-    This only specifies the metaclass and adds wraps `delete_singleton_by_name`.
+    This only specifies the metaclass and wraps `delete_singleton_by_name`.
     """
 
     @classmethod

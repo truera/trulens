@@ -573,7 +573,7 @@ class Instrument:
             raise ValueError("Instrumentation requires an app but is None.")
 
         if self.app.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING, lock=True
+            core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
             from trulens.experimental.otel_tracing.core.instruments import (
                 _Instrument,

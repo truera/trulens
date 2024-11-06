@@ -572,7 +572,7 @@ class Endpoint(
         session = core_session.TruSession()
 
         if session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING, lock=True
+            core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
             from trulens.experimental.otel_tracing.core.feedback.endpoint import (
                 _Endpoint,
@@ -743,7 +743,7 @@ class Endpoint(
         session = core_session.TruSession()
 
         if session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING, lock=True
+            core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
             from trulens.experimental.otel_tracing.core.feedback.endpoint import (
                 _Endpoint,
@@ -929,7 +929,17 @@ class _WithPost(Endpoint):
     ) -> Dict:
         """Wraps `post` with json()[0]."""
 
-        return self.post(url=url, json=json, timeout=timeout).json()[0]
+        jdata = self.post(url=url, json=json, timeout=timeout).json()
+        if len(jdata) == 0:
+            raise ValueError("Empty response from post.")
+
+        if len(jdata) > 1:
+            logger.warning(
+                "Received more than one response from post. "
+                "Returning only the first."
+            )
+
+        return jdata[0]
 
     async def apost_json_first(
         self,
@@ -939,7 +949,18 @@ class _WithPost(Endpoint):
     ) -> Dict:
         """Wraps `apost` with json()[0]."""
 
-        return (await self.apost(url=url, json=json, timeout=timeout)).json()[0]
+        jdata = (await self.apost(url=url, json=json, timeout=timeout)).json()
+
+        if len(jdata) == 0:
+            raise ValueError("Empty response from post.")
+
+        if len(jdata) > 1:
+            logger.warning(
+                "Received more than one response from apost. "
+                "Returning only the first."
+            )
+
+        return jdata[0]
 
 
 EndpointCallback.model_rebuild()
