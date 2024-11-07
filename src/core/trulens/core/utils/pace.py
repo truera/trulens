@@ -1,4 +1,5 @@
 from _thread import LockType
+import asyncio
 from collections import deque
 from datetime import datetime
 from datetime import timedelta
@@ -95,10 +96,53 @@ class Pace(BaseModel):
             **kwargs,
         )
 
-    def mark(self) -> float:
+    async def amark(self) -> float:
+        """Return in appropriate pace.
+
+        Blocks until return can happen in the appropriate pace. Returns time in
+        seconds since last mark returned.
         """
-        Return in appropriate pace. Blocks until return can happen in the
-        appropriate pace. Returns time in seconds since last mark returned.
+
+        async with self.lock:
+            while len(self.mark_expirations) >= self.max_marks:
+                delay = (
+                    self.mark_expirations[0] - datetime.now()
+                ).total_seconds()
+
+                if delay >= self.seconds_per_period * 0.5:
+                    logger.warning(
+                        f"""
+Pace has a long delay of {delay} seconds. There might have been a burst of
+requests which may become a problem for the receiver of whatever is being paced.
+Consider reducing the `seconds_per_period` (currently {self.seconds_per_period} [seconds]) over which to
+maintain pace to reduce burstiness. " Alternatively reduce `marks_per_second`
+(currently {self.marks_per_second} [1/second]) to reduce the number of marks
+per second in that period.
+"""
+                    )
+
+                if delay > 0.0:
+                    await asyncio.sleep(delay)
+
+                self.mark_expirations.popleft()
+
+            prior_last_mark = self.last_mark
+            now = datetime.now()
+            self.last_mark = now
+
+            # Add to marks the point at which the mark can be removed (after
+            # `period` seconds).
+            self.mark_expirations.append(
+                now + self.seconds_per_period_timedelta
+            )
+
+            return (now - prior_last_mark).total_seconds()
+
+    def mark(self) -> float:
+        """Return in appropriate pace.
+
+        Blocks until return can happen in the appropriate pace. Returns time in
+        seconds since last mark returned.
         """
 
         with self.lock:

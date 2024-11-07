@@ -1,11 +1,10 @@
+# ruff: noqa: E402
+
 """Implementation of recording that resembles the tracing process in OpenTelemetry.
 
 !!! Note
-    Most of the module is (EXPERIMENTAL: otel-tracing) though it includes some existing
+    Most of the module is (EXPERIMENTAL(otel_tracing)) though it includes some existing
     non-experimental classes moved here to resolve some circular import issues.
-
-This module is likely temporary and will be replaced by actual OpenTelemetry sdk
-components or implementations that are compatible with its API.
 """
 
 from __future__ import annotations
@@ -18,11 +17,12 @@ import logging
 import os
 import threading as th
 from threading import Lock
-from types import TracebackType
 from typing import (
     Any,
     Callable,
+    ContextManager,
     Dict,
+    Generic,
     Hashable,
     Iterable,
     List,
@@ -33,10 +33,8 @@ from typing import (
     Union,
 )
 import uuid
+import weakref
 
-from opentelemetry.semconv.resource import ResourceAttributes
-from opentelemetry.trace import span as span_api
-from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
@@ -45,8 +43,19 @@ from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing import _feature
 from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
+
+_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+
+from opentelemetry.semconv.resource import ResourceAttributes
+from opentelemetry.trace import span as span_api
+from opentelemetry.util import types as types_api
+
+T = TypeVar("T")
+R = TypeVar("R")  # callable return type
+E = TypeVar("E")  # iterator/generator element type
 
 logger = logging.getLogger(__name__)
 
@@ -95,19 +104,24 @@ class SpanContext(core_otel.SpanContext, Hashable):
                 span_id=span_context.span_id,
                 is_remote=span_context.is_remote,
             )
+        elif isinstance(span_context, Dict):
+            return SpanContext.model_validate(span_context)
         else:
             raise ValueError(f"Unrecognized span context type: {span_context}")
 
 
 SpanContextLike = Union[
-    SpanContext, core_otel.SpanContext, span_api.SpanContext
+    SpanContext, core_otel.SpanContext, span_api.SpanContext, serial_utils.JSON
 ]
 
 
 class Span(core_otel.Span):
     """TruLens additions on top of OTEL spans."""
 
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
+    model_config = pydantic.ConfigDict(
+        arbitrary_types_allowed=True,
+        use_enum_values=True,  # model_validate will fail without this
+    )
 
     def __str__(self):
         return (
@@ -130,6 +144,9 @@ class Span(core_otel.Span):
         if self.parent is None:
             return None
 
+        if self._tracer is None:
+            return None
+
         if (span := self._tracer.spans.get(self.parent)) is None:
             return None
 
@@ -146,10 +163,10 @@ class Span(core_otel.Span):
 
     def __init__(self, **kwargs):
         # Convert any contexts to our hashable context class:
-        if (context := kwargs["_context"]) is not None:
-            kwargs["_context"] = SpanContext.of_spancontextlike(context)
-        if (parent := kwargs.get("_parent", None)) is not None:
-            kwargs["_parent"] = SpanContext.of_spancontextlike(parent)
+        if (context := kwargs.get("context")) is not None:
+            kwargs["context"] = SpanContext.of_spancontextlike(context)
+        if (parent := kwargs.get("parent", None)) is not None:
+            kwargs["parent"] = SpanContext.of_spancontextlike(parent)
 
         super().__init__(**kwargs)
 
@@ -203,17 +220,6 @@ class Span(core_otel.Span):
                 total += span.cost
 
         return total
-
-    async def __aenter__(self) -> Span:
-        return self.__enter__()
-
-    async def __aexit__(
-        self,
-        exc_type: Optional[BaseException],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
-    ) -> None:
-        return self.__exit__(exc_type, exc_val, exc_tb)
 
 
 class PhantomSpan(Span):
@@ -391,13 +397,18 @@ class LiveSpanCall(LiveSpan, SpanCall):
             )
 
 
+S = TypeVar("S", bound=LiveSpanCall)
+
+
 class WithCost(LiveSpan):
     """Mixin to indicate the span has costs tracked."""
 
     cost: base_schema.Cost = pydantic.Field(default_factory=base_schema.Cost)
     """Cost of the computation spanned."""
 
-    endpoint: Optional[Any] = pydantic.Field(None, exclude=True)
+    endpoint: Optional[Any] = pydantic.Field(
+        None, exclude=True
+    )  # Any actually core_endpoint.Endpoint
     """Endpoint handling cost extraction for this span/call."""
 
     def end(self):
@@ -418,6 +429,11 @@ class LiveSpanCallWithCost(LiveSpanCall, WithCost):
 
 class Tracer(core_otel.Tracer):
     """TruLens additions on top of [OTEL Tracer][opentelemetry.trace.Tracer]."""
+
+    # TODO: Tracer that does not record anything. Can either be a setting to
+    # this tracer or a separate "NullTracer". We need non-recording users to not
+    # incur much overhead hence need to be able to disable most of the tracing
+    # logic when appropriate.
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
@@ -488,7 +504,11 @@ class Tracer(core_otel.Tracer):
                 del args["self"]  # remove self
 
         assert span.start_timestamp is not None
-        assert span.end_timestamp is not None
+        if span.end_timestamp is None:
+            logger.warning(
+                "Span %s has no end timestamp. It might not have yet finished recording.",
+                span,
+            )
 
         return record_schema.RecordAppCall(
             call_id=str(span.call_id),
@@ -527,10 +547,7 @@ class Tracer(core_otel.Tracer):
             else None
         )
 
-        if isinstance(root_span, WithCost):
-            root_cost = root_span.total_cost()
-        else:
-            root_cost = base_schema.Cost()
+        total_cost = root_span.total_cost()
 
         calls = []
         if isinstance(root_span, LiveSpanCall):
@@ -574,12 +591,14 @@ class Tracer(core_otel.Tracer):
             main_error=json_utils.jsonify(main_error),
             calls=calls,
             perf=root_perf,
-            cost=root_cost,
+            cost=total_cost,
             experimental_otel_spans=spans,
         )
 
         # record_id determinism
-        record.record_id = json_utils.obj_id_of_obj(record, prefix="record")
+        record.record_id = json_utils.obj_id_of_obj(
+            record.model_dump(), prefix="record"
+        )
 
         return record
 
@@ -608,39 +627,33 @@ class Tracer(core_otel.Tracer):
             )
 
     @contextlib.contextmanager
-    def _span(self, cls, **kwargs):
+    def _span(self, cls: Type[S], **kwargs) -> ContextManager[S]:
         with self.start_span(cls=cls, **kwargs) as span:
-            token = self.context_cvar.set(span.context)
-
-            try:
+            with python_utils.with_context({self.context_cvar: span.context}):
                 yield span
-
-            finally:
-                self.context_cvar.reset(token)
 
     @contextlib.asynccontextmanager
-    async def _aspan(self, cls, **kwargs):
+    async def _aspan(self, cls: Type[S], **kwargs) -> ContextManager[S]:
         async with self.start_span(cls=cls, **kwargs) as span:
-            token = self.context_cvar.set(span.context)
-
-            try:
+            async with python_utils.awith_context({
+                self.context_cvar: span.context
+            }):
                 yield span
 
-            finally:
-                self.context_cvar.reset(token)
-
     # context manager
-    def recording(self):
+    def recording(self) -> ContextManager[PhantomSpanRecordingContext]:
         return self._span(
             name="trulens.recording", cls=PhantomSpanRecordingContext
         )
 
     # context manager
-    def method(self, method_name: str):
+    def method(self, method_name: str) -> ContextManager[LiveSpanCall]:
         return self._span(name="trulens.call." + method_name, cls=LiveSpanCall)
 
     # context manager
-    def cost(self, method_name: str, cost: Optional[base_schema.Cost] = None):
+    def cost(
+        self, method_name: str, cost: Optional[base_schema.Cost] = None
+    ) -> ContextManager[LiveSpanCallWithCost]:
         return self._span(
             name="trulens.call." + method_name,
             cls=LiveSpanCallWithCost,
@@ -648,23 +661,23 @@ class Tracer(core_otel.Tracer):
         )
 
     # context manager
-    def phantom(self):
+    def phantom(self) -> ContextManager[PhantomSpan]:
         return self._span(name="trulens.phantom", cls=PhantomSpan)
 
     # context manager
-    async def arecording(self):
+    async def arecording(self) -> ContextManager[PhantomSpanRecordingContext]:
         return self._aspan(
             name="trulens.recording", cls=PhantomSpanRecordingContext
         )
 
     # context manager
-    async def amethod(self, method_name: str):
+    async def amethod(self, method_name: str) -> ContextManager[LiveSpanCall]:
         return self._aspan(name="trulens.call." + method_name, cls=LiveSpanCall)
 
     # context manager
     async def acost(
         self, method_name: str, cost: Optional[base_schema.Cost] = None
-    ):
+    ) -> ContextManager[LiveSpanCallWithCost]:
         return self._aspan(
             name="trulens.call." + method_name,
             cls=LiveSpanCallWithCost,
@@ -672,52 +685,8 @@ class Tracer(core_otel.Tracer):
         )
 
     # context manager
-    async def aphantom(self):
+    async def aphantom(self) -> ContextManager[PhantomSpan]:
         return self._aspan(name="trulens.phantom", cls=PhantomSpan)
-
-
-class NullTracer(Tracer):
-    """Tracer that does not save the spans it makes."""
-
-    @contextlib.contextmanager
-    def _span(self, cls, **kwargs):
-        # TODO: this adds span to global list, don't do this
-        span = self.start_span(cls=cls, **kwargs)
-
-        token = self.context.set(span.context)
-
-        error = None
-
-        try:
-            yield span
-        except BaseException as e:
-            # ignore exception since spans are also ignored/not recorded
-            error = e
-        finally:
-            self.context.reset(token)
-            if error is not None:
-                raise error
-
-    @contextlib.asynccontextmanager
-    async def _aspan(self, cls, **kwargs):
-        span = self.start_span(cls=cls, **kwargs)
-        token = self.context.set(span.context)
-
-        error = None
-
-        try:
-            yield span
-        except BaseException as e:
-            # ignore exception since spans are also ignored/not recorded
-            error = e
-        finally:
-            self.context.reset(token)
-            if error is not None:
-                raise error
-
-    @property
-    def spans(self):
-        return []
 
 
 class TracerProvider(
@@ -789,23 +758,14 @@ def trulens_tracer():
     )
 
 
-T = TypeVar("T")
-
-
-class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
+class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
     """Extension of CallableCallbacks that adds tracing to the wrapped callable
     as implemented using tracer and spans."""
-
-    @classmethod
-    def on_callable_wrapped(
-        cls, wrapper: Callable[..., Any], **kwargs: Dict[str, Any]
-    ):
-        return super().on_callable_wrapped(wrapper=wrapper, **kwargs)
 
     def __init__(
         self,
         func_name: str,
-        span_type: Type[LiveSpanCall] = LiveSpanCall,
+        span_type: Type[S] = LiveSpanCall,
         **kwargs: Dict[str, Any],
     ):
         super().__init__(**kwargs)
@@ -819,10 +779,10 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         if not issubclass(span_type, LiveSpanCall):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
 
-        self.span_context = trulens_tracer()._span(
+        self.span_context: ContextManager = trulens_tracer()._span(
             span_type, name="trulens.call." + func_name
         )
-        self.span = self.span_context.__enter__()
+        self.span: S = self.span_context.__enter__()
 
     def on_callable_call(
         self, bindings: inspect.BoundArguments, **kwargs: Dict[str, Any]
@@ -830,9 +790,12 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         temp = super().on_callable_call(bindings=bindings, **kwargs)
 
         if "self" in bindings.arguments:
+            # TODO: need some generalization
             self.obj = bindings.arguments["self"]
             self.obj_cls = type(self.obj)
             self.obj_id = id(self.obj)
+        else:
+            logger.warning("No self in bindings for %s.", self)
 
         span = self.span
         span.pid = os.getpid()
@@ -841,6 +804,8 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[T]):
         return temp
 
     def on_callable_end(self):
+        super().on_callable_end()
+
         span = self.span
 
         # SpanCall attributes
@@ -928,20 +893,20 @@ class _RecordingContext:
         """Metadata to attach to all records produced in this context."""
 
         self.tracer: Optional[Tracer] = tracer
-        """EXPERIMENTAL(otel-tracing): OTEL-like tracer for recording.
+        """EXPERIMENTAL(otel_tracing): OTEL-like tracer for recording.
         """
 
         self.span: Optional[PhantomSpanRecordingContext] = span
-        """EXPERIMENTAL(otel-tracing): Span that represents a recording context
+        """EXPERIMENTAL(otel_tracing): Span that represents a recording context
         (the with block)."""
 
         self.span_ctx = span_ctx
-        """EXPERIMENTAL(otel-tracing): The context manager for the above span.
+        """EXPERIMENTAL(otel_tracing): The context manager for the above span.
         """
 
     @property
     def spans(self) -> Dict[SpanContext, Span]:
-        """EXPERIMENTAL(otel-tracing): Get the spans of the tracer in this context."""
+        """EXPERIMENTAL(otel_tracing): Get the spans of the tracer in this context."""
 
         if self.tracer is None:
             return {}
@@ -1067,7 +1032,7 @@ class _WithInstrumentCallbacks:
     def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
-        """EXPERIMENTAL(otel-tracing): Get the methods (rather the inner
+        """EXPERIMENTAL(otel_tracing): Get the methods (rather the inner
         functions) matching the given `func` and the path of each.
 
         Args:
@@ -1082,7 +1047,7 @@ class _WithInstrumentCallbacks:
         ctx: _RecordingContext,
         root_span: LiveSpanCall,
     ) -> record_schema.Record:
-        """EXPERIMENTAL(otel-tracing): Called by instrumented methods if they
+        """EXPERIMENTAL(otel_tracing): Called by instrumented methods if they
         are root calls (first instrumented methods in a call stack).
 
         Args:
@@ -1090,31 +1055,31 @@ class _WithInstrumentCallbacks:
 
             root_span: The root span that was recorded.
         """
-        # EXPERIMENTAL: otel-tracing
+        # EXPERIMENTAL(otel_tracing)
 
         raise NotImplementedError
 
 
-class AppTracingCallbacks(TracingCallbacks[T]):
+class AppTracingCallbacks(TracingCallbacks[R, S]):
     """Extension to TracingCallbacks that keep track of apps that are
     instrumenting their constituent calls."""
 
     @classmethod
     def on_callable_wrapped(
         cls,
-        wrapper: Callable[..., Any],
+        wrapper: Callable[..., R],
         app: _WithInstrumentCallbacks,
         **kwargs: Dict[str, Any],
     ):
         if not python_utils.safe_hasattr(wrapper, APPS):
-            apps = set()
+            apps: weakref.WeakSet[_WithInstrumentCallbacks] = weakref.WeakSet()
             setattr(wrapper, APPS, apps)
         else:
             apps = python_utils.safe_getattr(wrapper, APPS)
 
         apps.add(app)
 
-        return super().on_callable_wrapped(wrapper, **kwargs)
+        return super().on_callable_wrapped(wrapper=wrapper, **kwargs)
 
     def __init__(
         self,
