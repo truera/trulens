@@ -4311,7 +4311,7 @@ files = []
 develop = true
 
 [package.dependencies]
-trulens-core = {version = "^1.0.0", extras = ["openai", "otel", "tqdm"]}
+trulens-core = {version = "^1.2.2", extras = ["openai", "otel", "tqdm"]}
 trulens-dashboard = "^1.0.0"
 trulens_eval = "^1.0.0"
 trulens-feedback = "^1.0.0"
