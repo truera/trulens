@@ -160,8 +160,8 @@ class SnowflakeConnector(DBConnector):
         snowpark_session: Session,
     ) -> None:
         if snowpark_session.connection._paramstyle == "pyformat":
-            # If this isn't the case, sql executions with bindings will fail
-            # later on so we fail fast here.
+            # If this is the case, sql executions with bindings will fail later
+            # on so we fail fast here.
             raise ValueError(
                 "The Snowpark session must have paramstyle 'qmark'! To ensure"
                 " this, during `snowflake.connection.connect` pass in"
