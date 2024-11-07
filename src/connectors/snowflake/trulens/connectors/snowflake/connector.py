@@ -164,7 +164,7 @@ class SnowflakeConnector(DBConnector):
             # on so we fail fast here.
             raise ValueError(
                 "The Snowpark session must have paramstyle 'qmark'! To ensure"
-                " this, during `snowflake.connection.connect` pass in"
+                " this, during `snowflake.connector.connect` pass in"
                 " `paramstyle='qmark'` or set"
                 " `snowflake.connector.paramstyle = 'qmark'` beforehand."
             )
