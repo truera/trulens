@@ -31,7 +31,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.9,!=3.9.7"
-trulens-core = { version = "^1.0.0" }
+trulens-core = { version = "^1.2.2" }
 ipywidgets = "^8.1.2"
 jupyter = "^1"
 pandas = ">=1.0.0"
