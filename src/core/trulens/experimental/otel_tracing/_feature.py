@@ -7,6 +7,7 @@ from trulens.core.utils import imports as import_utils
 
 # from trulens.core import session as core_session # circular import
 
+
 FEATURE = experimental.Feature.OTEL_TRACING
 """Feature controlling the use of this module."""
 

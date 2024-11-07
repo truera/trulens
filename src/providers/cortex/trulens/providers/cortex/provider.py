@@ -22,11 +22,12 @@ class Cortex(
     snowflake_conn: Any
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
-       Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
-        !!! example
-        === Connecting with user/password:
+    Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
+    !!! example
+
+        === "Connecting with user/password"
             ```python
             connection_parameters = {
                 "account": <account>,
@@ -42,8 +43,7 @@ class Cortex(
             ))
             ```
 
-        === Connecting with private key:
-
+        === "Connecting with private key"
             ```python
             connection_parameters = {
                 "account": <account>,
@@ -57,9 +57,9 @@ class Cortex(
             provider = Cortex(snowflake.connector.connect(
                 **connection_parameters
             ))
+            ```
 
-        === Connecting with a private key file:
-
+        === "Connecting with a private key file"
             ```python
             connection_parameters = {
                 "account": <account>,
@@ -77,7 +77,7 @@ class Cortex(
             ```
 
     Args:
-        snowflake_conn (Any): Snowflake connection.
+        snowflake_conn (Any): Snowflake connection. Note: This is not a snowflake session.
 
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
@@ -104,7 +104,10 @@ class Cortex(
         self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
         if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
             self_kwargs["snowflake_conn"] = snowflake_conn
-
+        if not callable(getattr(self_kwargs["snowflake_conn"], "cursor", None)):
+            raise ValueError(
+                "Invalid snowflake_conn: Expected a Snowflake connection object with a 'cursor' method. Please ensure you are not passing a session object."
+            )
         super().__init__(**self_kwargs)
 
     def _exec_snowsql_complete_command(

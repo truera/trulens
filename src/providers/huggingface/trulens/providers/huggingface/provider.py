@@ -157,9 +157,6 @@ class HuggingfaceBase(core_provider.Provider):
             feedback = Feedback(huggingface_provider.language_match).on_input_output()
             ```
 
-            The `on_input_output()` selector can be changed. See [Feedback Function
-            Guide](https://www.trulens.org/trulens/feedback_function_guide/)
-
         Args:
             text1: Text to evaluate.
 
@@ -363,9 +360,6 @@ class HuggingfaceBase(core_provider.Provider):
             f_pii_detection = Feedback(hugs.pii_detection).on_input()
             ```
 
-            The `on(...)` selector can be changed. See [Feedback Function Guide:
-            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
-
         Args:
             text: A text prompt that may contain a PII.
 
@@ -404,10 +398,6 @@ class HuggingfaceBase(core_provider.Provider):
             # Define a pii_detection feedback function using HuggingFace.
             f_pii_detection = Feedback(hugs.pii_detection).on_input()
             ```
-
-            The `on(...)` selector can be changed. See [Feedback Function Guide
-            :
-            Selectors](https://www.trulens.org/trulens/feedback_function_guide/#selector-details)
 
             Args:
                 text: A text prompt that may contain a name.

@@ -50,20 +50,22 @@ Thread(target=copy_context().run, args=(your_thread_target, yourargs, ...), kwar
 If using async Tasks, make sure that the default `copy_context` behaviour of
 `Task` is being used. This only applies to python >= 3.11:
 
-```python
-from contextvars import copy_context
-from asyncio import get_running_loop
+!!! example
 
-loop = get_running_loop()
+    ```python
+    from contextvars import copy_context
+    from asyncio import get_running_loop
 
-# before:
-task = loop.create_task(your_coroutine, ..., context=...)
+    loop = get_running_loop()
 
-# after:
-task = loop.create_task(your_coroutine, ..., context=copy_context())
-# or:
-task = loop.create_task(your_coroutine, ...) # use default context behaviour
-```
+    # before:
+    task = loop.create_task(your_coroutine, ..., context=...)
+
+    # after:
+    task = loop.create_task(your_coroutine, ..., context=copy_context())
+    # or:
+    task = loop.create_task(your_coroutine, ...) # use default context behaviour
+    ```
 
 If you are using python prior to 3.11, `copy_context` is the fixed behaviour
 which cannot be changed.

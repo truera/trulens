@@ -137,8 +137,8 @@ class BlockingSet(set, Generic[T]):
             self.read_lock.release()
 
         else:
-            # Acquire was used with blocking=False and the lock would have
-            # blocked.
+            # Acquire was used with blocking=False and it would have
+            # blocked. Want the non-blocking behaviour to return None in such cases.
             return None
 
         return item

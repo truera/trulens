@@ -5,9 +5,6 @@
 !!! Note
     Most of the module is (EXPERIMENTAL(otel_tracing)) though it includes some existing
     non-experimental classes moved here to resolve some circular import issues.
-
-This module is likely temporary and will be replaced by actual OpenTelemetry sdk
-components or implementations that are compatible with its API.
 """
 
 from __future__ import annotations
@@ -416,6 +413,9 @@ class LiveTraceRoot(WithApps):
 S = TypeVar("S", bound=LiveSpanCall)
 
 
+S = TypeVar("S", bound=LiveSpanCall)
+
+
 class WithCost(LiveSpan):
     """Mixin to indicate the span has costs tracked."""
 
@@ -445,6 +445,11 @@ class LiveSpanCallWithCost(LiveSpanCall, WithCost):
 
 class Tracer(core_otel.Tracer):
     """TruLens additions on top of [OTEL Tracer][opentelemetry.trace.Tracer]."""
+
+    # TODO: Tracer that does not record anything. Can either be a setting to
+    # this tracer or a separate "NullTracer". We need non-recording users to not
+    # incur much overhead hence need to be able to disable most of the tracing
+    # logic when appropriate.
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
