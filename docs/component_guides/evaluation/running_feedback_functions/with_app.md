@@ -9,7 +9,7 @@ evaluate. Optionally, you can also select an aggregation method.
 f_context_relevance = Feedback(openai.context_relevance)
     .on_input()
     .on(context)
-    .aggregate(numpy.min)
+    .aggregate(numpy.mean)
 
 # Implementation signature:
 # def context_relevance(self, question: str, statement: str) -> float:
