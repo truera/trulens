@@ -14,7 +14,7 @@ from trulens.core.utils import python as python_utils
 logger = logging.getLogger(__name__)
 
 PACKAGES_MIGRATION_LINK = (
-    "https://www.trulens.org/trulens/guides/trulens_eval_migration/"
+    "https://www.trulens.org/component_guides/other/trulens_eval_migration/"
 )
 
 

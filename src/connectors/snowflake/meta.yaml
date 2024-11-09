@@ -1,5 +1,5 @@
 {% set name = "trulens-connectors-snowflake" %}
-{% set version = "1.1.0" %}
+{% set version = "1.2.6" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: a7aa5eb9a1ffa98e2301952473a958f4bd143d2723339bc926f0a675e6d48ade
+  sha256: 60dd891cfdf9c5cfc7a39d74ad9f875336e163dadbf64ba2448bd7e062bbecd7
 
 build:
   noarch: python
@@ -22,10 +22,8 @@ requirements:
   run:
     - python >=3.9,<3.12
     - trulens-core >=1.0.0,<2.0.0
-    - snowflake-connector-python >=3.11.0,<4.0.0
     - snowflake-snowpark-python >=1.18.0,<2.0.0
     - snowflake-sqlalchemy >=1.6.0,<2.0.0
-    - snowflake.core >=0.10.0,<1.0.0
 
 test:
   imports:

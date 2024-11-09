@@ -3,17 +3,17 @@
 For cases where argument specification names more than one value as an input,
 aggregation can be used.
 
-Consider this feedback example:
+!!! example
 
-```python
-# Context relevance between question and each context chunk.
-f_context_relevance = (
-    Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
-    .on(Select.RecordCalls.retrieve.args.query)
-    .on(Select.RecordCalls.retrieve.rets)
-    .aggregate(numpy.mean)
-)
-```
+    ```python
+    # Context relevance between question and each context chunk.
+    f_context_relevance = (
+        Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
+        .on(Select.RecordCalls.retrieve.args.query)
+        .on(Select.RecordCalls.retrieve.rets)
+        .aggregate(numpy.mean)
+    )
+    ```
 
 The last line `aggregate(numpy.mean)` specifies how feedback outputs are to be aggregated.
 This only applies to cases where the argument specification names more than one value

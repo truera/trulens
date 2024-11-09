@@ -4,13 +4,13 @@ Test class to use for Snowflake testing.
 
 import logging
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 from unittest import TestCase
 from unittest import main
 import uuid
 
-from snowflake.core import Root
 from snowflake.snowpark import Session
+from snowflake.snowpark.row import Row
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as core_session
 
@@ -30,8 +30,7 @@ class SnowflakeTestCase(TestCase):
         self._snowpark_session = Session.builder.configs(
             self._snowflake_connection_parameters
         ).create()
-        self._snowflake_root = Root(self._snowpark_session)
-        self._snowflake_schemas_to_delete = []
+        self._snowflake_schemas_to_delete = set()
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
@@ -45,10 +44,9 @@ class SnowflakeTestCase(TestCase):
         schemas_not_deleted = []
         for curr in self._snowflake_schemas_to_delete:
             try:
-                schema = self._snowflake_root.databases[
-                    self._snowflake_connection_parameters["database"]
-                ].schemas[curr]
-                schema.delete()
+                self.run_query(
+                    f"DROP SCHEMA {self._snowflake_connection_parameters['database']}.{curr}"
+                )
             except Exception:
                 schemas_not_deleted.append(curr)
                 self._logger.error(f"Failed to clean up schema {curr}!")
@@ -61,10 +59,10 @@ class SnowflakeTestCase(TestCase):
         self._snowpark_session.close()
 
     def list_schemas(self):
-        schemas = self._snowflake_root.databases[
-            self._snowflake_connection_parameters["database"]
-        ].schemas.iter()
-        return [curr.name for curr in schemas]
+        res = self.run_query(
+            f"SHOW SCHEMAS IN DATABASE {self._snowflake_connection_parameters['database']}"
+        )
+        return [curr["name"] for curr in res]
 
     def get_snowpark_session_with_schema(self, schema: str) -> Session:
         snowflake_connection_parameters = (
@@ -94,7 +92,7 @@ class SnowflakeTestCase(TestCase):
         self._schema = self._schema.upper()
         if not schema_already_exists:
             self.assertNotIn(self._schema, self.list_schemas())
-            self._snowflake_schemas_to_delete.append(self._schema)
+            self._snowflake_schemas_to_delete.add(self._schema)
         if not connect_via_snowpark_session:
             connector = snowflake_connector.SnowflakeConnector(
                 schema=self._schema,
@@ -104,9 +102,7 @@ class SnowflakeTestCase(TestCase):
             )
         else:
             if not schema_already_exists:
-                snowflake_connector.SnowflakeConnector._create_snowflake_schema_if_not_exists(
-                    self._snowpark_session, self._schema
-                )
+                self.create_and_use_schema(self._schema)
             connector = snowflake_connector.SnowflakeConnector(
                 snowpark_session=self._snowpark_session,
                 init_server_side=True,
@@ -116,8 +112,15 @@ class SnowflakeTestCase(TestCase):
         self.assertIn(self._schema, self.list_schemas())
         return session
 
-    def run_query(self, q: str) -> None:
-        self._snowpark_session.sql(q).collect()
+    def run_query(
+        self, q: str, bindings: Optional[List[Any]] = None
+    ) -> List[Row]:
+        return self._snowpark_session.sql(q, bindings).collect()
+
+    def create_and_use_schema(self, schema_name: str) -> None:
+        self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
+        self._snowflake_schemas_to_delete.add(schema_name)
+        self._snowpark_session.use_schema(schema_name)
 
 
 if __name__ == "__main__":
