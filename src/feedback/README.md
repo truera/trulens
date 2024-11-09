@@ -88,7 +88,7 @@ selection and aggregation. Consider this feedback example:
 f_context_relevance = Feedback(openai.context_relevance)
     .on_input()
     .on(Select.Record.app.combine_docs_chain._call.args.inputs.input_documents[:].page_content)
-    .aggregate(numpy.min)
+    .aggregate(numpy.mean)
 
 # Implementation signature:
 # def context_relevance(self, question: str, statement: str) -> float:
@@ -100,10 +100,10 @@ f_context_relevance = Feedback(openai.context_relevance)
   specification will be discussed in further details in the Specifying Arguments
   section.
 
-- **Aggregation specification** -- The last line `aggregate(numpy.min)` specifies
+- **Aggregation specification** -- The last line `aggregate(numpy.mean)` specifies
   how feedback outputs are to be aggregated. This only applies to cases where
   the argument specification names more than one value for an input. The second
-  specification, for `statement` was of this type. The input to `aggregate` must
+  specification, for `context` was of this type. The input to `aggregate` must
   be a method which can be imported globally. This requirement is further
   elaborated in the next section. This function is called on the `float` results
   of feedback function evaluations to produce a single float. The default is
