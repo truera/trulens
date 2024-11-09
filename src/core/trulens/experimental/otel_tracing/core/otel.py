@@ -14,9 +14,7 @@ import contextvars
 import json
 import logging
 from pprint import pprint
-import random
 import threading
-import time
 from types import TracebackType
 from typing import (
     Any,
@@ -38,6 +36,7 @@ import pydantic
 from trulens.core._utils.pycompat import NoneType  # import style exception
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
+from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -164,20 +163,6 @@ def flatten_lensed_attributes(
     return ret
 
 
-def new_trace_id():
-    return int(
-        random.getrandbits(128)  # TODO: hook to otel api
-        & trace_api.span._TRACE_ID_MAX_VALUE
-    )
-
-
-def new_span_id():
-    return int(
-        random.getrandbits(64)  # TODO: hook to otel api
-        & trace_api.span._SPAN_ID_MAX_VALUE
-    )
-
-
 class TraceState(serial_utils.SerialModel, trace_api.span.TraceState):
     """[OTEL TraceState][opentelemetry.trace.TraceState] requirements."""
 
@@ -196,12 +181,16 @@ class SpanContext(serial_utils.SerialModel, Hashable):
     def __hash__(self):
         return hash((self.trace_id, self.span_id))
 
-    trace_id: int = pydantic.Field(default_factory=new_trace_id)
+    trace_id: types_schema.TraceID.PY_TYPE = pydantic.Field(
+        default_factory=types_schema.TraceID.rand_py
+    )
     """Unique identifier for the trace.
 
     Each root span has a unique trace id."""
 
-    span_id: int = pydantic.Field(default_factory=new_span_id)
+    span_id: types_schema.SpanID.PY_TYPE = pydantic.Field(
+        default_factory=types_schema.SpanID.rand_py
+    )
     """Identifier for the span.
 
     Meant to be at least unique within the same trace_id.
@@ -272,23 +261,36 @@ class Span(
 
     kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL
 
+    @pydantic.field_validator("kind")
+    @classmethod
+    def _validate_kind(cls, v):
+        return trace_api.SpanKind(v)
+
     context: SpanContext = pydantic.Field(default_factory=SpanContext)
     parent: Optional[SpanContext] = None
 
     status: trace_api.status.StatusCode = trace_api.status.StatusCode.UNSET
+
+    @pydantic.field_validator("status")
+    @classmethod
+    def _validate_status(cls, v):
+        return trace_api.status.StatusCode(v)
+
     status_description: Optional[str] = None
 
     events: List[
-        Tuple[str, trace_api.types.Attributes, int]  # get int from otel spec
+        Tuple[str, trace_api.types.Attributes, types_schema.Timestamp.PY_TYPE]
     ] = pydantic.Field(default_factory=list)
     links: trace_api._Links = pydantic.Field(default_factory=lambda: [])
 
     #    attributes: trace_api.types.Attributes = pydantic.Field(default_factory=dict)
     attributes: Dict = pydantic.Field(default_factory=dict)
 
-    start_timestamp: int = pydantic.Field(default_factory=time.time_ns)
+    start_timestamp: types_schema.Timestamp.PY_TYPE = pydantic.Field(
+        default_factory=types_schema.Timestamp.default_py
+    )
 
-    end_timestamp: Optional[int] = None
+    end_timestamp: Optional[types_schema.Timestamp.PY_TYPE] = None
 
     _record_exception: bool = pydantic.PrivateAttr(True)
     _set_status_on_exception: bool = pydantic.PrivateAttr(True)
@@ -305,7 +307,7 @@ class Span(
 
     def __init__(self, **kwargs):
         if kwargs.get("start_timestamp") is None:
-            kwargs["start_timestamp"] = time.time_ns()
+            kwargs["start_timestamp"] = types_schema.Timestamp.default_py()
 
         super().__init__(**kwargs)
 
@@ -336,24 +338,45 @@ class Span(
         if isinstance(status, trace_api.span.Status):
             if description is not None:
                 raise ValueError(
-                    "Ambiguous status description provided both in `status.description` and in `description`."
+                    "Ambiguous status description provided both in `status.description`"
+                    " and in `description`."
                 )
 
-            self.status = status.status_code
+            assert isinstance(status.status_code, trace_api.span.StatusCode), (
+                f"Invalid status code {status.status_code} of type "
+                f"{type(status.status_code)}."
+            )
+
+            self.status = trace_api.span.StatusCode(status.status_code)
             self.status_description = status.description
-        else:
-            self.status = status
+
+        elif isinstance(status, trace_api.span.StatusCode):
+            self.status = trace_api.span.StatusCode(status)
             self.status_description = description
+
+        else:
+            raise ValueError(f"Invalid status {status} or type {type(status)}.")
 
     def add_event(
         self,
         name: str,
         attributes: types_api.Attributes = None,
-        timestamp: Optional[int] = None,  # TODO: get int from otel spec
+        timestamp: Optional[types_schema.Timestamp.OTEL_TYPE] = None,
     ) -> None:
-        """See [OTEL add_event][opentelemetry.trace.span.Span.add_event]."""
+        """See [OTEL add_event][opentelemetry.trace.span.Span.add_event].
 
-        self.events.append((name, attributes, timestamp or time.time_ns()))
+        !!! Warning:
+            As this is an OTEL requirement, we accept expected OTEL types
+            instead of the ones we actually use in our classes.
+        """
+
+        self.events.append((
+            name,
+            attributes,
+            types_schema.Timestamp.py_of_otel(timestamp)
+            if timestamp is not None
+            else types_schema.Timestamp.default_py(),
+        ))
 
     def add_link(
         self,
@@ -368,20 +391,23 @@ class Span(
         self.links[context] = attributes
 
     def is_recording(self) -> bool:
-        """See [OTEL is_recording][opentelemetry.trace.span.Span.is_recording]."""
+        """See [OTEL
+        is_recording][opentelemetry.trace.span.Span.is_recording]."""
 
         return self.status == trace_api.status.StatusCode.UNSET
 
     def set_attributes(
         self, attributes: Dict[str, types_api.AttributeValue]
     ) -> None:
-        """See [OTEL set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
+        """See [OTEL
+        set_attributes][opentelemetry.trace.span.Span.set_attributes]."""
 
         for key, value in attributes.items():
             self.set_attribute(key, value)
 
     def set_attribute(self, key: str, value: types_api.AttributeValue) -> None:
-        """See [OTEL set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
+        """See [OTEL
+        set_attribute][opentelemetry.trace.span.Span.set_attribute]."""
 
         self.attributes[key] = value
 
@@ -389,10 +415,16 @@ class Span(
         self,
         exception: BaseException,
         attributes: types_api.Attributes = None,
-        timestamp: Optional[int] = None,  # TODO: get int from otel spec
+        timestamp: Optional[types_schema.Timestamp.UNION_TYPE] = None,
         escaped: bool = False,  # purpose unknown
     ) -> None:
-        """See [OTEL record_exception][opentelemetry.trace.span.Span.record_exception]."""
+        """See [OTEL
+        record_exception][opentelemetry.trace.span.Span.record_exception].
+
+        !!! Warning:
+            As this is an OTEL requirement, we accept expected OTEL types in
+            args.
+        """
 
         print(exception)
 
@@ -415,14 +447,19 @@ class Span(
             self.add_event("trulens.exception", attributes, timestamp)
 
     def end(
-        self, end_time: Optional[int] = None
+        self, end_time: Optional[types_schema.Timestamp.UNION_TYPE] = None
     ):  # TODO: get int from otel spec
-        """See [OTEL end][opentelemetry.trace.span.Span.end]"""
+        """See [OTEL end][opentelemetry.trace.span.Span.end].
+
+        !!! Warning:
+            As this is an OTEL requirement, we accept expected OTEL types in
+            args.
+        """
 
         if end_time is None:
-            end_time = time.time_ns()
-
-        self.end_timestamp = end_time
+            self.end_timestamp = types_schema.Timestamp.default_py()
+        else:
+            self.end_timestamp = types_schema.Timestamp.py(end_time)
 
         if self.is_recording():
             self.set_status(
@@ -464,13 +501,14 @@ class Span(
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
 
-    # Rest of these methods are for exporting spans to ReadableSpan. All are not standard OTEL.
+    # Rest of these methods are for exporting spans to ReadableSpan. All are not
+    # standard OTEL but values for OTEL ReadableSpan.
 
     @staticmethod
     def otel_context_of_context(context: SpanContext) -> trace_api.SpanContext:
         return trace_api.SpanContext(
-            trace_id=context.trace_id,
-            span_id=context.span_id,
+            trace_id=types_schema.TraceID.otel_of_py(context.trace_id),
+            span_id=types_schema.SpanID.otel_of_py(context.span_id),
             is_remote=False,
         )
 
@@ -507,10 +545,21 @@ class Span(
         )
 
     def otel_events(self) -> List[types_api.Event]:
-        return self.events
+        return [
+            (a, b, types_schema.Timestamp.otel_of_py(c))
+            for (a, b, c) in self.events
+        ]
 
     def otel_links(self) -> List[types_api.Link]:
         return self.links
+
+    def otel_start_timestamp(self) -> types_schema.Timestamp.OTEL_TYPE:
+        return types_schema.Timestamp.otel_of_py(self.start_timestamp)
+
+    def otel_end_timestamp(self) -> Optional[types_schema.Timestamp.OTEL_TYPE]:
+        if self.end_timestamp is None:
+            return None
+        return types_schema.Timestamp.otel_of_py(self.end_timestamp)
 
     def otel_freeze(self) -> trace_sdk.ReadableSpan:
         """Convert span to an OTEL compatible span for exporting to OTEL collectors."""
@@ -526,8 +575,8 @@ class Span(
             kind=self.otel_kind(),
             instrumentation_info=None,  # TODO(SNOW-1711959)
             status=self.otel_status(),
-            start_time=self.start_timestamp,
-            end_time=self.end_timestamp,
+            start_time=self.otel_start_timestamp(),
+            end_time=self.otel_end_timestamp(),
             instrumentation_scope=None,  # TODO(SNOW-1711959)
         )
 
@@ -586,11 +635,11 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         return self._span_context_cvar.get()
 
     @property
-    def trace_id(self) -> int:
+    def trace_id(self) -> types_schema.TraceID.PY_TYPE:
         return self.span_context.trace_id
 
     @property
-    def span_id(self) -> int:
+    def span_id(self) -> types_schema.SpanID.PY_TYPE:
         return self.span_context.span_id
 
     def _span_context_of_context(
@@ -602,8 +651,10 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             span_encoding = next(iter(context.values()))
 
             return cls(
-                trace_id=span_encoding.trace_id,
-                span_id=span_encoding.span_id,
+                trace_id=types_schema.TraceID.py_of_otel(
+                    span_encoding.trace_id
+                ),
+                span_id=types_schema.SpanID.py_of_otel(span_encoding.span_id),
                 _tracer=self,
             )
 
@@ -621,7 +672,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
         attributes: trace_api.types.Attributes = None,
         links: trace_api._Links = None,
-        start_time: Optional[int] = None,
+        start_time: Optional[types_schema.Timestamp.UNION_TYPE] = None,
         record_exception: bool = True,
         set_status_on_exception: bool = True,
         cls: Optional[Type[Span]] = None,  # non-standard
@@ -631,8 +682,13 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         """See [OTEL
         Tracer.start_span][opentelemetry.trace.Tracer.start_span].
 
+        !!! Warning:
+            As this is an OTEL requirement, we accept expected OTEL types in
+            args.
+
         Args:
-            cls: Class of span to create. Defaults to the class set in the tracer.
+            cls: Class of span to create. Defaults to the class set in the
+            tracer.
 
             trace_id: Trace id to use. Defaults to the current trace id.
 
@@ -656,7 +712,6 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             *args,
             trace_id=parent_context.trace_id if trace_id is None else trace_id,
             _tracer=self,
-            **kwargs,
         )
 
         if name is None:
@@ -671,7 +726,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         if cls is None:
             cls = self._span_class
 
-        print(f"creating span {name} of type {cls} at {new_context}")
+        print(f"creating span {name} of type {cls.__name__} at {new_context}")
 
         new_span = cls(
             name=name,
@@ -680,10 +735,13 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
             kind=kind,
             attributes=attributes,
             links=links,
-            start_timestamp=start_time,
+            start_timestamp=types_schema.Timestamp.py(start_time)
+            if start_time
+            else None,
             _record_exception=record_exception,
             _status_on_exception=set_status_on_exception,
             _tracer=self,
+            **kwargs,
         )
 
         return new_span
@@ -694,15 +752,20 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
         name: Optional[str] = None,
         context: Optional[trace_api.context.Context] = None,
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
-        attributes: trace_api.types.Attributes = None,
+        attributes: trace_api.attributes = None,
         links: trace_api._Links = None,
-        start_time: Optional[int] = None,
+        start_time: Optional[types_schema.Timestamp.UNION_TYPE] = None,
         record_exception: bool = True,
         set_status_on_exception: bool = True,
         end_on_exit: bool = True,
     ):
         """See [OTEL
-        Tracer.start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span]."""
+        Tracer.start_as_current_span][opentelemetry.trace.Tracer.start_as_current_span].
+
+        !!! Warning:
+            As this is an OTEL requirement, we accept expected OTEL types in
+            args.
+        """
 
         span = self.start_span(
             name=name,
@@ -751,18 +814,18 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
 
     @property
     def span_context(self) -> SpanContext:
+        """NON-STANDARD: The current span context."""
+
         return self._span_context_cvar.get()
 
-    # _trace_id: int = pydantic.PrivateAttr(default_factory=new_trace_id)
-
     @property
-    def trace_id(self) -> int:
+    def trace_id(self) -> types_schema.TraceID.PY_TYPE:
         """NON-STANDARD: The current trace id."""
 
         return self.span_context.trace_id
 
     @property
-    def span_id(self) -> int:
+    def span_id(self) -> types_schema.SpanID.PY_TYPE:
         """NON-STANDARD: The current span id."""
 
         return self.span_context.span_id
@@ -787,6 +850,9 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         )
 
         return tracer
+
+
+# The rest is ongoing collector work.
 
 
 class CollectorRequest(pydantic.BaseModel):

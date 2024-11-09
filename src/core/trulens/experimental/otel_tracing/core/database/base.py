@@ -2,20 +2,21 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from trulens.core.database import base as core_db
+from trulens.core.schema import types as types_schema
 from trulens.experimental.otel_tracing.core import otel as core_otel
-from trulens.experimental.otel_tracing.core.database import orm as otel_db
 
 
 @dataclass
 class SpanIndex:
     """Index of a span in the database.
 
-    A span can be indexed either by index alone or a combination of span_id and trace_id.
+    A span can be indexed either by index alone or a combination of span_id and
+    trace_id.
     """
 
     index: Optional[int] = None
-    span_id: Optional[otel_db.TSpanID] = None
-    trace_id: Optional[otel_db.TTraceID] = None
+    span_id: Optional[types_schema.SpanID.SQL_TYPE] = None
+    trace_id: Optional[types_schema.TraceID.SQL_TYPE] = None
 
 
 class _DB(core_db.DB):

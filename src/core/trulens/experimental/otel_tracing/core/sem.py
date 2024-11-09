@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import datetime
+import functools
 import inspect
+from logging import getLogger
 from typing import (
     Any,
     Callable,
@@ -11,6 +13,7 @@ from typing import (
     List,
     Optional,
     Set,
+    Tuple,
     Type,
     TypeVar,
 )
@@ -18,13 +21,14 @@ import uuid
 
 import pydantic
 from trulens.core.schema import base as base_schema
-from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.experimental.otel_tracing.core import trace as core_trace
 from trulens.semconv import trace as truconv
+
+logger = getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -133,16 +137,57 @@ class AttributeProperty(property, Generic[T]):
             del cls.__annotations__[name]
 
 
+@functools.lru_cache
+def _get_combo_class(classes: Tuple[Type[TypedSpan]]) -> Type[TypedSpan]:
+    """Get the class that corresponds to the combination of classes in the
+    input set.
+
+    Args:
+        classes: The set of classes to combine.
+
+    Returns:
+        The class that corresponds to the combination of the input classes.
+    """
+
+    class _Combo(*classes):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.span_types = set(s.span_type for s in classes)
+
+    _Combo.__name__ = "_".join(cls.__name__ for cls in classes)
+    _Combo.__qualname__ = "_".join(cls.__qualname__ for cls in classes)
+
+    return _Combo
+
+
+def get_combo_class(classes: Set[Type[TypedSpan]]) -> Type[TypedSpan]:
+    """Get the class that corresponds to the combination of classes in the
+    input set.
+
+    Also populates the span_types field.
+
+    Args:
+        classes: The set of classes to combine.
+
+    Returns:
+        The class that corresponds to the combination of the input classes.
+    """
+
+    classes = tuple(classes)
+
+    if len(classes) == 1:
+        return classes[0]
+
+    classes = tuple(sorted(classes, key=lambda cls: cls.__qualname__))
+
+    return _get_combo_class(classes)
+
+
 class TypedSpan(core_trace.Span):
     """A span with a type."""
 
-    span_types: Set[truconv.SpanAttributes.SpanType] = pydantic.Field(
-        default_factory=set
-    )
-
-    span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
-        truconv.SpanAttributes.SpanType.UNKNOWN
-    )
+    span_type: ClassVar[Optional[truconv.SpanAttributes.SpanType]] = None
+    """Mixin type for each subclass."""
 
     _attributes: Dict[str, Any] = pydantic.PrivateAttr(default_factory=dict)
     """Non-serialized values of named fields defined by `attribute_property`.
@@ -150,9 +195,27 @@ class TypedSpan(core_trace.Span):
     These are mirrored with serialized versions in `attributes`.
     """
 
+    @classmethod
+    def mixin_new(cls, d: Optional[Dict] = None, **kwargs) -> TypedSpan:
+        """Given a jsonized version of a typed span that may be of multiple
+        types, initialize the appropriate classes with the provided data."""
+
+        if d is None:
+            d = {}
+
+        d.update(kwargs)
+
+        types = d.pop("span_types", [])
+
+        classes = {TYPE_TO_CLASS_MAP[t] for t in types}
+
+        combo_class = get_combo_class(classes)
+
+        return combo_class(**d)
+
     @staticmethod
     def semanticize(span: core_trace.Span) -> TypedSpan:
-        common = {
+        class_args = {
             "name": span.name,
             "start_timestamp": span.start_timestamp,
             "end_timestamp": span.end_timestamp,
@@ -162,34 +225,82 @@ class TypedSpan(core_trace.Span):
             "links": span.links,
             "events": span.events,
         }
+
+        classes = set()
+
         if isinstance(span, core_trace.LiveSpanCall):
-            return WithCall(
-                call_id=span.call_id,
-                signature=pyschema_utils.Signature.of_signature(span.live_sig),
-                function=pyschema_utils.FunctionOrMethod.of_callable(
-                    span.live_func
-                ),
-                process_id=span.process_id,
-                thread_id=span.thread_id,
-                bindings=pyschema_utils.Bindings.of_bound_arguments(
-                    span.live_bindings
-                ),
-                ret=json_utils.jsonify(span.live_ret),
-                **common,
+            classes.add(Call)
+            classes.add(Semantic)
+
+            class_args.update(
+                dict(
+                    call_id=span.call_id,
+                    signature=pyschema_utils.Signature.of_signature(
+                        span.live_sig
+                    ),
+                    function=pyschema_utils.FunctionOrMethod.of_callable(
+                        span.live_func
+                    ),
+                    process_id=span.process_id,
+                    thread_id=span.thread_id,
+                    bindings=pyschema_utils.Bindings.of_bound_arguments(
+                        span.live_bindings
+                    ),
+                    ret=json_utils.jsonify(span.live_ret),
+                )
             )
 
-        else:  # isinstance(span, core_trace.LiveSpan):
-            return Unknown(**common)
+        if isinstance(span, core_trace.WithCost):
+            classes.add(Cost)
+            classes.add(Semantic)
+
+            class_args["cost"] = span.cost
+
+        if isinstance(span, core_trace.LiveAppCall):
+            classes.add(App)
+            classes.add(Semantic)
+
+            class_args["app_ids"] = set(app.app_id for app in span.live_apps)
+            class_args["record_ids"] = span.record_ids
+
+        if isinstance(span, core_trace.LiveRecordRoot):
+            classes.add(RecordRoot)
+
+            class_args.update(dict(record_id=span.trace_record_id))
+
+            app = span.live_app()
+            if app is None:
+                logger.warning(
+                    "App in %s got garbage collected before serialization.",
+                    span,
+                )
+            else:
+                class_args.update(
+                    dict(
+                        app_id=app.app_id,
+                        app_name=app.app_name,
+                        app_version=app.app_version,
+                    )
+                )
+
+        if len(classes) == 0:
+            logger.warning("No types found for span %s.", span)
+            classes.add(Unknown)
+
+        cls = get_combo_class(classes)
+
+        instance = cls(**class_args)
+
+        return instance
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.span_types.add(TypedSpan.span_type)
+        # This is meant to be overwritten:
+        self.span_types = set([self.__class__.span_type])
 
         for name, value in kwargs.items():
             if name in self.__class__.model_computed_fields:
-                # print("setting attr", name, value)
-                # self._attributes[name] = value
                 setattr(self, name, value)
 
     @staticmethod
@@ -226,6 +337,13 @@ class TypedSpan(core_trace.Span):
             return_type=typ,
         )
 
+    span_types = attribute_property(
+        truconv.SpanAttributes.SPAN_TYPES,
+        Set[truconv.SpanAttributes.SpanType],
+        default_factory=set,
+    )
+    """A span can be of multiple semantic categories."""
+
 
 class Unknown(TypedSpan):
     """An unknown span type."""
@@ -245,11 +363,11 @@ class EvalRoot(TypedSpan):
     # feedback result fields
 
 
-class TraceRoot(TypedSpan):
-    """Root of a trace."""
+class RecordRoot(TypedSpan):
+    """Root of a record."""
 
     span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
-        truconv.SpanAttributes.SpanType.TRACE_ROOT
+        truconv.SpanAttributes.SpanType.RECORD_ROOT
     )
 
     # TODEP:
@@ -262,6 +380,8 @@ class TraceRoot(TypedSpan):
     ts = TypedSpan.attribute_property("record.ts", datetime.datetime)
 
     app_id = TypedSpan.attribute_property("record.app_id", types_schema.AppID)
+    app_name = TypedSpan.attribute_property("record.app_name", str)
+    app_version = TypedSpan.attribute_property("record.app_version", str)
 
     cost = TypedSpan.attribute_property("record.cost", base_schema.Cost)
 
@@ -282,7 +402,27 @@ class TraceRoot(TypedSpan):
     )
 
 
-class WithCall(TypedSpan):
+class Semantic(TypedSpan):
+    """A normal span that is not unknown."""
+
+    span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
+        truconv.SpanAttributes.SpanType.SEMANTIC
+    )
+
+
+class Cost(TypedSpan):
+    """A span that corresponds to a cost."""
+
+    span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
+        truconv.SpanAttributes.SpanType.COST
+    )
+
+    cost = TypedSpan.attribute_property(
+        truconv.SpanAttributes.COST.COST, base_schema.Cost
+    )
+
+
+class Call(TypedSpan):
     """A typed span that corresponds to a method call."""
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
@@ -290,7 +430,7 @@ class WithCall(TypedSpan):
     )
 
     span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
-        truconv.SpanAttributes.SpanType.RETRIEVAL
+        truconv.SpanAttributes.SpanType.CALL
     )
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
@@ -329,6 +469,26 @@ class WithCall(TypedSpan):
     ret = TypedSpan.attribute_property(
         truconv.SpanAttributes.CALL.RETURN, serial_utils.JSON
     )
+
+
+class App(TypedSpan):
+    """A typed span that corresponds to an app call."""
+
+    span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
+        truconv.SpanAttributes.SpanType.APP
+    )
+
+    app_ids = TypedSpan.attribute_property(
+        truconv.SpanAttributes.APP.APP_IDS, Set[types_schema.AppID]
+    )
+    """The app ids of the apps that were called."""
+
+    record_ids = TypedSpan.attribute_property(
+        truconv.SpanAttributes.APP.RECORD_IDS,
+        Dict[types_schema.AppID, types_schema.RecordID],
+    )
+    """The map of app_id to record_id indicating the id of the span as viewed by
+    each app that was tracing it."""
 
 
 class Retrieval(TypedSpan):
@@ -528,33 +688,20 @@ class AgentInvocation(TypedSpan):
     """The description of the agent."""
 
 
-def typed_spans_of_record_spans(
-    record: record_schema.Record,
-) -> List[TypedSpan]:
-    """Convert a list of spans that corresponds to one record to a list of typed
-    spans including the trace root with record-level information"""
-
-    spans: List[core_trace.Span] = record.experimental_otel_spans
-
-    # root = TraceRoot(
-    #    name="trulens.record",
-    #    start_timestamp=min(span.start_timestamp for span in spans),
-    #    end_timestamp=max(span.end_timestamp if span.end_timestamp is not None else 0 for span in spans)
-    # )
-    first, *rest = spans
-
-    # first.parent = root.context
-    # root.app_id = record.app_id
-    # root.cost = record.cost
-    # root.tags = record.tags
-    # root.meta = record.meta
-    # root.main_input = record.main_input
-    # root.main_output = record.main_output
-    # root.main_error = record.main_error
-
-    # TODEP: record-specific fields that we dont need any more:
-    # root.record_id = record.record_id
-    # root.perf = record.perf
-    # root.ts = record.ts
-
-    return [first, *rest]
+TYPE_TO_CLASS_MAP: Dict[truconv.SpanAttributes.SpanType, Type[TypedSpan]] = {
+    truconv.SpanAttributes.SpanType.UNKNOWN: Unknown,
+    truconv.SpanAttributes.SpanType.SEMANTIC: Semantic,
+    truconv.SpanAttributes.SpanType.EVAL_ROOT: EvalRoot,
+    truconv.SpanAttributes.SpanType.RECORD_ROOT: RecordRoot,
+    truconv.SpanAttributes.SpanType.APP: App,
+    truconv.SpanAttributes.SpanType.CALL: Call,
+    truconv.SpanAttributes.SpanType.COST: Cost,
+    truconv.SpanAttributes.SpanType.RETRIEVAL: Retrieval,
+    truconv.SpanAttributes.SpanType.RERANKING: Reranking,
+    truconv.SpanAttributes.SpanType.GENERATION: Generation,
+    truconv.SpanAttributes.SpanType.MEMORIZATION: Memorization,
+    truconv.SpanAttributes.SpanType.EMBEDDING: Embedding,
+    truconv.SpanAttributes.SpanType.TOOL_INVOCATION: ToolInvocation,
+    truconv.SpanAttributes.SpanType.AGENT_INVOCATION: AgentInvocation,
+}
+"""Map of classes from their type enum."""

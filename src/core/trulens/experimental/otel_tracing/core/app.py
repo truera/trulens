@@ -14,7 +14,6 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing.core import sem as core_sem
 from trulens.experimental.otel_tracing.core import trace as core_trace
 
 
@@ -73,7 +72,7 @@ class _App(core_app.App):
         recording.records.append(record)
         # need to jsonify?
 
-        typed_spans = core_sem.typed_spans_of_record_spans(record=record)
+        typed_spans = record.experimental_otel_spans
 
         self.connector.db.insert_spans(spans=typed_spans)
 

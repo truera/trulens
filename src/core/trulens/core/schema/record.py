@@ -178,21 +178,26 @@ class Record(serial_utils.SerialModel, Hashable):
         """Deserialize spans if otel_tracing is enabled.
 
         We need to do this manually as the experimental_otel_spans field is
-        declared as containing `Any` but we want to have `Span`s there instead.
-        We cannot declare the field having `Span`s because we are not sure
-        otel_tracing is available.
+        declared as containing `Any` but we want to have `sem.TypedSpan`s there
+        instead. We cannot declare the field having `TypedSpan`s because we are
+        not sure otel_tracing is available.
         """
 
         ret = []
 
         if len(spans) > 0:
             if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-                from trulens.experimental.otel_tracing.core.trace import Span
+                from trulens.experimental.otel_tracing.core import (
+                    sem as core_sem,
+                )
 
                 for span in spans:
                     if isinstance(span, dict):
-                        ret.append(Span.model_validate(span))
+                        ret.append(core_sem.TypedSpan.mixin_new(d=span))
                     else:
+                        assert isinstance(
+                            span, core_sem.TypedSpan
+                        ), "TypedSpan expected."
                         ret.append(span)
             else:
                 logger.warning(

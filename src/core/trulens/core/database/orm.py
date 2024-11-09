@@ -27,8 +27,9 @@ from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import json as json_utils
 
+# TODO: move these type aliases to core/schema/types.py
 TYPE_JSON = Text
-"""Database type for JSON fields."""
+"""Database type for serialized JSON fields."""
 
 TYPE_TIMESTAMP = Float
 """Database type for timestamps."""

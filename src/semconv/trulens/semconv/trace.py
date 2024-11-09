@@ -17,29 +17,49 @@ class ResourceAttributes:
 
 
 class SpanAttributes:
-    SPAN_TYPE = "trulens.span_type"
+    SPAN_TYPES = "trulens.span_types"
 
     class SpanType(str, Enum):
         """Span type attribute values.
 
         The root types indicate the process that initiating the tracking of
         spans (either app tracing or feedback evaluation). Call indicates a
-        method/function call whereas the other types are semantic app steps. A
-        span can be multiple of these types at once except for the roots and
-        unknown.
+        method/function call. App indicates a call by an app method. Cost
+        indicates a call with cost tracking. All others are semantic types.
+
+        The first three classes are exclusive but the others can be mixed in
+        with each other.
         """
+
+        # Exclusive types.
 
         UNKNOWN = "unknown"
         """Unknown span type."""
 
-        TRACE_ROOT = "trace_root"
+        SEMANTIC = "semantic"
+        """Recognized span, at least to some degree.
+
+        Must include at least one of the mixable types below as well.
+        """
+
+        RECORD_ROOT = "record_root"
         """Spans as collected by tracing system."""
 
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation span."""
 
+        # Non-semantic mixable types.
+
+        APP = "app"
+        """An call belonging to an app."""
+
         CALL = "call"
         """A function call."""
+
+        COST = "cost"
+        """A span with a cost."""
+
+        # Semantic mixable types.
 
         RETRIEVAL = "retrieval"
         """A retrieval."""
@@ -62,18 +82,56 @@ class SpanAttributes:
         AGENT_INVOCATION = "agent_invocation"
         """An agent invocation."""
 
+    class SEMANTIC:
+        base = "trulens.semantic"
+
     class UNKNOWN:
         base = "trulens.unknown"
 
-    class TRACE_ROOT:
-        """Attributes for the root span of a trace."""
+    class RECORD_ROOT:
+        """Attributes for the root span of a record."""
 
         base = "trulens.record"
+
+        SPAN_NAME = base
+
+        APP_NAME = base + ".app_name"
+        """Name of the app for whom this is the root."""
+
+        APP_VERSION = base + ".app_version"
+        """Version of the app for whom this is the root."""
+
+        APP_ID = base + ".app_id"
+
+        RECORD_ID = base + ".record_id"
 
     class EVAL_ROOT:
         """Attributes for the root span of a feedback evaluation."""
 
         base = "trulens.eval"
+
+    class COST:
+        """Attributes for spans with a cost."""
+
+        base = "trulens.cost"
+
+        COST = base + ".cost"
+        """Cost of the span.
+
+        JSONization of
+        [trulens.core.schema.base.Cost][trulens.core.schema.base.Cost].
+        """
+
+    class APP:
+        """Attributes for app spans."""
+
+        base = "trulens.app"
+
+        APP_IDS = base + ".app_ids"
+        """Ids of apps that were tracing this span."""
+
+        RECORD_IDS = base + ".record_ids"
+        """Ids of records for this span, one for each app."""
 
     class CALL:
         """Instrumented method call attributes."""
