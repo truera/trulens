@@ -136,6 +136,19 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             def parse(cls, obj: core_sem.TypedSpan) -> NewSpanORM.Span:
                 """Parse a span object into an ORM object."""
 
+                if (
+                    isinstance(obj, core_sem.RecordRoot)
+                    and obj.record_id is not None
+                ):
+                    record_ids = {obj.app_id: obj.record_id}
+                elif (
+                    isinstance(obj, core_sem.App) and obj.record_ids is not None
+                ):
+                    record_ids = obj.record_ids
+                else:
+                    # TODO: figure out how to handle this case, or just not include these?
+                    record_ids = {}
+
                 assert isinstance(
                     obj, core_sem.TypedSpan
                 ), "TypedSpan expected."
@@ -145,6 +158,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     trace_id=types_schema.TraceID.sql_of_py(
                         obj.context.trace_id
                     ),
+                    record_ids=record_ids,
                     parent_span_id=types_schema.SpanID.sql_of_py(
                         obj.parent.span_id
                     )
@@ -203,7 +217,8 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     status=self.status,
                     status_description=self.status_description,
                     links=[],  # we dont keep links
-                    span_types=self.span_types,
+                    span_types=set(self.span_types),
+                    record_ids=self.record_ids,
                 )
 
     configure_mappers()  # IMPORTANT

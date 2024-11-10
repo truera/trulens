@@ -103,9 +103,14 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     and default implementation of this interface.
     """
 
+    T: ClassVar[TypeAlias] = None
+    """EXPERIMENTAL(otel_tracing): Database table expression type."""
+
     Q: ClassVar[TypeAlias] = None
-    """EXPERIMENTAL(otel_tracing): Database query type for creating select
-    queries."""
+    """EXPERIMENTAL(otel_tracing): Database select expression type."""
+
+    W: ClassVar[TypeAlias] = None
+    """EXPERIMENTAL(otel_tracing): Database where expression type."""
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True

@@ -205,6 +205,12 @@ class TypedSpan(core_trace.Span):
 
         d.update(kwargs)
 
+        if (record_ids := d.get("record_ids", None)) is not None:
+            # Some span types have record_id field which gets stored in
+            # record_ids in the db.
+            if len(record_ids) == 1:
+                d["record_id"] = next(iter(record_ids.values()))
+
         types = d.pop("span_types", [])
 
         classes = {TYPE_TO_CLASS_MAP[t] for t in types}
