@@ -22,6 +22,7 @@ from sqlalchemy.sql import func
 from trulens.core.schema import types as types_schema
 from trulens.experimental.otel_tracing.core import sem as core_sem
 from trulens.experimental.otel_tracing.core import trace as core_trace
+from trulens.semconv import trace as truconv
 
 NUM_SPANTYPE_BYTES = 32
 # trulens specific, not otel
@@ -136,18 +137,12 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             def parse(cls, obj: core_sem.TypedSpan) -> NewSpanORM.Span:
                 """Parse a span object into an ORM object."""
 
-                if (
-                    isinstance(obj, core_sem.RecordRoot)
-                    and obj.record_id is not None
-                ):
-                    record_ids = {obj.app_id: obj.record_id}
-                elif (
-                    isinstance(obj, core_sem.App) and obj.record_ids is not None
-                ):
+                record_ids = {}
+                if isinstance(obj, core_sem.App) and obj.record_ids is not None:
                     record_ids = obj.record_ids
                 else:
                     # TODO: figure out how to handle this case, or just not include these?
-                    record_ids = {}
+                    raise NotImplementedError("Cannot handle non-App spans.")
 
                 assert isinstance(
                     obj, core_sem.TypedSpan
@@ -206,6 +201,14 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     else None
                 )
 
+                span_types = set(self.span_types)
+                other_args = {}
+                if truconv.SpanAttributes.SpanType.RECORD_ROOT in span_types:
+                    # TODO: need to recover AttributeProperty fields from attributes here.
+                    other_args["record_id"] = self.attributes[
+                        truconv.SpanAttributes.RECORD_ROOT.RECORD_ID
+                    ]
+
                 return core_sem.TypedSpan.mixin_new(
                     name=self.name,
                     context=context,
@@ -217,8 +220,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     status=self.status,
                     status_description=self.status_description,
                     links=[],  # we dont keep links
-                    span_types=set(self.span_types),
+                    span_types=span_types,
                     record_ids=self.record_ids,
+                    **other_args,
                 )
 
     configure_mappers()  # IMPORTANT

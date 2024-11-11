@@ -134,6 +134,18 @@ class Span(core_otel.Span):
         use_enum_values=True,  # model_validate will fail without this
     )
 
+    trace_record_ids: Dict[types_schema.AppID, types_schema.RecordID] = (
+        pydantic.Field(default_factory=dict)
+    )
+    """Id of the record this span belongs to, per app.
+
+    This is because the same span might represent part of the trace of different
+    records because more than one app is tracing.
+
+    This will not be filled in if the span was produced outside of a recording
+    context.
+    """
+
     def __str__(self):
         return (
             f"{type(self).__name__}({self.name}, {self.context}->{self.parent})"
@@ -265,6 +277,17 @@ class LiveSpan(Span):
     otherwise.
     """
 
+    live_apps: weakref.WeakSet[Any] = pydantic.Field(
+        default_factory=weakref.WeakSet, exclude=True
+    )  # Any = App
+    """Apps for which this span is recording trace info for.
+
+    WeakSet to prevent memory leaks.
+
+    Note that this will not be filled in if this span was produced outside of an
+    app recording context.
+    """
+
 
 class PhantomSpanRecordingContext(PhantomSpan):
     """Tracks the context of an app used as a context manager."""
@@ -383,25 +406,14 @@ class LiveRecordRoot(LiveSpan):
     trace_record_id: types_schema.TraceRecordID.PY_TYPE = pydantic.Field(
         default_factory=types_schema.TraceRecordID.default_py
     )
-    """Unique identifier for this root call.
+    """Unique identifier for this root call or what is called a "record".
 
-    Value must be included in childrens' `record_ids` field.
-    """
+    Note that this is different from `trace_record_ids` though this
+    `trace_record_id` will be included in `record_ids` and will be included in
+    children's `trace_record_ids` fields.
 
-
-class LiveAppCall(LiveSpanCall):
-    live_apps: weakref.WeakSet[Any] = pydantic.Field(
-        default_factory=weakref.WeakSet, exclude=True
-    )  # Any = App
-    """Apps for which this span is recording trace info for."""
-
-    record_ids: Dict[types_schema.AppID, types_schema.RecordID] = (
-        pydantic.Field(default_factory=dict)
-    )
-    """Id of the record this span belongs to, per app.
-
-    This is because the same span might represent part of the trace of different
-    records because more than one app is tracing.
+    Note that a record root cannot be a distributed call hence there is no
+    non-live record root.
     """
 
 
@@ -647,11 +659,6 @@ class Tracer(core_otel.Tracer):
             experimental_otel_spans=spans,
         )
 
-        # record_id determinism
-        # record.record_id = json_utils.obj_id_of_obj(
-        #     record.model_dump(), prefix="record"
-        # )
-
         return record
 
     @staticmethod
@@ -828,7 +835,7 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
             enter_contexts: Whether to enter the context managers in this class
                 init. If a subclass needs to add more context managers before
                 entering, set this flag to false in `super().__init__` and then
-                call `self._enter_contexts()` in own init.
+                call `self._enter_contexts()` in own subclass `__init__`.
         """
 
         super().__init__(**kwargs)
@@ -850,7 +857,6 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
 
         # Keeping track of possibly multiple contexts for subclasses to add
         # more.
-
         self.context_managers: List[ContextManager[LiveSpanCall]] = [
             self.span_context
         ]
@@ -872,6 +878,15 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
         # Last context we enter is the span we track in this class. Subclasses
         # might have inserted earlier spans.
         self.span = self.spans[-1]
+
+        # Propagate some fields from parent. Note that these may be updated by
+        # the subclass of this callback class when new record roots get added.
+        parent_span = self.span.parent_span
+        if parent_span is not None:
+            if isinstance(parent_span, Span):
+                self.span.trace_record_ids = parent_span.trace_record_ids
+            if isinstance(parent_span, LiveSpan):
+                self.span.live_apps = parent_span.live_apps
 
     def _exit_contexts(self, error: Optional[Exception]) -> Optional[Exception]:
         """Exit all of the context managers registered in this class given the
@@ -1199,7 +1214,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
 
     def __init__(
         self,
-        span_type: Type[Span] = LiveAppCall,
+        span_type: Type[Span] = LiveSpanCall,
         **kwargs: Dict[str, Any],
     ):
         # Do not enter the context managers in the superclass init as we need to
@@ -1215,15 +1230,22 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
         # stack, they are wrapped in a trace root span. This is per-app so
         # mutliple new spans might be inserted.
 
-        started_apps: weakref.WeakSet[Any] = weakref.WeakSet()  # Any = App
         current_span = trulens_tracer().current_span
 
         record_map = {}
+        started_apps: weakref.WeakSet[Any] = weakref.WeakSet()  # Any = App
 
         if current_span is None:
             pass
         else:
+            if isinstance(current_span, Span):
+                record_map.update(current_span.trace_record_ids)
+
+            if isinstance(current_span, LiveSpan):
+                started_apps = started_apps.union(current_span.live_apps)
+
             # Check which apps already have a root span in the ancestors:
+            """
             for ancestor in current_span.iter_ancestors():
                 if isinstance(ancestor, LiveRecordRoot):
                     assert (
@@ -1232,30 +1254,34 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
                     live_app = ancestor.live_app()
                     if live_app is not None:
                         started_apps.add(live_app)  # was weakref
-                        record_map[live_app.app_id] = ancestor.trace_record_id
+                        record_map[live_app.app_id] = ancestor.record_id
                     else:
                         logger.warning(
                             "App in span %s got collected before we got a chance to serialize the span.",
                             ancestor,
                         )
+            """
 
-        # Now for each app that does not have a root, create a span context
-        # manager for it:
+        # Now for each app that is not yet in record_ids, create a span context
+        # manager for it and add it to record_ids of the new created span.
+
         for app in set(apps).difference(started_apps):
-            print(
-                f"Adding root span for app {app.app_name} at call to {self.func_name}."
-            )
             new_record_id = types_schema.TraceRecordID.default_py()
+            record_map[app.app_id] = new_record_id
             self.trace_root_span_context_managers.append(
                 trulens_tracer()._span(
                     cls=LiveRecordRoot,
                     name=truconv.SpanAttributes.RECORD_ROOT.SPAN_NAME,
                     live_app=weakref.ref(app),
                     trace_record_id=new_record_id,
+                    trace_record_ids=record_map,
                 )
             )
-            record_map[app.app_id] = new_record_id
             started_apps.add(app)
+
+            print(
+                f"Adding root span for app {app.app_name} at call to {self.func_name}."
+            )
 
         # Importantly, add the managers for the trace root `before` the span
         # managed by TracingCallbacks. This makes sure the root spans are the
@@ -1269,7 +1295,11 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
         self._enter_contexts()
 
         assert self.span is not None, "Contexts not yet entered."
+
         # Make note of all the apps the main span is recording for and the app
         # to record map.
-        self.span.live_apps = started_apps
-        self.span.record_ids = record_map
+        if issubclass(span_type, Span):
+            self.span.trace_record_ids = record_map
+
+        if issubclass(span_type, LiveSpan):
+            self.span.live_apps = started_apps

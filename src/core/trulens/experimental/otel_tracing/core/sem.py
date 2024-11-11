@@ -230,9 +230,19 @@ class TypedSpan(core_trace.Span):
             "status_description": span.status_description,
             "links": span.links,
             "events": span.events,
+            "record_ids": span.trace_record_ids,
         }
-
         classes = set()
+        classes.add(
+            App
+        )  # everything that comes from trulens tracer is a span under an app right now
+
+        if isinstance(span, core_trace.LiveSpan):
+            class_args.update(
+                dict(
+                    app_ids=set(app.app_id for app in span.live_apps),
+                )
+            )
 
         if isinstance(span, core_trace.LiveSpanCall):
             classes.add(Call)
@@ -261,13 +271,6 @@ class TypedSpan(core_trace.Span):
             classes.add(Semantic)
 
             class_args["cost"] = span.cost
-
-        if isinstance(span, core_trace.LiveAppCall):
-            classes.add(App)
-            classes.add(Semantic)
-
-            class_args["app_ids"] = set(app.app_id for app in span.live_apps)
-            class_args["record_ids"] = span.record_ids
 
         if isinstance(span, core_trace.LiveRecordRoot):
             classes.add(RecordRoot)
@@ -376,10 +379,10 @@ class RecordRoot(TypedSpan):
         truconv.SpanAttributes.SpanType.RECORD_ROOT
     )
 
-    # TODEP:
     record_id = TypedSpan.attribute_property(
-        "record.record_id", types_schema.RecordID
+        truconv.SpanAttributes.RECORD_ROOT.RECORD_ID, types_schema.RecordID
     )
+
     # TODEP:
     perf = TypedSpan.attribute_property("record.perf", base_schema.Perf)
     # TODEP:
