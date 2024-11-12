@@ -365,7 +365,7 @@ def generate_balanced_ms_marco_hard_negatives_dataset(
 
 
 def generate_ms_marco_trec_dl_annotation_benchmark(
-    dataset_path: str = "msmarco-document-v2/trec-dl-2022",
+    dataset_path: str = "msmarco-passage-v2/trec-dl-2022",
     max_samples_per_bucket: int = 100,
 ):
     dataset = ir_datasets.load(dataset_path)
