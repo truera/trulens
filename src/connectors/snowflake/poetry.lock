@@ -1407,7 +1407,7 @@ name = "trulens-core"
 version = "1.2.2"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
-python-versions = "^3.8"
+python-versions = "^3.8.1"
 files = []
 develop = true
 
@@ -1417,11 +1417,11 @@ dill = ">=0.3.8"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = [
-    {version = ">=1.23.0,<1.26.0", markers = "python_version < \"3.9\""},
+    {version = ">=1.23.0,<1.25.0", markers = "python_version < \"3.9\""},
     {version = ">=1.23.0", markers = "python_version >= \"3.9\""},
 ]
 pandas = ">=1.0.0"
-pydantic = "^2"
+pydantic = "^2.4.2"
 python-dotenv = ">=0.21,<2.0"
 rich = "^13.6"
 sqlalchemy = "^2.0"
@@ -1504,5 +1504,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.8,<3.12"
-content-hash = "874c1bf1257c7ee2b97272ec7023c66b611885794484528ddf1787476762b9ef"
+python-versions = "^3.8.1,<3.12"
+content-hash = "6133d6491ca191e9d0cff6648c0c3e75deb81da9a7c9dc614706bc75c8b09a99"

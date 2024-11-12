@@ -26,6 +26,8 @@ jobs:
           python-version: 3.10
         py311-static:
           python-version: 3.11
+        py313-static:
+          python-version: 3.13
 
     steps:
       - template: templates/env-setup.yaml
