@@ -46,6 +46,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        host: Optional[str] = None,
     ):
         connection_parameters = {
             "account": account,
@@ -55,6 +56,7 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
+            **({"host": host} if host else {}),
         }
         if snowpark_session is None:
             snowpark_session = self._create_snowpark_session(

@@ -32,6 +32,15 @@ class FeedbackDisplay(BaseModel):
     icon: str
 
 
+def get_spcs_login_token():
+    """
+    Read the login token supplied automatically by Snowflake. These tokens
+    are short lived and should always be read right before creating any new connection.
+    """
+    with open("/snowflake/session/token", "r") as f:
+        return f.read()
+
+
 def init_from_args():
     """Parse command line arguments and initialize Tru with them.
 
@@ -43,6 +52,7 @@ def init_from_args():
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
+    parser.add_argument("--spcs-runtime", default=False)
 
     try:
         args = parser.parse_args()
@@ -54,9 +64,28 @@ def init_from_args():
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    core_session.TruSession(
-        database_url=args.database_url, database_prefix=args.database_prefix
-    )
+    if args.spcs_runtime:
+        import os
+
+        from snowflake.snowpark import Session
+        from trulens.connectors.snowflake import SnowflakeConnector
+
+        connection_params = {
+            "account": os.environ.get("SNOWFLAKE_ACCOUNT"),
+            "host": os.getenv("SNOWFLAKE_HOST"),
+            "authenticator": "oauth",
+            "token": get_spcs_login_token(),
+            "warehouse": os.environ.get("SNOWFLAKE_WAREHOUSE"),
+            "database": os.environ.get("SNOWFLAKE_DATABASE"),
+            "schema": os.environ.get("SNOWFLAKE_SCHEMA"),
+        }
+        snowpark_session = Session.builder.configs(connection_params).create()
+        connector = SnowflakeConnector(snowpark_session=snowpark_session)
+        core_session.TruSession(connector=connector)
+    else:
+        core_session.TruSession(
+            database_url=args.database_url, database_prefix=args.database_prefix
+        )
 
 
 def trulens_leaderboard(app_ids: Optional[List[str]] = None):
