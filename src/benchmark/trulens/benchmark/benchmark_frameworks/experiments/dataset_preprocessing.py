@@ -1,9 +1,11 @@
 import ast
+from collections import defaultdict
 import csv
 import json
 import random
 from typing import Any, List, Tuple
 
+import ir_datasets
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -360,6 +362,55 @@ def generate_balanced_ms_marco_hard_negatives_dataset(
             "expected_response": negative_example,
             "expected_score": 0,  # Negative example, label 0
         })
+
+
+def generate_ms_marco_trec_dl_annotation_benchmark(
+    dataset_path: str = "msmarco-document-v2/trec-dl-2022",
+    max_samples_per_bucket: int = 100,
+):
+    dataset = ir_datasets.load(dataset_path)
+    sample_counts = {0: 0, 1: 0, 2: 0, 3: 0}
+
+    # Pre-build a dictionary of qrels by query_id and doc_id for fast lookup
+    qrels_by_query = defaultdict(list)
+    for qrel in dataset.qrels_iter():
+        qrels_by_query[qrel.query_id].append((qrel.doc_id, qrel.relevance))
+
+    # Pre-build a dictionary of documents by doc_id for quick access
+    docs_dict = {doc.doc_id: doc for doc in dataset.docs_iter()[: 1 / 50]}
+
+    # Generate samples
+    for query in dataset.queries_iter():
+        if query.query_id in qrels_by_query:
+            for doc_id, relevance in qrels_by_query[query.query_id]:
+                if sample_counts[relevance] < max_samples_per_bucket:
+                    doc = docs_dict.get(doc_id)
+                    if doc:
+                        doc_content = (
+                            doc.body
+                            if hasattr(doc, "body")
+                            else doc.text
+                            if hasattr(doc, "text")
+                            else None
+                        )
+                        if doc_content is None:
+                            continue
+
+                        yield {
+                            "query_id": query.query_id,
+                            "query": query.text,
+                            "doc_id": doc_id,
+                            "expected_response": doc_content,
+                            "expected_score": relevance / 3,
+                        }
+                        sample_counts[relevance] += 1
+
+                # Stop if all sample buckets are filled
+                if all(
+                    count >= max_samples_per_bucket
+                    for count in sample_counts.values()
+                ):
+                    return
 
 
 def write_results(
