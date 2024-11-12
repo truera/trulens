@@ -37,7 +37,10 @@ numpy = [
 ]
 nltk = "^3.9.1"
 # HuggingfaceLocal dependencies
-torch = "^2.1.2"
+torch = [
+  { version = "^2.1.2,<2.5.0", python = "<3.9" },
+  { version = "^2.1.2", python = ">=3.9" },
+]
 transformers = "^4.38.1"
 
 [tool.poetry.group.dev.dependencies]

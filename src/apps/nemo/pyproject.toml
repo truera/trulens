@@ -32,6 +32,10 @@ trulens-core = { version = "^1.0.0" }
 trulens-apps-langchain = { version = "^1.0.0" }
 pydantic = "^2.4.2"
 nemoguardrails = ">=0.9"
+onnxruntime = [
+  { version = ">=1.14.0,<1.20.0", python = "<3.10" },
+  { version = ">=1.14.0", python = ">=3.10" },
+]
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
