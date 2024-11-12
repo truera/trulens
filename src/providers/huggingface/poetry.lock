@@ -2096,7 +2096,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-core"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -2106,6 +2106,7 @@ develop = false
 [package.dependencies]
 alembic = "^1.8.1"
 dill = ">=0.3.8"
+importlib-resources = "^6.0"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = [
@@ -2125,7 +2126,7 @@ url = "../../core"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.2.2"
+version = "1.2.6"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.8.1"

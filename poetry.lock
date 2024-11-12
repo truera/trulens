@@ -2827,13 +2827,13 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.18"
+version = "0.2.19"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.2.18-py3-none-any.whl", hash = "sha256:277a5fdb381a707529cb44182a723fc49c290d630a46a8f75e522c527af4398b"},
-    {file = "langchain_community-0.2.18.tar.gz", hash = "sha256:501853685eef393fcfcadec4c896dfd4d7fb6c2404835c0255d4b7089ca27a4a"},
+    {file = "langchain_community-0.2.19-py3-none-any.whl", hash = "sha256:651d761f2d37d63f89de75d65858f6c7f6ea99c455622e9c13ca041622dad0c5"},
+    {file = "langchain_community-0.2.19.tar.gz", hash = "sha256:74f8db6992d03668c3d82e0d896845c413d167dad3b8e349fb2a9a57fd2d1396"},
 ]
 
 [package.dependencies]
@@ -7999,7 +7999,7 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8018,7 +8018,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8037,7 +8037,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-nemo"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,<3.13"
@@ -8056,7 +8056,7 @@ url = "src/apps/nemo"
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8072,7 +8072,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,<3.12"
@@ -8090,7 +8090,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8100,6 +8100,7 @@ develop = true
 [package.dependencies]
 alembic = "^1.8.1"
 dill = ">=0.3.8"
+importlib-resources = "^6.0"
 munch = "^2.5"
 nest-asyncio = "^1.5"
 numpy = [
@@ -8119,7 +8120,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,!=3.9.7"
@@ -8146,7 +8147,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "1.2.2"
+version = "1.2.6"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.8.1,!=3.9.7"
@@ -8164,7 +8165,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.2.2"
+version = "1.2.6"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.8.1"
@@ -8191,7 +8192,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8210,7 +8211,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.2.2"
+version = "1.2.6"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.8.1,<3.12"
@@ -8229,7 +8230,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8254,7 +8255,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8272,7 +8273,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8290,7 +8291,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "1.2.2"
+version = "1.2.6"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -8299,7 +8300,7 @@ develop = true
 
 [package.dependencies]
 langchain-community = ">=0.0.20"
-openai = "^1.0.0"
+openai = ">=1.52.1"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"
 

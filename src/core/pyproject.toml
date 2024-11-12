@@ -42,6 +42,7 @@ sqlalchemy = "^2.0"
 alembic = "^1.8.1"
 nest-asyncio = "^1.5"
 python-dotenv = ">=0.21,<2.0"
+importlib-resources = "^6.0"
 
 [tool.poetry.group.tqdm]
 optional = true
