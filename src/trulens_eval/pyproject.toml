@@ -32,7 +32,7 @@ python = "^3.9,!=3.9.7"
 # the latest trulens-* versions for users who are still installing
 # "trulens_eval".
 trulens = { version = "^1.0" }
-#trulens-core = { version = "^1.0.0" }
+#trulens-core = { version = "^1.2.2" }
 #trulens-feedback = { version = "^1.0.0" }
 #trulens-dashboard = { version = "^1.0.0" }
 
