@@ -31,7 +31,10 @@ python = "^3.9"
 trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
 requests = "^2.31"
-numpy = ">=1.23"
+numpy = [
+  { version = ">=1.23.0,<1.26.0", python = "<3.9" },
+  { version = ">=1.23.0", python = ">=3.9" },
+]
 nltk = "^3.9.1"
 # HuggingfaceLocal dependencies
 torch = "^2.1.2"
