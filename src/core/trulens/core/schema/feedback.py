@@ -140,10 +140,14 @@ class FeedbackCall(serial_utils.SerialModel):
     Note that a single `Feedback` instance might require more than one call.
     """
 
-    args: Dict[str, Optional[serial_utils.JSON]]
+    args: Dict[str, Optional[serial_utils.JSON]] = pydantic.Field(
+        default_factory=dict
+    )
     """Arguments to the feedback function."""
 
-    ret: Union[float, List[float], List[Tuple], List[Any]]
+    ret: Union[float, List[float], List[Tuple], List[Any]] = pydantic.Field(
+        default=0.0
+    )
     """Return value."""
 
     meta: Dict[str, Any] = pydantic.Field(default_factory=dict)

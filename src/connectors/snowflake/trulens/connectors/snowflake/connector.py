@@ -211,12 +211,11 @@ class SnowflakeConnector(DBConnector):
                     self.db.get_db_revision(),
                 ),
             )
+            print(f"Set TruLens workspace version tag: {res}")
         except Exception as e:
             print(
                 f"Error setting TruLens workspace version tag: {e}, check if you have enterprise version of Snowflake."
             )
-
-        print(f"Set TruLens workspace version tag: {res}")
 
     def _set_up_database_args(
         self,

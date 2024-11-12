@@ -13,6 +13,7 @@ import logging
 from pprint import PrettyPrinter
 import queue
 import sys
+import threading
 from types import FrameType
 from types import ModuleType
 import typing
@@ -153,6 +154,18 @@ def safe_signature(func_or_obj: Any):
 
         else:
             raise e
+
+
+def safer_getattr(obj: Any, k: str, default: Optional[Any] = None) -> Any:
+    """Get the attribute `k` of the given object.
+
+    Returns default if the attribute cannot be retrieved.
+    """
+
+    try:
+        return safe_getattr(obj, k)
+    except Exception:
+        return default
 
 
 def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
@@ -1102,12 +1115,32 @@ def wrap_until_eager(
     return rewrap(obj)
 
 
+# Context utilities
+
+
+def context_id() -> str:
+    """Return a short representation of context that includes the thread and
+    async task identifiers."""
+
+    ret = "T[" + threading.current_thread().name + "]"
+    try:
+        task = asyncio.current_task()
+        if task is not None:
+            ret += " K[" + task.name + "]"
+    except Exception:
+        pass
+
+    return ret
+
+
 # Class utilities
+
+
 class SingletonPerNameMeta(type):
-    """
-    Metaclass for creating singleton instances except there being one instance max,
-    there is one max per different `name` argument. If `name` is never given,
-    reverts to normal singleton behavior.
+    """Metaclass for creating singleton instances except there being one
+    instance max, there is one max per different `name` argument.
+
+    If `name` is never given, reverts to normal singleton behavior.
     """
 
     _singleton_instances = {}
@@ -1137,10 +1170,10 @@ class SingletonPerNameMeta(type):
 
     @staticmethod
     def delete_singleton_by_name(
-        name: str, cls: Optional[Type[SingletonPerNameMeta]] = None
+        name: str,
+        cls: Optional[Type[Any]] = None,  # Any is the type with this as meta
     ):
-        """
-        Delete the singleton instance with the given name.
+        """Delete the singleton instance with the given name.
 
         This can be used for testing to create another singleton.
 
@@ -1179,9 +1212,21 @@ class SingletonPerNameMeta(type):
 
 
 class PydanticSingletonMeta(type(pydantic.BaseModel), SingletonPerNameMeta):
-    """This is the metaclass for creating Pydantic models that are also required to be singletons"""
+    """This is the metaclass for creating Pydantic models that are also required
+    to be singletons"""
 
     pass
+
+
+class PydanticSingleton(metaclass=PydanticSingletonMeta):
+    """A Pydantic model that is also a singleton by name.
+
+    This only specifies the metaclass and wraps `delete_singleton_by_name`.
+    """
+
+    @classmethod
+    def delete_singleton_by_name(cls, name: str):
+        SingletonPerNameMeta.delete_singleton_by_name(name, cls)
 
 
 class InstanceRefMixin:
@@ -1202,3 +1247,9 @@ class InstanceRefMixin:
             inst = inst_ref()
             if inst is not None:
                 yield inst
+
+    @classmethod
+    def delete_instances(cls):
+        """Delete all instances of the class."""
+
+        cls._instance_refs[cls] = []

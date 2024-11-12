@@ -27,7 +27,7 @@ class _TruSession(core_session.TruSession):
         ), "otel_exporter must be an OpenTelemetry SpanExporter."
 
         self._experimental_feature(
-            flag=core_experimental.Feature.OTEL_TRACING, value=True, lock=True
+            flag=core_experimental.Feature.OTEL_TRACING, value=True, freeze=True
         )
 
         print(
