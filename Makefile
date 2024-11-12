@@ -42,8 +42,6 @@ env-tests-required:
 	poetry install --only required
 	make env-tests
 
-# Note: in the below, there are a few pinned langchain versions to make sure they don't have updated
-# to broken versions which are a few versions after the pinned ones.
 env-tests-optional: env env-tests
 	poetry run pip install \
 		llama-index-embeddings-huggingface \
