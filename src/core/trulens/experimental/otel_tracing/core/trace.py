@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import contextlib
 import contextvars
-import functools
 import inspect
 import logging
 import os
+import sys
 import threading as th
 from threading import Lock
 from typing import (
@@ -48,6 +48,11 @@ from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+
+if sys.version_info < (3, 9):
+    from functools import lru_cache as fn_cache
+else:
+    from functools import cache as fn_cache
 
 from opentelemetry.semconv.resource import ResourceAttributes
 from opentelemetry.trace import span as span_api
@@ -748,7 +753,7 @@ configured for OTEL.
 """
 
 
-@functools.cache
+@fn_cache
 def trulens_tracer():
     from trulens.core import __version__
 
