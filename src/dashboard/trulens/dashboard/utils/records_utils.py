@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
-from streamlit_pills import pills
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import highlight
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
@@ -135,7 +135,7 @@ def _render_feedback_pills(
             if fcol in selected_row and selected_row[fcol] is not None
         ])
 
-        icons = [get_icon(fcol) for fcol in feedback_with_valid_results]
+        icons = {fcol: get_icon(fcol) for fcol in feedback_with_valid_results}
     else:
         feedback_with_valid_results = feedback_col_names
 
@@ -143,20 +143,25 @@ def _render_feedback_pills(
         st.warning("No feedback functions found.")
         return
 
-    if selected_row is None:
-        return pills(
-            "Feedback Functions (click to learn more)",
-            feedback_with_valid_results,
-            index=None,
+    kwargs = {
+        "label": "Feedback Functions (click to learn more)",
+        "options": feedback_with_valid_results,
+        "index": None,
+    }
+
+    if selected_row is not None:
+        kwargs["format_func"] = (
+            lambda fcol: f"{icons[fcol]} {fcol} {selected_row[fcol]:.2f}"
         )
 
-    return pills(
-        "Feedback Functions (click to learn more)",
-        feedback_with_valid_results,
-        index=None,
-        format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
-        icons=icons,
-    )
+    if is_sis_compatibility_enabled():
+        return st.selectbox(**kwargs)
+    else:
+        from streamlit_pills import pills
+
+        return pills(
+            **kwargs,
+        )
 
 
 def _render_feedback_call(
