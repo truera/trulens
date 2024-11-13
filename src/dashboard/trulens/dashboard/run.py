@@ -43,6 +43,7 @@ def run_dashboard(
     port: Optional[int] = None,
     address: Optional[str] = None,
     force: bool = False,
+    sis_compatibility_mode: bool = False,
     _dev: Optional[Path] = None,
     _watch_changes: bool = False,
 ) -> Process:
@@ -54,6 +55,8 @@ def run_dashboard(
         address (Optional[str]): Address to pass to streamlit through `server.address`. `address` cannot be set if running from a colab notebook.
 
         force (bool): Stop existing dashboard(s) first. Defaults to `False`.
+
+        sis_compatibility_mode (bool): Flag to enable compatibility with Streamlit in Snowflake (SiS). SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components. As a result, enabling this flag will replace custom components in the dashboard with native Streamlit components. Defaults to `False`.
 
         _dev (Path): If given, runs the dashboard with the given `PYTHONPATH`. This can be used to run the dashboard from outside of its pip package installation folder. Defaults to `None`.
 
@@ -89,8 +92,14 @@ def run_dashboard(
 
     env_opts = {}
     if _dev is not None:
-        env_opts["env"] = os.environ
+        if env_opts.get("env", None) is None:
+            env_opts["env"] = os.environ
         env_opts["env"]["PYTHONPATH"] = str(_dev)
+
+    if sis_compatibility_mode:
+        if env_opts.get("env", None) is None:
+            env_opts["env"] = os.environ
+        env_opts["env"]["SIS_COMPATIBILITY_MODE"] = "true"
 
     if port is None:
         port = find_unused_port()

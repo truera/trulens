@@ -2,16 +2,13 @@ import json
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import ColumnsAutoSizeMode
-from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
+from trulens.dashboard.constants import SIS_COMPAT_FLAG
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
@@ -192,6 +189,8 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -368,24 +367,35 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+    if SIS_COMPAT_FLAG:
+        event = st.dataframe(
+            df, selection_mode="single-row", on_select="rerun", hide_index=True
+        )
+        return df.iloc[event.selection["rows"]]
+    else:
+        from st_aggrid import AgGrid
+        from st_aggrid.shared import ColumnsAutoSizeMode
+        from st_aggrid.shared import DataReturnMode
 
-    return AgGrid(
-        df,
-        # key="records_data",
-        height=height,
-        gridOptions=_build_grid_options(
-            df=df,
-            feedback_col_names=feedback_col_names,
-            feedback_directions=feedback_directions,
-            version_metadata_col_names=version_metadata_col_names,
-        ),
-        update_on=["selectionChanged"],
-        custom_css={**aggrid_css, **radio_button_css},
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
-        data_return_mode=DataReturnMode.FILTERED,
-        allow_unsafe_jscode=True,
-    )
+        height = 1000 if len(df) > 20 else 45 * len(df) + 100
+
+        event = AgGrid(
+            df,
+            # key="records_data",
+            height=height,
+            gridOptions=_build_grid_options(
+                df=df,
+                feedback_col_names=feedback_col_names,
+                feedback_directions=feedback_directions,
+                version_metadata_col_names=version_metadata_col_names,
+            ),
+            update_on=["selectionChanged"],
+            custom_css={**aggrid_css, **radio_button_css},
+            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+            data_return_mode=DataReturnMode.FILTERED,
+            allow_unsafe_jscode=True,
+        )
+        return pd.DataFrame(event.selected_rows)
 
 
 def _render_grid_tab(
@@ -394,14 +404,13 @@ def _render_grid_tab(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: List[str],
 ):
-    grid_data = _render_grid(
+    selected_records = _render_grid(
         df,
         feedback_col_names=feedback_col_names,
         feedback_directions=feedback_directions,
         version_metadata_col_names=version_metadata_col_names,
     )
-    selected_rows = grid_data.selected_rows
-    selected_records = pd.DataFrame(selected_rows)
+
     if selected_records.empty:
         selected_record_id = st.session_state.get(
             f"{page_name}.selected_record", None

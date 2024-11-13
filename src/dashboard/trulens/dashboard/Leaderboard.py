@@ -12,6 +12,7 @@ from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
+from trulens.dashboard.constants import SIS_COMPAT_FLAG
 from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
@@ -202,33 +203,44 @@ def _render_grid(
     df: pd.DataFrame,
     feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
-    version_metadata_col_names: Sequence[str],
+    version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+    if SIS_COMPAT_FLAG:
+        event = st.dataframe(
+            df, selection_mode="multi-row", on_select="rerun", hide_index=True
+        )
+        return df.iloc[event.selection["rows"]]
+    else:
+        columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
-    if dashboard_constants.PINNED_COL_NAME in df:
-        df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = df.loc[
-            df[dashboard_constants.PINNED_COL_NAME], "app_version"
-        ].apply(lambda x: f"📌 {x}")
+        if dashboard_constants.PINNED_COL_NAME in df:
+            df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = (
+                df.loc[
+                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
+                ].apply(lambda x: f"📌 {x}")
+            )
 
-    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+        height = 1000 if len(df) > 20 else 45 * len(df) + 100
+        event = AgGrid(
+            df,
+            key=grid_key,
+            height=height,
+            columns_state=columns_state,
+            gridOptions=_build_grid_options(
+                df=df,
+                feedback_col_names=feedback_col_names,
+                feedback_directions=feedback_directions,
+                version_metadata_col_names=version_metadata_col_names,
+            ),
+            custom_css=dashboard_styles.aggrid_css,
+            update_on=["selectionChanged", "cellValueChanged"],
+            allow_unsafe_jscode=True,
+        )
 
-    return AgGrid(
-        df,
-        key=grid_key,
-        height=height,
-        columns_state=columns_state,
-        gridOptions=_build_grid_options(
-            df=df,
-            feedback_col_names=feedback_col_names,
-            feedback_directions=feedback_directions,
-            version_metadata_col_names=version_metadata_col_names,
-        ),
-        custom_css=dashboard_styles.aggrid_css,
-        update_on=["selectionChanged", "cellValueChanged"],
-        allow_unsafe_jscode=True,
-    )
+        if event.event_data and event.event_data["type"] == "cellValueChanged":
+            handle_table_edit(df, event.event_data, version_metadata_col_names)
+        return pd.DataFrame(event.selected_rows)
 
 
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
@@ -476,7 +488,7 @@ def _render_grid_tab(
             return
     st.query_params["only_show_pinned"] = str(only_show_pinned)
 
-    grid_data = _render_grid(
+    selected_rows = _render_grid(
         df,
         feedback_col_names=feedback_col_names,
         feedback_directions=feedback_directions,
@@ -484,14 +496,6 @@ def _render_grid_tab(
         grid_key=grid_key,
     )
 
-    if (
-        grid_data.event_data
-        and grid_data.event_data["type"] == "cellValueChanged"
-    ):
-        handle_table_edit(df, grid_data.event_data, version_metadata_col_names)
-
-    selected_rows = grid_data.selected_rows
-    selected_rows = pd.DataFrame(selected_rows)
     if selected_rows.empty:
         selected_app_ids = []
     else:
