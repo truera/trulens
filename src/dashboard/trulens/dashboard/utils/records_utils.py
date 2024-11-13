@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
-from streamlit_pills import pills
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import highlight
@@ -130,32 +129,36 @@ def _render_feedback_pills(
             return cat.icon
 
         feedback_with_valid_results = sorted([
-            fcol
+            (fcol, get_icon(fcol))
             for fcol in feedback_col_names
             if fcol in selected_row and selected_row[fcol] is not None
         ])
 
-        icons = [get_icon(fcol) for fcol in feedback_with_valid_results]
+        # If there are no valid results, use the feedback column names without icons
+        if not feedback_with_valid_results:
+            feedback_with_valid_results = [
+                (fcol, "") for fcol in feedback_col_names
+            ]
+
     else:
-        feedback_with_valid_results = feedback_col_names
+        feedback_with_valid_results = [
+            (fcol, "") for fcol in feedback_col_names
+        ]
 
     if len(feedback_with_valid_results) == 0:
         st.warning("No feedback functions found.")
         return
 
     if selected_row is None:
-        return pills(
+        return st.pills(
             "Feedback Functions (click to learn more)",
-            feedback_with_valid_results,
-            index=None,
+            [fcol for fcol, _ in feedback_with_valid_results],
         )
 
-    return pills(
+    return st.pills(
         "Feedback Functions (click to learn more)",
-        feedback_with_valid_results,
-        index=None,
-        format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
-        icons=icons,
+        [fcol for fcol, _ in feedback_with_valid_results],
+        format_func=lambda fcol: f"{dict(feedback_with_valid_results)[fcol]} {fcol} {selected_row[fcol]:.2f}",
     )
 
 
