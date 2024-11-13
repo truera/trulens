@@ -816,17 +816,16 @@ def with_context(context_vars: Optional[ContextVarsOrValues] = None):
             variables to set to their current value.
     """
 
-    tokens = set_context_vars_or_values(context_vars)
-
     try:
+        tokens = set_context_vars_or_values(context_vars)
         yield
 
     finally:
         for cv, v in tokens.items():
             try:
                 cv.reset(v)
-            except Exception:
-                # TODO: Figure out if this is bad.
+            except Exception as e:
+                print("Context reset failed:", e)
                 pass
 
 
@@ -841,17 +840,16 @@ async def awith_context(context_vars: Optional[ContextVarsOrValues] = None):
             variables to set to their current value.
     """
 
-    tokens = set_context_vars_or_values(context_vars)
-
     try:
+        tokens = set_context_vars_or_values(context_vars)
         yield
 
     finally:
         for cv, v in tokens.items():
             try:
                 cv.reset(v)
-            except Exception:
-                # TODO: Figure out if this is bad.
+            except Exception as e:
+                print("Context reset failed:", e)
                 pass
 
 

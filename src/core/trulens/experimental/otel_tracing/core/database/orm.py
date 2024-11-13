@@ -11,25 +11,14 @@ from typing import (
 
 from sqlalchemy import INTEGER
 from sqlalchemy import JSON
-from sqlalchemy import SMALLINT
-from sqlalchemy import TIMESTAMP
-from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import configure_mappers
 from sqlalchemy.schema import MetaData
 from sqlalchemy.sql import func
 from trulens.core.schema import types as types_schema
+from trulens.experimental.otel_tracing.core import otel as core_otel
 from trulens.experimental.otel_tracing.core import sem as core_sem
-from trulens.experimental.otel_tracing.core import trace as core_trace
-from trulens.semconv import trace as truconv
-
-NUM_SPANTYPE_BYTES = 32
-# trulens specific, not otel
-
-NUM_NAME_BYTES = 32
-NUM_STATUS_DESCRIPTION_BYTES = 256
-# TODO: match otel spec
 
 T = TypeVar("T")
 
@@ -74,11 +63,11 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
 
             # pagination utility columns
             created_timestamp: Column = Column(
-                TIMESTAMP,
+                types_schema.Timestamp.SQL_SCHEMA_TYPE,
                 server_default=func.now(),
             )
             updated_timestamp: Column = Column(
-                TIMESTAMP,
+                types_schema.Timestamp.SQL_SCHEMA_TYPE,
                 server_default=func.now(),
                 onupdate=func.current_timestamp(),
             )
@@ -98,11 +87,15 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             __table_args__ = (UniqueConstraint("span_id", "trace_id"),)
 
             parent_span_id: Column = Column(types_schema.SpanID.SQL_SCHEMA_TYPE)
+
             parent_trace_id: Column = Column(
                 types_schema.TraceID.SQL_SCHEMA_TYPE
             )
 
-            name: Column = Column(VARCHAR(NUM_NAME_BYTES), nullable=False)
+            name: Column = Column(
+                types_schema.SpanName.SQL_SCHEMA_TYPE, nullable=False
+            )
+
             start_timestamp: Column = Column(
                 types_schema.Timestamp.SQL_SCHEMA_TYPE, nullable=False
             )
@@ -110,10 +103,17 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                 types_schema.Timestamp.SQL_SCHEMA_TYPE, nullable=False
             )
             attributes: Column = Column(JSON)
-            kind: Column = Column(SMALLINT, nullable=False)  # better type?
-            status: Column = Column(SMALLINT, nullable=False)  # better type?
+
+            kind: Column = Column(
+                types_schema.SpanKind.SQL_SCHEMA_TYPE, nullable=False
+            )
+
+            status: Column = Column(
+                types_schema.SpanStatusCode.SQL_SCHEMA_TYPE, nullable=False
+            )
+
             status_description: Column = Column(
-                VARCHAR(NUM_STATUS_DESCRIPTION_BYTES)
+                types_schema.StatusDescription.SQL_SCHEMA_TYPE
             )
 
             # Note that there are other OTEL requirements that we do not use and
@@ -128,18 +128,22 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             We cannot use trace_id for this purpose without interfering with
             expected OTEL behaviour. Can be null if we cannot figure out what
             record/call this span is associated with."""
-            # TODO: figure out the constraints/uniqueness for record_ids.
 
             span_types: Column = Column(JSON, nullable=False)
             """Types (of TypedSpan) the span belongs to."""
 
             @classmethod
             def parse(cls, obj: core_sem.TypedSpan) -> NewSpanORM.Span:
-                """Parse a span object into an ORM object."""
+                """Parse a typed span object into an ORM object."""
 
                 record_ids = {}
-                if isinstance(obj, core_sem.App) and obj.record_ids is not None:
-                    record_ids = obj.record_ids
+                if isinstance(obj, core_sem.Record):
+                    if obj.record_ids is not None:
+                        record_ids = obj.record_ids
+                    else:
+                        raise NotImplementedError(
+                            f"Record spans must have record_ids. This span does not: {obj}"
+                        )
                 else:
                     # TODO: figure out how to handle this case, or just not include these?
                     raise NotImplementedError("Cannot handle non-App spans.")
@@ -153,7 +157,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     trace_id=types_schema.TraceID.sql_of_py(
                         obj.context.trace_id
                     ),
-                    record_ids=record_ids,
+                    record_ids=types_schema.TraceRecordIDs.sql_of_py(
+                        record_ids
+                    ),
                     parent_span_id=types_schema.SpanID.sql_of_py(
                         obj.parent.span_id
                     )
@@ -174,22 +180,26 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                     if obj.end_timestamp
                     else None,
                     attributes=obj.attributes,
-                    kind=obj.kind.value,  # same as below
-                    status=obj.status.value,  # doesn't like to take the Enum itself
-                    status_description=obj.status_description,
+                    kind=types_schema.SpanKind.sql_of_py(obj.kind),
+                    status=types_schema.SpanStatusCode.sql_of_py(obj.status),
+                    status_description=types_schema.StatusDescription.sql_of_py(
+                        obj.status_description
+                    )
+                    if obj.status_description
+                    else None,
                     span_types=list(t.value for t in obj.span_types),
                 )
 
-            def write(self) -> core_trace.Span:
-                """Convert ORM class to span"""
+            def write(self) -> core_sem.TypedSpan:
+                """Convert ORM class to typed span."""
 
-                context = core_trace.SpanContext(
+                context = core_otel.SpanContext(
                     trace_id=types_schema.TraceID.py_of_sql(self.trace_id),
                     span_id=types_schema.SpanID.py_of_sql(self.span_id),
                 )
 
                 parent = (
-                    core_trace.SpanContext(
+                    core_otel.SpanContext(
                         trace_id=types_schema.TraceID.py_of_sql(
                             self.parent_trace_id
                         ),
@@ -202,27 +212,35 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
                 )
 
                 span_types = set(self.span_types)
-                other_args = {}
-                if truconv.SpanAttributes.SpanType.RECORD_ROOT in span_types:
-                    # TODO: need to recover AttributeProperty fields from attributes here.
-                    other_args["record_id"] = self.attributes[
-                        truconv.SpanAttributes.RECORD_ROOT.RECORD_ID
-                    ]
+                # other_args = {}
+                # if truconv.SpanAttributes.SpanType.RECORD_ROOT in span_types:
+                # TODO: need to recover AttributeProperty fields from attributes here.
+                #    other_args["record_id"] = self.attributes[
+                #        truconv.SpanAttributes.RECORD_ROOT.RECORD_ID
+                #    ]
 
                 return core_sem.TypedSpan.mixin_new(
                     name=self.name,
                     context=context,
                     parent=parent,
-                    kind=self.kind,
+                    kind=types_schema.SpanKind.py_of_sql(self.kind),
                     attributes=self.attributes,
-                    start_timestamp=self.start_timestamp,
-                    end_timestamp=self.end_timestamp,
-                    status=self.status,
-                    status_description=self.status_description,
+                    start_timestamp=types_schema.Timestamp.py_of_sql(
+                        self.start_timestamp
+                    ),
+                    end_timestamp=types_schema.Timestamp.py_of_sql(
+                        self.end_timestamp
+                    ),
+                    status=types_schema.SpanStatusCode.py_of_sql(self.status),
+                    status_description=types_schema.StatusDescription.py_of_sql(
+                        self.status_description
+                    ),
                     links=[],  # we dont keep links
-                    span_types=span_types,
-                    record_ids=self.record_ids,
-                    **other_args,
+                    span_types=types_schema.SpanTypes.py_of_sql(span_types),
+                    record_ids=types_schema.TraceRecordIDs.py_of_sql(
+                        self.record_ids
+                    ),
+                    #    **other_args,
                 )
 
     configure_mappers()  # IMPORTANT

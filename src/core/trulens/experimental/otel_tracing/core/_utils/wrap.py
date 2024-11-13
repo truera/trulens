@@ -448,15 +448,17 @@ def wrap_callable(
 
     assert isinstance(func, Callable), f"Callable expected but got {func}."
 
-    if python_utils.safe_hasattr(func, CALLBACKS):
-        # If CALLBACKS is set, it was already a wrapper.
-
-        # logger.warning("Function %s is already wrapped.", func)
-
-        return func
-
     sig = inspect.signature(func)  # safe sig?
     our_callback_init_kwargs: Dict[str, Any] = {"func": func, "sig": sig}
+
+    if python_utils.safe_hasattr(func, CALLBACKS):
+        # If CALLBACKS is set, it was already a wrapper. In this case we only
+        # call the static method on_callable_wrapped.
+
+        our_callback_init_kwargs["wrapper"] = func
+        callback_class.on_callable_wrapped(**our_callback_init_kwargs, **kwargs)
+
+        return func
 
     # If CALLBACKS is not set, create a wrapper and return it.
     @functools.wraps(func)

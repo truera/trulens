@@ -1,15 +1,11 @@
 from __future__ import annotations
 
-import datetime
 import functools
 import inspect
 from logging import getLogger
 from typing import (
-    Any,
-    Callable,
     ClassVar,
     Dict,
-    Generic,
     List,
     Optional,
     Set,
@@ -25,116 +21,12 @@ from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing.core import trace as core_trace
+from trulens.experimental.otel_tracing.core import span as core_span
 from trulens.semconv import trace as truconv
 
 logger = getLogger(__name__)
 
 T = TypeVar("T")
-
-
-class AttributeProperty(property, Generic[T]):
-    """Property that stores a serialized version its value in the attributes
-    dictionary.
-
-    Validates default and on assignment. This is meant to be used only in
-    TypedSpan instances (or subclasses).
-
-        Args:
-            name: The name of the property. The key used for storage will be
-                this with the vendor prefix.
-
-            typ: The type of the property.
-
-            typ_factory: A factory function that returns the type of the
-                property. This can be used for forward referenced types.
-
-            default: The default value of the property.
-
-            default_factory: A factory function that returns the default value
-                of the property. This can be used for defaults that make use of
-                forward referenced types.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        typ: Optional[Type[T]] = None,
-        typ_factory: Optional[Callable[[], Type[T]]] = None,
-        default: Optional[T] = None,
-        default_factory: Optional[Callable[[], T]] = None,
-    ):
-        self.name = name
-        self.typ = typ
-        self.typ_factory = typ_factory
-        self.default = default
-        self.default_factory = default_factory
-
-        self.forward_initialized = False
-
-    def init_forward(self):
-        if self.forward_initialized:
-            return
-
-        self.forward_initialized = True
-
-        if self.typ is None and self.typ_factory is not None:
-            self.typ = self.typ_factory()
-
-        if self.default is None and self.default_factory is not None:
-            self.default = self.default_factory()
-
-        if self.typ is None and self.default is not None:
-            self.typ = type(self.default)
-
-        if self.typ is None:
-            self.tadapter = None
-        else:
-            try:
-                self.tadapter = pydantic.TypeAdapter(self.typ)
-
-                if self.default is not None:
-                    self.tadapter.validate_python(self.default)
-
-            except pydantic.PydanticSchemaGenerationError:
-                self.tadapter = None
-
-    def fget(self, obj: Any) -> Optional[T]:
-        return self.__get__(obj, obj.__class__)
-
-    def __get__(self, obj: Any, objtype: Optional[Type[T]]) -> Optional[T]:  # type: ignore # noqa: F821
-        if obj is None:
-            return self
-
-        self.init_forward()
-        return obj._attributes.get(self.name, self.default)
-
-    def __set__(self, obj, value: T) -> None:
-        self.init_forward()
-
-        if self.tadapter is not None:
-            self.tadapter.validate_python(value)
-
-        obj._attributes[self.name] = value
-        obj.attributes[self.name] = json_utils.jsonify(value)
-
-    def __delete__(self, obj):
-        del obj._attributes[self.name]
-        del obj.attributes[self.name]
-
-    def __set_name__(self, cls, name):
-        if name in cls.__annotations__:
-            # If type is specified in annotation, take it from there.
-            self.typ = cls.__annotations__[name]
-            self.tadapter = pydantic.TypeAdapter(self.typ)
-
-            # Update the recorded return type as well.
-            # TODO: cannot do this at this point as the below dict is not yet populated
-            # if name in cls.model_computed_fields:
-            #     cls.model_computed_fields[name].return_type = self.typ
-
-            # Have to remove it as pydantic will complain about overriding fields with computed fields.
-            del cls.__annotations__[name]
 
 
 @functools.lru_cache
@@ -153,6 +45,9 @@ def _get_combo_class(classes: Tuple[Type[TypedSpan]]) -> Type[TypedSpan]:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.span_types = set(s.span_type for s in classes)
+
+            # for cls in classes:
+            #    cls._init_attribute_properties(self, kwargs)
 
     _Combo.__name__ = "_".join(cls.__name__ for cls in classes)
     _Combo.__qualname__ = "_".join(cls.__qualname__ for cls in classes)
@@ -183,17 +78,11 @@ def get_combo_class(classes: Set[Type[TypedSpan]]) -> Type[TypedSpan]:
     return _get_combo_class(classes)
 
 
-class TypedSpan(core_trace.Span):
+class TypedSpan(core_span.Span):
     """A span with a type."""
 
     span_type: ClassVar[Optional[truconv.SpanAttributes.SpanType]] = None
     """Mixin type for each subclass."""
-
-    _attributes: Dict[str, Any] = pydantic.PrivateAttr(default_factory=dict)
-    """Non-serialized values of named fields defined by `attribute_property`.
-
-    These are mirrored with serialized versions in `attributes`.
-    """
 
     @classmethod
     def mixin_new(cls, d: Optional[Dict] = None, **kwargs) -> TypedSpan:
@@ -205,11 +94,11 @@ class TypedSpan(core_trace.Span):
 
         d.update(kwargs)
 
-        if (record_ids := d.get("record_ids", None)) is not None:
-            # Some span types have record_id field which gets stored in
-            # record_ids in the db.
-            if len(record_ids) == 1:
-                d["record_id"] = next(iter(record_ids.values()))
+        # if (record_ids := d.get("record_ids", None)) is not None:
+        # Some span types have record_id field which gets stored in
+        # record_ids in the db.
+        #    if len(record_ids) == 1:
+        #        d["record_id"] = next(iter(record_ids.values()))
 
         types = d.pop("span_types", [])
 
@@ -220,8 +109,10 @@ class TypedSpan(core_trace.Span):
         return combo_class(**d)
 
     @staticmethod
-    def semanticize(span: core_trace.Span) -> TypedSpan:
+    def semanticize(span: core_span.Span) -> TypedSpan:
         class_args = {
+            "context": span.context,
+            "parent": span.parent,
             "name": span.name,
             "start_timestamp": span.start_timestamp,
             "end_timestamp": span.end_timestamp,
@@ -230,23 +121,37 @@ class TypedSpan(core_trace.Span):
             "status_description": span.status_description,
             "links": span.links,
             "events": span.events,
-            "record_ids": span.trace_record_ids,
         }
         classes = set()
-        classes.add(
-            App
-        )  # everything that comes from trulens tracer is a span under an app right now
 
-        if isinstance(span, core_trace.LiveSpan):
-            class_args.update(
-                dict(
-                    app_ids=set(app.app_id for app in span.live_apps),
+        if isinstance(span, core_span.Span):
+            classes.add(
+                Record
+            )  # everything that comes from trulens tracer is a span under an app right now
+            class_args["record_ids"] = span.record_ids
+            class_args["app_ids"] = span.app_ids
+
+            if span.record_ids is None:
+                raise RuntimeError("Span has no record_ids.")
+
+        if isinstance(span, core_span.RecordingContextSpan):
+            classes.add(Recording)
+
+            app = span.live_app()
+            if app is None:
+                logger.warning(
+                    "App in %s got garbage collected before serialization.",
+                    span,
                 )
-            )
+            else:
+                class_args.update(dict(app_id=app.app_id))
 
-        if isinstance(span, core_trace.LiveSpanCall):
+        if isinstance(span, core_span.LiveSpan):
+            # already covered everything in the Span case. The other live objects are not relevant.
+            pass
+
+        if isinstance(span, core_span.LiveSpanCall):
             classes.add(Call)
-            classes.add(Semantic)
 
             class_args.update(
                 dict(
@@ -266,31 +171,72 @@ class TypedSpan(core_trace.Span):
                 )
             )
 
-        if isinstance(span, core_trace.WithCost):
+        if isinstance(span, core_span.WithCost):
             classes.add(Cost)
-            classes.add(Semantic)
 
             class_args["cost"] = span.cost
 
-        if isinstance(span, core_trace.LiveRecordRoot):
+        if isinstance(span, core_span.LiveRecordRoot):
             classes.add(RecordRoot)
 
-            class_args.update(dict(record_id=span.trace_record_id))
+            class_args.update(dict(record_id=span.record_id))
 
             app = span.live_app()
+
             if app is None:
                 logger.warning(
                     "App in %s got garbage collected before serialization.",
                     span,
                 )
             else:
+                # Get the main method call so we can get the main input/output/error.
+
+                main_span = span.first_child(
+                    matching=lambda s: isinstance(s, core_span.LiveSpanCall)
+                )
+
+                total_cost = span.cost_tally()
+
+                if main_span is None:
+                    logger.warning(
+                        "No main span found for record %s in %s.",
+                        span.record_id,
+                        span,
+                    )
+
+                else:
+                    main_input = app.main_input(
+                        func=main_span.live_func,
+                        sig=main_span.live_sig,
+                        bindings=main_span.live_bindings,
+                    )
+                    main_output = app.main_output(
+                        func=main_span.live_func,
+                        sig=main_span.live_sig,
+                        bindings=main_span.live_bindings,
+                        ret=main_span.live_ret,
+                    )
+                    main_error = json_utils.jsonify(main_span.live_error)
+
+                    class_args.update(
+                        dict(
+                            main_input=main_input,
+                            main_output=main_output,
+                            main_error=main_error,
+                        )
+                    )
+
                 class_args.update(
                     dict(
                         app_id=app.app_id,
                         app_name=app.app_name,
                         app_version=app.app_version,
+                        total_cost=total_cost,
                     )
                 )
+
+        # TODO:
+        # classes.add(Semantic)
 
         if len(classes) == 0:
             logger.warning("No types found for span %s.", span)
@@ -308,50 +254,24 @@ class TypedSpan(core_trace.Span):
         # This is meant to be overwritten:
         self.span_types = set([self.__class__.span_type])
 
-        for name, value in kwargs.items():
-            if name in self.__class__.model_computed_fields:
-                setattr(self, name, value)
-
-    @staticmethod
-    def attribute_property_factory(base: str) -> Callable:
-        def prop_factory(
-            name: str,
-            typ: Optional[Type[T]] = None,
-            typ_factory: Optional[Callable[[], Type[T]]] = None,
-            default: Optional[T] = None,
-            default_factory: Optional[Callable[[], T]] = None,
-        ) -> property:
-            return TypedSpan.attribute_property(
-                name=base + "." + name,
-                typ=typ,
-                typ_factory=typ_factory,
-                default=default,
-                default_factory=default_factory,
-            )
-
-        return prop_factory
-
-    @staticmethod
-    def attribute_property(
-        name: str,
-        typ: Optional[Type[T]] = None,
-        typ_factory: Optional[Callable[[], Type[T]]] = None,
-        default: Optional[T] = None,
-        default_factory: Optional[Callable[[], T]] = None,
-    ) -> property:
-        """See AttributeProperty."""
-
-        return pydantic.computed_field(
-            AttributeProperty(name, typ, typ_factory, default, default_factory),
-            return_type=typ,
-        )
-
-    span_types = attribute_property(
+    span_types = core_span.Span.attribute_property(
         truconv.SpanAttributes.SPAN_TYPES,
         Set[truconv.SpanAttributes.SpanType],
         default_factory=set,
     )
-    """A span can be of multiple semantic categories."""
+    """A span can be of multiple categories."""
+
+
+class Recording(TypedSpan):
+    """A TruLens recording context span type."""
+
+    span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
+        truconv.SpanAttributes.SpanType.RECORDING
+    )
+
+    app_id = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORDING.APP_ID, types_schema.AppID
+    )
 
 
 class Unknown(TypedSpan):
@@ -379,35 +299,41 @@ class RecordRoot(TypedSpan):
         truconv.SpanAttributes.SpanType.RECORD_ROOT
     )
 
-    record_id = TypedSpan.attribute_property(
+    record_id = core_span.Span.attribute_property(
         truconv.SpanAttributes.RECORD_ROOT.RECORD_ID, types_schema.RecordID
     )
 
     # TODEP:
-    perf = TypedSpan.attribute_property("record.perf", base_schema.Perf)
+    # perf = core_span.Span.attribute_property("record.perf", base_schema.Perf)
     # TODEP:
-    ts = TypedSpan.attribute_property("record.ts", datetime.datetime)
+    # ts = core_span.Span.attribute_property("record.ts", datetime.datetime)
+    # tags = core_span.Span.attribute_property("record.tags", str)
+    # meta = core_span.Span.attribute_property("record.meta", serial_utils.JSON)
 
-    app_id = TypedSpan.attribute_property("record.app_id", types_schema.AppID)
-    app_name = TypedSpan.attribute_property("record.app_name", str)
-    app_version = TypedSpan.attribute_property("record.app_version", str)
-
-    cost = TypedSpan.attribute_property("record.cost", base_schema.Cost)
-
-    tags = TypedSpan.attribute_property("record.tags", str)
-
-    meta = TypedSpan.attribute_property("record.meta", serial_utils.JSON)
-
-    main_input = TypedSpan.attribute_property(
-        "record.main_input", serial_utils.JSON
+    app_id = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.APP_ID, types_schema.AppID
+    )
+    app_name = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.APP_NAME, str
+    )
+    app_version = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.APP_VERSION, str
     )
 
-    main_output = TypedSpan.attribute_property(
-        "record.main_output", serial_utils.JSON
+    total_cost = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.TOTAL_COST, base_schema.Cost
     )
 
-    main_error = TypedSpan.attribute_property(
-        "record.main_error", serial_utils.JSON
+    main_input = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.MAIN_INPUT, serial_utils.JSON
+    )
+
+    main_output = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.MAIN_OUTPUT, serial_utils.JSON
+    )
+
+    main_error = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD_ROOT.MAIN_ERROR, serial_utils.JSON
     )
 
 
@@ -426,7 +352,7 @@ class Cost(TypedSpan):
         truconv.SpanAttributes.SpanType.COST
     )
 
-    cost = TypedSpan.attribute_property(
+    cost = core_span.Span.attribute_property(
         truconv.SpanAttributes.COST.COST, base_schema.Cost
     )
 
@@ -444,56 +370,56 @@ class Call(TypedSpan):
 
     model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
 
-    call_id = TypedSpan.attribute_property(
+    call_id = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.CALL_ID, uuid.UUID
     )
     """Unique identifier for the call."""
 
-    signature = TypedSpan.attribute_property(
+    signature = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.SIGNATURE, inspect.Signature
     )
     """Signature of the function."""
 
-    function = TypedSpan.attribute_property(
+    function = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.FUNCTION, pyschema_utils.FunctionOrMethod
     )
     """Function info."""
 
     # TODO: move this to resource attributes:
-    process_id = TypedSpan.attribute_property(
+    process_id = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.PROCESS_ID, int
     )
     """Process id."""
 
-    thread_id = TypedSpan.attribute_property(
+    thread_id = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.THREAD_ID, int
     )
     """Thread id."""
 
-    bindings = TypedSpan.attribute_property(
+    bindings = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.BINDINGS, pyschema_utils.Bindings
     )
     """Bindings of the function, if can be bound."""
 
-    ret = TypedSpan.attribute_property(
+    ret = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.RETURN, serial_utils.JSON
     )
 
 
-class App(TypedSpan):
-    """A typed span that corresponds to an app call."""
+class Record(TypedSpan):
+    """Span that contains recording/app ids."""
 
     span_type: ClassVar[truconv.SpanAttributes.SpanType] = (
-        truconv.SpanAttributes.SpanType.APP
+        truconv.SpanAttributes.SpanType.RECORD
     )
 
-    app_ids = TypedSpan.attribute_property(
-        truconv.SpanAttributes.APP.APP_IDS, Set[types_schema.AppID]
+    app_ids = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD.APP_IDS, Set[types_schema.AppID]
     )
     """The app ids of the apps that were called."""
 
-    record_ids = TypedSpan.attribute_property(
-        truconv.SpanAttributes.APP.RECORD_IDS,
+    record_ids = core_span.Span.attribute_property(
+        truconv.SpanAttributes.RECORD.RECORD_IDS,
         Dict[types_schema.AppID, types_schema.RecordID],
     )
     """The map of app_id to record_id indicating the id of the span as viewed by
@@ -507,37 +433,37 @@ class Retrieval(TypedSpan):
         truconv.SpanAttributes.SpanType.RETRIEVAL
     )
 
-    query_text = TypedSpan.attribute_property(
+    query_text = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.QUERY_TEXT, str
     )
     """Input text whose related contexts are being retrieved."""
 
-    query_embedding = TypedSpan.attribute_property(
+    query_embedding = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.QUERY_EMBEDDING, List[float]
     )
     """Embedding of the input text."""
 
-    distance_type = TypedSpan.attribute_property(
+    distance_type = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.DISTANCE_TYPE, str
     )
     """Distance function used for ranking contexts."""
 
-    num_contexts = TypedSpan.attribute_property(
+    num_contexts = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.NUM_CONTEXTS, int
     )
     """The number of contexts requested, not necessarily retrieved."""
 
-    retrieved_contexts = TypedSpan.attribute_property(
+    retrieved_contexts = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS, List[str]
     )
     """The retrieved contexts."""
 
-    retrieved_scores = TypedSpan.attribute_property(
+    retrieved_scores = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.RETRIEVED_SCORES, List[float]
     )
     """The scores of the retrieved contexts."""
 
-    retrieved_embeddings = TypedSpan.attribute_property(
+    retrieved_embeddings = core_span.Span.attribute_property(
         truconv.SpanAttributes.RETRIEVAL.RETRIEVED_EMBEDDINGS, List[List[float]]
     )
     """The embeddings of the retrieved contexts."""
@@ -550,33 +476,33 @@ class Reranking(TypedSpan):
         truconv.SpanAttributes.SpanType.RERANKING
     )
 
-    query_text = TypedSpan.attribute_property(
+    query_text = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.QUERY_TEXT, str
     )
     """The query text."""
 
-    model_name = TypedSpan.attribute_property(
+    model_name = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.MODEL_NAME, str
     )  # consider generic ML model name attr
     """The model name of the reranker."""
 
-    top_n = TypedSpan.attribute_property(
+    top_n = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.TOP_N, int
     )
     """The number of contexts to rerank."""
 
-    input_context_texts = TypedSpan.attribute_property(
+    input_context_texts = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.INPUT_CONTEXT_TEXTS, List[str]
     )
     """The contexts being reranked."""
 
-    input_context_scores = TypedSpan.attribute_property(
+    input_context_scores = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.INPUT_CONTEXT_SCORES,
         Optional[List[float]],
     )
     """The scores of the input contexts."""
 
-    output_ranks = TypedSpan.attribute_property(
+    output_ranks = core_span.Span.attribute_property(
         truconv.SpanAttributes.RERANKING.OUTPUT_RANKS, List[int]
     )
     """Reranked indexes into `input_context_texts`."""
@@ -589,42 +515,42 @@ class Generation(TypedSpan):
         truconv.SpanAttributes.SpanType.GENERATION
     )
 
-    model_name = TypedSpan.attribute_property(
+    model_name = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.MODEL_NAME, str
     )  # to replace with otel's LLM_REQUEST_MODEL
     """The model name of the LLM."""
 
-    model_type = TypedSpan.attribute_property(
+    model_type = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.MODEL_TYPE, str
     )
     """The type of model used."""
 
-    input_token_count = TypedSpan.attribute_property(
+    input_token_count = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.INPUT_TOKEN_COUNT, int
     )  # to replace with otel's LLM_RESPONSE_USAGE_PROMPT_TOKENS
     """The number of tokens in the input."""
 
-    input_messages = TypedSpan.attribute_property(
+    input_messages = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.INPUT_MESSAGES, List[dict]
     )
     """The prompt given to the LLM."""
 
-    output_token_count = TypedSpan.attribute_property(
+    output_token_count = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.OUTPUT_MESSAGES, int
     )  # to replace with otel's LLM_RESPONSE_COMPLETION_TOKENS
     """The number of tokens in the output."""
 
-    output_messages = TypedSpan.attribute_property(
+    output_messages = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.OUTPUT_MESSAGES, List[dict]
     )
     """The returned text."""
 
-    temperature = TypedSpan.attribute_property(
+    temperature = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.TEMPERATURE, float
     )  # to replace with otel's LLM_REQUEST_TEMPERATURE
     """The temperature used for generation."""
 
-    cost = TypedSpan.attribute_property(
+    cost = core_span.Span.attribute_property(
         truconv.SpanAttributes.GENERATION.COST, float
     )
     """The cost of the generation."""
@@ -637,12 +563,12 @@ class Memorization(TypedSpan):
         truconv.SpanAttributes.SpanType.MEMORIZATION
     )
 
-    memory_type = TypedSpan.attribute_property(
+    memory_type = core_span.Span.attribute_property(
         truconv.SpanAttributes.MEMORIZATION.MEMORY_TYPE, str
     )
     """The type of memory."""
 
-    remembered = TypedSpan.attribute_property(
+    remembered = core_span.Span.attribute_property(
         truconv.SpanAttributes.MEMORIZATION.REMEMBERED, str
     )
     """The text being integrated into the memory in this span."""
@@ -655,17 +581,17 @@ class Embedding(TypedSpan):
         truconv.SpanAttributes.SpanType.EMBEDDING
     )
 
-    input_text = TypedSpan.attribute_property(
+    input_text = core_span.Span.attribute_property(
         truconv.SpanAttributes.EMBEDDING.INPUT_TEXT, str
     )
     """The text being embedded."""
 
-    model_name = TypedSpan.attribute_property(
+    model_name = core_span.Span.attribute_property(
         truconv.SpanAttributes.EMBEDDING.MODEL_NAME, str
     )
     """The model name of the embedding model."""
 
-    embedding = TypedSpan.attribute_property(
+    embedding = core_span.Span.attribute_property(
         truconv.SpanAttributes.EMBEDDING.EMBEDDING, List[float]
     )
     """The embedding of the input text."""
@@ -678,7 +604,7 @@ class ToolInvocation(TypedSpan):
         truconv.SpanAttributes.SpanType.TOOL_INVOCATION
     )
 
-    description = TypedSpan.attribute_property(
+    description = core_span.Span.attribute_property(
         truconv.SpanAttributes.TOOL_INVOCATION.DESCRIPTION, str
     )
     """The description of the tool."""
@@ -691,7 +617,7 @@ class AgentInvocation(TypedSpan):
         truconv.SpanAttributes.SpanType.AGENT_INVOCATION
     )
 
-    description = TypedSpan.attribute_property(
+    description = core_span.Span.attribute_property(
         truconv.SpanAttributes.AGENT_INVOCATION.DESCRIPTION, str
     )
     """The description of the agent."""
@@ -700,9 +626,10 @@ class AgentInvocation(TypedSpan):
 TYPE_TO_CLASS_MAP: Dict[truconv.SpanAttributes.SpanType, Type[TypedSpan]] = {
     truconv.SpanAttributes.SpanType.UNKNOWN: Unknown,
     truconv.SpanAttributes.SpanType.SEMANTIC: Semantic,
+    truconv.SpanAttributes.SpanType.RECORDING: Recording,
     truconv.SpanAttributes.SpanType.EVAL_ROOT: EvalRoot,
     truconv.SpanAttributes.SpanType.RECORD_ROOT: RecordRoot,
-    truconv.SpanAttributes.SpanType.APP: App,
+    truconv.SpanAttributes.SpanType.RECORD: Record,
     truconv.SpanAttributes.SpanType.CALL: Call,
     truconv.SpanAttributes.SpanType.COST: Cost,
     truconv.SpanAttributes.SpanType.RETRIEVAL: Retrieval,

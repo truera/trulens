@@ -16,17 +16,22 @@ have little to no internal dependencies.
 from __future__ import annotations
 
 import datetime
+from enum import Enum
 import random
 import time
-from typing import Dict, Optional, Tuple, Type, Union
+from typing import Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
 import uuid
 
 from opentelemetry import trace as trace_api
+from opentelemetry.trace import span as span_api
+from opentelemetry.trace import status as status_api
 from sqlalchemy import BINARY
 from sqlalchemy import JSON
+from sqlalchemy import SMALLINT
 from sqlalchemy import TIMESTAMP
 from sqlalchemy import VARCHAR
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
+from trulens.semconv import trace as truconv
 
 RecordID: TypeAlias = str
 """Unique identifier for a record.
@@ -109,8 +114,19 @@ By default these are hashes of dataset content as json.
 
 # The rest is a type organization introduced with EXPERIMENTAL(otel_tracing).
 
+T = TypeVar("T")
 
-class TypeInfo:
+O = TypeVar("O")  # noqa: E741
+"""Types for values in OTEL representations of spans or otherwise."""
+
+P = TypeVar("P")
+"""Types for values in python."""
+
+S = TypeVar("S")
+"""Types for values provided to or retrieved from sqlalchemy."""
+
+
+class TypeInfo(Generic[O, P, S]):
     """Container for types and conversions between types used to represent
     values that need to be stored/represented in different places.
 
@@ -125,7 +141,7 @@ class TypeInfo:
     -
     """
 
-    OTEL_TYPE: Optional[Type] = None
+    OTEL_TYPE: Optional[Type[O]] = None
     """Type for OTEL values.
 
     None if type info is not relevant to OTEL.
@@ -138,25 +154,25 @@ class TypeInfo:
     vary but may be specified by a spec, like OTEL, to be a certain number of
     bits regardless."""
 
-    PY_TYPE: Type
+    PY_TYPE: Type[P]
     """Type for python values."""
 
-    SQL_TYPE: Type
+    SQL_TYPE: Type[S]
     """Type for values understood by sqlalchemy to be representing in the
     database as the column type `SQL_SCHEMA_TYPE`."""
 
     SQL_SCHEMA_TYPE: Type
     """SQL column type for the column type."""
 
-    UNION_TYPE: Type
+    UNION_TYPE: Union[Type[O], Type[P], Type[S]]
     """Union of all types that can be used to represent values of this type
     except the schema type."""
 
-    TYPES: Tuple[Type, ...]
+    TYPES: Tuple[Type[O], Type[P], Type[S]]
     """Tuple of the above so that isinstance can be used."""
 
     @classmethod
-    def py(cls, val: TypeInfo.UNION_TYPE) -> TypeInfo.PY_TYPE:
+    def py(cls, val: TypeInfo.UNION_TYPE) -> P:
         """Convert a value to a python value."""
         if isinstance(val, cls.PY_TYPE):
             return val
@@ -168,7 +184,7 @@ class TypeInfo:
         raise TypeError(f"Cannot convert value of type {type(val)} to python.")
 
     @classmethod
-    def otel(cls, val: TypeInfo.UNION_TYPE) -> TypeInfo.OTEL_TYPE:
+    def otel(cls, val: TypeInfo.UNION_TYPE) -> O:
         """Convert a value to the otel representation."""
 
         cls._assert_has_otel()
@@ -183,7 +199,7 @@ class TypeInfo:
         raise TypeError(f"Cannot convert value of type {type(val)} to otel.")
 
     @classmethod
-    def sql(cls, val: TypeInfo.UNION_TYPE) -> TypeInfo.SQL_TYPE:
+    def sql(cls, val: TypeInfo.UNION_TYPE) -> S:
         """Convert a value to the sql representation."""
 
         if isinstance(val, cls.SQL_TYPE):
@@ -196,17 +212,17 @@ class TypeInfo:
         raise TypeError(f"Cannot convert value of type {type(val)} to sql.")
 
     @classmethod
-    def default_py(cls) -> TypeInfo.PY_TYPE:
+    def default_py(cls) -> P:
         """Default python value for this type."""
         return cls.rand_py()
 
     @classmethod
-    def default_sql(cls) -> TypeInfo.SQL_TYPE:
+    def default_sql(cls) -> S:
         """Default sql value for this type."""
         return cls.rand_sql()
 
     @classmethod
-    def rand_py(cls) -> TypeInfo.PY_TYPE:
+    def rand_py(cls) -> P:
         """Generate a new random python value of this type."""
         if cls.rand_otel is not TypeInfo.rand_otel:
             return cls.py_of_otel(cls.rand_otel())
@@ -215,7 +231,7 @@ class TypeInfo:
         raise NotImplementedError("Python type generation not implemented.")
 
     @classmethod
-    def rand_sql(cls) -> TypeInfo.SQL_TYPE:
+    def rand_sql(cls) -> S:
         """Generate a new random sql value of this type."""
         if cls.rand_otel is not TypeInfo.rand_otel:
             return cls.sql_of_otel(cls.rand_otel())
@@ -225,7 +241,7 @@ class TypeInfo:
         raise NotImplementedError("SQL type generation not implemented.")
 
     @classmethod
-    def sql_of_py(cls, py_value: TypeInfo.PY_TYPE) -> TypeInfo.SQL_TYPE:
+    def sql_of_py(cls, py_value: P) -> S:
         """Convert a python value to a sql value."""
 
         if cls.PY_TYPE is cls.SQL_TYPE:
@@ -240,7 +256,7 @@ class TypeInfo:
         raise NotImplementedError
 
     @classmethod
-    def py_of_sql(cls, sql_value: TypeInfo.SQL_TYPE) -> TypeInfo.PY_TYPE:
+    def py_of_sql(cls, sql_value: S) -> P:
         """Convert a sql value to a python value."""
 
         if cls.PY_TYPE is cls.SQL_TYPE:
@@ -262,7 +278,7 @@ class TypeInfo:
             )
 
     @classmethod
-    def rand_otel(cls) -> TypeInfo.OTEL_TYPE:
+    def rand_otel(cls) -> O:
         """Generate a new random otel value of this type."""
 
         cls._assert_has_otel()
@@ -275,7 +291,7 @@ class TypeInfo:
         raise NotImplementedError("OTEL type generation not implemented.")
 
     @classmethod
-    def default_otel(cls) -> TypeInfo.OTEL_TYPE:
+    def default_otel(cls) -> O:
         """Default otel value for this type."""
 
         cls._assert_has_otel()
@@ -283,7 +299,7 @@ class TypeInfo:
         return cls.rand_otel()
 
     @classmethod
-    def otel_of_py(cls, py_value: TypeInfo.PY_TYPE) -> TypeInfo.OTEL_TYPE:
+    def otel_of_py(cls, py_value: P) -> O:
         """Convert a python value to an otel value."""
 
         cls._assert_has_otel()
@@ -300,7 +316,7 @@ class TypeInfo:
         raise NotImplementedError
 
     @classmethod
-    def py_of_otel(cls, otel_value: TypeInfo.OTEL_TYPE) -> TypeInfo.PY_TYPE:
+    def py_of_otel(cls, otel_value: O) -> P:
         """Convert an otel value to a python value."""
 
         cls._assert_has_otel()
@@ -317,7 +333,7 @@ class TypeInfo:
         raise NotImplementedError
 
     @classmethod
-    def otel_of_sql(cls, sql_value: TypeInfo.SQL_TYPE) -> TypeInfo.OTEL_TYPE:
+    def otel_of_sql(cls, sql_value: S) -> O:
         """Convert a sql value to an otel value."""
 
         cls._assert_has_otel()
@@ -334,7 +350,7 @@ class TypeInfo:
         raise NotImplementedError
 
     @classmethod
-    def sql_of_otel(cls, otel_value: TypeInfo.OTEL_TYPE) -> TypeInfo.SQL_TYPE:
+    def sql_of_otel(cls, otel_value: O) -> S:
         """Convert an otel value to a sql value."""
 
         cls._assert_has_otel()
@@ -351,7 +367,7 @@ class TypeInfo:
         raise NotImplementedError
 
 
-class SpanID(TypeInfo):
+class SpanID(TypeInfo[int, int, bytes]):
     """Span ID type.
 
     This type is for supporting OTEL hence its requirements come from there. In
@@ -370,10 +386,13 @@ class SpanID(TypeInfo):
     UNION_TYPE: Type = Union[int, bytes]
     TYPES = (int, bytes)
 
+    INVALID_OTEL = span_api.INVALID_SPAN_ID
+    """Span ID for non-recording or invalid spans."""
+
     @classmethod
     def rand_otel(cls) -> int:
         return int(
-            random.getrandbits(cls.NUM_BITS) & trace_api.span._SPAN_ID_MAX_VALUE
+            random.getrandbits(cls.NUM_BITS) & span_api._SPAN_ID_MAX_VALUE
         )
 
     @classmethod
@@ -401,7 +420,7 @@ class SpanID(TypeInfo):
         return int.from_bytes(sql_value)
 
 
-class TraceID(TypeInfo):
+class TraceID(TypeInfo[int, int, bytes]):
     """Trace ID type.
 
     This type is for supporting OTEL hence its requirements come from there. In
@@ -419,6 +438,9 @@ class TraceID(TypeInfo):
 
     UNION_TYPE: Type = Union[int, bytes]
     TYPES: Tuple = (int, bytes)
+
+    INVALID_OTEL = span_api.INVALID_TRACE_ID
+    """Trace ID for non-recording or invalid spans."""
 
     @classmethod
     def rand_otel(cls) -> int:
@@ -452,16 +474,18 @@ class TraceID(TypeInfo):
         return int.from_bytes(sql_value)
 
 
-class TraceRecordID(TypeInfo):
-    """Types for representing record ids in traces/spans."""
+class StrAsVarChar(TypeInfo[str, str, str]):
+    """Types that are strings in python,otel,sql interface and VARCHAR in SQL column."""
 
-    OTEL_TYPE: Type = str  # same as RecordId above
-    PY_TYPE: Type = str  # same as RecordId above
-    SQL_TYPE: Type = str  # same as RecordId above
-    SQL_SCHEMA_TYPE: Type = VARCHAR(256)  # same as orm.py:TYPE_ID
+    NUM_BYTES: int = 256
 
-    UNION_TYPE = str
-    TYPES = (str,)
+    OTEL_TYPE: Type = str
+    PY_TYPE: Type = str
+    SQL_TYPE: Type = str
+    SQL_SCHEMA_TYPE: Type = VARCHAR(NUM_BYTES)
+
+    UNION_TYPE: Type = str
+    TYPES: Tuple = (str,)
 
     @classmethod
     def rand_otel(cls) -> str:
@@ -492,44 +516,193 @@ class TraceRecordID(TypeInfo):
         return sql_value
 
 
-class TraceRecordIDs(TypeInfo):
+class TraceRecordID(StrAsVarChar):
+    """Types for representing record ids in traces/spans."""
+
+    NUM_BYTES: int = 32
+
+
+class ListAsJSON(TypeInfo[List[O], List[P], List[S]], Generic[O, P, S]):
+    """Lists stored as JSON in the database."""
+
+    ETI: TypeInfo[O, P, S]
+    """TypeInfo for elements."""
+
+    OTEL_TYPE: Type = List[O]
+    PY_TYPE: Type = List[P]
+    SQL_TYPE: Type = List[S]
+    SQL_SCHEMA_TYPE: Type = JSON
+
+    @classmethod
+    def otel_of_py(cls, py_value: List[P]) -> List[O]:
+        return [cls.ETI.otel_of_py(val) for val in py_value]
+
+    @classmethod
+    def py_of_otel(cls, otel_value: List[O]) -> List[P]:
+        return [cls.ETI.py_of_otel(val) for val in otel_value]
+
+    @classmethod
+    def sql_of_py(cls, py_value: List[P]) -> List[S]:
+        return [cls.ETI.sql_of_py(val) for val in py_value]
+
+    @classmethod
+    def py_of_sql(cls, sql_value: List[S]) -> List[P]:
+        return [cls.ETI.py_of_sql(val) for val in sql_value]
+
+
+class DictAsJSON(
+    TypeInfo[Dict[str, O], Dict[str, P], Dict[str, S]], Generic[O, P, S]
+):
+    """Dicts of str keys stored as JSON in the database."""
+
+    ETI: TypeInfo[O, P, S]
+    """TypeInfo for elements."""
+
+    OTEL_TYPE: Type = Dict[str, O]
+    PY_TYPE: Type = Dict[str, P]
+    SQL_TYPE: Type = Dict[str, S]
+    SQL_SCHEMA_TYPE: Type = JSON
+
+    @classmethod
+    def otel_of_py(cls, py_value: Dict[str, P]) -> Dict[str, O]:
+        return {k: cls.ETI.otel_of_py(val) for k, val in py_value.items()}
+
+    @classmethod
+    def py_of_otel(cls, otel_value: Dict[str, O]) -> Dict[str, P]:
+        return {k: cls.ETI.py_of_otel(val) for k, val in otel_value.items()}
+
+    @classmethod
+    def sql_of_py(cls, py_value: Dict[str, P]) -> Dict[str, S]:
+        return {k: cls.ETI.sql_of_py(val) for k, val in py_value.items()}
+
+    @classmethod
+    def py_of_sql(cls, sql_value: Dict[str, S]) -> Dict[str, P]:
+        return {k: cls.ETI.py_of_sql(val) for k, val in sql_value.items()}
+
+
+class TraceRecordIDs(
+    DictAsJSON[
+        TraceRecordID.OTEL_TYPE, TraceRecordID.PY_TYPE, TraceRecordID.SQL_TYPE
+    ]
+):
     """Type for representing multiple trace record ids.
 
     This is a list of trace record ids. It is a list of `TraceRecordID`.
     """
 
-    OTEL_TYPE: Type = list
-    PY_TYPE: Type = list
-    SQL_TYPE: Type = list
-    SQL_SCHEMA_TYPE: Type = JSON
+    ETI = TraceRecordID
+
+
+class SpanName(StrAsVarChar):
+    """Span names."""
+
+    NUM_BYTES = 32
+    # TODO: get from otel spec
+
+
+E = TypeVar("E", bound=Enum)
+"""Enum types."""
+
+
+class IntEnumAsSmallInt(TypeInfo[E, E, int], Generic[E]):
+    """Enum types that are stored as integers in the database."""
+
+    OTEL_TYPE: Type[E]  # to fill in by subclass
+    PY_TYPE: Type[E]  # to fill in by subclass
+    SQL_TYPE: Type = int
+    SQL_SCHEMA_TYPE: Type = (
+        SMALLINT  # override in subclass if bigger int needed
+    )
+
+    UNION_TYPE: Type  # to fill in by subclass
+    TYPES: Tuple  # to fill in by subclass
 
     @classmethod
-    def otel_of_py(cls, py_value: list) -> list:
-        return [TraceRecordID.otel_of_py(val) for val in py_value]
+    def sql_of_py(cls, py_value: E) -> int:
+        return py_value.value
 
     @classmethod
-    def py_of_otel(cls, otel_value: list) -> list:
-        return [TraceRecordID.py_of_otel(val) for val in otel_value]
+    def py_of_sql(cls, sql_value: int) -> E:
+        return cls.PY_TYPE(sql_value)
+
+
+class StrEnumAsVarChar(TypeInfo[E, E, str], Generic[E]):
+    """Enum types that are stored as integers in the database."""
+
+    OTEL_TYPE: Type[E]  # to fill in by subclass
+    PY_TYPE: Type[E]  # to fill in by subclass
+    SQL_TYPE: Type = str
+    SQL_SCHEMA_TYPE: Type = VARCHAR(
+        16
+    )  # override in subclass if bigger int needed
+
+    UNION_TYPE: Type  # to fill in by subclass
+    TYPES: Tuple  # to fill in by subclass
 
     @classmethod
-    def sql_of_py(cls, py_value: list) -> list:
-        return [TraceRecordID.sql_of_py(val) for val in py_value]
+    def sql_of_py(cls, py_value: E) -> str:
+        return py_value.value
 
     @classmethod
-    def py_of_sql(cls, sql_value: list) -> list:
-        return [TraceRecordID.py_of_sql(val) for val in sql_value]
+    def py_of_sql(cls, sql_value: str) -> E:
+        return cls.PY_TYPE(sql_value)
 
 
-class Timestamp(TypeInfo):
+class SpanType(StrEnumAsVarChar):
+    """Span type enum."""
+
+    OTEL_TYPE = truconv.SpanAttributes.SpanType
+    PY_TYPE = truconv.SpanAttributes.SpanType
+    UNION_TYPE = Union[truconv.SpanAttributes.SpanType, str]
+    TYPES = (truconv.SpanAttributes.SpanType, str)
+
+
+class SpanTypes(
+    ListAsJSON[SpanType.OTEL_TYPE, SpanType.PY_TYPE, SpanType.SQL_TYPE]
+):
+    """Type for representing multiple span types.
+
+    This is a list of span types. It is a list of `SpanType`.
+    """
+
+    ETI = SpanType
+
+
+class SpanStatusCode(IntEnumAsSmallInt):
+    """Span status enum."""
+
+    OTEL_TYPE = status_api.StatusCode
+    PY_TYPE = status_api.StatusCode
+    UNION_TYPE = Union[status_api.StatusCode, int]
+    TYPES = (status_api.StatusCode, int)
+
+
+class StatusDescription(StrAsVarChar):
+    NUM_BYTES = 1024
+    # TODO: get from otel spec
+
+
+class SpanKind(IntEnumAsSmallInt):
+    """Span kind enum."""
+
+    OTEL_TYPE = trace_api.SpanKind
+    PY_TYPE = trace_api.SpanKind
+    UNION_TYPE = Union[trace_api.SpanKind, int]
+    TYPES = (trace_api.SpanKind, int)
+
+
+class Timestamp(TypeInfo[int, datetime.datetime, datetime.datetime]):
     """Timestamp type.
 
     This type is for supporting OTEL hence its requirements come from there. In
     OTEL it is a 64-bit integer representing the number of nano seconds since
     the epoch. In python, it is a [datetime][datetime.datetime]. In the
     database, it is the TIMESTAMP sql column type.
+
+    Default values are "now" and random is not supported.
     """
 
-    NUM_BITS: int = 64
+    NUM_BITS = 64
     """Number of bits in a span identifier."""
 
     OTEL_TYPE: Type = int
@@ -558,11 +731,11 @@ class Timestamp(TypeInfo):
         raise NotImplementedError("Timestamps are not meant to be random.")
 
     @classmethod
-    def rand_py(cls) -> int:
+    def rand_py(cls) -> datetime.datetime:
         raise NotImplementedError("Timestamps are not meant to be random.")
 
     @classmethod
-    def rand_sql(cls) -> bytes:
+    def rand_sql(cls) -> datetime.datetime:
         raise NotImplementedError("Timestamps are not meant to be random.")
 
     @classmethod

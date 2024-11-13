@@ -17,6 +17,11 @@ class ResourceAttributes:
 
 
 class SpanAttributes:
+    """Names of keys in the attributes field of a span.
+
+    In some cases below, we also include span name or span name prefix.
+    """
+
     SPAN_TYPES = "trulens.span_types"
 
     class SpanType(str, Enum):
@@ -29,6 +34,8 @@ class SpanAttributes:
 
         The first three classes are exclusive but the others can be mixed in
         with each other.
+
+        Attributes relevant to each span type follow.
         """
 
         # Exclusive types.
@@ -36,10 +43,16 @@ class SpanAttributes:
         UNKNOWN = "unknown"
         """Unknown span type."""
 
+        CUSTOM = "custom"
+        """Spans created by the user using otel api."""
+
+        RECORDING = "recording"
+        """Span encapsulating a TruLens app recording context."""
+
         SEMANTIC = "semantic"
         """Recognized span, at least to some degree.
 
-        Must include at least one of the mixable types below as well.
+        Must include at least one of the semantic mixable types below as well.
         """
 
         RECORD_ROOT = "record_root"
@@ -48,10 +61,10 @@ class SpanAttributes:
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation span."""
 
-        # Non-semantic mixable types.
+        # Non-semantic mixable types indicate presence of common sets of attributes.
 
-        APP = "app"
-        """An call belonging to an app."""
+        RECORD = "record"
+        """A span in a record."""
 
         CALL = "call"
         """A function call."""
@@ -59,7 +72,7 @@ class SpanAttributes:
         COST = "cost"
         """A span with a cost."""
 
-        # Semantic mixable types.
+        # Semantic mixable types. A span can have multiple of these types.
 
         RETRIEVAL = "retrieval"
         """A retrieval."""
@@ -82,18 +95,43 @@ class SpanAttributes:
         AGENT_INVOCATION = "agent_invocation"
         """An agent invocation."""
 
+    class RECORDING:
+        """Attributes and span name relevant to the recording span type.
+
+        Note that this span is created every time a TruLens app enters a
+        recording context even if it is not called. In such cases, there will be
+        a RECORDING span without a RECORD_ROOT.
+        """
+
+        base = "trulens.recording"
+
+        SPAN_NAME_PREFIX = base + "."
+        """Span name will end with app name."""
+
+        APP_ID = base + ".app_id"
+        """Id of the app being recorded."""
+
     class SEMANTIC:
+        """Attributes relevant to all semantic span types."""
+
         base = "trulens.semantic"
 
     class UNKNOWN:
+        """Attributes relevant for spans that could not be categorized otherwise."""
+
         base = "trulens.unknown"
 
     class RECORD_ROOT:
-        """Attributes for the root span of a record."""
+        """Attributes for the root span of a record.
 
-        base = "trulens.record"
+        Includes most fields carried over from
+        [trulens.core.schema.base.Record][trulens.core.schema.base.Record].
+        """
 
-        SPAN_NAME = base
+        base = "trulens.record_root"
+
+        SPAN_NAME_PREFIX = base + "."
+        """Span name will end with app name."""
 
         APP_NAME = base + ".app_name"
         """Name of the app for whom this is the root."""
@@ -105,10 +143,63 @@ class SpanAttributes:
 
         RECORD_ID = base + ".record_id"
 
-    class EVAL_ROOT:
-        """Attributes for the root span of a feedback evaluation."""
+        TOTAL_COST = base + ".total_cost"
+        """Total cost of the record.
 
-        base = "trulens.eval"
+        Note that child spans might include cost type spans. This is the sum of
+        all those costs.
+        """
+
+        MAIN_INPUT = base + ".main_input"
+        """Main input to the app."""
+
+        MAIN_OUTPUT = base + ".main_output"
+        """Main output of the app."""
+
+        MAIN_ERROR = base + ".main_error"
+        """Main error of the app.
+
+        Exclusive with main output.
+        """
+
+    class EVAL_ROOT:
+        """Attributes for the root span of a feedback evaluation.
+
+        Includes most of the fields carried over from
+        [trulens.core.schema.feedback.FeedbackResult][trulens.core.schema.feedback.FeedbackResult].
+        """
+
+        base = "trulens.eval_root"
+
+        TARGET_RECORD_ID = base + ".target_record_id"
+        """Record id of the record being evaluated."""
+
+        TARGET_TRACE_ID = base + ".target_trace_id"
+        """Trace id of the root span of the record being evaluated."""
+
+        TARGET_SPAN_ID = base + ".target_span_id"
+        """Span id of the root span of the record being evaluated."""
+
+        FEEDBACK_NAME = base + ".feedback_name"
+        """Name of the feedback definition being evaluated."""
+
+        FEEDBACK_DEFINITION_ID = base + ".feedback_definition_id"
+        """Id of the feedback definition being evaluated."""
+
+        STATUS = base + ".status"
+        """Status of the evaluation.
+
+        See [trulens.core.schema.feedback.FeedbackResult.status][trulens.core.schema.feedback.FeedbackResult.status] for values.
+        """
+
+        TOTAL_COST = base + ".total_cost"
+        """Cost of the evaluation.
+
+        Note that sub spans might contain cost type spans. This is the sum of
+        all those costs."""
+
+        ERROR = base + ".error"
+        """Error raised during evaluation."""
 
     class COST:
         """Attributes for spans with a cost."""
@@ -122,21 +213,24 @@ class SpanAttributes:
         [trulens.core.schema.base.Cost][trulens.core.schema.base.Cost].
         """
 
-    class APP:
-        """Attributes for app spans."""
+    class RECORD:
+        """Attributes for spans traced as part of a recording."""
 
-        base = "trulens.app"
+        base = "trulens.record"
 
         APP_IDS = base + ".app_ids"
         """Ids of apps that were tracing this span."""
 
         RECORD_IDS = base + ".record_ids"
-        """Ids of records for this span, one for each app."""
+        """Map of app id to record id."""
 
     class CALL:
         """Instrumented method call attributes."""
 
         base = "trulens.call"
+
+        SPAN_NAME_PREFIX = base + "."
+        """Span name will end with the function name."""
 
         CALL_ID = base + ".call_id"
         """Unique identifier for the call."""

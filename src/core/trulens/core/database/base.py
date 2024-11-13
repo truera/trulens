@@ -104,13 +104,16 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     """
 
     T: ClassVar[TypeAlias] = None
-    """EXPERIMENTAL(otel_tracing): Database table expression type."""
+    """EXPERIMENTAL(otel_tracing): Database "table" expression type."""
 
     Q: ClassVar[TypeAlias] = None
-    """EXPERIMENTAL(otel_tracing): Database select expression type."""
+    """EXPERIMENTAL(otel_tracing): Database "select" expression type."""
 
     W: ClassVar[TypeAlias] = None
-    """EXPERIMENTAL(otel_tracing): Database where expression type."""
+    """EXPERIMENTAL(otel_tracing): Database "where" expression type.
+
+    Must support ==, !-, `contains`, `and`, `or`, `not`.
+    """
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True

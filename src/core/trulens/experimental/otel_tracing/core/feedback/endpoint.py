@@ -8,7 +8,8 @@ from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.schema import base as base_schema
 from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import python as python_utils
-from trulens.experimental.otel_tracing.core import trace as mod_trace
+from trulens.experimental.otel_tracing.core import span as core_span
+from trulens.experimental.otel_tracing.core import trace as core_trace
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ Res = TypeVar("Res")
 
 
 class _WrapperEndpointCallback(
-    mod_trace.TracingCallbacks[Ret, mod_trace.LiveSpanCallWithCost],
+    core_trace.TracingCallbacks[Ret, core_span.LiveSpanCallWithCost],
     Generic[Ret, Res],
 ):
     """EXPERIMENTAL(otel_tracing): Extension to TracingCallbacks that tracks
@@ -36,7 +37,7 @@ class _WrapperEndpointCallback(
 
     # overriding CallableCallbacks
     def __init__(self, endpoint: core_endpoint.Endpoint, **kwargs):
-        super().__init__(**kwargs, span_type=mod_trace.LiveSpanCallWithCost)
+        super().__init__(**kwargs, span_type=core_span.LiveSpanCallWithCost)
 
         self.endpoint: core_endpoint.Endpoint = endpoint
         self.span.endpoint = endpoint
@@ -116,7 +117,7 @@ class _Endpoint(core_endpoint.Endpoint):
         *args,
         **kwargs,
     ) -> Tuple[Ret, python_utils.Thunk[base_schema.Cost]]:
-        with mod_trace.trulens_tracer().cost(
+        with core_trace.trulens_tracer().cost(
             method_name=__func.__name__
         ) as span:
             ret = __func(*args, **kwargs)

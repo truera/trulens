@@ -3,6 +3,7 @@ from typing import Iterable, List, Optional
 import sqlalchemy as sa
 from trulens.core.database import base as core_db
 from trulens.core.database import sqlalchemy as core_sqlalchemy
+from trulens.core.schema import types as types_schema
 from trulens.experimental.otel_tracing.core import sem as core_sem
 from trulens.experimental.otel_tracing.core.database import base as otel_core_db
 from trulens.experimental.otel_tracing.core.database import orm as otel_core_orm
@@ -105,6 +106,12 @@ class _SQLAlchemyDB(core_sqlalchemy.SQLAlchemyDB):
     def insert_span(self, span: core_sem.TypedSpan) -> otel_core_db.SpanIndex:
         """Insert a span into the database."""
 
+        if (
+            span.context.span_id == types_schema.SpanID.INVALID_OTEL
+            or span.context.trace_id == types_schema.TraceID.INVALID_OTEL
+        ):
+            raise ValueError(f"Invalid span context: {span.context}")
+
         with self.session.begin() as session:
             orm_object = self.Span.parse(span)
             session.merge(orm_object)
@@ -119,6 +126,13 @@ class _SQLAlchemyDB(core_sqlalchemy.SQLAlchemyDB):
         self, spans: Iterable[core_sem.TypedSpan]
     ) -> List[otel_core_db.SpanIndex]:
         """Insert a batch of spans into the database."""
+
+        for span in spans:
+            if (
+                span.context.span_id == types_schema.SpanID.INVALID_OTEL
+                or span.context.trace_id == types_schema.TraceID.INVALID_OTEL
+            ):
+                raise ValueError(f"Invalid span context: {span.context}")
 
         with self.session.begin() as session:
             orm_objects = [self.Span.parse(span) for span in spans]

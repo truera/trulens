@@ -19,6 +19,7 @@ from typing import (
     Hashable,
     Iterable,
     List,
+    Literal,
     Optional,
     Sequence,
     Set,
@@ -1062,12 +1063,10 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
-        # self._set_context_vars()
-
         return ctx
 
     # For use as a context manager.
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(self, exc_type, exc_value, exc_tb) -> Literal[False]:
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
@@ -1078,12 +1077,8 @@ class App(
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
 
-        # self._reset_context_vars()
-
-        if exc_type is not None:
-            raise exc_value
-
-        return
+        # False means dont suppress exceptions.
+        return False
 
     # For use as a context manager.
     async def __aenter__(self):
@@ -1099,12 +1094,10 @@ class App(
         token = self.recording_contexts.set(ctx)
         ctx.token = token
 
-        # self._set_context_vars()
-
         return ctx
 
     # For use as a context manager.
-    async def __aexit__(self, exc_type, exc_value, exc_tb):
+    async def __aexit__(self, exc_type, exc_value, exc_tb) -> Literal[False]:
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
@@ -1115,12 +1108,8 @@ class App(
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
 
-        # self._reset_context_vars()
-
-        if exc_type is not None:
-            raise exc_value
-
-        return
+        # False means dont suppress exceptions.
+        return False
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
