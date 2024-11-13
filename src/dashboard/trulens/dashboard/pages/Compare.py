@@ -6,14 +6,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
-from trulens.core import experimental as core_experimental
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
-from trulens.dashboard.utils.dashboard_utils import get_session
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -372,9 +371,7 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    if get_session().experimental_feature(
-        core_experimental.Feature.SIS_COMPATIBILITY
-    ):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
@@ -760,19 +757,20 @@ def render_app_comparison(app_name: str):
                         selected_ff, selected_row, feedback_directions
                     )
 
-    with trace_viewer_container:
-        trace_cols = trace_viewer_container.columns(
-            len(record_data), gap="large"
-        )
-        for i, app_id in enumerate(record_data):
-            with trace_cols[i]:
-                record_df = record_data[app_id]["records"]
-                selected_row = record_df.iloc[0]
-                record_viewer(
-                    json.loads(selected_row["record_json"]),
-                    json.loads(selected_row["app_json"]),
-                    key=f"compare_{app_id}",
-                )
+    if not is_sis_compatibility_enabled():
+        with trace_viewer_container:
+            trace_cols = trace_viewer_container.columns(
+                len(record_data), gap="large"
+            )
+            for i, app_id in enumerate(record_data):
+                with trace_cols[i]:
+                    record_df = record_data[app_id]["records"]
+                    selected_row = record_df.iloc[0]
+                    record_viewer(
+                        json.loads(selected_row["record_json"]),
+                        json.loads(selected_row["app_json"]),
+                        key=f"compare_{app_id}",
+                    )
 
 
 if __name__ == "__main__":

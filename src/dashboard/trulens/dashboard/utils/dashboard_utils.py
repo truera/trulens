@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
+from trulens.core import experimental as core_experimental
 from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
@@ -83,6 +84,12 @@ def read_query_params_into_session_state(
             st.session_state[f"{page_name}.{param}"] = value
         else:
             st.session_state[param] = value
+
+
+def is_sis_compatibility_enabled():
+    return get_session().experimental_feature(
+        core_experimental.Feature.SIS_COMPATIBILITY
+    )
 
 
 @st.cache_resource(show_spinner="Setting up TruLens session")

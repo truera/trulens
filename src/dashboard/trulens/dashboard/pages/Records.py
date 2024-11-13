@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
-from trulens.core import experimental as core_experimental
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -12,7 +11,7 @@ from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
-from trulens.dashboard.utils.dashboard_utils import get_session
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -145,10 +144,10 @@ def _render_trace(
             )
 
     # Trace details
-
-    with trace_details:
-        st.subheader("Trace Details")
-        record_viewer(record_json, app_json)
+    if not is_sis_compatibility_enabled():
+        with trace_details:
+            st.subheader("Trace Details")
+            record_viewer(record_json, app_json)
 
 
 def _preprocess_df(
@@ -368,9 +367,7 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    if get_session().experimental_feature(
-        core_experimental.Feature.SIS_COMPATIBILITY
-    ):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )

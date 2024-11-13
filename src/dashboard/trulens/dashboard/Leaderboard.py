@@ -7,14 +7,13 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from trulens.apps import virtual as virtual_app
-from trulens.core import experimental as core_experimental
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
-from trulens.dashboard.utils.dashboard_utils import get_session
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -207,9 +206,7 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if get_session().experimental_feature(
-        core_experimental.Feature.SIS_COMPATIBILITY
-    ):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="multi-row", on_select="rerun", hide_index=True
         )
