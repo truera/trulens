@@ -94,7 +94,7 @@ def get_session() -> core_session.TruSession:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
-    parser.add_argument("--sis-compatibility", default=False)
+    parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
@@ -112,6 +112,7 @@ def get_session() -> core_session.TruSession:
     session = core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
+
     if args.sis_compatibility:
         session.experimental_enable_feature(
             mod_experimental.Feature.SIS_COMPATIBILITY
