@@ -7,6 +7,7 @@ import pandas as pd
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
+from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
@@ -93,6 +94,7 @@ def get_session() -> core_session.TruSession:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
+    parser.add_argument("--sis-compatibility", default=False)
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
@@ -107,9 +109,14 @@ def get_session() -> core_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return core_session.TruSession(
+    session = core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
+    if args.sis_compatibility:
+        session.experimental_enable_feature(
+            mod_experimental.Feature.SIS_COMPATIBILITY
+        )
+    return session
 
 
 @st.cache_data(

@@ -96,11 +96,6 @@ def run_dashboard(
             env_opts["env"] = os.environ
         env_opts["env"]["PYTHONPATH"] = str(_dev)
 
-    if sis_compatibility_mode:
-        if env_opts.get("env", None) is None:
-            env_opts["env"] = os.environ
-        env_opts["env"]["SIS_COMPATIBILITY_MODE"] = "true"
-
     if port is None:
         port = find_unused_port()
 
@@ -146,6 +141,8 @@ def run_dashboard(
         "--database-prefix",
         session.connector.db.table_prefix,
     ]
+    if sis_compatibility_mode:
+        args += ["--sis-compatibility"]
 
     proc = subprocess.Popen(
         args,

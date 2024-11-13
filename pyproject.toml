@@ -34,7 +34,9 @@ trulens-core = { version = "^1.0.0", extras = [
   "openai",
 ] }
 trulens-feedback = { version = "^1.0.0" }
-trulens-dashboard = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0", extras = [
+  "rich",
+] }
 # Remove after deprecation period:
 trulens_eval = { version = "^1.0.0" }
 

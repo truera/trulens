@@ -5,17 +5,16 @@ from typing import Any, Dict, List, Optional, Sequence
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from trulens.apps import virtual as virtual_app
+from trulens.core import experimental as core_experimental
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
-from trulens.dashboard.constants import SIS_COMPAT_FLAG
 from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
+from trulens.dashboard.utils.dashboard_utils import get_session
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -108,6 +107,8 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -206,12 +207,16 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if SIS_COMPAT_FLAG:
+    if get_session().experimental_feature(
+        core_experimental.Feature.SIS_COMPATIBILITY
+    ):
         event = st.dataframe(
             df, selection_mode="multi-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
+        from st_aggrid import AgGrid
+
         columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
         if dashboard_constants.PINNED_COL_NAME in df:

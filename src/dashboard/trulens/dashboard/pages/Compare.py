@@ -6,13 +6,14 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from trulens.core import experimental as core_experimental
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
-from trulens.dashboard.constants import SIS_COMPAT_FLAG
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
+from trulens.dashboard.utils.dashboard_utils import get_session
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -371,7 +372,9 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    if SIS_COMPAT_FLAG:
+    if get_session().experimental_feature(
+        core_experimental.Feature.SIS_COMPATIBILITY
+    ):
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
