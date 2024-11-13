@@ -430,7 +430,7 @@ class LiveSpan(Span):
     """
 
 
-class RecordingContextSpan(Span):
+class RecordingContextSpan(LiveSpan):
     """Tracks the context of an app used as a context manager."""
 
     live_recording: Optional[Any] = pydantic.Field(None, exclude=True)
