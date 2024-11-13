@@ -1,6 +1,7 @@
 import json
 from typing import Any, ClassVar, Dict, Optional, Sequence
 
+from snowflake.cortex import Complete
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
@@ -110,47 +111,54 @@ class Cortex(
             )
         super().__init__(**self_kwargs)
 
-    def _exec_snowsql_complete_command(
+    def _invoke_cortex_complete(
         self,
         model: str,
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
-    ):
+    ) -> str:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
 
-        messages_json_str = json.dumps(messages)
+        # messages_json_str = json.dumps(messages)
 
         options = {"temperature": temperature}
 
-        options_json_str = json.dumps(options)
+        # options_json_str = json.dumps(options)
+        print("DANIEL new impl")
+        completion_res_str = Complete(
+            model=model,
+            prompt=messages,
+            options=options,
+        )
+        return completion_res_str
 
-        completion_input_str = """
-            SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                ?,
-                parse_json(?),
-                parse_json(?)
-            )
-        """
-        if (
-            hasattr(self.snowflake_conn, "_paramstyle")
-            and self.snowflake_conn._paramstyle == "pyformat"
-        ):
-            completion_input_str = completion_input_str.replace("?", "%s")
+        # completion_input_str = """
+        #     SELECT SNOWFLAKE.CORTEX.COMPLETE(
+        #         ?,
+        #         parse_json(?),
+        #         parse_json(?)
+        #     )
+        # """
+        # if (
+        #     hasattr(self.snowflake_conn, "_paramstyle")
+        #     and self.snowflake_conn._paramstyle == "pyformat"
+        # ):
+        #     completion_input_str = completion_input_str.replace("?", "%s")
 
-        # Executing Snow SQL command requires an active snow session
-        cursor = self.snowflake_conn.cursor()
-        try:
-            cursor.execute(
-                completion_input_str,
-                (model, messages_json_str, options_json_str),
-            )
-            result = cursor.fetchall()
-        finally:
-            cursor.close()
+        # # Executing Snow SQL command requires an active snow session
+        # cursor = self.snowflake_conn.cursor()
+        # try:
+        #     cursor.execute(
+        #         completion_input_str,
+        #         (model, messages_json_str, options_json_str),
+        #     )
+        #     result = cursor.fetchall()
+        # finally:
+        #     cursor.close()
 
-        return result
+        # return result
 
     def _create_chat_completion(
         self,
@@ -171,12 +179,12 @@ class Cortex(
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        res = self._exec_snowsql_complete_command(**kwargs)
+        res_json = json.loads(self._invoke_cortex_complete(**kwargs))
 
-        if len(res) == 0 or len(res[0]) == 0:
+        if not res_json or "choices" not in res_json or not res_json["choices"]:
             raise ValueError("No completion returned from Snowflake Cortex.")
 
-        completion = json.loads(res[0][0])["choices"][0]["messages"]
+        completion = res_json["choices"][0]["messages"]
 
         return completion
 

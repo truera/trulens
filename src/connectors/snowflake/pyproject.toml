@@ -35,7 +35,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8.1,<3.12"
 trulens-core = { version = "^1.0.0" }
-snowflake-snowpark-python = { version = "^1.18" }
+snowflake-snowpark-python = { version = "^1.24" }
 snowflake-sqlalchemy = { version = "^1.6" }
 
 [tool.poetry.group.dev.dependencies]
