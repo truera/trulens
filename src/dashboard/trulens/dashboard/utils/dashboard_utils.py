@@ -87,6 +87,15 @@ def read_query_params_into_session_state(
 
 
 def is_sis_compatibility_enabled():
+    """This method returns whether the SIS compatibility feature is enabled.
+    The SiS compatibility feature adapts dashboard components to support Streamlit in Snowflake (SiS).
+    As of 11/13/2024, SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components.
+
+    In the TruLens dashboard, this flag will replace or disable certain custom components (like Aggrid and the trace viewer).
+
+    Returns:
+        bool: True if the SIS compatibility feature is enabled, False otherwise.
+    """
     return get_session().experimental_feature(
         core_experimental.Feature.SIS_COMPATIBILITY
     )

@@ -135,9 +135,12 @@ def _render_feedback_pills(
             if fcol in selected_row and selected_row[fcol] is not None
         ])
 
-        icons = {fcol: get_icon(fcol) for fcol in feedback_with_valid_results}
+        format_func = (
+            lambda fcol: f"{get_icon(fcol)} {fcol} {selected_row[fcol]:.2f}"
+        )
     else:
         feedback_with_valid_results = feedback_col_names
+        format_func = None
 
     if len(feedback_with_valid_results) == 0:
         st.warning("No feedback functions found.")
@@ -146,22 +149,20 @@ def _render_feedback_pills(
     kwargs = {
         "label": "Feedback Functions (click to learn more)",
         "options": feedback_with_valid_results,
-        "index": None,
+        "format_func": format_func,
     }
 
-    if selected_row is not None:
-        kwargs["format_func"] = (
-            lambda fcol: f"{icons[fcol]} {fcol} {selected_row[fcol]:.2f}"
-        )
-
     if is_sis_compatibility_enabled():
-        return st.selectbox(**kwargs)
+        return st.selectbox(**kwargs, index=None)
+    elif hasattr(st, "pills"):
+        # Use native streamlit pills, released in 1.40.0
+        return st.pills(
+            **kwargs,
+        )
     else:
         from streamlit_pills import pills
 
-        return pills(
-            **kwargs,
-        )
+        return pills(**kwargs, index=None)
 
 
 def _render_feedback_call(

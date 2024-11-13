@@ -264,8 +264,19 @@ def trulens_feedback(record: record_schema.Record):
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
     st.header("Feedback Functions")
+    format_func = lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}"
     if dashboard_utils.is_sis_compatibility_enabled():
-        selected_feedback = st.selectbox("Feedback Functions", feedback_cols)
+        selected_feedback = st.selectbox(
+            "Feedback Functions",
+            feedback_cols,
+            index=None,
+            format_func=format_func,
+        )
+    elif hasattr(st, "pills"):
+        # Use native streamlit pills, released in 1.40.0
+        selected_feedback = st.pills(
+            "Feedback Functions", feedback_cols, format_func=format_func
+        )
     else:
         from streamlit_pills import pills
 
@@ -273,7 +284,7 @@ def trulens_feedback(record: record_schema.Record):
             "Feedback Functions",
             feedback_cols,
             index=None,
-            format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
+            format_func=format_func,
             label_visibility="collapsed",  # Hiding because we can't format the label here.
             icons=icons,
             key=f"{call_data['feedback_name']}_{len(feedbacks)}",  # Important! Otherwise streamlit sometimes lazily skips update even with st.fragment
