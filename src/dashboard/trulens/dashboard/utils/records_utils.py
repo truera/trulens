@@ -17,7 +17,7 @@ def df_cell_highlight(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
     n_cells: int = 1,
-) -> list[str]:
+) -> List[str]:
     """Returns the background color for a cell in a DataFrame based on the score and feedback name.
 
     Args:

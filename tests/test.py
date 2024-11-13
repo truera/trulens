@@ -1,5 +1,7 @@
 """TestCase extension and utilities."""
 
+from __future__ import annotations
+
 import asyncio
 from dataclasses import fields
 from dataclasses import is_dataclass

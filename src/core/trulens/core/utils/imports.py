@@ -6,7 +6,6 @@ Utilities for importing python modules and optional importing.
 import builtins
 from dataclasses import dataclass
 from importlib import metadata
-from importlib import resources
 import inspect
 from inspect import cleandoc
 import logging
@@ -23,6 +22,7 @@ from typing import (
     Union,
 )
 
+import importlib_resources
 from packaging import requirements
 from packaging import version
 import pkg_resources
@@ -47,8 +47,8 @@ def _requirements_of_trulens_core_file(
 ) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
     file in trulens.core."""
-    _trulens_resources = resources.files("trulens.core")
-    with resources.as_file(_trulens_resources / path) as _path:
+    _trulens_resources = importlib_resources.files("trulens.core")
+    with importlib_resources.as_file(_trulens_resources / path) as _path:
         with open(_path) as fh:
             reqs = pkg_resources.parse_requirements(fh)
 
@@ -76,15 +76,17 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
         # This does not exist in 3.8
         from importlib.abc import Traversable
 
-        _trulens_resources: Traversable = resources.files(
+        _trulens_resources: Traversable = importlib_resources.files(
             f"trulens.{namespace}"
         )
-        with resources.as_file(_trulens_resources / filepath) as _path:
+        with importlib_resources.as_file(
+            _trulens_resources / filepath
+        ) as _path:
             return _path
     else:
         # This is deprecated starting 3.11
         parts = filepath.parts
-        with resources.path("trulens", parts[0]) as _path:
+        with importlib_resources.path("trulens", parts[0]) as _path:
             # NOTE: resources.path does not allow the resource to include folders.
             for part in parts[1:]:
                 _path = _path / part
