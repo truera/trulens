@@ -558,9 +558,13 @@ def render_records(app_name: str):
     )
 
 
-if __name__ == "__main__":
+def records_main():
     set_page_config(page_title=page_name)
     init_page_state()
     app_name = render_sidebar()
     if app_name:
         render_records(app_name)
+
+
+if __name__ == "__main__":
+    records_main()

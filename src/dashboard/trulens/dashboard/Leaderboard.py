@@ -852,7 +852,7 @@ def render_leaderboard(app_name: str):
         )
 
 
-if __name__ == "__main__":
+def leaderboard_main():
     dashboard_utils.set_page_config(
         page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
     )
@@ -860,3 +860,7 @@ if __name__ == "__main__":
     app_name = dashboard_utils.render_sidebar()
     if app_name:
         render_leaderboard(app_name)
+
+
+if __name__ == "__main__":
+    leaderboard_main()
