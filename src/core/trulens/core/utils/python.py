@@ -825,8 +825,7 @@ def with_context(context_vars: Optional[ContextVarsOrValues] = None):
             try:
                 cv.reset(v)
             except Exception as e:
-                print("Context reset failed:", e)
-                pass
+                logger.warning("Context reset failed: %s", e)
 
 
 @asynccontextmanager
@@ -849,8 +848,7 @@ async def awith_context(context_vars: Optional[ContextVarsOrValues] = None):
             try:
                 cv.reset(v)
             except Exception as e:
-                print("Context reset failed:", e)
-                pass
+                logger.warning("Context reset failed: %s", e)
 
 
 def wrap_awaitable(
