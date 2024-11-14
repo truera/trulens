@@ -149,8 +149,9 @@ def _render_feedback_pills(
     kwargs = {
         "label": "Feedback Functions (click to learn more)",
         "options": feedback_with_valid_results,
-        "format_func": format_func,
     }
+    if format_func:
+        kwargs["format_func"] = format_func
 
     if is_sis_compatibility_enabled():
         return st.selectbox(**kwargs, index=None)
