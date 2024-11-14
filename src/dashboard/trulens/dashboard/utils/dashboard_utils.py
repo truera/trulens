@@ -316,7 +316,8 @@ def _get_query_args_handler(key: str, max_options: Optional[int] = None):
     if isinstance(new_val, list):
         if len(new_val) == max_options:
             # don't need to explicitly add query args as default is all options
-            del st.query_params[key]
+            if key in st.query_params:
+                del st.query_params[key]
             return
         new_val = ",".join(str(v) for v in new_val)
     elif not isinstance(new_val, str):
@@ -361,7 +362,8 @@ def _handle_reset_filters(
         query_param_key = key
         if page_name_keys and key in page_name_keys:
             query_param_key = ".".join(query_param_key.split(".")[1:])
-        del st.query_params[query_param_key]
+        if query_param_key in st.query_params:
+            del st.query_params[query_param_key]
 
 
 def render_app_version_filters(
