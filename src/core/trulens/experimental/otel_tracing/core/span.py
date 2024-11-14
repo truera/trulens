@@ -526,8 +526,8 @@ class LiveSpanCall(LiveSpan):
 class LiveRecordRoot(LiveSpan):
     """Wrapper for first app calls, or "records".
 
-    Children spans of type `WithApps` are expected to contain the app named here
-    in their `live_apps` field and have a record_id for this app.
+    Children spans of type `LiveSpan` are expected to contain the app named here
+    in their `live_apps` field.
     """
 
     live_app: Optional[weakref.ReferenceType[Any]] = pydantic.Field(
