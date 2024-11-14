@@ -79,11 +79,6 @@ def _preprocess_df(
         .reset_index()
     )
 
-    if dashboard_constants.PINNED_COL_NAME in app_versions_df:
-        app_versions_df[dashboard_constants.PINNED_COL_NAME] = app_versions_df[
-            dashboard_constants.PINNED_COL_NAME
-        ]
-
     df = app_agg_df.join(
         app_versions_df.set_index(["app_id", "app_name", "app_version"])[
             metadata_col_names
