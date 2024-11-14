@@ -747,8 +747,10 @@ def render_app_comparison(app_name: str):
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
         ):
-            feedback_selector_cols = record_feedback_selector_container.columns(
-                len(record_data), gap="large"
+            feedback_selector_cols = st_columns(
+                len(record_data),
+                gap="large",
+                container=record_feedback_selector_container,
             )
             for i, app_id in enumerate(record_data):
                 with feedback_selector_cols[i]:
@@ -760,8 +762,8 @@ def render_app_comparison(app_name: str):
 
     if not is_sis_compatibility_enabled():
         with trace_viewer_container:
-            trace_cols = trace_viewer_container.columns(
-                len(record_data), gap="large"
+            trace_cols = st_columns(
+                len(record_data), gap="large", container=trace_viewer_container
             )
             for i, app_id in enumerate(record_data):
                 with trace_cols[i]:

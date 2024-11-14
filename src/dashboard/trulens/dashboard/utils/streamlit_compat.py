@@ -9,7 +9,9 @@ st_fragment = (
 )
 
 
-def st_columns(spec, *, gap=None, vertical_alignment=None, container=None):
+def st_columns(
+    spec, *, gap: str = "small", vertical_alignment: str = "top", container=None
+):
     container = container or st
     if st_version >= Version("1.36.0"):
         return container.columns(

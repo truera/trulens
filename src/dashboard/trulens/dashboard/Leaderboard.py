@@ -421,9 +421,8 @@ def _render_grid_tab(
     grid_key: Optional[str] = None,
 ):
     container = st.container()
-    c1, c2, c3, c4, c5, c6 = container.columns(
-        [1, 1, 1, 1, 1, 1],
-        vertical_alignment="center",
+    c1, c2, c3, c4, c5, c6 = st_columns(
+        [1, 1, 1, 1, 1, 1], vertical_alignment="center", container=container
     )
 
     _metadata_options = [
