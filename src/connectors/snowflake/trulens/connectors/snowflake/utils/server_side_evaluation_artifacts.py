@@ -16,6 +16,7 @@ _PYTHON_STORED_PROCEDURE_CODE_FILENAME = os.path.join(
 _TRULENS_PACKAGES = [
     "trulens-connectors-snowflake",
     "trulens-core",
+    "trulens-dashboard",
     "trulens-feedback",
     "trulens-providers-cortex",
 ]

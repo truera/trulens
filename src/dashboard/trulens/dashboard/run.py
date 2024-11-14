@@ -322,3 +322,33 @@ def stop_dashboard(
     else:
         session._dashboard_proc.kill()
         session._dashboard_proc = None
+
+
+def run_dashboard_sis(
+    session: Optional[core_session.TruSession] = None,
+):
+    with import_utils.OptionalImports(
+        messages=import_utils.format_import_errors(
+            "trulens-connectors-snowflake",
+            purpose="running the TruLens dashboard in Streamlit in Snowflake",
+        )
+    ) as opt:
+        import trulens.connectors.snowflake
+    opt.assert_installed(trulens.connectors.snowflake)
+
+    session = session or core_session.TruSession()
+
+    if trulens.connectors.snowflake.SnowflakeConnector and isinstance(
+        session.connector, trulens.connectors.snowflake.SnowflakeConnector
+    ):
+        session.connector._set_up_sis_dashboard(
+            session.connector.snowpark_session,
+            database=session.connector.connection_parameters["database"],
+            schema=session.connector.connection_parameters["schema"],
+            warehouse=session.connector.connection_parameters["warehouse"],
+            init_server_side_with_staged_packages=session.connector.use_staged_packages,
+        )
+    else:
+        raise ValueError(
+            "This function is only supported with the SnowflakeConnector."
+        )

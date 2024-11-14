@@ -14,6 +14,9 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
+from trulens.connectors.snowflake.utils.sis_dashboard_artifacts import (
+    SiSDashboardArtifacts,
+)
 from trulens.core.database import base as core_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
@@ -42,6 +45,7 @@ class SnowflakeConnector(DBConnector):
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
         init_server_side_with_staged_packages: bool = False,
+        init_sis_dashboard: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -71,12 +75,16 @@ class SnowflakeConnector(DBConnector):
             snowpark_session,
             init_server_side,
             init_server_side_with_staged_packages,
+            init_sis_dashboard,
             database_redact_keys,
             database_prefix,
             database_args,
             database_check_revision,
             connection_parameters,
         )
+        self.snowpark_session = snowpark_session
+        self.connection_parameters = connection_parameters
+        self.use_staged_packages = init_server_side_with_staged_packages
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
@@ -160,6 +168,7 @@ class SnowflakeConnector(DBConnector):
         snowpark_session: Session,
         init_server_side: bool,
         init_server_side_with_staged_packages: bool,
+        init_sis_dashboard: bool,
         database_redact_keys: bool,
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
@@ -193,6 +202,14 @@ class SnowflakeConnector(DBConnector):
                 database_args["database_prefix"],
                 init_server_side_with_staged_packages,
             ).set_up_all()
+        if init_sis_dashboard:
+            self._set_up_sis_dashboard(
+                snowpark_session,
+                connection_parameters["database"],
+                connection_parameters["schema"],
+                connection_parameters["warehouse"],
+                init_server_side_with_staged_packages,
+            )
 
         # Add "trulens_workspace_version" tag to the current schema
         TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
@@ -259,6 +276,27 @@ class SnowflakeConnector(DBConnector):
             database_prefix or core_db.DEFAULT_DATABASE_PREFIX
         )
         return database_args
+
+    def _set_up_sis_dashboard(
+        self,
+        session: Session,
+        database: Optional[str] = None,
+        schema: Optional[str] = None,
+        warehouse: Optional[str] = None,
+        init_server_side_with_staged_packages: bool = False,
+    ) -> None:
+        if not database or not schema or not warehouse:
+            raise ValueError(
+                "Must specify `database`, `schema`, and `warehouse` to set up SiS dashboard!"
+            )
+
+        SiSDashboardArtifacts(
+            session,
+            database,
+            schema,
+            warehouse,
+            init_server_side_with_staged_packages,
+        ).set_up_all()
 
     @staticmethod
     def _run_query(
