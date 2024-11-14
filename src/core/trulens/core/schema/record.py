@@ -205,8 +205,8 @@ class Record(serial_utils.SerialModel, Hashable):
                     "be used in the current environment due to missing modules.\n%s",
                     otel_tracing_feature._FeatureSetup.REQUIREMENT.module_not_found,
                 )
-                # Set to empty None to prevent errors downstream where Span
-                # instances are expected.
+                # Set to empty to prevent errors downstream where Span instances
+                # are expected.
                 ret = []
 
         return ret

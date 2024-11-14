@@ -368,7 +368,10 @@ class SQLAlchemyDB(core_db.DB):
         # EXPERIMENTAL(otel_tracing): Spans table is hacked in and needs special
         # handling here. We remove the meta data that was reflected back from DB
         # schema so that the Span schema can be created when otel_tracing is
-        # being enabled.
+        # being enabled. If don't do this, `meta.reflect` above will learn about
+        # the spans table and if its metadata is subsequently created in the
+        # otel_tracing version of this file, sqlalchemy will throw an error
+        # because it thinks it already exists.
         spans_table = self.table_prefix + "spans"
         if spans_table in meta.tables:
             meta.remove(meta.tables[spans_table])
