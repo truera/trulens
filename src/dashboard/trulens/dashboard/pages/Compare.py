@@ -21,6 +21,7 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import diff_cell_css
 from trulens.dashboard.ux.styles import diff_cell_rules
@@ -226,14 +227,14 @@ def _render_advanced_filters(
         out = None
 
         filters = []
-        c1, c2, c3, c4, _ = st.columns([0.15, 0.15, 0.15, 0.15, 0.4])
+        c1, c2, c3, c4, _ = st_columns([0.15, 0.15, 0.15, 0.15, 0.4])
 
         n_clauses = st.session_state.get(
             f"{page_name}.record_filter.n_clauses", 0
         )
 
         if n_clauses:
-            st_cols = st.columns(5, vertical_alignment="center")
+            st_cols = st_columns(5, vertical_alignment="center")
             for i, header in enumerate([
                 "Feedback Function",
                 "App Version 0",
@@ -535,7 +536,7 @@ def _render_version_selectors(
         ]
     ]
 
-    inc_col, dec_col, _ = st.columns([0.15, 0.15, 0.7])
+    inc_col, dec_col, _ = st_columns([0.15, 0.15, 0.7])
     inc_col.button(
         "➕ Add App Version",
         disabled=len(current_app_ids) >= MAX_COMPARATORS,
@@ -554,7 +555,7 @@ def _render_version_selectors(
         args=(current_app_ids,),
     )
 
-    app_filter_cols = st.columns(
+    app_filter_cols = st_columns(
         len(current_app_ids),
         gap="large",
         vertical_alignment="top",
@@ -596,7 +597,7 @@ def _render_version_selectors(
 
     # Render version selectors
     with st.form("app_version_selector_form", border=False):
-        app_selector_cols = st.columns(
+        app_selector_cols = st_columns(
             len(current_app_ids),
             gap="large",
             vertical_alignment="top",

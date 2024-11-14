@@ -8,6 +8,7 @@ from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
+from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
@@ -20,6 +21,7 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
@@ -61,7 +63,7 @@ def _render_record_metrics(
 
     app_specific_df = records_df[records_df["app_id"] == selected_row["app_id"]]
 
-    token_col, cost_col, latency_col, _ = st.columns([1, 1, 1, 3])
+    token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
 
     num_tokens = selected_row["total_tokens"]
     with token_col.container(height=128, border=True):
@@ -100,7 +102,7 @@ def _render_record_metrics(
         )
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_trace(
     selected_row: pd.Series,
     records_df: pd.DataFrame,
@@ -114,7 +116,7 @@ def _render_trace(
     st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
     st.markdown(f"#### {selected_row['record_id']}")
 
-    input_col, output_col = st.columns(2)
+    input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
         st.code(selected_row["input"], wrap_lines=True)
 
@@ -448,7 +450,7 @@ def _render_app_id_args_filter(versions_df: pd.DataFrame):
             return versions_df
 
         ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
-        info_col, show_all_col = st.columns(
+        info_col, show_all_col = st_columns(
             [0.9, 0.1], vertical_alignment="center"
         )
         info_col.info(f"Filtering with App IDs: {ids_str}")
@@ -527,7 +529,7 @@ def render_records(app_name: str):
             st.error(f"No records found for app `{app_name}`.")
         return
     elif records_limit is not None and len(records_df) >= records_limit:
-        cols = st.columns([0.9, 0.1], vertical_alignment="center")
+        cols = st_columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Limiting to the latest {records_limit} records. Use the search bar and filters to narrow your search.",
             icon="ℹ️",

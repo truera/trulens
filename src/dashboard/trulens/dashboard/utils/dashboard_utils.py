@@ -14,6 +14,7 @@ from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.utils import metadata_utils
+from trulens.dashboard.utils.streamlit_compat import st_columns
 
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
@@ -46,7 +47,8 @@ def set_page_config(page_title: Optional[str] = None):
             import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
         )
 
-    st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
+    if not is_sis_compatibility_enabled():
+        st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
         st.session_state[ST_RECORDS_LIMIT] = dashboard_constants.RECORDS_LIMIT
@@ -370,7 +372,7 @@ def render_app_version_filters(
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
-    col0, col1, col2 = st.columns(
+    col0, col1, col2 = st_columns(
         [0.7, 0.15, 0.15], vertical_alignment="bottom"
     )
     if other_query_params_kv:

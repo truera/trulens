@@ -13,7 +13,9 @@ from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
+from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -287,7 +289,7 @@ def handle_table_edit(
     st.toast(f"Successfully updated metadata for `{app_df['app_version']}`")
 
 
-@st.dialog("Add/Edit Metadata")
+@streamlit_compat.st_dialog("Add/Edit Metadata")
 def handle_add_metadata(
     selected_rows: pd.DataFrame, metadata_col_names: List[str]
 ):
@@ -335,7 +337,7 @@ def handle_add_metadata(
         st.rerun()
 
 
-@st.dialog("Add Virtual App")
+@streamlit_compat.st_dialog("Add Virtual App")
 def handle_add_virtual_app(
     app_name: str,
     feedback_col_names: List[str],
@@ -582,7 +584,7 @@ def _render_grid_tab(
         )
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_list_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -619,7 +621,7 @@ def _render_list_tab(
             tokens_col,
             cost_col,
             select_app_col,
-        ) = st.columns([1, 1, 1, 1, 1])
+        ) = st_columns([1, 1, 1, 1, 1])
         n_records_col.metric("Records", app_row["Records"])
 
         latency_mean = app_row["Average Latency"]
@@ -652,7 +654,7 @@ def _render_list_tab(
         )
 
         if len(app_feedback_col_names) > 0:
-            feedback_cols = st.columns(
+            feedback_cols = st_columns(
                 min(len(app_feedback_col_names), max_feedback_cols)
             )
             for i, col_name in enumerate(app_feedback_col_names):
@@ -710,7 +712,7 @@ def _render_list_tab(
         st.markdown("""---""")
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     if len(feedback_col_names) == 0:
         st.warning("No feedback functions found.")
@@ -794,7 +796,7 @@ def render_leaderboard(app_name: str):
         st.error(f"No records found for app `{app_name}`.")
         return
     elif records_limit is not None and len(records_df) >= records_limit:
-        cols = st.columns([0.9, 0.1], vertical_alignment="center")
+        cols = st_columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Computed from the last {records_limit} records.",
             icon="ℹ️",

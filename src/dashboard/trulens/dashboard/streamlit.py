@@ -19,6 +19,8 @@ from trulens.dashboard.components import (
     record_viewer as dashboard_record_viewer,
 )
 from trulens.dashboard.utils import dashboard_utils
+from trulens.dashboard.utils import streamlit_compat
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -127,7 +129,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
             for col_name in feedback_col_names
             if not app_df[col_name].isna().all()
         ]
-        col1, col2, col3, col4, *feedback_cols = st.columns(
+        col1, col2, col3, col4, *feedback_cols = st_columns(
             5 + len(app_feedback_col_names)
         )
         latency_mean = (
@@ -207,7 +209,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         st.markdown("""---""")
 
 
-@st.fragment(run_every=2)
+@streamlit_compat.st_fragment(run_every=2)
 def trulens_feedback(record: record_schema.Record):
     """Render clickable feedback pills for a given record.
 
