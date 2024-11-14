@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from collections import defaultdict
 import contextvars
-import functools
 import inspect
 import logging
 import os
+import sys
 import threading as th
 from threading import Lock
 from typing import (
@@ -34,6 +34,7 @@ from typing import (
 )
 import weakref
 
+from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
@@ -51,7 +52,10 @@ from trulens.semconv import trace as truconv
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
 
-from opentelemetry.util import types as types_api
+if sys.version_info < (3, 9):
+    from functools import lru_cache as fn_cache
+else:
+    from functools import cache as fn_cache
 
 T = TypeVar("T")
 R = TypeVar("R")  # callable return type
@@ -387,7 +391,7 @@ class TracerProvider(
         return tracer
 
 
-@functools.cache
+@fn_cache
 def trulens_tracer_provider():
     """Global tracer provider.
     All trulens tracers are made by this provider even if a different one is
@@ -408,7 +412,7 @@ def was_exported_to(
     return trulens_tracer_provider().was_exported_to(context, to, mark_exported)
 
 
-@functools.cache
+@fn_cache
 def trulens_tracer():
     from trulens.core import __version__
 

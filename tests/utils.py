@@ -1,5 +1,7 @@
 """Testing utilities."""
 
+from __future__ import annotations
+
 import builtins
 from collections import namedtuple
 import ctypes

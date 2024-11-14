@@ -46,7 +46,7 @@ class AttributeProperty(property, Generic[T]):
     dictionary.
 
     Validates default and on assignment. This is meant to be used only in
-    TypedSpan instances (or subclasses).
+    trulens Span instances (or subclasses).
 
         Args:
             name: The name of the property. The key used for storage will be
