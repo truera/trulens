@@ -2,6 +2,16 @@
 
 This file should not have any dependencies so it can be easily imported by tools
 that want to read TruLens data but not use TruLens otherwise.
+
+Relevant links:
+
+- [OTEL Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/).
+
+- [OTEL Trace Semantic
+  Conventions](https://opentelemetry.io/docs/specs/semconv/general/trace/).
+
+- [OTEL Semantic Conventions for Generative AI
+  Systems](https://opentelemetry.io/docs/specs/semconv/gen-ai/).
 """
 
 from enum import Enum
@@ -13,6 +23,7 @@ from opentelemetry.semconv.trace import SpanAttributes as otel_SpanAttributes
 
 
 class ResourceAttributes:
+    # TODO: Some Span attributes should be moved here.
     pass
 
 
