@@ -94,7 +94,7 @@ class CortexEndpoint(core_endpoint.Endpoint):
         kwargs["callback_class"] = CortexCallback
 
         super().__init__(*args, **kwargs)
-
+        # we instrument the SSEClient class from snowflake.cortex module to get the usage information from the HTTP response
         self._instrument_class(SSEClient, "events")
 
     def handle_wrapped_call(

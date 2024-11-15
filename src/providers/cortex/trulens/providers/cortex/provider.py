@@ -14,62 +14,11 @@ from trulens.providers.cortex import endpoint as cortex_endpoint
 # If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
 # TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
 _SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
-# Define the new version of the function
-
-
-# def _patched_return_stream_response(
-#     response: Response, deadline: Optional[float]
-# ) -> dict:
-#     client = SSEClient(response)
-#     full_content = []  # Accumulate the content here
-#     for event in client.events():
-#         if deadline is not None and time.time() > deadline:
-#             raise TimeoutError()
-#         try:
-#             message = json.loads(event.data)
-#             full_content.append(message["choices"][0]["delta"]["content"])
-
-#         except (json.JSONDecodeError, KeyError, IndexError):
-#             # For the sake of evolution of the output format,
-#             # ignore stream messages that don't match the expected format.
-#             pass
-#     final_message = {
-#         "id": message["id"],
-#         "created": message["created"],
-#         "model": message["model"],
-#         "tru_content": "".join(full_content),
-#         "usage": message["usage"],
-#     }
-#     return final_message
-
-
-# def _modified_complete_non_streaming_immediate(
-#     model: str,
-#     prompt,
-#     options,
-#     session=None,
-#     deadline: Optional[float] = None,
-# ) -> str:
-#     response = _complete._complete_rest(
-#         model=model,
-#         prompt=prompt,
-#         options=options,
-#         session=session,
-#         deadline=deadline,
-#     )
-#     return response
-
-
-# # monkey patch the function to allow usage tracking from Cortex REST API
-# _complete._return_stream_response = _patched_return_stream_response
-# _complete._complete_non_streaming_immediate = (
-#     _modified_complete_non_streaming_immediate
-# )
 
 
 class Cortex(
     llm_provider.LLMProvider
-):  # require `pip install snowflake-ml-python` and a active Snowflake account with proper privileges
+):  # require `pip install snowflake-snowpark-python snowflake-ml-python>=1.7.1` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
@@ -185,32 +134,6 @@ class Cortex(
             options=options,
         )
         return completion_res_str
-
-        # completion_input_str = """
-        #     SELECT SNOWFLAKE.CORTEX.COMPLETE(
-        #         ?,
-        #         parse_json(?),
-        #         parse_json(?)
-        #     )
-        # """
-        # if (
-        #     hasattr(self.snowflake_conn, "_paramstyle")
-        #     and self.snowflake_conn._paramstyle == "pyformat"
-        # ):
-        #     completion_input_str = completion_input_str.replace("?", "%s")
-
-        # # Executing Snow SQL command requires an active snow session
-        # cursor = self.snowflake_conn.cursor()
-        # try:
-        #     cursor.execute(
-        #         completion_input_str,
-        #         (model, messages_json_str, options_json_str),
-        #     )
-        #     result = cursor.fetchall()
-        # finally:
-        #     cursor.close()
-
-        # return result
 
     def _create_chat_completion(
         self,
