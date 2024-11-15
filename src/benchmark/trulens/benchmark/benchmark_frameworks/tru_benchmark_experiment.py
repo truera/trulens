@@ -33,8 +33,9 @@ class TruBenchmarkExperiment:
             "schema": os.environ["SNOWFLAKE_SCHEMA"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
+        snowflake_session = Session.builder.configs(connection_params).create()
         cortex = Cortex(
-            snowflake.connector.connect(**snowflake_connection_parameters)
+            snowflake_session=snowflake_session,
             model_engine="snowflake-arctic",
         )
 
