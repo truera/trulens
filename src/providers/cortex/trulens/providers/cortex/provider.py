@@ -8,6 +8,7 @@ from typing import (
 
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
+from snowflake.snowpark import context
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
@@ -87,7 +88,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_session: Session,
+        snowflake_session: Optional[Session] = None,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -105,7 +106,12 @@ class Cortex(
         self_kwargs["snowflake_session"] = _SNOWFLAKE_STORED_PROCEDURE_SESSION
 
         if _SNOWFLAKE_STORED_PROCEDURE_SESSION is None:
-            self_kwargs["snowflake_session"] = snowflake_session
+            self_kwargs["snowflake_session"] = (
+                snowflake_session
+                if snowflake_session is not None
+                else context.get_active_session()  # context.get_active_session() will fail if there is no or more than one active session. This is not a concern
+                # for server side eval in the warehouse as there should only be only active session in the execution context.
+            )
 
         super().__init__(**self_kwargs)
 
