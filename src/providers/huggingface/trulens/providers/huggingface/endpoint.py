@@ -74,12 +74,12 @@ if otel_tracing_feature._FeatureSetup.are_optionals_installed():
 
             super().on_callable_return(ret=ret, **kwargs)
 
-            bindings = self.bindings
+            bound_arguments = self.bound_arguments
 
-            if "url" not in bindings.arguments:
+            if "url" not in bound_arguments.arguments:
                 return ret
 
-            url = bindings.arguments["url"]
+            url = bound_arguments.arguments["url"]
             if not url.startswith("https://api-inference.huggingface.co"):
                 return ret
 

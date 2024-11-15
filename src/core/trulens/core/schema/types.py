@@ -19,18 +19,34 @@ import datetime
 from enum import Enum
 import random
 import time
-from typing import Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
+from typing import (
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 import uuid
 
 from opentelemetry import trace as trace_api
 from opentelemetry.trace import span as span_api
 from opentelemetry.trace import status as status_api
+from opentelemetry.util import types as types_api
 from sqlalchemy import BINARY
 from sqlalchemy import JSON
 from sqlalchemy import SMALLINT
 from sqlalchemy import TIMESTAMP
 from sqlalchemy import VARCHAR
+from trulens.core._utils.pycompat import NoneType  # import style exception
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
+from trulens.core._utils.pycompat import TypeAliasType  # import style exception
+from trulens.core.utils import serial as serial_utils
 from trulens.semconv import trace as truconv
 
 RecordID: TypeAlias = str
@@ -627,7 +643,7 @@ class IntEnumAsSmallInt(TypeInfo[E, E, int], Generic[E]):
 
 
 class StrEnumAsVarChar(TypeInfo[E, E, str], Generic[E]):
-    """Enum types that are stored as integers in the database."""
+    """Enum types that are stored as varchar in the database."""
 
     OTEL_TYPE: Type[E]  # to fill in by subclass
     PY_TYPE: Type[E]  # to fill in by subclass
@@ -753,3 +769,119 @@ class Timestamp(TypeInfo[int, datetime.datetime, datetime.datetime]):
     @classmethod
     def py_of_sql(cls, sql_value: datetime.datetime) -> datetime.datetime:
         return sql_value
+
+
+# OTEL Attributes-related
+
+
+def lens_of_flat_key(key: str) -> serial_utils.Lens:
+    """Convert a flat dict key to a lens."""
+    lens = serial_utils.Lens()
+    for step in key.split("."):
+        lens = lens[step]
+
+    return lens
+
+
+TLensedBaseType: TypeAlias = Union[str, int, float, bool]
+"""Type of base types in span attributes.
+
+!!! Warning
+    OpenTelemetry does not allow None as an attribute value. Handling None is to
+    be decided.
+"""
+
+TLensedAttributeValue = TypeAliasType(
+    "TLensedAttributeValue",
+    Union[
+        str,
+        int,
+        float,
+        bool,
+        NoneType,  # TODO(SNOW-1711929): None is not technically allowed as an attribute value.
+        Sequence["TLensedAttributeValue"],  # type: ignore
+        "TLensedAttributes",
+    ],
+)
+"""Type of values in span attributes."""
+
+# NOTE(piotrm): pydantic will fail if you specify a recursive type alias without
+# the TypeAliasType schema as above.
+
+TLensedAttributes: TypeAlias = Dict[str, TLensedAttributeValue]
+"""Attribute dictionaries.
+
+Note that this deviates from what OTEL allows as attribute values. Because OTEL
+does not allow general recursive values to be stored as attributes, we employ a
+system of flattening values before exporting to OTEL. In this process we encode
+a single generic value as multiple attributes where the attribute name include
+paths/lenses to the parts of the generic value they are representing. For
+example, an attribute/value like `{"a": {"b": 1, "c": 2}}` would be encoded as
+`{"a.b": 1, "a.c": 2}`. This process is implemented in the
+`flatten_lensed_attributes` method.
+"""
+
+
+def flatten_value(
+    v: TLensedAttributeValue, lens: Optional[serial_utils.Lens] = None
+) -> Iterable[Tuple[serial_utils.Lens, types_api.AttributeValue]]:
+    """Flatten recursive value into OTEL-compatible attribute values.
+
+    See `TLensedAttributes` for more details.
+    """
+
+    if lens is None:
+        lens = serial_utils.Lens()
+
+    # TODO(SNOW-1711929): OpenTelemetry does not allow None as an attribute
+    # value. Unsure what is best to do here.
+
+    # if v is None:
+    #    yield (path, "None")
+
+    elif v is None:
+        pass
+
+    elif isinstance(v, TLensedBaseType):
+        yield (lens, v)
+
+    elif isinstance(v, Sequence) and all(
+        isinstance(e, TLensedBaseType) for e in v
+    ):
+        yield (lens, v)
+
+    elif isinstance(v, Sequence):
+        for i, e in enumerate(v):
+            yield from flatten_value(v=e, lens=lens[i])
+
+    elif isinstance(v, Mapping):
+        for k, e in v.items():
+            yield from flatten_value(v=e, lens=lens[k])
+
+    else:
+        raise ValueError(
+            f"Do not know how to flatten value of type {type(v)} to OTEL attributes."
+        )
+
+
+def flatten_lensed_attributes(
+    m: TLensedAttributes,
+    path: Optional[serial_utils.Lens] = None,
+    prefix: str = "",
+) -> types_api.Attributes:
+    """Flatten lensed attributes into OpenTelemetry attributes."""
+
+    if path is None:
+        path = serial_utils.Lens()
+
+    ret = {}
+    for k, v in m.items():
+        if k.startswith(prefix):
+            # Only flattening those attributes that begin with `prefix` are
+            # those are the ones coming from trulens_eval.
+            for p, a in flatten_value(v, path[k]):
+                ret[str(p)] = a
+        else:
+            ret[k] = v
+
+    return ret

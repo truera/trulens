@@ -1,3 +1,17 @@
+"""
+OTEL tracing specific additions and changes for instrumentation.
+
+This file is to be integrated into the main
+[instruments][trulens.core.instruments] once otel_tracing graduates.
+
+- Overwrites
+  [tracked_method_wrapper][trulens.core.instruments.Instrument.tracked_method_wrapper]
+  to use
+  [wrap_callable][trulens.experimental.otel_tracing.core._utils.wrap_callable]
+  with span creating callbacks
+  ([AppTracingCallbacks][trulens.experimental.otel_tracing.core.trace.AppTracingCallbacks]).
+"""
+
 from __future__ import annotations
 
 import logging

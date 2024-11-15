@@ -352,7 +352,7 @@ class CallableCallbacks(Generic[R]):
         self.call_args: Optional[Tuple[Any, ...]] = call_args
         self.call_kwargs: Optional[Dict[str, Any]] = call_kwargs
 
-        self.bindings: Optional[inspect.BoundArguments] = None
+        self.bound_arguments: Optional[inspect.BoundArguments] = None
         self.bind_error: Optional[Exception] = None
 
         self.error: Optional[Exception] = None
@@ -365,7 +365,7 @@ class CallableCallbacks(Generic[R]):
     def on_callable_call(
         self,
         *,
-        bindings: inspect.BoundArguments,
+        bound_arguments: inspect.BoundArguments,
     ) -> inspect.BoundArguments:
         """Called before the execution of the wrapped method assuming its
         arguments can be bound.
@@ -374,9 +374,9 @@ class CallableCallbacks(Generic[R]):
             This callback must return the bound arguments or wrappers of bound
             arguments.
         """
-        self.bindings = bindings
+        self.bound_arguments = bound_arguments
 
-        return bindings
+        return bound_arguments
 
     def on_callable_bind_error(
         self,
@@ -481,10 +481,10 @@ def wrap_callable(
         )
 
         try:
-            bindings = sig.bind(*args, **kwargs)  # save and reuse sig
+            bound_arguments = sig.bind(*args, **kwargs)  # save and reuse sig
 
             # callback step 1: call on_callable_call
-            callback.on_callable_call(bindings=bindings)
+            callback.on_callable_call(bound_arguments=bound_arguments)
 
         except TypeError as e:
             # callback step 2a: call on_callable_bind_error

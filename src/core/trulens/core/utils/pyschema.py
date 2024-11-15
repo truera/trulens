@@ -449,7 +449,59 @@ class Signature(serial_utils.SerialModel):
         return Signature(sig_str=str(sig))
 
 
+class BoundArguments(serial_utils.SerialModel):
+    """Bound arguments to a function or method.
+
+    Unlike bindings, this stores all args by their name. This can only be filled
+    in if a call is successfully bound to the function signature.
+
+    Also provides get/set/del item.
+    """
+
+    arguments: Dict[str, Any]
+
+    @staticmethod
+    def of_bound_arguments(
+        b: inspect.BoundArguments, skip_self: bool = True
+    ) -> BoundArguments:
+        """Convert [inspect.BoundArguments][inspect.BoundArguments] to
+        [BoundArguments][trulens.core.utils.pyschema.BoundArguments], optionally
+        skipping self."""
+
+        firstarg: Optional[str] = _self_arg(b)
+
+        return BoundArguments(
+            arguments={
+                k: v
+                for k, v in b.arguments.items()
+                if (not skip_self or k != firstarg)
+            }
+        )
+
+    def __getitem__(self, k: str) -> Any:
+        if k in self.arguments:
+            return self.arguments[k]
+
+        raise KeyError(f"Key {k} not found in Bindings kwargs.")
+
+    def __setitem__(self, k: str, v: Any):
+        self.arguments[k] = v
+
+    def __delitem__(self, k: str):
+        del self.arguments[k]
+
+    def __contains__(self, k: str) -> bool:
+        return k in self.arguments
+
+
 class Bindings(serial_utils.SerialModel):
+    """Function positional and keyword arguments.
+
+    This can be filled in with arguments and kwargs to a function or method even
+    if they are wrong and would result in a binding error. See `BoundArguments`
+    for storing successfully bound arguments only.
+    """
+
     args: Tuple
     kwargs: Dict[str, Any]
 

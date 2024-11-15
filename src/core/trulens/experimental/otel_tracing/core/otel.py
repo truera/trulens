@@ -4,17 +4,14 @@
 
 This module contains classes to support interacting with the OTEL ecosystem.
 Additions on top of these meant for TruLens uses outside of OTEL compatibility
-are found in `traces.py`.
+are found in `span.py` and `trace.py`.
 """
 
 from __future__ import annotations
 
 import contextlib
 import contextvars
-import json
 import logging
-from pprint import pprint
-import threading
 from types import TracebackType
 from typing import (
     Any,
@@ -22,12 +19,9 @@ from typing import (
     ClassVar,
     Dict,
     Hashable,
-    Iterable,
     List,
     Literal,
-    Mapping,
     Optional,
-    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -35,13 +29,11 @@ from typing import (
 )
 
 import pydantic
-from trulens.core._utils.pycompat import NoneType  # import style exception
-from trulens.core._utils.pycompat import TypeAlias  # import style exception
-from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing import _feature
 
 _feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
@@ -52,7 +44,6 @@ from opentelemetry.sdk import resources as resources_sdk
 from opentelemetry.sdk import trace as trace_sdk
 from opentelemetry.trace import span as span_api
 from opentelemetry.util import types as types_api
-import uvicorn
 
 logger = logging.getLogger(__name__)
 
@@ -62,119 +53,25 @@ A = TypeVar("A")
 B = TypeVar("B")
 
 
-TLensedBaseType: TypeAlias = Union[str, int, float, bool]
-"""Type of base types in span attributes.
-
-!!! Warning
-    OpenTelemetry does not allow None as an attribute value. Handling None is to
-    be decided.
-"""
-
-TLensedAttributeValue = TypeAliasType(
-    "TLensedAttributeValue",
-    Union[
-        str,
-        int,
-        float,
-        bool,
-        NoneType,  # TODO(SNOW-1711929): None is not technically allowed as an attribute value.
-        Sequence["TLensedAttributeValue"],  # type: ignore
-        "TLensedAttributes",
-    ],
-)
-"""Type of values in span attributes."""
-
-# NOTE(piotrm): pydantic will fail if you specify a recursive type alias without
-# the TypeAliasType schema as above.
-
-TLensedAttributes: TypeAlias = Dict[str, TLensedAttributeValue]
-"""Attribute dictionaries.
-
-Note that this deviates from what OTEL allows as attribute values. Because OTEL
-does not allow general recursive values to be stored as attributes, we employ a
-system of flattening values before exporting to OTEL. In this process we encode
-a single generic value as multiple attributes where the attribute name include
-paths/lenses to the parts of the generic value they are representing. For
-example, an attribute/value like `{"a": {"b": 1, "c": 2}}` would be encoded as
-`{"a.b": 1, "a.c": 2}`. This process is implemented in the
-`flatten_lensed_attributes` method.
-"""
-
-
-def flatten_value(
-    v: TLensedAttributeValue, lens: Optional[serial_utils.Lens] = None
-) -> Iterable[Tuple[serial_utils.Lens, types_api.AttributeValue]]:
-    """Flatten recursive value into OTEL-compatible attribute values.
-
-    See `TLensedAttributes` for more details.
-    """
-
-    if lens is None:
-        lens = serial_utils.Lens()
-
-    # TODO(SNOW-1711929): OpenTelemetry does not allow None as an attribute
-    # value. Unsure what is best to do here.
-
-    # if v is None:
-    #    yield (path, "None")
-
-    elif v is None:
-        pass
-
-    elif isinstance(v, TLensedBaseType):
-        yield (lens, v)
-
-    elif isinstance(v, Sequence) and all(
-        isinstance(e, TLensedBaseType) for e in v
-    ):
-        yield (lens, v)
-
-    elif isinstance(v, Sequence):
-        for i, e in enumerate(v):
-            yield from flatten_value(v=e, lens=lens[i])
-
-    elif isinstance(v, Mapping):
-        for k, e in v.items():
-            yield from flatten_value(v=e, lens=lens[k])
-
-    else:
-        raise ValueError(
-            f"Do not know how to flatten value of type {type(v)} to OTEL attributes."
-        )
-
-
-def flatten_lensed_attributes(
-    m: TLensedAttributes,
-    path: Optional[serial_utils.Lens] = None,
-    prefix: str = "",
-) -> types_api.Attributes:
-    """Flatten lensed attributes into OpenTelemetry attributes."""
-
-    if path is None:
-        path = serial_utils.Lens()
-
-    ret = {}
-    for k, v in m.items():
-        if k.startswith(prefix):
-            # Only flattening those attributes that begin with `prefix` are
-            # those are the ones coming from trulens_eval.
-            for p, a in flatten_value(v, path[k]):
-                ret[str(p)] = a
-        else:
-            ret[k] = v
-
-    return ret
-
-
 class TraceState(serial_utils.SerialModel, span_api.TraceState):
-    """[OTEL TraceState][opentelemetry.trace.TraceState] requirements."""
+    """[OTEL TraceState][opentelemetry.trace.TraceState] requirements.
+
+    Adds [SerialModel][trulens.core.utils.serial.SerialModel] and therefore
+    [pydantic.BaseModel][pydantic.BaseModel] onto the OTEL TraceState.
+    """
 
     # Hackish: span_api.TraceState uses _dict internally.
     _dict: Dict[str, str] = pydantic.PrivateAttr(default_factory=dict)
 
 
 class SpanContext(serial_utils.SerialModel, Hashable):
-    """[OTEL SpanContext][opentelemetry.trace.SpanContext] requirements."""
+    """[OTEL SpanContext][opentelemetry.trace.SpanContext] requirements.
+
+    Adds [SerialModel][trulens.core.utils.serial.SerialModel] and therefore
+    [pydantic.BaseModel][pydantic.BaseModel] onto the OTEL SpanContext.
+
+    Also adds hashing, equality, conversion, and representation methods.
+    """
 
     model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         arbitrary_types_allowed=True,
@@ -196,16 +93,12 @@ class SpanContext(serial_utils.SerialModel, Hashable):
 
         return self.trace_id == other.trace_id and self.span_id == other.span_id
 
-    trace_id: types_schema.TraceID.PY_TYPE  # = pydantic.Field(
-    #        default=types_schema.TraceID.INVALID_OTEL
-    #    )
+    trace_id: types_schema.TraceID.PY_TYPE
     """Unique identifier for the trace.
 
     Each root span has a unique trace id."""
 
-    span_id: types_schema.SpanID.PY_TYPE  # = pydantic.Field(
-    #        default=types_schema.SpanID.INVALID_OTEL
-    #    )
+    span_id: types_schema.SpanID.PY_TYPE
     """Identifier for the span.
 
     Meant to be at least unique within the same trace_id.
@@ -229,26 +122,35 @@ class SpanContext(serial_utils.SerialModel, Hashable):
     is_remote: bool = False
 
     _tracer: Tracer = pydantic.PrivateAttr(None)
+    """Reference to the tracer that produces this SpanContext."""
 
     @property
     def tracer(self) -> Tracer:
+        """Tracer that produced this SpanContext."""
         return self._tracer
 
     @staticmethod
     def of_contextlike(
         context: ContextLike, tracer: Optional[Tracer] = None
     ) -> SpanContext:
+        """Convert several types that convey span/contxt identifiers into the
+        common SpanContext type."""
+
         if isinstance(context, SpanContext):
+            if tracer is not None:
+                context._tracer = tracer
+
             return context
 
-        elif isinstance(context, span_api.SpanContext):
+        if isinstance(context, span_api.SpanContext):
+            # otel api SpanContext; doesn't have hashing and other things we need.
             return SpanContext(
                 trace_id=context.trace_id,
                 span_id=context.span_id,
                 is_remote=context.is_remote,
                 _tracer=tracer,
             )
-        elif isinstance(context, context_api.Context):
+        if isinstance(context, context_api.Context):
             # Context dict from OTEL.
 
             if len(context) == 1:
@@ -267,15 +169,18 @@ class SpanContext(serial_utils.SerialModel, Hashable):
                 raise ValueError(
                     f"Unrecognized context dict from OTEL: {context}"
                 )
-        elif isinstance(context, dict):
-            # Json encoding of SpanContext
+        if isinstance(context, dict):
+            # Json encoding of SpanContext, i.e. output of
+            # SpanContext.model_dump .
+
             context["_tracer"] = tracer
             return SpanContext.model_validate(context)
-        else:
-            raise ValueError(f"Unrecognized span context type: {context}")
+
+        raise ValueError(f"Unrecognized span context type: {context}")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         for k, v in kwargs.items():
             if v is None:
                 continue
@@ -293,15 +198,6 @@ These may be the non-hashable ones coming from OTEL, the hashable ones we
 defined above, or their JSON representations."""
 
 
-def lens_of_flat_key(key: str) -> serial_utils.Lens:
-    """Convert a flat dict key to a lens."""
-    lens = serial_utils.Lens()
-    for step in key.split("."):
-        lens = lens[step]
-
-    return lens
-
-
 class Span(
     pyschema_utils.WithClassInfo,
     serial_utils.SerialModel,
@@ -314,6 +210,16 @@ class Span(
     Span](https://opentelemetry.io/docs/specs/otel/trace/api/#span) and
     [OpenTelemetry Span
     specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/api.md).
+
+    Adds more features on top of basic OTEL API span requirements:
+
+    - Hashable.
+
+    - pydantic.BaseModel for validation and (de)serialization.
+
+    - Async context manager requirements (__aenter__, __aexit__).
+
+    - Conversions to OTEL ReadableSpan (methods starting with "otel_").
     """
 
     model_config = pydantic.ConfigDict(
@@ -366,6 +272,7 @@ class Span(
 
     @property
     def tracer(self) -> Tracer:
+        """The tracer that produced this span."""
         return self._tracer
 
     def __hash__(self):
@@ -596,7 +503,7 @@ class Span(
         return self.otel_context_of_context(self.parent)
 
     def otel_attributes(self) -> types_api.Attributes:
-        return flatten_lensed_attributes(self.attributes)
+        return types_schema.flatten_lensed_attributes(self.attributes)
 
     def otel_kind(self) -> types_api.SpanKind:
         return trace_api.SpanKind.INTERNAL
@@ -958,7 +865,9 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
             )
         )
 
-        print("Root context=", self._span_context_cvar.get())
+        print(
+            f"{text_utils.UNICODE_SQUID} TruLens root context={self._span_context_cvar.get()}"
+        )
 
     def get_tracer(
         self,
@@ -980,114 +889,3 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         )
 
         return tracer
-
-
-# The rest is ongoing collector work.
-
-
-class CollectorRequest(pydantic.BaseModel):
-    payload: str = "notset"
-
-
-class CollectorResponse(pydantic.BaseModel):
-    status: int = 404
-
-
-class Collector:
-    """OTLP Traces Collector.
-
-    See [specification](https://opentelemetry.io/docs/specs/otlp/). See also the
-    other side of this connection in
-    [OTLPSpanExporter][opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter].
-
-    Not all of the specification is currently supported. Please update this
-    docstring as more of the spec is handled.
-
-    - Ignores most of http spec including path.
-
-    - Only proto payloads are supported.
-
-    - No compression is supported.
-
-    - Only spans are supported.
-    """
-
-    @staticmethod
-    async def _uvicorn_handle(scope, receive, send):
-        """Main uvicorn handler."""
-
-        print("scope:")
-        pprint(scope)
-        if scope.get("type") != "http":
-            return
-
-        request = await receive()
-        print("request:")
-        pprint(request)
-
-        if request.get("type") != "http.request":
-            return
-
-        headers = dict(scope.get("headers", {}))
-        method = scope.get("method", None)
-        if method != "POST":
-            return
-
-        body = request.get("body", None)
-        if body is None:
-            return
-        content_type = headers.get(b"content-type", None)
-
-        if content_type == b"application/json":
-            body = json.loads(body.decode("utf-8"))
-        elif content_type == b"application/x-protobuf":
-            from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
-                ExportTraceServiceRequest as PB2ExportTraceServiceRequest,
-            )
-
-            body = PB2ExportTraceServiceRequest().FromString(body)
-
-            for resource_and_span in body.resource_spans:
-                resource = resource_and_span.resource
-                print("resource:")
-                pprint(resource)
-                spans = resource_and_span.scope_spans
-                for span in spans:
-                    print("span:")
-                    pprint(span)
-
-        else:
-            return
-
-        await send({
-            "type": "http.response.start",
-            "status": 200,
-            "headers": [
-                [b"content-type", b"application/json"],
-            ],
-        })
-
-        await send({
-            "type": "http.response.body",
-            "body": CollectorResponse(status=200)
-            .model_dump_json()
-            .encode("utf-8"),
-        })
-
-    def __init__(self):
-        self.app = self._uvicorn_handle
-        self.server_thread = threading.Thread(target=self._run)
-
-    def _run(self):
-        self.config = uvicorn.Config(app=self.app, port=5000)
-        self.server = uvicorn.Server(self.config)
-        import asyncio
-
-        self.loop = asyncio.new_event_loop()
-        self.loop.run_until_complete(self.server.serve())
-
-    def start(self):
-        self.server_thread.start()
-
-    def stop(self):
-        self.loop.close()

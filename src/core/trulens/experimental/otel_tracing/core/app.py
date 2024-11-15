@@ -1,8 +1,27 @@
+"""
+Adds otel_tracing specific features to the main [App][trulens.core.app.App]
+class. This file is to be integrated into the main [app][trulens.core.app] once
+otel_tracing graduates.
+
+- Callback
+  ([_on_new_root_span][trulens.experimental.otel_tracing.core.app._on_new_root_span])
+  for when a new root span has finished tracing. This callback adds the records'
+  worth of spans to the database and possibly executes feedback
+
+- Contextmanager methods (__enter__, __exit__) for starting and stopping a
+  recording context are overwritten for otel tracing to create a special
+  [RecordingContextSpan][trulens.experimental.otel_tracing.core.span.RecordingContextSpan]
+  span.
+
+- Callback
+  ([_on_new_recording_span][trulens.experimental.otel_tracing.core.app._on_new_recording_span])
+  when the recording span (the above) is finished. This span also controls the
+  exporting of spans if TruLens has been configured so.
+"""
+
 from __future__ import annotations
 
-import contextvars
 from typing import (
-    Iterable,
     List,
     Literal,
     Optional,
@@ -24,22 +43,17 @@ class _App(core_app.App):
     # TODO(otel_tracing): Roll into core_app.App once no longer experimental.
 
     # WithInstrumentCallbacks requirement
-    def get_active_contexts(
-        self,
-    ) -> Iterable[core_instruments._RecordingContext]:
-        """Get all active recording contexts."""
-
-        recording = self.recording_contexts.get(contextvars.Token.MISSING)
-
-        while recording is not contextvars.Token.MISSING:
-            yield recording
-            recording = recording.token.old_value
-
-    # WithInstrumentCallbacks requirement
     def _on_new_recording_span(
         self,
         recording_span: core_span.Span,
     ):
+        """Callback for when a recording span
+        ([RecordingContextSpan][trulens.experimental.otel_tracing.core.span.RecordingContextSpan])
+        is finished.
+
+        Handles exporting to OTEL exporters.
+        """
+
         exporter_ident = str(str(self.session._experimental_otel_exporter))
         if self.session._experimental_otel_exporter is not None:
             to_export: Optional[List] = []
@@ -75,6 +89,13 @@ class _App(core_app.App):
         recording: core_instruments._RecordingContext,
         root_span: core_span.Span,
     ) -> record_schema.Record:
+        """Callback for when a new trace root span
+        ([LiveRecordRoot][trulens.experimental.otel_tracing.core.span.LiveRecordRoot])
+        is finished.
+
+        Controls saving spans to the database as well as feedback execution or scheduling.
+        """
+
         tracer = root_span.context.tracer
 
         record = tracer.record_of_root_span(
@@ -144,6 +165,7 @@ class _App(core_app.App):
         recording_span: core_span.RecordingContextSpan = (
             recording_span_ctx.__enter__()
         )
+
         recording = core_trace._RecordingContext(
             app=self,
             tracer=tracer,
@@ -166,6 +188,8 @@ class _App(core_app.App):
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
         assert recording.span is not None, "Not in a tracing context."
+
+        print(f"exiting {recording.span}")
 
         self.recording_contexts.reset(recording.token)
 

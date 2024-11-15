@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from pprint import PrettyPrinter
 from typing import Generic, Tuple, TypeVar
@@ -40,7 +41,10 @@ class _WrapperEndpointCallback(
         super().__init__(**kwargs, span_type=core_span.LiveSpanCallWithCost)
 
         self.endpoint: core_endpoint.Endpoint = endpoint
-        self.span.endpoint = endpoint
+
+        assert self.span is not None
+
+        self.span.live_endpoint = endpoint
 
         self.cost: base_schema.Cost = self.span.cost
         self.cost.n_requests += 1
@@ -117,9 +121,13 @@ class _Endpoint(core_endpoint.Endpoint):
         *args,
         **kwargs,
     ) -> Tuple[Ret, python_utils.Thunk[base_schema.Cost]]:
-        with core_trace.trulens_tracer().cost(
-            method_name=__func.__name__
+        with core_trace.trulens_tracer().start_as_current_span(
+            cls=core_span.LiveSpanCall,
+            live_func=__func,
+            live_sig=inspect.signature(__func),
+            live_args=args,
+            live_kwargs=kwargs,
         ) as span:
             ret = __func(*args, **kwargs)
 
-            return ret, span.total_cost
+            return ret, span.cost_tally

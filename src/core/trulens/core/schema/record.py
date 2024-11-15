@@ -44,8 +44,24 @@ class RecordAppCallMethod(serial_utils.SerialModel):
     path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema_utils.Method
+    method: Optional[pyschema_utils.Method] = None
     """The method that was called."""
+
+    function: Optional[pyschema_utils.Function] = None
+    """If representing a function instead of a method, set this field instead.
+
+    Not using FunctionOrMethod on `method` for backwards compatibility.
+    """
+
+    @property
+    def function_or_method(self) -> pyschema_utils.FunctionOrMethod:
+        """The callable object for this method or function."""
+
+        if self.method is not None:
+            return self.method
+        else:
+            assert self.function is not None
+            return self.function
 
 
 class RecordAppCall(serial_utils.SerialModel):
@@ -362,7 +378,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path + serial_utils.GetItemOrAttribute(
-                item_or_attribute=frame_info.method.name
+                item_or_attribute=frame_info.function_or_method.name
             )
 
             if path.exists(obj=ret):

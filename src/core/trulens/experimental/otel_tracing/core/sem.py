@@ -164,10 +164,13 @@ class TypedSpan(core_span.Span):
                     ),
                     process_id=span.process_id,
                     thread_id=span.thread_id,
-                    bindings=pyschema_utils.Bindings.of_bound_arguments(
-                        span.live_bindings
-                    ),
+                    bound_arguments=pyschema_utils.BoundArguments.of_bound_arguments(
+                        span.live_bound_arguments
+                    )
+                    if span.live_bound_arguments is not None
+                    else None,
                     ret=json_utils.jsonify(span.live_ret),
+                    call_error=json_utils.jsonify(span.live_error),
                 )
             )
 
@@ -208,12 +211,12 @@ class TypedSpan(core_span.Span):
                     main_input = app.main_input(
                         func=main_span.live_func,
                         sig=main_span.live_sig,
-                        bindings=main_span.live_bindings,
+                        bindings=main_span.live_bound_arguments,
                     )
                     main_output = app.main_output(
                         func=main_span.live_func,
                         sig=main_span.live_sig,
-                        bindings=main_span.live_bindings,
+                        bindings=main_span.live_bound_arguments,
                         ret=main_span.live_ret,
                     )
                     main_error = json_utils.jsonify(main_span.live_error)
@@ -396,13 +399,19 @@ class Call(TypedSpan):
     )
     """Thread id."""
 
-    bindings = core_span.Span.attribute_property(
-        truconv.SpanAttributes.CALL.BINDINGS, pyschema_utils.Bindings
+    bound_arguments = core_span.Span.attribute_property(
+        truconv.SpanAttributes.CALL.BOUND_ARGUMENTS,
+        Optional[pyschema_utils.BoundArguments],
+        default=None,
     )
     """Bindings of the function, if can be bound."""
 
     ret = core_span.Span.attribute_property(
         truconv.SpanAttributes.CALL.RETURN, serial_utils.JSON
+    )
+
+    call_error = core_span.Span.attribute_property(
+        truconv.SpanAttributes.CALL.ERROR, serial_utils.JSON
     )
 
 

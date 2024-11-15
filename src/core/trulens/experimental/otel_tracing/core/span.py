@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import inspect
+import os
+import threading
 from typing import (
     Any,
     Callable,
@@ -16,7 +18,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TypeAlias,
     TypeVar,
     Union,
 )
@@ -24,6 +25,7 @@ import uuid
 import weakref
 
 import pydantic
+from trulens.core._utils.pycompat import TypeAlias
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
@@ -478,14 +480,26 @@ class LiveSpanCall(LiveSpan):
     call_id = WithAttributeProperties.attribute_property(
         truconv.SpanAttributes.CALL.CALL_ID,
         Optional[uuid.UUID],
+        default_factory=uuid.uuid4,
     )
     """Unique call identifiers."""
 
-    process_id: Optional[int] = pydantic.Field(None, exclude=True)
+    process_id = WithAttributeProperties.attribute_property(
+        truconv.SpanAttributes.CALL.PROCESS_ID, int, default_factory=os.getpid
+    )
     """Process ID of the call."""
 
-    thread_id: Optional[int] = pydantic.Field(None, exclude=True)
+    thread_id = WithAttributeProperties.attribute_property(
+        truconv.SpanAttributes.CALL.THREAD_ID,
+        int,
+        default_factory=threading.get_native_id,
+    )
     """Thread ID of the call."""
+
+    call_error = WithAttributeProperties.attribute_property(
+        truconv.SpanAttributes.CALL.ERROR, Optional[Exception], default=None
+    )
+    """Optional error if the called function raised an exception."""
 
     live_sig: Optional[inspect.Signature] = pydantic.Field(None, exclude=True)
     """Called function's signature."""
@@ -505,7 +519,7 @@ class LiveSpanCall(LiveSpan):
     live_kwargs: Optional[Dict[str, Any]] = pydantic.Field(None, exclude=True)
     """Keyword arguments to the function call."""
 
-    live_bindings: Optional[inspect.BoundArguments] = pydantic.Field(
+    live_bound_arguments: Optional[inspect.BoundArguments] = pydantic.Field(
         None, exclude=True
     )
     """Bound arguments to the function call if can be bound."""
@@ -553,25 +567,20 @@ class LiveRecordRoot(LiveSpan):
     """
 
 
-S = TypeVar("S", bound=LiveSpanCall)
-
-
 class WithCost(LiveSpan):
     """Mixin to indicate the span has costs tracked."""
 
-    cost: base_schema.Cost = pydantic.Field(default_factory=base_schema.Cost)
+    cost = WithAttributeProperties.attribute_property(
+        truconv.SpanAttributes.COST.COST,
+        base_schema.Cost,
+        default_factory=base_schema.Cost,
+    )
     """Cost of the computation spanned."""
 
-    endpoint: Optional[Any] = pydantic.Field(
+    live_endpoint: Optional[Any] = pydantic.Field(
         None, exclude=True
     )  # Any actually core_endpoint.Endpoint
     """Endpoint handling cost extraction for this span/call."""
-
-    def __init__(self, cost: Optional[base_schema.Cost] = None, **kwargs):
-        if cost is None:
-            cost = base_schema.Cost()
-
-        super().__init__(cost=cost, **kwargs)
 
 
 class LiveSpanCallWithCost(LiveSpanCall, WithCost):

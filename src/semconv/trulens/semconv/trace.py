@@ -281,10 +281,11 @@ class SpanAttributes:
         Serialized using [trulens.core.utils.json.jsonify][trulens.core.utils.json.jsonify].
         """
 
-        BINDINGS = base + ".bindings"
+        BOUND_ARGUMENTS = base + ".bound_arguments"
         """Bindings of the function if arguments were able to be bound.
 
-        Serialized from [trulens.core.utils.pyschema.Bindings][trulens.core.utils.pyschema.Bindings].
+        Self is not included. Serialized from
+        [trulens.core.utils.pyschema.BoundArguments][trulens.core.utils.pyschema.BoundArguments].
         """
 
         RETURN = base + ".return"

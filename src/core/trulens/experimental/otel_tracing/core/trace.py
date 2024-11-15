@@ -1,6 +1,8 @@
 # ruff: noqa: E402
 
-"""Implementation of recording that resembles the tracing process in OpenTelemetry.
+"""Tracer for OTEL tracing.
+
+Adds TruLens specific features on top of the minimal OTEL Tracer.
 
 !!! Note
     Most of the module is EXPERIMENTAL(otel_tracing) though it includes some existing
@@ -132,18 +134,36 @@ class Tracer(core_otel.Tracer):
 
         if isinstance(span, core_span.LiveSpanCall):
             if span.live_func is None:
+                print(span.attributes)
                 raise ValueError(f"Span {span} has no function.")
 
             path = get_method_path(obj=span.live_obj, func=span.live_func)
 
-            frame_ident = record_schema.RecordAppCallMethod(
-                path=path
-                if path is not None
-                else serial_utils.Lens().static,  # placeholder path for functions
-                method=pyschema_utils.Method.of_method(
-                    span.live_func, obj=span.live_obj, cls=span.live_cls
-                ),
-            )
+            if path is None:
+                logger.warning(
+                    "No path found for %s in %s.", span.live_func, span.live_obj
+                )
+                path = serial_utils.Lens().static
+
+            if inspect.ismethod(span.live_func):
+                # This is a method.
+                frame_ident = record_schema.RecordAppCallMethod(
+                    path=path,
+                    method=pyschema_utils.Method.of_method(
+                        span.live_func, obj=span.live_obj, cls=span.live_cls
+                    ),
+                )
+            elif inspect.isfunction(span.live_func):
+                # This is a function, not a method.
+                frame_ident = record_schema.RecordAppCallMethod(
+                    path=path,
+                    method=None,
+                    function=pyschema_utils.Function.of_function(
+                        span.live_func
+                    ),
+                )
+            else:
+                raise ValueError(f"Unexpected function type: {span.live_func}")
 
             stack = stack + [frame_ident]
             span_stacks[span] = stack
@@ -164,8 +184,8 @@ class Tracer(core_otel.Tracer):
         """Convert a LiveSpanCall to a RecordAppCall."""
 
         args = (
-            dict(span.live_bindings.arguments)
-            if span.live_bindings is not None
+            dict(span.live_bound_arguments.arguments)
+            if span.live_bound_arguments is not None
             else {}
         )
         if "self" in args:
@@ -210,13 +230,20 @@ class Tracer(core_otel.Tracer):
         # Use the record_id created during tracing.
         record_id = root_span.record_id
 
-        span_stacks = {}
+        span_stacks: Dict[
+            core_span.Span, List[record_schema.RecordAppCallMethod]
+        ] = {}
 
         self._fill_stacks(
             root_span,
             span_stacks=span_stacks,
             get_method_path=app.get_method_path,
         )
+
+        if root_span.end_timestamp is None:
+            raise RuntimeError(
+                f"Root span has not finished recording: {root_span}"
+            )
 
         root_perf = base_schema.Perf(
             start_time=root_span.start_timestamp,
@@ -241,20 +268,20 @@ class Tracer(core_otel.Tracer):
         if root_call_span is None:
             raise ValueError("No call span found under trace root span.")
 
-        bindings = root_call_span.live_bindings
+        bound_arguments = root_call_span.live_bound_arguments
         main_error = root_call_span.live_error
 
-        if bindings is not None:
+        if bound_arguments is not None:
             main_input = app.main_input(
                 func=root_call_span.live_func,
                 sig=root_call_span.live_sig,
-                bindings=root_call_span.live_bindings,
+                bindings=root_call_span.live_bound_arguments,
             )
             if main_error is None:
                 main_output = app.main_output(
                     func=root_call_span.live_func,
                     sig=root_call_span.live_sig,
-                    bindings=root_call_span.live_bindings,
+                    bindings=root_call_span.live_bound_arguments,
                     ret=root_call_span.live_ret,
                 )
             else:
@@ -523,24 +550,27 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
                     error = next_error
 
             else:
-                self.span_context.__exit__(None, None, None)
+                context_manager.__exit__(None, None, None)
 
         return error
 
     def on_callable_call(
-        self, bindings: inspect.BoundArguments, **kwargs: Dict[str, Any]
+        self, bound_arguments: inspect.BoundArguments, **kwargs: Dict[str, Any]
     ) -> inspect.BoundArguments:
-        temp = super().on_callable_call(bindings=bindings, **kwargs)
+        temp = super().on_callable_call(
+            bound_arguments=bound_arguments, **kwargs
+        )
 
-        if "self" in bindings.arguments:
+        if "self" in bound_arguments.arguments:
             # TODO: need some generalization
-            self.obj = bindings.arguments["self"]
+            self.obj = bound_arguments.arguments["self"]
             self.obj_cls = type(self.obj)
             self.obj_id = id(self.obj)
         else:
             logger.warning("No self in bindings for %s.", self)
 
         span = self.span
+
         assert span is not None, "Contexts not yet entered."
         span.process_id = os.getpid()
         span.thread_id = th.get_native_id()
@@ -550,19 +580,30 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
     def on_callable_end(self):
         super().on_callable_end()
 
-        span = self.span
+        error = None
+        try:
+            error = self._exit_contexts(self.error)
 
-        # LiveSpanCall attributes
-        span.call_id = self.call_id
-        span.live_obj = self.obj
-        span.live_cls = self.obj_cls
-        span.live_func = self.func
-        span.live_args = self.call_args
-        span.live_kwargs = self.call_kwargs
-        span.live_bindings = self.bindings
-        span.live_sig = self.sig
-        span.live_ret = self.ret
-        span.live_error = self._exit_contexts(self.error)
+        except Exception as e:
+            # Just in case exit contexts raises another error
+            error = e
+
+        finally:
+            span = self.span
+            if span is None:
+                raise RuntimeError("Contexts not yet entered.")
+
+            # LiveSpanCall attributes
+            span.call_id = self.call_id
+            span.live_obj = self.obj
+            span.live_cls = self.obj_cls
+            span.live_func = self.func
+            span.live_args = self.call_args
+            span.live_kwargs = self.call_kwargs
+            span.live_bound_arguments = self.bound_arguments
+            span.live_sig = self.sig
+            span.live_ret = self.ret
+            span.live_error = error
 
 
 class _RecordingContext:
