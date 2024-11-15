@@ -954,19 +954,19 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "0.2.11"
+version = "0.2.17"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain-0.2.11-py3-none-any.whl", hash = "sha256:5a7a8b4918f3d3bebce9b4f23b92d050699e6f7fb97591e8941177cf07a260a2"},
-    {file = "langchain-0.2.11.tar.gz", hash = "sha256:d7a9e4165f02dca0bd78addbc2319d5b9286b5d37c51d784124102b57e9fd297"},
+    {file = "langchain-0.2.17-py3-none-any.whl", hash = "sha256:a97a33e775f8de074370aecab95db148b879c794695d9e443c95457dce5eb525"},
+    {file = "langchain-0.2.17.tar.gz", hash = "sha256:5a99ce94aae05925851777dba45cbf2c475565d1e91cbe7d82c5e329d514627e"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
-langchain-core = ">=0.2.23,<0.3.0"
+langchain-core = ">=0.2.43,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
@@ -981,21 +981,21 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.10"
+version = "0.2.19"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_community-0.2.10-py3-none-any.whl", hash = "sha256:9f4d1b5ab7f0b0a704f538e26e50fce45a461da6d2bf6b7b636d24f22fbc088a"},
-    {file = "langchain_community-0.2.10.tar.gz", hash = "sha256:3a0404bad4bd07d6f86affdb62fb3d080a456c66191754d586a409d9d6024d62"},
+    {file = "langchain_community-0.2.19-py3-none-any.whl", hash = "sha256:651d761f2d37d63f89de75d65858f6c7f6ea99c455622e9c13ca041622dad0c5"},
+    {file = "langchain_community-0.2.19.tar.gz", hash = "sha256:74f8db6992d03668c3d82e0d896845c413d167dad3b8e349fb2a9a57fd2d1396"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.9,<0.3.0"
-langchain-core = ">=0.2.23,<0.3.0"
-langsmith = ">=0.1.0,<0.2.0"
+langchain = ">=0.2.17,<0.3.0"
+langchain-core = ">=0.2.43,<0.3.0"
+langsmith = ">=0.1.112,<0.2.0"
 numpy = [
     {version = ">=1,<2", markers = "python_version < \"3.12\""},
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
@@ -1007,18 +1007,18 @@ tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.24"
+version = "0.2.43"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_core-0.2.24-py3-none-any.whl", hash = "sha256:9444fc082d21ef075d925590a684a73fe1f9688a3d90087580ec929751be55e7"},
-    {file = "langchain_core-0.2.24.tar.gz", hash = "sha256:f2e3fa200b124e8c45d270da9bf836bed9c09532612c96ff3225e59b9a232f5a"},
+    {file = "langchain_core-0.2.43-py3-none-any.whl", hash = "sha256:619601235113298ebf8252a349754b7c28d3cf7166c7c922da24944b78a9363a"},
+    {file = "langchain_core-0.2.43.tar.gz", hash = "sha256:42c2ef6adedb911f4254068b6adc9eb4c4075f6c8cb3d83590d3539a815695f5"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.75,<0.2.0"
+langsmith = ">=0.1.112,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
@@ -1026,20 +1026,21 @@ pydantic = [
 ]
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
+typing-extensions = ">=4.7"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.2.2"
+version = "0.2.4"
 description = "LangChain text splitting utilities"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 files = [
-    {file = "langchain_text_splitters-0.2.2-py3-none-any.whl", hash = "sha256:1c80d4b11b55e2995f02d2a326c0323ee1eeff24507329bb22924e420c782dff"},
-    {file = "langchain_text_splitters-0.2.2.tar.gz", hash = "sha256:a1e45de10919fa6fb080ef0525deab56557e9552083600455cb9fa4238076140"},
+    {file = "langchain_text_splitters-0.2.4-py3-none-any.whl", hash = "sha256:2702dee5b7cbdd595ccbe43b8d38d01a34aa8583f4d6a5a68ad2305ae3e7b645"},
+    {file = "langchain_text_splitters-0.2.4.tar.gz", hash = "sha256:f7daa7a3b0aa8309ce248e2e2b6fc8115be01118d336c7f7f7dfacda0e89bf29"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.10,<0.3.0"
+langchain-core = ">=0.2.38,<0.3.0"
 
 [[package]]
 name = "langsmith"
@@ -1483,12 +1484,12 @@ files = [
 
 [[package]]
 name = "nemoguardrails"
-version = "0.9.1.1"
-description = "NeMo Guardrails is an open-source toolkit for easily adding programmagle guardrails to LLM-based conversational systems."
+version = "0.10.1"
+description = "NeMo Guardrails is an open-source toolkit for easily adding programmable guardrails to LLM-based conversational systems."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nemoguardrails-0.9.1.1-py3-none-any.whl", hash = "sha256:2d6aed9c7ecec9434b3018ffbbfc863b1c51141bd2086443361b9ea73cd1ac03"},
+    {file = "nemoguardrails-0.10.1-py3-none-any.whl", hash = "sha256:11b7db76337365adea33567d6a35299b34903174253083ac984d1a16953e2fc2"},
 ]
 
 [package.dependencies]
@@ -1497,10 +1498,10 @@ annoy = ">=1.17.3"
 fastapi = ">=0.103.0"
 fastembed = ">=0.2.2"
 httpx = ">=0.24.1"
-jinja2 = ">=3.1.3"
-langchain = ">=0.1.0,<0.1.9 || >0.1.9,<0.3.0"
+jinja2 = ">=3.1.4"
+langchain = ">=0.2.14,<0.3.0"
 langchain-community = ">=0.0.16,<0.3.0"
-langchain-core = ">=0.1.0,<0.1.26 || >0.1.26,<0.3.0"
+langchain-core = ">=0.2.14,<0.3.0"
 lark = ">=1.1.7,<1.2.0"
 nest-asyncio = ">=1.5.6"
 prompt-toolkit = ">=3.0"
@@ -1514,9 +1515,10 @@ uvicorn = ">=0.23"
 watchdog = ">=3.0.0"
 
 [package.extras]
-all = ["nemoguardrails[eval,openai,sdd]"]
-dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0)"]
-eval = ["numpy (>=1.24,<2.0)", "tqdm (>=4.65,<5.0)"]
+all = ["nemoguardrails[eval,gcp,openai,sdd]"]
+dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0,<0.32.0)", "streamlit (>=1.37.0)"]
+eval = ["numpy (>=1.24,<2.0)", "streamlit (>=1.37.0)", "tqdm (>=4.65,<5.0)"]
+gcp = ["google-cloud-language (>=2.14.0)"]
 openai = ["langchain-openai (>=0.0.5)"]
 sdd = ["presidio-analyzer (>=2.2)", "presidio-anonymizer (>=2.2)", "spacy (>=3.7.2)"]
 
@@ -2797,8 +2799,8 @@ files = []
 develop = false
 
 [package.dependencies]
-langchain = ">=0.2.10,<0.2.12 || ^0.3.0"
-langchain-core = ">=0.2.0,<=0.2.24 || ^0.3.0"
+langchain = ">=0.2.10"
+langchain-core = ">=0.2.0"
 pydantic = "^2.4.2"
 trulens-core = "^1.0.0"
 

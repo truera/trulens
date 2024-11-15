@@ -3479,4 +3479,4 @@ full = ["streamlit-aggrid", "streamlit-pills"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1,!=3.9.7"
-content-hash = "e633c0a6677ba27eff84e26394c36347f6833ea8c6abb850deb50fdeb5a78712"
+content-hash = "8bffd02e0772bf7fda0fccf9c3e2e1f5eb65f88f832e96425fb563320566f719"

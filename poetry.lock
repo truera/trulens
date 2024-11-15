@@ -551,6 +551,39 @@ url = "https://pypi.org/simple"
 reference = "pypi-public"
 
 [[package]]
+name = "backports-zoneinfo"
+version = "0.2.1"
+description = "Backport of the standard library zoneinfo module"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:da6013fd84a690242c310d77ddb8441a559e9cb3d3d59ebac9aca1a57b2e18bc"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:89a48c0d158a3cc3f654da4c2de1ceba85263fafb861b98b59040a5086259722"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:1c5742112073a563c81f786e77514969acb58649bcdf6cdf0b4ed31a348d4546"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win32.whl", hash = "sha256:e8236383a20872c0cdf5a62b554b27538db7fa1bbec52429d8d106effbaeca08"},
+    {file = "backports.zoneinfo-0.2.1-cp36-cp36m-win_amd64.whl", hash = "sha256:8439c030a11780786a2002261569bdf362264f605dfa4d65090b64b05c9f79a7"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-macosx_10_14_x86_64.whl", hash = "sha256:f04e857b59d9d1ccc39ce2da1021d196e47234873820cbeaad210724b1ee28ac"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:17746bd546106fa389c51dbea67c8b7c8f0d14b5526a579ca6ccf5ed72c526cf"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:5c144945a7752ca544b4b78c8c41544cdfaf9786f25fe5ffb10e838e19a27570"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win32.whl", hash = "sha256:e55b384612d93be96506932a786bbcde5a2db7a9e6a4bb4bffe8b733f5b9036b"},
+    {file = "backports.zoneinfo-0.2.1-cp37-cp37m-win_amd64.whl", hash = "sha256:a76b38c52400b762e48131494ba26be363491ac4f9a04c1b7e92483d169f6582"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:8961c0f32cd0336fb8e8ead11a1f8cd99ec07145ec2931122faaac1c8f7fd987"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_i686.whl", hash = "sha256:e81b76cace8eda1fca50e345242ba977f9be6ae3945af8d46326d776b4cf78d1"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:7b0a64cda4145548fed9efc10322770f929b944ce5cee6c0dfe0c87bf4c0c8c9"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win32.whl", hash = "sha256:1b13e654a55cd45672cb54ed12148cd33628f672548f373963b0bff67b217328"},
+    {file = "backports.zoneinfo-0.2.1-cp38-cp38-win_amd64.whl", hash = "sha256:4a0f800587060bf8880f954dbef70de6c11bbe59c673c3d818921f042f9954a6"},
+    {file = "backports.zoneinfo-0.2.1.tar.gz", hash = "sha256:fadbfe37f74051d024037f223b8e001611eac868b5c5b06144ef4d8b799862f2"},
+]
+
+[package.extras]
+tzdata = ["tzdata"]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.12.3"
 description = "Screen-scraping library"
@@ -668,17 +701,17 @@ reference = "pypi-public"
 
 [[package]]
 name = "boto3"
-version = "1.35.60"
+version = "1.35.61"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.35.60-py3-none-any.whl", hash = "sha256:a34d28de1a1f6ca6ec3edd05c26db16e422293d8f9dcd94f308059a434596753"},
-    {file = "boto3-1.35.60.tar.gz", hash = "sha256:e573504c67c3e438fd4b0222119ed1a73b644c78eb3b6dee0b36a6c70ecf7677"},
+    {file = "boto3-1.35.61-py3-none-any.whl", hash = "sha256:b86ddb1bb903fd0cd8fe69dc73ec2d317133f6731e90c0781f23398025471e64"},
+    {file = "boto3-1.35.61.tar.gz", hash = "sha256:b9d3c7c65182bcb63c48ee959abbcf4ef293c1e3f7cb866a0de4684345b5a16e"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.60,<1.36.0"
+botocore = ">=1.35.61,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -692,13 +725,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "botocore"
-version = "1.35.60"
+version = "1.35.61"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.35.60-py3-none-any.whl", hash = "sha256:ddccfc39a0a55ac0321191a36d29c2ea9be2c96ceefb3928dd3c91c79c494d50"},
-    {file = "botocore-1.35.60.tar.gz", hash = "sha256:378f53037d817bed2c04a006b7319745e664030182211429c924647273b29bc9"},
+    {file = "botocore-1.35.61-py3-none-any.whl", hash = "sha256:6bf15cb459d71e53239474bf8a47c1cda0e309b8e05cbe61561fd70cf0c4551d"},
+    {file = "botocore-1.35.61.tar.gz", hash = "sha256:f6ddaa5f5eca2829ce5ed798d1cfee99479d5d4fb6d05fc20ca918d0dbe98d8f"},
 ]
 
 [package.dependencies]
@@ -3021,19 +3054,19 @@ reference = "pypi-public"
 
 [[package]]
 name = "langchain"
-version = "0.2.11"
+version = "0.2.17"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain-0.2.11-py3-none-any.whl", hash = "sha256:5a7a8b4918f3d3bebce9b4f23b92d050699e6f7fb97591e8941177cf07a260a2"},
-    {file = "langchain-0.2.11.tar.gz", hash = "sha256:d7a9e4165f02dca0bd78addbc2319d5b9286b5d37c51d784124102b57e9fd297"},
+    {file = "langchain-0.2.17-py3-none-any.whl", hash = "sha256:a97a33e775f8de074370aecab95db148b879c794695d9e443c95457dce5eb525"},
+    {file = "langchain-0.2.17.tar.gz", hash = "sha256:5a99ce94aae05925851777dba45cbf2c475565d1e91cbe7d82c5e329d514627e"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 async-timeout = {version = ">=4.0.0,<5.0.0", markers = "python_version < \"3.11\""}
-langchain-core = ">=0.2.23,<0.3.0"
+langchain-core = ">=0.2.43,<0.3.0"
 langchain-text-splitters = ">=0.2.0,<0.3.0"
 langsmith = ">=0.1.17,<0.2.0"
 numpy = [
@@ -3053,21 +3086,21 @@ reference = "pypi-public"
 
 [[package]]
 name = "langchain-community"
-version = "0.2.10"
+version = "0.2.19"
 description = "Community contributed LangChain integrations."
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain_community-0.2.10-py3-none-any.whl", hash = "sha256:9f4d1b5ab7f0b0a704f538e26e50fce45a461da6d2bf6b7b636d24f22fbc088a"},
-    {file = "langchain_community-0.2.10.tar.gz", hash = "sha256:3a0404bad4bd07d6f86affdb62fb3d080a456c66191754d586a409d9d6024d62"},
+    {file = "langchain_community-0.2.19-py3-none-any.whl", hash = "sha256:651d761f2d37d63f89de75d65858f6c7f6ea99c455622e9c13ca041622dad0c5"},
+    {file = "langchain_community-0.2.19.tar.gz", hash = "sha256:74f8db6992d03668c3d82e0d896845c413d167dad3b8e349fb2a9a57fd2d1396"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.3,<4.0.0"
 dataclasses-json = ">=0.5.7,<0.7"
-langchain = ">=0.2.9,<0.3.0"
-langchain-core = ">=0.2.23,<0.3.0"
-langsmith = ">=0.1.0,<0.2.0"
+langchain = ">=0.2.17,<0.3.0"
+langchain-core = ">=0.2.43,<0.3.0"
+langsmith = ">=0.1.112,<0.2.0"
 numpy = [
     {version = ">=1,<2", markers = "python_version < \"3.12\""},
     {version = ">=1.26.0,<2.0.0", markers = "python_version >= \"3.12\""},
@@ -3084,18 +3117,18 @@ reference = "pypi-public"
 
 [[package]]
 name = "langchain-core"
-version = "0.2.24"
+version = "0.2.43"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain_core-0.2.24-py3-none-any.whl", hash = "sha256:9444fc082d21ef075d925590a684a73fe1f9688a3d90087580ec929751be55e7"},
-    {file = "langchain_core-0.2.24.tar.gz", hash = "sha256:f2e3fa200b124e8c45d270da9bf836bed9c09532612c96ff3225e59b9a232f5a"},
+    {file = "langchain_core-0.2.43-py3-none-any.whl", hash = "sha256:619601235113298ebf8252a349754b7c28d3cf7166c7c922da24944b78a9363a"},
+    {file = "langchain_core-0.2.43.tar.gz", hash = "sha256:42c2ef6adedb911f4254068b6adc9eb4c4075f6c8cb3d83590d3539a815695f5"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33,<2.0"
-langsmith = ">=0.1.75,<0.2.0"
+langsmith = ">=0.1.112,<0.2.0"
 packaging = ">=23.2,<25"
 pydantic = [
     {version = ">=1,<3", markers = "python_full_version < \"3.12.4\""},
@@ -3103,6 +3136,7 @@ pydantic = [
 ]
 PyYAML = ">=5.3"
 tenacity = ">=8.1.0,<8.4.0 || >8.4.0,<9.0.0"
+typing-extensions = ">=4.7"
 
 [package.source]
 type = "legacy"
@@ -3111,17 +3145,17 @@ reference = "pypi-public"
 
 [[package]]
 name = "langchain-text-splitters"
-version = "0.2.2"
+version = "0.2.4"
 description = "LangChain text splitting utilities"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "langchain_text_splitters-0.2.2-py3-none-any.whl", hash = "sha256:1c80d4b11b55e2995f02d2a326c0323ee1eeff24507329bb22924e420c782dff"},
-    {file = "langchain_text_splitters-0.2.2.tar.gz", hash = "sha256:a1e45de10919fa6fb080ef0525deab56557e9552083600455cb9fa4238076140"},
+    {file = "langchain_text_splitters-0.2.4-py3-none-any.whl", hash = "sha256:2702dee5b7cbdd595ccbe43b8d38d01a34aa8583f4d6a5a68ad2305ae3e7b645"},
+    {file = "langchain_text_splitters-0.2.4.tar.gz", hash = "sha256:f7daa7a3b0aa8309ce248e2e2b6fc8115be01118d336c7f7f7dfacda0e89bf29"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.2.10,<0.3.0"
+langchain-core = ">=0.2.38,<0.3.0"
 
 [package.source]
 type = "legacy"
@@ -3178,13 +3212,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "litellm"
-version = "1.52.6"
+version = "1.52.8"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = ">=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*"
 files = [
-    {file = "litellm-1.52.6-py3-none-any.whl", hash = "sha256:9b3e9fb51f7e2a3cc8b50997b346c55aae9435a138d9a656f18e262750a1bfe1"},
-    {file = "litellm-1.52.6.tar.gz", hash = "sha256:d67c653f97bd07f503b975c167de1e25632b7bc6bb3c008c46921e4acc81ec60"},
+    {file = "litellm-1.52.8-py3-none-any.whl", hash = "sha256:aa0845be8d5852802d50ab6d0b85b88f9a847a02b88d865b2984077c18dabc98"},
+    {file = "litellm-1.52.8.tar.gz", hash = "sha256:18606f21f01c2be3a8c1589c563879cd3c8251b32480fc3822a2775b5f7a6e13"},
 ]
 
 [package.dependencies]
@@ -3364,13 +3398,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "llama-index-indices-managed-llama-cloud"
-version = "0.4.2"
+version = "0.5.0"
 description = "llama-index indices llama-cloud integration"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "llama_index_indices_managed_llama_cloud-0.4.2-py3-none-any.whl", hash = "sha256:def86ba39810248f07dc006fd373a3a2eede5249f358eee0cb2351f9faa63243"},
-    {file = "llama_index_indices_managed_llama_cloud-0.4.2.tar.gz", hash = "sha256:4e27b8f825aff04f80776e915a9f2c238e2f35c7bc72684185279161d051a3f9"},
+    {file = "llama_index_indices_managed_llama_cloud-0.5.0-py3-none-any.whl", hash = "sha256:6bd57854f0c08412d312b86f253bb8ac2a7cf62d4631d049b1204d57da52a2a7"},
+    {file = "llama_index_indices_managed_llama_cloud-0.5.0.tar.gz", hash = "sha256:09fc44d8537a7c4fe041900705d708295bc2c8432de4caea5d149d6a4777edf5"},
 ]
 
 [package.dependencies]
@@ -4629,12 +4663,12 @@ reference = "pypi-public"
 
 [[package]]
 name = "nemoguardrails"
-version = "0.9.1.1"
-description = "NeMo Guardrails is an open-source toolkit for easily adding programmagle guardrails to LLM-based conversational systems."
+version = "0.10.1"
+description = "NeMo Guardrails is an open-source toolkit for easily adding programmable guardrails to LLM-based conversational systems."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "nemoguardrails-0.9.1.1-py3-none-any.whl", hash = "sha256:2d6aed9c7ecec9434b3018ffbbfc863b1c51141bd2086443361b9ea73cd1ac03"},
+    {file = "nemoguardrails-0.10.1-py3-none-any.whl", hash = "sha256:11b7db76337365adea33567d6a35299b34903174253083ac984d1a16953e2fc2"},
 ]
 
 [package.dependencies]
@@ -4643,10 +4677,10 @@ annoy = ">=1.17.3"
 fastapi = ">=0.103.0"
 fastembed = ">=0.2.2"
 httpx = ">=0.24.1"
-jinja2 = ">=3.1.3"
-langchain = ">=0.1.0,<0.1.9 || >0.1.9,<0.3.0"
+jinja2 = ">=3.1.4"
+langchain = ">=0.2.14,<0.3.0"
 langchain-community = ">=0.0.16,<0.3.0"
-langchain-core = ">=0.1.0,<0.1.26 || >0.1.26,<0.3.0"
+langchain-core = ">=0.2.14,<0.3.0"
 lark = ">=1.1.7,<1.2.0"
 nest-asyncio = ">=1.5.6"
 prompt-toolkit = ">=3.0"
@@ -4660,9 +4694,10 @@ uvicorn = ">=0.23"
 watchdog = ">=3.0.0"
 
 [package.extras]
-all = ["nemoguardrails[eval,openai,sdd]"]
-dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0)"]
-eval = ["numpy (>=1.24,<2.0)", "tqdm (>=4.65,<5.0)"]
+all = ["nemoguardrails[eval,gcp,openai,sdd]"]
+dev = ["aioresponses (>=0.7.6)", "black (==23.3.0)", "mypy (>=1.1.1)", "pre-commit (>=3.1.1)", "pylint (>=2.17.0)", "pytest (>=7.2.2)", "pytest-asyncio (>=0.21.0)", "pytest-cov (>=4.1.0)", "pytest-httpx (>=0.22.0,<0.32.0)", "streamlit (>=1.37.0)"]
+eval = ["numpy (>=1.24,<2.0)", "streamlit (>=1.37.0)", "tqdm (>=4.65,<5.0)"]
+gcp = ["google-cloud-language (>=2.14.0)"]
 openai = ["langchain-openai (>=0.0.5)"]
 sdd = ["presidio-analyzer (>=2.2)", "presidio-anonymizer (>=2.2)", "spacy (>=3.7.2)"]
 
@@ -7945,13 +7980,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "snowflake-snowpark-python"
-version = "1.24.0"
+version = "1.25.0"
 description = "Snowflake Snowpark for Python"
 optional = false
 python-versions = ">=3.8, <3.12"
 files = [
-    {file = "snowflake_snowpark_python-1.24.0-py3-none-any.whl", hash = "sha256:d84e0709c4fda710bef99c201a4a83aa6489c2850e3a26f12c20e96d727c337a"},
-    {file = "snowflake_snowpark_python-1.24.0.tar.gz", hash = "sha256:cd8bae93f08f210b57b6ce9c12bca251dd062de57031a496411ac5bfd7fa1105"},
+    {file = "snowflake_snowpark_python-1.25.0-py3-none-any.whl", hash = "sha256:0b965308eb88568cbe6865164fb5441a336d9cf55bc603291f64ebfe799018d1"},
+    {file = "snowflake_snowpark_python-1.25.0.tar.gz", hash = "sha256:184b9f6873b4c318af2727c707000998c9f6e24542036e536d86c2e314549e47"},
 ]
 
 [package.dependencies]
@@ -7959,20 +7994,22 @@ cloudpickle = [
     {version = ">=1.6.0,<2.1.0 || >2.1.0,<2.2.0 || >2.2.0,<=2.2.1", markers = "python_version < \"3.11\""},
     {version = "2.2.1", markers = "python_version ~= \"3.11\""},
 ]
+protobuf = ">=3.20,<6"
 pyyaml = "*"
 setuptools = ">=40.6.0"
-snowflake-connector-python = ">=3.10.0,<4.0.0"
+snowflake-connector-python = ">=3.12.0,<4.0.0"
 typing-extensions = ">=4.1.0,<5.0.0"
+tzlocal = "*"
 wheel = "*"
 
 [package.extras]
-development = ["cachetools", "coverage", "decorator", "graphviz", "matplotlib", "openpyxl", "pre-commit", "pytest (<8.0.0)", "pytest-assume", "pytest-cov", "pytest-timeout", "pytest-xdist", "sphinx (==5.0.2)"]
+development = ["cachetools", "coverage", "decorator", "graphviz", "lxml", "matplotlib", "mypy-protobuf", "openpyxl", "pre-commit", "protoc-wheel-0 (==21.1)", "pytest (<8.0.0)", "pytest-assume", "pytest-cov", "pytest-timeout", "pytest-xdist", "sphinx (==5.0.2)"]
 localtest = ["pandas", "requests"]
-modin = ["modin (==0.28.1)", "snowflake-connector-python[pandas] (>=3.10.0,<4.0.0)"]
-modin-development = ["cachetools", "coverage", "decorator", "graphviz", "matplotlib", "modin (==0.28.1)", "openpyxl", "pre-commit", "pytest (<8.0.0)", "pytest-assume", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-learn (==1.5.2)", "scipy", "snowflake-connector-python[pandas] (>=3.10.0,<4.0.0)", "sphinx (==5.0.2)", "statsmodels"]
+modin = ["modin (==0.30.1)", "snowflake-connector-python[pandas] (>=3.12.0,<4.0.0)"]
+modin-development = ["cachetools", "coverage", "decorator", "graphviz", "lxml", "matplotlib", "modin (==0.30.1)", "mypy-protobuf", "openpyxl", "pre-commit", "protoc-wheel-0 (==21.1)", "pytest (<8.0.0)", "pytest-assume", "pytest-cov", "pytest-timeout", "pytest-xdist", "scikit-learn (==1.5.2)", "scipy", "snowflake-connector-python[pandas] (>=3.12.0,<4.0.0)", "sphinx (==5.0.2)", "statsmodels"]
 opentelemetry = ["opentelemetry-api (>=1.0.0,<2.0.0)", "opentelemetry-sdk (>=1.0.0,<2.0.0)"]
-pandas = ["snowflake-connector-python[pandas] (>=3.10.0,<4.0.0)"]
-secure-local-storage = ["snowflake-connector-python[secure-local-storage] (>=3.10.0,<4.0.0)"]
+pandas = ["snowflake-connector-python[pandas] (>=3.12.0,<4.0.0)"]
+secure-local-storage = ["snowflake-connector-python[secure-local-storage] (>=3.12.0,<4.0.0)"]
 
 [package.source]
 type = "legacy"
@@ -9039,8 +9076,8 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain = ">=0.2.10,<0.2.12 || ^0.3.0"
-langchain-core = ">=0.2.0,<=0.2.24 || ^0.3.0"
+langchain = ">=0.2.10"
+langchain-core = ">=0.2.0"
 pydantic = "^2.4.2"
 trulens-core = "^1.0.0"
 
@@ -9168,7 +9205,7 @@ files = []
 develop = true
 
 [package.dependencies]
-ipywidgets = "^8.1.2"
+ipywidgets = ">=7.1.2"
 jupyter = "^1"
 pandas = ">=1.0.0"
 plotly = "^5.22.0"
@@ -9308,7 +9345,7 @@ files = []
 develop = true
 
 [package.dependencies]
-langchain-core = ">=0.2.0,<=0.2.24 || ^0.3.0"
+langchain-core = ">=0.2.0"
 trulens-core = "^1.0.0"
 trulens-feedback = "^1.0.0"
 
@@ -9464,6 +9501,29 @@ files = [
     {file = "tzdata-2024.2-py2.py3-none-any.whl", hash = "sha256:a48093786cdcde33cad18c2555e8532f34422074448fbc874186f0abd79565cd"},
     {file = "tzdata-2024.2.tar.gz", hash = "sha256:7d85cc416e9382e69095b7bdf4afd9e3880418a2413feec7069d533d6b4e31cc"},
 ]
+
+[package.source]
+type = "legacy"
+url = "https://pypi.org/simple"
+reference = "pypi-public"
+
+[[package]]
+name = "tzlocal"
+version = "5.2"
+description = "tzinfo object for the local timezone"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tzlocal-5.2-py3-none-any.whl", hash = "sha256:49816ef2fe65ea8ac19d19aa7a1ae0551c834303d5014c6d5a62e4cbda8047b8"},
+    {file = "tzlocal-5.2.tar.gz", hash = "sha256:8d399205578f1a9342816409cc1e46a93ebd5755e39ea2d85334bea911bf0e6e"},
+]
+
+[package.dependencies]
+"backports.zoneinfo" = {version = "*", markers = "python_version < \"3.9\""}
+tzdata = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+devenv = ["check-manifest", "pytest (>=4.3)", "pytest-cov", "pytest-mock (>=3.3)", "zest.releaser"]
 
 [package.source]
 type = "legacy"

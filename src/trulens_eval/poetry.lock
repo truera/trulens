@@ -3534,7 +3534,7 @@ files = []
 develop = true
 
 [package.dependencies]
-ipywidgets = "^8.1.2"
+ipywidgets = ">=7.1.2"
 jupyter = "^1"
 pandas = ">=1.0.0"
 plotly = "^5.22.0"
