@@ -6,7 +6,6 @@ from trulens.dashboard.pages.Records import records_main
 
 if __name__ == "__main__":
     session = get_active_session()
-    # st.write(session)
 
     tru_session = TruSession(
         connector=SnowflakeConnector(

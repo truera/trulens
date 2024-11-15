@@ -1,7 +1,7 @@
 import glob
 import os
 import tempfile
-from typing import Optional
+from typing import Optional, Any
 
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _STAGE_NAME as _PKG_STAGE_NAME,
@@ -41,7 +41,7 @@ class SiSDashboardArtifacts:
         self._set_up_stage()
         return self._set_up_streamlit()
 
-    def _run_query(self, q: str) -> None:
+    def _run_query(self, q: str) -> Any:
         cursor = self._session.connection.cursor()
         cursor.execute(q)
         return cursor.fetchall()
@@ -108,7 +108,7 @@ class SiSDashboardArtifacts:
                     "@{self._database}.{self._schema}.{_PKG_STAGE_NAME}/trulens-core.zip",
                     "@{self._database}.{self._schema}.{_PKG_STAGE_NAME}/trulens-dashboard.zip",
                     "@{self._database}.{self._schema}.{_PKG_STAGE_NAME}/trulens-connectors-snowflake.zip"
-                );
+                )
             """
         else:
             imports = ""
