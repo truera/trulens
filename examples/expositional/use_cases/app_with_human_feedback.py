@@ -24,7 +24,6 @@ from langchain_openai import ChatOpenAI
 import streamlit as st
 from trulens.core import session as core_session
 from trulens import dashboard as mod_dashboard
-from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 
 dev_path = str(Path(__file__).resolve().parent.parent)
@@ -77,7 +76,7 @@ if user_input:
     st.write(gpt3_response["text"])
 
     # Allow user to rate the response with emojis
-    col1, col2 = st_columns(2)
+    col1, col2 = st.columns(2)
     with col1:
         thumbs_up = st.button("👍")
     with col2:
