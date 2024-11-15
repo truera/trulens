@@ -1,7 +1,7 @@
 import glob
 import os
 import tempfile
-from typing import Optional, Any
+from typing import Any, Optional
 
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _STAGE_NAME as _PKG_STAGE_NAME,
