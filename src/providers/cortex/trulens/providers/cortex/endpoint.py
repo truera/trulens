@@ -5,7 +5,7 @@ import os
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
-from snowflake.cortex import _complete
+from snowflake.cortex._sse_client import SSEClient
 from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
@@ -95,8 +95,7 @@ class CortexEndpoint(core_endpoint.Endpoint):
 
         super().__init__(*args, **kwargs)
 
-        # Instrument functions from snowflake.cortex modules for usage/cost tracking.
-        self._instrument_module(_complete, "_call_complete_rest")
+        self._instrument_class(SSEClient, "events")
 
     def handle_wrapped_call(
         self,
@@ -107,12 +106,12 @@ class CortexEndpoint(core_endpoint.Endpoint):
     ) -> Any:
         counted_something = False
 
+        response_dict = None, None
+
         try:
-            resp_json_str = response.text.replace("data: ", "", 1)
-            # resp_json_str is from Server-Sent-Event hence the "data" prefix
-            # "data: {'id': 'xxx', 'created': xxx, 'model': 'snowflake-arctic', 'choices': [{'delta': {'content': 'xxx'}, 'finish_reason': 'stop'}],
-            # 'usage': {'prompt_tokens': 164, 'completion_tokens': 96, 'total_tokens': 260}}
-            response_dict = json.loads(resp_json_str)
+            response_dict = json.loads(
+                response.data
+            )  # response is a server-sent event (SSE). see _sse_client.py from snowflake.cortex module for reference
 
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
