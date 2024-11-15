@@ -7,6 +7,7 @@ from typing import (
 
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
+from snowflake.snowpark import context
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
@@ -84,7 +85,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_session: Session,
+        snowflake_session: Optional[Session] = None,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -99,8 +100,11 @@ class Cortex(
             *args, **kwargs
         )
 
-        # Create a Snowflake session
-        self_kwargs["snowflake_session"] = snowflake_session
+        self_kwargs["snowflake_session"] = (
+            snowflake_session
+            if snowflake_session is not None
+            else context.get_active_session()
+        )
 
         super().__init__(**self_kwargs)
 
@@ -121,6 +125,7 @@ class Cortex(
             prompt=messages,
             options=options,
             session=self.snowflake_session,
+            stream=False,
         )
         return completion_res_str
 

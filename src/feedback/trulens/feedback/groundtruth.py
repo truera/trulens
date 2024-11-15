@@ -99,6 +99,7 @@ class GroundTruthAgreement(
 
         Usage 3:
             ```python
+            from snowflake.snowpark import Session
             from trulens.feedback import GroundTruthAgreement
             from trulens.providers.cortex import Cortex
             ground_truth_imp = llm_app
@@ -112,10 +113,13 @@ class GroundTruthAgreement(
                 "schema": os.environ["SNOWFLAKE_SCHEMA"],
                 "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
             }
+
+            snowflake_session = Session.builder.configs(snowflake_connection_parameters).create()
+
             ground_truth_collection = GroundTruthAgreement(
                 ground_truth_imp,
                 provider=Cortex(
-                    snowflake.connector.connect(**snowflake_connection_parameters),
+                    snowflake_session=snowflake_session,
                     model_engine="mistral-7b",
                 ),
             )
