@@ -5,10 +5,7 @@ import os
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
-import requests
-from snowflake import cortex
-from snowflake.connector.cursor import SnowflakeCursor
-from snowflake.snowpark import Session
+from snowflake.cortex import _complete
 from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
@@ -98,13 +95,8 @@ class CortexEndpoint(core_endpoint.Endpoint):
 
         super().__init__(*args, **kwargs)
 
-        # Instrument various methods for usage/cost tracking.
-        self._instrument_class(Session, "sql")
-        self._instrument_class(SnowflakeCursor, "fetchall")
-        self._instrument_module_members(cortex, "_call_complete_rest")
-        # self._instrument_module_members(Complete, "_call_complete_rest")
-        # self._instrument_module_members(_complete, "Complete")
-        # self._instrument_module_members(_complete, "_return_stream_response")
+        # Instrument functions from snowflake.cortex modules for usage/cost tracking.
+        self._instrument_module(_complete, "_call_complete_rest")
 
     def handle_wrapped_call(
         self,
@@ -115,43 +107,13 @@ class CortexEndpoint(core_endpoint.Endpoint):
     ) -> Any:
         counted_something = False
 
-        # response is a snowflake dataframe instance or a list if the response is from cursor.fetchall()
-        # try:
-        #     if isinstance(response, DataFrame):
-        #         response_dict = json.loads(response.collect()[0][0])
-        #     elif isinstance(response, list):
-        #         response_dict = json.loads(response[0][0])
-        # except json.JSONDecodeError:
-        #     response_dict = response
-        # except Exception as e:
-        #     logger.error(f"Error occurred while parsing response: {e}")
-        #     raise e
-
         try:
-            if isinstance(response, requests.Response):
-                from snowflake.cortex._sse_client import SSEClient
+            resp_json_str = response.text.replace("data: ", "", 1)
+            # resp_json_str is from Server-Sent-Event hence the "data" prefix
+            # "data: {'id': 'xxx', 'created': xxx, 'model': 'snowflake-arctic', 'choices': [{'delta': {'content': 'xxx'}, 'finish_reason': 'stop'}],
+            # 'usage': {'prompt_tokens': 164, 'completion_tokens': 96, 'total_tokens': 260}}
+            response_dict = json.loads(resp_json_str)
 
-                client = SSEClient(response)
-                full_content = []  # Accumulate the content here
-                for event in client.events():
-                    try:
-                        message = json.loads(event.data)
-                        full_content.append(
-                            message["choices"][0]["delta"]["content"]
-                        )
-
-                    except (json.JSONDecodeError, KeyError, IndexError):
-                        # For the sake of evolution of the output format,
-                        # ignore stream messages that don't match the expected format.
-                        pass
-                final_message = {
-                    "id": message["id"],
-                    "created": message["created"],
-                    "model": message["model"],
-                    "tru_content": "".join(full_content),
-                    "usage": message["usage"],
-                }
-                response_dict = final_message
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
             raise e
