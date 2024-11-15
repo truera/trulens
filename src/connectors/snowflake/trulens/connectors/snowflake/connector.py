@@ -290,7 +290,7 @@ class SnowflakeConnector(DBConnector):
                 "Must specify `database`, `schema`, and `warehouse` to set up SiS dashboard!"
             )
 
-        SiSDashboardArtifacts(
+        return SiSDashboardArtifacts(
             session,
             database,
             schema,

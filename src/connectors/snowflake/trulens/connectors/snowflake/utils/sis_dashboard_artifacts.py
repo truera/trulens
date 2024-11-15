@@ -39,12 +39,12 @@ class SiSDashboardArtifacts:
 
     def set_up_all(self) -> None:
         self._set_up_stage()
-        self._set_up_streamlit()
+        return self._set_up_streamlit()
 
     def _run_query(self, q: str) -> None:
         cursor = self._session.connection.cursor()
         cursor.execute(q)
-        cursor.fetchall()
+        return cursor.fetchall()
 
     def _stage_file(
         self, file_path: str, stage_path: Optional[str] = None
@@ -110,13 +110,13 @@ class SiSDashboardArtifacts:
         else:
             imports = ""
 
-        self._run_query(
+        return self._run_query(
             f"""
-            CREATE OR REPLACE STREAMLIT {_STREAMLIT_NAME}
+            CREATE STREAMLIT IF NOT EXISTS {_STREAMLIT_NAME}
             FROM @{self._database}.{self._schema}.{_STAGE_NAME}
             MAIN_FILE = "{_STREAMLIT_ENTRYPOINT}"
             QUERY_WAREHOUSE = "{self._warehouse}"
             TITLE = "{_STREAMLIT_NAME}"
             {imports}
             """
-        )
+        )[0][0]

@@ -1,0 +1,54 @@
+{% set name = "trulens-dashboard" %}
+{% set version = "1.2.7" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: 3996f64d783278aab40a847cc9188ec51b71d8483f36f80b016b3cd1c277bcd8
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - trulens-core >=1.0.0,<2.0.0
+    - ipywidgets >=7.1.2
+    - jupyter >=1.0.0,<2.0.0
+    - pandas >=1.0.0
+    - psutil >=5.9.0,<6.0.0
+    - rich >=13.6.0,<14.0.0
+    - plotly >=5.22.0,<6.0.0
+    - streamlit >=1.35.0,<2.0.0
+    - traitlets >=5.0.5,<6.0.0
+  run_constrained:
+    - tqdm >=4.2.0
+    - openai >=1.0.0
+    - httpx >=0.27
+
+test:
+  imports:
+    - trulens.dashboard
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu

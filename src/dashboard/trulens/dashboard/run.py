@@ -341,7 +341,7 @@ def run_dashboard_sis(
     if trulens.connectors.snowflake.SnowflakeConnector and isinstance(
         session.connector, trulens.connectors.snowflake.SnowflakeConnector
     ):
-        session.connector._set_up_sis_dashboard(
+        return session.connector._set_up_sis_dashboard(
             session.connector.snowpark_session,
             database=session.connector.connection_parameters["database"],
             schema=session.connector.connection_parameters["schema"],
