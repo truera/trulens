@@ -1,4 +1,4 @@
-"""Derpecation and backwards compatibility tests."""
+"""Deprecation and backwards compatibility tests."""
 
 from enum import Enum
 import importlib

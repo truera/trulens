@@ -26,8 +26,12 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
+
 [tool.poetry.dependencies]
-python = "^3.9,!=3.9.7"
+python = "^3.8.1,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
   "otel",
   "tqdm",
@@ -42,7 +46,7 @@ trulens_eval = { version = "^1.0.0" }
 trulens-benchmark = { path = "src/benchmark", develop = true }
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "^3.7"
+pre-commit = "^3.5"
 ruff = ">=0.5"
 mypy = "^1.11"
 build = "^1.2"
@@ -68,9 +72,9 @@ mkdocs-literate-nav = ">=0.6"
 mkdocs-section-index = ">=0.3"
 
 [tool.poetry.group.apps.dependencies]
-trulens-apps-langchain = { path = "src/apps/langchain", develop = true, python = "<3.13" }
+trulens-apps-langchain = { path = "src/apps/langchain", develop = true }
 trulens-apps-llamaindex = { path = "src/apps/llamaindex", develop = true }
-trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.12" }
+trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.13" }
 
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
@@ -86,9 +90,9 @@ trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = tr
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
-trulens-dashboard = { path = "src/dashboard", develop = true, python = "!=3.9.7" }
+trulens-dashboard = { path = "src/dashboard", develop = true }
 # Remove after deprecation period.
-trulens_eval = { path = "src/trulens_eval", develop = true, python = "!=3.9.7" }
+trulens_eval = { path = "src/trulens_eval", develop = true }
 
 [tool.ruff]
 line-length = 80

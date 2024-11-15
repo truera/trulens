@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from enum import Enum
 import operator
-from typing import Callable, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 import numpy as np
 from trulens.core.utils import serial as serial_utils
@@ -47,9 +49,9 @@ class CATEGORY:
         "FAIL": dict(color="#ffaaaa70", icon="🛑"),
     }
 
-    PASS: dict[str, Category] = {}
-    FAIL: dict[str, Category] = {}
-    WARNING: dict[str, Category] = {}
+    PASS: Dict[str, Category] = {}
+    FAIL: Dict[str, Category] = {}
+    WARNING: Dict[str, Category] = {}
 
     for direction in directions:
         a = sorted(
