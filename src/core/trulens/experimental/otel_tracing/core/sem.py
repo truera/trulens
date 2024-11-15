@@ -1,3 +1,8 @@
+"""TypedSpan organization and semantization.
+
+The Span subclass and subsubclasses defined here are the only ones we put into the database.
+"""
+
 from __future__ import annotations
 
 import functools
