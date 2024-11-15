@@ -1,5 +1,4 @@
 from typing import (
-    Any,
     ClassVar,
     Dict,
     Optional,
@@ -7,13 +6,10 @@ from typing import (
 )
 
 from snowflake.cortex import Complete
+from snowflake.snowpark import Session
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
-
-# If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
-# TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
-_SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
 
 class Cortex(
@@ -25,7 +21,7 @@ class Cortex(
 
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
-    snowflake_conn: Any
+    snowflake_session: Session
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
 
@@ -44,9 +40,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowflake_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowflake_session=snowflake_session)
             ```
 
         === "Connecting with private key"
@@ -60,9 +55,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowflake_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowflake_session=snowflake_session)
             ```
 
         === "Connecting with a private key file"
@@ -77,13 +71,12 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowflake_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowflake_session=snowflake_session)
             ```
 
     Args:
-        snowflake_conn (Any): Snowflake connection. Note: This is not a snowflake session.
+        snowflake_session (Session): Snowflake session.
 
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
@@ -91,7 +84,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_conn: Any,
+        snowflake_session: Session,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -106,14 +99,9 @@ class Cortex(
             *args, **kwargs
         )
 
-        # Create a Snowflake connector
-        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
-        if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
-            self_kwargs["snowflake_conn"] = snowflake_conn
-        if not callable(getattr(self_kwargs["snowflake_conn"], "cursor", None)):
-            raise ValueError(
-                "Invalid snowflake_conn: Expected a Snowflake connection object with a 'cursor' method. Please ensure you are not passing a session object."
-            )
+        # Create a Snowflake session
+        self_kwargs["snowflake_session"] = snowflake_session
+
         super().__init__(**self_kwargs)
 
     def _invoke_cortex_complete(
@@ -132,6 +120,7 @@ class Cortex(
             model=model,
             prompt=messages,
             options=options,
+            session=self.snowflake_session,
         )
         return completion_res_str
 
