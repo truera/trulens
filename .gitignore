@@ -66,6 +66,6 @@ htmlcov/
 _trulens_eval/
 data/
 
-# Staged Connectors
+# Staged artifacts for snowflake connector
 !src/connectors/snowflake/trulens/data
 src/connectors/snowflake/trulens/data/snowflake_stage_zips
