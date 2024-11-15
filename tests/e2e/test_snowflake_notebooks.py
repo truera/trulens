@@ -1,7 +1,6 @@
 import tempfile
 from typing import Sequence
 from unittest import main
-import uuid
 
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _TRULENS_PACKAGES,
@@ -18,8 +17,7 @@ _DATA_DIRECTORY = "tests/e2e/data/"
 
 class TestSnowflakeNotebooks(SnowflakeTestCase):
     def test_simple(self) -> None:
-        schema_name = f"test_simple_{str(uuid.uuid4()).replace('-', '_')}"
-        self.create_and_use_schema(schema_name)
+        self.create_and_use_schema("test_simple", append_uuid=True)
         self._upload_and_run_notebook("simple", _TRULENS_PACKAGES)
 
     def test_staged_packages(self) -> None:
