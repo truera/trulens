@@ -26,6 +26,10 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
+
 [tool.poetry.dependencies]
 python = "^3.8.1,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
@@ -90,10 +94,6 @@ trulens-dashboard = { path = "src/dashboard", develop = true }
 trulens-semconv = { path = "src/semconv", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true }
-
-[[tool.poetry.source]]
-name = "pypi-public"
-url = "https://pypi.org/simple/"
 
 [tool.ruff]
 line-length = 80
