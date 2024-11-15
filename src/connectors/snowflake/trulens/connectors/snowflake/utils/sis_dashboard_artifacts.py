@@ -60,14 +60,17 @@ class SiSDashboardArtifacts:
 
     def _set_up_environment_file(self, environment_filepath: str) -> None:
         if self._use_staged_packages:
-            with tempfile.NamedTemporaryFile(delete=True) as f:
-                with open(environment_filepath, "r") as env_f:
-                    f.write(env_f.read().encode())
-                    for dep in _TRULENS_DEPENDENCIES:
-                        f.write(f"- {dep}\n".encode())
-                self._stage_file(f.name)
-        else:
             self._stage_file(environment_filepath)
+        else:
+            with open(environment_filepath, "r") as env_f:
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    new_env_path = os.path.join(tmp_dir, "environment.yml")
+                    with open(new_env_path, "w") as f:
+                        f.write(env_f.read())
+                        for dep in _TRULENS_DEPENDENCIES:
+                            f.write(f"- {dep}\n")
+                        f.flush()
+                        self._stage_file(new_env_path)
 
     def _set_up_stage(self) -> None:
         self._run_query(f"CREATE STAGE IF NOT EXISTS {_STAGE_NAME}")
