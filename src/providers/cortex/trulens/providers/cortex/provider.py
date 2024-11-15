@@ -69,7 +69,7 @@ _SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
 
 class Cortex(
     llm_provider.LLMProvider
-):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+):  # require `pip install snowflake-ml-python` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
