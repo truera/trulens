@@ -5,7 +5,11 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
-        exclude: src/dashboard/trulens/dashboard/.*/dist/.*
+        exclude: |
+          (?x)^(
+            src/dashboard/trulens/dashboard/.*/dist/.*|
+            poetry.lock
+          )$
       - id: check-yaml
         exclude: meta.yaml
       - id: destroyed-symlinks
@@ -44,42 +48,3 @@ repos:
     hooks:
       - id: poetry-check
         name: trulens-poetry-check
-      - id: poetry-check
-        name: trulens-core-poetry-check
-        args: [-C src/core]
-      - id: poetry-check
-        name: trulens-benchmark-poetry-check
-        args: [-C src/benchmark]
-      - id: poetry-check
-        name: trulens-feedback-poetry-check
-        args: [-C src/feedback]
-      - id: poetry-check
-        name: trulens-apps-langchain-poetry-check
-        args: [-C src/apps/langchain]
-      - id: poetry-check
-        name: trulens-apps-llamaindex-poetry-check
-        args: [-C src/apps/llamaindex]
-      - id: poetry-check
-        name: trulens-apps-nemo-poetry-check
-        args: [-C src/apps/nemo]
-      - id: poetry-check
-        name: trulens-providers-bedrock-poetry-check
-        args: [-C src/providers/bedrock]
-      - id: poetry-check
-        name: trulens-providers-cortex-poetry-check
-        args: [-C src/providers/cortex]
-      - id: poetry-check
-        name: trulens-providers-huggingface-poetry-check
-        args: [-C src/providers/huggingface]
-      - id: poetry-check
-        name: trulens-providers-langchain-poetry-check
-        args: [-C src/providers/langchain]
-      - id: poetry-check
-        name: trulens-providers-litellm-poetry-check
-        args: [-C src/providers/litellm]
-      - id: poetry-check
-        name: trulens-providers-openai-poetry-check
-        args: [-C src/providers/openai]
-      - id: poetry-check
-        name: trulens-connectors-snowflake-poetry-check
-        args: [-C src/connectors/snowflake]
