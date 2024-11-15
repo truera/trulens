@@ -203,7 +203,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
         if len(spans) > 0:
             if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-                from trulens.experimental.otel_tracing.core import (
+                from trulens.experimental.otel_tracing.core.trace import (
                     sem as core_sem,
                 )
 

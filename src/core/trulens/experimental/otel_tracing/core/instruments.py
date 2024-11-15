@@ -9,7 +9,7 @@ This file is to be integrated into the main
   to use
   [wrap_callable][trulens.experimental.otel_tracing.core._utils.wrap_callable]
   with span creating callbacks
-  ([AppTracingCallbacks][trulens.experimental.otel_tracing.core.trace.AppTracingCallbacks]).
+  ([AppTracingCallbacks][trulens.experimental.otel_tracing.core.callbacks.AppTracingCallbacks]).
 """
 
 from __future__ import annotations
@@ -21,8 +21,10 @@ import weakref
 from trulens.core import instruments as core_instruments
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing.core import trace as mod_trace
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
+from trulens.experimental.otel_tracing.core.trace import (
+    callbacks as core_callbacks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +54,7 @@ class _Instrument(core_instruments.Instrument):
         if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
 
-        if python_utils.safe_hasattr(func, mod_trace.INSTRUMENT):
+        if python_utils.safe_hasattr(func, core_callbacks.INSTRUMENT):
             logger.debug("\t\t\t%s: %s is already instrumented", query, func)
 
         # Notify the app instrumenting this method where it is located:
@@ -62,7 +64,7 @@ class _Instrument(core_instruments.Instrument):
 
         return wrap_utils.wrap_callable(
             func=func,
-            callback_class=mod_trace.AppTracingCallbacks,
+            callback_class=core_callbacks.AppTracingCallbacks,
             func_name=method_name,
             app=deproxy(self.app),  # gets rewrapped in weakref later
         )

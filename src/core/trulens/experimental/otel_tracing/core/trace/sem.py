@@ -26,7 +26,7 @@ from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing.core import span as core_span
+from trulens.experimental.otel_tracing.core.trace import span as core_span
 from trulens.semconv import trace as truconv
 
 logger = getLogger(__name__)

@@ -24,19 +24,16 @@ from typing import (
 import uuid
 import weakref
 
+from opentelemetry.semconv.resource import ResourceAttributes
 import pydantic
 from trulens.core._utils.pycompat import TypeAlias
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
-from trulens.experimental.otel_tracing import _feature
-from trulens.experimental.otel_tracing.core import otel as core_otel
-from trulens.experimental.otel_tracing.core import trace as core_trace
+from trulens.experimental.otel_tracing.core.trace import context as core_context
+from trulens.experimental.otel_tracing.core.trace import otel as core_otel
+from trulens.experimental.otel_tracing.core.trace import trace as core_trace
 from trulens.semconv import trace as truconv
-
-_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
-
-from opentelemetry.semconv.resource import ResourceAttributes
 
 T = TypeVar("T")
 R = TypeVar("R")  # callable return type
@@ -266,14 +263,15 @@ class Span(core_otel.Span, WithAttributeProperties):
     def __init__(self, **kwargs):
         # Convert any contexts to our hashable context class:
         if (context := kwargs.get("context")) is not None:
-            kwargs["context"] = core_otel.SpanContext.of_contextlike(context)
+            kwargs["context"] = core_context.SpanContext.of_contextlike(context)
         if (parent := kwargs.get("parent", None)) is not None:
-            kwargs["parent"] = core_otel.SpanContext.of_contextlike(parent)
+            kwargs["parent"] = core_context.SpanContext.of_contextlike(parent)
 
         super().__init__(**kwargs)
 
         if (parent_span := self.parent_span) is not None:
-            parent_span.children_spans.append(self)
+            if isinstance(parent_span, Span):
+                parent_span.children_spans.append(self)
 
         self._init_attribute_properties(kwargs)
 

@@ -1011,13 +1011,12 @@ files = [
 
 [[package]]
 name = "htbuilder"
-version = "0.6.2"
+version = "0.7.0"
 description = "A purely-functional HTML builder for Python. Think JSX rather than templates."
 optional = false
 python-versions = ">=3.5"
 files = [
-    {file = "htbuilder-0.6.2-py3-none-any.whl", hash = "sha256:5bb707221a0e2162e406c9ecf7bcc9efa9ad590c9f2180149440415f43a10bb5"},
-    {file = "htbuilder-0.6.2.tar.gz", hash = "sha256:9979a4fb6e50ce732bf6f6bc0441039dcaa3a3fc70689d8f38f601ed8a1aeec0"},
+    {file = "htbuilder-0.7.0.tar.gz", hash = "sha256:61435d649438d5b7c3d30868f5644b83f0ab488d411eb0485439cb9e05223f19"},
 ]
 
 [package.dependencies]
@@ -1025,13 +1024,13 @@ more-itertools = "*"
 
 [[package]]
 name = "httpcore"
-version = "1.0.6"
+version = "1.0.7"
 description = "A minimal low-level HTTP client."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "httpcore-1.0.6-py3-none-any.whl", hash = "sha256:27b59625743b85577a8c0e10e55b50b5368a4f2cfe8cc7bcfa9cf00829c2682f"},
-    {file = "httpcore-1.0.6.tar.gz", hash = "sha256:73f6dbd6eb8c21bbf7ef8efad555481853f5f6acdeaff1edb0694289269ee17f"},
+    {file = "httpcore-1.0.7-py3-none-any.whl", hash = "sha256:a3fff8f43dc260d5bd363d9f9cf1830fa3a458b332856f34282de498ed420edd"},
+    {file = "httpcore-1.0.7.tar.gz", hash = "sha256:8551cb62a169ec7162ac7be8d4817d561f60e08eaa485234898414bb5a8a0b4c"},
 ]
 
 [package.dependencies]

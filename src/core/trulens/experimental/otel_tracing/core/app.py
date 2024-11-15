@@ -34,8 +34,12 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing.core import span as core_span
-from trulens.experimental.otel_tracing.core import trace as core_trace
+from trulens.experimental.otel_tracing.core.trace import (
+    callbacks as core_callbacks,
+)
+from trulens.experimental.otel_tracing.core.trace import export as core_export
+from trulens.experimental.otel_tracing.core.trace import span as core_span
+from trulens.experimental.otel_tracing.core.trace import trace as core_trace
 from trulens.semconv import trace as truconv
 
 
@@ -96,9 +100,7 @@ class _App(core_app.App):
         Controls saving spans to the database as well as feedback execution or scheduling.
         """
 
-        tracer = root_span.context.tracer
-
-        record = tracer.record_of_root_span(
+        record = core_export.record_of_root_span(
             root_span=root_span, recording=recording
         )
         recording.records.append(record)
@@ -166,7 +168,7 @@ class _App(core_app.App):
             recording_span_ctx.__enter__()
         )
 
-        recording = core_trace._RecordingContext(
+        recording = core_callbacks._RecordingContext(
             app=self,
             tracer=tracer,
             span=recording_span,
@@ -183,13 +185,13 @@ class _App(core_app.App):
     def __exit__(self, exc_type, exc_value, exc_tb) -> Literal[False]:
         # EXPERIMENTAL(otel_tracing): replacement to recording context manager.
 
-        recording: core_trace._RecordingContext = self.recording_contexts.get()
+        recording: core_callbacks._RecordingContext = (
+            self.recording_contexts.get()
+        )
 
         assert recording is not None, "Not in a tracing context."
         assert recording.tracer is not None, "Not in a tracing context."
         assert recording.span is not None, "Not in a tracing context."
-
-        print(f"exiting {recording.span}")
 
         self.recording_contexts.reset(recording.token)
 
@@ -203,7 +205,7 @@ class _App(core_app.App):
 
         tracer: core_trace.Tracer = core_trace.trulens_tracer()
 
-        recording_span_ctx = await tracer.astart_as_current_span(
+        recording_span_ctx = tracer.astart_as_current_span(
             cls=core_span.RecordingContextSpan,
             name=truconv.SpanNames.RECORDING_CONTEXT_PREFIX + self.app_name,
         )

@@ -4,9 +4,9 @@ import sqlalchemy as sa
 from trulens.core.database import base as core_db
 from trulens.core.database import sqlalchemy as core_sqlalchemy
 from trulens.core.schema import types as types_schema
-from trulens.experimental.otel_tracing.core import sem as core_sem
 from trulens.experimental.otel_tracing.core.database import base as otel_core_db
 from trulens.experimental.otel_tracing.core.database import orm as otel_core_orm
+from trulens.experimental.otel_tracing.core.trace import sem as core_sem
 
 
 class _SQLAlchemyDB(core_sqlalchemy.SQLAlchemyDB):

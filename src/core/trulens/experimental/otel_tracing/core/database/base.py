@@ -3,7 +3,7 @@ from typing import Iterable, Optional
 
 from trulens.core.database import base as core_db
 from trulens.core.schema import types as types_schema
-from trulens.experimental.otel_tracing.core import sem as core_sem
+from trulens.experimental.otel_tracing.core.trace import sem as core_sem
 
 
 @dataclass

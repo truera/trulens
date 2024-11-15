@@ -17,8 +17,8 @@ from sqlalchemy.orm import configure_mappers
 from sqlalchemy.schema import MetaData
 from sqlalchemy.sql import func
 from trulens.core.schema import types as types_schema
-from trulens.experimental.otel_tracing.core import otel as core_otel
-from trulens.experimental.otel_tracing.core import sem as core_sem
+from trulens.experimental.otel_tracing.core.trace import context as core_context
+from trulens.experimental.otel_tracing.core.trace import sem as core_sem
 
 T = TypeVar("T")
 
@@ -193,13 +193,13 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[SpanORM[T]]:
             def write(self) -> core_sem.TypedSpan:
                 """Convert ORM class to typed span."""
 
-                context = core_otel.SpanContext(
+                context = core_context.SpanContext(
                     trace_id=types_schema.TraceID.py_of_sql(self.trace_id),
                     span_id=types_schema.SpanID.py_of_sql(self.span_id),
                 )
 
                 parent = (
-                    core_otel.SpanContext(
+                    core_context.SpanContext(
                         trace_id=types_schema.TraceID.py_of_sql(
                             self.parent_trace_id
                         ),

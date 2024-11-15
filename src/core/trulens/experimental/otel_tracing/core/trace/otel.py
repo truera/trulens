@@ -16,7 +16,6 @@ from types import TracebackType
 from typing import (
     Any,
     Callable,
-    ClassVar,
     Dict,
     Hashable,
     List,
@@ -28,22 +27,18 @@ from typing import (
     Union,
 )
 
+from opentelemetry import trace as trace_api
+from opentelemetry.sdk import resources as resources_sdk
+from opentelemetry.sdk import trace as trace_sdk
+from opentelemetry.trace import span as span_api
+from opentelemetry.util import types as types_api
 import pydantic
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing import _feature
-
-_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
-
-from opentelemetry import context as context_api
-from opentelemetry import trace as trace_api
-from opentelemetry.sdk import resources as resources_sdk
-from opentelemetry.sdk import trace as trace_sdk
-from opentelemetry.trace import span as span_api
-from opentelemetry.util import types as types_api
+from trulens.experimental.otel_tracing.core.trace import context as core_context
 
 logger = logging.getLogger(__name__)
 
@@ -51,151 +46,6 @@ logger = logging.getLogger(__name__)
 
 A = TypeVar("A")
 B = TypeVar("B")
-
-
-class TraceState(serial_utils.SerialModel, span_api.TraceState):
-    """[OTEL TraceState][opentelemetry.trace.TraceState] requirements.
-
-    Adds [SerialModel][trulens.core.utils.serial.SerialModel] and therefore
-    [pydantic.BaseModel][pydantic.BaseModel] onto the OTEL TraceState.
-    """
-
-    # Hackish: span_api.TraceState uses _dict internally.
-    _dict: Dict[str, str] = pydantic.PrivateAttr(default_factory=dict)
-
-
-class SpanContext(serial_utils.SerialModel, Hashable):
-    """[OTEL SpanContext][opentelemetry.trace.SpanContext] requirements.
-
-    Adds [SerialModel][trulens.core.utils.serial.SerialModel] and therefore
-    [pydantic.BaseModel][pydantic.BaseModel] onto the OTEL SpanContext.
-
-    Also adds hashing, equality, conversion, and representation methods.
-    """
-
-    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
-        arbitrary_types_allowed=True,
-        use_enum_values=True,  # needed for enums that do not inherit from str
-    )
-
-    def __str__(self):
-        return f"{self.trace_id % 0xFF:02x}/{self.span_id % 0xFF:02x}"
-
-    def __repr__(self):
-        return str(self)
-
-    def __hash__(self):
-        return self.trace_id + self.span_id
-
-    def __eq__(self, other: ContextLike):
-        if other is None:
-            return False
-
-        return self.trace_id == other.trace_id and self.span_id == other.span_id
-
-    trace_id: types_schema.TraceID.PY_TYPE
-    """Unique identifier for the trace.
-
-    Each root span has a unique trace id."""
-
-    span_id: types_schema.SpanID.PY_TYPE
-    """Identifier for the span.
-
-    Meant to be at least unique within the same trace_id.
-    """
-
-    trace_flags: trace_api.TraceFlags = pydantic.Field(
-        trace_api.DEFAULT_TRACE_OPTIONS
-    )
-
-    @pydantic.field_validator("trace_flags", mode="before")
-    @classmethod
-    def _validate_trace_flags(cls, v):
-        """Validate trace flags.
-
-        Pydantic does not seem to like classes that inherit from int without this.
-        """
-        return trace_api.TraceFlags(v)
-
-    trace_state: TraceState = pydantic.Field(default_factory=TraceState)
-
-    is_remote: bool = False
-
-    _tracer: Tracer = pydantic.PrivateAttr(None)
-    """Reference to the tracer that produces this SpanContext."""
-
-    @property
-    def tracer(self) -> Tracer:
-        """Tracer that produced this SpanContext."""
-        return self._tracer
-
-    @staticmethod
-    def of_contextlike(
-        context: ContextLike, tracer: Optional[Tracer] = None
-    ) -> SpanContext:
-        """Convert several types that convey span/contxt identifiers into the
-        common SpanContext type."""
-
-        if isinstance(context, SpanContext):
-            if tracer is not None:
-                context._tracer = tracer
-
-            return context
-
-        if isinstance(context, span_api.SpanContext):
-            # otel api SpanContext; doesn't have hashing and other things we need.
-            return SpanContext(
-                trace_id=context.trace_id,
-                span_id=context.span_id,
-                is_remote=context.is_remote,
-                _tracer=tracer,
-            )
-        if isinstance(context, context_api.Context):
-            # Context dict from OTEL.
-
-            if len(context) == 1:
-                span_encoding = next(iter(context.values()))
-
-                return SpanContext(
-                    trace_id=types_schema.TraceID.py_of_otel(
-                        span_encoding.trace_id
-                    ),
-                    span_id=types_schema.SpanID.py_of_otel(
-                        span_encoding.span_id
-                    ),
-                    _tracer=tracer,
-                )
-            else:
-                raise ValueError(
-                    f"Unrecognized context dict from OTEL: {context}"
-                )
-        if isinstance(context, dict):
-            # Json encoding of SpanContext, i.e. output of
-            # SpanContext.model_dump .
-
-            context["_tracer"] = tracer
-            return SpanContext.model_validate(context)
-
-        raise ValueError(f"Unrecognized span context type: {context}")
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        for k, v in kwargs.items():
-            if v is None:
-                continue
-            # pydantic does not set private attributes in init
-            if k.startswith("_") and hasattr(self, k):
-                setattr(self, k, v)
-
-
-ContextLike = Union[
-    SpanContext, span_api.SpanContext, context_api.Context, serial_utils.JSON
-]
-"""SpanContext types we need to deal with.
-
-These may be the non-hashable ones coming from OTEL, the hashable ones we
-defined above, or their JSON representations."""
 
 
 class Span(
@@ -236,9 +86,9 @@ class Span(
     def _validate_kind(cls, v):
         return trace_api.SpanKind(v)
 
-    context: SpanContext
+    context: core_context.SpanContext
 
-    parent: Optional[SpanContext] = None
+    parent: Optional[core_context.SpanContext] = None
 
     status: trace_api.status.StatusCode = trace_api.status.StatusCode.UNSET
 
@@ -486,7 +336,9 @@ class Span(
     # standard OTEL but values for OTEL ReadableSpan.
 
     @staticmethod
-    def otel_context_of_context(context: SpanContext) -> trace_api.SpanContext:
+    def otel_context_of_context(
+        context: core_context.SpanContext,
+    ) -> trace_api.SpanContext:
         return trace_api.SpanContext(
             trace_id=types_schema.TraceID.otel_of_py(context.trace_id),
             span_id=types_schema.SpanID.otel_of_py(context.span_id),
@@ -571,7 +423,7 @@ class Span(
 
 def _default_context_factory(
     name: str,
-) -> Callable[[], contextvars.ContextVar[SpanContext]]:
+) -> Callable[[], contextvars.ContextVar[core_context.SpanContext]]:
     """Create a default span context contextvar factory.
 
     Includes the given name in the contextvar name. The default context is a
@@ -581,7 +433,7 @@ def _default_context_factory(
     def create():
         return contextvars.ContextVar(
             f"context_{name}_{python_utils.context_id()}",
-            default=SpanContext(
+            default=core_context.SpanContext(
                 trace_id=types_schema.TraceID.INVALID_OTEL,
                 span_id=types_schema.SpanID.INVALID_OTEL,
             ),
@@ -627,7 +479,11 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     def __repr__(self):
         return str(self)
 
-    def __init__(self, _span_context_cvar: SpanContext, **kwargs):
+    def __init__(
+        self,
+        _span_context_cvar: contextvars.ContextVar[core_context.SpanContext],
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         for k, v in kwargs.items():
@@ -639,12 +495,12 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
 
         self._span_context_cvar = _span_context_cvar
 
-    _span_context_cvar: contextvars.ContextVar[SpanContext] = (
+    _span_context_cvar: contextvars.ContextVar[core_context.SpanContext] = (
         pydantic.PrivateAttr(default_factory=_default_context_factory("Tracer"))
     )
 
     @property
-    def current_span_context(self) -> SpanContext:
+    def current_span_context(self) -> core_context.SpanContext:
         return self._span_context_cvar.get()
 
     def current_span_id(self) -> types_schema.SpanID.PY_TYPE:
@@ -656,7 +512,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     def start_span(
         self,
         name: Optional[str] = None,
-        context: Optional[ContextLike] = None,
+        context: Optional[core_context.ContextLike] = None,
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
         attributes: trace_api.types.Attributes = None,
         links: trace_api._Links = None,
@@ -687,12 +543,16 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
 
         if (
             context is None
-            or (parent_context := SpanContext.of_spancontextlike(context))
+            or (
+                parent_context := core_context.SpanContext.of_spancontextlike(
+                    context
+                )
+            )
             is None
         ):
             parent_context = self.current_span_context
 
-        new_context = SpanContext(
+        new_context = core_context.SpanContext(
             trace_id=parent_context.trace_id,
             span_id=types_schema.SpanID.rand_otel(),
             _tracer=self,
@@ -733,7 +593,7 @@ class Tracer(serial_utils.SerialModel, trace_api.Tracer):
     def start_as_current_span(
         self,
         name: Optional[str] = None,
-        context: Optional[ContextLike] = None,
+        context: Optional[core_context.ContextLike] = None,
         kind: trace_api.SpanKind = trace_api.SpanKind.INTERNAL,
         attributes: trace_api.attributes = None,
         links: trace_api._Links = None,
@@ -831,14 +691,14 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
     _tracer_class: Type[Tracer] = pydantic.PrivateAttr(Tracer)
     """NON-STANDARD: The default tracer class to use when creating tracers."""
 
-    _span_context_cvar: contextvars.ContextVar[SpanContext] = (
+    _span_context_cvar: contextvars.ContextVar[core_context.SpanContext] = (
         pydantic.PrivateAttr(
             default_factory=_default_context_factory("TracerProvider")
         )
     )
 
     @property
-    def current_span_context(self) -> SpanContext:
+    def current_span_context(self) -> core_context.SpanContext:
         """NON-STANDARD: The current span context."""
 
         return self._span_context_cvar.get()
@@ -859,7 +719,7 @@ class TracerProvider(serial_utils.SerialModel, trace_api.TracerProvider):
         super().__init__()
 
         self._span_context_cvar.set(
-            SpanContext(
+            core_context.SpanContext(
                 span_id=types_schema.SpanID.rand_otel(),
                 trace_id=types_schema.TraceID.rand_otel(),
             )

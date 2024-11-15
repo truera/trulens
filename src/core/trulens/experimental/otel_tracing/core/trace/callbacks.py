@@ -1,452 +1,58 @@
 # ruff: noqa: E402
 
-"""Tracer for OTEL tracing.
-
-Adds TruLens specific features on top of the minimal OTEL Tracer.
-
-!!! Note
-    Most of the module is EXPERIMENTAL(otel_tracing) though it includes some existing
-    non-experimental classes moved here to resolve some circular import issues.
-"""
+""" """
 
 from __future__ import annotations
 
-from collections import defaultdict
 import contextvars
 import inspect
 import logging
 import os
-import sys
-import threading as th
-from threading import Lock
+import threading
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     ContextManager,
     Dict,
     Generic,
-    Hashable,
     Iterable,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     TypeVar,
 )
 import weakref
 
-from opentelemetry.util import types as types_api
-import pydantic
-from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.utils import json as json_utils
-from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing import _feature
-from trulens.experimental.otel_tracing.core import otel as core_otel
-from trulens.experimental.otel_tracing.core import span as core_span
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
+from trulens.experimental.otel_tracing.core.trace import context as core_context
+from trulens.experimental.otel_tracing.core.trace import otel as core_otel
+from trulens.experimental.otel_tracing.core.trace import span as core_span
+from trulens.experimental.otel_tracing.core.trace import trace as core_trace
 from trulens.semconv import trace as truconv
 
-_feature._FeatureSetup.assert_optionals_installed()  # checks to make sure otel is installed
+if TYPE_CHECKING:
+    # Need to model_rebuild classes that use these:
+    from trulens.experimental.otel_tracing.core.trace import span as core_trace
 
-if sys.version_info < (3, 9):
-    from functools import lru_cache as fn_cache
-else:
-    from functools import cache as fn_cache
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 R = TypeVar("R")  # callable return type
 E = TypeVar("E")  # iterator/generator element type
 S = TypeVar("S")  # span type
 
-logger = logging.getLogger(__name__)
-
 INSTRUMENT: str = "__tru_instrumented"
 """Attribute name to be used to flag instrumented objects/methods/others."""
 
 APPS: str = "__tru_apps"
 """Attribute name for storing apps that expect to be notified of calls."""
-
-
-class Tracer(core_otel.Tracer):
-    """TruLens additions on top of [OTEL Tracer][opentelemetry.trace.Tracer]."""
-
-    # TODO: Create a Tracer that does not record anything. Can either be a
-    # setting to this tracer or a separate "NullTracer". We need non-recording
-    # users to not incur much overhead hence need to be able to disable most of
-    # the tracing logic when appropriate.
-
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    # Overrides core_otel.Tracer._span_class
-    _span_class: Type[core_span.Span] = pydantic.PrivateAttr(core_span.Span)
-
-    @property
-    def spans(self) -> Dict[core_otel.SpanContext, core_span.Span]:
-        return self._tracer_provider.spans
-
-    @property
-    def current_span(self) -> Optional[core_span.Span]:
-        if (context := self.current_span_context) is None:
-            return None
-
-        return self.spans.get(context)
-
-    def start_span(self, *args, **kwargs):
-        """Like OTEL start_span except also keeps track of the span just created."""
-
-        new_span = super().start_span(*args, **kwargs)
-
-        self.spans[new_span.context] = new_span
-
-        return new_span
-
-    @staticmethod
-    def _fill_stacks(
-        span: core_span.Span,
-        get_method_path: Callable,
-        span_stacks: Dict[
-            core_span.Span, List[record_schema.RecordAppCallMethod]
-        ],
-        stack: Optional[List[record_schema.RecordAppCallMethod]] = None,
-    ):
-        """Populate span_stacks with a mapping of span to call stack for
-        backwards compatibility with records.
-
-        Args:
-            span: Span to start from.
-
-            get_method_path: Function that looks up lens of a given
-                obj/function. This is an WithAppCallbacks method.
-
-            span_stacks: Mapping of span to call stack. This will be modified by
-                this method.
-
-            stack: Current call stack. Recursive calls will build this up.
-        """
-        if stack is None:
-            stack = []
-
-        if isinstance(span, core_span.LiveSpanCall):
-            if span.live_func is None:
-                print(span.attributes)
-                raise ValueError(f"Span {span} has no function.")
-
-            path = get_method_path(obj=span.live_obj, func=span.live_func)
-
-            if path is None:
-                logger.warning(
-                    "No path found for %s in %s.", span.live_func, span.live_obj
-                )
-                path = serial_utils.Lens().static
-
-            if inspect.ismethod(span.live_func):
-                # This is a method.
-                frame_ident = record_schema.RecordAppCallMethod(
-                    path=path,
-                    method=pyschema_utils.Method.of_method(
-                        span.live_func, obj=span.live_obj, cls=span.live_cls
-                    ),
-                )
-            elif inspect.isfunction(span.live_func):
-                # This is a function, not a method.
-                frame_ident = record_schema.RecordAppCallMethod(
-                    path=path,
-                    method=None,
-                    function=pyschema_utils.Function.of_function(
-                        span.live_func
-                    ),
-                )
-            else:
-                raise ValueError(f"Unexpected function type: {span.live_func}")
-
-            stack = stack + [frame_ident]
-            span_stacks[span] = stack
-
-        for subspan in span.iter_children(transitive=False):
-            Tracer._fill_stacks(
-                subspan,
-                stack=stack,
-                get_method_path=get_method_path,
-                span_stacks=span_stacks,
-            )
-
-    def _call_of_spancall(
-        self,
-        span: core_span.LiveSpanCall,
-        stack: List[record_schema.RecordAppCallMethod],
-    ) -> record_schema.RecordAppCall:
-        """Convert a LiveSpanCall to a RecordAppCall."""
-
-        args = (
-            dict(span.live_bound_arguments.arguments)
-            if span.live_bound_arguments is not None
-            else {}
-        )
-        if "self" in args:
-            del args["self"]  # remove self
-
-        assert span.start_timestamp is not None
-        if span.end_timestamp is None:
-            logger.warning(
-                "Span %s has no end timestamp. It might not have yet finished recording.",
-                span,
-            )
-
-        return record_schema.RecordAppCall(
-            call_id=str(span.call_id),
-            stack=stack,
-            args={k: json_utils.jsonify(v) for k, v in args.items()},
-            rets=json_utils.jsonify(span.live_ret),
-            error=str(span.live_error),
-            perf=base_schema.Perf(
-                start_time=span.start_timestamp,
-                end_time=span.end_timestamp,
-            ),
-            pid=span.process_id,
-            tid=span.thread_id,
-        )
-
-    def record_of_root_span(
-        self, recording: Any, root_span: core_span.LiveRecordRoot
-    ) -> Tuple[record_schema.Record]:
-        """Convert a root span to a record.
-
-        This span has to be a call span so we can extract things like main input and output.
-        """
-
-        assert isinstance(root_span, core_span.LiveRecordRoot), type(root_span)
-
-        # avoiding circular imports
-        from trulens.experimental.otel_tracing.core import sem as core_sem
-
-        app = recording.app
-
-        # Use the record_id created during tracing.
-        record_id = root_span.record_id
-
-        span_stacks: Dict[
-            core_span.Span, List[record_schema.RecordAppCallMethod]
-        ] = {}
-
-        self._fill_stacks(
-            root_span,
-            span_stacks=span_stacks,
-            get_method_path=app.get_method_path,
-        )
-
-        if root_span.end_timestamp is None:
-            raise RuntimeError(
-                f"Root span has not finished recording: {root_span}"
-            )
-
-        root_perf = base_schema.Perf(
-            start_time=root_span.start_timestamp,
-            end_time=root_span.end_timestamp,
-        )
-
-        total_cost = root_span.cost_tally()
-
-        calls = []
-        spans = [core_sem.TypedSpan.semanticize(root_span)]
-
-        root_call_span = None
-        for span in root_span.iter_children():
-            if isinstance(span, core_span.LiveSpanCall):
-                calls.append(
-                    self._call_of_spancall(span, stack=span_stacks[span])
-                )
-                root_call_span = root_call_span or span
-
-            spans.append(core_sem.TypedSpan.semanticize(span))
-
-        if root_call_span is None:
-            raise ValueError("No call span found under trace root span.")
-
-        bound_arguments = root_call_span.live_bound_arguments
-        main_error = root_call_span.live_error
-
-        if bound_arguments is not None:
-            main_input = app.main_input(
-                func=root_call_span.live_func,
-                sig=root_call_span.live_sig,
-                bindings=root_call_span.live_bound_arguments,
-            )
-            if main_error is None:
-                main_output = app.main_output(
-                    func=root_call_span.live_func,
-                    sig=root_call_span.live_sig,
-                    bindings=root_call_span.live_bound_arguments,
-                    ret=root_call_span.live_ret,
-                )
-            else:
-                main_output = None
-        else:
-            main_input = None
-            main_output = None
-
-        record = record_schema.Record(
-            record_id=record_id,
-            app_id=app.app_id,
-            main_input=json_utils.jsonify(main_input),
-            main_output=json_utils.jsonify(main_output),
-            main_error=json_utils.jsonify(main_error),
-            calls=calls,
-            perf=root_perf,
-            cost=total_cost,
-            experimental_otel_spans=spans,
-        )
-
-        return record
-
-    @staticmethod
-    def find_each_child(
-        span: core_span.Span, span_filter: Callable
-    ) -> Iterable[core_span.Span]:
-        """For each family rooted at each child of this span, find the top-most
-        span that satisfies the filter."""
-
-        for child_span in span.children_spans:
-            if span_filter(child_span):
-                yield child_span
-            else:
-                yield from Tracer.find_each_child(child_span, span_filter)
-
-    def records_of_recording(
-        self, recording: core_span.RecordingContextSpan
-    ) -> Iterable[record_schema.Record]:
-        """Convert a recording based on spans to a list of records."""
-
-        for root_span in Tracer.find_each_child(
-            span=recording,
-            span_filter=lambda s: isinstance(s, core_span.LiveRecordRoot),
-        ):
-            assert isinstance(root_span, core_span.LiveRecordRoot), type(
-                root_span
-            )
-            yield self.record_of_root_span(
-                recording=recording, root_span=root_span
-            )
-
-
-class TracerProvider(
-    core_otel.TracerProvider, metaclass=python_utils.PydanticSingletonMeta
-):
-    """TruLens additions on top of [OTEL TracerProvider][opentelemetry.trace.TracerProvider]."""
-
-    model_config = pydantic.ConfigDict(arbitrary_types_allowed=True)
-
-    _trace_id: types_schema.TraceID.PY_TYPE = pydantic.PrivateAttr(
-        default_factory=types_schema.TraceID.default_py
-    )
-
-    def __str__(self):
-        # Pydantic will not print anything useful otherwise.
-        return f"{self.__module__}.{type(self).__name__}()"
-
-    @property
-    def trace_id(self) -> types_schema.TraceID.PY_TYPE:
-        return self._trace_id
-
-    # Overrides core_otel.TracerProvider._tracer_class
-    _tracer_class: Type[Tracer] = pydantic.PrivateAttr(default=Tracer)
-
-    _tracers: Dict[str, Tracer] = pydantic.PrivateAttr(default_factory=dict)
-
-    _spans: Dict[core_otel.SpanContext, core_span.Span] = pydantic.PrivateAttr(
-        default_factory=dict
-    )
-
-    @property
-    def spans(self) -> Dict[core_otel.SpanContext, core_span.Span]:
-        return self._spans
-
-    _exported_map: Dict[Hashable, Set[core_otel.SpanContext]] = (
-        pydantic.PrivateAttr(default_factory=lambda: defaultdict(set))
-    )
-    """NON-STANDARD: Each sink (hashable) is mapped to the set of span contexts
-    it has received.
-
-    This is to prevent saving the same span twice or exporting it twice. Due to
-    the recording context nature of TruLens, the same spans can be processed for
-    multiple apps/contexts but we don't want to write them more than once.
-    """
-
-    def was_exported_to(
-        self,
-        context: core_otel.SpanContext,
-        to: Hashable,
-        mark_exported: bool = False,
-    ) -> bool:
-        """Determine whether the given span context has been exported to the
-        given sink.
-
-        Optionally marks the span context as exported.
-        """
-
-        ret = context in self._exported_map[to]
-
-        if mark_exported:
-            self._exported_map[to].add(context)
-
-        return ret
-
-    def get_tracer(
-        self,
-        instrumenting_module_name: str,
-        instrumenting_library_version: Optional[str] = None,
-        schema_url: Optional[str] = None,
-        attributes: Optional[types_api.Attributes] = None,
-    ):
-        if instrumenting_module_name in self._tracers:
-            return self._tracers[instrumenting_module_name]
-
-        tracer = super().get_tracer(
-            instrumenting_module_name=instrumenting_module_name,
-            instrumenting_library_version=instrumenting_library_version,
-            attributes=attributes,
-            schema_url=schema_url,
-        )
-
-        self._tracers[instrumenting_module_name] = tracer
-
-        return tracer
-
-
-@fn_cache
-def trulens_tracer_provider():
-    """Global tracer provider.
-    All trulens tracers are made by this provider even if a different one is
-    configured for OTEL.
-    """
-
-    return TracerProvider()
-
-
-def was_exported_to(
-    context: core_otel.SpanContext, to: Hashable, mark_exported: bool = False
-):
-    """Determine whether the given span context has been exported to the given sink.
-
-    Optionally marks the span context as exported.
-    """
-
-    return trulens_tracer_provider().was_exported_to(context, to, mark_exported)
-
-
-@fn_cache
-def trulens_tracer():
-    from trulens.core import __version__
-
-    return trulens_tracer_provider().get_tracer(
-        instrumenting_module_name="trulens.experimental.otel_tracing.core.trace",
-        instrumenting_library_version=__version__,
-    )
 
 
 class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
@@ -480,7 +86,7 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
 
         self.span_context: ContextManager[core_span.LiveSpanCall] = (
-            trulens_tracer().start_as_current_span(cls=span_type, name=truconv.SpanAttributes.CALL.SPAN_NAME_PREFIX + self.func_name)
+            core_trace.trulens_tracer().start_as_current_span(cls=span_type, name=truconv.SpanAttributes.CALL.SPAN_NAME_PREFIX + self.func_name)
         )
         # Will be filled in by _enter_contexts.
         self.span: Optional[core_span.LiveSpanCall] = None
@@ -491,7 +97,7 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
             self.span_context
         ]
         self.spans: List[
-            core_span.Span
+            core_otel.Span
         ] = []  # keep track of the spans we enter
 
         if enter_contexts:
@@ -573,7 +179,7 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
 
         assert span is not None, "Contexts not yet entered."
         span.process_id = os.getpid()
-        span.thread_id = th.get_native_id()
+        span.thread_id = threading.get_native_id()
 
         return temp
 
@@ -637,9 +243,9 @@ class _RecordingContext:
         self,
         app: _WithInstrumentCallbacks,
         record_metadata: serial_utils.JSON = None,
-        tracer: Optional[Tracer] = None,
+        tracer: Optional[core_trace.Tracer] = None,
         span: Optional[core_span.RecordingContextSpan] = None,
-        span_ctx: Optional[core_otel.SpanContext] = None,
+        span_ctx: Optional[core_context.SpanContext] = None,
     ):
         self.calls: Dict[types_schema.CallID, record_schema.RecordAppCall] = {}
         """A record (in terms of its RecordAppCall) in process of being created.
@@ -654,7 +260,7 @@ class _RecordingContext:
         self.records: List[record_schema.Record] = []
         """Completed records."""
 
-        self.lock: Lock = Lock()
+        self.lock: threading.Lock = threading.Lock()
         """Lock blocking access to `records` when adding calls or
         finishing a record."""
 
@@ -667,7 +273,7 @@ class _RecordingContext:
         self.record_metadata = record_metadata
         """Metadata to attach to all records produced in this context."""
 
-        self.tracer: Optional[Tracer] = tracer
+        self.tracer: Optional[core_trace.Tracer] = tracer
         """EXPERIMENTAL(otel_tracing): OTEL-like tracer for recording.
         """
 
@@ -680,7 +286,7 @@ class _RecordingContext:
         """
 
     @property
-    def spans(self) -> Dict[core_otel.SpanContext, core_span.Span]:
+    def spans(self) -> Dict[core_context.SpanContext, core_otel.Span]:
         """EXPERIMENTAL(otel_tracing): Get the spans of the tracer in this context."""
 
         if self.tracer is None:
@@ -864,7 +470,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
 
     def __init__(
         self,
-        span_type: Type[core_span.Span] = core_span.LiveSpanCall,
+        span_type: Type[core_otel.Span] = core_span.LiveSpanCall,
         **kwargs: Dict[str, Any],
     ):
         # Do not enter the context managers in the superclass init as we need to
@@ -878,7 +484,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
 
         trace_root_span_context_managers: List[ContextManager] = []
 
-        current_span = trulens_tracer().current_span
+        current_span = core_trace.trulens_tracer().current_span
         record_map = {}
         started_apps: weakref.WeakSet[Any] = weakref.WeakSet()  # Any = App
 
@@ -905,7 +511,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
             )
             started_apps.add(app)
             trace_root_span_context_managers.append(
-                trulens_tracer().start_as_current_span(
+                core_trace.trulens_tracer().start_as_current_span(
                     cls=core_span.LiveRecordRoot,
                     name=truconv.SpanAttributes.RECORD_ROOT.SPAN_NAME_PREFIX
                     + app.app_name,  # otel Span field
