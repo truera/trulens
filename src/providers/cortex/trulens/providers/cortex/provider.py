@@ -1,4 +1,5 @@
 from typing import (
+    Any,
     ClassVar,
     Dict,
     Optional,
@@ -7,10 +8,11 @@ from typing import (
 
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
-from snowflake.snowpark import context
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
+
+_SNOWFLAKE_STORED_PROCEDURE_SESSION: Any = None
 
 
 class Cortex(
@@ -85,7 +87,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_session: Optional[Session] = None,
+        snowflake_session: Session,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -100,11 +102,10 @@ class Cortex(
             *args, **kwargs
         )
 
-        self_kwargs["snowflake_session"] = (
-            snowflake_session
-            if snowflake_session is not None
-            else context.get_active_session()
-        )
+        self_kwargs["snowflake_session"] = _SNOWFLAKE_STORED_PROCEDURE_SESSION
+
+        if _SNOWFLAKE_STORED_PROCEDURE_SESSION is None:
+            self_kwargs["snowflake_session"] = snowflake_session
 
         super().__init__(**self_kwargs)
 

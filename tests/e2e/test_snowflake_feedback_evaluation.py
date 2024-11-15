@@ -56,10 +56,17 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         ).on_input_output()
 
     def _start_evaluator_as_snowflake(self, session: core_session.TruSession):
-        session.start_evaluator(
-            run_location=feedback_schema.FeedbackRunLocation.SNOWFLAKE,
-            return_when_done=True,
-        )
+        try:
+            cortex_provider._SNOWFLAKE_STORED_PROCEDURE_SESSION = (
+                self._snowpark_session
+            )
+
+            session.start_evaluator(
+                run_location=feedback_schema.FeedbackRunLocation.SNOWFLAKE,
+                return_when_done=True,
+            )
+        finally:
+            cortex_provider._SNOWFLAKE_STORED_PROCEDURE_SESSION = None
 
     @mod_test.optional_test
     def test_local_deferred_mode(self) -> None:
