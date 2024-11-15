@@ -6,8 +6,6 @@ from snowflake.snowpark import Session
 
 
 def run(snowpark_session: Session):
-    # Ensure any Cortex provider uses the only Snowflake connection allowed in this stored procedure.
-
     # Run deferred feedback evaluator.
     connector = SnowflakeConnector(
         snowpark_session=snowpark_session,
