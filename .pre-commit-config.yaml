@@ -5,7 +5,11 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
-        exclude: src/dashboard/trulens/dashboard/.*/dist/.*
+        exclude: |
+          (?x)^(
+            src/dashboard/trulens/dashboard/.*/dist/.*|
+            poetry.lock
+          )$
       - id: check-yaml
         exclude: meta.yaml
       - id: destroyed-symlinks
@@ -39,3 +43,8 @@ repos:
 #        - flake8-type-checking
 #      exclude: ^tests
 #      args: [--ignore, "E501,W503,E704,E203,E402,E731,E266"]
+-   repo: https://github.com/python-poetry/poetry
+    rev: 1.8.3
+    hooks:
+      - id: poetry-check
+        name: trulens-poetry-check

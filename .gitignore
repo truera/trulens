@@ -69,3 +69,4 @@ data/
 
 # Build objects
 **/poetry.lock
+!poetry.lock
