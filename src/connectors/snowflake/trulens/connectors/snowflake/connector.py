@@ -83,8 +83,8 @@ class SnowflakeConnector(DBConnector):
             connection_parameters,
         )
         self.snowpark_session = snowpark_session
-        self.connection_parameters = connection_parameters
-        self.use_staged_packages = init_server_side_with_staged_packages
+        self.connection_parameters: Dict[str, str] = connection_parameters
+        self.use_staged_packages: bool = init_server_side_with_staged_packages
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
@@ -115,7 +115,7 @@ class SnowflakeConnector(DBConnector):
         self,
         snowpark_session: Session,
         connection_parameters: Dict[str, Optional[str]],
-    ) -> Dict[str, Optional[str]]:
+    ) -> Dict[str, str]:
         # Validate.
         snowpark_session_connection_parameters = {
             "account": snowpark_session.get_current_account(),
@@ -161,6 +161,9 @@ class SnowflakeConnector(DBConnector):
                 connection_parameters["password"]
             )
             self.password_known = True
+        snowpark_session_connection_parameters = {
+            k: v for k, v in snowpark_session_connection_parameters.items() if v
+        }
         return snowpark_session_connection_parameters
 
     def _init_with_snowpark_session(
@@ -205,8 +208,6 @@ class SnowflakeConnector(DBConnector):
         if init_sis_dashboard:
             self._set_up_sis_dashboard(
                 snowpark_session,
-                connection_parameters["database"],
-                connection_parameters["schema"],
                 connection_parameters["warehouse"],
                 init_server_side_with_staged_packages,
             )
@@ -279,23 +280,16 @@ class SnowflakeConnector(DBConnector):
 
     def _set_up_sis_dashboard(
         self,
-        session: Session,
-        database: Optional[str] = None,
-        schema: Optional[str] = None,
+        session: Optional[Session] = None,
         warehouse: Optional[str] = None,
         init_server_side_with_staged_packages: bool = False,
     ) -> None:
-        if not database or not schema or not warehouse:
-            raise ValueError(
-                "Must specify `database`, `schema`, and `warehouse` to set up SiS dashboard!"
-            )
-
         return SiSDashboardArtifacts(
-            session,
-            database,
-            schema,
-            warehouse,
-            init_server_side_with_staged_packages,
+            session or self.snowpark_session,
+            self.connection_parameters["database"],
+            self.connection_parameters["schema"],
+            warehouse or self.connection_parameters["warehouse"],
+            init_server_side_with_staged_packages or self.use_staged_packages,
         ).set_up_all()
 
     @staticmethod

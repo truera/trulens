@@ -326,6 +326,8 @@ def stop_dashboard(
 
 def run_dashboard_sis(
     session: Optional[core_session.TruSession] = None,
+    warehouse: Optional[str] = None,
+    init_server_side_with_staged_packages: bool = False,
 ):
     with import_utils.OptionalImports(
         messages=import_utils.format_import_errors(
@@ -343,10 +345,8 @@ def run_dashboard_sis(
     ):
         return session.connector._set_up_sis_dashboard(
             session.connector.snowpark_session,
-            database=session.connector.connection_parameters["database"],
-            schema=session.connector.connection_parameters["schema"],
-            warehouse=session.connector.connection_parameters["warehouse"],
-            init_server_side_with_staged_packages=session.connector.use_staged_packages,
+            warehouse=warehouse,
+            init_server_side_with_staged_packages=init_server_side_with_staged_packages,
         )
     else:
         raise ValueError(
