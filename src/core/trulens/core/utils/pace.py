@@ -9,6 +9,7 @@ from typing import ClassVar, Deque, Optional
 
 from pydantic import BaseModel
 from pydantic import Field
+from pydantic import PrivateAttr
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +62,10 @@ class Pace(BaseModel):
     last_mark: datetime = Field(default_factory=datetime.now)
     """Time of the last mark return."""
 
-    lock: Lock = Field(default_factory=Lock)
+    _lock: Lock = PrivateAttr(default_factory=Lock)
     """Thread Lock to ensure mark method details run only one at a time."""
 
-    alock: asyncio.Lock = Field(default_factory=asyncio.Lock)
+    _alock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
     """Asyncio Lock to ensure amark method details run only one at a time."""
 
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
@@ -116,7 +117,7 @@ class Pace(BaseModel):
         seconds since last mark returned.
         """
 
-        async with self.alock:
+        async with self._alock:
             while len(self.mark_expirations) >= self.max_marks:
                 delay = (
                     self.mark_expirations[0] - datetime.now()
@@ -163,7 +164,7 @@ per second in that period.
         seconds since last mark returned.
         """
 
-        with self.lock:
+        with self._lock:
             while len(self.mark_expirations) >= self.max_marks:
                 delay = (
                     self.mark_expirations[0] - datetime.now()
