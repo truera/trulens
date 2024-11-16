@@ -28,6 +28,7 @@ import weakref
 from opentelemetry.semconv.resource import ResourceAttributes
 import pydantic
 from trulens.core._utils.pycompat import TypeAlias
+from trulens.core._utils.pycompat import WeakSet
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
@@ -422,8 +423,8 @@ class LiveSpan(Span):
     otherwise.
     """
 
-    live_apps: weakref.WeakSet[core_app.App] = pydantic.Field(
-        default_factory=weakref.WeakSet, exclude=True
+    live_apps: WeakSet[core_app.App] = pydantic.Field(
+        default_factory=WeakSet, exclude=True
     )  # Any = App
     """Apps for which this span is recording trace info for.
 

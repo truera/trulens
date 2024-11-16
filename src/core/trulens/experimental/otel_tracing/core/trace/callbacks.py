@@ -25,6 +25,7 @@ from typing import (
 )
 import weakref
 
+from trulens.core._utils.pycompat import WeakSet
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import python as python_utils
@@ -459,7 +460,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
         # instrumented for.
 
         if not python_utils.safe_hasattr(wrapper, APPS):
-            apps: weakref.WeakSet[_WithInstrumentCallbacks] = weakref.WeakSet()
+            apps: WeakSet[_WithInstrumentCallbacks] = WeakSet()
             setattr(wrapper, APPS, apps)
         else:
             apps = python_utils.safe_getattr(wrapper, APPS)
@@ -486,7 +487,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
 
         current_span = core_trace.trulens_tracer().current_span
         record_map = {}
-        started_apps: weakref.WeakSet[Any] = weakref.WeakSet()  # Any = App
+        started_apps: WeakSet[Any] = WeakSet()  # Any = App
 
         # Logic here needs to determine whether to add new RecordRoot spans. Get
         # already tracking apps/records from current (soon to be parent) span.
@@ -519,7 +520,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
                     app_ids={
                         app.app_id for app in started_apps
                     },  # trulens Span field
-                    live_apps=weakref.WeakSet(started_apps),  # LiveSpan field
+                    live_apps=WeakSet(started_apps),  # LiveSpan field
                     live_app=weakref.ref(app),  # LiveRecordRoot field
                     record_id=new_record_id,  # LiveRecordRoot field
                 )
