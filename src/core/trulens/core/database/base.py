@@ -11,12 +11,12 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    Type,
     Union,
 )
 
 import pandas as pd
 import pydantic
-from trulens.core._utils.pycompat import TypeAlias  # import standard exception
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -103,13 +103,13 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     and default implementation of this interface.
     """
 
-    T: ClassVar[TypeAlias] = None
+    T: ClassVar[Type] = Any
     """EXPERIMENTAL(otel_tracing): Database "table" expression type."""
 
-    Q: ClassVar[TypeAlias] = None
+    Q: ClassVar[Type] = Any
     """EXPERIMENTAL(otel_tracing): Database "select" expression type."""
 
-    W: ClassVar[TypeAlias] = None
+    W: ClassVar[Type] = Any
     """EXPERIMENTAL(otel_tracing): Database "where" expression type.
 
     Must support ==, !-, `contains`, `and`, `or`, `not`.
