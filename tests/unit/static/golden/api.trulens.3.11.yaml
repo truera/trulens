@@ -216,6 +216,7 @@ trulens.core.database.base:
     DEFAULT_DATABASE_PREFIX: builtins.str
     DEFAULT_DATABASE_REDACT_KEYS: builtins.bool
     MULTI_CALL_NAME_DELIMITER: builtins.str
+    PageSelect: builtins.type
 trulens.core.database.base.DB:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -223,6 +224,9 @@ trulens.core.database.base.DB:
   - trulens.core.utils.text.WithIdentString
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    Q: typing._AnyMeta
+    T: typing._AnyMeta
+    W: typing._AnyMeta
     batch_insert_feedback: builtins.function
     batch_insert_ground_truth: builtins.function
     batch_insert_record: builtins.function
@@ -249,6 +253,20 @@ trulens.core.database.base.DB:
     reset_database: builtins.function
     table_prefix: builtins.str
     update_app_metadata: builtins.function
+trulens.core.database.base.PageSelect:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    after_created_timestamp: builtins.NoneType
+    after_index: builtins.NoneType
+    after_updated_timestamp: builtins.NoneType
+    before_created_timestamp: builtins.NoneType
+    before_index: builtins.NoneType
+    before_updated_timestamp: builtins.NoneType
+    limit: builtins.NoneType
+    offset: builtins.NoneType
+    shuffle: builtins.bool
 trulens.core.database.connector:
   __class__: builtins.module
   highs:
@@ -442,6 +460,7 @@ trulens.core.experimental:
   highs: {}
   lows:
     Feature: enum.EnumType
+    can_enable: builtins.function
 trulens.core.experimental.Feature:
   __bases__:
   - builtins.str
@@ -989,7 +1008,9 @@ trulens.core.schema.record.RecordAppCallMethod:
   - trulens.core.utils.serial.SerialModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    method: trulens.core.utils.pyschema.Method
+    function: typing.Optional[trulens.core.utils.pyschema.Function, builtins.NoneType]
+    function_or_method: builtins.property
+    method: typing.Optional[trulens.core.utils.pyschema.Method, builtins.NoneType]
     path: trulens.core.utils.serial.Lens
 trulens.core.schema.select:
   __class__: builtins.module
@@ -1024,7 +1045,178 @@ trulens.core.schema.types:
   __class__: builtins.module
   highs: {}
   lows:
+    DictAsJSON: builtins.type
+    IntEnumAsSmallInt: builtins.type
+    ListAsJSON: builtins.type
+    SpanID: builtins.type
+    SpanKind: builtins.type
+    SpanName: builtins.type
+    SpanStatusCode: builtins.type
+    SpanType: builtins.type
+    SpanTypes: builtins.type
+    StatusDescription: builtins.type
+    StrAsVarChar: builtins.type
+    StrEnumAsVarChar: builtins.type
+    TLensedAttributeValue: typing_extensions.TypeAliasType
+    Timestamp: builtins.type
+    TraceID: builtins.type
+    TraceRecordID: builtins.type
+    TraceRecordIDs: builtins.type
+    TypeInfo: builtins.type
+    flatten_lensed_attributes: builtins.function
+    flatten_value: builtins.function
+    lens_of_flat_key: builtins.function
     new_call_id: builtins.function
+trulens.core.schema.types.DictAsJSON:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: typing._GenericAlias
+    SQL_SCHEMA_TYPE: builtins.type
+    SQL_TYPE: typing._GenericAlias
+trulens.core.schema.types.IntEnumAsSmallInt:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    SQL_SCHEMA_TYPE: builtins.type
+    SQL_TYPE: builtins.type
+trulens.core.schema.types.ListAsJSON:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: typing._GenericAlias
+    SQL_SCHEMA_TYPE: builtins.type
+    SQL_TYPE: typing._GenericAlias
+trulens.core.schema.types.SpanID:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  __class__: builtins.type
+  attributes:
+    INVALID_OTEL: builtins.int
+    PY_TYPE: builtins.type
+    SQL_SCHEMA_TYPE: sqlalchemy.sql.sqltypes.BINARY
+    SQL_TYPE: builtins.type
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.SpanKind:
+  __bases__:
+  - trulens.core.schema.types.IntEnumAsSmallInt
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: enum.EnumType
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.SpanName:
+  __bases__:
+  - trulens.core.schema.types.StrAsVarChar
+  __class__: builtins.type
+  attributes: {}
+trulens.core.schema.types.SpanStatusCode:
+  __bases__:
+  - trulens.core.schema.types.IntEnumAsSmallInt
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: enum.EnumType
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.SpanType:
+  __bases__:
+  - trulens.core.schema.types.StrEnumAsVarChar
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: enum.EnumType
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.SpanTypes:
+  __bases__:
+  - trulens.core.schema.types.ListAsJSON
+  __class__: builtins.type
+  attributes:
+    ETI: builtins.type
+trulens.core.schema.types.StatusDescription:
+  __bases__:
+  - trulens.core.schema.types.StrAsVarChar
+  __class__: builtins.type
+  attributes: {}
+trulens.core.schema.types.StrAsVarChar:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  __class__: builtins.type
+  attributes:
+    NUM_BYTES: builtins.int
+    PY_TYPE: builtins.type
+    SQL_SCHEMA_TYPE: sqlalchemy.sql.sqltypes.VARCHAR
+    SQL_TYPE: builtins.type
+    TYPES: builtins.tuple
+    UNION_TYPE: builtins.type
+trulens.core.schema.types.StrEnumAsVarChar:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    SQL_SCHEMA_TYPE: sqlalchemy.sql.sqltypes.VARCHAR
+    SQL_TYPE: builtins.type
+trulens.core.schema.types.Timestamp:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  __class__: builtins.type
+  attributes:
+    PY_TYPE: builtins.type
+    SQL_SCHEMA_TYPE: builtins.type
+    SQL_TYPE: builtins.type
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.TraceID:
+  __bases__:
+  - trulens.core.schema.types.TypeInfo
+  __class__: builtins.type
+  attributes:
+    INVALID_OTEL: builtins.int
+    PY_TYPE: builtins.type
+    SQL_SCHEMA_TYPE: sqlalchemy.sql.sqltypes.BINARY
+    SQL_TYPE: builtins.type
+    TYPES: builtins.tuple
+    UNION_TYPE: typing._UnionGenericAlias
+trulens.core.schema.types.TraceRecordID:
+  __bases__:
+  - trulens.core.schema.types.StrAsVarChar
+  __class__: builtins.type
+  attributes: {}
+trulens.core.schema.types.TraceRecordIDs:
+  __bases__:
+  - trulens.core.schema.types.DictAsJSON
+  __class__: builtins.type
+  attributes:
+    ETI: builtins.type
+trulens.core.schema.types.TypeInfo:
+  __bases__:
+  - typing.Generic
+  __class__: builtins.type
+  attributes:
+    NUM_BITS: builtins.NoneType
+    OTEL_TYPE: builtins.NoneType
+    default_otel: builtins.classmethod
+    default_py: builtins.classmethod
+    default_sql: builtins.classmethod
+    otel: builtins.classmethod
+    otel_of_py: builtins.classmethod
+    otel_of_sql: builtins.classmethod
+    py: builtins.classmethod
+    py_of_otel: builtins.classmethod
+    py_of_sql: builtins.classmethod
+    rand_otel: builtins.classmethod
+    rand_py: builtins.classmethod
+    rand_sql: builtins.classmethod
+    sql: builtins.classmethod
+    sql_of_otel: builtins.classmethod
+    sql_of_py: builtins.classmethod
 trulens.core.session:
   __class__: builtins.module
   highs: {}
@@ -1250,12 +1442,14 @@ trulens.core.utils.pyschema:
   highs: {}
   lows:
     Bindings: pydantic._internal._model_construction.ModelMetaclass
+    BoundArguments: pydantic._internal._model_construction.ModelMetaclass
     Class: pydantic._internal._model_construction.ModelMetaclass
     Function: pydantic._internal._model_construction.ModelMetaclass
     FunctionOrMethod: pydantic._internal._model_construction.ModelMetaclass
     Method: pydantic._internal._model_construction.ModelMetaclass
     Module: pydantic._internal._model_construction.ModelMetaclass
     Obj: pydantic._internal._model_construction.ModelMetaclass
+    Signature: pydantic._internal._model_construction.ModelMetaclass
     WithClassInfo: pydantic._internal._model_construction.ModelMetaclass
     builtin_init_dummy: builtins.function
     clean_attributes: builtins.function
@@ -1271,6 +1465,13 @@ trulens.core.utils.pyschema.Bindings:
     args: typing.Tuple
     kwargs: typing.Dict[builtins.str, typing.Any]
     load: builtins.function
+    of_bound_arguments: builtins.staticmethod
+trulens.core.utils.pyschema.BoundArguments:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    arguments: typing.Dict[builtins.str, typing.Any]
     of_bound_arguments: builtins.staticmethod
 trulens.core.utils.pyschema.Class:
   __bases__:
@@ -1330,6 +1531,13 @@ trulens.core.utils.pyschema.Obj:
     init_bindings: typing.Optional[trulens.core.utils.pyschema.Bindings, builtins.NoneType]
     load: builtins.function
     of_object: builtins.staticmethod
+trulens.core.utils.pyschema.Signature:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    of_signature: builtins.staticmethod
+    sig_str: builtins.str
 trulens.core.utils.pyschema.WithClassInfo:
   __bases__:
   - pydantic.main.BaseModel
