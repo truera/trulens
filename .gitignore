@@ -70,3 +70,16 @@ data/
 # Build objects
 **/poetry.lock
 !poetry.lock
+src/apps/langchain/poetry.lock
+src/apps/llamaindex/poetry.lock
+src/apps/nemo/poetry.lock
+src/connectors/snowflake/poetry.lock
+src/core/poetry.lock
+src/dashboard/poetry.lock
+src/providers/bedrock/poetry.lock
+src/providers/cortex/poetry.lock
+src/providers/huggingface/poetry.lock
+src/providers/langchain/poetry.lock
+src/providers/litellm/poetry.lock
+src/providers/openai/poetry.lock
+src/trulens_eval/poetry.lock
