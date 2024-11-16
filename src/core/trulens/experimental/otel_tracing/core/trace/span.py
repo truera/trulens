@@ -8,6 +8,7 @@ import inspect
 import os
 import threading
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -34,6 +35,9 @@ from trulens.experimental.otel_tracing.core.trace import context as core_context
 from trulens.experimental.otel_tracing.core.trace import otel as core_otel
 from trulens.experimental.otel_tracing.core.trace import trace as core_trace
 from trulens.semconv import trace as truconv
+
+if TYPE_CHECKING:
+    from trulens.core import app as core_app
 
 T = TypeVar("T")
 R = TypeVar("R")  # callable return type
@@ -418,7 +422,7 @@ class LiveSpan(Span):
     otherwise.
     """
 
-    live_apps: weakref.WeakSet[Any] = pydantic.Field(
+    live_apps: weakref.WeakSet[core_app.App] = pydantic.Field(
         default_factory=weakref.WeakSet, exclude=True
     )  # Any = App
     """Apps for which this span is recording trace info for.
@@ -436,7 +440,7 @@ class RecordingContextSpan(LiveSpan):
     live_recording: Optional[Any] = pydantic.Field(None, exclude=True)
     # TODO: app.RecordingContext # circular import issues
 
-    live_app: Optional[weakref.ReferenceType[Any]] = pydantic.Field(
+    live_app: Optional[weakref.ReferenceType[core_app.App]] = pydantic.Field(
         None, exclude=True
     )  # Any = App
 
