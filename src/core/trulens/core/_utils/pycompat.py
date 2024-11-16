@@ -62,6 +62,11 @@ if sys.version_info >= (3, 9):
     """
 
     WeakSet = weakref.WeakSet
+    """Alias for [weakref.WeakSet][] .
+
+    In python < 3.9, a subclass of [weakref.WeakSet][] with
+    `Generic[A]` is used instead.
+    """
 
 else:
     # Fake classes which can have type args. In python earlier than 3.9, the
