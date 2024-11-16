@@ -16,7 +16,6 @@ from typing import (
     Sequence,
     Tuple,
     Type,
-    TypeAlias,
     Union,
 )
 import warnings
@@ -66,13 +65,13 @@ class SQLAlchemyDB(core_db.DB):
         arbitrary_types_allowed=True
     )
 
-    T: ClassVar[TypeAlias] = sa.sql.expression.TableClause
+    T: ClassVar[Type] = sa.sql.expression.TableClause
     """Table type for this database."""
 
-    Q: ClassVar[TypeAlias] = sa.sql.expression.Select
+    Q: ClassVar[Type] = sa.sql.expression.Select
     """Query type for this database."""
 
-    W: ClassVar[TypeAlias] = sa.sql.expression.Select
+    W: ClassVar[Type] = sa.sql.expression.Select
     """Where clause type for this database."""
 
     table_prefix: str = core_db.DEFAULT_DATABASE_PREFIX
