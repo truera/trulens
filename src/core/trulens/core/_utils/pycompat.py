@@ -18,7 +18,6 @@ import types
 from typing import (
     Any,
     Generic,
-    Type,
     TypeVar,
 )
 
@@ -26,6 +25,7 @@ import typing_extensions
 
 TypeAliasType = typing_extensions.TypeAliasType
 TypeAlias = typing_extensions.TypeAlias
+Type = typing_extensions.Type
 
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static

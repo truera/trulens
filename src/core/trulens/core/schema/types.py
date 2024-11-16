@@ -28,7 +28,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    Type,
     TypeVar,
     Union,
 )
@@ -44,6 +43,7 @@ from sqlalchemy import SMALLINT
 from sqlalchemy import TIMESTAMP
 from sqlalchemy import VARCHAR
 from trulens.core._utils.pycompat import NoneType  # import style exception
+from trulens.core._utils.pycompat import Type  # import style exception
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import serial as serial_utils
