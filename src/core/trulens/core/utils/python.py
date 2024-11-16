@@ -37,6 +37,7 @@ from typing import (
 import weakref
 
 import pydantic
+from trulens.core._utils.pycompat import ReferenceType
 
 T = TypeVar("T")
 
@@ -580,10 +581,10 @@ class WeakWrapper(Generic[T]):
     otherwise not weakly referenceable. The goal of this class is to generalize
     weakref.ref to work with any object."""
 
-    obj: weakref.ReferenceType[Union[_Wrap[T], T]]
+    obj: ReferenceType[Union[_Wrap[T], T]]
 
-    def __init__(self, obj: Union[weakref.ReferenceType[T], WeakWrapper[T], T]):
-        if isinstance(obj, weakref.ReferenceType):
+    def __init__(self, obj: Union[ReferenceType[T], WeakWrapper[T], T]):
+        if isinstance(obj, ReferenceType):
             self.obj = obj
 
         else:
@@ -1231,9 +1232,9 @@ class PydanticSingleton(metaclass=PydanticSingletonMeta):
 class InstanceRefMixin:
     """Mixin for classes that need to keep track of their instances."""
 
-    _instance_refs: Dict[
-        Type, List[weakref.ReferenceType[InstanceRefMixin]]
-    ] = defaultdict(list)
+    _instance_refs: Dict[Type, List[ReferenceType[InstanceRefMixin]]] = (
+        defaultdict(list)
+    )
 
     def __init__(self, register_instance: bool = True):
         if register_instance:

@@ -23,10 +23,10 @@ from typing import (
     Union,
 )
 import uuid
-import weakref
 
 from opentelemetry.semconv.resource import ResourceAttributes
 import pydantic
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core._utils.pycompat import TypeAlias
 from trulens.core._utils.pycompat import WeakSet
 from trulens.core.schema import base as base_schema
@@ -441,9 +441,9 @@ class RecordingContextSpan(LiveSpan):
     live_recording: Optional[Any] = pydantic.Field(None, exclude=True)
     # TODO: app.RecordingContext # circular import issues
 
-    live_app: Optional[weakref.ReferenceType[core_app.App]] = pydantic.Field(
+    live_app: Optional[ReferenceType[core_app.App]] = pydantic.Field(
         None, exclude=True
-    )  # Any = App
+    )
 
     def otel_resource_attributes(self) -> Dict[str, Any]:
         ret = super().otel_resource_attributes()
@@ -547,7 +547,7 @@ class LiveRecordRoot(LiveSpan):
     in their `live_apps` field.
     """
 
-    live_app: Optional[weakref.ReferenceType[core_app.App]] = pydantic.Field(
+    live_app: Optional[ReferenceType[core_app.App]] = pydantic.Field(
         None, exclude=True
     )
     """The app for which this is the root call.

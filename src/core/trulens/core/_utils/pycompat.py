@@ -68,6 +68,13 @@ if sys.version_info >= (3, 9):
     `Generic[A]` is used instead.
     """
 
+    ReferenceType = weakref.ReferenceType
+    """Alias for [weakref.ReferenceType][] .
+
+    In python < 3.9, a subclass of [weakref.ReferenceType][] with
+    `Generic[A]` is used instead.
+    """
+
 else:
     # Fake classes which can have type args. In python earlier than 3.9, the
     # classes imported above cannot have type args which is annoying for type
@@ -95,6 +102,13 @@ else:
         """Alias for [weakref.WeakSet][] .
 
         In python < 3.9, a subclass of [weakref.WeakSet][] with
+        `Generic[A]` is used instead.
+        """
+
+    class ReferenceType(Generic[A], weakref.ReferenceType):
+        """Alias for [weakref.ReferenceType][] .
+
+        In python < 3.9, a subclass of [weakref.ReferenceType][] with
         `Generic[A]` is used instead.
         """
 

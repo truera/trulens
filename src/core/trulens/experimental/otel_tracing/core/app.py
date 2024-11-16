@@ -26,10 +26,10 @@ from typing import (
     Literal,
     Optional,
 )
-import weakref
 
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.utils import python as python_utils
@@ -161,7 +161,7 @@ class _App(core_app.App):
             cls=core_span.RecordingContextSpan,
             name=truconv.SpanAttributes.RECORDING.SPAN_NAME_PREFIX
             + self.app_name,
-            live_app=weakref.ref(self),
+            live_app=ReferenceType(self),
         )
 
         recording_span: core_span.RecordingContextSpan = (

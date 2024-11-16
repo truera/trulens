@@ -429,7 +429,7 @@ class SpanID(TypeInfo[int, int, bytes]):
 
     @classmethod
     def sql_of_py(cls, py_value: int) -> bytes:
-        return py_value.to_bytes(cls.NUM_BITS // 8)
+        return py_value.to_bytes(cls.NUM_BITS // 8, byteorder="big")
 
     @classmethod
     def py_of_sql(cls, sql_value: bytes) -> int:
@@ -483,7 +483,7 @@ class TraceID(TypeInfo[int, int, bytes]):
 
     @classmethod
     def sql_of_py(cls, py_value: int) -> bytes:
-        return py_value.to_bytes(cls.NUM_BITS // 8)
+        return py_value.to_bytes(cls.NUM_BITS // 8, byteorder="big")
 
     @classmethod
     def py_of_sql(cls, sql_value: bytes) -> int:

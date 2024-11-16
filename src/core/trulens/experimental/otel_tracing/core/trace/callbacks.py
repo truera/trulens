@@ -23,8 +23,8 @@ from typing import (
     Type,
     TypeVar,
 )
-import weakref
 
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core._utils.pycompat import WeakSet
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
@@ -521,7 +521,7 @@ class AppTracingCallbacks(TracingCallbacks[R, S]):
                         app.app_id for app in started_apps
                     },  # trulens Span field
                     live_apps=WeakSet(started_apps),  # LiveSpan field
-                    live_app=weakref.ref(app),  # LiveRecordRoot field
+                    live_app=ReferenceType(app),  # LiveRecordRoot field
                     record_id=new_record_id,  # LiveRecordRoot field
                 )
             )
