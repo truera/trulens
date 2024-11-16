@@ -3,7 +3,8 @@ Modules in this folder depend on each other which makes it impossible to import
 them without circular import errors. Because of this, some imports need to be
 put into `if TYPE_CHECKING` blocks and classes that depend on those imports need
 to be "rebuilt" with `model_rebuild`. This only applies to `pydantic.BaseModel`
-classes.
+classes. Type hints on non-pydantic classes are never interpreted hence no need
+to "rebuild" those.
 """
 
 from . import context as core_context

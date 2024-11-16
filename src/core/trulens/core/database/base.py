@@ -11,12 +11,12 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TypeAlias,
     Union,
 )
 
 import pandas as pd
 import pydantic
+from trulens.core._utils.pycompat import TypeAlias  # import standard exception
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
