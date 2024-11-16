@@ -546,9 +546,9 @@ class LiveRecordRoot(LiveSpan):
     in their `live_apps` field.
     """
 
-    live_app: Optional[weakref.ReferenceType[Any]] = pydantic.Field(
+    live_app: Optional[weakref.ReferenceType[core_app.App]] = pydantic.Field(
         None, exclude=True
-    )  # Any = App
+    )
     """The app for which this is the root call.
 
     Value must be included in children's `live_apps` field.
