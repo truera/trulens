@@ -7954,7 +7954,6 @@ trulens_eval.utils.pace.Pace:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     last_mark: datetime.datetime
-    lock: _thread.lock
     mark: builtins.function
     mark_expirations: typing.Deque[datetime.datetime]
     marks_per_second: builtins.float
