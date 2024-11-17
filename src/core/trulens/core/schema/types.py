@@ -30,6 +30,7 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
+    Union,
 )
 import uuid
 
@@ -48,9 +49,6 @@ from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import serial as serial_utils
 from trulens.semconv import trace as truconv
-
-#    Union,
-from typing_extensions import Union
 
 RecordID: TypeAlias = str
 """Unique identifier for a record.
