@@ -18,6 +18,7 @@ from __future__ import annotations
 import datetime
 from enum import Enum
 import random
+import sys
 import time
 from typing import (
     Dict,
@@ -29,7 +30,6 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    Union,
 )
 import uuid
 
@@ -48,6 +48,9 @@ from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import serial as serial_utils
 from trulens.semconv import trace as truconv
+
+#    Union,
+from typing_extensions import Union
 
 RecordID: TypeAlias = str
 """Unique identifier for a record.
@@ -433,7 +436,7 @@ class SpanID(TypeInfo[int, int, bytes]):
 
     @classmethod
     def py_of_sql(cls, sql_value: bytes) -> int:
-        return int.from_bytes(sql_value)
+        return int.from_bytes(sql_value, byteorder="big")
 
 
 class TraceID(TypeInfo[int, int, bytes]):
@@ -487,7 +490,7 @@ class TraceID(TypeInfo[int, int, bytes]):
 
     @classmethod
     def py_of_sql(cls, sql_value: bytes) -> int:
-        return int.from_bytes(sql_value)
+        return int.from_bytes(sql_value, byteorder="big")
 
 
 class StrAsVarChar(TypeInfo[str, str, str]):
@@ -783,7 +786,12 @@ def lens_of_flat_key(key: str) -> serial_utils.Lens:
     return lens
 
 
-TLensedBaseType: TypeAlias = Union[str, int, float, bool]
+if sys.version_info >= (3, 9):
+    TLensedBaseType: TypeAlias = Union[str, int, float, bool]
+else:
+    # The above will produce errors on isinstance if used in python 3.8. This
+    # will work ok instead:
+    TLensedBaseType = (str, int, float, bool)
 """Type of base types in span attributes.
 
 !!! Warning
