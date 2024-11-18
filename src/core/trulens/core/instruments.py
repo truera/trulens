@@ -1242,5 +1242,5 @@ class instrument(AddInstruments):
         self.method(cls, name)
 
     def __call__(_self, *args, **kwargs):
-        # _self is used to avoid conflicts where `self` may be passed from the callee
+        # `_self` is used to avoid conflicts where `self` may be passed from the caller method
         return _self.func(*args, **kwargs)
