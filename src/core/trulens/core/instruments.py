@@ -1241,5 +1241,6 @@ class instrument(AddInstruments):
         # list of filters.
         self.method(cls, name)
 
-    def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+    def __call__(_self, *args, **kwargs):
+        # _self is used to avoid conflicts where `self` may be passed from the callee
+        return _self.func(*args, **kwargs)
