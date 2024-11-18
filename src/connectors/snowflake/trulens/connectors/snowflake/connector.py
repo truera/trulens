@@ -295,11 +295,13 @@ class SnowflakeConnector(DBConnector):
 
     def _set_up_sis_dashboard(
         self,
+        streamlit_name: str,
         session: Optional[Session] = None,
         warehouse: Optional[str] = None,
         init_server_side_with_staged_packages: bool = False,
     ) -> None:
         return SiSDashboardArtifacts(
+            streamlit_name,
             session or self.snowpark_session,
             self.connection_parameters["database"],
             self.connection_parameters["schema"],

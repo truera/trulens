@@ -10,7 +10,6 @@ from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import 
 from snowflake.snowpark import Session
 
 _STAGE_NAME = "TRULENS_DASHBOARD_STAGE"
-_STREAMLIT_NAME = "TRULENS_STREAMLIT_DASHBOARD"
 _STREAMLIT_ENTRYPOINT = "Leaderboard.py"
 
 _TRULENS_DEPENDENCIES = [
@@ -25,12 +24,14 @@ class SiSDashboardArtifacts:
 
     def __init__(
         self,
+        streamlit_name: str,
         session: Session,
         database: str,
         schema: str,
         warehouse: str,
         use_staged_packages: bool,
     ) -> None:
+        self._streamlit_name = streamlit_name
         self._session = session
         self._database = database
         self._schema = schema
@@ -118,11 +119,11 @@ class SiSDashboardArtifacts:
 
         return self._run_query(
             f"""
-            CREATE STREAMLIT IF NOT EXISTS {_STREAMLIT_NAME}
+            CREATE STREAMLIT IF NOT EXISTS {self._streamlit_name}
             FROM @{self._database}.{self._schema}.{_STAGE_NAME}
             MAIN_FILE = "{_STREAMLIT_ENTRYPOINT}"
             QUERY_WAREHOUSE = "{self._warehouse}"
-            TITLE = "{_STREAMLIT_NAME}"
+            TITLE = "{self._streamlit_name}"
             {imports}
             """
         )[0][0]

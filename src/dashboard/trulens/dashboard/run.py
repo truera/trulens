@@ -325,6 +325,7 @@ def stop_dashboard(
 
 
 def run_dashboard_sis(
+    streamlit_name: str = "TRULENS_DASHBOARD",
     session: Optional[core_session.TruSession] = None,
     warehouse: Optional[str] = None,
     init_server_side_with_staged_packages: bool = False,
@@ -344,6 +345,7 @@ def run_dashboard_sis(
         session.connector, trulens.connectors.snowflake.SnowflakeConnector
     ):
         return session.connector._set_up_sis_dashboard(
+            streamlit_name,
             session.connector.snowpark_session,
             warehouse=warehouse,
             init_server_side_with_staged_packages=init_server_side_with_staged_packages,
