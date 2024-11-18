@@ -40,20 +40,15 @@ env-tests:
 		jsondiff
 
 env-tests-required:
-	poetry install --only required
-	make env-tests
+	poetry install --only required \
+		&& make env-tests
 
-# Note: in the below, there are a few pinned langchain versions to make sure they don't have updated
-# to broken versions which are a few versions after the pinned ones.
 env-tests-optional: env env-tests
 	poetry run pip install \
-		langchain==0.2.11 \
-		langchain-core==0.2.24 \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		langchain-openai \
 		unstructured \
-		chromadb \
+		chromadb
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -235,6 +230,9 @@ clean:
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
+	else \
+		echo "Did not clean!"; \
+		exit 1; \
 	fi;
 
 ## Step: Build wheels

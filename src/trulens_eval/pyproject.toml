@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens_eval"
-version = "1.2.2"
+version = "1.2.6"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -27,18 +27,18 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9,!=3.9.7"
+python = "^3.8.1,!=3.9.7"
 # If any of these below has a new release, make a new trulens_eval release with
 # the latest trulens-* versions for users who are still installing
 # "trulens_eval".
-trulens = { version = "^1.0" }
-#trulens-core = { version = "^1.0.0" }
-#trulens-feedback = { version = "^1.0.0" }
-#trulens-dashboard = { version = "^1.0.0" }
+# trulens = { version = "^1.0" }
+trulens-core = { version = "^1.0.0" }
+trulens-feedback = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0" }
 
 [tool.poetry.group.dev.dependencies]
 # Is this needed?
-trulens = { path = "../..", develop = true }
-#trulens-core = { path = "../core", develop = true }
-#trulens-feedback = { path = "../feedback", develop = true }
-#trulens-dashboard = { path = "../dashboard", develop = true }
+# trulens = { path = "../..", develop = true }
+trulens-core = { path = "../core", develop = true }
+trulens-feedback = { path = "../feedback", develop = true }
+trulens-dashboard = { path = "../dashboard", develop = true }

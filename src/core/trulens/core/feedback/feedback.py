@@ -1073,7 +1073,7 @@ Feedback function signature:
                     status=feedback_schema.FeedbackResultStatus.FAILED,
                 )
             )
-            return
+            return None
 
         # Otherwise update based on what Feedback.run produced (could be success
         # or failure).

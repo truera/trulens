@@ -5,55 +5,63 @@ To do so, you first need to define the wrap the specified feedback
 implementation with `Feedback` and select what components of your app to
 evaluate. Optionally, you can also select an aggregation method.
 
-```python
-f_context_relevance = Feedback(openai.context_relevance)
-    .on_input()
-    .on(context)
-    .aggregate(numpy.min)
+!!! example
 
-# Implementation signature:
-# def context_relevance(self, question: str, statement: str) -> float:
-```
+    ```python
+    f_context_relevance = Feedback(openai.context_relevance)
+        .on_input()
+        .on(context)
+        .aggregate(numpy.mean)
+
+    # Implementation signature:
+    # def context_relevance(self, question: str, statement: str) -> float:
+    ```
 
 Once you've defined the feedback functions to run with your application, you can
 then pass them as a list to the instrumentation class of your choice, along with
 the app itself. These make up the `recorder`.
 
-```python
-from trulens.apps.langchain import TruChain
-# f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
-tru_recorder = TruChain(
-    chain,
-    app_name='ChatApplication',
-    app_version="Chain1",
-    feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
-```
+!!! example
+
+    ```python
+    from trulens.apps.langchain import TruChain
+    # f_lang_match, f_qa_relevance, f_context_relevance are feedback functions
+    tru_recorder = TruChain(
+        chain,
+        app_name='ChatApplication',
+        app_version="Chain1",
+        feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance])
+    ```
 
 Now that you've included the evaluations as a component of your `recorder`, they
 are able to be run with your application. By default, feedback functions will be
 run in the same process as the app. This is known as the feedback mode:
 `with_app_thread`.
 
-```python
-with tru_recorder as recording:
-    chain(""What is langchain?")
-```
+!!! example
+
+    ```python
+    with tru_recorder as recording:
+        chain(""What is langchain?")
+    ```
 
 In addition to `with_app_thread`, there are a number of other manners of running
 feedback functions. These are accessed by the feedback mode and included when
-you construct the recorder, like so:
+you construct the recorder.
 
-```python
-from trulens.core import FeedbackMode
+!!! example
 
-tru_recorder = TruChain(
-    chain,
-    app_name='ChatApplication',
-    app_version="Chain1",
-    feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
-    feedback_mode=FeedbackMode.DEFERRED
-    )
-```
+    ```python
+    from trulens.core import FeedbackMode
+
+    tru_recorder = TruChain(
+        chain,
+        app_name='ChatApplication',
+        app_version="Chain1",
+        feedbacks=[f_lang_match, f_qa_relevance, f_context_relevance],
+        feedback_mode=FeedbackMode.DEFERRED
+        )
+    ```
 
 Here are the different feedback modes you can use:
 

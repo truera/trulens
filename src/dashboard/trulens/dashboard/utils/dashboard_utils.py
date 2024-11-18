@@ -55,7 +55,7 @@ def add_query_param(param_name: str, param_value: str):
 
 
 def read_query_params_into_session_state(
-    page_name: str, transforms: Optional[dict[str, Callable[[str], Any]]] = None
+    page_name: str, transforms: Optional[Dict[str, Callable[[str], Any]]] = None
 ):
     """This method loads query params into the session state. This function should only be called only once when the page is first initialized.
 
@@ -340,7 +340,7 @@ def _handle_reset_filters(
 
 def render_app_version_filters(
     app_name: str,
-    other_query_params_kv: Optional[dict[str, str]] = None,
+    other_query_params_kv: Optional[Dict[str, str]] = None,
     page_name_keys: Optional[List[str]] = None,
 ):
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)

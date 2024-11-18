@@ -5,6 +5,9 @@ Tests for a Snowflake connection.
 from unittest import main
 import uuid
 
+import snowflake.connector
+from snowflake.snowpark import Session
+from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.dashboard import run_dashboard
 from trulens.dashboard import stop_dashboard
 
@@ -40,7 +43,7 @@ class TestSnowflakeConnection(SnowflakeTestCase):
         schema_name += str(uuid.uuid4()).replace("-", "_")
         schema_name = schema_name.upper()
         self.assertNotIn(schema_name, self.list_schemas())
-        self._snowflake_schemas_to_delete.append(schema_name)
+        self._snowflake_schemas_to_delete.add(schema_name)
         self.run_query(f"CREATE SCHEMA {schema_name}")
         self.run_query(
             f"CREATE TABLE {self._database}.{schema_name}.MY_TABLE (TEST_COLUMN NUMBER)"
@@ -67,6 +70,37 @@ class TestSnowflakeConnection(SnowflakeTestCase):
                 stop_dashboard(session)
             except Exception:
                 pass
+
+    @optional_test
+    def test_paramstyle_pyformat(self):
+        default_paramstyle = snowflake.connector.paramstyle
+        try:
+            # pyformat paramstyle should fail fast.
+            snowflake.connector.paramstyle = "pyformat"
+            schema_name = self.create_and_use_schema(
+                "test_paramstyle_pyformat", append_uuid=True
+            )
+            snowflake_connection = snowflake.connector.connect(
+                **self._snowflake_connection_parameters, schema=schema_name
+            )
+            snowpark_session = Session.builder.configs({
+                "connection": snowflake_connection
+            }).create()
+            with self.assertRaisesRegex(
+                ValueError, "The Snowpark session must have paramstyle 'qmark'!"
+            ):
+                SnowflakeConnector(snowpark_session=snowpark_session)
+            # qmark paramstyle should be fine.
+            snowflake.connector.paramstyle = "qmark"
+            snowflake_connection = snowflake.connector.connect(
+                **self._snowflake_connection_parameters, schema=schema_name
+            )
+            snowpark_session = Session.builder.configs({
+                "connection": snowflake_connection
+            }).create()
+            SnowflakeConnector(snowpark_session=snowpark_session)
+        finally:
+            snowflake.connector.paramstyle = default_paramstyle
 
 
 if __name__ == "__main__":

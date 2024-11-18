@@ -66,3 +66,7 @@ htmlcov/
 # testing: parts of old trulens_eval package for backwards compatibility testing
 _trulens_eval/
 data/
+
+# Build objects
+**/poetry.lock
+!poetry.lock

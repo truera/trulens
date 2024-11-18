@@ -1,21 +1,22 @@
 # 🦴 Anatomy of Feedback Functions
 
 The [Feedback][trulens.core.Feedback] class contains the
-starting point for feedback function specification and evaluation. A typical
-use-case looks like this:
+starting point for feedback function specification and evaluation.
 
-```python
-# Context relevance between question and each context chunk.
-f_context_relevance = (
-    Feedback(
-        provider.context_relevance_with_cot_reasons,
-        name="Context Relevance"
+!!! example
+
+    ```python
+    # Context relevance between question and each context chunk.
+    f_context_relevance = (
+        Feedback(
+            provider.context_relevance_with_cot_reasons,
+            name="Context Relevance"
+        )
+        .on(Select.RecordCalls.retrieve.args.query)
+        .on(Select.RecordCalls.retrieve.rets)
+        .aggregate(numpy.mean)
     )
-    .on(Select.RecordCalls.retrieve.args.query)
-    .on(Select.RecordCalls.retrieve.rets)
-    .aggregate(numpy.mean)
-)
-```
+    ```
 
 The components of this specifications are:
 
@@ -37,9 +38,11 @@ Feedback implementations are simple callables that can be run
 on any arguments matching their signatures. In the example, the implementation
 has the following signature:
 
-```python
-def context_relevance(self, prompt: str, context: str) -> float:
-```
+!!! example
+
+    ```python
+    def context_relevance(self, prompt: str, context: str) -> float:
+    ```
 
 That is,
 [context_relevance][trulens.providers.openai.provider.OpenAI.context_relevance]

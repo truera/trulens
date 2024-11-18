@@ -155,6 +155,20 @@ class SnowflakeConnector(DBConnector):
             self.password_known = True
         return snowpark_session_connection_parameters
 
+    @staticmethod
+    def _validate_snowpark_session_paramstyle(
+        snowpark_session: Session,
+    ) -> None:
+        if snowpark_session.connection._paramstyle == "pyformat":
+            # If this is the case, sql executions with bindings will fail later
+            # on so we fail fast here.
+            raise ValueError(
+                "The Snowpark session must have paramstyle 'qmark'! To ensure"
+                " this, during `snowflake.connector.connect` pass in"
+                " `paramstyle='qmark'` or set"
+                " `snowflake.connector.paramstyle = 'qmark'` beforehand."
+            )
+
     def _init_with_snowpark_session(
         self,
         snowpark_session: Session,
@@ -166,6 +180,7 @@ class SnowflakeConnector(DBConnector):
         database_check_revision: bool,
         connection_parameters: Dict[str, str],
     ):
+        self._validate_snowpark_session_paramstyle(snowpark_session)
         database_args = self._set_up_database_args(
             database_args,
             snowpark_session,
@@ -197,21 +212,25 @@ class SnowflakeConnector(DBConnector):
         # Add "trulens_workspace_version" tag to the current schema
         TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
 
-        self._run_query(
-            snowpark_session,
-            f"CREATE TAG IF NOT EXISTS {TRULENS_WORKSPACE_VERSION_TAG}",
-        )
-        res = self._run_query(
-            snowpark_session,
-            "ALTER SCHEMA {}.{} SET TAG {}='{}'".format(
-                connection_parameters["database"],
-                connection_parameters["schema"],
-                TRULENS_WORKSPACE_VERSION_TAG,
-                self.db.get_db_revision(),
-            ),
-        )
-
-        print(f"Set TruLens workspace version tag: {res}")
+        try:
+            self._run_query(
+                snowpark_session,
+                f"CREATE TAG IF NOT EXISTS {TRULENS_WORKSPACE_VERSION_TAG}",
+            )
+            res = self._run_query(
+                snowpark_session,
+                "ALTER SCHEMA {}.{} SET TAG {}='{}'".format(
+                    connection_parameters["database"],
+                    connection_parameters["schema"],
+                    TRULENS_WORKSPACE_VERSION_TAG,
+                    self.db.get_db_revision(),
+                ),
+            )
+            print(f"Set TruLens workspace version tag: {res}")
+        except Exception as e:
+            print(
+                f"Error setting TruLens workspace version tag: {e}, check if you have enterprise version of Snowflake."
+            )
 
     def _set_up_database_args(
         self,

@@ -119,13 +119,15 @@ class BlockingSet(set, Generic[T]):
                 and empty, will return None.
         """
 
-        with self.read_lock:
+        if self.read_lock.acquire(blocking=blocking):
             if not blocking and not self.event_nonempty.is_set():
+                self.read_lock.release()
                 return None
 
             self.event_nonempty.wait()
 
             if self.event_shutdown.is_set():
+                self.read_lock.release()
                 raise StopIteration("Set is shutdown.")
 
             item = next(iter(self.content))
@@ -133,6 +135,13 @@ class BlockingSet(set, Generic[T]):
 
             if len(self.content) == 0:
                 self.event_nonempty.clear()
+
+            self.read_lock.release()
+
+        else:
+            # Acquire was used with blocking=False and it would have
+            # blocked. Want the non-blocking behaviour to return None in such cases.
+            return None
 
         return item
 

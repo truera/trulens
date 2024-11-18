@@ -12,10 +12,12 @@ To evaluate the inner components of an application, we first need access to them
 
 As a reminder, a typical feedback definition looks like this:
 
-```python
-f_lang_match = Feedback(hugs.language_match)
-    .on_input_output()
-```
+!!! example
+
+    ```python
+    f_lang_match = Feedback(hugs.language_match)
+        .on_input_output()
+    ```
 
 `on_input_output` is one of many available shortcuts to simplify the selection
 of components for evaluation. We'll cover that in a later section.
