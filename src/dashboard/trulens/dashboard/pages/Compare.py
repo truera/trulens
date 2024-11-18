@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
+from trulens.core.utils import imports as import_utils
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -26,6 +27,15 @@ from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import diff_cell_css
 from trulens.dashboard.ux.styles import diff_cell_rules
 from trulens.dashboard.ux.styles import radio_button_css
+
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "streamlit-aggrid",
+        purpose="Rendering the leaderboard grid using Aggrid",
+    )
+):
+    import st_aggrid
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
@@ -322,8 +332,6 @@ def _build_grid_options(
     diff_cols: List[str],
     record_id_cols: List[str],
 ):
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50, flex=1)
 
     gb.configure_column(
@@ -372,19 +380,17 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled():
+    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
-        from st_aggrid import AgGrid
-
         columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
         height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
-        event = AgGrid(
+        event = st_aggrid.AgGrid(
             df,
             # key=grid_key,
             height=height,

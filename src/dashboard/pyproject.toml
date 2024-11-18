@@ -47,7 +47,6 @@ streamlit-pills = { version = ">=0.3", optional = true }
 [tool.poetry.extras]
 full = [
   "streamlit-aggrid",
-  "streamlit-pills",
 ]
 
 [tool.poetry.group.dev.dependencies]

@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 import streamlit as st
 from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
+from trulens.core.utils import imports as import_utils
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as Compare_page
@@ -18,6 +19,15 @@ from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
+
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "streamlit-aggrid",
+        purpose="Rendering the leaderboard grid using Aggrid",
+    )
+):
+    import st_aggrid
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
@@ -103,8 +113,6 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -203,14 +211,12 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled():
+    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
         event = st.dataframe(
             df, selection_mode="multi-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
-        from st_aggrid import AgGrid
-
         columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
         if dashboard_constants.PINNED_COL_NAME in df:
@@ -221,7 +227,7 @@ def _render_grid(
             )
 
         height = 1000 if len(df) > 20 else 45 * len(df) + 100
-        event = AgGrid(
+        event = st_aggrid.AgGrid(
             df,
             key=grid_key,
             height=height,

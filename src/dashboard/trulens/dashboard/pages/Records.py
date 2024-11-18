@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
+from trulens.core.utils import imports as import_utils
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -27,6 +28,17 @@ from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import radio_button_css
+
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "streamlit-aggrid",
+        purpose="Rendering the leaderboard grid using Aggrid",
+    )
+):
+    import st_aggrid
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+    from st_aggrid.shared import ColumnsAutoSizeMode
+    from st_aggrid.shared import DataReturnMode
 
 
 def init_page_state():
@@ -192,8 +204,6 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -370,19 +380,15 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    if is_sis_compatibility_enabled():
+    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
-        from st_aggrid import AgGrid
-        from st_aggrid.shared import ColumnsAutoSizeMode
-        from st_aggrid.shared import DataReturnMode
-
         height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
-        event = AgGrid(
+        event = st_aggrid.AgGrid(
             df,
             # key="records_data",
             height=height,

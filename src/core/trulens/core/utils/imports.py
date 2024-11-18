@@ -366,7 +366,7 @@ class Dummy(type):
         While dummies can be used as types, they return false to all `isinstance`
         and `issubclass` checks. Further, the use of a dummy in subclassing
         produces unreliable results with some of the debugging information such
-        as `original_exception` may be inaccassible.
+        as `original_exception` may be inaccessible.
     """
 
     def __str__(self) -> str:

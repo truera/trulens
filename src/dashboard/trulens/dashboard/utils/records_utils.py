@@ -7,7 +7,6 @@ import streamlit as st
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import highlight
-from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.ux.styles import CATEGORY
 from trulens.dashboard.ux.styles import default_direction
 
@@ -153,17 +152,13 @@ def _render_feedback_pills(
     if format_func:
         kwargs["format_func"] = format_func
 
-    if is_sis_compatibility_enabled():
-        return st.selectbox(**kwargs, index=None)
-    elif hasattr(st, "pills"):
+    if hasattr(st, "pills"):
         # Use native streamlit pills, released in 1.40.0
         return st.pills(
             **kwargs,
         )
     else:
-        from streamlit_pills import pills
-
-        return pills(**kwargs, index=None)
+        return st.selectbox(**kwargs, index=None)
 
 
 def _render_feedback_call(
