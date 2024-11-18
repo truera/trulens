@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+import inspect
 from inspect import cleandoc
 from string import Formatter
-from typing import ClassVar, Dict, List, Optional, Tuple, Union
+from typing import Callable, ClassVar, Dict, List, Optional, Tuple, Union
 
 import pydantic
 from trulens.core.utils import python as python_utils
@@ -176,6 +177,84 @@ class OutputSpace(Enum):
     # note: we will be deprecating the 0 to 10 output space in favor of the likert-0-3 or binary output space in the near release
     LIKERT_0_10 = (0, 10)
     BINARY = (0, 1)
+
+
+class FewShotExamples:
+    def __init__(self, examples: str):
+        self.examples = examples
+
+    """
+    Create few-shot examples to be used to customize the feedback function's behavior.
+
+    !!! example "Example with feedback function that requires a single string argument"
+        ```python
+        from trulens.feedback.v2.feedback import FewShotExamples
+        from trulens.providers.openai import OpenAI
+
+        provider = OpenAI(model_engine="gpt-4")
+
+        fewshot_sentiment_examples_list = [
+            ("I am having trouble accessing my account. Can you help me reset my password?", 1),
+            ("I love this product! It's amazing and works perfectly.", 3),
+            ("This is the worst experience I've ever had. Completely dissatisfied.", 0)
+        ]
+
+        fewshot_sentiment_examples = FewShotExamples.from_list(provider.sentiment, fewshot_sentiment_examples_list)
+
+        ```
+
+    !!! example "Example with feedback function that requires multiple string arguments"
+        ```python
+        from trulens.feedback.v2.feedback import FewShotExamples
+        from trulens.providers.openai import OpenAI
+
+        fewshot_relevance_examples_list = [
+            ("I am having trouble accessing my account. Can you help me reset my password?", "Go to resetmypassword.com and enter the authentication code to get a new password", 3),
+            ("I love this product! It's amazing and works perfectly.", "Very glad to hear it.", 3),
+            ("This is the worst experience I've ever had. Completely dissatisfied.", "Onomatopeia", 0)
+        ]
+
+        fewshot_relevance_examples = FewShotExamples.from_list(provider.relevance, fewshot_relevance_examples_list)
+        ```
+    """
+
+    @classmethod
+    def from_list(
+        cls,
+        feedback_function: Callable,
+        examples_list: List[
+            Union[
+                Tuple[str, float],
+                Tuple[str, str, float],
+                Tuple[str, str, str, float],
+            ]
+        ],
+    ) -> "FewShotExamples":
+        examples = ["Use the following examples to guide scoring: \n"]
+        feedback_args = [
+            (name, param)
+            for name, param in inspect.signature(
+                feedback_function
+            ).parameters.items()
+            if param.annotation is str and param.default == param.empty
+        ]
+        for idx, example in enumerate(examples_list, start=1):
+            if (len(example) - 1) != len(feedback_args):
+                raise ValueError(
+                    "Mismatch between number of arguments in feedback function and example length"
+                )
+
+            example_str = [f"Example {idx}:"]
+            for i, (arg_name, _) in enumerate(feedback_args):
+                example_str.append(f"{arg_name}: {example[i]}")
+
+            examples.append("\n".join(example_str))
+            examples.append(f"Score: {example[-1]}\n")
+
+        examples.append("")
+
+        examples.append("-----")
+        return cls(examples="\n".join(examples))
 
 
 class EvalSchema(pydantic.BaseModel):
