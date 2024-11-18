@@ -84,9 +84,6 @@ class SiSDashboardArtifacts:
             os.path.join(data_directory, "environment.yml")
         )
 
-        # Stage the utils file
-        self._stage_file(os.path.join(data_directory, "utils.py"))
-
         # Stage the main dashboard file
         entrypoint_path = os.path.join(data_directory, _STREAMLIT_ENTRYPOINT)
         if not os.path.exists(entrypoint_path) or not os.path.isfile(
