@@ -1,13 +1,11 @@
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import session as core_session
 from trulens.core.schema import feedback as feedback_schema
-from trulens.providers.cortex import provider as cortex_provider
 
 from snowflake.snowpark import Session
 
 
 def run(snowpark_session: Session):
-    cortex_provider._SNOWFLAKE_STORED_PROCEDURE_SESSION = snowpark_session
     # Run deferred feedback evaluator.
     connector = SnowflakeConnector(
         snowpark_session=snowpark_session,
