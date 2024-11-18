@@ -1,3 +1,5 @@
+"""This module contains utility functions for rendering the dashboard on Streamlit in Snowflake."""
+
 from snowflake.snowpark.context import get_active_session
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import TruSession
