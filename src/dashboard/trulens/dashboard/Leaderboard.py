@@ -221,11 +221,11 @@ def _render_grid(
         column_order = [col for col in column_order if col in df.columns]
         event = st.dataframe(
             df[column_order],
-            use_container_width=True,
             column_order=column_order,
             selection_mode="multi-row",
             on_select="rerun",
             hide_index=True,
+            use_container_width=True,
         )
         return df.iloc[event.selection["rows"]]
     else:
