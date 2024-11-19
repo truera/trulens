@@ -28,26 +28,29 @@ def set_page_config(page_title: Optional[str] = None):
         layout="wide",
     )
 
-    if st.get_option("theme.base") == "dark":
-        logo = str(
-            import_utils.static_resource(
-                "dashboard", "ux/trulens_logo_light.svg"
-            )
-        )
-        logo_small = str(
-            import_utils.static_resource(
-                "dashboard", "ux/trulens_squid_light.svg"
-            )
-        )
+    if is_sis_compatibility_enabled():
+        pass
     else:
-        logo = str(
-            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-        )
-        logo_small = str(
-            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
-        )
-
-    if not is_sis_compatibility_enabled():
+        if st.get_option("theme.base") == "dark":
+            logo = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_logo_light.svg"
+                )
+            )
+            logo_small = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_squid_light.svg"
+                )
+            )
+        else:
+            logo = str(
+                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+            )
+            logo_small = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_squid.svg"
+                )
+            )
         st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
@@ -167,6 +170,11 @@ def get_records_and_feedback(
             records_df[dashboard_constants.HIDE_RECORD_COL_NAME] == "True"
         ).astype(bool)
     records_df = records_df.replace({float("nan"): None})
+
+    feedback_col_names = [
+        col for col in feedback_col_names if col in records_df.columns
+    ]
+
     return records_df, feedback_col_names
 
 

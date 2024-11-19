@@ -1240,7 +1240,7 @@ class AppsExtractor:
                         ] = feedback_usage["cost"]
 
                     if (
-                        _res.multi_result is not None
+                        _res.multi_result not in [None, "null", "None"]
                         and (multi_result := json.loads(_res.multi_result))
                         is not None
                     ):

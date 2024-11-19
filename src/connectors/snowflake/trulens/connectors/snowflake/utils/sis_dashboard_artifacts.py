@@ -7,6 +7,7 @@ from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import 
     _STAGE_NAME as _PKG_STAGE_NAME,
 )
 
+from snowflake.connector.errors import ProgrammingError
 from snowflake.snowpark import Session
 
 _STAGE_NAME = "TRULENS_DASHBOARD_STAGE"
@@ -113,14 +114,25 @@ class SiSDashboardArtifacts:
             """
         else:
             imports = ""
-
-        return self._run_query(
-            f"""
-            CREATE STREAMLIT IF NOT EXISTS {self._streamlit_name}
-            FROM @{self._database}.{self._schema}.{_STAGE_NAME}
-            MAIN_FILE = "{_STREAMLIT_ENTRYPOINT}"
-            QUERY_WAREHOUSE = "{self._warehouse}"
-            TITLE = "{self._streamlit_name}"
-            {imports}
-            """
-        )[0][0]
+        try:
+            return self._run_query(
+                f"""
+                CREATE STREAMLIT IF NOT EXISTS {self._streamlit_name}
+                FROM @{self._database}.{self._schema}.{_STAGE_NAME}
+                MAIN_FILE = "{_STREAMLIT_ENTRYPOINT}"
+                QUERY_WAREHOUSE = "{self._warehouse}"
+                TITLE = "{self._streamlit_name}"
+                {imports}
+                """
+            )[0][0]
+        except ProgrammingError:
+            return self._run_query(
+                f"""
+                CREATE STREAMLIT IF NOT EXISTS {self._streamlit_name}
+                ROOT_LOCATION=@{self._database}.{self._schema}.{_STAGE_NAME}
+                MAIN_FILE = "{_STREAMLIT_ENTRYPOINT}"
+                QUERY_WAREHOUSE = "{self._warehouse}"
+                TITLE = "{self._streamlit_name}"
+                {imports}
+                """
+            )[0][0]

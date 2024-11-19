@@ -71,6 +71,10 @@ class SnowflakeConnector(DBConnector):
                 )
             )
 
+        self.snowpark_session = snowpark_session
+        self.connection_parameters: Dict[str, str] = connection_parameters
+        self.use_staged_packages: bool = init_server_side_with_staged_packages
+
         self._init_with_snowpark_session(
             snowpark_session,
             init_server_side,
@@ -82,9 +86,6 @@ class SnowflakeConnector(DBConnector):
             database_check_revision,
             connection_parameters,
         )
-        self.snowpark_session = snowpark_session
-        self.connection_parameters: Dict[str, str] = connection_parameters
-        self.use_staged_packages: bool = init_server_side_with_staged_packages
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]
@@ -222,9 +223,9 @@ class SnowflakeConnector(DBConnector):
             ).set_up_all()
         if init_sis_dashboard:
             self._set_up_sis_dashboard(
-                snowpark_session,
-                connection_parameters["warehouse"],
-                init_server_side_with_staged_packages,
+                session=snowpark_session,
+                warehouse=connection_parameters["warehouse"],
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
             )
 
         # Add "trulens_workspace_version" tag to the current schema
@@ -295,7 +296,7 @@ class SnowflakeConnector(DBConnector):
 
     def _set_up_sis_dashboard(
         self,
-        streamlit_name: str,
+        streamlit_name: str = "TRULENS_DASHBOARD",
         session: Optional[Session] = None,
         warehouse: Optional[str] = None,
         init_server_side_with_staged_packages: bool = False,

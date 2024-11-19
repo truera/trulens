@@ -20,15 +20,6 @@ from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "streamlit-aggrid",
-        purpose="Rendering the leaderboard grid using Aggrid",
-    )
-):
-    import st_aggrid
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-
 APP_COLS = ["app_version", "app_id", "app_name"]
 APP_AGG_COLS = ["Records", "Average Latency"]
 
@@ -79,7 +70,8 @@ def _preprocess_df(
         "tags": ("tags", lambda x: ",".join(x.drop_duplicates())),
     }
     for col in feedback_col_names:
-        agg_dict[col] = (col, "mean")
+        if col in records_df:
+            agg_dict[col] = (col, "mean")
 
     app_agg_df: pd.DataFrame = (
         records_df.groupby(
@@ -113,6 +105,14 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    with import_utils.OptionalImports(
+        messages=import_utils.format_import_errors(
+            "streamlit-aggrid",
+            purpose="Rendering the leaderboard grid using Aggrid",
+        )
+    ):
+        from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -211,12 +211,20 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="multi-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
+        with import_utils.OptionalImports(
+            messages=import_utils.format_import_errors(
+                "streamlit-aggrid",
+                purpose="Rendering the leaderboard grid using Aggrid",
+            )
+        ):
+            import st_aggrid
+
         columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
         if dashboard_constants.PINNED_COL_NAME in df:

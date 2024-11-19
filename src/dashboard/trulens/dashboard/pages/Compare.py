@@ -28,15 +28,6 @@ from trulens.dashboard.ux.styles import diff_cell_css
 from trulens.dashboard.ux.styles import diff_cell_rules
 from trulens.dashboard.ux.styles import radio_button_css
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "streamlit-aggrid",
-        purpose="Rendering the leaderboard grid using Aggrid",
-    )
-):
-    import st_aggrid
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-
 MAX_COMPARATORS = 5
 MIN_COMPARATORS = 2
 DEFAULT_COMPARATORS = MIN_COMPARATORS
@@ -332,6 +323,14 @@ def _build_grid_options(
     diff_cols: List[str],
     record_id_cols: List[str],
 ):
+    with import_utils.OptionalImports(
+        messages=import_utils.format_import_errors(
+            "streamlit-aggrid",
+            purpose="Rendering the leaderboard grid using Aggrid",
+        )
+    ):
+        from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50, flex=1)
 
     gb.configure_column(
@@ -380,12 +379,20 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
+        with import_utils.OptionalImports(
+            messages=import_utils.format_import_errors(
+                "streamlit-aggrid",
+                purpose="Rendering the leaderboard grid using Aggrid",
+            )
+        ):
+            import st_aggrid
+
         columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
 
         height = 1000 if len(df) > 20 else 45 * len(df) + 100

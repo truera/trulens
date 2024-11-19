@@ -29,17 +29,6 @@ from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
 from trulens.dashboard.ux.styles import radio_button_css
 
-with import_utils.OptionalImports(
-    messages=import_utils.format_import_errors(
-        "streamlit-aggrid",
-        purpose="Rendering the leaderboard grid using Aggrid",
-    )
-):
-    import st_aggrid
-    from st_aggrid.grid_options_builder import GridOptionsBuilder
-    from st_aggrid.shared import ColumnsAutoSizeMode
-    from st_aggrid.shared import DataReturnMode
-
 
 def init_page_state():
     if st.session_state.get(f"{page_name}.initialized", False):
@@ -204,6 +193,14 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    with import_utils.OptionalImports(
+        messages=import_utils.format_import_errors(
+            "streamlit-aggrid",
+            purpose="Rendering the leaderboard grid using Aggrid",
+        )
+    ):
+        from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -380,12 +377,22 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    if is_sis_compatibility_enabled() or import_utils.is_dummy(st_aggrid):
+    if is_sis_compatibility_enabled():
         event = st.dataframe(
             df, selection_mode="single-row", on_select="rerun", hide_index=True
         )
         return df.iloc[event.selection["rows"]]
     else:
+        with import_utils.OptionalImports(
+            messages=import_utils.format_import_errors(
+                "streamlit-aggrid",
+                purpose="Rendering the leaderboard grid using Aggrid",
+            )
+        ):
+            import st_aggrid
+            from st_aggrid.shared import ColumnsAutoSizeMode
+            from st_aggrid.shared import DataReturnMode
+
         height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
         event = st_aggrid.AgGrid(
@@ -442,8 +449,10 @@ def _render_grid_tab(
 
 
 def _reset_app_ids():
-    del st.session_state[f"{page_name}.app_ids"]
-    st.query_params.pop("app_ids")
+    if f"{page_name}.app_ids" in st.session_state:
+        del st.session_state[f"{page_name}.app_ids"]
+    if "app_ids" in st.query_params:
+        st.query_params.pop("app_ids")
 
 
 def _render_app_id_args_filter(versions_df: pd.DataFrame):
@@ -475,7 +484,7 @@ def _handle_record_query_change():
     value = st.session_state.get(f"{page_name}.record_search", None)
     if value:
         st.query_params["record_search"] = value
-    else:
+    elif "record_search" in st.query_params:
         st.query_params.pop("record_search")
 
 
