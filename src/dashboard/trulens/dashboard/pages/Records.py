@@ -378,8 +378,29 @@ def _render_grid(
     version_metadata_col_names: Sequence[str],
 ):
     if is_sis_compatibility_enabled():
+        column_order = [
+            "app_version",
+            "input",
+            "output",
+            "record_metadata",
+            "total_tokens",
+            "total_cost",
+            "cost_currency",
+            "latency",
+            "tags",
+            "ts",
+            *version_metadata_col_names,
+            *feedback_col_names,
+            "record_json",
+        ]
+        column_order = [col for col in column_order if col in df.columns]
         event = st.dataframe(
-            df, selection_mode="single-row", on_select="rerun", hide_index=True
+            df[column_order],
+            column_order=column_order,
+            selection_mode="single-row",
+            on_select="rerun",
+            hide_index=True,
+            use_container_width=True,
         )
         return df.iloc[event.selection["rows"]]
     else:

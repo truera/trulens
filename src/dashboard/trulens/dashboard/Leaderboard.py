@@ -212,8 +212,20 @@ def _render_grid(
     grid_key: Optional[str] = None,
 ):
     if is_sis_compatibility_enabled():
+        column_order = [
+            "app_version",
+            "records",
+            "latency",
+            *feedback_col_names,
+        ]
+        column_order = [col for col in column_order if col in df.columns]
         event = st.dataframe(
-            df, selection_mode="multi-row", on_select="rerun", hide_index=True
+            df[column_order],
+            use_container_width=True,
+            column_order=column_order,
+            selection_mode="multi-row",
+            on_select="rerun",
+            hide_index=True,
         )
         return df.iloc[event.selection["rows"]]
     else:
