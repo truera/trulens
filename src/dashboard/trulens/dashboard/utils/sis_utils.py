@@ -1,12 +1,20 @@
 """This module contains utility functions for rendering the dashboard on Streamlit in Snowflake."""
 
-from snowflake.snowpark.context import get_active_session
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import TruSession
 from trulens.core.experimental import Feature
+from trulens.core.utils import imports as import_utils
 from trulens.dashboard.Leaderboard import leaderboard_main
 from trulens.dashboard.pages.Compare import compare_main
 from trulens.dashboard.pages.Records import records_main
+
+with import_utils.OptionalImports(
+    messages=import_utils.format_import_errors(
+        "snowflake-connector-python",
+        purpose="creating or retrieving the Snowflake Session",
+    )
+):
+    from snowflake.snowpark.context import get_active_session
 
 DASHBOARD_PAGES = {
     "leaderboard": leaderboard_main,
