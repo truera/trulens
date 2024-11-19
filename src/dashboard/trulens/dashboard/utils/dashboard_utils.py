@@ -7,11 +7,14 @@ import pandas as pd
 import streamlit as st
 from trulens import core as mod_core
 from trulens import dashboard as mod_dashboard
+from trulens.core import experimental as core_experimental
+from trulens.core import experimental as mod_experimental
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.utils import imports as import_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.utils import metadata_utils
+from trulens.dashboard.utils.streamlit_compat import st_columns
 
 ST_APP_NAME = "app_name"
 ST_RECORDS_LIMIT = "records_limit"
@@ -25,26 +28,30 @@ def set_page_config(page_title: Optional[str] = None):
         layout="wide",
     )
 
-    if st.get_option("theme.base") == "dark":
-        logo = str(
-            import_utils.static_resource(
-                "dashboard", "ux/trulens_logo_light.svg"
-            )
-        )
-        logo_small = str(
-            import_utils.static_resource(
-                "dashboard", "ux/trulens_squid_light.svg"
-            )
-        )
+    if is_sis_compatibility_enabled():
+        pass
     else:
-        logo = str(
-            import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
-        )
-        logo_small = str(
-            import_utils.static_resource("dashboard", "ux/trulens_squid.svg")
-        )
-
-    st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
+        if st.get_option("theme.base") == "dark":
+            logo = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_logo_light.svg"
+                )
+            )
+            logo_small = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_squid_light.svg"
+                )
+            )
+        else:
+            logo = str(
+                import_utils.static_resource("dashboard", "ux/trulens_logo.svg")
+            )
+            logo_small = str(
+                import_utils.static_resource(
+                    "dashboard", "ux/trulens_squid.svg"
+                )
+            )
+        st.logo(logo, icon_image=logo_small, link="https://www.trulens.org/")
 
     if ST_RECORDS_LIMIT not in st.session_state:
         st.session_state[ST_RECORDS_LIMIT] = dashboard_constants.RECORDS_LIMIT
@@ -84,6 +91,21 @@ def read_query_params_into_session_state(
             st.session_state[param] = value
 
 
+def is_sis_compatibility_enabled():
+    """This method returns whether the SIS compatibility feature is enabled.
+    The SiS compatibility feature adapts dashboard components to support Streamlit in Snowflake (SiS).
+    As of 11/13/2024, SiS runs on Python 3.8, Streamlit 1.35.0, and does not support bidirectional custom components.
+
+    In the TruLens dashboard, this flag will replace or disable certain custom components (like Aggrid and the trace viewer).
+
+    Returns:
+        bool: True if the SIS compatibility feature is enabled, False otherwise.
+    """
+    return get_session().experimental_feature(
+        core_experimental.Feature.SIS_COMPATIBILITY
+    )
+
+
 @st.cache_resource(show_spinner="Setting up TruLens session")
 def get_session() -> core_session.TruSession:
     """Parse command line arguments and initialize TruSession with them.
@@ -93,6 +115,7 @@ def get_session() -> core_session.TruSession:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=None)
+    parser.add_argument("--sis-compatibility", action="store_true")
     parser.add_argument(
         "--database-prefix", default=core_db.DEFAULT_DATABASE_PREFIX
     )
@@ -107,9 +130,15 @@ def get_session() -> core_session.TruSession:
         # so we have to do a hard exit.
         sys.exit(e.code)
 
-    return core_session.TruSession(
+    session = core_session.TruSession(
         database_url=args.database_url, database_prefix=args.database_prefix
     )
+
+    if args.sis_compatibility:
+        session.experimental_enable_feature(
+            mod_experimental.Feature.SIS_COMPATIBILITY
+        )
+    return session
 
 
 @st.cache_data(
@@ -141,6 +170,11 @@ def get_records_and_feedback(
             records_df[dashboard_constants.HIDE_RECORD_COL_NAME] == "True"
         ).astype(bool)
     records_df = records_df.replace({float("nan"): None})
+
+    feedback_col_names = [
+        col for col in feedback_col_names if col in records_df.columns
+    ]
+
     return records_df, feedback_col_names
 
 
@@ -290,7 +324,8 @@ def _get_query_args_handler(key: str, max_options: Optional[int] = None):
     if isinstance(new_val, list):
         if len(new_val) == max_options:
             # don't need to explicitly add query args as default is all options
-            del st.query_params[key]
+            if key in st.query_params:
+                del st.query_params[key]
             return
         new_val = ",".join(str(v) for v in new_val)
     elif not isinstance(new_val, str):
@@ -335,7 +370,8 @@ def _handle_reset_filters(
         query_param_key = key
         if page_name_keys and key in page_name_keys:
             query_param_key = ".".join(query_param_key.split(".")[1:])
-        del st.query_params[query_param_key]
+        if query_param_key in st.query_params:
+            del st.query_params[query_param_key]
 
 
 def render_app_version_filters(
@@ -346,7 +382,7 @@ def render_app_version_filters(
     app_versions_df, app_version_metadata_cols = get_app_versions(app_name)
     filtered_app_versions = app_versions_df
 
-    col0, col1, col2 = st.columns(
+    col0, col1, col2 = st_columns(
         [0.7, 0.15, 0.15], vertical_alignment="bottom"
     )
     if other_query_params_kv:

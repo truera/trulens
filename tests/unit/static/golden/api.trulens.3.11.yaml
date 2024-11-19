@@ -449,6 +449,7 @@ trulens.core.experimental.Feature:
   __class__: enum.EnumType
   attributes:
     OTEL_TRACING: trulens.core.experimental.Feature
+    SIS_COMPATIBILITY: trulens.core.experimental.Feature
     name: enum.property
     value: enum.property
 trulens.core.feedback:
@@ -1644,6 +1645,7 @@ trulens.dashboard:
   __version__: 1.2.6
   highs:
     run_dashboard: builtins.function
+    run_dashboard_sis: builtins.function
     stop_dashboard: builtins.function
   lows:
     __all__: builtins.list
@@ -1659,6 +1661,7 @@ trulens.dashboard.Leaderboard:
     handle_pin_toggle: builtins.function
     handle_table_edit: builtins.function
     init_page_state: builtins.function
+    leaderboard_main: builtins.function
     order_columns: builtins.function
     render_leaderboard: builtins.function
 trulens.dashboard.appui:
@@ -1716,8 +1719,6 @@ trulens.dashboard.components.record_viewer:
   __class__: builtins.module
   highs: {}
   lows:
-    build_dir: builtins.str
-    parent_dir: builtins.str
     record_viewer: builtins.function
 trulens.dashboard.constants:
   __class__: builtins.module
@@ -1746,6 +1747,7 @@ trulens.dashboard.run:
     DASHBOARD_START_TIMEOUT: builtins.int
     find_unused_port: builtins.function
     run_dashboard: builtins.function
+    run_dashboard_sis: builtins.function
     stop_dashboard: builtins.function
 trulens.dashboard.streamlit:
   __class__: builtins.module
@@ -1780,6 +1782,7 @@ trulens.dashboard.utils.dashboard_utils:
     get_feedback_defs: streamlit.runtime.caching.cache_utils.CachedFunc
     get_records_and_feedback: streamlit.runtime.caching.cache_utils.CachedFunc
     get_session: streamlit.runtime.caching.cache_utils.CachedFunc
+    is_sis_compatibility_enabled: builtins.function
     read_query_params_into_session_state: builtins.function
     render_app_version_filters: builtins.function
     render_refresh_button: builtins.function
@@ -1808,6 +1811,18 @@ trulens.dashboard.utils.records_utils:
     default_direction: builtins.str
     df_cell_highlight: builtins.function
     display_feedback_call: builtins.function
+trulens.dashboard.utils.sis_utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DASHBOARD_PAGES: builtins.dict
+    render_page: builtins.function
+trulens.dashboard.utils.streamlit_compat:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    st_code: builtins.function
+    st_columns: builtins.function
 trulens.dashboard.ux:
   __class__: builtins.module
   highs: {}
