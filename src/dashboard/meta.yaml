@@ -30,7 +30,7 @@ requirements:
     - plotly >=5.22.0,<6.0.0
     - streamlit >=1.35.0,<2.0.0
     - traitlets >=5.0.5,<6.0.0
-    - packaging >= 23.0
+    - packaging >=23.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
