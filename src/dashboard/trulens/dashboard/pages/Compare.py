@@ -6,7 +6,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
-from trulens.core.utils import imports as import_utils
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import COMPARE_PAGE_NAME as page_name
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -323,13 +322,7 @@ def _build_grid_options(
     diff_cols: List[str],
     record_id_cols: List[str],
 ):
-    with import_utils.OptionalImports(
-        messages=import_utils.format_import_errors(
-            "streamlit-aggrid",
-            purpose="Rendering the leaderboard grid using Aggrid",
-        )
-    ):
-        from st_aggrid.grid_options_builder import GridOptionsBuilder
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
 
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50, flex=1)
 
@@ -379,7 +372,36 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled():
+    if not is_sis_compatibility_enabled():
+        try:
+            import st_aggrid
+
+            columns_state = st.session_state.get(
+                f"{grid_key}.columns_state", None
+            )
+
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+
+            event = st_aggrid.AgGrid(
+                df,
+                # key=grid_key,
+                height=height,
+                columns_state=columns_state,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    agg_diff_col=agg_diff_col,
+                    diff_cols=diff_cols,
+                    record_id_cols=record_id_cols,
+                ),
+                custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
+                update_on=["selectionChanged"],
+                allow_unsafe_jscode=True,
+            )
+            return pd.DataFrame(event.selected_rows)
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
         column_order = ["input", *diff_cols, *agg_diff_col]
         column_order = [col for col in column_order if col in df.columns]
         event = st.dataframe(
@@ -391,35 +413,6 @@ def _render_grid(
             use_container_width=True,
         )
         return df.iloc[event.selection["rows"]]
-    else:
-        with import_utils.OptionalImports(
-            messages=import_utils.format_import_errors(
-                "streamlit-aggrid",
-                purpose="Rendering the leaderboard grid using Aggrid",
-            )
-        ):
-            import st_aggrid
-
-        columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
-
-        height = 1000 if len(df) > 20 else 45 * len(df) + 100
-
-        event = st_aggrid.AgGrid(
-            df,
-            # key=grid_key,
-            height=height,
-            columns_state=columns_state,
-            gridOptions=_build_grid_options(
-                df=df,
-                agg_diff_col=agg_diff_col,
-                diff_cols=diff_cols,
-                record_id_cols=record_id_cols,
-            ),
-            custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
-            update_on=["selectionChanged"],
-            allow_unsafe_jscode=True,
-        )
-        return pd.DataFrame(event.selected_rows)
 
 
 def _render_shared_records(

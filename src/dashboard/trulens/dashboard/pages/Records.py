@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
-from trulens.core.utils import imports as import_utils
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
@@ -201,13 +200,7 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    with import_utils.OptionalImports(
-        messages=import_utils.format_import_errors(
-            "streamlit-aggrid",
-            purpose="Rendering the leaderboard grid using Aggrid",
-        )
-    ):
-        from st_aggrid.grid_options_builder import GridOptionsBuilder
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
 
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
@@ -385,62 +378,60 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    if is_sis_compatibility_enabled():
-        column_order = [
-            "app_version",
-            "input",
-            "output",
-            "record_metadata",
-            "total_tokens",
-            "total_cost",
-            "cost_currency",
-            "latency",
-            "tags",
-            "ts",
-            *version_metadata_col_names,
-            *feedback_col_names,
-            "record_json",
-        ]
-        column_order = [col for col in column_order if col in df.columns]
-        event = st.dataframe(
-            df[column_order],
-            column_order=column_order,
-            selection_mode="single-row",
-            on_select="rerun",
-            hide_index=True,
-            use_container_width=True,
-        )
-        return df.iloc[event.selection["rows"]]
-    else:
-        with import_utils.OptionalImports(
-            messages=import_utils.format_import_errors(
-                "streamlit-aggrid",
-                purpose="Rendering the leaderboard grid using Aggrid",
-            )
-        ):
+    if not is_sis_compatibility_enabled():
+        try:
             import st_aggrid
             from st_aggrid.shared import ColumnsAutoSizeMode
             from st_aggrid.shared import DataReturnMode
 
-        height = 1000 if len(df) > 20 else 45 * len(df) + 100
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
 
-        event = st_aggrid.AgGrid(
-            df,
-            # key="records_data",
-            height=height,
-            gridOptions=_build_grid_options(
-                df=df,
-                feedback_col_names=feedback_col_names,
-                feedback_directions=feedback_directions,
-                version_metadata_col_names=version_metadata_col_names,
-            ),
-            update_on=["selectionChanged"],
-            custom_css={**aggrid_css, **radio_button_css},
-            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
-            data_return_mode=DataReturnMode.FILTERED,
-            allow_unsafe_jscode=True,
-        )
-        return pd.DataFrame(event.selected_rows)
+            event = st_aggrid.AgGrid(
+                df,
+                height=height,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    feedback_col_names=feedback_col_names,
+                    feedback_directions=feedback_directions,
+                    version_metadata_col_names=version_metadata_col_names,
+                ),
+                update_on=["selectionChanged"],
+                custom_css={**aggrid_css, **radio_button_css},
+                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                data_return_mode=DataReturnMode.FILTERED,
+                allow_unsafe_jscode=True,
+            )
+            return pd.DataFrame(event.selected_rows)
+
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
+    column_order = [
+        "app_version",
+        "input",
+        "output",
+        "record_metadata",
+        "total_tokens",
+        "total_cost",
+        "cost_currency",
+        "latency",
+        "tags",
+        "ts",
+        *version_metadata_col_names,
+        *feedback_col_names,
+        "record_json",
+    ]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="single-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
+    )
+    return df.iloc[event.selection["rows"]]
 
 
 def _render_grid_tab(

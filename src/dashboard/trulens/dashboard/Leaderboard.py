@@ -8,7 +8,6 @@ from plotly.subplots import make_subplots
 import streamlit as st
 from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
-from trulens.core.utils import imports as import_utils
 from trulens.core.utils import text as text_utils
 from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as Compare_page
@@ -105,13 +104,7 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    with import_utils.OptionalImports(
-        messages=import_utils.format_import_errors(
-            "streamlit-aggrid",
-            purpose="Rendering the leaderboard grid using Aggrid",
-        )
-    ):
-        from st_aggrid.grid_options_builder import GridOptionsBuilder
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
 
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
@@ -211,61 +204,66 @@ def _render_grid(
     version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    if is_sis_compatibility_enabled():
-        column_order = [
-            "app_version",
-            "records",
-            "latency",
-            *feedback_col_names,
-        ]
-        column_order = [col for col in column_order if col in df.columns]
-        event = st.dataframe(
-            df[column_order],
-            column_order=column_order,
-            selection_mode="multi-row",
-            on_select="rerun",
-            hide_index=True,
-            use_container_width=True,
-        )
-        return df.iloc[event.selection["rows"]]
-    else:
-        with import_utils.OptionalImports(
-            messages=import_utils.format_import_errors(
-                "streamlit-aggrid",
-                purpose="Rendering the leaderboard grid using Aggrid",
-            )
-        ):
+    if not is_sis_compatibility_enabled():
+        try:
             import st_aggrid
 
-        columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
-
-        if dashboard_constants.PINNED_COL_NAME in df:
-            df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = (
-                df.loc[
-                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
-                ].apply(lambda x: f"📌 {x}")
+            columns_state = st.session_state.get(
+                f"{grid_key}.columns_state", None
             )
 
-        height = 1000 if len(df) > 20 else 45 * len(df) + 100
-        event = st_aggrid.AgGrid(
-            df,
-            key=grid_key,
-            height=height,
-            columns_state=columns_state,
-            gridOptions=_build_grid_options(
-                df=df,
-                feedback_col_names=feedback_col_names,
-                feedback_directions=feedback_directions,
-                version_metadata_col_names=version_metadata_col_names,
-            ),
-            custom_css=dashboard_styles.aggrid_css,
-            update_on=["selectionChanged", "cellValueChanged"],
-            allow_unsafe_jscode=True,
-        )
+            if dashboard_constants.PINNED_COL_NAME in df:
+                df.loc[
+                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
+                ] = df.loc[
+                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
+                ].apply(lambda x: f"📌 {x}")
 
-        if event.event_data and event.event_data["type"] == "cellValueChanged":
-            handle_table_edit(df, event.event_data, version_metadata_col_names)
-        return pd.DataFrame(event.selected_rows)
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+            event = st_aggrid.AgGrid(
+                df,
+                key=grid_key,
+                height=height,
+                columns_state=columns_state,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    feedback_col_names=feedback_col_names,
+                    feedback_directions=feedback_directions,
+                    version_metadata_col_names=version_metadata_col_names,
+                ),
+                custom_css=dashboard_styles.aggrid_css,
+                update_on=["selectionChanged", "cellValueChanged"],
+                allow_unsafe_jscode=True,
+            )
+
+            if (
+                event.event_data
+                and event.event_data["type"] == "cellValueChanged"
+            ):
+                handle_table_edit(
+                    df, event.event_data, version_metadata_col_names
+                )
+            return pd.DataFrame(event.selected_rows)
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
+    column_order = [
+        "app_version",
+        "records",
+        "latency",
+        *feedback_col_names,
+    ]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="multi-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
+    )
+    return df.iloc[event.selection["rows"]]
 
 
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
