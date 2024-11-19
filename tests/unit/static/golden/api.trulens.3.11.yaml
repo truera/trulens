@@ -1811,6 +1811,12 @@ trulens.dashboard.utils.records_utils:
     default_direction: builtins.str
     df_cell_highlight: builtins.function
     display_feedback_call: builtins.function
+trulens.dashboard.utils.sis_utils:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    DASHBOARD_PAGES: builtins.dict
+    render_page: builtins.function
 trulens.dashboard.utils.streamlit_compat:
   __class__: builtins.module
   highs: {}
