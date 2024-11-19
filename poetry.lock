@@ -701,17 +701,17 @@ reference = "pypi-public"
 
 [[package]]
 name = "boto3"
-version = "1.35.63"
+version = "1.35.64"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "boto3-1.35.63-py3-none-any.whl", hash = "sha256:d0f938d4f6f392b6ffc5e75fff14a42e5bbb5228675a0367c8af55398abadbec"},
-    {file = "boto3-1.35.63.tar.gz", hash = "sha256:deb593d9a0fb240deb4c43e4da8e6626d7c36be7b2fd2fe28f49d44d395b7de0"},
+    {file = "boto3-1.35.64-py3-none-any.whl", hash = "sha256:cdacf03fc750caa3aa0dbf6158166def9922c9d67b4160999ff8fc350662facc"},
+    {file = "boto3-1.35.64.tar.gz", hash = "sha256:bc3fc12b41fa2c91e51ab140f74fb1544408a2b1e00f88a4c2369a66d18ddf20"},
 ]
 
 [package.dependencies]
-botocore = ">=1.35.63,<1.36.0"
+botocore = ">=1.35.64,<1.36.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.10.0,<0.11.0"
 
@@ -725,13 +725,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "botocore"
-version = "1.35.63"
+version = "1.35.64"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">= 3.8"
 files = [
-    {file = "botocore-1.35.63-py3-none-any.whl", hash = "sha256:0ca1200694a4c0a3fa846795d8e8a08404c214e21195eb9e010c4b8a4ca78a4a"},
-    {file = "botocore-1.35.63.tar.gz", hash = "sha256:2b8196bab0a997d206c3d490b52e779ef47dffb68c57c685443f77293aca1589"},
+    {file = "botocore-1.35.64-py3-none-any.whl", hash = "sha256:bbd96bf7f442b1d5e35b36f501076e4a588c83d8d84a1952e9ee1d767e5efb3e"},
+    {file = "botocore-1.35.64.tar.gz", hash = "sha256:2f95c83f31c9e38a66995c88810fc638c829790e125032ba00ab081a2cf48cb9"},
 ]
 
 [package.dependencies]
@@ -2881,13 +2881,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "jupyterlab"
-version = "4.2.5"
+version = "4.2.6"
 description = "JupyterLab computational environment"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "jupyterlab-4.2.5-py3-none-any.whl", hash = "sha256:73b6e0775d41a9fee7ee756c80f58a6bed4040869ccc21411dc559818874d321"},
-    {file = "jupyterlab-4.2.5.tar.gz", hash = "sha256:ae7f3a1b8cb88b4f55009ce79fa7c06f99d70cd63601ee4aa91815d054f46f75"},
+    {file = "jupyterlab-4.2.6-py3-none-any.whl", hash = "sha256:78dd42cae5b460f377624b03966a8730e3b0692102ddf5933a2a3730c1bc0a20"},
+    {file = "jupyterlab-4.2.6.tar.gz", hash = "sha256:625f3ac19da91f9706baf66df25723b2f1307c1159fc7293035b066786d62a4a"},
 ]
 
 [package.dependencies]
@@ -3212,13 +3212,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "litellm"
-version = "1.52.8"
+version = "1.52.10"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = ">=3.8, !=2.7.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*, !=3.7.*"
 files = [
-    {file = "litellm-1.52.8-py3-none-any.whl", hash = "sha256:aa0845be8d5852802d50ab6d0b85b88f9a847a02b88d865b2984077c18dabc98"},
-    {file = "litellm-1.52.8.tar.gz", hash = "sha256:18606f21f01c2be3a8c1589c563879cd3c8251b32480fc3822a2775b5f7a6e13"},
+    {file = "litellm-1.52.10-py3-none-any.whl", hash = "sha256:f2bf35b1409729253eb70a6d575cb8ccf71373358e109b0f4653b5bcd9a65467"},
+    {file = "litellm-1.52.10.tar.gz", hash = "sha256:8ceaa016cd8ff3a11783d57f862f3157cd764947c60b8f0c4fb04d927d5fe4c1"},
 ]
 
 [package.dependencies]
@@ -8198,13 +8198,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "starlette"
-version = "0.41.2"
+version = "0.41.3"
 description = "The little ASGI library that shines."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "starlette-0.41.2-py3-none-any.whl", hash = "sha256:fbc189474b4731cf30fcef52f18a8d070e3f3b46c6a04c97579e85e6ffca942d"},
-    {file = "starlette-0.41.2.tar.gz", hash = "sha256:9834fd799d1a87fd346deb76158668cfa0b0d56f85caefe8268e2d97c3468b62"},
+    {file = "starlette-0.41.3-py3-none-any.whl", hash = "sha256:44cedb2b7c77a9de33a8b74b2b90e9f50d11fcf25d8270ea525ad71a25374ff7"},
+    {file = "starlette-0.41.3.tar.gz", hash = "sha256:0e4ab3d16522a255be6b28260b938eae2482f98ce5cc934cb08dce8dc3ba5835"},
 ]
 
 [package.dependencies]
@@ -8275,25 +8275,6 @@ altair = "<5"
 pandas = ">=1.2"
 python-decouple = ">=3.6,<4.0"
 streamlit = ">=0.87.0"
-
-[package.source]
-type = "legacy"
-url = "https://pypi.org/simple"
-reference = "pypi-public"
-
-[[package]]
-name = "streamlit-pills"
-version = "0.3.0"
-description = "💊 A Streamlit component to show clickable pills/badges"
-optional = false
-python-versions = ">=3.8,<4.0"
-files = [
-    {file = "streamlit-pills-0.3.0.tar.gz", hash = "sha256:47668ad4fd8c137b203ee1aec9d9d44ed8b2ff7ded9f586984f204be2eac772f"},
-    {file = "streamlit_pills-0.3.0-py3-none-any.whl", hash = "sha256:b66fdf7b1820c09b751a76ef1ae01ab93221d0c2c2d1cd489b711b9afaae0513"},
-]
-
-[package.dependencies]
-streamlit = ">=1.12.0,<2.0.0"
 
 [package.source]
 type = "legacy"
@@ -8940,13 +8921,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "transformers"
-version = "4.46.2"
+version = "4.46.3"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "transformers-4.46.2-py3-none-any.whl", hash = "sha256:c921f4406b78e6518c97b618c5acd1cf8a4f2315b6b727f4bf9e01496eef849c"},
-    {file = "transformers-4.46.2.tar.gz", hash = "sha256:3d85410881e1c074be767877bf33c83231ec11529f274a6044ecb20c157ba14e"},
+    {file = "transformers-4.46.3-py3-none-any.whl", hash = "sha256:a12ef6f52841fd190a3e5602145b542d03507222f2c64ebb7ee92e8788093aef"},
+    {file = "transformers-4.46.3.tar.gz", hash = "sha256:8ee4b3ae943fe33e82afff8e837f4b052058b07ca9be3cb5b729ed31295f72cc"},
 ]
 
 [package.dependencies]
@@ -9068,7 +9049,7 @@ reference = "pypi-public"
 
 [[package]]
 name = "trulens-apps-langchain"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9087,7 +9068,7 @@ url = "src/apps/langchain"
 
 [[package]]
 name = "trulens-apps-llamaindex"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9110,7 +9091,7 @@ url = "src/apps/llamaindex"
 
 [[package]]
 name = "trulens-apps-nemo"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,<3.13"
@@ -9133,7 +9114,7 @@ url = "src/apps/nemo"
 
 [[package]]
 name = "trulens-benchmark"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9149,7 +9130,7 @@ url = "src/benchmark"
 
 [[package]]
 name = "trulens-connectors-snowflake"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,<3.12"
@@ -9167,7 +9148,7 @@ url = "src/connectors/snowflake"
 
 [[package]]
 name = "trulens-core"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9197,7 +9178,7 @@ url = "src/core"
 
 [[package]]
 name = "trulens-dashboard"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1,!=3.9.7"
@@ -9213,12 +9194,11 @@ psutil = "^5.9"
 rich = "^13.6"
 streamlit = "^1.35"
 streamlit-aggrid = {version = "^1.0.5", optional = true}
-streamlit-pills = {version = ">=0.3", optional = true}
 traitlets = "^5.0.5"
 trulens-core = "^1.0.0"
 
 [package.extras]
-full = ["streamlit-aggrid (>=1.0.5,<2.0.0)", "streamlit-pills (>=0.3)"]
+full = ["streamlit-aggrid (>=1.0.5,<2.0.0)"]
 
 [package.source]
 type = "directory"
@@ -9226,7 +9206,7 @@ url = "src/dashboard"
 
 [[package]]
 name = "trulens-eval"
-version = "1.2.6"
+version = "1.2.8"
 description = "Backwards-compatibility package for API of trulens_eval<1.0.0 using API of trulens-*>=1.0.0."
 optional = false
 python-versions = "^3.8.1,!=3.9.7"
@@ -9244,7 +9224,7 @@ url = "src/trulens_eval"
 
 [[package]]
 name = "trulens-feedback"
-version = "1.2.6"
+version = "1.2.8"
 description = "A TruLens extension package implementing feedback functions for LLM App evaluation."
 optional = false
 python-versions = "^3.8.1"
@@ -9271,7 +9251,7 @@ url = "src/feedback"
 
 [[package]]
 name = "trulens-providers-bedrock"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9290,7 +9270,7 @@ url = "src/providers/bedrock"
 
 [[package]]
 name = "trulens-providers-cortex"
-version = "1.2.6"
+version = "1.2.8"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 optional = false
 python-versions = "^3.8.1,<3.12"
@@ -9309,7 +9289,7 @@ url = "src/providers/cortex"
 
 [[package]]
 name = "trulens-providers-huggingface"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9337,7 +9317,7 @@ url = "src/providers/huggingface"
 
 [[package]]
 name = "trulens-providers-langchain"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9355,7 +9335,7 @@ url = "src/providers/langchain"
 
 [[package]]
 name = "trulens-providers-litellm"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9373,7 +9353,7 @@ url = "src/providers/litellm"
 
 [[package]]
 name = "trulens-providers-openai"
-version = "1.2.6"
+version = "1.2.8"
 description = "Library to systematically track and evaluate LLM based applications."
 optional = false
 python-versions = "^3.8.1"
@@ -9419,13 +9399,13 @@ reference = "pypi-public"
 
 [[package]]
 name = "typer"
-version = "0.13.0"
+version = "0.13.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "typer-0.13.0-py3-none-any.whl", hash = "sha256:d85fe0b777b2517cc99c8055ed735452f2659cd45e451507c76f48ce5c1d00e2"},
-    {file = "typer-0.13.0.tar.gz", hash = "sha256:f1c7198347939361eec90139ffa0fd8b3df3a2259d5852a0f7400e476d95985c"},
+    {file = "typer-0.13.1-py3-none-any.whl", hash = "sha256:5b59580fd925e89463a29d363e0a43245ec02765bde9fb77d39e5d0f29dd7157"},
+    {file = "typer-0.13.1.tar.gz", hash = "sha256:9d444cb96cc268ce6f8b94e13b4335084cef4c079998a9f4851a90229a3bd25c"},
 ]
 
 [package.dependencies]
