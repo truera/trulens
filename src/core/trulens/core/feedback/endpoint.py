@@ -135,7 +135,7 @@ class Endpoint(
         class_name: str
 
     # TODO: factor this out
-    BASE_ENDPOINTS = {}
+    BASE_ENDPOINTS: ClassVar[Dict[str, Endpoint]] = {}
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag="with_openai",
