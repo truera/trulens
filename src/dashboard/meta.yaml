@@ -1,4 +1,4 @@
-{% set name = "trulens-providers-cortex" %}
+{% set name = "trulens-dashboard" %}
 {% set version = "1.2.7" %}
 
 package:
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 78902692d4612a57af2b3fb35efbb4d7b51cea3ec083835e842050fb8d103e97
+  sha256: 3996f64d783278aab40a847cc9188ec51b71d8483f36f80b016b3cd1c277bcd8
 
 build:
   noarch: python
@@ -16,19 +16,28 @@ build:
 
 requirements:
   host:
-    - python >=3.8.1,<3.12
+    - python >=3.8,<3.12
     - poetry-core
     - pip
   run:
     - python >=3.9,<3.12
     - trulens-core >=1.0.0,<2.0.0
-    - trulens-feedback >=1.0.0,<2.0.0
-    - snowflake-connector-python >=3.11.0,<4.0.0
-    - snowflake-snowpark-python >=1.18.0,<2.0.0
+    - ipywidgets >=7.1.2
+    - jupyter >=1.0.0,<2.0.0
+    - pandas >=1.0.0
+    - psutil >=5.9.0,<6.0.0
+    - rich >=13.6.0,<14.0.0
+    - plotly >=5.22.0,<6.0.0
+    - streamlit >=1.35.0,<2.0.0
+    - traitlets >=5.0.5,<6.0.0
+  run_constrained:
+    - tqdm >=4.2.0
+    - openai >=1.0.0
+    - httpx >=0.27
 
 test:
   imports:
-    - trulens.providers.cortex
+    - trulens.dashboard
   commands:
     - pip check
   requires:
@@ -36,7 +45,7 @@ test:
 
 about:
   home: https://trulens.org/
-  summary: A TruLens extension package adding Snowflake Cortex support for LLM App evaluation.
+  summary: Library to systematically track and evaluate LLM based applications.
   license: MIT
 
 extra:

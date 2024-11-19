@@ -7,7 +7,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 import streamlit as st
-from streamlit_pills import pills
 from trulens.core import session as core_session
 from trulens.core.database import base as core_db
 from trulens.core.database.legacy import migration as legacy_migration
@@ -19,6 +18,9 @@ from trulens.dashboard import display as dashboard_display
 from trulens.dashboard.components import (
     record_viewer as dashboard_record_viewer,
 )
+from trulens.dashboard.utils import dashboard_utils
+from trulens.dashboard.utils import streamlit_compat
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -127,7 +129,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
             for col_name in feedback_col_names
             if not app_df[col_name].isna().all()
         ]
-        col1, col2, col3, col4, *feedback_cols = st.columns(
+        col1, col2, col3, col4, *feedback_cols = st_columns(
             5 + len(app_feedback_col_names)
         )
         latency_mean = (
@@ -207,7 +209,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         st.markdown("""---""")
 
 
-@st.fragment(run_every=2)
+@streamlit_compat.st_fragment(run_every=2)
 def trulens_feedback(record: record_schema.Record):
     """Render clickable feedback pills for a given record.
 
@@ -264,15 +266,19 @@ def trulens_feedback(record: record_schema.Record):
         icons.append(feedbacks[call_data["feedback_name"]].icon)
 
     st.header("Feedback Functions")
-    selected_feedback = pills(
-        "Feedback functions",
-        feedback_cols,
-        index=None,
-        format_func=lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}",
-        label_visibility="collapsed",  # Hiding because we can't format the label here.
-        icons=icons,
-        key=f"{call_data['feedback_name']}_{len(feedbacks)}",  # Important! Otherwise streamlit sometimes lazily skips update even with st.fragment
-    )
+    format_func = lambda fcol: f"{fcol} {feedbacks[fcol].score:.4f}"
+    if hasattr(st, "pills"):
+        # Use native streamlit pills, released in 1.40.0
+        selected_feedback = st.pills(
+            "Feedback Functions", feedback_cols, format_func=format_func
+        )
+    else:
+        selected_feedback = st.selectbox(
+            "Feedback Functions",
+            feedback_cols,
+            index=None,
+            format_func=format_func,
+        )
 
     if selected_feedback is not None:
         df = dashboard_display.get_feedback_result(
@@ -323,6 +329,12 @@ def trulens_trace(record: record_schema.Record):
 
     session = core_session.TruSession()
     app = session.get_app(app_id=record.app_id)
-    dashboard_record_viewer.record_viewer(
-        record_json=json.loads(json_utils.json_str_of_obj(record)), app_json=app
-    )
+    if dashboard_utils.is_sis_compatibility_enabled():
+        st.warning(
+            "TruLens trace view is not enabled when SiS compatibility is enabled."
+        )
+    else:
+        dashboard_record_viewer.record_viewer(
+            record_json=json.loads(json_utils.json_str_of_obj(record)),
+            app_json=app,
+        )
