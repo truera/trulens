@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
     
     
       
@@ -3685,6 +3685,8 @@
       
         
       
+        
+      
     
     
       
@@ -3761,6 +3763,27 @@
   
   <span class="md-ellipsis">
     <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> server_side_evaluation_stored_procedure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../connectors/snowflake/utils/sis_dashboard_artifacts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> sis_dashboard_artifacts
   </span>
   
 
@@ -6371,6 +6394,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -6489,6 +6516,48 @@
   
   <span class="md-ellipsis">
     <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> records_utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dashboard/utils/sis_utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> sis_utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dashboard/utils/streamlit_compat/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> streamlit_compat
   </span>
   
 
@@ -8561,6 +8630,8 @@
       
         
       
+        
+      
     
     
       
@@ -8593,6 +8664,27 @@
             Use cases
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/use_cases/context_filters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Context Filters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -8751,10 +8843,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_5_4_7" id="__nav_5_4_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_4_8" id="__nav_5_4_8_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -8765,8 +8857,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4_7">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_8">
             <span class="md-nav__icon md-icon"></span>
             Iterate on rag
           </label>
@@ -9884,11 +9976,6 @@
 
 
 
-
-
-
-
-
   <div class="doc doc-children">
 
 
@@ -9953,7 +10040,7 @@
 <a href="#trulens.core.database.utils.check_db_revision" class="headerlink" title="Permanent link">&para;</a></h4>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">check_db_revision</span><span class="p">(</span>
     <span class="n">engine</span><span class="p">:</span> <span class="n"><span title="sqlalchemy.Engine">Engine</span></span><span class="p">,</span>
-    <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="trulens.core.database.base.DEFAULT_DATABASE_PREFIX" href="../base/#trulens.core.database.base.DEFAULT_DATABASE_PREFIX">DEFAULT_DATABASE_PREFIX</a></span><span class="p">,</span>
+    <span class="n">prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span> <span class="o">=</span> <span class="n">core_db</span><span class="o">.</span><span class="n">DEFAULT_DATABASE_PREFIX</span><span class="p">,</span>
     <span class="n">prior_prefix</span><span class="p">:</span> <span class="n"><a class="autorefs autorefs-external" title="typing.Optional" href="https://docs.python.org/3/library/typing.html#typing.Optional">Optional</a></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-external" href="https://docs.python.org/3/library/stdtypes.html#str">str</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div>
@@ -9972,9 +10059,7 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td>
-                <code>engine</code>
-            </td>
+            <td><code>engine</code></td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>SQLAlchemy engine to check.</p>
@@ -9988,9 +10073,7 @@
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>prefix</code>
-            </td>
+            <td><code>prefix</code></td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Prefix used for table names including alembic_version in the
@@ -10009,9 +10092,7 @@ current code.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td>
-                <code>prior_prefix</code>
-            </td>
+            <td><code>prior_prefix</code></td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Table prefix used in the previous version of the

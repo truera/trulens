@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../../../../img/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.42">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
     
     
       
@@ -3685,6 +3685,8 @@
       
         
       
+        
+      
     
     
       
@@ -3761,6 +3763,27 @@
   
   <span class="md-ellipsis">
     <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> server_side_evaluation_stored_procedure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../connectors/snowflake/utils/sis_dashboard_artifacts/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> sis_dashboard_artifacts
   </span>
   
 
@@ -6647,6 +6670,10 @@
       
         
       
+        
+      
+        
+      
     
     
       
@@ -6765,6 +6792,48 @@
   
   <span class="md-ellipsis">
     <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> records_utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dashboard/utils/sis_utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> sis_utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../dashboard/utils/streamlit_compat/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    <code class="doc-symbol doc-symbol-nav doc-symbol-module"></code> streamlit_compat
   </span>
   
 
@@ -8837,6 +8906,8 @@
       
         
       
+        
+      
     
     
       
@@ -8869,6 +8940,27 @@
             Use cases
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../cookbook/use_cases/context_filters/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    📓 Context Filters
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -9027,10 +9119,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_5_4_7" id="__nav_5_4_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_4_8" id="__nav_5_4_8_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -9041,8 +9133,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4_7">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4_8">
             <span class="md-nav__icon md-icon"></span>
             Iterate on rag
           </label>
@@ -10438,11 +10530,6 @@
 
 
 
-
-
-
-
-
   <div class="doc doc-children">
 
 
@@ -10496,11 +10583,6 @@
 
 
 
-
-
-
-
-
   <div class="doc doc-children">
 
 
@@ -10529,6 +10611,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of requests.</p>
+<p>To increment immediately when a request is made.</p>
     </div>
 
 </div>
@@ -10553,6 +10636,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of successful requests.</p>
+<p>To increment only after a response is processed and it indicates success.</p>
     </div>
 
 </div>
@@ -10577,6 +10661,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of completion requests.</p>
+<p>To increment immediately when a completion request is made.</p>
     </div>
 
 </div>
@@ -10601,6 +10686,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of classification requests.</p>
+<p>To increment immediately when a classification request is made.</p>
     </div>
 
 </div>
@@ -10625,6 +10711,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of class scores retrieved.</p>
+<p>To increment for each class in a successful classification response.</p>
     </div>
 
 </div>
@@ -10649,6 +10736,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of embedding requests.</p>
+<p>To increment immediately when an embedding request is made.</p>
     </div>
 
 </div>
@@ -10673,6 +10761,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of embeddings retrieved.</p>
+<p>To increment for each embedding vector returned by an embedding request.</p>
     </div>
 
 </div>
@@ -10697,6 +10786,11 @@
     <div class="doc doc-contents ">
 
         <p>Total tokens processed.</p>
+<p>To increment by the number of input(prompt) and output tokens in completion
+requests. While the input part of this could be incremented upon a request,
+the actual count is not easy to determine due to tokenizer variations and
+instead is usually seen in the response. Also, we want to count only tokens
+for successful requests that incur a cost to the user.</p>
     </div>
 
 </div>
@@ -10721,6 +10815,8 @@
     <div class="doc doc-contents ">
 
         <p>In streaming mode, number of chunks produced.</p>
+<p>To increment for each chunk in a streaming response. This does not need to
+wait for completion of the responses.</p>
     </div>
 
 </div>
@@ -10745,6 +10841,9 @@
     <div class="doc doc-contents ">
 
         <p>Number of prompt tokens supplied.</p>
+<p>To increment by the number of tokens in the prompt of a completion request.
+This is visible in the response though and should only count successful
+requests.</p>
     </div>
 
 </div>
@@ -10769,6 +10868,7 @@
     <div class="doc doc-contents ">
 
         <p>Number of completion tokens generated.</p>
+<p>To increment by the number of tokens in the completion of a completion request.</p>
     </div>
 
 </div>
@@ -10792,7 +10892,8 @@
 
     <div class="doc doc-contents ">
 
-        <p>Number of guardrails tokens generated. i.e. available in Cortex endpoint.</p>
+        <p>Number of guardrails tokens generated. This is only available for
+requests instrumented by the Cortex endpoint.</p>
     </div>
 
 </div>
@@ -10817,6 +10918,7 @@
     <div class="doc doc-contents ">
 
         <p>Cost in [cost_currency].</p>
+<p>This may not always be available or accurate.</p>
     </div>
 
 </div>
@@ -10868,11 +10970,6 @@
 
         <p>Performance information.</p>
 <p>Presently only the start and end times, and thus latency.</p>
-
-
-
-
-
 
 
 
@@ -10972,8 +11069,8 @@
 
     <div class="doc doc-contents ">
 
-        <p>EXPERIMENTAL: otel-tracing</p>
-<p>Start time in number of nanoseconds since the epoch.</p>
+        <p>EXPERIMENTAL(otel_tracing): Start time in number of nanoseconds since
+the epoch.</p>
     </div>
 
 </div>
@@ -10996,8 +11093,8 @@
 
     <div class="doc doc-contents ">
 
-        <p>EXPERIMENTAL: otel-tracing</p>
-<p>End time in number of nanoseconds since the epoch.</p>
+        <p>EXPERIMENTAL(otel_tracing): End time in number of nanoseconds since
+the epoch.</p>
     </div>
 
 </div>
@@ -11075,9 +11172,7 @@
       </thead>
       <tbody>
           <tr class="doc-section-item">
-            <td>
-                <code>latency</code>
-            </td>
+            <td><code>latency</code></td>
             <td class="doc-param-details">
               <div class="doc-md-description">
                 <p>Latency in seconds. If given, end time will be now plus
@@ -11122,9 +11217,8 @@ latency. Otherwise end time will be a minimal interval plus start_time.</p>
 
     <div class="doc doc-contents ">
 
-        <p>EXPERIMENTAL: otel-tracing</p>
-<p>Create a <code>Perf</code> instance from start and end times in nanoseconds
-since the epoch.</p>
+        <p>EXPERIMENTAL(otel_tracing): Create a <code>Perf</code> instance from start and
+end times in nanoseconds since the epoch.</p>
 
     </div>
 
