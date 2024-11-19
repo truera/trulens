@@ -71,5 +71,4 @@ data/
 src/connectors/snowflake/trulens/data/snowflake_stage_zips
 
 # Build objects
-**/poetry.lock
-!poetry.lock
+src/**/poetry.lock
