@@ -27,7 +27,6 @@ requirements:
     - typing_extensions >=4.9.0,<5.0.0
     - pydantic >=2.0.0,<3.0.0
     - pandas >=1.0.0,<3.0.0
-    - requests >=2.31.0,<3.0.0
     - rich >=13.6.0,<14.0.0
     - sqlalchemy >=2.0.0,<3.0.0
     - alembic >=1.8.1,<2.0.0
