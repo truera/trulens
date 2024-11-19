@@ -135,6 +135,7 @@ class Endpoint(
         class_name: str
 
     # TODO: factor this out
+    BASE_ENDPOINTS = {}
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag="with_openai",
@@ -498,12 +499,12 @@ class Endpoint(
 
         endpoints = []
 
-        for endpoint in Endpoint.ENDPOINT_SETUPS:
-            if locals().get(endpoint.arg_flag):
+        for endpoint_setup in Endpoint.ENDPOINT_SETUPS:
+            if locals().get(endpoint_setup.arg_flag):
                 try:
-                    mod = importlib.import_module(endpoint.module_name)
+                    mod = importlib.import_module(endpoint_setup.module_name)
                     cls: Type[Endpoint] = python_utils.safe_getattr(
-                        mod, endpoint.class_name
+                        mod, endpoint_setup.class_name
                     )
                 except ImportError:
                     # If endpoint uses optional packages, will get either module
@@ -514,7 +515,7 @@ class Endpoint(
                     logger.warning(
                         "Could not import tracking module %s. "
                         "trulens will not track costs/usage of this endpoint. %s",
-                        endpoint.module_name,
+                        endpoint_setup.module_name,
                         e,
                     )
                     continue
@@ -522,16 +523,21 @@ class Endpoint(
                 try:
                     endpoint = next(iter(cls.get_instances()))
                 except StopIteration:
-                    logger.warning(
-                        "Could not find an instance of %s. "
-                        "trulens will create an endpoint for cost tracking.",
-                        cls.__name__,
-                    )
                     endpoint = None
 
                 try:
                     if endpoint is None:
-                        endpoint = cls(_register_instance=False)  # type: ignore
+                        if cls.__name__ not in Endpoint.BASE_ENDPOINTS:
+                            logger.warning(
+                                "Could not find an instance of %s. "
+                                "trulens will create an endpoint for cost tracking.",
+                                cls.__name__,
+                            )
+                            Endpoint.BASE_ENDPOINTS[cls.__name__] = cls(
+                                _register_instance=False
+                            )
+                        endpoint = Endpoint.BASE_ENDPOINTS[cls.__name__]
+
                     endpoints.append(endpoint)
                 except Exception as e:
                     logger.debug(
