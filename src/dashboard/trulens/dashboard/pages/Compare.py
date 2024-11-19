@@ -780,18 +780,28 @@ def render_app_comparison(app_name: str):
                         selected_ff, selected_row, feedback_directions
                     )
 
-    if not is_sis_compatibility_enabled():
-        with trace_viewer_container:
-            trace_cols = st_columns(
-                len(record_data), gap="large", container=trace_viewer_container
-            )
-            for i, app_id in enumerate(record_data):
-                with trace_cols[i]:
-                    record_df = record_data[app_id]["records"]
-                    selected_row = record_df.iloc[0]
+    with trace_viewer_container:
+        trace_cols = st_columns(
+            len(record_data), gap="large", container=trace_viewer_container
+        )
+        for i, app_id in enumerate(record_data):
+            with trace_cols[i]:
+                record_df = record_data[app_id]["records"]
+                selected_row = record_df.iloc[0]
+
+                record_json = json.loads(selected_row["record_json"])
+                app_json = json.loads(selected_row["app_json"])
+
+                if is_sis_compatibility_enabled():
+                    st.subheader("Trace Details")
+                    st.json(record_json, expanded=1)
+
+                    st.subheader("App Details")
+                    st.json(app_json, expanded=1)
+                else:
                     record_viewer(
-                        json.loads(selected_row["record_json"]),
-                        json.loads(selected_row["app_json"]),
+                        record_json,
+                        app_json,
                         key=f"compare_{app_id}",
                     )
 

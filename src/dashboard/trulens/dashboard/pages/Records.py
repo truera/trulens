@@ -148,7 +148,15 @@ def _render_trace(
             )
 
     # Trace details
-    if not is_sis_compatibility_enabled():
+
+    if is_sis_compatibility_enabled():
+        st.subheader("Trace Details")
+        st.json(record_json, expanded=1)
+
+        st.subheader("App Details")
+        st.json(app_json, expanded=1)
+
+    else:
         with trace_details:
             st.subheader("Trace Details")
             record_viewer(record_json, app_json)
