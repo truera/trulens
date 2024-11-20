@@ -104,7 +104,7 @@ class Cortex(
             snowflake_session
             if snowflake_session is not None
             else context.get_active_session()  # context.get_active_session() will fail if there is no or more than one active session. This should be fine
-            # for server side eval in the warehouse as there should only be only active session in the execution context.
+            # for server side eval in the warehouse as there should only be one active session in the execution context.
         )
 
         super().__init__(**self_kwargs)
