@@ -329,11 +329,11 @@ class TestEndpoints(test_utils.TruTestCase):
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
 
-        snowflake_session = Session.builder.configs(
+        snowpark_session = Session.builder.configs(
             snowflake_connection_parameters
         ).create()
         provider = Cortex(
-            snowflake_session=snowflake_session,
+            snowpark_session=snowpark_session,
             model_engine="snowflake-arctic",
         )
 

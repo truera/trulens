@@ -114,12 +114,12 @@ class GroundTruthAgreement(
                 "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
             }
 
-            snowflake_session = Session.builder.configs(snowflake_connection_parameters).create()
+            snowpark_session = Session.builder.configs(snowflake_connection_parameters).create()
 
             ground_truth_collection = GroundTruthAgreement(
                 ground_truth_imp,
                 provider=Cortex(
-                    snowflake_session=snowflake_session,
+                    snowpark_session=snowpark_session,
                     model_engine="mistral-7b",
                 ),
             )

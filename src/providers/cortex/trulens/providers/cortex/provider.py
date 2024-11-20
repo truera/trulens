@@ -22,7 +22,7 @@ class Cortex(
 
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
-    snowflake_session: Session
+    snowpark_session: Session
 
     """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
 
@@ -41,8 +41,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowflake_session = Session.builder.configs(connection_parameters).create()
-            provider = Cortex(snowflake_session=snowflake_session)
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
         === "Connecting with private key"
@@ -56,8 +56,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowflake_session = Session.builder.configs(connection_parameters).create()
-            provider = Cortex(snowflake_session=snowflake_session)
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
         === "Connecting with a private key file"
@@ -72,12 +72,12 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            snowflake_session = Session.builder.configs(connection_parameters).create()
-            provider = Cortex(snowflake_session=snowflake_session)
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
     Args:
-        snowflake_session (Session): Snowflake session.
+        snowpark_session (Session): Snowflake session.
 
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
@@ -85,7 +85,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_session: Optional[Session] = None,
+        snowpark_session: Optional[Session] = None,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -100,9 +100,9 @@ class Cortex(
             *args, **kwargs
         )
 
-        self_kwargs["snowflake_session"] = (
-            snowflake_session
-            if snowflake_session is not None
+        self_kwargs["snowpark_session"] = (
+            snowpark_session
+            if snowpark_session is not None
             else context.get_active_session()  # context.get_active_session() will fail if there is no or more than one active session. This should be fine
             # for server side eval in the warehouse as there should only be one active session in the execution context.
         )
@@ -125,7 +125,7 @@ class Cortex(
             model=model,
             prompt=messages,
             options=options,
-            session=self.snowflake_session,
+            session=self.snowpark_session,
             stream=False,
         )
         return completion_res_str

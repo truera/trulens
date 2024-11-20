@@ -285,7 +285,7 @@ trulens_eval.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_session: snowflake.snowpark.session.Session
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2297,7 +2297,7 @@ trulens_eval.feedback.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_session: snowflake.snowpark.session.Session
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3361,7 +3361,7 @@ trulens_eval.feedback.provider.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_session: snowflake.snowpark.session.Session
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4074,7 +4074,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_session: snowflake.snowpark.session.Session
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
