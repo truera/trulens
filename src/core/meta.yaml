@@ -34,6 +34,7 @@ requirements:
     - python-dotenv >=0.21,<2.0
     - requests >=2.31.0,<3.0.0
     - packaging >=23.0
+    - importlib-resources >= 6.0.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
