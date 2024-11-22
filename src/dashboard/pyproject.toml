@@ -43,7 +43,6 @@ streamlit = "^1.35"
 traitlets = "^5.0.5"
 
 streamlit-aggrid = { version = "^1.0.5", optional = true }
-streamlit-pills = { version = ">=0.3", optional = true }
 
 [tool.poetry.extras]
 full = [
