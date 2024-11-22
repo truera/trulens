@@ -46,6 +46,7 @@ class Feature(str, Enum):
         ```
     """
 
+    SIS_COMPATIBILITY = "sis_compatibility"
     OTEL_TRACING = "otel_tracing"
     """OTEL-like tracing.
 

@@ -2,19 +2,17 @@ import json
 from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
-from st_aggrid.shared import ColumnsAutoSizeMode
-from st_aggrid.shared import DataReturnMode
 import streamlit as st
 from trulens.dashboard.components.record_viewer import record_viewer
 from trulens.dashboard.constants import EXTERNAL_APP_COL_NAME
 from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.constants import RECORDS_PAGE_NAME as page_name
+from trulens.dashboard.utils import streamlit_compat
 from trulens.dashboard.utils.dashboard_utils import ST_RECORDS_LIMIT
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -23,6 +21,8 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.streamlit_compat import st_code
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import cell_rules
 from trulens.dashboard.ux.styles import default_direction
@@ -64,7 +64,7 @@ def _render_record_metrics(
 
     app_specific_df = records_df[records_df["app_id"] == selected_row["app_id"]]
 
-    token_col, cost_col, latency_col, _ = st.columns([1, 1, 1, 3])
+    token_col, cost_col, latency_col, _ = st_columns([1, 1, 1, 3])
 
     num_tokens = selected_row["total_tokens"]
     with token_col.container(height=128, border=True):
@@ -103,7 +103,7 @@ def _render_record_metrics(
         )
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_trace(
     selected_row: pd.Series,
     records_df: pd.DataFrame,
@@ -117,12 +117,12 @@ def _render_trace(
     st.caption(f"{selected_row['app_id']} / {selected_row['record_id']}")
     st.markdown(f"#### {selected_row['record_id']}")
 
-    input_col, output_col = st.columns(2)
+    input_col, output_col = st_columns(2)
     with input_col.expander("Record Input"):
-        st.code(selected_row["input"], wrap_lines=True)
+        st_code(selected_row["input"], wrap_lines=True)
 
     with output_col.expander("Record Output"):
-        st.code(selected_row["output"], wrap_lines=True)
+        st_code(selected_row["output"], wrap_lines=True)
 
     _render_record_metrics(records_df, selected_row)
 
@@ -148,9 +148,17 @@ def _render_trace(
 
     # Trace details
 
-    with trace_details:
+    if is_sis_compatibility_enabled():
         st.subheader("Trace Details")
-        record_viewer(record_json, app_json)
+        st.json(record_json, expanded=1)
+
+        st.subheader("App Details")
+        st.json(app_json, expanded=1)
+
+    else:
+        with trace_details:
+            st.subheader("Trace Details")
+            record_viewer(record_json, app_json)
 
 
 def _preprocess_df(
@@ -192,6 +200,8 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -368,24 +378,60 @@ def _render_grid(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
-    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+    if not is_sis_compatibility_enabled():
+        try:
+            import st_aggrid
+            from st_aggrid.shared import ColumnsAutoSizeMode
+            from st_aggrid.shared import DataReturnMode
 
-    return AgGrid(
-        df,
-        # key="records_data",
-        height=height,
-        gridOptions=_build_grid_options(
-            df=df,
-            feedback_col_names=feedback_col_names,
-            feedback_directions=feedback_directions,
-            version_metadata_col_names=version_metadata_col_names,
-        ),
-        update_on=["selectionChanged"],
-        custom_css={**aggrid_css, **radio_button_css},
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
-        data_return_mode=DataReturnMode.FILTERED,
-        allow_unsafe_jscode=True,
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+
+            event = st_aggrid.AgGrid(
+                df,
+                height=height,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    feedback_col_names=feedback_col_names,
+                    feedback_directions=feedback_directions,
+                    version_metadata_col_names=version_metadata_col_names,
+                ),
+                update_on=["selectionChanged"],
+                custom_css={**aggrid_css, **radio_button_css},
+                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                data_return_mode=DataReturnMode.FILTERED,
+                allow_unsafe_jscode=True,
+            )
+            return pd.DataFrame(event.selected_rows)
+
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
+    column_order = [
+        "app_version",
+        "input",
+        "output",
+        "record_metadata",
+        "total_tokens",
+        "total_cost",
+        "cost_currency",
+        "latency",
+        "tags",
+        "ts",
+        *version_metadata_col_names,
+        *feedback_col_names,
+        "record_json",
+    ]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="single-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
     )
+    return df.iloc[event.selection["rows"]]
 
 
 def _render_grid_tab(
@@ -394,14 +440,13 @@ def _render_grid_tab(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: List[str],
 ):
-    grid_data = _render_grid(
+    selected_records = _render_grid(
         df,
         feedback_col_names=feedback_col_names,
         feedback_directions=feedback_directions,
         version_metadata_col_names=version_metadata_col_names,
     )
-    selected_rows = grid_data.selected_rows
-    selected_records = pd.DataFrame(selected_rows)
+
     if selected_records.empty:
         selected_record_id = st.session_state.get(
             f"{page_name}.selected_record", None
@@ -424,8 +469,10 @@ def _render_grid_tab(
 
 
 def _reset_app_ids():
-    del st.session_state[f"{page_name}.app_ids"]
-    st.query_params.pop("app_ids")
+    if f"{page_name}.app_ids" in st.session_state:
+        del st.session_state[f"{page_name}.app_ids"]
+    if "app_ids" in st.query_params:
+        st.query_params.pop("app_ids")
 
 
 def _render_app_id_args_filter(versions_df: pd.DataFrame):
@@ -439,7 +486,7 @@ def _render_app_id_args_filter(versions_df: pd.DataFrame):
             return versions_df
 
         ids_str = "**`" + "`**, **`".join(app_ids) + "`**"
-        info_col, show_all_col = st.columns(
+        info_col, show_all_col = st_columns(
             [0.9, 0.1], vertical_alignment="center"
         )
         info_col.info(f"Filtering with App IDs: {ids_str}")
@@ -457,7 +504,7 @@ def _handle_record_query_change():
     value = st.session_state.get(f"{page_name}.record_search", None)
     if value:
         st.query_params["record_search"] = value
-    else:
+    elif "record_search" in st.query_params:
         st.query_params.pop("record_search")
 
 
@@ -518,7 +565,7 @@ def render_records(app_name: str):
             st.error(f"No records found for app `{app_name}`.")
         return
     elif records_limit is not None and len(records_df) >= records_limit:
-        cols = st.columns([0.9, 0.1], vertical_alignment="center")
+        cols = st_columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Limiting to the latest {records_limit} records. Use the search bar and filters to narrow your search.",
             icon="ℹ️",
@@ -549,9 +596,13 @@ def render_records(app_name: str):
     )
 
 
-if __name__ == "__main__":
+def records_main():
     set_page_config(page_title=page_name)
     init_page_state()
     app_name = render_sidebar()
     if app_name:
         render_records(app_name)
+
+
+if __name__ == "__main__":
+    records_main()

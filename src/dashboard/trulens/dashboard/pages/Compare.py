@@ -4,8 +4,6 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 import plotly.express as px
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 from trulens.dashboard.components.record_viewer import record_viewer
@@ -14,6 +12,7 @@ from trulens.dashboard.constants import HIDE_RECORD_COL_NAME
 from trulens.dashboard.constants import PINNED_COL_NAME
 from trulens.dashboard.utils.dashboard_utils import get_feedback_defs
 from trulens.dashboard.utils.dashboard_utils import get_records_and_feedback
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
 from trulens.dashboard.utils.dashboard_utils import (
     read_query_params_into_session_state,
 )
@@ -22,6 +21,7 @@ from trulens.dashboard.utils.dashboard_utils import render_sidebar
 from trulens.dashboard.utils.dashboard_utils import set_page_config
 from trulens.dashboard.utils.records_utils import _render_feedback_call
 from trulens.dashboard.utils.records_utils import _render_feedback_pills
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux.styles import aggrid_css
 from trulens.dashboard.ux.styles import diff_cell_css
 from trulens.dashboard.ux.styles import diff_cell_rules
@@ -227,14 +227,14 @@ def _render_advanced_filters(
         out = None
 
         filters = []
-        c1, c2, c3, c4, _ = st.columns([0.15, 0.15, 0.15, 0.15, 0.4])
+        c1, c2, c3, c4, _ = st_columns([0.15, 0.15, 0.15, 0.15, 0.4])
 
         n_clauses = st.session_state.get(
             f"{page_name}.record_filter.n_clauses", 0
         )
 
         if n_clauses:
-            st_cols = st.columns(5, vertical_alignment="center")
+            st_cols = st_columns(5, vertical_alignment="center")
             for i, header in enumerate([
                 "Feedback Function",
                 "App Version 0",
@@ -322,6 +322,8 @@ def _build_grid_options(
     diff_cols: List[str],
     record_id_cols: List[str],
 ):
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50, flex=1)
 
     gb.configure_column(
@@ -370,25 +372,47 @@ def _render_grid(
     record_id_cols: List[str],
     grid_key: Optional[str] = None,
 ):
-    columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+    if not is_sis_compatibility_enabled():
+        try:
+            import st_aggrid
 
-    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+            columns_state = st.session_state.get(
+                f"{grid_key}.columns_state", None
+            )
 
-    return AgGrid(
-        df,
-        # key=grid_key,
-        height=height,
-        columns_state=columns_state,
-        gridOptions=_build_grid_options(
-            df=df,
-            agg_diff_col=agg_diff_col,
-            diff_cols=diff_cols,
-            record_id_cols=record_id_cols,
-        ),
-        custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
-        update_on=["selectionChanged"],
-        allow_unsafe_jscode=True,
-    )
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+
+            event = st_aggrid.AgGrid(
+                df,
+                # key=grid_key,
+                height=height,
+                columns_state=columns_state,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    agg_diff_col=agg_diff_col,
+                    diff_cols=diff_cols,
+                    record_id_cols=record_id_cols,
+                ),
+                custom_css={**aggrid_css, **radio_button_css, **diff_cell_css},
+                update_on=["selectionChanged"],
+                allow_unsafe_jscode=True,
+            )
+            return pd.DataFrame(event.selected_rows)
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
+        column_order = ["input", *diff_cols, *agg_diff_col]
+        column_order = [col for col in column_order if col in df.columns]
+        event = st.dataframe(
+            df[column_order],
+            column_order=column_order,
+            selection_mode="single-row",
+            on_select="rerun",
+            hide_index=True,
+            use_container_width=True,
+        )
+        return df.iloc[event.selection["rows"]]
 
 
 def _render_shared_records(
@@ -471,7 +495,7 @@ def _render_shared_records(
 
     st.subheader("Shared Records Stats")
 
-    grid_data = _render_grid(
+    selected_rows = _render_grid(
         query_col[["input", agg_diff_col] + diff_cols + record_id_cols],
         agg_diff_col,
         diff_cols,
@@ -479,8 +503,6 @@ def _render_shared_records(
         grid_key="compare_grid",
     )
 
-    selected_rows = grid_data.selected_rows
-    selected_rows = pd.DataFrame(selected_rows)
     if selected_rows.empty:
         return None
     return selected_rows[record_id_cols]
@@ -527,7 +549,7 @@ def _render_version_selectors(
         ]
     ]
 
-    inc_col, dec_col, _ = st.columns([0.15, 0.15, 0.7])
+    inc_col, dec_col, _ = st_columns([0.15, 0.15, 0.7])
     inc_col.button(
         "➕ Add App Version",
         disabled=len(current_app_ids) >= MAX_COMPARATORS,
@@ -546,7 +568,7 @@ def _render_version_selectors(
         args=(current_app_ids,),
     )
 
-    app_filter_cols = st.columns(
+    app_filter_cols = st_columns(
         len(current_app_ids),
         gap="large",
         vertical_alignment="top",
@@ -588,7 +610,7 @@ def _render_version_selectors(
 
     # Render version selectors
     with st.form("app_version_selector_form", border=False):
-        app_selector_cols = st.columns(
+        app_selector_cols = st_columns(
             len(current_app_ids),
             gap="large",
             vertical_alignment="top",
@@ -738,8 +760,10 @@ def render_app_comparison(app_name: str):
             feedback_col_names=feedback_col_names,
             feedback_directions=feedback_directions,
         ):
-            feedback_selector_cols = record_feedback_selector_container.columns(
-                len(record_data), gap="large"
+            feedback_selector_cols = st_columns(
+                len(record_data),
+                gap="large",
+                container=record_feedback_selector_container,
             )
             for i, app_id in enumerate(record_data):
                 with feedback_selector_cols[i]:
@@ -750,23 +774,38 @@ def render_app_comparison(app_name: str):
                     )
 
     with trace_viewer_container:
-        trace_cols = trace_viewer_container.columns(
-            len(record_data), gap="large"
+        trace_cols = st_columns(
+            len(record_data), gap="large", container=trace_viewer_container
         )
         for i, app_id in enumerate(record_data):
             with trace_cols[i]:
                 record_df = record_data[app_id]["records"]
                 selected_row = record_df.iloc[0]
-                record_viewer(
-                    json.loads(selected_row["record_json"]),
-                    json.loads(selected_row["app_json"]),
-                    key=f"compare_{app_id}",
-                )
+
+                record_json = json.loads(selected_row["record_json"])
+                app_json = json.loads(selected_row["app_json"])
+
+                if is_sis_compatibility_enabled():
+                    st.subheader("Trace Details")
+                    st.json(record_json, expanded=1)
+
+                    st.subheader("App Details")
+                    st.json(app_json, expanded=1)
+                else:
+                    record_viewer(
+                        record_json,
+                        app_json,
+                        key=f"compare_{app_id}",
+                    )
 
 
-if __name__ == "__main__":
+def compare_main():
     set_page_config(page_title=page_name)
     init_page_state()
     app_name = render_sidebar()
     if app_name:
         render_app_comparison(app_name)
+
+
+if __name__ == "__main__":
+    compare_main()

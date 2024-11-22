@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.2.6" %}
+{% set version = "1.2.8" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 60ef731365def0f4a05439776b6be57635a4ebd5f6261265a15793ba2a6ddc89
+  sha256: 9cd240154391ec429ff9d385b6978838dbd1dd9778f01458869420af4beb4206
 
 build:
   noarch: python
@@ -16,7 +16,7 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.8.1
     - poetry-core
     - pip
   run:
@@ -32,6 +32,9 @@ requirements:
     - alembic >=1.8.1,<2.0.0
     - nest-asyncio >=1.5.0,<2.0.0
     - python-dotenv >=0.21,<2.0
+    - requests >=2.31.0,<3.0.0
+    - packaging >=23.0
+    - importlib-resources >= 6.0.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
