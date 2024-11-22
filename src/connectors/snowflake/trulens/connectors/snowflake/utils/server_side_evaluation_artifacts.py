@@ -42,6 +42,7 @@ _TRULENS_PACKAGES_DEPENDENCIES = [
     "rich",
     "scikit-learn",
     "scipy",
+    "snowflake-ml-python",
     "snowflake-snowpark-python",
     "snowflake-sqlalchemy",
     "sqlalchemy",
