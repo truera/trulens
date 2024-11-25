@@ -13,6 +13,7 @@ from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core import session as core_session
+from trulens.providers.cortex.provider import Cortex
 
 
 class SnowflakeTestCase(TestCase):
@@ -31,6 +32,7 @@ class SnowflakeTestCase(TestCase):
             self._snowflake_connection_parameters
         ).create()
         self._snowflake_schemas_to_delete = set()
+        Cortex.DEFAULT_SNOWPARK_SESSION = self._snowpark_session
 
     def tearDown(self):
         # [HACK!] Clean up any instances of `TruSession` so tests don't interfere with each other.
