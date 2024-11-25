@@ -168,6 +168,18 @@ write-golden-%: tests/e2e/test_%.py
 	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 write-golden: write-golden-dummy write-golden-serial
 
+# Snowflake-specific tests.
+test-snowflake:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env \
+		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+			./tests/e2e/test_context_variables.py \
+			./tests/e2e/test_snowflake_*
+
 # Run the tests for a specific file.
 test-file-%: tests/e2e/%
 	$(PYTEST) tests/e2e/$*

@@ -8,6 +8,8 @@ from typing import (
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
 from snowflake.snowpark import context
+from snowflake.snowpark.exceptions import SnowparkSessionException
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
@@ -18,6 +20,7 @@ class Cortex(
 ):  # require `pip install snowflake-snowpark-python snowflake-ml-python>=1.7.1` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
+    DEFAULT_SNOWPARK_SESSION: Optional[Session] = None
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
 
     model_engine: str
@@ -100,12 +103,30 @@ class Cortex(
             *args, **kwargs
         )
 
-        self_kwargs["snowpark_session"] = (
+        if snowpark_session is None or pyschema_utils.is_noserio(
             snowpark_session
-            if snowpark_session is not None
-            else context.get_active_session()  # context.get_active_session() will fail if there is no or more than one active session. This should be fine
-            # for server side eval in the warehouse as there should only be one active session in the execution context.
-        )
+        ):
+            if (
+                hasattr(self, "DEFAULT_SNOWPARK_SESSION")
+                and self.DEFAULT_SNOWPARK_SESSION is not None
+            ):
+                snowpark_session = self.DEFAULT_SNOWPARK_SESSION
+            else:
+                # context.get_active_session() will fail if there is no or more
+                # than one active session. This should be fine for server side
+                # eval in the warehouse as there should only be one active
+                # session in the execution context.
+                try:
+                    snowpark_session = context.get_active_session()
+                except SnowparkSessionException:
+                    class_name = (
+                        f"{self.__module__}.{self.__class__.__qualname__}"
+                    )
+                    raise ValueError(
+                        "Cannot infer snowpark session to use! Try setting "
+                        f"`{class_name}.DEFAULT_SNOWPARK_SESSION`."
+                    )
+        self_kwargs["snowpark_session"] = snowpark_session
 
         super().__init__(**self_kwargs)
 
