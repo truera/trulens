@@ -1,5 +1,4 @@
 import argparse
-import json
 import sys
 from typing import Any, Callable, Dict, List, Optional
 
@@ -156,8 +155,7 @@ def get_records_and_feedback(
         app_name=app_name, app_ids=app_ids, limit=limit
     )
 
-    record_json = records_df["record_json"].apply(json.loads)
-    records_df["record_metadata"] = record_json.apply(
+    records_df["record_metadata"] = records_df["record_json"].apply(
         lambda x: metadata_utils.flatten_metadata(x["meta"])
         if isinstance(x["meta"], dict)
         else {}
