@@ -48,3 +48,11 @@ repos:
     hooks:
       - id: poetry-check
         name: trulens-poetry-check
+- repo: local
+  hooks:
+    - id: poetry-lock-updated
+      name: poetry-lock-updated
+      entry: bash -c 'for file in $(find . -name "pyproject.toml"); do if [[ $file -nt poetry.lock ]]; then exit 1; fi; done'
+      files: '^pyproject\.toml$'
+      language: system
+      pass_filenames: false
