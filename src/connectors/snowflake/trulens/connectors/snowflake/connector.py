@@ -127,9 +127,9 @@ class SnowflakeConnector(DBConnector):
             "role": snowpark_session.get_current_role(),
         }
 
-        for k, v in connection_parameters.items():
+        for k, v in snowpark_session_connection_parameters.items():
             if v and v.startswith('"') and v.endswith('"'):
-                connection_parameters[k] = v.strip('"')
+                snowpark_session_connection_parameters[k] = v.strip('"')
 
         missing_snowpark_session_parameters = []
         mismatched_parameters = []
