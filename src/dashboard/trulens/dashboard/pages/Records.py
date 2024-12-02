@@ -127,7 +127,7 @@ def _render_trace(
     _render_record_metrics(records_df, selected_row)
 
     app_json = json.loads(selected_row["app_json"])
-    record_json = json.loads(selected_row["record_json"])
+    record_json = selected_row["record_json"]
 
     feedback_results = st.container()
     trace_details = st.container()
