@@ -188,24 +188,7 @@ class FewShotExamples:
     """
     Create few-shot examples to be used to customize the feedback function's behavior.
 
-    !!! example "Example with feedback function that requires a single string argument"
-        ```python
-        from trulens.feedback.v2.feedback import FewShotExamples
-        from trulens.providers.openai import OpenAI
-
-        provider = OpenAI(model_engine="gpt-4")
-
-        fewshot_sentiment_examples_list = [
-            ("I am having trouble accessing my account. Can you help me reset my password?", 1),
-            ("I love this product! It's amazing and works perfectly.", 3),
-            ("This is the worst experience I've ever had. Completely dissatisfied.", 0)
-        ]
-
-        fewshot_sentiment_examples = FewShotExamples.from_list(provider.sentiment, fewshot_sentiment_examples_list)
-
-        ```
-
-    !!! example "Example with feedback function that requires multiple string arguments"
+    !!! example "Adding examples to a feedback function"
         ```python
         from trulens.feedback.v2.feedback import FewShotExamples
         from trulens.providers.openai import OpenAI
