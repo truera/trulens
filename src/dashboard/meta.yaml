@@ -1,4 +1,4 @@
-{% set name = "trulens-core" %}
+{% set name = "trulens-dashboard" %}
 {% set version = "1.2.8" %}
 
 package:
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 9cd240154391ec429ff9d385b6978838dbd1dd9778f01458869420af4beb4206
+  sha256: d019be7067582a27ffabb6def1159fb5148e92a38b461b23d53b6cd20da2ae35
 
 build:
   noarch: python
@@ -16,25 +16,21 @@ build:
 
 requirements:
   host:
-    - python >=3.8.1
+    - python >=3.8,<3.12
     - poetry-core
     - pip
   run:
     - python >=3.9,<3.12
-    - numpy >=1.23
-    - munch >=2.5.0,<3.0.0
-    - dill >=0.3.8,<0.4.0
-    - typing_extensions >=4.9.0,<5.0.0
-    - pydantic >=2.0.0,<3.0.0
-    - pandas >=1.0.0,<3.0.0
+    - trulens-core >=1.0.0,<2.0.0
+    - ipywidgets >=7.1.2
+    - jupyter >=1.0.0,<2.0.0
+    - pandas >=1.0.0
+    - psutil >=5.9.0,<6.0.0
     - rich >=13.6.0,<14.0.0
-    - sqlalchemy >=2.0.0,<3.0.0
-    - alembic >=1.8.1,<2.0.0
-    - nest-asyncio >=1.5.0,<2.0.0
-    - python-dotenv >=0.21,<2.0
-    - requests >=2.31.0,<3.0.0
+    - plotly >=5.22.0,<6.0.0
+    - streamlit >=1.35.0,<2.0.0
+    - traitlets >=5.0.5,<6.0.0
     - packaging >=23.0
-    - importlib-resources >=6.0.0
   run_constrained:
     - tqdm >=4.2.0
     - openai >=1.0.0
@@ -42,7 +38,7 @@ requirements:
 
 test:
   imports:
-    - trulens.core
+    - trulens.dashboard
   commands:
     - pip check
   requires:

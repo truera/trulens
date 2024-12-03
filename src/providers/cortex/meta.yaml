@@ -1,5 +1,5 @@
 {% set name = "trulens-providers-cortex" %}
-{% set version = "1.2.6" %}
+{% set version = "1.2.8" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 735144708a181ae110abbe445f7674885899cf7acc7440992c15d3d453013749
+  sha256: 956dae945065b776ac283be64d466f5718f8461e8d1ba66951c22d9f77f1097c
 
 build:
   noarch: python
@@ -16,7 +16,7 @@ build:
 
 requirements:
   host:
-    - python >=3.9,<3.12
+    - python >=3.8.1,<3.12
     - poetry-core
     - pip
   run:
@@ -24,6 +24,7 @@ requirements:
     - trulens-core >=1.0.0,<2.0.0
     - trulens-feedback >=1.0.0,<2.0.0
     - snowflake-connector-python >=3.11.0,<4.0.0
+    - snowflake-ml-python >= 1.7.1
     - snowflake-snowpark-python >=1.18.0,<2.0.0
 
 test:

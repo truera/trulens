@@ -35,6 +35,7 @@ botocore >= 1.33.6
 litellm     >= 1.25.2
 
 # Cortex
+snowflake-ml-python >= 1.7.1 # 1.7.1 is required for using the REST api of Cortex Complete
 snowflake-snowpark-python >= 1.18.0; python_version < "3.12" # not available for 3.12
 snowflake-connector-python >= 3.11.0
 
@@ -86,6 +87,7 @@ snowflake-sqlalchemy >= 1.6.0
 trulens-apps-llamaindex >= 1.0.0
 trulens-apps-langchain >= 1.0.0
 trulens-apps-nemo >= 1.0.0
+trulens-connectors-snowflake >= 1.0.0
 trulens-providers-bedrock >= 1.0.0
 trulens-providers-cortex >= 1.0.0
 trulens-providers-huggingface >= 1.0.0
