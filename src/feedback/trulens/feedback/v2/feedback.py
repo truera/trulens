@@ -323,8 +323,6 @@ class CriteriaOutputSpaceMixin:
             )
             prompt += examples_instance.examples
 
-        print(prompt)
-
         return prompt
 
 
