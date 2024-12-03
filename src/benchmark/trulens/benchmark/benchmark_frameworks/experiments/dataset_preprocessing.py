@@ -364,75 +364,7 @@ def generate_balanced_ms_marco_hard_negatives_dataset(
         })
 
 
-def generate_trec_dl_doc_benchmark(
-    max_samples_per_bucket: int = 3,
-    dataset_path: str = "msmarco-document-v2/trec-dl-2021/judged",
-):
-    dataset = ir_datasets.load(dataset_path)
-    queries = {}
-    qrels = defaultdict(dict)
-    docs_store = None
-
-    # Load queries and qrels
-    queries.update({q.query_id: q for q in dataset.queries_iter()})
-    for qid, docs in dataset.qrels_dict().items():
-        qrels[qid].update(docs)
-
-    # Pre-build a dictionary of qrels by query_id and doc_id for fast lookup
-    qrels_by_query = defaultdict(list)
-    for qrel in dataset.qrels_iter():
-        qrels_by_query[qrel.query_id].append((qrel.doc_id, qrel.relevance))
-
-    # Get docs_store
-    if docs_store is None:
-        docs_store = dataset.docs_store()
-
-    # Generate samples for each query
-    for query_id, query in queries.items():
-        if query_id not in qrels:
-            print(f"Query ID {query_id} not found in qrels, skipping...")
-            continue  # Skip queries without relevance judgments
-
-        # Initialize sample counts per relevance score for the current query
-        sample_counts = {0: 0, 1: 0, 2: 0, 3: 0}
-
-        # Get all document IDs and relevance scores for the query
-        for doc_id, relevance in qrels_by_query[query_id]:
-            if sample_counts[relevance] < max_samples_per_bucket:
-                # Retrieve document content
-                doc = docs_store.get(doc_id)
-                if doc:
-                    doc_content = (
-                        doc.body
-                        if hasattr(doc, "body")
-                        else doc.text
-                        if hasattr(doc, "text")
-                        else None
-                    )
-                    if doc_content is None:
-                        continue
-
-                    # Yield the sample
-                    yield {
-                        "query_id": str(query.query_id),
-                        "query": query.text,
-                        "doc_id": doc_id,
-                        "expected_response": doc_content,
-                        "expected_score": relevance / 3,  # Normalize to [0, 1]
-                    }
-
-                    # Update the sample count for this relevance score
-                    sample_counts[relevance] += 1
-
-            # Stop if all buckets for this query are filled
-            if all(
-                count >= max_samples_per_bucket
-                for count in sample_counts.values()
-            ):
-                break
-
-
-def generate_trec_dl_benchmark(
+def generate_trec_dl_passage_benchmark(
     max_samples_per_query_per_score: int = 3,
     dataset_path: str = "msmarco-passage-v2/trec-dl-2021/judged",
 ):
@@ -540,55 +472,6 @@ def generate_trec_dl_benchmark(
                     "expected_score": qrels[query_id][doc_id]
                     / 3,  # Normalize to [0, 1]
                 }
-
-
-# def generate_ms_marco_trec_dl_annotation_benchmark(
-#     dataset_path: str = "msmarco-passage-v2/trec-dl-2022",
-#     max_samples_per_bucket: int = 100,
-# ):
-#     dataset = ir_datasets.load(dataset_path)
-#     sample_counts = {0: 0, 1: 0, 2: 0, 3: 0}
-
-#     # Pre-build a dictionary of qrels by query_id and doc_id for fast lookup
-#     qrels_by_query = defaultdict(list)
-#     for qrel in dataset.qrels_iter():
-#         qrels_by_query[qrel.query_id].append((qrel.doc_id, qrel.relevance))
-
-#     # Pre-build a dictionary of documents by doc_id for quick access
-#     docs_dict = {doc.doc_id: doc for doc in dataset.docs_iter()[: 1 / 50]}
-
-#     # Generate samples
-#     for query in dataset.queries_iter():
-#         if query.query_id in qrels_by_query:
-#             for doc_id, relevance in qrels_by_query[query.query_id]:
-#                 if sample_counts[relevance] < max_samples_per_bucket:
-#                     doc = docs_dict.get(doc_id)
-#                     if doc:
-#                         doc_content = (
-#                             doc.body
-#                             if hasattr(doc, "body")
-#                             else doc.text
-#                             if hasattr(doc, "text")
-#                             else None
-#                         )
-#                         if doc_content is None:
-#                             continue
-
-#                         yield {
-#                             "query_id": query.query_id,
-#                             "query": query.text,
-#                             "doc_id": doc_id,
-#                             "expected_response": doc_content,
-#                             "expected_score": relevance / 3,
-#                         }
-#                         sample_counts[relevance] += 1
-
-#                 # Stop if all sample buckets are filled
-#                 if all(
-#                     count >= max_samples_per_bucket
-#                     for count in sample_counts.values()
-#                 ):
-#                     return
 
 
 def write_results(
