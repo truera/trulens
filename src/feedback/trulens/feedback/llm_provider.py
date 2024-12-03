@@ -219,6 +219,7 @@ class LLMProvider(core_provider.Provider):
             messages=llm_messages,
             temperature=temperature,
         )
+        print(response)
         if "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
@@ -309,11 +310,24 @@ class LLMProvider(core_provider.Provider):
             f"Invalid score range: [{min_score_val}, {max_score_val}]. Must match one of the predefined output spaces."
         )
 
+    def _determine_output_space_prompt(self, output_space_name: str) -> str:
+        if output_space_name == feedback_v2.OutputSpace.LIKERT_0_3.name:
+            return feedback_v2.LIKERT_0_3_PROMPT
+        elif output_space_name == feedback_v2.OutputSpace.LIKERT_0_10.name:
+            return feedback_v2.LIKERT_0_10_PROMPT
+        elif output_space_name == feedback_v2.OutputSpace.BINARY.name:
+            return feedback_v2.BINARY_0_1_PROMPT
+        else:
+            raise ValueError(
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+            )
+
     def context_relevance(
         self,
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -348,11 +362,14 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        output_space_prompt = self._determine_output_space_prompt(output_space)
+
         system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
-            output_space=output_space,
+            output_space=output_space_prompt,
+            examples=examples,
         )
 
         return self.generate_score(
@@ -504,6 +521,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -540,9 +558,17 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        output_space_prompt = self._determine_output_space_prompt(output_space)
+
+        print(output_space_prompt)
+
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
-                min_score_val, max_score_val, criteria, output_space
+                min_score=0,
+                max_score=3,
+                criteria=criteria,
+                output_space=output_space_prompt,
+                examples=examples,
             )
         )
 

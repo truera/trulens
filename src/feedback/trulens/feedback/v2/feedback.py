@@ -22,6 +22,9 @@ class Feedback(pydantic.BaseModel):
     Base class for feedback functions.
     """
 
+    def __init__(self, examples):
+        self.examples = examples
+
     @classmethod
     def help(cls) -> None:
         print(cls.str_help())
@@ -260,6 +263,7 @@ class FewShotExamples:
 class EvalSchema(pydantic.BaseModel):
     criteria: str
     output_space: str
+    examples: str
 
     @pydantic.field_validator("output_space")
     def validate_output_space(cls, output_space: str):
@@ -272,18 +276,6 @@ class EvalSchema(pydantic.BaseModel):
                 'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
             )
         return output_space
-
-    def get_output_scale_prompt(self) -> str:
-        if self.output_space == OutputSpace.LIKERT_0_3.name:
-            return LIKERT_0_3_PROMPT
-        elif self.output_space == OutputSpace.LIKERT_0_10.name:
-            return LIKERT_0_10_PROMPT
-        elif self.output_space == OutputSpace.BINARY.name:
-            return BINARY_0_1_PROMPT
-        else:
-            raise ValueError(
-                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
-            )
 
 
 class Conciseness(Semantics, WithPrompt):  # or syntax
@@ -320,10 +312,15 @@ class CriteriaOutputSpaceMixin:
     output_space_prompt: ClassVar[str]
     system_prompt_template: ClassVar[str]
     criteria_template: ClassVar[str]
+    examples_template: ClassVar[Optional[str]] = None
 
     @staticmethod
-    def validate_criteria_and_output_space(criteria: str, output_space: str):
-        validated = EvalSchema(criteria=criteria, output_space=output_space)
+    def validate_criteria_and_output_space(
+        criteria: str, output_space: str, examples: str
+    ):
+        validated = EvalSchema(
+            criteria=criteria, output_space=output_space, examples=examples
+        )
         return validated
 
     @classmethod
@@ -333,30 +330,26 @@ class CriteriaOutputSpaceMixin:
         max_score: int,
         criteria: Optional[str] = None,
         output_space: Optional[str] = None,
+        examples: Optional[str] = None,
     ) -> str:
-        if criteria is None and output_space is None:
-            return cls.system_prompt
-
-        if criteria is None:
-            criteria = cls.criteria_template.format(
+        if output_space is not None:
+            print(output_space)
+        prompt = cls.system_prompt_template.format(
+            output_space_prompt=output_space or cls.output_space_prompt,
+            criteria=criteria
+            or cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
-            )
-
-        if output_space is None:
-            output_space_prompt = cls.output_space_prompt
-        else:
-            validated = cls.validate_criteria_and_output_space(
-                criteria, output_space
-            )
-            criteria = validated.criteria
-            output_space_prompt = validated.get_output_scale_prompt()
-
-        return cleandoc(
-            cls.system_prompt_template.format(
-                output_space_prompt=output_space_prompt,
-                criteria=criteria,
-            )
+            ),
         )
+
+        if examples is not None:
+            print(examples)
+            examples_prompt = FewShotExamples.from_list(examples)
+            prompt += f"\n\nEXAMPLES:\n{examples_prompt}"
+
+        print(prompt)
+
+        return prompt
 
 
 class Relevance(Semantics):
@@ -540,6 +533,11 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
     """
 
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
         Respond only as a number from {output_space_prompt}.
@@ -554,6 +552,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """
     )
 
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
     user_prompt: ClassVar[str] = cleandoc(
         """PROMPT: {prompt}
 
@@ -563,16 +567,10 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """
     )
 
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
-        )
-    )
+    def __init__(self, examples=None):
+        super().__init__(examples)
+        if self.examples:
+            self.system_prompt += f"\n\n{self.examples}"
 
 
 class Sentiment(Semantics, WithPrompt):

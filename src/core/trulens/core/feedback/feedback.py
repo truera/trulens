@@ -152,10 +152,13 @@ class Feedback(feedback_schema.FeedbackDefinition):
     [FeedbackDefinition.aggregator][trulens.core.schema.feedback.FeedbackDefinition.aggregator].
     """
 
+    examples: Optional[List[str]] = pydantic.Field(None, exclude=True)
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
+        examples: Optional[List[str]] = None,
         **kwargs,
     ):
         # imp is the python function/method while implementation is a serialized
@@ -238,6 +241,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         self.imp = imp
         self.agg = agg
+        self.examples = examples
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -247,6 +251,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
                     f"{argname} is not an argument to {self.imp.__name__}. "
                     f"Its arguments are {list(sig.parameters.keys())}."
                 )
+
+        if self.examples is not None:
+            kwargs["examples"] = self.examples
 
     def on_input_output(self) -> Feedback:
         """
