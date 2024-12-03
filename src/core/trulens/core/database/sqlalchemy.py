@@ -1157,6 +1157,10 @@ class AppsExtractor:
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
         df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df["record_json"] = df["record_json"].apply(json.loads)
+        df["input"] = df["input"].apply(json.loads)
+        df["output"] = df["output"].apply(json.loads)
+
         return df, list(self.feedback_columns)
 
     def extract_apps(
@@ -1240,7 +1244,7 @@ class AppsExtractor:
                         ] = feedback_usage["cost"]
 
                     if (
-                        _res.multi_result is not None
+                        _res.multi_result not in [None, "null", "None"]
                         and (multi_result := json.loads(_res.multi_result))
                         is not None
                     ):

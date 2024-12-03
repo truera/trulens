@@ -285,7 +285,7 @@ trulens_eval.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_conn: typing.Any
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -2298,7 +2298,7 @@ trulens_eval.feedback.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_conn: typing.Any
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -3364,7 +3364,7 @@ trulens_eval.feedback.provider.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_conn: typing.Any
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4077,7 +4077,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     schema_json: builtins.classmethod
     sentiment: builtins.function
     sentiment_with_cot_reasons: builtins.function
-    snowflake_conn: typing.Any
+    snowpark_session: snowflake.snowpark.session.Session
     stereotypes: builtins.function
     stereotypes_with_cot_reasons: builtins.function
     summarization_with_cot_reasons: builtins.function
@@ -4107,6 +4107,7 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4173,6 +4174,7 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4238,6 +4240,7 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     alloc: builtins.property
@@ -4316,6 +4319,7 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
   - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4381,6 +4385,7 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4449,6 +4454,7 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4514,6 +4520,7 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4619,6 +4626,7 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4696,6 +4704,7 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     alloc: builtins.property
@@ -4774,6 +4783,7 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
   - trulens.core.utils.python.InstanceRefMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -4933,6 +4943,7 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -5050,6 +5061,7 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -5166,6 +5178,7 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -5285,6 +5298,7 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -5401,6 +5415,7 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -5560,6 +5575,7 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    BASE_ENDPOINTS: builtins.dict
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     apace_me: builtins.function
@@ -8068,7 +8084,6 @@ trulens_eval.utils.pace.Pace:
   attributes:
     amark: builtins.function
     last_mark: datetime.datetime
-    lock: _thread.lock
     mark: builtins.function
     mark_expirations: typing.Deque[datetime.datetime]
     marks_per_second: builtins.float

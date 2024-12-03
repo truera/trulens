@@ -29,7 +29,6 @@ share/python-wheels/
 .pypirc
 MANIFEST
 *.whl
-src/connectors/snowflake/trulens/data/snowflake_stage_zips
 
 # Notebook tests generate these files:
 imagenet_class_index.json
@@ -67,6 +66,9 @@ htmlcov/
 _trulens_eval/
 data/
 
+# Staged artifacts for snowflake connector
+!src/connectors/snowflake/trulens/data
+src/connectors/snowflake/trulens/data/snowflake_stage_zips
+
 # Build objects
-**/poetry.lock
-!poetry.lock
+src/**/poetry.lock

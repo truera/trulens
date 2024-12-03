@@ -627,11 +627,6 @@ class App(
                 or f.run_location
                 == feedback_schema.FeedbackRunLocation.SNOWFLAKE
             ):
-                # To correctly deserialize a Cortex provider, we assume that
-                # trulens.providers.cortex.provider._SNOWFLAKE_STORED_PROCEDURE_CONNECTION
-                # is set (as in a Snowflake stored procedure). So we don't check
-                # it here as there are other ways to initialize the Cortex
-                # provider out of convenience.
                 if (
                     isinstance(f.implementation, pyschema_utils.Method)
                     and f.implementation.obj.cls.module.module_name

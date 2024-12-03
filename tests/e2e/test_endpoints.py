@@ -9,6 +9,7 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import skip
 
+from snowflake.snowpark import Session
 from trulens.core import experimental as core_experimental
 from trulens.core import session as core_session
 from trulens.core.feedback import endpoint as core_endpoint
@@ -317,7 +318,6 @@ class TestEndpoints(test_utils.TruTestCase):
     @test_utils.optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
-        import snowflake.connector
         from trulens.providers.cortex import Cortex
 
         snowflake_connection_parameters = {
@@ -328,8 +328,12 @@ class TestEndpoints(test_utils.TruTestCase):
             "schema": os.environ["SNOWFLAKE_SCHEMA"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
+
+        snowpark_session = Session.builder.configs(
+            snowflake_connection_parameters
+        ).create()
         provider = Cortex(
-            snowflake.connector.connect(**snowflake_connection_parameters),
+            snowpark_session=snowpark_session,
             model_engine="snowflake-arctic",
         )
 
