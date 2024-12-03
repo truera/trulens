@@ -310,6 +310,7 @@ trulens_eval.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
@@ -389,7 +390,7 @@ trulens_eval.Huggingface:
     context_relevance: builtins.function
     copy: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.core.feedback.endpoint._WithPost
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
@@ -824,7 +825,7 @@ trulens_eval.TP:
 trulens_eval.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
-  - pydantic.main.BaseModel
+  - trulens.core.utils.python.PydanticSingleton
   __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
@@ -846,23 +847,52 @@ trulens_eval.Tru:
     add_record: builtins.function
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
+    construct: builtins.classmethod
+    copy: builtins.function
     delete_app: builtins.function
+    delete_singleton_by_name: builtins.classmethod
+    dict: builtins.function
     find_unused_port: builtins.function
+    from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
+    json: builtins.function
     migrate_database: builtins.function
+    model_computed_fields: builtins.dict
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_extra: builtins.property
+    model_fields: builtins.dict
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
     reset_database: builtins.function
     run_dashboard: builtins.function
     run_evaluator: builtins.function
     run_feedback_functions: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
     start_dashboard: builtins.function
     start_evaluator: builtins.function
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
+    update_forward_refs: builtins.classmethod
     update_record: builtins.function
+    validate: builtins.classmethod
 trulens_eval.TruBasicApp:
   __bases__:
   - trulens.core.app.App
@@ -1777,6 +1807,7 @@ trulens_eval.database.base.DB:
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
+    get_db_revision: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -1933,6 +1964,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     get_app: builtins.function
     get_apps: builtins.function
     get_datasets: builtins.function
+    get_db_revision: builtins.function
     get_feedback: builtins.function
     get_feedback_count_by_status: builtins.function
     get_feedback_defs: builtins.function
@@ -2336,6 +2368,7 @@ trulens_eval.feedback.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
@@ -2461,7 +2494,7 @@ trulens_eval.feedback.Huggingface:
     context_relevance: builtins.function
     copy: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.core.feedback.endpoint._WithPost
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
@@ -2887,6 +2920,7 @@ trulens_eval.feedback.feedback.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
@@ -3347,7 +3381,7 @@ trulens_eval.feedback.provider.Huggingface:
     context_relevance: builtins.function
     copy: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.core.feedback.endpoint._WithPost
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
@@ -4075,11 +4109,13 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4139,10 +4175,12 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4196,18 +4234,23 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.DummyEndpoint:
   __bases__:
+  - trulens.core.feedback.endpoint._WithPost
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     alloc: builtins.property
+    apace_me: builtins.function
     api: trulens.feedback.dummy.endpoint.DummyAPI
+    apost: builtins.function
+    apost_json_first: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
+    delete_instances: builtins.classmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
@@ -4249,6 +4292,7 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     parse_raw: builtins.classmethod
     post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
+    post_json_first: builtins.function
     print_instrumented: builtins.classmethod
     replace: builtins.function
     retries: builtins.int
@@ -4274,10 +4318,12 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4331,15 +4377,20 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     wrap_function: builtins.function
 trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
   __bases__:
+  - trulens.core.feedback.endpoint._WithPost
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
+    apost: builtins.function
+    apost_json_first: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4376,6 +4427,7 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     parse_raw: builtins.classmethod
     post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
+    post_json_first: builtins.function
     print_instrumented: builtins.classmethod
     replace: builtins.function
     retries: builtins.int
@@ -4399,11 +4451,13 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4462,10 +4516,12 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4565,11 +4621,13 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4634,18 +4692,23 @@ trulens_eval.feedback.provider.endpoint.base:
     deprecation_utils: builtins.module
 trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
   __bases__:
+  - trulens.core.feedback.endpoint._WithPost
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
     alloc: builtins.property
+    apace_me: builtins.function
     api: trulens.feedback.dummy.endpoint.DummyAPI
+    apost: builtins.function
+    apost_json_first: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
     delay: builtins.property
+    delete_instances: builtins.classmethod
     dict: builtins.function
     error_prob: builtins.property
     formatted_objects: _contextvars.ContextVar
@@ -4687,6 +4750,7 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     parse_raw: builtins.classmethod
     post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
+    post_json_first: builtins.function
     print_instrumented: builtins.classmethod
     replace: builtins.function
     retries: builtins.int
@@ -4712,10 +4776,12 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4869,11 +4935,13 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     client: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -4984,10 +5052,12 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5092,15 +5162,20 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceCallback:
     validate: builtins.classmethod
 trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
   __bases__:
+  - trulens.core.feedback.endpoint._WithPost
   - trulens.core.feedback.endpoint.Endpoint
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
+    apost: builtins.function
+    apost_json_first: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5137,6 +5212,7 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     parse_raw: builtins.classmethod
     post: builtins.function
     post_headers: typing.Dict[builtins.str, builtins.str]
+    post_json_first: builtins.function
     print_instrumented: builtins.classmethod
     replace: builtins.function
     retries: builtins.int
@@ -5211,11 +5287,13 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     chain: typing.Any
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5325,10 +5403,12 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5482,11 +5562,13 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
   attributes:
     ENDPOINT_SETUPS: builtins.list
     EndpointSetup: builtins.type
+    apace_me: builtins.function
     callback_class: typing.Type[trulens.core.feedback.endpoint.EndpointCallback]
     callback_name: builtins.str
     client: trulens.providers.openai.endpoint.OpenAIClient
     construct: builtins.classmethod
     copy: builtins.function
+    delete_instances: builtins.classmethod
     dict: builtins.function
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -5565,7 +5647,7 @@ trulens_eval.feedback.provider.hugs.Dummy:
     context_relevance: builtins.function
     copy: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.core.feedback.endpoint._WithPost
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
@@ -5615,7 +5697,7 @@ trulens_eval.feedback.provider.hugs.Huggingface:
     context_relevance: builtins.function
     copy: builtins.function
     dict: builtins.function
-    endpoint: trulens.core.feedback.endpoint.Endpoint
+    endpoint: trulens.core.feedback.endpoint._WithPost
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
@@ -6132,6 +6214,7 @@ trulens_eval.generate_test_set:
   lows:
     GenerateTestSet: builtins.type
     deprecation_utils: builtins.module
+    generate_test_set: builtins.module
     import_utils: builtins.module
     mod_generate: builtins.module
     opt: trulens.core.utils.imports.OptionalImports
@@ -6478,6 +6561,7 @@ trulens_eval.schema.feedback.FeedbackDefinition:
     construct: builtins.classmethod
     copy: builtins.function
     dict: builtins.function
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
@@ -6820,7 +6904,7 @@ trulens_eval.tru:
 trulens_eval.tru.Tru:
   __bases__:
   - trulens.core.experimental._WithExperimentalSettings
-  - pydantic.main.BaseModel
+  - trulens.core.utils.python.PydanticSingleton
   __class__: trulens.core.utils.python.PydanticSingletonMeta
   attributes:
     App: builtins.function
@@ -6842,23 +6926,52 @@ trulens_eval.tru.Tru:
     add_record: builtins.function
     add_record_nowait: builtins.function
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
+    construct: builtins.classmethod
+    copy: builtins.function
     delete_app: builtins.function
+    delete_singleton_by_name: builtins.classmethod
+    dict: builtins.function
     find_unused_port: builtins.function
+    from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
+    json: builtins.function
     migrate_database: builtins.function
+    model_computed_fields: builtins.dict
+    model_config: builtins.dict
+    model_construct: builtins.classmethod
+    model_copy: builtins.function
+    model_dump: builtins.function
+    model_dump_json: builtins.function
+    model_extra: builtins.property
+    model_fields: builtins.dict
+    model_fields_set: builtins.property
+    model_json_schema: builtins.classmethod
+    model_parametrized_name: builtins.classmethod
+    model_post_init: builtins.function
+    model_rebuild: builtins.classmethod
+    model_validate: builtins.classmethod
+    model_validate_json: builtins.classmethod
+    model_validate_strings: builtins.classmethod
+    parse_file: builtins.classmethod
+    parse_obj: builtins.classmethod
+    parse_raw: builtins.classmethod
     reset_database: builtins.function
     run_dashboard: builtins.function
     run_evaluator: builtins.function
     run_feedback_functions: builtins.function
+    schema: builtins.classmethod
+    schema_json: builtins.classmethod
     start_dashboard: builtins.function
     start_evaluator: builtins.function
     stop_dashboard: builtins.function
     stop_evaluator: builtins.function
+    update_forward_refs: builtins.classmethod
     update_record: builtins.function
+    validate: builtins.classmethod
 trulens_eval.tru_basic_app:
   __class__: builtins.module
   highs: {}
@@ -7953,6 +8066,7 @@ trulens_eval.utils.pace.Pace:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    amark: builtins.function
     last_mark: datetime.datetime
     lock: _thread.lock
     mark: builtins.function

@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.2.2
+  __version__: 1.2.6
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.2.2
+  __version__: 1.2.6
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -534,6 +534,7 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
@@ -580,6 +581,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
@@ -836,6 +838,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
@@ -1641,7 +1644,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.2.2
+  __version__: 1.2.6
   highs:
     run_dashboard: builtins.function
     stop_dashboard: builtins.function
@@ -1915,7 +1918,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.2.2
+  __version__: 1.2.6
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2229,6 +2232,7 @@ trulens.feedback.v2.feedback:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutput: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutputType: pydantic._internal._model_construction.ModelMetaclass
+    FewShotExamples: builtins.type
     GraphicViolence: pydantic._internal._model_construction.ModelMetaclass
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
     Groundedness: pydantic._internal._model_construction.ModelMetaclass
@@ -2405,6 +2409,7 @@ trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin:
   - builtins.object
   __class__: builtins.type
   attributes:
+    examples: builtins.NoneType
     generate_system_prompt: builtins.classmethod
     validate_criteria_and_output_space: builtins.staticmethod
 trulens.feedback.v2.feedback.DigitalOutputType:
@@ -2422,7 +2427,6 @@ trulens.feedback.v2.feedback.EvalSchema:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
-    get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
 trulens.feedback.v2.feedback.Explained:
@@ -2454,6 +2458,12 @@ trulens.feedback.v2.feedback.FeedbackOutputType:
     max_interpretation: typing.Optional[builtins.str, builtins.NoneType]
     min_feedback: builtins.float
     min_interpretation: typing.Optional[builtins.str, builtins.NoneType]
+trulens.feedback.v2.feedback.FewShotExamples:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    from_list: builtins.classmethod
 trulens.feedback.v2.feedback.GraphicViolence:
   __bases__:
   - trulens.feedback.v2.feedback.Violence
