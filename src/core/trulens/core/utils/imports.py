@@ -6,7 +6,6 @@ Utilities for importing python modules and optional importing.
 import builtins
 from dataclasses import dataclass
 from importlib import metadata
-from importlib import resources
 import inspect
 from inspect import cleandoc
 import logging
@@ -23,6 +22,7 @@ from typing import (
     Union,
 )
 
+import importlib_resources
 from packaging import requirements
 from packaging import version
 import pkg_resources
@@ -47,8 +47,8 @@ def _requirements_of_trulens_core_file(
 ) -> Dict[str, requirements.Requirement]:
     """Get a dictionary of package names to requirements from a requirements
     file in trulens.core."""
-    _trulens_resources = resources.files("trulens.core")
-    with resources.as_file(_trulens_resources / path) as _path:
+    _trulens_resources = importlib_resources.files("trulens.core")
+    with importlib_resources.as_file(_trulens_resources / path) as _path:
         with open(_path) as fh:
             reqs = pkg_resources.parse_requirements(fh)
 
@@ -76,15 +76,17 @@ def static_resource(namespace: str, filepath: Union[Path, str]) -> Path:
         # This does not exist in 3.8
         from importlib.abc import Traversable
 
-        _trulens_resources: Traversable = resources.files(
+        _trulens_resources: Traversable = importlib_resources.files(
             f"trulens.{namespace}"
         )
-        with resources.as_file(_trulens_resources / filepath) as _path:
+        with importlib_resources.as_file(
+            _trulens_resources / filepath
+        ) as _path:
             return _path
     else:
         # This is deprecated starting 3.11
         parts = filepath.parts
-        with resources.path("trulens", parts[0]) as _path:
+        with importlib_resources.path("trulens", parts[0]) as _path:
             # NOTE: resources.path does not allow the resource to include folders.
             for part in parts[1:]:
                 _path = _path / part
@@ -302,7 +304,10 @@ def format_import_errors(
     this_these = "this" if len(packages) == 1 else "these"
 
     msg = cleandoc(f"""
-{",".join(packages)} {pack_s} {is_are} required for {purpose}.
+These {pack_s} {is_are} required for {purpose}:
+
+    {",".join(packages)}
+
 You should be able to install {it_them} with pip:
 
     ```bash
@@ -311,18 +316,14 @@ You should be able to install {it_them} with pip:
 """)
 
     msg_pinned = cleandoc(f"""
-You have {packs} installed but we could not import the required
-components. There may be a version incompatibility. Please try installing {this_these}
-exact {pack_s} with pip:
+There was a problem using these packages:
+
+    {packs}
+
+They are required for {purpose}. Try installing {this_these} exact {pack_s} with pip:
 
     ```bash
     pip install {" ".join(map(lambda a: f'"{a}"', requirements_pinned))}
-    ```
-
-Alternatively, if you do not need {packs}, uninstall {it_them}:
-
-    ```bash
-    pip uninstall -y '{" ".join(packages)}'
     ```
 """)
 
@@ -365,7 +366,7 @@ class Dummy(type):
         While dummies can be used as types, they return false to all `isinstance`
         and `issubclass` checks. Further, the use of a dummy in subclassing
         produces unreliable results with some of the debugging information such
-        as `original_exception` may be inaccassible.
+        as `original_exception` may be inaccessible.
     """
 
     def __str__(self) -> str:
@@ -558,7 +559,14 @@ class OptionalImports:
         self.fail = fail
         self.imp = builtins.__import__
 
-    def __import__(self, name, globals=None, locals=None, fromlist=(), level=0):
+    def __import__(
+        self,
+        name,
+        globals: Optional[Dict[str, Any]] = None,
+        locals: Optional[Dict[str, Any]] = None,
+        fromlist: Sequence[str] = (),
+        level=0,
+    ):
         # Check if this import call is coming from an import in trulens as
         # otherwise we don't want to intercept the error as some modules rely on
         # import failures for various things. HACK012: we have to step back a
@@ -572,30 +580,19 @@ class OptionalImports:
 
         module_name = frame.f_globals.get("__name__", "")
 
+        if fromlist is None:
+            fromlist = ()
+
         if not module_name.startswith("trulens"):
+            # If we are not importing in trulens, ignore this mechanism and use
+            # the builtin import. We don't want to override behaviour of
+            # importing for other packages as they might rely on import errors
+            # to drive their own logic.
             return self.imp(name, globals, locals, fromlist, level)
 
         try:
+            # First check whether the module itself is importable.
             mod = self.imp(name, globals, locals, fromlist, level)
-
-            # NOTE(piotrm): commented block attempts to check module contents for required
-            # attributes so we can offer a message without raising an exception later. It is
-            # commented out for now it is catching some things we don't watch to catch. Need to
-            # check how attributes are normally looked up in a module to fix this. Specifically, the
-            # code that raises these messages: "ImportError: cannot import name ..."
-            """
-            if isinstance(fromlist, Iterable):
-                for i in fromlist:
-                    if i == "*":
-                        continue
-                    # Check the contents so there is opportunity to catch import errors here
-                    try:
-                        getattr(mod, i)
-                    except AttributeError as e:
-                        raise ImportError(e)
-            """
-
-            return mod
 
         except ModuleNotFoundError as e:
             if self.fail:
@@ -609,18 +606,6 @@ class OptionalImports:
                 exception_class=ModuleNotFoundError,
             )
 
-        except AttributeError as e:
-            if self.fail:
-                raise e
-
-            return Dummy(
-                name=name,
-                message=self.messages.module_not_found,
-                importer=self,
-                original_exception=e,
-                exception_class=AttributeError,
-            )
-
         except ImportError as e:
             if self.fail:
                 raise e
@@ -632,6 +617,56 @@ class OptionalImports:
                 importer=self,
                 original_exception=e,
             )
+
+        # By this point the module was imported successfully. Now we need to
+        # check if we need to make dummies for the fromlist.
+
+        for i in fromlist:
+            if i == "*":
+                # Don't have a good way of verifying that * imports are all
+                # available. We should not be using those in optional imports.
+                logger.warning(
+                    "Optional import of * from %s is not supported.",
+                    name,
+                )
+                continue
+
+            try:
+                val = getattr(mod, i)
+
+            except AttributeError as e:
+                if self.fail:
+                    raise e
+
+                val = Dummy(
+                    name=i,
+                    message=self.messages.module_not_found,
+                    importer=self,
+                    original_exception=e,
+                    exception_class=AttributeError,
+                )
+
+            except ImportError as e:
+                if self.fail:
+                    raise e
+
+                val = Dummy(
+                    name=i,
+                    message=self.messages.import_error,
+                    importer=self,
+                    original_exception=e,
+                    exception_class=ImportError,
+                )
+
+            mod.__dict__[i] = val
+
+            if globals is not None:
+                globals[i] = val
+
+            if locals is not None:
+                locals[i] = val
+
+        return mod
 
     def __enter__(self):
         """Handle entering the WithOptionalImports context block.

@@ -3,7 +3,7 @@
 This wrapper is the most flexible option for instrumenting an application, and
 can be used to instrument any custom python class.
 
-Example:
+Example: Instrumenting a custom class
     Consider a mock question-answering app with a context retriever component coded
     up as two classes in two python, `CustomApp` and `CustomRetriever`:
 
@@ -53,46 +53,47 @@ each method that the user wishes to track.
 The owner classes of any decorated method is then viewed as an app component. In
 this example, case `CustomApp` and `CustomRetriever` are components.
 
-    Example:
-        ### `example.py`
+Example:
+    ### `example.py`
 
-        ```python
-        from custom_app import CustomApp
-        from trulens.apps.custom import TruCustomApp
+    ```python
+    from custom_app import CustomApp
+    from trulens.apps.custom import TruCustomApp
 
-        custom_app = CustomApp()
+    custom_app = CustomApp()
 
-        # Normal app Usage:
-        response = custom_app.respond_to_query("What is the capital of Indonesia?")
+    # Normal app Usage:
+    response = custom_app.respond_to_query("What is the capital of Indonesia?")
 
-        # Wrapping app with `TruCustomApp`:
-        tru_recorder = TruCustomApp(ca)
+    # Wrapping app with `TruCustomApp`:
+    tru_recorder = TruCustomApp(ca)
 
-        # Tracked usage:
-        with tru_recorder:
-            custom_app.respond_to_query, input="What is the capital of Indonesia?")
-        ```
+    # Tracked usage:
+    with tru_recorder:
+        custom_app.respond_to_query, input="What is the capital of Indonesia?")
+    ```
 
     `TruCustomApp` constructor arguments are like in those higher-level
 apps as well including the feedback functions, metadata, etc.
 
-### Instrumenting 3rd party classes
+## Instrumenting 3rd party classes
 
 In cases you do not have access to a class to make the necessary decorations for
 tracking, you can instead use one of the static methods of `instrument`, for
 example, the alternative for making sure the custom retriever gets instrumented
 is via:
 
-```python
-# custom_app.py`:
+Example:
+    ```python
+    # custom_app.py`:
 
-from trulens.apps.custom import instrument
-from some_package.from custom_retriever import CustomRetriever
+    from trulens.apps.custom import instrument
+    from some_package.from custom_retriever import CustomRetriever
 
-instrument.method(CustomRetriever, "retrieve_chunks")
+    instrument.method(CustomRetriever, "retrieve_chunks")
 
-# ... rest of the custom class follows ...
-```
+    # ... rest of the custom class follows ...
+    ```
 
 ## API Usage Tracking
 
@@ -102,6 +103,8 @@ apps.
 ### Covered LLM Libraries
 
 - Official OpenAI python package (https://github.com/openai/openai-python).
+- Snowflake Cortex (https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex.html).
+- Amazon Bedrock (https://docs.aws.amazon.com/code-library/latest/ug/python_3_bedrock_code_examples.html).
 
 ### Huggingface
 
@@ -220,8 +223,7 @@ class TruCustomApp(core_app.App):
     Track any custom app using methods decorated with `@instrument`, or whose
     methods are instrumented after the fact by `instrument.method`.
 
-    Example: "Using the `@instrument` decorator"
-
+    Example: Using the `@instrument` decorator
         ```python
         from trulens.core import instrument
 
@@ -249,8 +251,7 @@ class TruCustomApp(core_app.App):
         ca = CustomApp()
         ```
 
-    Example: "Using `instrument.method`"
-
+    Example: Using `instrument.method`
         ```python
         from trulens.core import instrument
 
@@ -302,8 +303,7 @@ class TruCustomApp(core_app.App):
     Last, the `TruCustomApp` recorder can wrap our custom application, and
     provide logging and evaluation upon its use.
 
-    Example: "Using the `TruCustomApp` recorder"
-
+    Example: Using the `TruCustomApp` recorder
         ```python
         from trulens.apps.custom import TruCustomApp
 

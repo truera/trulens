@@ -20,6 +20,36 @@ _TRULENS_PACKAGES = [
     "trulens-providers-cortex",
 ]
 
+_TRULENS_EXTRA_STAGED_PACKAGES = [
+    "trulens-dashboard",
+]
+
+
+# TODO(dkurokawa): get these package versions automatically.
+_TRULENS_PACKAGES_DEPENDENCIES = [
+    "alembic",
+    "dill",
+    "munch",
+    "nest-asyncio",
+    "nltk",
+    "numpy",
+    "packaging",
+    "pandas",
+    "pip",
+    "pydantic",
+    "python-dotenv",
+    "requests",
+    "rich",
+    "scikit-learn",
+    "scipy",
+    "snowflake-ml-python",
+    "snowflake-snowpark-python",
+    "snowflake-sqlalchemy",
+    "sqlalchemy",
+    "tqdm",
+    "typing_extensions",
+]
+
 
 class ServerSideEvaluationArtifacts:
     """This class is used to set up any Snowflake server side artifacts for feedback evaluation."""
@@ -58,9 +88,13 @@ class ServerSideEvaluationArtifacts:
         data_directory = os.path.join(
             os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
-        for trulens_package in _TRULENS_PACKAGES:
+        for trulens_package in (
+            _TRULENS_PACKAGES + _TRULENS_EXTRA_STAGED_PACKAGES
+        ):
             file_path = os.path.join(data_directory, f"{trulens_package}.zip")
-            self._run_query(f"PUT file://{file_path} @{_STAGE_NAME}")
+            self._run_query(
+                f"PUT file://{file_path} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
+            )
 
     def _set_up_stream(self) -> None:
         self._run_query(
@@ -77,11 +111,13 @@ class ServerSideEvaluationArtifacts:
                 f"'@{_STAGE_NAME}/{curr}.zip'" for curr in _TRULENS_PACKAGES
             ])
             import_statement = f"IMPORTS = ({import_packages})"
-            trulens_packages = ""
+            packages_statement = ",".join([
+                f"'{curr}'" for curr in _TRULENS_PACKAGES_DEPENDENCIES
+            ])
         else:
             import_statement = ""
-            trulens_packages = "".join([
-                f"'{curr}'," for curr in _TRULENS_PACKAGES
+            packages_statement = ",".join([
+                f"'{curr}'" for curr in _TRULENS_PACKAGES
             ])
         with open(_PYTHON_STORED_PROCEDURE_CODE_FILENAME, "r") as fh:
             python_code = fh.read()
@@ -92,28 +128,7 @@ class ServerSideEvaluationArtifacts:
                 LANGUAGE PYTHON
                 RUNTIME_VERSION = '3.11'
                 PACKAGES = (
-                    {trulens_packages}
-                    -- TODO(dkurokawa): get these package versions automatically.
-                    'alembic',
-                    'dill',
-                    'munch',
-                    'nest-asyncio',
-                    'nltk',
-                    'numpy',
-                    'packaging',
-                    'pandas',
-                    'pip',
-                    'pydantic',
-                    'python-dotenv',
-                    'requests',
-                    'rich',
-                    'scikit-learn',
-                    'scipy',
-                    'snowflake-snowpark-python',
-                    'snowflake-sqlalchemy',
-                    'sqlalchemy',
-                    'tqdm',
-                    'typing_extensions'
+                    {packages_statement}
                 )
                 {import_statement}
                 HANDLER = 'run'

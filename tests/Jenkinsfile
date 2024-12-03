@@ -1,0 +1,84 @@
+def vault_settings = [
+    vaultSecrets: [
+        [
+            path: 'ml-platform/snowml/e2etests-trulens-jenkins-credentials',
+            secretValues: [
+                [envVar: 'OPENAI_API_KEY', vaultKey: 'OPENAI_API_KEY'],
+                [envVar: 'HUGGINGFACEHUB_API_TOKEN', vaultKey: 'HUGGINGFACEHUB_API_TOKEN'],
+                [envVar: 'HUGGINGFACE_API_KEY', vaultKey: 'HUGGINGFACE_API_KEY'],
+                [envVar: 'PINECONE_API_KEY', vaultKey: 'PINECONE_API_KEY'],
+                [envVar: 'PINECONE_ENV', vaultKey: 'PINECONE_ENV'],
+                [envVar: 'SNOWFLAKE_ACCOUNT', vaultKey: 'SNOWFLAKE_ACCOUNT'],
+                [envVar: 'SNOWFLAKE_DATABASE', vaultKey: 'SNOWFLAKE_DATABASE'],
+                [envVar: 'SNOWFLAKE_ROLE', vaultKey: 'SNOWFLAKE_ROLE'],
+                [envVar: 'SNOWFLAKE_SCHEMA', vaultKey: 'SNOWFLAKE_SCHEMA'],
+                [envVar: 'SNOWFLAKE_USER', vaultKey: 'SNOWFLAKE_USER'],
+                [envVar: 'SNOWFLAKE_USER_PASSWORD', vaultKey: 'SNOWFLAKE_USER_PASSWORD'],
+                [envVar: 'SNOWFLAKE_WAREHOUSE', vaultKey: 'SNOWFLAKE_WAREHOUSE']
+            ]
+        ]
+    ]
+]
+
+pipeline {
+    agent {
+        docker {
+            label 'regular-memory-node-c7'
+            image 'python:3.11'
+            reuseNode true
+            alwaysPull false
+            args '-u root'
+        }
+    }
+
+    options {
+        timestamps()
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage('prepare') {
+            steps {
+                sh label: 'Environment setup', script: '''
+                    git config --global --add safe.directory '*'  # perm fix
+                    curl -sSL https://install.python-poetry.org | python3 -
+                    ln -s /root/.local/bin/poetry /usr/local/bin/poetry
+                    echo "Using $(python --version) ($(which python)) $(poetry -V)"
+                    poetry config virtualenvs.create false
+                    poetry run pip install pip==24.1.2
+                    poetry run python --version
+                    poetry run pip --version
+                '''
+                sh label: 'Run Pre-commit hooks', script: '''
+                    set -e
+                    poetry install --only dev --sync
+                    make run-precommit
+                '''
+            }
+        }
+        stage('Test Suites') {
+            parallel {
+                stage('e2e') {
+                    steps {
+                        withVault(vault_settings) {
+                            sh label: 'Run Optional "e2e" Test Suite', script: '''
+                                set -e
+                                make test-e2e-optional
+                            '''
+                        }
+                    }
+                }
+                stage('notebook') {
+                    steps {
+                        withVault(vault_settings) {
+                            sh label: 'Run Optional "test" Test Suite', script: '''
+                                set -e
+                                make test-notebook-optional
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

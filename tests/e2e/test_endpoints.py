@@ -6,10 +6,12 @@ various secrets configured. See `setUp` below.
 
 import os
 from pprint import PrettyPrinter
-from unittest import TestCase
 from unittest import main
 from unittest import skip
 
+from snowflake.snowpark import Session
+from trulens.core import experimental as core_experimental
+from trulens.core import session as core_session
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.utils import keys as key_utils
 
@@ -18,8 +20,17 @@ from tests import test as test_utils
 pp = PrettyPrinter()
 
 
-class TestEndpoints(TestCase):
+class TestEndpoints(test_utils.TruTestCase):
     """Tests for cost tracking of endpoints."""
+
+    @classmethod
+    def setUpClass(cls):
+        session = core_session.TruSession()
+
+        if cls.env_true(test_utils.USE_OTEL_TRACING):
+            session.experimental_enable_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
 
     def setUp(self):
         key_utils.check_keys(
@@ -40,6 +51,9 @@ class TestEndpoints(TestCase):
             "SNOWFLAKE_ACCOUNT",
             "SNOWFLAKE_USER",
             "SNOWFLAKE_USER_PASSWORD",
+            "SNOWFLAKE_DATABASE",
+            "SNOWFLAKE_SCHEMA",
+            "SNOWFLAKE_WAREHOUSE",
         )
 
     def _test_hugs_provider_endpoint(self, provider, with_cost: bool = True):
@@ -214,11 +228,14 @@ class TestEndpoints(TestCase):
         os.environ["OPENAI_API_TYPE"] = "openai"
 
         from trulens.providers.litellm import LiteLLM
+        from trulens.providers.litellm.endpoint import LiteLLMEndpoint
         from trulens.providers.openai import OpenAI
+        from trulens.providers.openai.endpoint import OpenAIEndpoint
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        LiteLLMEndpoint.delete_instances()
+        OpenAIEndpoint.delete_instances()
 
         provider = LiteLLM(f"openai/{OpenAI.DEFAULT_MODEL_ENGINE}")
 
@@ -232,6 +249,9 @@ class TestEndpoints(TestCase):
         os.environ["OPENAI_API_TYPE"] = "azure"
 
         from trulens.providers.openai import AzureOpenAI
+        from trulens.providers.openai.endpoint import OpenAIEndpoint
+
+        OpenAIEndpoint.delete_instances()
 
         provider = AzureOpenAI(
             model_engine=AzureOpenAI.DEFAULT_MODEL_ENGINE,
@@ -249,7 +269,9 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        from trulens.providers.litellm.endpoint import LiteLLMEndpoint
+
+        LiteLLMEndpoint.delete_instances()
 
         from trulens.providers.litellm import LiteLLM
 
@@ -284,7 +306,9 @@ class TestEndpoints(TestCase):
 
         # Have to delete litellm endpoint singleton as it may have been created
         # with the wrong underlying litellm provider in a prior test.
-        core_endpoint.Endpoint.delete_singleton_by_name("litellm")
+        from trulens.providers.litellm.endpoint import LiteLLMEndpoint
+
+        LiteLLMEndpoint.delete_instances()
 
         provider = LiteLLM(f"bedrock/{Bedrock.DEFAULT_MODEL_ID}")
 
@@ -294,7 +318,6 @@ class TestEndpoints(TestCase):
     @test_utils.optional_test
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
-        import snowflake.connector
         from trulens.providers.cortex import Cortex
 
         snowflake_connection_parameters = {
@@ -305,8 +328,12 @@ class TestEndpoints(TestCase):
             "schema": os.environ["SNOWFLAKE_SCHEMA"],
             "warehouse": os.environ["SNOWFLAKE_WAREHOUSE"],
         }
+
+        snowpark_session = Session.builder.configs(
+            snowflake_connection_parameters
+        ).create()
         provider = Cortex(
-            snowflake.connector.connect(**snowflake_connection_parameters),
+            snowpark_session=snowpark_session,
             model_engine="snowflake-arctic",
         )
 

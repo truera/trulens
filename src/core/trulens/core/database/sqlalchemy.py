@@ -545,18 +545,33 @@ class SQLAlchemyDB(core_db.DB):
             feedback_result, redact_keys=self.redact_keys
         )
         with self.session.begin() as session:
-            if (
-                session.query(self.orm.FeedbackResult)
-                .filter_by(
-                    feedback_result_id=feedback_result.feedback_result_id
-                )
-                .first()
-            ):
-                session.merge(_feedback_result)  # update existing
+            # The Snowflake stored procedure connector isn't currently capable
+            # of handling None qmark-bound to an `INSERT INTO` or `UPDATE`
+            # statement for nullable numeric columns. Thus, as a hack, we get
+            # around this by first inserting a non-null value then updating it
+            # to a null value.
+            use_snowflake_hack = (
+                self.engine.dialect.name == "snowflake"
+                and _feedback_result.result is None
+            )
+            if not use_snowflake_hack:
+                session.merge(_feedback_result)
             else:
-                session.merge(
-                    _feedback_result
-                )  # insert new result # .add was not thread safe
+                _feedback_result.result = -1
+                session.merge(_feedback_result)
+                _feedback_result.result = None
+                session.flush()  # Ensure the merge is executed before the update.
+                session.execute(
+                    sql_text(
+                        """
+                    UPDATE trulens_feedbacks
+                    SET result=NULL
+                    WHERE trulens_feedbacks.feedback_result_id = :feedback_result_id
+                        """.replace("\n", " ")
+                    ),
+                    {"feedback_result_id": feedback_result.feedback_result_id},
+                )
+                session.flush()
 
             status = feedback_schema.FeedbackResultStatus(
                 _feedback_result.status
@@ -587,6 +602,17 @@ class SQLAlchemyDB(core_db.DB):
         self, feedback_results: List[feedback_schema.FeedbackResult]
     ) -> List[types_schema.FeedbackResultID]:
         """See [DB.batch_insert_feedback][trulens.core.database.base.DB.batch_insert_feedback]."""
+        # The Snowflake stored procedure connector isn't currently capable of
+        # handling None qmark-bound to an `INSERT INTO` or `UPDATE` statement
+        # for nullable numeric columns. Thus, as a hack, we get around this by
+        # first inserting a non-null value then updating it to a null value.
+        if self.engine.dialect == "snowflake" and any([
+            curr.result is None for curr in feedback_results
+        ]):
+            ret = []
+            for curr in feedback_results:
+                ret.append(self.insert_feedback(curr))
+            return ret
         with self.session.begin() as session:
             feedback_results_list = [
                 self.orm.FeedbackResult.parse(f, redact_keys=self.redact_keys)
@@ -1131,6 +1157,10 @@ class AppsExtractor:
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
         df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df["record_json"] = df["record_json"].apply(json.loads)
+        df["input"] = df["input"].apply(json.loads)
+        df["output"] = df["output"].apply(json.loads)
+
         return df, list(self.feedback_columns)
 
     def extract_apps(
@@ -1214,7 +1244,7 @@ class AppsExtractor:
                         ] = feedback_usage["cost"]
 
                     if (
-                        _res.multi_result is not None
+                        _res.multi_result not in [None, "null", "None"]
                         and (multi_result := json.loads(_res.multi_result))
                         is not None
                     ):
@@ -1222,7 +1252,7 @@ class AppsExtractor:
                             if (
                                 val is not None
                             ):  # avoid getting Nones into np.mean
-                                name = f"{_res.name}:::{key}"
+                                name = f"{_res.name}{core_db.MULTI_CALL_NAME_DELIMITER}{key}"
                                 values[name] = val
                                 self.feedback_columns.add(name)
                     elif (

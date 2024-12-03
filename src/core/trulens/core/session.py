@@ -42,7 +42,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.core.utils import threading as tru_threading
+from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
     from trulens.core import app as base_app
@@ -55,9 +55,7 @@ logger = logging.getLogger(__name__)
 
 
 class TruSession(
-    core_experimental._WithExperimentalSettings,
-    pydantic.BaseModel,
-    metaclass=python_utils.PydanticSingletonMeta,
+    core_experimental._WithExperimentalSettings, python_utils.PydanticSingleton
 ):
     """TruSession is the main class that provides an entry points to trulens.
 
@@ -182,6 +180,8 @@ class TruSession(
     def experimental_otel_exporter(
         self, value: Optional[Any]
     ):  # Any = otel_export_sdk.SpanExporter
+        otel_tracing_feature._FeatureSetup.assert_optionals_installed()
+
         from trulens.experimental.otel_tracing.core.session import _TruSession
 
         _TruSession._setup_otel_exporter(self, value)
@@ -247,7 +247,13 @@ class TruSession(
             self.experimental_set_features(experimental_feature_flags)
 
         if _experimental_otel_exporter is not None:
-            self.experimental_otel_exporter = _experimental_otel_exporter
+            otel_tracing_feature.assert_optionals_installed()
+
+            from trulens.experimental.otel_tracing.core.session import (
+                _TruSession,
+            )
+
+            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
@@ -897,7 +903,7 @@ class TruSession(
             )
             print(
                 f"Tasks are spread among max of "
-                f"{tru_threading.TP.MAX_THREADS} thread(s)."
+                f"{threading_utils.TP.MAX_THREADS} thread(s)."
             )
             print(
                 f"Will rerun running feedbacks after "

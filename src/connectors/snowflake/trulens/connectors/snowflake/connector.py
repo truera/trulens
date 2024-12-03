@@ -14,6 +14,9 @@ from typing import (
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     ServerSideEvaluationArtifacts,
 )
+from trulens.connectors.snowflake.utils.sis_dashboard_artifacts import (
+    SiSDashboardArtifacts,
+)
 from trulens.core.database import base as core_db
 from trulens.core.database.base import DB
 from trulens.core.database.connector.base import DBConnector
@@ -42,6 +45,7 @@ class SnowflakeConnector(DBConnector):
         snowpark_session: Optional[Session] = None,
         init_server_side: bool = False,
         init_server_side_with_staged_packages: bool = False,
+        init_sis_dashboard: bool = False,
         database_redact_keys: bool = False,
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
@@ -67,10 +71,15 @@ class SnowflakeConnector(DBConnector):
                 )
             )
 
+        self.snowpark_session = snowpark_session
+        self.connection_parameters: Dict[str, str] = connection_parameters
+        self.use_staged_packages: bool = init_server_side_with_staged_packages
+
         self._init_with_snowpark_session(
             snowpark_session,
             init_server_side,
             init_server_side_with_staged_packages,
+            init_sis_dashboard,
             database_redact_keys,
             database_prefix,
             database_args,
@@ -107,7 +116,7 @@ class SnowflakeConnector(DBConnector):
         self,
         snowpark_session: Session,
         connection_parameters: Dict[str, Optional[str]],
-    ) -> Dict[str, Optional[str]]:
+    ) -> Dict[str, str]:
         # Validate.
         snowpark_session_connection_parameters = {
             "account": snowpark_session.get_current_account(),
@@ -153,19 +162,38 @@ class SnowflakeConnector(DBConnector):
                 connection_parameters["password"]
             )
             self.password_known = True
+        snowpark_session_connection_parameters = {
+            k: v for k, v in snowpark_session_connection_parameters.items() if v
+        }
         return snowpark_session_connection_parameters
+
+    @staticmethod
+    def _validate_snowpark_session_paramstyle(
+        snowpark_session: Session,
+    ) -> None:
+        if snowpark_session.connection._paramstyle == "pyformat":
+            # If this is the case, sql executions with bindings will fail later
+            # on so we fail fast here.
+            raise ValueError(
+                "The Snowpark session must have paramstyle 'qmark'! To ensure"
+                " this, during `snowflake.connector.connect` pass in"
+                " `paramstyle='qmark'` or set"
+                " `snowflake.connector.paramstyle = 'qmark'` beforehand."
+            )
 
     def _init_with_snowpark_session(
         self,
         snowpark_session: Session,
         init_server_side: bool,
         init_server_side_with_staged_packages: bool,
+        init_sis_dashboard: bool,
         database_redact_keys: bool,
         database_prefix: Optional[str],
         database_args: Optional[Dict[str, Any]],
         database_check_revision: bool,
         connection_parameters: Dict[str, str],
     ):
+        self._validate_snowpark_session_paramstyle(snowpark_session)
         database_args = self._set_up_database_args(
             database_args,
             snowpark_session,
@@ -193,25 +221,35 @@ class SnowflakeConnector(DBConnector):
                 database_args["database_prefix"],
                 init_server_side_with_staged_packages,
             ).set_up_all()
+        if init_sis_dashboard:
+            self._set_up_sis_dashboard(
+                session=snowpark_session,
+                warehouse=connection_parameters["warehouse"],
+                init_server_side_with_staged_packages=init_server_side_with_staged_packages,
+            )
 
         # Add "trulens_workspace_version" tag to the current schema
         TRULENS_WORKSPACE_VERSION_TAG = "trulens_workspace_version"
 
-        self._run_query(
-            snowpark_session,
-            f"CREATE TAG IF NOT EXISTS {TRULENS_WORKSPACE_VERSION_TAG}",
-        )
-        res = self._run_query(
-            snowpark_session,
-            "ALTER SCHEMA {}.{} SET TAG {}='{}'".format(
-                connection_parameters["database"],
-                connection_parameters["schema"],
-                TRULENS_WORKSPACE_VERSION_TAG,
-                self.db.get_db_revision(),
-            ),
-        )
-
-        print(f"Set TruLens workspace version tag: {res}")
+        try:
+            self._run_query(
+                snowpark_session,
+                f"CREATE TAG IF NOT EXISTS {TRULENS_WORKSPACE_VERSION_TAG}",
+            )
+            res = self._run_query(
+                snowpark_session,
+                "ALTER SCHEMA {}.{} SET TAG {}='{}'".format(
+                    connection_parameters["database"],
+                    connection_parameters["schema"],
+                    TRULENS_WORKSPACE_VERSION_TAG,
+                    self.db.get_db_revision(),
+                ),
+            )
+            print(f"Set TruLens workspace version tag: {res}")
+        except Exception as e:
+            print(
+                f"Error setting TruLens workspace version tag: {e}, check if you have enterprise version of Snowflake."
+            )
 
     def _set_up_database_args(
         self,
@@ -255,6 +293,22 @@ class SnowflakeConnector(DBConnector):
             database_prefix or core_db.DEFAULT_DATABASE_PREFIX
         )
         return database_args
+
+    def _set_up_sis_dashboard(
+        self,
+        streamlit_name: str = "TRULENS_DASHBOARD",
+        session: Optional[Session] = None,
+        warehouse: Optional[str] = None,
+        init_server_side_with_staged_packages: bool = False,
+    ) -> None:
+        return SiSDashboardArtifacts(
+            streamlit_name,
+            session or self.snowpark_session,
+            self.connection_parameters["database"],
+            self.connection_parameters["schema"],
+            warehouse or self.connection_parameters["warehouse"],
+            init_server_side_with_staged_packages or self.use_staged_packages,
+        ).set_up_all()
 
     @staticmethod
     def _run_query(

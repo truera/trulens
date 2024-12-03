@@ -8,6 +8,7 @@ import importlib
 import inspect
 import logging
 from pprint import PrettyPrinter
+import re
 from time import sleep
 from types import ModuleType
 from typing import (
@@ -25,12 +26,17 @@ from typing import (
 
 import pydantic
 from pydantic import Field
+from pydantic import PrivateAttr
+import requests
+from trulens.core import experimental as core_experimental
+from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
-from trulens.core.utils import asynchro as mod_asynchro_utils
+from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.core.utils import threading as threading_utils
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +55,15 @@ _NO_CONTEXT_WARNING = """
 Cannot find TruLens context. See
 https://www.trulens.org/component_guides/other/no_context_warning for more information.
 """
+
+_RE_NO_RETRY = re.compile(
+    "("
+    + ("|".join(["authentication", "unauthorized", "expired", "quota"]))
+    + ")",
+    re.IGNORECASE,
+)
+"""Pattern matched against request exceptions to determine whether they should
+be aborted right away instead of retried."""
 
 
 class EndpointCallback(serial_utils.SerialModel):
@@ -120,6 +135,7 @@ class Endpoint(
         class_name: str
 
     # TODO: factor this out
+    BASE_ENDPOINTS: ClassVar[Dict[str, Endpoint]] = {}
     ENDPOINT_SETUPS: ClassVar[List[EndpointSetup]] = [
         EndpointSetup(
             arg_flag="with_openai",
@@ -207,6 +223,11 @@ class Endpoint(
     callback_name: str = Field(exclude=True)
     """Name of variable that stores the callback noted above."""
 
+    _experimental_wrapper_callback_class: Optional[Type[Any]] = PrivateAttr(
+        None
+    )  # Any actually WrapperEndpointCallback but cannot import it here
+    """EXPERIMENTAL(otel_tracing): callback class to use for usage tracking."""
+
     _context_endpoints: ClassVar[contextvars.ContextVar] = (
         contextvars.ContextVar("endpoints", default={})
     )
@@ -271,13 +292,27 @@ class Endpoint(
 
         return self.pace.mark()
 
-    def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
-        """
-        Run the given `func` on the given `args` and `kwargs` at pace with the
-        endpoint-specified rpm. Failures will be retried `self.retries` times.
+    async def apace_me(self) -> float:
+        yield self.pace.amark()
+
+    def _can_retry(self, e: Exception) -> bool:
+        """Determine whether a request that raised the given exception can be
+        retried.
+
+        Things like authorization errors should not be retried.
         """
 
+        if _RE_NO_RETRY.search(str(e)) is not None:
+            return False
+
+        return True
+
+    def run_in_pace(self, func: Callable[[A], B], *args, **kwargs) -> B:
+        """Run the given `func` on the given `args` and `kwargs` at pace with the
+        endpoint-specified rpm. Failures will be retried `self.retries` times."""
+
         retries = self.retries + 1
+        attempts = 0
         retry_delay = 2.0
 
         errors = []
@@ -285,6 +320,7 @@ class Endpoint(
         while retries > 0:
             try:
                 self.pace_me()
+                attempts += 1
                 ret = func(*args, **kwargs)
                 return ret
 
@@ -298,12 +334,15 @@ class Endpoint(
                     retries,
                 )
                 errors.append(e)
+                if not self._can_retry(e):
+                    break
+
                 if retries > 0:
                     sleep(retry_delay)
                     retry_delay *= 2
 
         raise RuntimeError(
-            f"Endpoint {self.name} request failed {self.retries + 1} time(s): \n\t"
+            f"Endpoint {self.name} request failed {attempts} time(s): \n\t"
             + ("\n\t".join(map(str, errors)))
         )
 
@@ -436,15 +475,16 @@ class Endpoint(
                 m,
                 method_name,
             )
-            if python_utils.safe_hasattr(mod, m):
-                obj = python_utils.safe_getattr(mod, m)
+            obj = python_utils.safer_getattr(mod, m)
+            if obj is not None and isinstance(obj, type):
+                # Instrument only classes, not instances.
                 self._instrument_class(obj, method_name=method_name)
 
         already_instrumented.add(method_name)
 
     @staticmethod
     def track_all_costs(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -454,19 +494,17 @@ class Endpoint(
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, Sequence[EndpointCallback]]:
-        """
-        Track costs of all of the apis we can currently track, over the
-        execution of thunk.
-        """
+        """Track costs of all of the apis we can currently track, over the
+        execution of thunk."""
 
         endpoints = []
 
-        for endpoint in Endpoint.ENDPOINT_SETUPS:
-            if locals().get(endpoint.arg_flag):
+        for endpoint_setup in Endpoint.ENDPOINT_SETUPS:
+            if locals().get(endpoint_setup.arg_flag):
                 try:
-                    mod = importlib.import_module(endpoint.module_name)
+                    mod = importlib.import_module(endpoint_setup.module_name)
                     cls: Type[Endpoint] = python_utils.safe_getattr(
-                        mod, endpoint.class_name
+                        mod, endpoint_setup.class_name
                     )
                 except ImportError:
                     # If endpoint uses optional packages, will get either module
@@ -477,7 +515,7 @@ class Endpoint(
                     logger.warning(
                         "Could not import tracking module %s. "
                         "trulens will not track costs/usage of this endpoint. %s",
-                        endpoint.module_name,
+                        endpoint_setup.module_name,
                         e,
                     )
                     continue
@@ -485,16 +523,21 @@ class Endpoint(
                 try:
                     endpoint = next(iter(cls.get_instances()))
                 except StopIteration:
-                    logger.warning(
-                        "Could not find an instance of %s. "
-                        "trulens will create an endpoint for cost tracking.",
-                        cls.__name__,
-                    )
                     endpoint = None
 
                 try:
                     if endpoint is None:
-                        endpoint = cls(_register_instance=False)  # type: ignore
+                        if cls.__name__ not in Endpoint.BASE_ENDPOINTS:
+                            logger.warning(
+                                "Could not find an instance of %s. "
+                                "trulens will create an endpoint for cost tracking.",
+                                cls.__name__,
+                            )
+                            Endpoint.BASE_ENDPOINTS[cls.__name__] = cls(
+                                _register_instance=False
+                            )
+                        endpoint = Endpoint.BASE_ENDPOINTS[cls.__name__]
+
                     endpoints.append(endpoint)
                 except Exception as e:
                     logger.debug(
@@ -511,7 +554,7 @@ class Endpoint(
 
     @staticmethod
     def track_all_costs_tally(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_openai: bool = True,
         with_hugs: bool = True,
@@ -521,8 +564,7 @@ class Endpoint(
         with_dummy: bool = True,
         **kwargs,
     ) -> Tuple[T, python_utils.Thunk[base_schema.Cost]]:
-        """
-        Track costs of all of the apis we can currently track, over the
+        """Track costs of all of the apis we can currently track, over the
         execution of thunk.
 
         Returns:
@@ -532,6 +574,17 @@ class Endpoint(
                 callbacks that tracked costs. This is a thunk as the costs might
                 change after this method returns in case of Awaitable results.
         """
+
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, freeze=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.track_all_costs_tally(__func, *args, **kwargs)
 
         result, cbs = Endpoint.track_all_costs(
             __func,
@@ -555,7 +608,7 @@ class Endpoint(
 
     @staticmethod
     def _track_costs(
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[A, T],
+        __func: asynchro_utils.CallableMaybeAwaitable[A, T],
         *args,
         with_endpoints: Optional[List[Endpoint]] = None,
         **kwargs,
@@ -634,7 +687,7 @@ class Endpoint(
 
     def track_cost(
         self,
-        __func: mod_asynchro_utils.CallableMaybeAwaitable[..., T],
+        __func: asynchro_utils.CallableMaybeAwaitable[..., T],
         *args,
         **kwargs,
     ) -> Tuple[T, EndpointCallback]:
@@ -692,6 +745,17 @@ class Endpoint(
 
     def wrap_function(self, func):
         """Create a wrapper of the given function to perform cost tracking."""
+
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, freeze=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.wrap_function(self, func)
 
         if python_utils.safe_hasattr(func, INSTRUMENT):
             # Store the types of callback classes that will handle calls to the
@@ -819,6 +883,90 @@ class Endpoint(
         logger.debug("Instrumenting %s for %s.", func.__name__, self.name)
 
         return tru_wrapper
+
+
+class _WithPost(Endpoint):
+    """Endpoint with post methods."""
+
+    post_headers: Dict[str, str] = Field(default_factory=dict)
+
+    def post(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: Optional[float] = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> requests.Response:
+        """Make an http post request.
+
+        Subclasses can include additional logic to handle endpoint-specific
+        responses.
+        """
+
+        self.pace_me()
+
+        return requests.post(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
+
+    async def apost(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: Optional[float] = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> requests.Response:
+        """Make an http post request.
+
+        Subclasses can include additional logic to handle endpoint-specific
+        responses.
+        """
+
+        await self.apace_me()
+
+        # TODO: use an asynchronous post method.
+        return requests.post(
+            url, json=json, timeout=timeout, headers=self.post_headers
+        )
+
+    def post_json_first(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> Dict:
+        """Wraps `post` with json()[0]."""
+
+        jdata = self.post(url=url, json=json, timeout=timeout).json()
+        if len(jdata) == 0:
+            raise ValueError("Empty response from post.")
+
+        if len(jdata) > 1:
+            logger.warning(
+                "Received more than one response from post. "
+                "Returning only the first."
+            )
+
+        return jdata[0]
+
+    async def apost_json_first(
+        self,
+        url: str,
+        json: serial_utils.JSON,
+        timeout: float = threading_utils.DEFAULT_NETWORK_TIMEOUT,
+    ) -> Dict:
+        """Wraps `apost` with json()[0]."""
+
+        jdata = (await self.apost(url=url, json=json, timeout=timeout)).json()
+
+        if len(jdata) == 0:
+            raise ValueError("Empty response from post.")
+
+        if len(jdata) > 1:
+            logger.warning(
+                "Received more than one response from apost. "
+                "Returning only the first."
+            )
+
+        return jdata[0]
 
 
 EndpointCallback.model_rebuild()

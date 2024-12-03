@@ -267,7 +267,8 @@ class _RecordingContext:
         """Completed records."""
 
         self.lock: th.Lock = th.Lock()
-        """Lock blocking access to `calls` and `records` when adding calls or finishing a record."""
+        """Lock blocking access to `calls` and `records` when adding calls or
+        finishing a record."""
 
         self.token: Optional[contextvars.Token] = None
         """Token for context management."""
@@ -572,7 +573,7 @@ class Instrument:
             raise ValueError("Instrumentation requires an app but is None.")
 
         if self.app.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING, lock=True
+            core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
             from trulens.experimental.otel_tracing.core.instruments import (
                 _Instrument,
@@ -1257,5 +1258,6 @@ class instrument(AddInstruments):
         # list of filters.
         self.method(cls, name)
 
-    def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+    def __call__(_self, *args, **kwargs):
+        # `_self` is used to avoid conflicts where `self` may be passed from the caller method
+        return _self.func(*args, **kwargs)

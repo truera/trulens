@@ -1,0 +1,16 @@
+name: trulens-dashboard-sis
+channels:
+- snowflake
+dependencies:
+- dill
+- alembic
+- importlib-resources
+- munch
+- nest-asyncio
+- plotly
+- pydantic
+- python-dotenv
+- snowflake-sqlalchemy
+- sqlalchemy
+- snowflake-snowpark-python
+- streamlit

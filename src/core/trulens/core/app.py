@@ -509,7 +509,7 @@ class App(
 
     def wait_for_feedback_results(
         self, feedback_timeout: Optional[float] = None
-    ) -> List[record_schema.Record]:
+    ) -> Iterable[record_schema.Record]:
         """Wait for all feedbacks functions to complete.
 
         Args:
@@ -518,7 +518,7 @@ class App(
                 total timeout for this entire blocking call.
 
         Returns:
-            A list of records that have been waited on. Note a record will be
+            An iterable of records that have been waited on. Note a record will be
                 included even if a feedback computation for it failed or
                 timed out.
 
@@ -527,17 +527,13 @@ class App(
         this is running, it will include them.
         """
 
-        records = []
-
         while (
             record := self.records_with_pending_feedback_results.pop(
                 blocking=False
             )
         ) is not None:
             record.wait_for_feedback_results(feedback_timeout=feedback_timeout)
-            records.append(record)
-
-        return records
+            yield record
 
     @classmethod
     def select_context(cls, app: Optional[Any] = None) -> serial_utils.Lens:
@@ -631,6 +627,13 @@ class App(
                 or f.run_location
                 == feedback_schema.FeedbackRunLocation.SNOWFLAKE
             ):
+                if (
+                    isinstance(f.implementation, pyschema_utils.Method)
+                    and f.implementation.obj.cls.module.module_name
+                    == "trulens.providers.cortex.provider"
+                    and f.implementation.obj.cls.name == "Cortex"
+                ):
+                    continue
                 # Try to load each of the feedback implementations. Deferred
                 # mode will do this but we want to fail earlier at app
                 # constructor here.
@@ -907,10 +910,8 @@ class App(
     def on_method_instrumented(
         self, obj: object, func: Callable, path: serial_utils.Lens
     ):
-        """
-        Called by instrumentation system for every function requested to be
-        instrumented by this app.
-        """
+        """Called by instrumentation system for every function requested to be
+        instrumented by this app."""
 
         if id(obj) in self.instrumented_methods:
             funcs = self.instrumented_methods[id(obj)]
@@ -941,11 +942,11 @@ class App(
     def get_methods_for_func(
         self, func: Callable
     ) -> Iterable[Tuple[int, Callable, serial_utils.Lens]]:
-        """
-        Get the methods (rather the inner functions) matching the given `func`
-        and the path of each.
+        """Get the methods (rather the inner functions) matching the given
+        `func` and the path of each.
 
-        See [WithInstrumentCallbacks.get_methods_for_func][trulens.core.instruments.WithInstrumentCallbacks.get_methods_for_func].
+        See
+        [WithInstrumentCallbacks.get_methods_for_func][trulens.core.instruments.WithInstrumentCallbacks.get_methods_for_func].
         """
 
         for _id, funcs in self.instrumented_methods.items():
@@ -955,9 +956,8 @@ class App(
 
     # WithInstrumentCallbacks requirement
     def get_method_path(self, obj: object, func: Callable) -> serial_utils.Lens:
-        """
-        Get the path of the instrumented function `method` relative to this app.
-        """
+        """Get the path of the instrumented function `method` relative to this
+        app."""
 
         # TODO: cleanup and/or figure out why references to objects change when executing langchain chains.
 

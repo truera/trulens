@@ -39,20 +39,15 @@ env-tests:
 		jsondiff
 
 env-tests-required:
-	poetry install --only required
-	make env-tests
+	poetry install --only required \
+		&& make env-tests
 
-# Note: in the below, there are a few pinned langchain versions to make sure they don't have updated
-# to broken versions which are a few versions after the pinned ones.
 env-tests-optional: env env-tests
 	poetry run pip install \
-		langchain==0.2.11 \
-		langchain-core==0.2.24 \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
-		langchain-openai \
 		unstructured \
-		chromadb \
+		chromadb
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -173,6 +168,18 @@ write-golden-%: tests/e2e/test_%.py
 	WRITE_GOLDEN=1 $(PYTEST) tests/e2e/test_$*.py || true
 write-golden: write-golden-dummy write-golden-serial
 
+# Snowflake-specific tests.
+test-snowflake:
+	rm -rf ./dist \
+		&& rm -rf ./src/core/trulens/data/snowflake_stage_zips \
+		&& make build \
+		&& make zip-wheels \
+		&& make build \
+		&& make env \
+		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+			./tests/e2e/test_context_variables.py \
+			./tests/e2e/test_snowflake_*
+
 # Run the tests for a specific file.
 test-file-%: tests/e2e/%
 	$(PYTEST) tests/e2e/$*
@@ -225,6 +232,9 @@ clean:
 	echo
 	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
 		git clean -fxd; \
+	else \
+		echo "Did not clean!"; \
+		exit 1; \
 	fi;
 
 ## Step: Build wheels

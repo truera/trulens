@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import pandas as pd
 import streamlit as st
-from streamlit_pills import pills
 from trulens.core.database.base import MULTI_CALL_NAME_DELIMITER
 from trulens.dashboard.display import expand_groundedness_df
 from trulens.dashboard.display import highlight
@@ -17,7 +16,7 @@ def df_cell_highlight(
     feedback_name: str,
     feedback_directions: Dict[str, bool],
     n_cells: int = 1,
-) -> list[str]:
+) -> List[str]:
     """Returns the background color for a cell in a DataFrame based on the score and feedback name.
 
     Args:
@@ -135,28 +134,31 @@ def _render_feedback_pills(
             if fcol in selected_row and selected_row[fcol] is not None
         ])
 
-        icons = [get_icon(fcol) for fcol in feedback_with_valid_results]
+        format_func = (
+            lambda fcol: f"{get_icon(fcol)} {fcol} {selected_row[fcol]:.2f}"
+        )
     else:
         feedback_with_valid_results = feedback_col_names
+        format_func = None
 
     if len(feedback_with_valid_results) == 0:
         st.warning("No feedback functions found.")
         return
 
-    if selected_row is None:
-        return pills(
-            "Feedback Functions (click to learn more)",
-            feedback_with_valid_results,
-            index=None,
-        )
+    kwargs = {
+        "label": "Feedback Functions (click to learn more)",
+        "options": feedback_with_valid_results,
+    }
+    if format_func:
+        kwargs["format_func"] = format_func
 
-    return pills(
-        "Feedback Functions (click to learn more)",
-        feedback_with_valid_results,
-        index=None,
-        format_func=lambda fcol: f"{fcol} {selected_row[fcol]:.4f}",
-        icons=icons,
-    )
+    if hasattr(st, "pills"):
+        # Use native streamlit pills, released in 1.40.0
+        return st.pills(
+            **kwargs,
+        )
+    else:
+        return st.selectbox(**kwargs, index=None)
 
 
 def _render_feedback_call(
