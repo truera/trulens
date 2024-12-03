@@ -625,13 +625,15 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        output_space_prompt = self._determine_output_space_prompt(output_space)
+
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
                 examples=examples,
-                output_space=output_space,
+                output_space=output_space_prompt,
             )
         )
 
@@ -1559,6 +1561,7 @@ class LLMProvider(core_provider.Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
+        examples: Optional[str] = None,
         use_sent_tokenize: bool = True,
         filter_trivial_statements: bool = True,
         min_score_val: int = 0,
@@ -1655,11 +1658,14 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        output_space_prompt = self._determine_output_space_prompt(output_space)
+
         system_prompt = feedback_v2.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
-            output_space=output_space,
+            examples=examples,
+            output_space=output_space_prompt,
         )
 
         def evaluate_hypothesis(index, hypothesis):
@@ -1745,6 +1751,7 @@ class LLMProvider(core_provider.Provider):
         statement: str,
         question: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         use_sent_tokenize: bool = True,
         filter_trivial_statements: bool = True,
         min_score_val: int = 0,
@@ -1852,11 +1859,14 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        output_space_prompt = self._determine_output_space_prompt(output_space)
+
         system_prompt = feedback_v2.Groundedness.generate_system_prompt(
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
-            output_space=output_space,
+            examples=examples,
+            output_space=output_space_prompt,
         )
 
         def evaluate_hypothesis(index, hypothesis):
