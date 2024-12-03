@@ -388,6 +388,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -438,6 +439,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -454,6 +456,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -495,6 +498,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -586,6 +590,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -625,6 +630,7 @@ class LLMProvider(core_provider.Provider):
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
+                examples=examples,
                 output_space=output_space,
             )
         )
