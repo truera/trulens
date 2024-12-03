@@ -98,7 +98,7 @@ class Pace(BaseModel):
         if max_marks == 0:
             raise ValueError(
                 "Period is too short for the give rate. "
-                "Increase `seconds_per_period` or `returns_per_second` (or both)."
+                "Increase `seconds_per_period` or `marks_per_second` (or both)."
             )
 
         super().__init__(
