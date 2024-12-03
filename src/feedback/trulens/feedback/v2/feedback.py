@@ -225,13 +225,7 @@ class FewShotExamples:
     def from_list(
         cls,
         feedback_function: Callable,
-        examples_list: List[
-            Union[
-                Tuple[str, float],
-                Tuple[str, str, float],
-                Tuple[str, str, str, float],
-            ]
-        ],
+        examples_list: List[Tuple],
     ) -> "FewShotExamples":
         examples = ["Use the following examples to guide scoring: \n"]
         feedback_args = [
@@ -263,7 +257,6 @@ class FewShotExamples:
 class EvalSchema(pydantic.BaseModel):
     criteria: str
     output_space: str
-    examples: str
 
     @pydantic.field_validator("output_space")
     def validate_output_space(cls, output_space: str):
@@ -312,15 +305,11 @@ class CriteriaOutputSpaceMixin:
     output_space_prompt: ClassVar[str]
     system_prompt_template: ClassVar[str]
     criteria_template: ClassVar[str]
-    examples_template: ClassVar[Optional[str]] = None
+    examples: ClassVar[Optional[str]] = None
 
     @staticmethod
-    def validate_criteria_and_output_space(
-        criteria: str, output_space: str, examples: str
-    ):
-        validated = EvalSchema(
-            criteria=criteria, output_space=output_space, examples=examples
-        )
+    def validate_criteria_and_output_space(criteria: str, output_space: str):
+        validated = EvalSchema(criteria=criteria, output_space=output_space)
         return validated
 
     @classmethod
@@ -332,8 +321,6 @@ class CriteriaOutputSpaceMixin:
         output_space: Optional[str] = None,
         examples: Optional[str] = None,
     ) -> str:
-        if output_space is not None:
-            print(output_space)
         prompt = cls.system_prompt_template.format(
             output_space_prompt=output_space or cls.output_space_prompt,
             criteria=criteria
@@ -342,8 +329,7 @@ class CriteriaOutputSpaceMixin:
             ),
         )
 
-        if examples is not None:
-            print(examples)
+        if cls.examples is not None:
             examples_prompt = FewShotExamples.from_list(examples)
             prompt += f"\n\nEXAMPLES:\n{examples_prompt}"
 
@@ -566,11 +552,6 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         RELEVANCE:
         """
     )
-
-    def __init__(self, examples=None):
-        super().__init__(examples)
-        if self.examples:
-            self.system_prompt += f"\n\n{self.examples}"
 
 
 class Sentiment(Semantics, WithPrompt):

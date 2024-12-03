@@ -219,7 +219,6 @@ class LLMProvider(core_provider.Provider):
             messages=llm_messages,
             temperature=temperature,
         )
-        print(response)
         if "Supporting Evidence" in response:
             score = -1
             supporting_evidence = None
@@ -559,8 +558,6 @@ class LLMProvider(core_provider.Provider):
         )
 
         output_space_prompt = self._determine_output_space_prompt(output_space)
-
-        print(output_space_prompt)
 
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
