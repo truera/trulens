@@ -454,6 +454,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
         assert (
             self.imp is not None
         ), "Feedback definition needs an implementation to call."
+        if self.examples is not None:
+            kwargs["examples"] = self.examples
         return self.imp(*args, **kwargs)
 
     def aggregate(
