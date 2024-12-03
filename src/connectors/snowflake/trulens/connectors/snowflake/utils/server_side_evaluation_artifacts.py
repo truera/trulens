@@ -18,6 +18,7 @@ _TRULENS_PACKAGES = [
     "trulens-core",
     "trulens-feedback",
     "trulens-providers-cortex",
+    "trulens-semconv",
 ]
 
 _TRULENS_EXTRA_STAGED_PACKAGES = [
@@ -33,6 +34,8 @@ _TRULENS_PACKAGES_DEPENDENCIES = [
     "nest-asyncio",
     "nltk",
     "numpy",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
     "packaging",
     "pandas",
     "pip",

@@ -42,3 +42,4 @@ zip_wheel trulens-core ${OUTPUT_DIRECTORY}/trulens-core.zip
 zip_wheel trulens-dashboard ${OUTPUT_DIRECTORY}/trulens-dashboard.zip
 zip_wheel trulens-feedback ${OUTPUT_DIRECTORY}/trulens-feedback.zip
 zip_wheel trulens-providers-cortex ${OUTPUT_DIRECTORY}/trulens-providers-cortex.zip
+zip_wheel trulens-semconv ${OUTPUT_DIRECTORY}/trulens-semconv.zip
