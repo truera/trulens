@@ -1,4 +1,3 @@
-import json
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -782,8 +781,8 @@ def render_app_comparison(app_name: str):
                 record_df = record_data[app_id]["records"]
                 selected_row = record_df.iloc[0]
 
-                record_json = json.loads(selected_row["record_json"])
-                app_json = json.loads(selected_row["app_json"])
+                record_json = selected_row["record_json"]
+                app_json = selected_row["app_json"]
 
                 if is_sis_compatibility_enabled():
                     st.subheader("Trace Details")

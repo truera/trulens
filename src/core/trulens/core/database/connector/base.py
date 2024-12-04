@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from concurrent import futures
-import json
 import logging
 import queue
 from threading import Thread
@@ -343,12 +342,8 @@ class DBConnector(ABC, text_utils.WithIdentString):
             app_ids, offset=offset, limit=limit
         )
 
-        df["app_name"] = df["app_json"].apply(
-            lambda x: json.loads(x).get("app_name")
-        )
-        df["app_version"] = df["app_json"].apply(
-            lambda x: json.loads(x).get("app_version")
-        )
+        df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
+        df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
         return df, list(feedback_columns)
 
@@ -384,19 +379,13 @@ class DBConnector(ABC, text_utils.WithIdentString):
         )
         feedback_cols = sorted(feedback_cols)
 
-        df["app_name"] = df["app_json"].apply(
-            lambda x: json.loads(x).get("app_name")
-        )
-        df["app_version"] = df["app_json"].apply(
-            lambda x: json.loads(x).get("app_version")
-        )
+        df["app_name"] = df["app_json"].apply(lambda x: x.get("app_name"))
+        df["app_version"] = df["app_json"].apply(lambda x: x.get("app_version"))
 
         col_agg_list = feedback_cols + ["latency", "total_cost"]
 
         if group_by_metadata_key is not None:
-            df["meta"] = [
-                json.loads(df["record_json"][i])["meta"] for i in range(len(df))
-            ]
+            df["meta"] = [df["record_json"][i]["meta"] for i in range(len(df))]
 
             df[str(group_by_metadata_key)] = [
                 item.get(group_by_metadata_key, None)
