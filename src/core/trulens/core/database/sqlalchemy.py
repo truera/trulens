@@ -1165,6 +1165,7 @@ class AppsExtractor:
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
         df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df["app_json"] = df["app_json"].apply(json.loads)
         df["record_json"] = df["record_json"].apply(json.loads)
         df["input"] = df["input"].apply(json.loads)
         df["output"] = df["output"].apply(json.loads)

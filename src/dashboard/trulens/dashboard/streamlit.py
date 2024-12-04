@@ -113,8 +113,7 @@ def trulens_leaderboard(app_ids: Optional[List[str]] = None):
         app_df = records.loc[records.app_id == app]
         if app_df.empty:
             continue
-        app_str = app_df["app_json"].iloc[0]
-        app_json = json.loads(app_str)
+        app_json = app_df["app_json"].iloc[0]
         app_name = app_json["app_name"]
         app_version = app_json["app_version"]
         app_name_version = f"{app_name} - {app_version}"
