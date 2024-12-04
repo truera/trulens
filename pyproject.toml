@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.2.8"
+version = "1.2.9"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -50,6 +50,13 @@ mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
 codespell = "^2.3"
+# scipy is here even though it's for trulens-feedback because `poetry lock`
+# doesn't incorporate the python version specific dependencies in
+# `./src/feedback/pyproject.toml` correctly for some reason.
+scipy = [
+  { version = ">=1.7.0,<1.11.1", python = "<3.9" },
+  { version = ">=1.11.1", python = ">=3.9" },
+]
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
