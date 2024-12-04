@@ -215,6 +215,8 @@ trulens_eval.Cortex:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
+      builtins.NoneType]
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -2228,6 +2230,8 @@ trulens_eval.feedback.Cortex:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
+      builtins.NoneType]
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -3294,6 +3298,8 @@ trulens_eval.feedback.provider.Cortex:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
+      builtins.NoneType]
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
@@ -4007,6 +4013,8 @@ trulens_eval.feedback.provider.cortex.Cortex:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     DEFAULT_MODEL_ENGINE: builtins.str
+    DEFAULT_SNOWPARK_SESSION: typing.Optional[snowflake.snowpark.session.Session,
+      builtins.NoneType]
     coherence: builtins.function
     coherence_with_cot_reasons: builtins.function
     comprehensiveness_with_cot_reasons: builtins.function
