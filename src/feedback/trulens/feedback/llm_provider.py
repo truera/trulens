@@ -573,8 +573,6 @@ class LLMProvider(core_provider.Provider):
             )
         )
 
-        print(system_prompt)
-
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
