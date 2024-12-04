@@ -565,13 +565,15 @@ class LLMProvider(core_provider.Provider):
 
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
-                min_score=0,
-                max_score=3,
+                min_score=min_score_val,
+                max_score=max_score_val,
                 criteria=criteria,
                 output_space=output_space_prompt,
                 examples=examples,
             )
         )
+
+        print(system_prompt)
 
         return self.generate_score(
             system_prompt=system_prompt,
@@ -636,6 +638,8 @@ class LLMProvider(core_provider.Provider):
                 output_space=output_space_prompt,
             )
         )
+
+        print(system_prompt)
 
         user_prompt = str.format(
             feedback_prompts.ANSWER_RELEVANCE_USER,
