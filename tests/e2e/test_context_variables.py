@@ -29,7 +29,9 @@ class TestContextVariables(unittest.TestCase):
             connection_parameters
         ).create()
         connector = SnowflakeConnector(
-            **connection_parameters, init_server_side=True
+            **connection_parameters,
+            init_server_side=True,
+            init_server_side_with_staged_packages=True,
         )
         self._session = TruSession(connector=connector)
 
