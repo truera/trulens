@@ -5,7 +5,7 @@ requires = [
 ]
 
 [tool.poetry]
-name = "trulens-semconv"
+name = "trulens-otel-semconv"
 version = "1.2.8"
 description = "Semantic conventions for spans produced by TruLens."
 authors = [
