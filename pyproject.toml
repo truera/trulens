@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.2.6"
+version = "1.2.9"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -26,10 +26,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 
-[[tool.poetry.source]]
-name = "pypi-public"
-url = "https://pypi.org/simple/"
-
 [tool.poetry.dependencies]
 python = "^3.8.1,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
@@ -38,7 +34,9 @@ trulens-core = { version = "^1.0.0", extras = [
   "openai",
 ] }
 trulens-feedback = { version = "^1.0.0" }
-trulens-dashboard = { version = "^1.0.0" }
+trulens-dashboard = { version = "^1.0.0", extras = [
+  "full",
+] }
 # Remove after deprecation period:
 trulens_eval = { version = "^1.0.0" }
 
@@ -52,6 +50,13 @@ mypy = "^1.11"
 build = "^1.2"
 twine = "^5.1"
 codespell = "^2.3"
+# scipy is here even though it's for trulens-feedback because `poetry lock`
+# doesn't incorporate the python version specific dependencies in
+# `./src/feedback/pyproject.toml` correctly for some reason.
+scipy = [
+  { version = ">=1.7.0,<1.11.1", python = "<3.9" },
+  { version = ">=1.11.1", python = ">=3.9" },
+]
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
@@ -93,6 +98,10 @@ trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true }
+
+[[tool.poetry.source]]
+name = "pypi-public"
+url = "https://pypi.org/simple/"
 
 [tool.ruff]
 line-length = 80

@@ -1,27 +1,33 @@
-import json
-from typing import Any, ClassVar, Dict, Optional, Sequence
+from typing import (
+    ClassVar,
+    Dict,
+    Optional,
+    Sequence,
+)
 
+from snowflake.cortex import Complete
+from snowflake.snowpark import Session
+from snowflake.snowpark import context
+from snowflake.snowpark.exceptions import SnowparkSessionException
+from trulens.core.utils import pyschema as pyschema_utils
 from trulens.feedback import llm_provider
 from trulens.feedback import prompts as feedback_prompts
 from trulens.providers.cortex import endpoint as cortex_endpoint
 
-# If this is set, the provider will use this connection. This is useful for server-side evaluations which are done in a stored procedure and must have a single connection throughout the life of the stored procedure.
-# TODO: This is a bit of a hack to pass the connection to the provider. Explore options on how to improve this.
-_SNOWFLAKE_STORED_PROCEDURE_CONNECTION: Any = None
-
 
 class Cortex(
     llm_provider.LLMProvider
-):  # require `pip install snowflake-snowpark-python` and a active Snowflake account with proper privileges
+):  # require `pip install snowflake-snowpark-python snowflake-ml-python>=1.7.1` and a active Snowflake account with proper privileges
     # https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions#availability
 
+    DEFAULT_SNOWPARK_SESSION: Optional[Session] = None
     DEFAULT_MODEL_ENGINE: ClassVar[str] = "llama3.1-8b"
 
     model_engine: str
     endpoint: cortex_endpoint.CortexEndpoint
-    snowflake_conn: Any
+    snowpark_session: Session
 
-    """Snowflake's Cortex COMPLETE endpoint. Defaults to `snowflake-arctic`.
+    """Snowflake's Cortex COMPLETE endpoint. Defaults to `llama3.1-8b`.
 
     Reference: https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex
 
@@ -38,9 +44,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
         === "Connecting with private key"
@@ -54,9 +59,8 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
         === "Connecting with a private key file"
@@ -71,13 +75,12 @@ class Cortex(
                 "schema": <schema>,
                 "warehouse": <warehouse>
             }
-            provider = Cortex(snowflake.connector.connect(
-                **connection_parameters
-            ))
+            snowpark_session = Session.builder.configs(connection_parameters).create()
+            provider = Cortex(snowpark_session=snowpark_session)
             ```
 
     Args:
-        snowflake_conn (Any): Snowflake connection. Note: This is not a snowflake session.
+        snowpark_session (Session): Snowflake session.
 
         model_engine (str, optional): Model engine to use. Defaults to `snowflake-arctic`.
 
@@ -85,7 +88,7 @@ class Cortex(
 
     def __init__(
         self,
-        snowflake_conn: Any,
+        snowpark_session: Optional[Session] = None,
         model_engine: Optional[str] = None,
         *args,
         **kwargs: Dict,
@@ -100,57 +103,53 @@ class Cortex(
             *args, **kwargs
         )
 
-        # Create a Snowflake connector
-        self_kwargs["snowflake_conn"] = _SNOWFLAKE_STORED_PROCEDURE_CONNECTION
-        if _SNOWFLAKE_STORED_PROCEDURE_CONNECTION is None:
-            self_kwargs["snowflake_conn"] = snowflake_conn
-        if not callable(getattr(self_kwargs["snowflake_conn"], "cursor", None)):
-            raise ValueError(
-                "Invalid snowflake_conn: Expected a Snowflake connection object with a 'cursor' method. Please ensure you are not passing a session object."
-            )
+        if snowpark_session is None or pyschema_utils.is_noserio(
+            snowpark_session
+        ):
+            if (
+                hasattr(self, "DEFAULT_SNOWPARK_SESSION")
+                and self.DEFAULT_SNOWPARK_SESSION is not None
+            ):
+                snowpark_session = self.DEFAULT_SNOWPARK_SESSION
+            else:
+                # context.get_active_session() will fail if there is no or more
+                # than one active session. This should be fine for server side
+                # eval in the warehouse as there should only be one active
+                # session in the execution context.
+                try:
+                    snowpark_session = context.get_active_session()
+                except SnowparkSessionException:
+                    class_name = (
+                        f"{self.__module__}.{self.__class__.__qualname__}"
+                    )
+                    raise ValueError(
+                        "Cannot infer snowpark session to use! Try setting "
+                        f"`{class_name}.DEFAULT_SNOWPARK_SESSION`."
+                    )
+        self_kwargs["snowpark_session"] = snowpark_session
+
         super().__init__(**self_kwargs)
 
-    def _exec_snowsql_complete_command(
+    def _invoke_cortex_complete(
         self,
         model: str,
         temperature: float,
         messages: Optional[Sequence[Dict]] = None,
-    ):
+    ) -> str:
         # Ensure messages are formatted as a JSON array string
         if messages is None:
             messages = []
 
-        messages_json_str = json.dumps(messages)
-
         options = {"temperature": temperature}
 
-        options_json_str = json.dumps(options)
-
-        completion_input_str = """
-            SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                ?,
-                parse_json(?),
-                parse_json(?)
-            )
-        """
-        if (
-            hasattr(self.snowflake_conn, "_paramstyle")
-            and self.snowflake_conn._paramstyle == "pyformat"
-        ):
-            completion_input_str = completion_input_str.replace("?", "%s")
-
-        # Executing Snow SQL command requires an active snow session
-        cursor = self.snowflake_conn.cursor()
-        try:
-            cursor.execute(
-                completion_input_str,
-                (model, messages_json_str, options_json_str),
-            )
-            result = cursor.fetchall()
-        finally:
-            cursor.close()
-
-        return result
+        completion_res_str: str = Complete(
+            model=model,
+            prompt=messages,
+            options=options,
+            session=self.snowpark_session,
+            stream=False,
+        )
+        return completion_res_str
 
     def _create_chat_completion(
         self,
@@ -171,14 +170,9 @@ class Cortex(
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        res = self._exec_snowsql_complete_command(**kwargs)
+        completion_str = self._invoke_cortex_complete(**kwargs)
 
-        if len(res) == 0 or len(res[0]) == 0:
-            raise ValueError("No completion returned from Snowflake Cortex.")
-
-        completion = json.loads(res[0][0])["choices"][0]["messages"]
-
-        return completion
+        return completion_str
 
     def _get_answer_agreement(
         self, prompt: str, response: str, check_response: str

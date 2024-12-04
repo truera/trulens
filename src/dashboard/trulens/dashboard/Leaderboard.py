@@ -5,8 +5,6 @@ from typing import Any, Dict, List, Optional, Sequence
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from st_aggrid import AgGrid
-from st_aggrid.grid_options_builder import GridOptionsBuilder
 import streamlit as st
 from trulens.apps import virtual as virtual_app
 from trulens.core.schema import feedback as feedback_schema
@@ -15,6 +13,9 @@ from trulens.dashboard import constants as dashboard_constants
 from trulens.dashboard.pages import Compare as Compare_page
 from trulens.dashboard.utils import dashboard_utils
 from trulens.dashboard.utils import metadata_utils
+from trulens.dashboard.utils import streamlit_compat
+from trulens.dashboard.utils.dashboard_utils import is_sis_compatibility_enabled
+from trulens.dashboard.utils.streamlit_compat import st_columns
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
 
@@ -68,7 +69,8 @@ def _preprocess_df(
         "tags": ("tags", lambda x: ",".join(x.drop_duplicates())),
     }
     for col in feedback_col_names:
-        agg_dict[col] = (col, "mean")
+        if col in records_df:
+            agg_dict[col] = (col, "mean")
 
     app_agg_df: pd.DataFrame = (
         records_df.groupby(
@@ -77,11 +79,6 @@ def _preprocess_df(
         .aggregate(**agg_dict)
         .reset_index()
     )
-
-    if dashboard_constants.PINNED_COL_NAME in app_versions_df:
-        app_versions_df[dashboard_constants.PINNED_COL_NAME] = app_versions_df[
-            dashboard_constants.PINNED_COL_NAME
-        ]
 
     df = app_agg_df.join(
         app_versions_df.set_index(["app_id", "app_name", "app_version"])[
@@ -107,6 +104,8 @@ def _build_grid_options(
     feedback_directions: Dict[str, bool],
     version_metadata_col_names: Sequence[str],
 ):
+    from st_aggrid.grid_options_builder import GridOptionsBuilder
+
     gb = GridOptionsBuilder.from_dataframe(df, headerHeight=50)
 
     gb.configure_column(
@@ -202,33 +201,69 @@ def _render_grid(
     df: pd.DataFrame,
     feedback_col_names: List[str],
     feedback_directions: Dict[str, bool],
-    version_metadata_col_names: Sequence[str],
+    version_metadata_col_names: List[str],
     grid_key: Optional[str] = None,
 ):
-    columns_state = st.session_state.get(f"{grid_key}.columns_state", None)
+    if not is_sis_compatibility_enabled():
+        try:
+            import st_aggrid
 
-    if dashboard_constants.PINNED_COL_NAME in df:
-        df.loc[df[dashboard_constants.PINNED_COL_NAME], "app_version"] = df.loc[
-            df[dashboard_constants.PINNED_COL_NAME], "app_version"
-        ].apply(lambda x: f"📌 {x}")
+            columns_state = st.session_state.get(
+                f"{grid_key}.columns_state", None
+            )
 
-    height = 1000 if len(df) > 20 else 45 * len(df) + 100
+            if dashboard_constants.PINNED_COL_NAME in df:
+                df.loc[
+                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
+                ] = df.loc[
+                    df[dashboard_constants.PINNED_COL_NAME], "app_version"
+                ].apply(lambda x: f"📌 {x}")
 
-    return AgGrid(
-        df,
-        key=grid_key,
-        height=height,
-        columns_state=columns_state,
-        gridOptions=_build_grid_options(
-            df=df,
-            feedback_col_names=feedback_col_names,
-            feedback_directions=feedback_directions,
-            version_metadata_col_names=version_metadata_col_names,
-        ),
-        custom_css=dashboard_styles.aggrid_css,
-        update_on=["selectionChanged", "cellValueChanged"],
-        allow_unsafe_jscode=True,
+            height = 1000 if len(df) > 20 else 45 * len(df) + 100
+            event = st_aggrid.AgGrid(
+                df,
+                key=grid_key,
+                height=height,
+                columns_state=columns_state,
+                gridOptions=_build_grid_options(
+                    df=df,
+                    feedback_col_names=feedback_col_names,
+                    feedback_directions=feedback_directions,
+                    version_metadata_col_names=version_metadata_col_names,
+                ),
+                custom_css=dashboard_styles.aggrid_css,
+                update_on=["selectionChanged", "cellValueChanged"],
+                allow_unsafe_jscode=True,
+            )
+
+            if (
+                event.event_data
+                and event.event_data["type"] == "cellValueChanged"
+            ):
+                handle_table_edit(
+                    df, event.event_data, version_metadata_col_names
+                )
+            return pd.DataFrame(event.selected_rows)
+        except ImportError:
+            # Fallback to st.dataframe if st_aggrid is not installed
+            pass
+
+    column_order = [
+        "app_version",
+        "records",
+        "latency",
+        *feedback_col_names,
+    ]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="multi-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
     )
+    return df.iloc[event.selection["rows"]]
 
 
 def handle_pin_toggle(selected_app_ids: List[str], on_leaderboard: bool):
@@ -273,7 +308,7 @@ def handle_table_edit(
     st.toast(f"Successfully updated metadata for `{app_df['app_version']}`")
 
 
-@st.dialog("Add/Edit Metadata")
+@streamlit_compat.st_dialog("Add/Edit Metadata")
 def handle_add_metadata(
     selected_rows: pd.DataFrame, metadata_col_names: List[str]
 ):
@@ -321,7 +356,7 @@ def handle_add_metadata(
         st.rerun()
 
 
-@st.dialog("Add Virtual App")
+@streamlit_compat.st_dialog("Add Virtual App")
 def handle_add_virtual_app(
     app_name: str,
     feedback_col_names: List[str],
@@ -405,9 +440,8 @@ def _render_grid_tab(
     grid_key: Optional[str] = None,
 ):
     container = st.container()
-    c1, c2, c3, c4, c5, c6 = container.columns(
-        [1, 1, 1, 1, 1, 1],
-        vertical_alignment="center",
+    c1, c2, c3, c4, c5, c6 = st_columns(
+        [1, 1, 1, 1, 1, 1], vertical_alignment="center", container=container
     )
 
     _metadata_options = [
@@ -476,7 +510,7 @@ def _render_grid_tab(
             return
     st.query_params["only_show_pinned"] = str(only_show_pinned)
 
-    grid_data = _render_grid(
+    selected_rows = _render_grid(
         df,
         feedback_col_names=feedback_col_names,
         feedback_directions=feedback_directions,
@@ -484,14 +518,6 @@ def _render_grid_tab(
         grid_key=grid_key,
     )
 
-    if (
-        grid_data.event_data
-        and grid_data.event_data["type"] == "cellValueChanged"
-    ):
-        handle_table_edit(df, grid_data.event_data, version_metadata_col_names)
-
-    selected_rows = grid_data.selected_rows
-    selected_rows = pd.DataFrame(selected_rows)
     if selected_rows.empty:
         selected_app_ids = []
     else:
@@ -576,7 +602,7 @@ def _render_grid_tab(
         )
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_list_tab(
     df: pd.DataFrame,
     feedback_col_names: List[str],
@@ -613,7 +639,7 @@ def _render_list_tab(
             tokens_col,
             cost_col,
             select_app_col,
-        ) = st.columns([1, 1, 1, 1, 1])
+        ) = st_columns([1, 1, 1, 1, 1])
         n_records_col.metric("Records", app_row["Records"])
 
         latency_mean = app_row["Average Latency"]
@@ -646,7 +672,7 @@ def _render_list_tab(
         )
 
         if len(app_feedback_col_names) > 0:
-            feedback_cols = st.columns(
+            feedback_cols = st_columns(
                 min(len(app_feedback_col_names), max_feedback_cols)
             )
             for i, col_name in enumerate(app_feedback_col_names):
@@ -704,7 +730,7 @@ def _render_list_tab(
         st.markdown("""---""")
 
 
-@st.fragment
+@streamlit_compat.st_fragment
 def _render_plot_tab(df: pd.DataFrame, feedback_col_names: List[str]):
     if len(feedback_col_names) == 0:
         st.warning("No feedback functions found.")
@@ -788,7 +814,7 @@ def render_leaderboard(app_name: str):
         st.error(f"No records found for app `{app_name}`.")
         return
     elif records_limit is not None and len(records_df) >= records_limit:
-        cols = st.columns([0.9, 0.1], vertical_alignment="center")
+        cols = st_columns([0.9, 0.1], vertical_alignment="center")
         cols[0].info(
             f"Computed from the last {records_limit} records.",
             icon="ℹ️",
@@ -846,7 +872,7 @@ def render_leaderboard(app_name: str):
         )
 
 
-if __name__ == "__main__":
+def leaderboard_main():
     dashboard_utils.set_page_config(
         page_title=dashboard_constants.LEADERBOARD_PAGE_NAME
     )
@@ -854,3 +880,7 @@ if __name__ == "__main__":
     app_name = dashboard_utils.render_sidebar()
     if app_name:
         render_leaderboard(app_name)
+
+
+if __name__ == "__main__":
+    leaderboard_main()

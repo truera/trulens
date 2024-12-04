@@ -18,7 +18,13 @@ _TRULENS_PACKAGES = [
     "trulens-core",
     "trulens-feedback",
     "trulens-providers-cortex",
+    "trulens-semconv",
 ]
+
+_TRULENS_EXTRA_STAGED_PACKAGES = [
+    "trulens-dashboard",
+]
+
 
 # TODO(dkurokawa): get these package versions automatically.
 _TRULENS_PACKAGES_DEPENDENCIES = [
@@ -28,6 +34,8 @@ _TRULENS_PACKAGES_DEPENDENCIES = [
     "nest-asyncio",
     "nltk",
     "numpy",
+    "opentelemetry-api",
+    "opentelemetry-sdk",
     "packaging",
     "pandas",
     "pip",
@@ -37,6 +45,7 @@ _TRULENS_PACKAGES_DEPENDENCIES = [
     "rich",
     "scikit-learn",
     "scipy",
+    "snowflake-ml-python",
     "snowflake-snowpark-python",
     "snowflake-sqlalchemy",
     "sqlalchemy",
@@ -82,7 +91,9 @@ class ServerSideEvaluationArtifacts:
         data_directory = os.path.join(
             os.path.dirname(__file__), "../../../data/snowflake_stage_zips"
         )
-        for trulens_package in _TRULENS_PACKAGES:
+        for trulens_package in (
+            _TRULENS_PACKAGES + _TRULENS_EXTRA_STAGED_PACKAGES
+        ):
             file_path = os.path.join(data_directory, f"{trulens_package}.zip")
             self._run_query(
                 f"PUT file://{file_path} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
