@@ -154,7 +154,7 @@ class Cortex(
         # the response is a JSON string with a `choices` key containing an
         # array of completions due to `options` being specified. Currently the
         # array is always of size 1 according to the link.
-        return json.loads(completion_res)["choices"][0]
+        return json.loads(completion_res)["choices"][0]["messages"]
 
     def _create_chat_completion(
         self,
