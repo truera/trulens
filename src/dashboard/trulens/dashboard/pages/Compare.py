@@ -401,17 +401,17 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
-        column_order = ["input", *diff_cols, *agg_diff_col]
-        column_order = [col for col in column_order if col in df.columns]
-        event = st.dataframe(
-            df[column_order],
-            column_order=column_order,
-            selection_mode="single-row",
-            on_select="rerun",
-            hide_index=True,
-            use_container_width=True,
-        )
-        return df.iloc[event.selection["rows"]]
+    column_order = ["input", *diff_cols, *agg_diff_col]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="single-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
+    )
+    return df.iloc[event.selection["rows"]]
 
 
 def _render_shared_records(
