@@ -1,0 +1,42 @@
+{% set name = "trulens-semconv" %}
+{% set version = "1.2.9" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  sha256: 32e7cd49243c467fb428bf0a0ee67e2689775e744061c2201e89e77b131f890f
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.8.1,<3.12
+    - poetry-core
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - opentelemetry-semantic-conventions >=0.48b0
+
+test:
+  imports:
+    - trulens.semconv
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu
