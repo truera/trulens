@@ -26,6 +26,7 @@ import pandas as pd
 import pydantic
 from pydantic import Field
 import sqlalchemy as sa
+from sqlalchemy import Table
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
@@ -347,9 +348,16 @@ class SQLAlchemyDB(core_db.DB):
         """See [DB.reset_database][trulens.core.database.base.DB.reset_database]."""
 
         # meta = MetaData()
-        meta = self.orm.metadata  #
-        meta.reflect(bind=self.engine)
-        meta.drop_all(bind=self.engine)
+        meta = self.orm.metadata
+
+        tables = [
+            Table(f"{self.table_prefix}alembic_version", self.orm.metadata)
+        ] + [
+            c.__table__
+            for c in self.orm.registry.values()
+            if hasattr(c, "__table__")
+        ]
+        meta.drop_all(bind=self.engine, tables=tables)
 
         self.migrate_database()
 
