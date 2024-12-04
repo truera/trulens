@@ -245,7 +245,9 @@ def _render_advanced_filters(
 
         for i in range(n_clauses):
             clause_container = st.container()
-            st_cols = clause_container.columns(5, vertical_alignment="center")
+            st_cols = st_columns(
+                5, vertical_alignment="center", container=clause_container
+            )
             clause_fields = render_clause(st_cols, idx=i)
             if clause_fields is None:
                 # TODO: test this
