@@ -6,7 +6,9 @@ from typing import (
     Sequence,
 )
 
+from packaging.version import Version
 from snowflake.cortex import Complete
+import snowflake.ml.version
 from snowflake.snowpark import Session
 from snowflake.snowpark import context
 from snowflake.snowpark.exceptions import SnowparkSessionException
@@ -150,6 +152,8 @@ class Cortex(
             session=self.snowpark_session,
             stream=False,
         )
+        if Version(snowflake.ml.version.VERSION) >= Version("1.7.1"):
+            return completion_res
         # As per https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#returns,
         # the response is a JSON string with a `choices` key containing an
         # array of completions due to `options` being specified. Currently the
