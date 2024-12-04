@@ -18,7 +18,7 @@ if os.environ.get("WITH_OTEL_TRACING") is not None:
 
 session.reset_database()
 
-tru_suprise_travel_crew = TruCustomApp(
+tru_surprise_travel_crew = TruCustomApp(
     surprise_travel_crew,
     app_name="SurpriseTravelCrew",
     app_version="1.0.0",
@@ -36,7 +36,7 @@ def run():
         "flight_information": "GOL 1234, leaving at June 30th, 2024, 10:00",
         "trip_duration": "14 days",
     }
-    with tru_suprise_travel_crew as recorder:
+    with tru_surprise_travel_crew as recorder:
         result = SurpriseTravelCrew().crew().kickoff(inputs=inputs)
 
     print(result)
