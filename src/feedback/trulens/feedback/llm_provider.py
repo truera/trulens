@@ -637,8 +637,6 @@ class LLMProvider(core_provider.Provider):
             )
         )
 
-        print(system_prompt)
-
         user_prompt = str.format(
             feedback_prompts.ANSWER_RELEVANCE_USER,
             prompt=prompt,
