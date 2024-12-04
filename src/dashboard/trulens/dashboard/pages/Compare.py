@@ -502,7 +502,7 @@ def _render_shared_records(
         grid_key="compare_grid",
     )
 
-    if selected_rows.empty:
+    if selected_rows is None or selected_rows.empty:
         return None
     return selected_rows[record_id_cols]
 

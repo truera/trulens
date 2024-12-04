@@ -518,7 +518,7 @@ def _render_grid_tab(
         grid_key=grid_key,
     )
 
-    if selected_rows.empty:
+    if selected_rows is None or selected_rows.empty:
         selected_app_ids = []
     else:
         selected_app_ids = list(selected_rows.app_id.unique())
