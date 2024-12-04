@@ -18,7 +18,7 @@ class Activity(BaseModel):
     location: str = Field(..., description="Location of the activity")
     description: str = Field(..., description="Description of the activity")
     date: str = Field(..., description="Date of the activity")
-    cousine: str = Field(..., description="Cousine of the restaurant")
+    cuisine: str = Field(..., description="Cuisine of the restaurant")
     why_its_suitable: str = Field(
         ..., description="Why it's suitable for the traveler"
     )

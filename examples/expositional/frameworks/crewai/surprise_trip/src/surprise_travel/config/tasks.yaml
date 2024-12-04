@@ -14,7 +14,7 @@ personalized_activity_planning_task:
 
     - age of the traveler: {age}
 
-    - hotel localtion: {hotel_location}
+    - hotel location: {hotel_location}
 
     - flight infromation: {flight_information}
 
