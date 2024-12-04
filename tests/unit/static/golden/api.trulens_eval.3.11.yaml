@@ -8088,6 +8088,7 @@ trulens_eval.utils.pace.Pace:
   attributes:
     amark: builtins.function
     last_mark: datetime.datetime
+    lock: _thread.lock
     mark: builtins.function
     mark_expirations: typing.Deque[datetime.datetime]
     marks_per_second: builtins.float

@@ -1,3 +1,4 @@
+from _thread import LockType
 import asyncio
 from collections import deque
 from datetime import datetime
@@ -9,7 +10,6 @@ from typing import ClassVar, Deque, Optional
 
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import PrivateAttr
 
 logger = logging.getLogger(__name__)
 
@@ -21,18 +21,13 @@ class Pace(BaseModel):
     constraint: the number of returns in the given period of time cannot exceed
     `marks_per_second * seconds_per_period`. This means the average number of
     returns in that period is bounded above exactly by `marks_per_second`.
-
-    !!! Warning:
-        The asynchronous and synchronous methods `amark` and `mark` should not be
-        used at the same time. That is, use either the synchronous interface or the
-        asynchronous one, but not both.
     """
 
     marks_per_second: float = 1.0
     """The pace in number of mark returns per second."""
 
     seconds_per_period: float = 60.0
-    """Evaluate pace as the average over this period.
+    """Evaluate pace as overage over this period.
 
     Assumes that prior to construction of this Pace instance, the period did not
     have any marks called. The longer this period is, the bigger burst of marks
@@ -47,7 +42,7 @@ class Pace(BaseModel):
     mark_expirations: Deque[datetime] = Field(default_factory=deque)
     """Keep track of returns that happened in the last `period` seconds.
 
-    Store the datetime at which they expire (they become older than `period`
+    Store the datetime at which they expire (they become longer than `period`
     seconds old).
     """
 
@@ -62,19 +57,10 @@ class Pace(BaseModel):
     last_mark: datetime = Field(default_factory=datetime.now)
     """Time of the last mark return."""
 
-    _lock: Lock = PrivateAttr(default_factory=Lock)
+    lock: LockType = Field(default_factory=Lock)
     """Thread Lock to ensure mark method details run only one at a time."""
 
-    _alock: asyncio.Lock = PrivateAttr(default_factory=asyncio.Lock)
-    """Asyncio Lock to ensure amark method details run only one at a time."""
-
     model_config: ClassVar[dict] = dict(arbitrary_types_allowed=True)
-
-    _warned: bool = False
-    """Whether the long delay warning has already been issued.
-
-    This is to not repeatedly give it.
-    """
 
     def __init__(
         self,
@@ -98,7 +84,7 @@ class Pace(BaseModel):
         if max_marks == 0:
             raise ValueError(
                 "Period is too short for the give rate. "
-                "Increase `seconds_per_period` or `marks_per_second` (or both)."
+                "Increase `seconds_per_period` or `returns_per_second` (or both)."
             )
 
         super().__init__(
@@ -117,28 +103,23 @@ class Pace(BaseModel):
         seconds since last mark returned.
         """
 
-        async with self._alock:
+        async with self.lock:
             while len(self.mark_expirations) >= self.max_marks:
                 delay = (
                     self.mark_expirations[0] - datetime.now()
                 ).total_seconds()
 
                 if delay >= self.seconds_per_period * 0.5:
-                    if not self._warned:
-                        self._warned = True
-                        logger.warning(
-                            """
-Pace has a long delay of %s seconds. There might have been a burst of
+                    logger.warning(
+                        f"""
+Pace has a long delay of {delay} seconds. There might have been a burst of
 requests which may become a problem for the receiver of whatever is being paced.
-Consider reducing the `seconds_per_period` (currently %s [seconds]) over which to
+Consider reducing the `seconds_per_period` (currently {self.seconds_per_period} [seconds]) over which to
 maintain pace to reduce burstiness. " Alternatively reduce `marks_per_second`
-(currently %s [1/second]) to reduce the number of marks
+(currently {self.marks_per_second} [1/second]) to reduce the number of marks
 per second in that period.
-    """,
-                            delay,
-                            self.seconds_per_period,
-                            self.marks_per_second,
-                        )
+"""
+                    )
 
                 if delay > 0.0:
                     await asyncio.sleep(delay)
@@ -164,28 +145,23 @@ per second in that period.
         seconds since last mark returned.
         """
 
-        with self._lock:
+        with self.lock:
             while len(self.mark_expirations) >= self.max_marks:
                 delay = (
                     self.mark_expirations[0] - datetime.now()
                 ).total_seconds()
 
                 if delay >= self.seconds_per_period * 0.5:
-                    if not self._warned:
-                        self._warned = True
-                        logger.warning(
-                            """
-Pace has a long delay of %s seconds. There might have been a burst of
+                    logger.warning(
+                        f"""
+Pace has a long delay of {delay} seconds. There might have been a burst of
 requests which may become a problem for the receiver of whatever is being paced.
-Consider reducing the `seconds_per_period` (currently %s [seconds]) over which to
+Consider reducing the `seconds_per_period` (currently {self.seconds_per_period} [seconds]) over which to
 maintain pace to reduce burstiness. " Alternatively reduce `marks_per_second`
-(currently %s [1/second]) to reduce the number of marks
+(currently {self.marks_per_second} [1/second]) to reduce the number of marks
 per second in that period.
-""",
-                            delay,
-                            self.seconds_per_period,
-                            self.marks_per_second,
-                        )
+"""
+                    )
 
                 if delay > 0.0:
                     time.sleep(delay)
