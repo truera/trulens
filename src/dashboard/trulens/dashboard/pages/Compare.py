@@ -1,4 +1,3 @@
-import json
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -246,7 +245,9 @@ def _render_advanced_filters(
 
         for i in range(n_clauses):
             clause_container = st.container()
-            st_cols = clause_container.columns(5, vertical_alignment="center")
+            st_cols = st_columns(
+                5, vertical_alignment="center", container=clause_container
+            )
             clause_fields = render_clause(st_cols, idx=i)
             if clause_fields is None:
                 # TODO: test this
@@ -402,17 +403,17 @@ def _render_grid(
             # Fallback to st.dataframe if st_aggrid is not installed
             pass
 
-        column_order = ["input", *diff_cols, *agg_diff_col]
-        column_order = [col for col in column_order if col in df.columns]
-        event = st.dataframe(
-            df[column_order],
-            column_order=column_order,
-            selection_mode="single-row",
-            on_select="rerun",
-            hide_index=True,
-            use_container_width=True,
-        )
-        return df.iloc[event.selection["rows"]]
+    column_order = ["input", *diff_cols, *agg_diff_col]
+    column_order = [col for col in column_order if col in df.columns]
+    event = st.dataframe(
+        df[column_order],
+        column_order=column_order,
+        selection_mode="single-row",
+        on_select="rerun",
+        hide_index=True,
+        use_container_width=True,
+    )
+    return df.iloc[event.selection["rows"]]
 
 
 def _render_shared_records(
@@ -503,7 +504,7 @@ def _render_shared_records(
         grid_key="compare_grid",
     )
 
-    if selected_rows.empty:
+    if selected_rows is None or selected_rows.empty:
         return None
     return selected_rows[record_id_cols]
 
@@ -782,8 +783,8 @@ def render_app_comparison(app_name: str):
                 record_df = record_data[app_id]["records"]
                 selected_row = record_df.iloc[0]
 
-                record_json = json.loads(selected_row["record_json"])
-                app_json = json.loads(selected_row["app_json"])
+                record_json = selected_row["record_json"]
+                app_json = selected_row["app_json"]
 
                 if is_sis_compatibility_enabled():
                     st.subheader("Trace Details")
