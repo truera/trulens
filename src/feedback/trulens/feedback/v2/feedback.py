@@ -241,6 +241,18 @@ class EvalSchema(pydantic.BaseModel):
             )
         return output_space
 
+    def get_output_scale_prompt(self) -> str:
+        if self.output_space == OutputSpace.LIKERT_0_3.name:
+            return LIKERT_0_3_PROMPT
+        elif self.output_space == OutputSpace.LIKERT_0_10.name:
+            return LIKERT_0_10_PROMPT
+        elif self.output_space == OutputSpace.BINARY.name:
+            return BINARY_0_1_PROMPT
+        else:
+            raise ValueError(
+                'output_space must resolve to one of "likert-0-3" or "binary" or "likert-0-10" (legacy)'
+            )
+
 
 class Conciseness(Semantics, WithPrompt):  # or syntax
     # openai.conciseness
@@ -292,13 +304,28 @@ class CriteriaOutputSpaceMixin:
         output_space: Optional[str] = None,
         examples: Optional[str] = None,
     ) -> str:
-        prompt = cls.system_prompt_template.format(
-            output_space_prompt=output_space or cls.output_space_prompt,
-            criteria=criteria
-            or cls.criteria_template.format(
+        if criteria is None and output_space is None:
+            return cls.system_prompt
+
+        if criteria is None:
+            criteria = cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
-            ),
-        )
+            )
+
+        if output_space is None:
+            output_space_prompt = cls.output_space_prompt
+        else:
+            validated = cls.validate_criteria_and_output_space(
+                criteria, output_space
+            )
+            criteria = validated.criteria
+            output_space_prompt = validated.get_output_scale_prompt()
+            prompt = cleandoc(
+                cls.system_prompt_template.format(
+                    output_space_prompt=output_space_prompt,
+                    criteria=criteria,
+                )
+            )
 
         if examples is not None:
             examples_instance = FewShotExamples.from_list(
