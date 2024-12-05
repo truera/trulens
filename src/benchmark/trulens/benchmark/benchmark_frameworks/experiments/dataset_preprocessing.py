@@ -5,12 +5,50 @@ import json
 import random
 from typing import Any, List, Tuple
 
+from datasets import load_dataset
 import ir_datasets
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from trulens.feedback import GroundTruthAggregator
+
+
+def generate_balanced_llm_aggrefact_benchmark(split="test", random_seed=42):
+    llm_aggrefact_dataset = load_dataset("lytang/LLM-AggreFact")
+
+    # Convert to pandas DataFrame
+    df = pd.DataFrame(llm_aggrefact_dataset[split])
+
+    # Initialize an empty list to store balanced DataFrames
+    balanced_dfs = []
+
+    # Iterate over each unique dataset
+    for dataset_name in df["dataset"].unique():
+        # Filter the DataFrame for the current dataset
+        df_subset = df[df["dataset"] == dataset_name]
+
+        # Count the number of instances for each class
+        class_counts = df_subset["label"].value_counts()
+
+        # Determine the minimum count between the two classes
+        min_count = class_counts.min()
+
+        # Sample min_count instances from each class
+        df_balanced = (
+            df_subset.groupby("label")
+            .apply(lambda x: x.sample(min_count, random_state=random_seed))
+            .reset_index(drop=True)
+        )
+
+        # Append the balanced DataFrame to the list
+        balanced_dfs.append(df_balanced)
+
+    # Concatenate all balanced DataFrames into a final DataFrame
+    final_balanced_df = pd.concat(balanced_dfs, ignore_index=True)
+
+    # Display the balanced DataFrame
+    return final_balanced_df
 
 
 def generate_summeval_groundedness_golden_set(
