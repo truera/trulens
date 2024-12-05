@@ -26,6 +26,7 @@ import pandas as pd
 import pydantic
 from pydantic import Field
 import sqlalchemy as sa
+from sqlalchemy import Table
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
@@ -360,9 +361,17 @@ class SQLAlchemyDB(core_db.DB):
     def reset_database(self):
         """See [DB.reset_database][trulens.core.database.base.DB.reset_database]."""
 
+        # meta = MetaData()
         meta = self.orm.metadata
-        meta.reflect(bind=self.engine)
-        meta.drop_all(bind=self.engine)
+
+        tables = [
+            Table(f"{self.table_prefix}alembic_version", self.orm.metadata)
+        ] + [
+            c.__table__
+            for c in self.orm.registry.values()
+            if hasattr(c, "__table__")
+        ]
+        meta.drop_all(bind=self.engine, tables=tables)
 
         # EXPERIMENTAL(otel_tracing): Spans table is hacked in and needs special
         # handling here. We remove the meta data that was reflected back from DB
@@ -1196,6 +1205,7 @@ class AppsExtractor:
             drop=True, inplace=True
         )  # prevent index mismatch on the horizontal concat that follows
         df = pd.concat([df, _extract_tokens_and_cost(df["cost_json"])], axis=1)
+        df["app_json"] = df["app_json"].apply(json.loads)
         df["record_json"] = df["record_json"].apply(json.loads)
         df["input"] = df["input"].apply(json.loads)
         df["output"] = df["output"].apply(json.loads)

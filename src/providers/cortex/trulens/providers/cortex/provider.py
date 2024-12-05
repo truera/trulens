@@ -1,3 +1,4 @@
+import json
 from typing import (
     ClassVar,
     Dict,
@@ -5,7 +6,9 @@ from typing import (
     Sequence,
 )
 
+from packaging.version import Version
 from snowflake.cortex import Complete
+import snowflake.ml.version
 from snowflake.snowpark import Session
 from snowflake.snowpark import context
 from snowflake.snowpark.exceptions import SnowparkSessionException
@@ -142,14 +145,20 @@ class Cortex(
 
         options = {"temperature": temperature}
 
-        completion_res_str: str = Complete(
+        completion_res: str = Complete(
             model=model,
             prompt=messages,
             options=options,
             session=self.snowpark_session,
             stream=False,
         )
-        return completion_res_str
+        if Version(snowflake.ml.version.VERSION) >= Version("1.7.1"):
+            return completion_res
+        # As per https://docs.snowflake.com/en/sql-reference/functions/complete-snowflake-cortex#returns,
+        # the response is a JSON string with a `choices` key containing an
+        # array of completions due to `options` being specified. Currently the
+        # array is always of size 1 according to the link.
+        return json.loads(completion_res)["choices"][0]["messages"]
 
     def _create_chat_completion(
         self,
@@ -170,9 +179,7 @@ class Cortex(
         else:
             raise ValueError("`prompt` or `messages` must be specified.")
 
-        completion_str = self._invoke_cortex_complete(**kwargs)
-
-        return completion_str
+        return self._invoke_cortex_complete(**kwargs)
 
     def _get_answer_agreement(
         self, prompt: str, response: str, check_response: str

@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens"
-version = "1.2.8"
+version = "1.2.9"
 description = "Library to systematically track and evaluate LLM based applications."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -36,7 +36,7 @@ trulens-feedback = { version = "^1.0.0" }
 trulens-dashboard = { version = "^1.0.0", extras = [
   "full",
 ] }
-trulens-semconv = { version = "^1.0.0" }
+trulens-otel-semconv = { version = "^1.0.0" }
 # Remove after deprecation period:
 trulens_eval = { version = "^1.0.0" }
 
@@ -96,7 +96,7 @@ trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = tr
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
 trulens-dashboard = { path = "src/dashboard", develop = true }
-trulens-semconv = { path = "src/semconv", develop = true }
+trulens-otel-semconv = { path = "src/otel/semconv", develop = true }
 # Remove after deprecation period.
 trulens_eval = { path = "src/trulens_eval", develop = true }
 

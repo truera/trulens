@@ -48,7 +48,7 @@ from trulens.core._utils.pycompat import Type  # import style exception
 from trulens.core._utils.pycompat import TypeAlias  # import style exception
 from trulens.core._utils.pycompat import TypeAliasType  # import style exception
 from trulens.core.utils import serial as serial_utils
-from trulens.semconv import trace as truconv
+from trulens.otel.semconv import trace as truconv
 
 RecordID: TypeAlias = str
 """Unique identifier for a record.

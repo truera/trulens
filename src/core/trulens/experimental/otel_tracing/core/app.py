@@ -40,7 +40,7 @@ from trulens.experimental.otel_tracing.core.trace import (
 from trulens.experimental.otel_tracing.core.trace import export as core_export
 from trulens.experimental.otel_tracing.core.trace import span as core_span
 from trulens.experimental.otel_tracing.core.trace import trace as core_trace
-from trulens.semconv import trace as truconv
+from trulens.otel.semconv import trace as truconv
 
 
 class _App(core_app.App):

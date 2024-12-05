@@ -1,4 +1,4 @@
-{% set name = "trulens-connectors-snowflake" %}
+{% set name = "trulens-otel-semconv" %}
 {% set version = "1.2.9" %}
 
 package:
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  sha256: 34439f15d462570e7f20bb89f207e92f5d80a8f4f4657c87005f14e1ae53b241
+  sha256: 32e7cd49243c467fb428bf0a0ee67e2689775e744061c2201e89e77b131f890f
 
 build:
   noarch: python
@@ -20,14 +20,12 @@ requirements:
     - poetry-core
     - pip
   run:
-    - python >=3.9,<3.12
-    - trulens-core >=1.0.0,<2.0.0
-    - snowflake-snowpark-python >=1.18.0,<2.0.0
-    - snowflake-sqlalchemy >=1.6.0,<2.0.0
+    - python >=3.8.1,<3.12
+    - opentelemetry-semantic-conventions >=0.48b0
 
 test:
   imports:
-    - trulens.connectors.snowflake
+    - trulens.otel.semconv
   commands:
     - pip check
   requires:

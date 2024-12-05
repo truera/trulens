@@ -35,7 +35,7 @@ from trulens.core.utils import json as json_utils
 from trulens.experimental.otel_tracing.core.trace import context as core_context
 from trulens.experimental.otel_tracing.core.trace import otel as core_otel
 from trulens.experimental.otel_tracing.core.trace import trace as core_trace
-from trulens.semconv import trace as truconv
+from trulens.otel.semconv import trace as truconv
 
 if TYPE_CHECKING:
     from trulens.core import app as core_app

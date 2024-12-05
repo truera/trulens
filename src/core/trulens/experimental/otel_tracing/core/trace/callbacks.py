@@ -36,7 +36,7 @@ from trulens.experimental.otel_tracing.core.trace import context as core_context
 from trulens.experimental.otel_tracing.core.trace import otel as core_otel
 from trulens.experimental.otel_tracing.core.trace import span as core_span
 from trulens.experimental.otel_tracing.core.trace import trace as core_trace
-from trulens.semconv import trace as truconv
+from trulens.otel.semconv import trace as truconv
 
 if TYPE_CHECKING:
     # Need to model_rebuild classes that use these:
@@ -87,7 +87,11 @@ class TracingCallbacks(wrap_utils.CallableCallbacks[R], Generic[R, S]):
             raise ValueError("span_type must be a subclass of LiveSpanCall.")
 
         self.span_context: ContextManager[core_span.LiveSpanCall] = (
-            core_trace.trulens_tracer().start_as_current_span(cls=span_type, name=truconv.SpanAttributes.CALL.SPAN_NAME_PREFIX + self.func_name)
+            core_trace.trulens_tracer().start_as_current_span(
+                cls=span_type,
+                name=truconv.SpanAttributes.CALL.SPAN_NAME_PREFIX
+                + self.func_name,
+            )
         )
         # Will be filled in by _enter_contexts.
         self.span: Optional[core_span.LiveSpanCall] = None
