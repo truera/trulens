@@ -18,14 +18,15 @@ import types
 from typing import (
     Any,
     Generic,
-    Type,
     TypeVar,
 )
+import weakref
 
 import typing_extensions
 
 TypeAliasType = typing_extensions.TypeAliasType
 TypeAlias = typing_extensions.TypeAlias
+Type = typing_extensions.Type
 
 if sys.version_info >= (3, 11):
     getmembers_static = inspect.getmembers_static
@@ -60,6 +61,20 @@ if sys.version_info >= (3, 9):
     `Generic[A]` is used instead.
     """
 
+    WeakSet = weakref.WeakSet
+    """Alias for [weakref.WeakSet][] .
+
+    In python < 3.9, a subclass of [weakref.WeakSet][] with
+    `Generic[A]` is used instead.
+    """
+
+    ReferenceType = weakref.ReferenceType
+    """Alias for [weakref.ReferenceType][] .
+
+    In python < 3.9, a subclass of [weakref.ReferenceType][] with
+    `Generic[A]` is used instead.
+    """
+
 else:
     # Fake classes which can have type args. In python earlier than 3.9, the
     # classes imported above cannot have type args which is annoying for type
@@ -80,6 +95,20 @@ else:
         """Alias for [queue.Queue][] .
 
         In python < 3.9, a subclass of [queue.Queue][] with
+        `Generic[A]` is used instead.
+        """
+
+    class WeakSet(Generic[A], weakref.WeakSet):
+        """Alias for [weakref.WeakSet][] .
+
+        In python < 3.9, a subclass of [weakref.WeakSet][] with
+        `Generic[A]` is used instead.
+        """
+
+    class ReferenceType(Generic[A], weakref.ReferenceType):
+        """Alias for [weakref.ReferenceType][] .
+
+        In python < 3.9, a subclass of [weakref.ReferenceType][] with
         `Generic[A]` is used instead.
         """
 

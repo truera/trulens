@@ -4,9 +4,8 @@ Includes component categories that organize various langchain classes and
 example classes:
 """
 
-from typing import Type
-
 from trulens.core import app as core_app
+from trulens.core._utils.pycompat import Type
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 

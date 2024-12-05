@@ -67,7 +67,7 @@ TOpenAIReturn = Union[
     openai.types.create_embedding_response.CreateEmbeddingResponse,
     openai.types.moderation.Moderation,
 ]
-"""Types that openai respones can attain, or at least the ones we handle in cost tracking."""
+"""Types that openai responses can attain, or at least the ones we handle in cost tracking."""
 
 TOpenAIResponse = TOpenAIReturn
 

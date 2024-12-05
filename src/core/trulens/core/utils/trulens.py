@@ -3,9 +3,8 @@ Utilities for app components provided as part of the trulens package.
 Currently organizes all such components as "Other".
 """
 
-from typing import Type
-
 from trulens.core import app
+from trulens.core._utils.pycompat import Type
 from trulens.core.utils import pyschema as pyschema_utils
 
 
