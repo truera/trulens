@@ -101,6 +101,8 @@ class Pace(BaseModel):
                 "Increase `seconds_per_period` or `marks_per_second` (or both)."
             )
 
+        self._ensure_event_loop_exists()
+
         super().__init__(
             *args,
             seconds_per_period=seconds_per_period,
@@ -109,6 +111,14 @@ class Pace(BaseModel):
             max_marks=max_marks,
             **kwargs,
         )
+
+    @staticmethod
+    def _ensure_event_loop_exists():
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
     async def amark(self) -> float:
         """Return in appropriate pace.

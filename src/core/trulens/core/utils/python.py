@@ -37,6 +37,7 @@ from typing import (
 import weakref
 
 import pydantic
+from trulens.core._utils.pycompat import ReferenceType
 
 T = TypeVar("T")
 
@@ -189,6 +190,9 @@ def safe_getattr(obj: Any, k: str, get_prop: bool = True) -> Any:
     if is_prop:
         if not get_prop:
             raise ValueError(f"{k} is a property")
+
+        if v.fget is None:
+            raise ValueError(f"{k} property does not have a getter.")
 
         try:
             v = v.fget(obj)
@@ -577,10 +581,10 @@ class WeakWrapper(Generic[T]):
     otherwise not weakly referenceable. The goal of this class is to generalize
     weakref.ref to work with any object."""
 
-    obj: weakref.ReferenceType[Union[_Wrap[T], T]]
+    obj: ReferenceType[Union[_Wrap[T], T]]
 
-    def __init__(self, obj: Union[weakref.ReferenceType[T], WeakWrapper[T], T]):
-        if isinstance(obj, weakref.ReferenceType):
+    def __init__(self, obj: Union[ReferenceType[T], WeakWrapper[T], T]):
+        if isinstance(obj, ReferenceType):
             self.obj = obj
 
         else:
@@ -813,18 +817,16 @@ def with_context(context_vars: Optional[ContextVarsOrValues] = None):
             variables to set to their current value.
     """
 
-    tokens = set_context_vars_or_values(context_vars)
-
     try:
+        tokens = set_context_vars_or_values(context_vars)
         yield
 
     finally:
         for cv, v in tokens.items():
             try:
                 cv.reset(v)
-            except Exception:
-                # TODO: Figure out if this is bad.
-                pass
+            except Exception as e:
+                logger.warning("Context reset failed: %s", e)
 
 
 @asynccontextmanager
@@ -838,18 +840,16 @@ async def awith_context(context_vars: Optional[ContextVarsOrValues] = None):
             variables to set to their current value.
     """
 
-    tokens = set_context_vars_or_values(context_vars)
-
     try:
+        tokens = set_context_vars_or_values(context_vars)
         yield
 
     finally:
         for cv, v in tokens.items():
             try:
                 cv.reset(v)
-            except Exception:
-                # TODO: Figure out if this is bad.
-                pass
+            except Exception as e:
+                logger.warning("Context reset failed: %s", e)
 
 
 def wrap_awaitable(
@@ -1232,9 +1232,9 @@ class PydanticSingleton(metaclass=PydanticSingletonMeta):
 class InstanceRefMixin:
     """Mixin for classes that need to keep track of their instances."""
 
-    _instance_refs: Dict[
-        Type, List[weakref.ReferenceType[InstanceRefMixin]]
-    ] = defaultdict(list)
+    _instance_refs: Dict[Type, List[ReferenceType[InstanceRefMixin]]] = (
+        defaultdict(list)
+    )
 
     def __init__(self, register_instance: bool = True):
         if register_instance:
