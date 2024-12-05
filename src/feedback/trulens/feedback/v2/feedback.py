@@ -182,9 +182,6 @@ class OutputSpace(Enum):
 
 
 class FewShotExamples:
-    def __init__(self, examples: str):
-        self.examples = examples
-
     """
     Create few-shot examples to be used to customize the feedback function's behavior.
 
@@ -194,35 +191,48 @@ class FewShotExamples:
         from trulens.providers.openai import OpenAI
 
         fewshot_relevance_examples_list = [
-            ("I am having trouble accessing my account. Can you help me reset my password?", "Go to resetmypassword.com and enter the authentication code to get a new password", 3),
-            ("I love this product! It's amazing and works perfectly.", "Very glad to hear it.", 3),
-            ("This is the worst experience I've ever had. Completely dissatisfied.", "Onomatopeia", 0)
+            ({"query": "I am having trouble accessing my account. Can you help me reset my password?",
+              "response": "Go to resetmypassword.com and enter the authentication code to get a new password"},
+             3),
+            ({"query": "I love this product! It's amazing and works perfectly.",
+              "response": "Very glad to hear it."},
+             3),
+            ({"query": "This is the worst experience I've ever had. Completely dissatisfied.",
+              "response": "Onomatopeia"},
+             0)
         ]
 
-        fewshot_relevance_examples = FewShotExamples.from_list(provider.relevance, fewshot_relevance_examples_list)
+        fewshot_relevance_examples = FewShotExamples.from_list(fewshot_relevance_examples_list)
         ```
     """
 
     @classmethod
     def from_list(
-        cls,
-        examples_list: List[
-            Union[
-                Tuple[str, float],
-                Tuple[str, str, float],
-                Tuple[str, str, str, float],
-            ]
-        ],
-    ) -> str:
+        cls, examples_list: List[Tuple[dict, int]]
+    ) -> "FewShotExamples":
+        """
+        Create a FewShotExamples instance from a list of examples.
+
+        Args:
+            examples_list (List[Tuple[dict, int]]): A list of tuples where the first element is a dictionary
+                                                    with the keys of the feedback function argument names and values,
+                                                    and the second element is the score.
+
+        Returns:
+            FewShotExamples: An instance of FewShotExamples with the provided examples.
+        """
         examples = ["\n\nUse the following examples to guide scoring: \n"]
-        for idx, example in enumerate(examples_list, start=1):
-            example_str = [f"Example {idx}:"]
-            for i, item in enumerate(example[:-1]):
-                example_str.append(f"{item}")
-            example_str.append(f"Score: {example[-1]}\n")
+        for idx, (example_dict, score) in enumerate(examples_list, start=1):
+            example_str = [f"Example {idx}:\n"]
+            for key, value in example_dict.items():
+                example_str.append(f"{key.capitalize()}:\n{value}\n")
+            example_str.append(f"Score: {score}\n")
             examples.append("\n".join(example_str))
         examples.append("-----")
         return cls(examples="\n".join(examples))
+
+    def __init__(self, examples: str):
+        self.examples = examples
 
 
 class EvalSchema(pydantic.BaseModel):
