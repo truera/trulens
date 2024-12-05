@@ -167,7 +167,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
     use_sent_tokenize: Optional[bool] = pydantic.Field(None, exclude=True)
     """Groundedness only: whether to use sentence tokenization."""
 
-    filter_trivial_statements: Optional[float] = pydantic.Field(
+    filter_trivial_statements: Optional[bool] = pydantic.Field(
         None, exclude=True
     )
     """Groundedness only: filter trivial statements."""
@@ -181,7 +181,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
         use_sent_tokenize: Optional[bool] = True,
-        filter_trivial_statements: Optional[float] = 0.0,
+        filter_trivial_statements: Optional[bool] = True,
         **kwargs,
     ):
         # imp is the python function/method while implementation is a serialized
