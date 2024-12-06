@@ -138,8 +138,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are serialized
-                hence the type hint.
+                [AppDefinition][trulens.core.schema.app.AppDefinition] parts
+                are serialized hence the type hint.
 
         Returns:
             The id of the given app.
@@ -366,8 +366,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
     ) -> types_schema.GroundTruthID:
-        """Insert a ground truth entry into the database. The ground truth id is generated
-        based on the ground truth content, so re-inserting is idempotent.
+        """Insert a ground truth entry into the database. The ground truth id
+        is generated based on the ground truth content, so re-inserting is
+        idempotent.
 
         Args:
             ground_truth: The ground truth entry to insert.
@@ -413,8 +414,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     def insert_dataset(
         self, dataset: dataset_schema.Dataset
     ) -> types_schema.DatasetID:
-        """Insert a dataset into the database. The dataset id is generated based on the
-        dataset content, so re-inserting is idempotent.
+        """Insert a dataset into the database. The dataset id is generated
+        based on the dataset content, so re-inserting is idempotent.
 
         Args:
             dataset: The dataset to insert.
