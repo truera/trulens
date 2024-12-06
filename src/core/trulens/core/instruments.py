@@ -767,6 +767,8 @@ class Instrument:
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
+                print(f"calling {func} with {args}")
+
                 rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
                 )
@@ -1063,11 +1065,15 @@ class Instrument:
             # subchains call superchains, and we want to capture the
             # intermediate steps. On the other hand we don't want to instrument
             # the very base classes such as object:
-            if not self.to_instrument_module(base.__module__):
-                continue
+            # if not self.to_instrument_module(base.__module__):
+            #    print(
+            #        f"skipping base {base} because of module {base.__module__}"
+            #    )
+            #    continue
 
             try:
                 if not self.to_instrument_class(base):
+                    print(f"skipping base {base} because of class")
                     continue
 
             except Exception as e:
@@ -1082,11 +1088,14 @@ class Instrument:
 
                 # continue
 
+            print(f"instrumenting {obj.__class__} for base {base}")
+
             for method_name, class_filter in self.include_methods.items():
                 if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
 
+                    print("\tinstrumenting", method_name)
                     original_fun = getattr(base, method_name)
 
                     # If an instrument class uses a decorator to wrap one of
@@ -1204,6 +1213,8 @@ class AddInstruments:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
+        print("adding method", of_cls, name, of_cls.__module__)
+
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
 
@@ -1228,6 +1239,7 @@ class instrument(AddInstruments):
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
     def __init__(self, func: Callable):
+        print("decorating", func)
         self.func = func
 
     def __set_name__(self, cls: type, name: str):
@@ -1237,6 +1249,11 @@ class instrument(AddInstruments):
 
         # Important: do this first:
         setattr(cls, name, self.func)
+
+        if self.func is not getattr(cls, name):
+            print(
+                "Warning. Method to be instrumented does not belong to a class. It may not be instrumented."
+            )
 
         # Note that this does not actually change the method, just adds it to
         # list of filters.
