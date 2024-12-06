@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-otel-semconv"
-version = "1.2.9"
+version = "1.2.10"
 description = "Semantic conventions for spans produced by TruLens."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -29,6 +29,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8.1,!=3.9.7"
 # This package only has pre-releases:
-opentelemetry-semantic-conventions = { version = ">=0.48b0", allow-prereleases = true }
+opentelemetry-semantic-conventions = { version = ">=0.36b0", allow-prereleases = true }
 # This package requires python 3.9 so we are avoiding using it for now:
 # opentelemetry-semantic-conventions-ai = { version = ">=0.4.2", allow-prereleases=true }
