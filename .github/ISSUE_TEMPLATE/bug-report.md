@@ -4,7 +4,7 @@ about: Thanks for taking the time to fill out this bug report! Please complete t
   following form to help us assist you.
 title: "[BUG]"
 labels: bug
-assignees: sfc-gh-jreini
+assignees: sfc-gh-pdharmana
 
 ---
 
