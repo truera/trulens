@@ -6,7 +6,6 @@ from enum import Enum
 import functools
 import importlib
 from typing import (
-    TYPE_CHECKING,
     Callable,
     ClassVar,
     Dict,
@@ -24,9 +23,6 @@ import pydantic
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-
-if TYPE_CHECKING:
-    from trulens.core.session import TruSession
 
 T = TypeVar("T")
 
@@ -111,7 +107,7 @@ class _FeatureSetup(pydantic.BaseModel):
     @abstractmethod
     def enable(
         session: _WithExperimentalSettings,
-    ) -> TruSession:
+    ) -> None:
         """Callback to call for the feature when enabled."""
 
     @staticmethod
@@ -157,9 +153,7 @@ class _FeatureSetup(pydantic.BaseModel):
         return getattr(mod, "_FeatureSetup")
 
     @staticmethod
-    def call_enable(
-        flag: Feature, session: _WithExperimentalSettings
-    ) -> TruSession:
+    def call_enable(flag: Feature, session: _WithExperimentalSettings) -> None:
         """Called when the feature is enabled for the session."""
 
         setup = _FeatureSetup.load_setup(flag)
