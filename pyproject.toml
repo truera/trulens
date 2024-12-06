@@ -29,7 +29,6 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8.1,!=3.9.7"
 trulens-core = { version = "^1.0.0", extras = [
-  "otel",
   "tqdm",
   "openai",
 ] }
@@ -85,7 +84,7 @@ trulens-apps-nemo = { path = "src/apps/nemo", develop = true, python = "<3.13" }
 [tool.poetry.group.providers.dependencies]
 trulens-providers-bedrock = { path = "src/providers/bedrock", develop = true }
 trulens-providers-langchain = { path = "src/providers/langchain", develop = true }
-trulens-providers-cortex = { path = "src/providers/cortex", develop = true, python = "<3.12" }
+trulens-providers-cortex = { path = "src/providers/cortex", develop = true, python = ">=3.9,<3.12" }
 trulens-providers-huggingface = { path = "src/providers/huggingface", develop = true }
 trulens-providers-openai = { path = "src/providers/openai", develop = true }
 trulens-providers-litellm = { path = "src/providers/litellm", develop = true }

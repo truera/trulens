@@ -1,6 +1,4 @@
-"""
-Container class utilities.
-"""
+"""Container class utilities."""
 
 from __future__ import annotations
 

@@ -44,8 +44,24 @@ class RecordAppCallMethod(serial_utils.SerialModel):
     path: serial_utils.Lens
     """Path to the method in the app's structure."""
 
-    method: pyschema_utils.Method
+    method: Optional[pyschema_utils.Method] = None
     """The method that was called."""
+
+    function: Optional[pyschema_utils.Function] = None
+    """If representing a function instead of a method, set this field instead.
+
+    Not using FunctionOrMethod on `method` for backwards compatibility.
+    """
+
+    @property
+    def function_or_method(self) -> pyschema_utils.FunctionOrMethod:
+        """The callable object for this method or function."""
+
+        if self.method is not None:
+            return self.method
+        else:
+            assert self.function is not None
+            return self.function
 
 
 class RecordAppCall(serial_utils.SerialModel):
@@ -107,11 +123,7 @@ class RecordAppCall(serial_utils.SerialModel):
 
 
 class Record(serial_utils.SerialModel, Hashable):
-    """The record of a single main method call.
-
-    Note:
-        This class will be renamed to `Trace` in the future.
-    """
+    """The record of a single main method call."""
 
     def __str__(self):
         ret = f"Record({self.record_id}) with {len(self.calls)} calls:\n"
@@ -120,10 +132,10 @@ class Record(serial_utils.SerialModel, Hashable):
 
         return ret
 
-    model_config: ClassVar[dict] = {
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
         # for `Future[FeedbackResult]`
-        "arbitrary_types_allowed": True
-    }
+        arbitrary_types_allowed=True
+    )
 
     record_id: types_schema.RecordID
     """Unique identifier for this record."""
@@ -182,21 +194,26 @@ class Record(serial_utils.SerialModel, Hashable):
         """Deserialize spans if otel_tracing is enabled.
 
         We need to do this manually as the experimental_otel_spans field is
-        declared as containing `Any` but we want to have `Span`s there instead.
-        We cannot declare the field having `Span`s because we are not sure
-        otel_tracing is available.
+        declared as containing `Any` but we want to have `sem.TypedSpan`s there
+        instead. We cannot declare the field having `TypedSpan`s because we are
+        not sure otel_tracing is available.
         """
 
         ret = []
 
         if len(spans) > 0:
             if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-                from trulens.experimental.otel_tracing.core.trace import Span
+                from trulens.experimental.otel_tracing.core.trace import (
+                    sem as core_sem,
+                )
 
                 for span in spans:
                     if isinstance(span, dict):
-                        ret.append(Span.model_validate(span))
+                        ret.append(core_sem.TypedSpan.mixin_new(d=span))
                     else:
+                        assert isinstance(
+                            span, core_sem.TypedSpan
+                        ), "TypedSpan expected."
                         ret.append(span)
             else:
                 logger.warning(
@@ -204,8 +221,8 @@ class Record(serial_utils.SerialModel, Hashable):
                     "be used in the current environment due to missing modules.\n%s",
                     otel_tracing_feature._FeatureSetup.REQUIREMENT.module_not_found,
                 )
-                # Set to empty None to prevent errors downstream where Span
-                # instances are expected.
+                # Set to empty to prevent errors downstream where Span instances
+                # are expected.
                 ret = []
 
         return ret
@@ -361,7 +378,7 @@ class Record(serial_utils.SerialModel, Hashable):
 
             # Adds another attribute to path, from method name:
             path = frame_info.path + serial_utils.GetItemOrAttribute(
-                item_or_attribute=frame_info.method.name
+                item_or_attribute=frame_info.function_or_method.name
             )
 
             if path.exists(obj=ret):

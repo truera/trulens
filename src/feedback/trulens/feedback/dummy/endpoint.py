@@ -531,7 +531,7 @@ class DummyAPICreator:
         )
 
 
-if otel_tracing_feature._FeatureSetup.are_optionals_installed():
+if otel_tracing_feature._FeatureSetup.are_optionals_installed():  # pylint: disable=protected-access
     from trulens.experimental.otel_tracing.core.feedback import (
         endpoint as experimental_core_endpoint,
     )

@@ -1,9 +1,22 @@
 import abc
+from dataclasses import dataclass
 from datetime import datetime
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import (
+    Any,
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import pandas as pd
+import pydantic
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -36,12 +49,75 @@ DEFAULT_DATABASE_REDACT_KEYS: bool = False
 """Default value for option to redact secrets before writing out data to database."""
 
 
+@dataclass
+class PageSelect:
+    """EXPERIMENTAL(otel_tracing): Pagination information for a database query.
+
+    This is expected to be obtuse as it is DB implementation independent.
+    """
+
+    offset: Optional[int] = None
+    """The offset of the first row to return.
+
+    None is identical to 0.
+    """
+
+    limit: Optional[int] = None
+    """The maximum number of rows to return.
+
+    None means no limit.
+    """
+
+    shuffle: bool = False
+    """Shuffle the rows before returning them."""
+
+    before_index: Optional[int] = None
+    """The index of the row to start before.
+
+    Note that the index column is auto incrementing.
+    """
+
+    after_index: Optional[int] = None
+    """The index of the row to start after.
+
+    Note that the index column is auto incrementing.
+    """
+
+    before_created_timestamp: Optional[datetime] = None
+    """The created timestamp of the row to start before."""
+
+    after_created_timestamp: Optional[datetime] = None
+    """The created timestamp of the row to start after."""
+
+    before_updated_timestamp: Optional[datetime] = None
+    """The updated timestamp of the row to start before."""
+
+    after_updated_timestamp: Optional[datetime] = None
+    """The updated timestamp of the row to start after."""
+
+
 class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     """Abstract definition of databases used by trulens.
 
     [SQLAlchemyDB][trulens.core.database.sqlalchemy.SQLAlchemyDB] is the main
     and default implementation of this interface.
     """
+
+    T: ClassVar[Type] = Any
+    """EXPERIMENTAL(otel_tracing): Database "table" expression type."""
+
+    Q: ClassVar[Type] = Any
+    """EXPERIMENTAL(otel_tracing): Database "select" expression type."""
+
+    W: ClassVar[Type] = Any
+    """EXPERIMENTAL(otel_tracing): Database "where" expression type.
+
+    Must support ==, !-, `contains`, `and`, `or`, `not`.
+    """
+
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True
+    )
 
     redact_keys: bool = DEFAULT_DATABASE_REDACT_KEYS
     """Redact secrets before writing out data."""
@@ -138,8 +214,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Args:
             app: The app to insert or update. Note that only the
-                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are serialized
-                hence the type hint.
+                [AppDefinition][trulens.core.schema.app.AppDefinition] parts are
+                serialized hence the type hint.
 
         Returns:
             The id of the given app.
@@ -366,8 +442,9 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     def insert_ground_truth(
         self, ground_truth: groundtruth_schema.GroundTruth
     ) -> types_schema.GroundTruthID:
-        """Insert a ground truth entry into the database. The ground truth id is generated
-        based on the ground truth content, so re-inserting is idempotent.
+        """Insert a ground truth entry into the database. The ground truth id is
+        generated based on the ground truth content, so re-inserting is
+        idempotent.
 
         Args:
             ground_truth: The ground truth entry to insert.
@@ -413,8 +490,8 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
     def insert_dataset(
         self, dataset: dataset_schema.Dataset
     ) -> types_schema.DatasetID:
-        """Insert a dataset into the database. The dataset id is generated based on the
-        dataset content, so re-inserting is idempotent.
+        """Insert a dataset into the database. The dataset id is generated based
+        on the dataset content, so re-inserting is idempotent.
 
         Args:
             dataset: The dataset to insert.

@@ -24,9 +24,10 @@ from trulens.core.utils import python as python_utils
 
 logger = logging.getLogger(__name__)
 
-R = TypeVar("R")  # callable's return type
-A = TypeVar("A")  # awaitable's result type
-E = TypeVar("E")  # iterator/generator element type
+T = TypeVar("T")
+E = TypeVar("E")  # iterator/generator element
+A = TypeVar("A")  # awaitable result
+R = TypeVar("R")  # callable return value
 
 
 class AwaitableCallbacks(Generic[A]):
@@ -68,11 +69,13 @@ class AwaitableCallbacks(Generic[A]):
         !!! Important
             This should return the result or some wrapper of the result.
         """
+
         self.result = result
         return result
 
     def on_awaitable_exception(self, error: Exception) -> Exception:
         """Called if awaiting for the wrapped awaitable raised an exception."""
+
         self.error = error
         return error
 
@@ -237,7 +240,7 @@ class IterableCallbacks(Generic[E]):
 
 def wrap_iterable(
     itb: Iterable[E],
-    callback_class: Type[IterableCallbacks] = IterableCallbacks,
+    callback_class: Type[IterableCallbacks[E]] = IterableCallbacks,
     **kwargs: Dict[str, Any],
 ) -> Iterable[E]:
     """Wrap an iterable to invoke various callbacks.
@@ -335,6 +338,7 @@ class CallableCallbacks(Generic[R]):
         wrapper: Callable[..., R],
         call_args: Tuple[Any, ...],
         call_kwargs: Dict[str, Any],
+        **kwargs,
     ):
         """Called/constructed when the wrapper function is called but before
         arguments are bound to the wrapped function's signature."""
@@ -348,7 +352,7 @@ class CallableCallbacks(Generic[R]):
         self.call_args: Optional[Tuple[Any, ...]] = call_args
         self.call_kwargs: Optional[Dict[str, Any]] = call_kwargs
 
-        self.bindings: Optional[inspect.BoundArguments] = None
+        self.bound_arguments: Optional[inspect.BoundArguments] = None
         self.bind_error: Optional[Exception] = None
 
         self.error: Optional[Exception] = None
@@ -361,7 +365,7 @@ class CallableCallbacks(Generic[R]):
     def on_callable_call(
         self,
         *,
-        bindings: inspect.BoundArguments,
+        bound_arguments: inspect.BoundArguments,
     ) -> inspect.BoundArguments:
         """Called before the execution of the wrapped method assuming its
         arguments can be bound.
@@ -370,9 +374,9 @@ class CallableCallbacks(Generic[R]):
             This callback must return the bound arguments or wrappers of bound
             arguments.
         """
-        self.bindings = bindings
+        self.bound_arguments = bound_arguments
 
-        return bindings
+        return bound_arguments
 
     def on_callable_bind_error(
         self,
@@ -444,15 +448,17 @@ def wrap_callable(
 
     assert isinstance(func, Callable), f"Callable expected but got {func}."
 
-    if python_utils.safe_hasattr(func, CALLBACKS):
-        # If CALLBACKS is set, it was already a wrapper.
-
-        # logger.warning("Function %s is already wrapped.", func)
-
-        return func
-
     sig = inspect.signature(func)  # safe sig?
     our_callback_init_kwargs: Dict[str, Any] = {"func": func, "sig": sig}
+
+    if python_utils.safe_hasattr(func, CALLBACKS):
+        # If CALLBACKS is set, it was already a wrapper. In this case we only
+        # call the static method on_callable_wrapped.
+
+        our_callback_init_kwargs["wrapper"] = func
+        callback_class.on_callable_wrapped(**our_callback_init_kwargs, **kwargs)
+
+        return func
 
     # If CALLBACKS is not set, create a wrapper and return it.
     @functools.wraps(func)
@@ -475,10 +481,10 @@ def wrap_callable(
         )
 
         try:
-            bindings = sig.bind(*args, **kwargs)  # save and reuse sig
+            bound_arguments = sig.bind(*args, **kwargs)  # save and reuse sig
 
             # callback step 1: call on_callable_call
-            callback.on_callable_call(bindings=bindings)
+            callback.on_callable_call(bound_arguments=bound_arguments)
 
         except TypeError as e:
             # callback step 2a: call on_callable_bind_error
