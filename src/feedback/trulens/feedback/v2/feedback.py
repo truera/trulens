@@ -21,6 +21,9 @@ class Feedback(pydantic.BaseModel):
     Base class for feedback functions.
     """
 
+    def __init__(self, examples):
+        self.examples = examples
+
     @classmethod
     def help(cls) -> None:
         print(cls.str_help())
@@ -178,6 +181,60 @@ class OutputSpace(Enum):
     BINARY = (0, 1)
 
 
+class FewShotExamples:
+    """
+    Create few-shot examples to be used to customize the feedback function's behavior.
+
+    !!! example "Adding examples to a feedback function"
+        ```python
+        from trulens.feedback.v2.feedback import FewShotExamples
+        from trulens.providers.openai import OpenAI
+
+        fewshot_relevance_examples_list = [
+            ({"query": "I am having trouble accessing my account. Can you help me reset my password?",
+              "response": "Go to resetmypassword.com and enter the authentication code to get a new password"},
+             3),
+            ({"query": "I love this product! It's amazing and works perfectly.",
+              "response": "Very glad to hear it."},
+             3),
+            ({"query": "This is the worst experience I've ever had. Completely dissatisfied.",
+              "response": "Onomatopeia"},
+             0)
+        ]
+
+        fewshot_relevance_examples = FewShotExamples.from_list(fewshot_relevance_examples_list)
+        ```
+    """
+
+    @classmethod
+    def from_list(
+        cls, examples_list: List[Tuple[dict, int]]
+    ) -> "FewShotExamples":
+        """
+        Create a FewShotExamples instance from a list of examples.
+
+        Args:
+            examples_list (List[Tuple[dict, int]]): A list of tuples where the first element is a dictionary
+                                                    with the keys of the feedback function argument names and values,
+                                                    and the second element is the score.
+
+        Returns:
+            FewShotExamples: An instance of FewShotExamples with the provided examples.
+        """
+        examples = ["\n\nUse the following examples to guide scoring: \n"]
+        for idx, (example_dict, score) in enumerate(examples_list, start=1):
+            example_str = [f"Example {idx}:\n"]
+            for key, value in example_dict.items():
+                example_str.append(f"{key.capitalize()}:\n{value}\n")
+            example_str.append(f"Score: {score}\n")
+            examples.append("\n".join(example_str))
+        examples.append("-----")
+        return cls(examples="\n".join(examples))
+
+    def __init__(self, examples: str):
+        self.examples = examples
+
+
 class EvalSchema(pydantic.BaseModel):
     criteria: str
     output_space: str
@@ -241,6 +298,7 @@ class CriteriaOutputSpaceMixin:
     output_space_prompt: ClassVar[str]
     system_prompt_template: ClassVar[str]
     criteria_template: ClassVar[str]
+    examples: ClassVar[Optional[str]] = None
 
     @staticmethod
     def validate_criteria_and_output_space(criteria: str, output_space: str):
@@ -254,6 +312,7 @@ class CriteriaOutputSpaceMixin:
         max_score: int,
         criteria: Optional[str] = None,
         output_space: Optional[str] = None,
+        examples: Optional[str] = None,
     ) -> str:
         if criteria is None and output_space is None:
             return cls.system_prompt
@@ -271,13 +330,20 @@ class CriteriaOutputSpaceMixin:
             )
             criteria = validated.criteria
             output_space_prompt = validated.get_output_scale_prompt()
-
-        return cleandoc(
-            cls.system_prompt_template.format(
-                output_space_prompt=output_space_prompt,
-                criteria=criteria,
+            prompt = cleandoc(
+                cls.system_prompt_template.format(
+                    output_space_prompt=output_space_prompt,
+                    criteria=criteria,
+                )
             )
-        )
+
+        if examples is not None:
+            examples_instance = FewShotExamples.from_list(
+                examples_list=examples
+            )
+            prompt += examples_instance.examples
+
+        return prompt
 
 
 class Relevance(Semantics):
@@ -461,6 +527,11 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
     """
 
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
         Respond only as a number from {output_space_prompt}.
@@ -475,6 +546,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """
     )
 
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
     user_prompt: ClassVar[str] = cleandoc(
         """PROMPT: {prompt}
 
@@ -482,17 +559,6 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         RELEVANCE:
         """
-    )
-
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
-        )
     )
 
 
