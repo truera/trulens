@@ -37,6 +37,7 @@ import weakref
 import pydantic
 from pydantic.v1 import BaseModel as v1BaseModel
 from trulens.core import experimental as core_experimental
+from trulens.core._utils.pycompat import WeakSet
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
@@ -933,7 +934,7 @@ class Instrument:
         # recorder/app gets garbage collected, it will be evicted from this set.
 
         # NOTE(piotrm): __repr__.__self__ undoes weakref.proxy .
-        apps = weakref.WeakSet([self.app.__repr__.__self__])
+        apps = WeakSet([self.app.__repr__.__self__])
 
         # Indicate that the wrapper is an instrumented method so that we dont
         # further instrument it in another layer accidentally.

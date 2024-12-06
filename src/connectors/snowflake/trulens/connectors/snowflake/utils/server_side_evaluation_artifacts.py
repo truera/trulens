@@ -17,8 +17,8 @@ _TRULENS_PACKAGES = [
     "trulens-connectors-snowflake",
     "trulens-core",
     "trulens-feedback",
+    "trulens-otel-semconv",
     "trulens-providers-cortex",
-    "trulens-semconv",
 ]
 
 _TRULENS_EXTRA_STAGED_PACKAGES = [

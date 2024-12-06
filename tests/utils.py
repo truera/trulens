@@ -29,6 +29,7 @@ import weakref
 
 from tqdm.auto import tqdm
 from trulens.core._utils import pycompat as pycompat_utils
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -616,7 +617,7 @@ class RefLike(Generic[T]):
     def __init__(
         self,
         ref_id: Optional[int] = None,
-        obj: Optional[Union[weakref.ReferenceType[T], T]] = None,
+        obj: Optional[Union[ReferenceType[T], T]] = None,
     ):
         if ref_id is None:
             assert obj is not None
@@ -642,7 +643,7 @@ class RefLike(Generic[T]):
 
     def get(self) -> T:
         try:
-            if weakref.ReferenceType.__instancecheck__(self.ref_or_val):
+            if ReferenceType.__instancecheck__(self.ref_or_val):
                 return self.ref_or_val()
         except Exception:
             return None

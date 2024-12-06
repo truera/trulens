@@ -6,9 +6,8 @@ various llama_index classes and example classes:
   nodes via a threshold on a specified feedback function.
 """
 
-from typing import Type
-
 from trulens.core import app as core_app
+from trulens.core._utils.pycompat import Type
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 
