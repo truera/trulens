@@ -1,14 +1,54 @@
 import ast
+from collections import defaultdict
 import csv
 import json
 import random
 from typing import Any, List, Tuple
 
+from datasets import load_dataset
+import ir_datasets
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from trulens.feedback import GroundTruthAggregator
+
+
+def generate_balanced_llm_aggrefact_benchmark(split="test", random_seed=42):
+    llm_aggrefact_dataset = load_dataset("lytang/LLM-AggreFact")
+
+    # Convert to pandas DataFrame
+    df = pd.DataFrame(llm_aggrefact_dataset[split])
+
+    # Initialize an empty list to store balanced DataFrames
+    balanced_dfs = []
+
+    # Iterate over each unique dataset
+    for dataset_name in df["dataset"].unique():
+        # Filter the DataFrame for the current dataset
+        df_subset = df[df["dataset"] == dataset_name]
+
+        # Count the number of instances for each class
+        class_counts = df_subset["label"].value_counts()
+
+        # Determine the minimum count between the two classes
+        min_count = class_counts.min()
+
+        # Sample min_count instances from each class
+        df_balanced = (
+            df_subset.groupby("label")
+            .apply(lambda x: x.sample(min_count, random_state=random_seed))
+            .reset_index(drop=True)
+        )
+
+        # Append the balanced DataFrame to the list
+        balanced_dfs.append(df_balanced)
+
+    # Concatenate all balanced DataFrames into a final DataFrame
+    final_balanced_df = pd.concat(balanced_dfs, ignore_index=True)
+
+    # Display the balanced DataFrame
+    return final_balanced_df
 
 
 def generate_summeval_groundedness_golden_set(
@@ -360,6 +400,116 @@ def generate_balanced_ms_marco_hard_negatives_dataset(
             "expected_response": negative_example,
             "expected_score": 0,  # Negative example, label 0
         })
+
+
+def generate_trec_dl_passage_benchmark(
+    max_samples_per_query_per_score: int = 3,
+    dataset_path: str = "msmarco-passage-v2/trec-dl-2021/judged",
+):
+    # Combine queries and qrels from multiple datasets
+    queries = {}
+    qrels = defaultdict(dict)
+    docs_store = None
+
+    dataset = ir_datasets.load(dataset_path)
+    # Merge queries
+    queries.update({q.query_id: q for q in dataset.queries_iter()})
+    # Merge qrels
+    for qid, docs in dataset.qrels_dict().items():
+        qrels[qid].update(docs)
+    # Get docs_store
+    if docs_store is None:
+        docs_store = dataset.docs_store()
+
+    print("Total number of queries:", len(queries))
+    print("Total number of qrels:", len(qrels))
+
+    # Sampling
+    for query_id, query in queries.items():
+        if query_id not in qrels:
+            print("query_id not found in qrels")
+            continue  # Skip queries without relevance judgments
+
+        # Get documents by relevance scores
+        relevant_docs = defaultdict(list)
+        for doc_id, score in qrels[query_id].items():
+            relevant_docs[score].append(doc_id)
+
+        # Determine scoreddocs intervals for this query
+        scored_docs = [
+            scored_doc
+            for scored_doc in ir_datasets.load(dataset_path).scoreddocs_iter()
+            if scored_doc.query_id == query_id
+        ]
+        if not scored_docs:
+            continue
+
+        min_score = min(scored_doc.score for scored_doc in scored_docs)
+        max_score = max(scored_doc.score for scored_doc in scored_docs)
+        interval_size = (max_score - min_score) / 4
+        intervals = [
+            (min_score + i * interval_size, min_score + (i + 1) * interval_size)
+            for i in range(4)
+        ]
+
+        # Initialize sampling counts
+        sampled_docs = []
+
+        # Use scoreddocs for all scores (0, 1, 2, and 3)
+        for score in [0, 1, 2, 3]:
+            if score in relevant_docs:
+                # Get ranked documents using scoreddocs
+                ranked_docs = []
+                for scored_doc in scored_docs:
+                    if scored_doc.doc_id in relevant_docs[score]:
+                        ranked_docs.append((
+                            scored_doc.doc_id,
+                            scored_doc.score,
+                        ))
+
+                # Filter documents based on interval alignment (-1, 0, +1)
+                allowed_intervals = [
+                    intervals[max(0, score - 1)],
+                    intervals[score],
+                    intervals[min(3, score + 1)],
+                ]
+                interval_docs = [
+                    (doc_id, doc_score)
+                    for doc_id, doc_score in ranked_docs
+                    if any(
+                        low <= doc_score <= high
+                        for low, high in allowed_intervals
+                    )
+                ]
+
+                # Sort by score (descending) and select top documents
+                interval_docs.sort(key=lambda x: x[1], reverse=True)
+                top_docs = [
+                    doc_id
+                    for doc_id, _ in interval_docs[
+                        :max_samples_per_query_per_score
+                    ]
+                ]
+
+                # Add to sampled documents
+                sampled_docs.extend(top_docs)
+
+        doc_text_seen = set()  # deduplication of identical passages
+        # Yield the sampled data
+        for doc_id in sampled_docs:
+            doc = docs_store.get(doc_id)
+            if doc and doc.text not in doc_text_seen:
+                doc_text_seen.add(doc.text)
+                yield {
+                    "query_id": query_id,
+                    "query": query.text,
+                    "doc_id": doc_id,
+                    "expected_response": doc.text
+                    if hasattr(doc, "text")
+                    else doc.body,
+                    "expected_score": qrels[query_id][doc_id]
+                    / 3,  # Normalize to [0, 1]
+                }
 
 
 def write_results(
