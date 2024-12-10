@@ -314,6 +314,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -353,6 +354,7 @@ class LLMProvider(core_provider.Provider):
             max_score=max_score_val,
             criteria=criteria,
             output_space=output_space,
+            examples=examples,
         )
 
         return self.generate_score(
@@ -372,6 +374,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -422,6 +425,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -438,6 +442,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -479,6 +484,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -504,6 +510,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -542,7 +549,11 @@ class LLMProvider(core_provider.Provider):
 
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
-                min_score_val, max_score_val, criteria, output_space
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
             )
         )
 
@@ -563,6 +574,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -602,6 +614,7 @@ class LLMProvider(core_provider.Provider):
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
+                examples=examples,
                 output_space=output_space,
             )
         )
@@ -1530,6 +1543,7 @@ class LLMProvider(core_provider.Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
+        examples: Optional[str] = None,
         use_sent_tokenize: bool = True,
         filter_trivial_statements: bool = True,
         min_score_val: int = 0,
@@ -1630,6 +1644,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -1716,6 +1731,7 @@ class LLMProvider(core_provider.Provider):
         statement: str,
         question: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         use_sent_tokenize: bool = True,
         filter_trivial_statements: bool = True,
         min_score_val: int = 0,
@@ -1827,6 +1843,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
