@@ -26,10 +26,10 @@ from typing import (
 )
 import unittest
 from unittest import TestCase
-import weakref
 
 import pydantic
 from pydantic import BaseModel
+from trulens.core._utils.pycompat import ReferenceType
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 import yaml
@@ -553,7 +553,7 @@ class TruTestCase(WithJSONTestCase, TestCase):
             "on",
         ]
 
-    def assertCollected(self, ref: weakref.ReferenceType[T], msg=None):
+    def assertCollected(self, ref: ReferenceType[T], msg=None):
         """Check that the object referenced by `ref` has been garbage
         collected.
 
