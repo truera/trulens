@@ -24,7 +24,7 @@ from trulens.providers.openai import provider as openai_provider
 key_utils.check_keys("PINECONE_API_KEY", "PINECONE_ENV", "OPENAI_API_KEY")
 
 # Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+model_name = "gpt-4o-mini"
 
 app_name = "TruBot"
 # app_name = "TruBot_langprompt"
