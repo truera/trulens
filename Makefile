@@ -36,7 +36,9 @@ env-tests:
 		ruff \
 		pre-commit \
 		pytest-cov \
-		jsondiff
+		jsondiff \
+		langchain-openai \
+		pydantic
 
 env-tests-required:
 	poetry install --only required \
