@@ -36,8 +36,7 @@ env-tests:
 		ruff \
 		pre-commit \
 		pytest-cov \
-		jsondiff \
-		langchain-openai
+		jsondiff
 
 env-tests-required:
 	poetry install --only required \
@@ -48,7 +47,8 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured \
-		chromadb
+		chromadb \
+		langchain-openai
 
 env-tests-db: env-tests
 	poetry run pip install \
