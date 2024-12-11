@@ -44,6 +44,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.schema.event import Event
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -972,6 +973,16 @@ class SQLAlchemyDB(core_db.DB):
                 data=((ds.dataset_id, ds.name, ds.meta) for ds in results),
                 columns=["dataset_id", "name", "meta"],
             )
+
+    def insert_event(self, event: Event) -> types_schema.EventID:
+        """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+        with self.session.begin() as session:
+            _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
+            session.merge(_event)
+            logger.info(
+                f"{text_utils.UNICODE_CHECK} added event {_event.event_id}"
+            )
+            return _event.event_id
 
 
 # Use this Perf for missing Perfs.
