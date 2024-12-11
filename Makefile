@@ -37,8 +37,7 @@ env-tests:
 		pre-commit \
 		pytest-cov \
 		jsondiff \
-		langchain-openai \
-		pydantic
+		langchain-openai
 
 env-tests-required:
 	poetry install --only required \
