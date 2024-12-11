@@ -22,6 +22,7 @@ from sqlalchemy.schema import MetaData
 from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
+from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
@@ -116,6 +117,7 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackResult: Type[T]
     GroundTruth: Type[T]
     Dataset: Type[T]
+    EventTable: Type[T]
 
 
 def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
@@ -399,6 +401,46 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 return cls(
                     dataset_id=obj.dataset_id,
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
+                )
+
+        class EventTable(base):
+            """
+            ORM class for OTEL traces/spans.
+            """
+
+            _table_base_name = "events"
+
+            event_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            record = Column(TYPE_JSON, nullable=False)
+            record_attributes = Column(TYPE_JSON, nullable=False)
+            record_type = Column(VARCHAR(256), nullable=False)
+            resource_attributes = Column(TYPE_JSON, nullable=False)
+            start_timestamp = Column(TYPE_TIMESTAMP, nullable=False)
+            timestamp = Column(TYPE_TIMESTAMP, nullable=False)
+            trace = Column(TYPE_JSON, nullable=False)
+
+            @classmethod
+            def parse(
+                cls,
+                obj: event_schema.Event,
+            ) -> ORM.EventTable:
+                return cls(
+                    event_id=obj.event_id,
+                    record=json_utils.json_str_of_obj(
+                        obj.record, redact_keys=True
+                    ),
+                    record_attributes=json_utils.json_str_of_obj(
+                        obj.record_attributes, redact_keys=True
+                    ),
+                    record_type=obj.record_type,
+                    resource_attributes=json_utils.json_str_of_obj(
+                        obj.resource_attributes, redact_keys=True
+                    ),
+                    start_timestamp=obj.start_timestamp,
+                    timestamp=obj.timestamp,
+                    trace=json_utils.json_str_of_obj(
+                        obj.trace, redact_keys=True
+                    ),
                 )
 
     configure_mappers()  # IMPORTANT
