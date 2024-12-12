@@ -4,7 +4,6 @@ from typing import Any, Callable, Optional, Union
 
 from opentelemetry import trace
 from trulens.apps.custom import instrument as custom_instrument
-from trulens.core.utils import json as json_utils
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.semantic import (
     TRULENS_SELECTOR_NAME,
@@ -45,36 +44,42 @@ def instrument(attributes: Attributes = {}):
                 .start_as_current_span(
                     name=func.__name__,
                 )
-            ):
+            ) as parent_span:
                 span = trace.get_current_span()
                 _instrumented_object, *rest_args = args
 
-                # ? Do we have to validate the args/kwargs and make sure they are serializable?
-                span.set_attribute("function", func.__name__)
+                span.set_attribute("name", func.__name__)
+                span.set_attribute("kind", "SPAN_KIND_TRULENS")
                 span.set_attribute(
-                    "args", json_utils.json_str_of_obj(rest_args)
+                    "parent_span_id", parent_span.get_span_context().span_id
                 )
-                ret = custom_instrument(func)(*args, **kwargs)
-                span.set_attribute("return", ret)
 
-                attributes_to_add = {}
+                try:
+                    ret = custom_instrument(func)(*args, **kwargs)
 
-                # Set the user provider attributes.
-                if attributes:
-                    if callable(attributes):
-                        attributes_to_add = attributes(
-                            ret, *rest_args, **kwargs
-                        )
-                    else:
-                        attributes_to_add = attributes
+                    attributes_to_add = {}
 
-                logger.info(f"Attributes to add: {attributes_to_add}")
+                    # Set the user provider attributes.
+                    if attributes:
+                        if callable(attributes):
+                            attributes_to_add = attributes(
+                                ret, *rest_args, **kwargs
+                            )
+                        else:
+                            attributes_to_add = attributes
 
-                _validate_attributes(attributes_to_add)
+                    logger.info(f"Attributes to add: {attributes_to_add}")
 
-                for key, value in attributes_to_add.items():
-                    span.set_attribute(key, value)
+                    _validate_attributes(attributes_to_add)
 
+                    for key, value in attributes_to_add.items():
+                        span.set_attribute(key, value)
+
+                except Exception:
+                    span.set_attribute("status", "STATUS_CODE_ERROR")
+                    return None
+
+                span.set_attribute("status", "STATUS_CODE_UNSET")
                 return ret
 
         return wrapper
