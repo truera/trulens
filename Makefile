@@ -39,7 +39,7 @@ env-tests:
 		jsondiff
 
 env-tests-required:
-	poetry install --only required \
+	poetry install --only required -vvv \
 		&& make env-tests
 
 env-tests-optional: env env-tests
