@@ -27,10 +27,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.9.0"
 trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
-langchain-core = ">=0.2.0"
+langchain-core = ">=0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 trulens-core = { path = "../../core" }
