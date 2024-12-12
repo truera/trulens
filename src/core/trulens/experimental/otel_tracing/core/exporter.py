@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Sequence
 
 from opentelemetry.sdk.trace import ReadableSpan
@@ -28,16 +29,23 @@ class TruLensDBSpanExporter(SpanExporter):
                 event_id=str(context.span_id),
                 record=span.attributes,
                 record_attributes=span.attributes,
-                record_type="span",
+                record_type="SPAN",
                 resource_attributes=span.resource.attributes,
-                start_timestamp=span.start_time,
-                timestamp=span.end_time,
+                start_timestamp=datetime.fromtimestamp(
+                    span.start_time / pow(10, 9)
+                )
+                if span.start_time
+                else datetime.now(),
+                timestamp=datetime.fromtimestamp(span.end_time / pow(10, 9))
+                if span.end_time
+                else datetime.now(),
                 trace={
                     "trace_id": str(context.trace_id),
                     "parent_id": str(context.span_id),
                 },
             )
             self.connector.add_event(event)
+            print(f"adding event {str(context.span_id)}")
             print(event)
         return SpanExportResult.SUCCESS
 
