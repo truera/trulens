@@ -21,10 +21,8 @@ crewai-tools = "^0.4.6"
 pip = "^24.1.1"
 langchain = ">=0.3.9"
 langchain-core = ">=0.3.21"
+trulens-core = "^1.2.0"
 
 [tool.poetry.scripts]
 surprise_travel = "surprise_travel.main:run"
 train = "surprise_travel.main:train"
-
-[trulens]
-trulens-core = "1.2.0"
