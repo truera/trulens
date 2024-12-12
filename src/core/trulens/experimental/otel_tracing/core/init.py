@@ -1,3 +1,5 @@
+import logging
+
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -12,6 +14,9 @@ from trulens.experimental.otel_tracing.core.exporter import (
 TRULENS_SERVICE_NAME = "trulens"
 
 
+logger = logging.getLogger(__name__)
+
+
 def init(session: TruSession, debug: bool = False):
     """Initialize the OpenTelemetry SDK with TruLens configuration."""
     resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
@@ -19,7 +24,7 @@ def init(session: TruSession, debug: bool = False):
     trace.set_tracer_provider(provider)
 
     if debug:
-        print(
+        logging.debug(
             "Initializing OpenTelemetry with TruLens configuration for console debugging"
         )
         # Add a console exporter for debugging purposes
@@ -28,9 +33,21 @@ def init(session: TruSession, debug: bool = False):
         provider.add_span_processor(console_processor)
 
     if session.connector:
-        print("Exporting traces to the TruLens database")
+        logging.debug("Exporting traces to the TruLens database")
 
-        # TODO: Validate that the table exists.
+        # Check the database revision
+        try:
+            db_revision = session.connector.db.get_db_revision()
+            if db_revision is None:
+                raise ValueError(
+                    "Database revision is not set. Please run the migrations."
+                )
+            if int(db_revision) < 10:
+                raise ValueError(
+                    "Database revision is too low. Please run the migrations."
+                )
+        except Exception:
+            raise ValueError("Error checking the database revision.")
 
         # Add the TruLens database exporter
         db_exporter = TruLensDBSpanExporter(session.connector)
