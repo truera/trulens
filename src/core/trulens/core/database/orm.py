@@ -5,6 +5,7 @@ import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
+from sqlalchemy import DATETIME
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
@@ -117,7 +118,7 @@ class ORM(abc.ABC, Generic[T]):
     FeedbackResult: Type[T]
     GroundTruth: Type[T]
     Dataset: Type[T]
-    EventTable: Type[T]
+    Event: Type[T]
 
 
 def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
@@ -403,43 +404,83 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                     dataset_json=obj.model_dump_json(redact_keys=redact_keys),
                 )
 
-        class EventTable(base):
+        class Event(base):
             """
-            ORM class for OTEL traces/spans.
+            ORM class for OTEL traces/spans. This should be kept in line with the event table
+            https://docs.snowflake.com/en/developer-guide/logging-tracing/event-table-columns#data-for-trace-events
+            https://docs.snowflake.com/en/developer-guide/logging-tracing/event-table-columns#label-event-table-record-column-span
             """
 
             _table_base_name = "events"
 
             event_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            """
+            The unique identifier for the event. This is just the span_id.
+            """
+
             record = Column(TYPE_JSON, nullable=False)
+            """
+            For a span, this is an object that includes:
+            - name: the function/procedure that emitted the data
+            - kind: SPAN_KIND_TRULENS
+            - parent_span_id: the unique identifier for the parent span
+            - status: STATUS_CODE_ERROR when the span corresponds to an unhandled exception. Otherwise, STATUS_CODE_UNSET.
+            """
+
             record_attributes = Column(TYPE_JSON, nullable=False)
+            """
+            Attributes of the record that can either come from the user, or based on the TruLens semantic conventions.
+            """
+
             record_type = Column(VARCHAR(256), nullable=False)
+            """
+            Specifies the kind of record specified by this row. This will always be "SPAN" for TruLens.
+            """
+
             resource_attributes = Column(TYPE_JSON, nullable=False)
-            start_timestamp = Column(TYPE_TIMESTAMP, nullable=False)
-            timestamp = Column(TYPE_TIMESTAMP, nullable=False)
+            """
+            Reserved.
+            """
+
+            start_timestamp = Column(DATETIME, nullable=False)
+            """
+            The timestamp when the span started. This is a UNIX timestamp in milliseconds.
+            Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
+            """
+
+            timestamp = Column(DATETIME, nullable=False)
+            """
+            The timestamp when the span concluded. This is a UNIX timestamp in milliseconds.
+            Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
+            """
+
             trace = Column(TYPE_JSON, nullable=False)
+            """
+            Contains the span context, including the trace_id and span_id for the span.
+            """
 
             @classmethod
             def parse(
                 cls,
                 obj: event_schema.Event,
+                redact_keys: bool = False,
             ) -> ORM.EventTable:
                 return cls(
                     event_id=obj.event_id,
                     record=json_utils.json_str_of_obj(
-                        obj.record, redact_keys=True
+                        obj.record, redact_keys=redact_keys
                     ),
                     record_attributes=json_utils.json_str_of_obj(
-                        obj.record_attributes, redact_keys=True
+                        obj.record_attributes, redact_keys=redact_keys
                     ),
                     record_type=obj.record_type,
                     resource_attributes=json_utils.json_str_of_obj(
-                        obj.resource_attributes, redact_keys=True
+                        obj.resource_attributes, redact_keys=redact_keys
                     ),
                     start_timestamp=obj.start_timestamp,
                     timestamp=obj.timestamp,
                     trace=json_utils.json_str_of_obj(
-                        obj.trace, redact_keys=True
+                        obj.trace, redact_keys=redact_keys
                     ),
                 )
 

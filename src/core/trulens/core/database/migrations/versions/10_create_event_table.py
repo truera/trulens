@@ -35,8 +35,8 @@ def upgrade(config) -> None:
         sa.Column("record_attributes", sa.Text(), nullable=False),
         sa.Column("record_type", sa.VARCHAR(length=256), nullable=False),
         sa.Column("resource_attributes", sa.Text(), nullable=False),
-        sa.Column("start_timestamp", sa.Float(), nullable=False),
-        sa.Column("timestamp", sa.Float(), nullable=False),
+        sa.Column("start_timestamp", sa.TIMESTAMP(), nullable=False),
+        sa.Column("timestamp", sa.TIMESTAMP(), nullable=False),
         sa.Column("trace", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("event_id"),
     )
