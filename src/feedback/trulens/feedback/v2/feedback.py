@@ -297,7 +297,10 @@ class Relevance(Semantics):
 adalflow_v2 = """
 You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
 
-Respond only as a number from 0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score.\n\nYou should score the groundedness of the statement based on the following criteria:\n\n- Statements that are directly supported by the source should be considered grounded and should get a high score.\n\n- Statements that are not directly supported by the source should be considered not grounded and should get a low score.\n\n- Statements of doubt, admissions of uncertainty, or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of 3.\n\n- Consider indirect or implicit evidence, or the context of the statement, to avoid penalizing potentially factual claims due to lack of explicit support.\n\n- Be cautious of false positives; ensure that high scores are only given when there is clear supporting evidence.\n\n- Pay special attention to cases where the prediction is 1 but the ground truth is 0, and ensure that indirect evidence is not mistaken for direct support.\n\nNever elaborate.
+Respond only as a number from 0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score.\n\nYou should score the groundedness of the statement based on the following criteria:\n\n- Statements that are directly supported by the source should be considered grounded and should get a high score.\n\n- Statements that are not directly supported by the source should be considered not grounded and should get a low score.\n\n- Statements of doubt, admissions of uncertainty, or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of 3.
+
+\n\n- Consider indirect or implicit evidence, or the context of the statement, to avoid penalizing potentially factual claims due to lack of explicit support.
+- Be cautious of false positives; ensure that high scores are only given when there is clear supporting evidence.\n\n- Pay special attention to cases where the prediction is 1 but the ground truth is 0, and ensure that indirect evidence is not mistaken for direct support.\n\nNever elaborate.
 """
 
 
@@ -315,12 +318,11 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
+        """
+You are an INFORMATION OVERLAP classifier; providing the overlap of information (entailment or groundedness) between the source and statement.
 
-        Respond only as a number from {output_space_prompt}.
-
-        {criteria}
-        Never elaborate."""
+Respond only as a number from 0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score.\n\nYou should score the groundedness of the statement based on the following criteria:\n\n- Statements that are directly supported by the source should be considered grounded and should get a high score.\n\n- Statements that are not directly supported by the source should be considered not grounded and should get a low score.\n\n- Statements of doubt, admissions of uncertainty, or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of 3.\n\n- Consider indirect or implicit evidence, or the context of the statement, to avoid penalizing potentially factual claims due to lack of explicit support.\n\n- Be cautious of false positives; ensure that high scores are only given when there is clear supporting evidence.\n\n- Pay special attention to cases where the prediction is 1 but the ground truth is 0, and ensure that indirect evidence is not mistaken for direct support.\n\nNever elaborate.
+"""
     )
 
     user_prompt: ClassVar[str] = cleandoc(
