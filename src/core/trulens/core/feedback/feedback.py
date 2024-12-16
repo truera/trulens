@@ -994,7 +994,7 @@ Feedback function signature:
 
                 else:
                     assert isinstance(
-                        result_val, (int, float, list)
+                        result_val, (int, float, list, dict)
                     ), f"Feedback function output must be a float or an int, a list of floats, or dict but was {type(result_val)}."
                     feedback_call = feedback_schema.FeedbackCall(
                         args=ins, ret=result_val, meta=meta
