@@ -25,6 +25,7 @@ class TruLensDBSpanExporter(SpanExporter):
         try:
             for span in spans:
                 context = span.get_span_context()
+                parent = span.parent
 
                 if context is None:
                     logger.error(
@@ -48,7 +49,7 @@ class TruLensDBSpanExporter(SpanExporter):
                     else datetime.now(),
                     trace={
                         "trace_id": str(context.trace_id),
-                        "parent_id": str(context.span_id),
+                        "parent_id": str(parent.span_id if parent else ""),
                     },
                 )
                 self.connector.add_event(event)
