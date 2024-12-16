@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.2.6
+  __version__: 1.2.10
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.2.6
+  __version__: 1.2.10
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -539,6 +539,7 @@ trulens.core.feedback.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
+    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -565,6 +566,7 @@ trulens.core.feedback.feedback.Feedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
 trulens.core.feedback.feedback.InvalidSelector:
   __bases__:
   - builtins.Exception
@@ -588,6 +590,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
+    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -603,6 +606,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
 trulens.core.feedback.provider:
   __class__: builtins.module
   highs: {}
@@ -1651,7 +1655,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.2.6
+  __version__: 1.2.10
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1939,7 +1943,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.2.6
+  __version__: 1.2.10
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2448,6 +2452,7 @@ trulens.feedback.v2.feedback.EvalSchema:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
+    get_output_scale_prompt: builtins.function
     output_space: builtins.str
     validate_output_space: builtins.classmethod
 trulens.feedback.v2.feedback.Explained:
