@@ -884,15 +884,16 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return _App.__enter__(self)
+            return OTELApp.__enter__(self)
 
         ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
-
         # self._set_context_vars()
 
         return ctx
@@ -902,9 +903,11 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return _App.__exit__(self, exc_type, exc_value, exc_tb)
+            return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)

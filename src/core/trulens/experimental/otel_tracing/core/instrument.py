@@ -3,6 +3,8 @@ import logging
 from typing import Callable, Optional
 
 from opentelemetry import trace
+from trulens.apps.custom import instrument as custom_instrument
+from trulens.core import app as core_app
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -77,3 +79,19 @@ def instrument(
         return wrapper
 
     return inner_decorator
+
+
+class App(core_app.App):
+    # For use as a context manager.
+    def __enter__(self):
+        return (
+            trace.get_tracer_provider()
+            .get_tracer(TRULENS_SERVICE_NAME)
+            .start_as_current_span(
+                name="root",
+            )
+            .__enter__()
+        )
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        print("exit")
