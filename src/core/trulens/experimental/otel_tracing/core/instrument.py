@@ -42,13 +42,13 @@ def instrument(attributes: Attributes = {}):
                 trace.get_tracer_provider()
                 .get_tracer(TRULENS_SERVICE_NAME)
                 .start_as_current_span(
-                    name=func.__name__,
+                    name="test",
                 )
             ) as parent_span:
                 span = trace.get_current_span()
                 _instrumented_object, *rest_args = args
 
-                span.set_attribute("name", func.__name__)
+                span.set_attribute("name", "test")
                 span.set_attribute("kind", "SPAN_KIND_TRULENS")
                 span.set_attribute(
                     "parent_span_id", parent_span.get_span_context().span_id
