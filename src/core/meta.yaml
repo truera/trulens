@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.2.11" %}
+{% set version = "1.2.10" %}
 
 package:
   name: {{ name|lower }}
@@ -7,8 +7,7 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # https://pypi.org/project/trulens-core/#files
-  sha256: 410209272c10daabb25cdaea7da08c058112ac41083bec948aa71f1301ae5ecd
+  sha256: 597a2ac350450330daeb7326e012c62389ba246d88d02db64832b97f837d2b32
 
 build:
   noarch: python
@@ -23,7 +22,6 @@ requirements:
   run:
     - python >=3.9,<3.12
     - numpy >=1.23
-    - trulens-otel-semconv >=1.0.0,<2.0.0
     - munch >=2.5.0,<3.0.0
     - dill >=0.3.8,<0.4.0
     - typing_extensions >=4.9.0,<5.0.0
