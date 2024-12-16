@@ -410,6 +410,20 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_virtual_ground_truth(
+        self,
+        user_table_name: str,
+        user_schema_mapping: Dict[str, str],
+        user_schema_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        """Get all virtual ground truths from the database from a particular user table's name.
+
+        Returns:
+            A dataframe with the virtual ground truths.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def insert_dataset(
         self, dataset: dataset_schema.Dataset
     ) -> types_schema.DatasetID:

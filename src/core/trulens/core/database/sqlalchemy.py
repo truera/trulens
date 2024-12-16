@@ -27,6 +27,7 @@ import pydantic
 from pydantic import Field
 import sqlalchemy as sa
 from sqlalchemy import Table
+from sqlalchemy import inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
@@ -44,6 +45,7 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
+from trulens.core.schema.groundtruth import VirtualGroundTruthSchemaMapping
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -936,6 +938,69 @@ class SQLAlchemyDB(core_db.DB):
                         df = pd.concat([df, _extract_ground_truths(results)])
             return df
             # TODO: use a generator instead of a list? (for large datasets)
+
+    def get_virtual_ground_truth(
+        self,
+        user_table_name: str,
+        user_schema_mapping: Dict[str, str],
+        user_schema_name: Optional[str] = None,
+    ) -> pd.DataFrame:
+        virtual_gt_schema_mapping: VirtualGroundTruthSchemaMapping = (
+            VirtualGroundTruthSchemaMapping.validate_mapping(
+                user_schema_mapping
+            )
+        )
+
+        with self.session.begin() as session:
+            # Dynamically construct the column mappings
+            inspector = inspect(session.get_bind())
+            user_columns = inspector.get_columns(
+                user_table_name, schema=user_schema_name
+            )
+
+            # Dynamically define the table with its columns
+            user_table = sa.Table(
+                user_table_name,
+                sa.MetaData(),
+                *[
+                    sa.Column(
+                        col["name"], col["type"], nullable=col["nullable"]
+                    )
+                    for col in user_columns
+                ],
+                schema=user_schema_name,
+            )
+
+            # Ensure all required columns exist
+            required_columns = {
+                getattr(virtual_gt_schema_mapping, field)
+                for field in virtual_gt_schema_mapping.model_dump()
+                if getattr(virtual_gt_schema_mapping, field)
+            }
+
+            existing_columns = {col.name for col in user_table.columns}
+            missing_columns = required_columns - existing_columns
+            if missing_columns:
+                raise ValueError(
+                    f"Missing required columns in user table '{user_table_name}': {', '.join(missing_columns)}"
+                )
+
+            # Create a query to fetch the mapped data
+            column_mapping = {
+                field: user_table.c[getattr(virtual_gt_schema_mapping, field)]
+                for field in virtual_gt_schema_mapping.model_dump()
+                if getattr(virtual_gt_schema_mapping, field)
+            }
+
+            query = sa.select(*column_mapping.values())
+            results = session.execute(query).fetchall()
+
+            # Convert results to DataFrame
+            if not results:
+                return None
+            return pd.DataFrame(
+                data=results, columns=list(column_mapping.keys())
+            )
 
     def insert_dataset(
         self, dataset: dataset_schema.Dataset

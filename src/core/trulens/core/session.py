@@ -840,6 +840,29 @@ class TruSession(
 
         return self.connector.db.get_ground_truths_by_dataset(dataset_name)
 
+    def get_virtual_ground_truth(
+        self,
+        user_table_name: str,
+        user_schema_mapping: Dict[str, str],
+        user_schema_name: Optional[str] = None,
+    ) -> pandas.DataFrame:
+        """
+        Load a virtual dataset from the user's table using the schema mapping.
+
+        Args:
+            user_table_name (str): Name of the user's table to load ground truth data from.
+            schema_mapping (Dict[str, str]): Mapping of user table columns to internal `GroundTruth` schema fields.
+
+        Returns:
+            pd.DataFrame: Ground truth data as a DataFrame.
+        """
+
+        return self.connector.db.get_virtual_ground_truth(
+            user_table_name=user_table_name,
+            user_schema_mapping=user_schema_mapping,
+            user_schema_name=user_schema_name,
+        )
+
     def start_evaluator(
         self,
         restart: bool = False,
