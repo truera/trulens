@@ -304,7 +304,7 @@ def clean_db(
             # NOTE: Sqlalchemy docs say this should be written
             # "sqlite://:memory:" but that gives an error on mac at least.
             "sqlite_file": f"sqlite:///{Path(tmp) / 'test.sqlite'}",
-            "postgres": "postgresql+psycopg2://pg-test-user:pg-test-pswd@localhost/pg-test-db",
+            "postgres": "postgresql+psycopg://pg-test-user:pg-test-pswd@localhost/pg-test-db",
             "mysql": "mysql+pymysql://mysql-test-user:mysql-test-pswd@localhost/mysql-test-db",
         }[alias]
 
