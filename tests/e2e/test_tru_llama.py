@@ -53,7 +53,7 @@ class TestLlamaIndex(TruTestCase):
         if not TestLlamaIndex.DATA_PATH.exists():
             os.system(f"wget {TestLlamaIndex.DATA_URL} -P data/")
 
-        Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.0)
+        Settings.llm = OpenAI(model="gpt-4o-mini", temperature=0.0)
         Settings.num_output = 64
 
         documents = SimpleDirectoryReader("data").load_data()
