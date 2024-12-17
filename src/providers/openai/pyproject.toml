@@ -36,8 +36,8 @@ langchain-community = [
   { version = ">=0.3.0", python = ">=3.9" },
 ]
 pydantic = [
-  { version = ">=1.0.0,<2.0.0", python = "<3.9" },
-  { version = ">=2.0.0", python = ">=3.9" },
+  { version = "^1.0.0", python = "<3.9" },
+  { version = ">=2.4.2", python = ">=3.9" },
 ]
 
 [tool.poetry.group.dev.dependencies]

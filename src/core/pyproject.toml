@@ -35,7 +35,10 @@ numpy = [
 munch = "^2.5"
 dill = ">=0.3.8"
 typing_extensions = "^4.9"
-pydantic = "^2.4.2"
+pydantic = [
+  { version = "^1.0.0", python = "<3.9" },
+  { version = ">=2.4.2", python = ">=3.9" },
+]
 pandas = ">=1.0.0"
 rich = "^13.6"
 requests = "^2.31"
