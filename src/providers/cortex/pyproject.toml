@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-providers-cortex"
-version = "1.2.10"
+version = "1.2.11"
 description = "A TruLens extension package adding Snowflake Cortex support for LLM App evaluation."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
@@ -33,6 +33,10 @@ trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
 snowflake-connector-python = "^3.11"
 snowflake-ml-python = "^1.6.4"
+scipy = [
+  { version = ">=1.7.0,<1.11.1", python = "<3.9" },
+  { version = ">=1.11.1", python = ">=3.9" },
+]
 snowflake-snowpark-python = "^1.18.0"
 
 [tool.poetry.group.dev.dependencies]
