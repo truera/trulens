@@ -1000,7 +1000,7 @@ class SQLAlchemyDB(core_db.DB):
 
                 # Convert results to DataFrame
                 if not results:
-                    return None
+                    return pd.DataFrame()
                 return pd.DataFrame(
                     data=results, columns=list(column_mapping.keys())
                 )
