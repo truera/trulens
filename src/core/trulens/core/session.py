@@ -851,7 +851,7 @@ class TruSession(
 
         Args:
             user_table_name (str): Name of the user's table to load ground truth data from.
-            schema_mapping (Dict[str, str]): Mapping of user table columns to internal `GroundTruth` schema fields.
+            user_schema_mapping (Dict[str, str]): Mapping of user table columns to internal `GroundTruth` schema fields.
 
         Returns:
             pd.DataFrame: Ground truth data as a DataFrame.
