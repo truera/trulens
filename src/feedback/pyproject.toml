@@ -30,7 +30,10 @@ classifiers = [
 python = "^3.8.1"
 trulens-core = { version = "^1.0.0" }
 nltk = "^3.9.1"
-pydantic = "^2.4.2"
+pydantic = [
+  { version = "^1.0.0", python = "<3.9" },
+  { version = ">=2.4.2", python = ">=3.9" },
+]
 requests = "^2.31"
 numpy = [
   { version = ">=1.23.0,<1.25.0", python = "<3.9" },
