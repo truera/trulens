@@ -952,55 +952,62 @@ class SQLAlchemyDB(core_db.DB):
         )
 
         with self.session.begin() as session:
-            # Dynamically construct the column mappings
-            inspector = inspect(session.get_bind())
-            user_columns = inspector.get_columns(
-                user_table_name, schema=user_schema_name
-            )
-
-            # Dynamically define the table with its columns
-            user_table = sa.Table(
-                user_table_name,
-                sa.MetaData(),
-                *[
-                    sa.Column(
-                        col["name"], col["type"], nullable=col["nullable"]
-                    )
-                    for col in user_columns
-                ],
-                schema=user_schema_name,
-            )
-
-            # Ensure all required columns exist
-            required_columns = {
-                getattr(virtual_gt_schema_mapping, field)
-                for field in virtual_gt_schema_mapping.model_dump()
-                if getattr(virtual_gt_schema_mapping, field)
-            }
-
-            existing_columns = {col.name for col in user_table.columns}
-            missing_columns = required_columns - existing_columns
-            if missing_columns:
-                raise ValueError(
-                    f"Missing required columns in user table '{user_table_name}': {', '.join(missing_columns)}"
+            try:
+                # Dynamically construct the column mappings
+                inspector = inspect(session.get_bind())
+                user_columns = inspector.get_columns(
+                    user_table_name, schema=user_schema_name
                 )
 
-            # Create a query to fetch the mapped data
-            column_mapping = {
-                field: user_table.c[getattr(virtual_gt_schema_mapping, field)]
-                for field in virtual_gt_schema_mapping.model_dump()
-                if getattr(virtual_gt_schema_mapping, field)
-            }
+                # Dynamically define the table with its columns
+                user_table = sa.Table(
+                    user_table_name,
+                    sa.MetaData(),
+                    *[
+                        sa.Column(
+                            col["name"], col["type"], nullable=col["nullable"]
+                        )
+                        for col in user_columns
+                    ],
+                    schema=user_schema_name,
+                )
 
-            query = sa.select(*column_mapping.values())
-            results = session.execute(query).fetchall()
+                # Ensure all required columns exist
+                required_columns = {
+                    getattr(virtual_gt_schema_mapping, field)
+                    for field in virtual_gt_schema_mapping.model_dump()
+                    if getattr(virtual_gt_schema_mapping, field)
+                }
 
-            # Convert results to DataFrame
-            if not results:
-                return None
-            return pd.DataFrame(
-                data=results, columns=list(column_mapping.keys())
-            )
+                existing_columns = {col.name for col in user_table.columns}
+                missing_columns = required_columns - existing_columns
+                if missing_columns:
+                    raise ValueError(
+                        f"Missing required columns in user table '{user_table_name}': {', '.join(missing_columns)}"
+                    )
+
+                # Create a query to fetch the mapped data
+                column_mapping = {
+                    field: user_table.c[
+                        getattr(virtual_gt_schema_mapping, field)
+                    ]
+                    for field in virtual_gt_schema_mapping.model_dump()
+                    if getattr(virtual_gt_schema_mapping, field)
+                }
+
+                query = sa.select(*column_mapping.values())
+                results = session.execute(query).fetchall()
+
+                # Convert results to DataFrame
+                if not results:
+                    return None
+                return pd.DataFrame(
+                    data=results, columns=list(column_mapping.keys())
+                )
+            except Exception as e:
+                raise ValueError(
+                    f"Failed to fetch virtual ground truth: {str(e)}"
+                )
 
     def insert_dataset(
         self, dataset: dataset_schema.Dataset
