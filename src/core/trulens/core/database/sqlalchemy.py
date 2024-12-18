@@ -44,7 +44,6 @@ from trulens.core.database.migrations import data as data_migrations
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
-from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
@@ -74,18 +73,20 @@ def patch_insert(statement: Insert, compiler: SQLCompiler, **kw):
 
     if statement.table.name.endswith("_events"):
         insert_statement = insert_statement.replace(
-            "VALUES (%(record)s, %(record_attributes)s, %(record_type)s, %(resource_attributes)s, %(start_timestamp)s, %(timestamp)s, %(trace)s)",
+            "VALUES (%(record)s, %(event_id)s, %(record_attributes)s, %(record_type)s, %(resource_attributes)s, %(start_timestamp)s, %(timestamp)s, %(trace)s)",
             """
 SELECT
     PARSE_JSON(column1),
-    PARSE_JSON(column2),
-    column3,
-    PARSE_JSON(column4),
-    column5,
+    column2,
+    PARSE_JSON(column3),
+    column4,
+    PARSE_JSON(column5),
     column6,
-    PARSE_JSON(column7),
+    column7,
+    PARSE_JSON(column8),
 from VALUES (
     %(record)s,
+    %(event_id)s,
     %(record_attributes)s,
     %(record_type)s,
     %(resource_attributes)s,
