@@ -31,6 +31,7 @@ def upgrade(config) -> None:
         # table.
         op.create_table(
             prefix + "events",
+            sa.Column("event_id", sa.VARCHAR(length=256), nullable=False),
             sa.Column("record", OBJECT(), nullable=False),
             sa.Column("record_attributes", OBJECT(), nullable=False),
             sa.Column("record_type", sa.VARCHAR(length=256), nullable=False),
@@ -38,6 +39,7 @@ def upgrade(config) -> None:
             sa.Column("start_timestamp", TIMESTAMP_NTZ(), nullable=False),
             sa.Column("timestamp", TIMESTAMP_NTZ(), nullable=False),
             sa.Column("trace", OBJECT(), nullable=False),
+            sa.PrimaryKeyConstraint("event_id"),
         )
     # ### end Alembic commands ###
 
