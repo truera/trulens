@@ -92,6 +92,15 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def get_db_dialect(self) -> Optional[str]:
+        """Get the dialect of the database.
+
+        Returns:
+            The dialect of the database.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def get_db_revision(self) -> Optional[str]:
         """Get the current revision of the database.
 
@@ -435,7 +444,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_event(self, event: event_schema.Event) -> types_schema.EventID:
+    def insert_event(self, event: event_schema.Event) -> event_schema.EventID:
         """Insert an event into the database.
 
         Args:
