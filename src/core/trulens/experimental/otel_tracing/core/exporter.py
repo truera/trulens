@@ -65,6 +65,7 @@ class TruLensDBSpanExporter(SpanExporter):
 
         except Exception as e:
             logger.error("Error exporting spans to the database: %s", e)
+            print("Error exporting spans to the database: %s", e)
             return SpanExportResult.FAILURE
 
         return SpanExportResult.SUCCESS
