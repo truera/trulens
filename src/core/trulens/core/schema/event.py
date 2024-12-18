@@ -3,22 +3,32 @@
 from __future__ import annotations
 
 from datetime import datetime
+import enum
 import logging
 from typing import Any, Dict, Hashable
 
-from trulens.core.schema import types as types_schema
 from trulens.core.utils import serial as serial_utils
+from typing_extensions import TypedDict
 
 logger = logging.getLogger(__name__)
 
 
+class EventRecordType(enum.Enum):
+    """The enumeration of the possible record types for an event."""
+
+    SPAN = "SPAN"
+
+
+class Trace(TypedDict):
+    """The type hint for a trace dictionary."""
+
+    trace_id: str
+    parent_id: str
+    span_id: str
+
+
 class Event(serial_utils.SerialModel, Hashable):
     """The class that represents a single event data entry."""
-
-    event_id: types_schema.EventID  # str
-    """
-    The unique identifier for the event. This is just the span_id.
-    """
 
     record: Dict[str, Any]
     """
@@ -34,7 +44,7 @@ class Event(serial_utils.SerialModel, Hashable):
     Attributes of the record that can either come from the user, or based on the TruLens semantic conventions.
     """
 
-    record_type: str
+    record_type: EventRecordType
     """
     Specifies the kind of record specified by this row. This will always be "SPAN" for TruLens.
     """
@@ -56,15 +66,16 @@ class Event(serial_utils.SerialModel, Hashable):
     Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
     """
 
-    trace: Dict[str, Any]
+    trace: Trace
+    """
+    The trace context information for the span.
+    """
 
     def __init__(
         self,
-        event_id: types_schema.EventID,
         **kwargs,
     ):
-        super().__init__(event_id=event_id, **kwargs)
-        self.event_id = event_id
+        super().__init__(**kwargs)
 
     def __hash__(self):
-        return hash(self.event_id)
+        return self.trace["span_id"]

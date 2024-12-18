@@ -5,10 +5,12 @@ import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
-from sqlalchemy import DATETIME
+from snowflake.sqlalchemy import OBJECT
+from snowflake.sqlalchemy import TIMESTAMP_NTZ
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
+from sqlalchemy import Enum
 from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Text
@@ -413,12 +415,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             _table_base_name = "events"
 
-            event_id = Column(TYPE_ID, nullable=False, primary_key=True)
-            """
-            The unique identifier for the event. This is just the span_id.
-            """
-
-            record = Column(TYPE_JSON, nullable=False)
+            record = Column(OBJECT, nullable=False)
             """
             For a span, this is an object that includes:
             - name: the function/procedure that emitted the data
@@ -427,36 +424,42 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             - status: STATUS_CODE_ERROR when the span corresponds to an unhandled exception. Otherwise, STATUS_CODE_UNSET.
             """
 
-            record_attributes = Column(TYPE_JSON, nullable=False)
+            record_attributes = Column(OBJECT, nullable=False)
             """
             Attributes of the record that can either come from the user, or based on the TruLens semantic conventions.
             """
 
-            record_type = Column(VARCHAR(256), nullable=False)
+            record_type = Column(
+                Enum(event_schema.EventRecordType), nullable=False
+            )
             """
             Specifies the kind of record specified by this row. This will always be "SPAN" for TruLens.
             """
 
-            resource_attributes = Column(TYPE_JSON, nullable=False)
+            resource_attributes = Column(OBJECT, nullable=False)
             """
             Reserved.
             """
 
-            start_timestamp = Column(DATETIME, nullable=False)
+            start_timestamp = Column(
+                TIMESTAMP_NTZ, nullable=False, primary_key=True
+            )
             """
             The timestamp when the span started. This is a UNIX timestamp in milliseconds.
             Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
+
+            Set as the primary key for testing since SQLAlchemy needs one.
             """
 
-            timestamp = Column(DATETIME, nullable=False)
+            timestamp = Column(TIMESTAMP_NTZ, nullable=False)
             """
             The timestamp when the span concluded. This is a UNIX timestamp in milliseconds.
             Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
             """
 
-            trace = Column(TYPE_JSON, nullable=False)
+            trace = Column(OBJECT, nullable=False)
             """
-            Contains the span context, including the trace_id and span_id for the span.
+            Contains the span context, including the trace_id, parent_id, and span_id for the span.
             """
 
             @classmethod
@@ -465,8 +468,13 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 obj: event_schema.Event,
                 redact_keys: bool = False,
             ) -> ORM.EventTable:
+                # Attributes stored as objects should be converted to JSON strings, so that
+                # they can then be parsed via Snowflake's PARSE_JSON function. This is required
+                # because Snowflake SQLAlchemy doesn't support natively inserting Python dicts
+                # as objects.
+                #
+                # See patch_insert in trulens.core.database.sqlalchemy to learn more.
                 return cls(
-                    event_id=obj.event_id,
                     record=json_utils.json_str_of_obj(
                         obj.record, redact_keys=redact_keys
                     ),
