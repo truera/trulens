@@ -30,6 +30,11 @@ class Trace(TypedDict):
 class Event(serial_utils.SerialModel, Hashable):
     """The class that represents a single event data entry."""
 
+    event_id: str
+    """
+    The unique identifier for the event.
+    """
+
     record: Dict[str, Any]
     """
     For a span, this is an object that includes:

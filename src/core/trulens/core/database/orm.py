@@ -424,6 +424,12 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             - status: STATUS_CODE_ERROR when the span corresponds to an unhandled exception. Otherwise, STATUS_CODE_UNSET.
             """
 
+            event_id = Column(TYPE_ID, nullable=False, primary_key=True)
+            """
+            Used as primary key for the schema. Not technically present in the event table schema,
+            but having it here makes it easier to work with the ORM.
+            """
+
             record_attributes = Column(OBJECT, nullable=False)
             """
             Attributes of the record that can either come from the user, or based on the TruLens semantic conventions.
@@ -441,14 +447,10 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             Reserved.
             """
 
-            start_timestamp = Column(
-                TIMESTAMP_NTZ, nullable=False, primary_key=True
-            )
+            start_timestamp = Column(TIMESTAMP_NTZ, nullable=False)
             """
             The timestamp when the span started. This is a UNIX timestamp in milliseconds.
             Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
-
-            Set as the primary key for testing since SQLAlchemy needs one.
             """
 
             timestamp = Column(TIMESTAMP_NTZ, nullable=False)
@@ -475,6 +477,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 #
                 # See patch_insert in trulens.core.database.sqlalchemy to learn more.
                 return cls(
+                    event_id=obj.event_id,
                     record=json_utils.json_str_of_obj(
                         obj.record, redact_keys=redact_keys
                     ),
