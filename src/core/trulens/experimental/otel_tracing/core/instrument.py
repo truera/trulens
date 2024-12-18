@@ -54,9 +54,9 @@ def instrument(
                     "parent_span_id", parent_span.get_span_context().span_id
                 )
 
-                try:
-                    ret = custom_instrument(func)(*args, **kwargs)
+                ret = custom_instrument(func)(*args, **kwargs)
 
+                try:
                     attributes_to_add = {}
 
                     # Set the user provider attributes.
