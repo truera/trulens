@@ -444,7 +444,7 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def insert_event(self, event: event_schema.Event) -> event_schema.EventID:
+    def insert_event(self, event: event_schema.Event) -> types_schema.EventID:
         """Insert an event into the database.
 
         Args:
