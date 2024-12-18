@@ -11,12 +11,12 @@ from trulens.experimental.otel_tracing.core.semantic import (
 
 logger = logging.getLogger(__name__)
 
-type Attributes = Optional[
-    Union[dict[str, Any], Callable[[Any, Any, Any], dict[str, Any]]]
-]
 
-
-def instrument(attributes: Attributes = {}):
+def instrument(
+    attributes: Optional[
+        Union[dict[str, Any], Callable[[Any, Any, Any], dict[str, Any]]]
+    ] = {},
+):
     """
     Decorator for marking functions to be instrumented in custom classes that are
     wrapped by TruCustomApp, with OpenTelemetry tracing.

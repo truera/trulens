@@ -25,11 +25,15 @@ import numpy as np
 import pandas as pd
 import pydantic
 from pydantic import Field
+from snowflake.sqlalchemy import dialect as SnowflakeDialect
 import sqlalchemy as sa
 from sqlalchemy import Table
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
+from sqlalchemy.sql.compiler import SQLCompiler
+from sqlalchemy.sql.expression import Insert
 from trulens.core.database import base as core_db
 from trulens.core.database import exceptions as db_exceptions
 from trulens.core.database import migrations as db_migrations
@@ -40,6 +44,7 @@ from trulens.core.database.migrations import data as data_migrations
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import dataset as dataset_schema
+from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
@@ -51,6 +56,47 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
+
+
+@compiles(Insert, SnowflakeDialect.name)
+def patch_insert(statement: Insert, compiler: SQLCompiler, **kw):
+    """
+    Patches INSERT SQL queries so sqlalchemy ORM will support Snowflake OBJECT.
+
+    See:
+        * https://github.com/snowflakedb/snowflake-sqlalchemy/issues/299
+        * https://github.com/snowflakedb/snowflake-sqlalchemy/issues/411
+
+    For more information (e.g. read about the parameters), please look at:
+        * https://docs.sqlalchemy.org/en/20/core/compiler.html
+    """
+    insert_statement = compiler.visit_insert(statement, **kw)
+
+    if statement.table.name.endswith("_events"):
+        insert_statement = insert_statement.replace(
+            "VALUES (%(record)s, %(record_attributes)s, %(record_type)s, %(resource_attributes)s, %(start_timestamp)s, %(timestamp)s, %(trace)s)",
+            """
+SELECT
+    PARSE_JSON(column1),
+    PARSE_JSON(column2),
+    column3,
+    PARSE_JSON(column4),
+    column5,
+    column6,
+    PARSE_JSON(column7),
+from VALUES (
+    %(record)s,
+    %(record_attributes)s,
+    %(record_type)s,
+    %(resource_attributes)s,
+    %(start_timestamp)s,
+    %(timestamp)s,
+    %(trace)s
+)
+""",
+        )
+
+    return insert_statement
 
 
 class SnowflakeImpl(DefaultImpl):
@@ -250,6 +296,9 @@ class SQLAlchemyDB(core_db.DB):
             raise ValueError("Database engine not initialized.")
 
         db_utils.check_db_revision(self.engine, self.table_prefix)
+
+    def get_db_dialect(self) -> Optional[str]:
+        return self.engine.dialect.name if self.engine else None
 
     def get_db_revision(self) -> Optional[str]:
         if self.engine is None:
@@ -976,6 +1025,7 @@ class SQLAlchemyDB(core_db.DB):
 
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+
         with self.session.begin() as session:
             _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
             session.add(_event)
