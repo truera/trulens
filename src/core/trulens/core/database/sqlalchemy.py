@@ -978,7 +978,7 @@ class SQLAlchemyDB(core_db.DB):
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
         with self.session.begin() as session:
             _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
-            session.merge(_event)
+            session.add(_event)
             logger.info(
                 f"{text_utils.UNICODE_CHECK} added event {_event.event_id}"
             )
