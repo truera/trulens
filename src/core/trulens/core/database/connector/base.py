@@ -261,6 +261,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         ],
     ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
+        # TODO: This is slow and should be batched or otherwise optimized in the future.
 
         Args:
             feedback_results: An iterable with each iteration being a [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] or
@@ -422,6 +423,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
     def add_events(self, events: List[event_schema.Event]):
         """
         Add multiple events to the database.
+        # TODO: This is slow and should be batched or otherwise optimized in the future.
 
         Args:
             events: A list of events to add to the database.
