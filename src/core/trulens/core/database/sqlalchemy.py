@@ -45,7 +45,6 @@ from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.schema.groundtruth import VirtualGroundTruthSchemaMapping
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -945,10 +944,8 @@ class SQLAlchemyDB(core_db.DB):
         user_schema_mapping: Dict[str, str],
         user_schema_name: Optional[str] = None,
     ) -> pd.DataFrame:
-        virtual_gt_schema_mapping: VirtualGroundTruthSchemaMapping = (
-            VirtualGroundTruthSchemaMapping.validate_mapping(
-                user_schema_mapping
-            )
+        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping = groundtruth_schema.VirtualGroundTruthSchemaMapping.validate_mapping(
+            user_schema_mapping
         )
 
         with self.session.begin() as session:
