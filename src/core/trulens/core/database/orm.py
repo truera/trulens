@@ -5,6 +5,8 @@ import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
+from sqlalchemy import JSON
+from sqlalchemy import TIMESTAMP
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
@@ -405,9 +407,6 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class Event(base):
-            from snowflake.sqlalchemy import OBJECT
-            from snowflake.sqlalchemy import TIMESTAMP_NTZ
-
             """
             ORM class for OTEL traces/spans. This should be kept in line with the event table
             https://docs.snowflake.com/en/developer-guide/logging-tracing/event-table-columns#data-for-trace-events
@@ -416,7 +415,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
 
             _table_base_name = "events"
 
-            record = Column(OBJECT, nullable=False)
+            record = Column(JSON, nullable=False)
             """
             For a span, this is an object that includes:
             - name: the function/procedure that emitted the data
@@ -431,7 +430,7 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             but having it here makes it easier to work with the ORM.
             """
 
-            record_attributes = Column(OBJECT, nullable=False)
+            record_attributes = Column(JSON, nullable=False)
             """
             Attributes of the record that can either come from the user, or based on the TruLens semantic conventions.
             """
@@ -443,24 +442,24 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             Specifies the kind of record specified by this row. This will always be "SPAN" for TruLens.
             """
 
-            resource_attributes = Column(OBJECT, nullable=False)
+            resource_attributes = Column(JSON, nullable=False)
             """
             Reserved.
             """
 
-            start_timestamp = Column(TIMESTAMP_NTZ, nullable=False)
+            start_timestamp = Column(TIMESTAMP, nullable=False)
             """
             The timestamp when the span started. This is a UNIX timestamp in milliseconds.
             Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
             """
 
-            timestamp = Column(TIMESTAMP_NTZ, nullable=False)
+            timestamp = Column(TIMESTAMP, nullable=False)
             """
             The timestamp when the span concluded. This is a UNIX timestamp in milliseconds.
             Note: The Snowflake event table uses the TIMESTAMP_NTZ data type for this column.
             """
 
-            trace = Column(OBJECT, nullable=False)
+            trace = Column(JSON, nullable=False)
             """
             Contains the span context, including the trace_id, parent_id, and span_id for the span.
             """
@@ -471,12 +470,6 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 obj: event_schema.Event,
                 redact_keys: bool = False,
             ) -> ORM.EventTable:
-                # Attributes stored as objects should be converted to JSON strings, so that
-                # they can then be parsed via Snowflake's PARSE_JSON function. This is required
-                # because Snowflake SQLAlchemy doesn't support natively inserting Python dicts
-                # as objects.
-                #
-                # See patch_insert in trulens.core.database.sqlalchemy to learn more.
                 return cls(
                     event_id=obj.event_id,
                     record=json_utils.json_str_of_obj(
