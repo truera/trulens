@@ -5,8 +5,6 @@ import functools
 from sqlite3 import Connection as SQLite3Connection
 from typing import ClassVar, Dict, Generic, Type, TypeVar
 
-from snowflake.sqlalchemy import OBJECT
-from snowflake.sqlalchemy import TIMESTAMP_NTZ
 from sqlalchemy import VARCHAR
 from sqlalchemy import Column
 from sqlalchemy import Engine
@@ -407,6 +405,9 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
                 )
 
         class Event(base):
+            from snowflake.sqlalchemy import OBJECT
+            from snowflake.sqlalchemy import TIMESTAMP_NTZ
+
             """
             ORM class for OTEL traces/spans. This should be kept in line with the event table
             https://docs.snowflake.com/en/developer-guide/logging-tracing/event-table-columns#data-for-trace-events
