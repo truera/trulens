@@ -3,7 +3,6 @@ import logging
 from typing import Any, Callable, Optional, Union
 
 from opentelemetry import trace
-from trulens.apps.custom import instrument as custom_instrument
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.semantic import (
     TRULENS_SELECTOR_NAME,
@@ -46,7 +45,6 @@ def instrument(
                 )
             ) as parent_span:
                 span = trace.get_current_span()
-                _instrumented_object, *rest_args = args
 
                 span.set_attribute("name", func.__name__)
                 span.set_attribute("kind", "SPAN_KIND_TRULENS")
@@ -54,7 +52,7 @@ def instrument(
                     "parent_span_id", parent_span.get_span_context().span_id
                 )
 
-                ret = custom_instrument(func)(*args, **kwargs)
+                ret = func(*args, **kwargs)
 
                 try:
                     attributes_to_add = {}
@@ -62,9 +60,7 @@ def instrument(
                     # Set the user provider attributes.
                     if attributes:
                         if callable(attributes):
-                            attributes_to_add = attributes(
-                                ret, *rest_args, **kwargs
-                            )
+                            attributes_to_add = attributes(ret, *args, **kwargs)
                         else:
                             attributes_to_add = attributes
 
