@@ -22,6 +22,7 @@ feature information about the encoded object types in the dictionary under the
 # WARNING: This file does not follow the no-init aliases import standard.
 
 from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.dataset import Dataset
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResult
@@ -37,4 +38,5 @@ __all__ = [
     "FeedbackMode",
     "Record",
     "GroundTruth",
+    "Dataset",
 ]
