@@ -8,7 +8,6 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
-from trulens.apps.custom import instrument as custom_instrument
 from trulens.core import app as core_app
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.semantic import (
