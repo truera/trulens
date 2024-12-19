@@ -25,15 +25,11 @@ import numpy as np
 import pandas as pd
 import pydantic
 from pydantic import Field
-from snowflake.sqlalchemy import dialect as SnowflakeDialect
 import sqlalchemy as sa
 from sqlalchemy import Table
-from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
-from sqlalchemy.sql.compiler import SQLCompiler
-from sqlalchemy.sql.expression import Insert
 from trulens.core.database import base as core_db
 from trulens.core.database import exceptions as db_exceptions
 from trulens.core.database import migrations as db_migrations
@@ -55,49 +51,6 @@ from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
-
-
-@compiles(Insert, SnowflakeDialect.name)
-def patch_insert(statement: Insert, compiler: SQLCompiler, **kw):
-    """
-    Patches INSERT SQL queries so sqlalchemy ORM will support Snowflake OBJECT.
-
-    See:
-        * https://github.com/snowflakedb/snowflake-sqlalchemy/issues/299
-        * https://github.com/snowflakedb/snowflake-sqlalchemy/issues/411
-
-    For more information (e.g. read about the parameters), please look at:
-        * https://docs.sqlalchemy.org/en/20/core/compiler.html
-    """
-    insert_statement = compiler.visit_insert(statement, **kw)
-
-    if statement.table.name.endswith("_events"):
-        insert_statement = insert_statement.replace(
-            "VALUES (%(record)s, %(event_id)s, %(record_attributes)s, %(record_type)s, %(resource_attributes)s, %(start_timestamp)s, %(timestamp)s, %(trace)s)",
-            """
-SELECT
-    PARSE_JSON(column1),
-    column2,
-    PARSE_JSON(column3),
-    column4,
-    PARSE_JSON(column5),
-    column6,
-    column7,
-    PARSE_JSON(column8),
-from VALUES (
-    %(record)s,
-    %(event_id)s,
-    %(record_attributes)s,
-    %(record_type)s,
-    %(resource_attributes)s,
-    %(start_timestamp)s,
-    %(timestamp)s,
-    %(trace)s
-)
-""",
-        )
-
-    return insert_statement
 
 
 class SnowflakeImpl(DefaultImpl):
