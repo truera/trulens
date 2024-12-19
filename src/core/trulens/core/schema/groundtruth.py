@@ -5,11 +5,56 @@ from __future__ import annotations
 import logging
 from typing import Dict, Hashable, Optional, Sequence
 
+from pydantic import BaseModel
+from pydantic import Field
+from pydantic import ValidationError
 from trulens.core.schema import types as types_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import serial as serial_utils
 
 logger = logging.getLogger(__name__)
+
+
+class VirtualGroundTruthSchemaMapping(BaseModel):
+    query: str = Field(
+        ...,
+        description="Column name in the user's table mapping to the 'query' field.",
+    )
+    query_id: str = Field(
+        ...,
+        description="Column name in the user's table mapping to the 'query_id' field.",
+    )
+    expected_response: Optional[str] = Field(
+        None, description="Column name for the 'expected_response' field."
+    )
+    expected_chunks: Optional[str] = Field(
+        None, description="Column name for the 'expected_chunks' field."
+    )
+    dataset_id: Optional[str] = Field(
+        None,
+        description="Column name for the 'dataset_id' field.",  # TODO: is this still relevant for virtual?
+    )
+
+    @classmethod
+    def validate_mapping(
+        cls, schema_mapping: Dict[str, str]
+    ) -> "VirtualGroundTruthSchemaMapping":
+        """
+        Validate and parse the schema mapping dictionary.
+
+        Args:
+            schema_mapping (Dict[str, str]): User-provided schema mapping.
+
+        Returns:
+            SchemaMapping: Parsed and validated schema mapping.
+
+        Raises:
+            ValidationError: If mandatory fields are missing or invalid.
+        """
+        try:
+            return cls(**schema_mapping)
+        except ValidationError as e:
+            raise ValueError(f"Invalid schema mapping: {e}")
 
 
 class GroundTruth(serial_utils.SerialModel, Hashable):
