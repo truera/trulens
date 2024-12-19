@@ -1,0 +1,55 @@
+"""create event table
+
+Revision ID: 10
+Revises: 9
+Create Date: 2024-12-11 09:32:48.976169
+"""
+
+from alembic import op
+from snowflake.sqlalchemy import OBJECT
+from snowflake.sqlalchemy import TIMESTAMP_NTZ
+from snowflake.sqlalchemy import dialect as SnowflakeDialect
+import sqlalchemy as sa
+
+# revision identifiers, used by Alembic.
+revision = "10"
+down_revision = "9"
+branch_labels = None
+depends_on = None
+
+
+def upgrade(config) -> None:
+    prefix = config.get_main_option("trulens.table_prefix")
+
+    if prefix is None:
+        raise RuntimeError("trulens.table_prefix is not set")
+
+    if op.get_context().dialect.name == SnowflakeDialect.name:
+        # Note:
+        # 1. This particular migration is temporary, intended for helping us test
+        # OTEL integration, hence we only perform this table creation if it's a Snowflake
+        # table.
+        # 2. Event tables technically don't have event_id, but including it as a column here
+        # because SQL alchemy needs one, and there aren't really suitable columns.
+        op.create_table(
+            prefix + "events",
+            sa.Column("event_id", sa.VARCHAR(length=256), nullable=False),
+            sa.Column("record", OBJECT(), nullable=False),
+            sa.Column("record_attributes", OBJECT(), nullable=False),
+            sa.Column("record_type", sa.VARCHAR(length=256), nullable=False),
+            sa.Column("resource_attributes", OBJECT(), nullable=False),
+            sa.Column("start_timestamp", TIMESTAMP_NTZ(), nullable=False),
+            sa.Column("timestamp", TIMESTAMP_NTZ(), nullable=False),
+            sa.Column("trace", OBJECT(), nullable=False),
+            sa.PrimaryKeyConstraint("event_id"),
+        )
+
+
+def downgrade(config) -> None:
+    prefix = config.get_main_option("trulens.table_prefix")
+
+    if prefix is None:
+        raise RuntimeError("trulens.table_prefix is not set")
+
+    if op.get_context().dialect.name == SnowflakeDialect.name:
+        op.drop_table(prefix + "events")
