@@ -20,6 +20,7 @@ import pandas
 from trulens.core._utils.pycompat import Future  # code style exception
 from trulens.core.database import base as core_db
 from trulens.core.schema import app as app_schema
+from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
@@ -260,6 +261,7 @@ class DBConnector(ABC, text_utils.WithIdentString):
         ],
     ) -> List[types_schema.FeedbackResultID]:
         """Add multiple feedback results to the database and return their unique ids.
+        # TODO: This is slow and should be batched or otherwise optimized in the future.
 
         Args:
             feedback_results: An iterable with each iteration being a [FeedbackResult][trulens.core.schema.feedback.FeedbackResult] or
@@ -408,3 +410,22 @@ class DBConnector(ABC, text_utils.WithIdentString):
                 .mean()
                 .sort_values(by=feedback_cols, ascending=False)
             )
+
+    def add_event(self, event: event_schema.Event):
+        """
+        Add an event to the database.
+
+        Args:
+            event: The event to add to the database.
+        """
+        return self.db.insert_event(event=event)
+
+    def add_events(self, events: List[event_schema.Event]):
+        """
+        Add multiple events to the database.
+        # TODO: This is slow and should be batched or otherwise optimized in the future.
+
+        Args:
+            events: A list of events to add to the database.
+        """
+        return [self.add_event(event=event) for event in events]
