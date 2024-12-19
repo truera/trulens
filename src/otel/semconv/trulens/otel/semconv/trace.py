@@ -34,6 +34,12 @@ class SpanAttributes:
     In some cases below, we also include span name or span name prefix.
     """
 
+    SPAN_TYPE = "trulens.span_type"
+    """Key for the span type attribute."""
+
+    RECORD_ID = "trulens.record_id"
+    """ID of the record that the span belongs to."""
+
     SPAN_TYPES = "trulens.span_types"
 
     class SpanType(str, Enum):
