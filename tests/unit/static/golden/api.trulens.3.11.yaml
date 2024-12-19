@@ -238,6 +238,7 @@ trulens.core.database.base.DB:
     get_ground_truth: builtins.function
     get_ground_truths_by_dataset: builtins.function
     get_records_and_feedback: builtins.function
+    get_virtual_ground_truth: builtins.function
     insert_app: builtins.function
     insert_dataset: builtins.function
     insert_feedback: builtins.function
@@ -687,9 +688,11 @@ trulens.core.schema:
   __class__: builtins.module
   highs:
     AppDefinition: pydantic._internal._model_construction.ModelMetaclass
+    Dataset: pydantic._internal._model_construction.ModelMetaclass
     FeedbackDefinition: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
     FeedbackResult: pydantic._internal._model_construction.ModelMetaclass
+    GroundTruth: pydantic._internal._model_construction.ModelMetaclass
     Record: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
   lows:
@@ -917,6 +920,7 @@ trulens.core.schema.groundtruth:
   highs: {}
   lows:
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
+    VirtualGroundTruthSchemaMapping: pydantic._internal._model_construction.ModelMetaclass
 trulens.core.schema.groundtruth.GroundTruth:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -931,6 +935,17 @@ trulens.core.schema.groundtruth.GroundTruth:
     meta: typing.Optional[typing.Dict, builtins.NoneType]
     query: builtins.str
     query_id: typing.Optional[builtins.str, builtins.NoneType]
+trulens.core.schema.groundtruth.VirtualGroundTruthSchemaMapping:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    dataset_id: typing.Optional[builtins.str, builtins.NoneType]
+    expected_chunks: typing.Optional[builtins.str, builtins.NoneType]
+    expected_response: typing.Optional[builtins.str, builtins.NoneType]
+    query: builtins.str
+    query_id: builtins.str
+    validate_mapping: builtins.classmethod
 trulens.core.schema.record:
   __class__: builtins.module
   highs: {}
@@ -1065,6 +1080,7 @@ trulens.core.session.TruSession:
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
+    get_virtual_ground_truth: builtins.function
     migrate_database: builtins.function
     reset_database: builtins.function
     run_dashboard: builtins.function
