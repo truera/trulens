@@ -55,6 +55,13 @@ class SpanAttributes:
     """
     User-defined selector name for the current span.
     """
+    SPAN_TYPE = "trulens.span_type"
+    """Key for the span type attribute."""
+
+    RECORD_ID = "trulens.record_id"
+    """ID of the record that the span belongs to."""
+
+    SPAN_TYPES = "trulens.span_types"
 
     class SpanType(str, Enum):
         """Span type attribute values.
