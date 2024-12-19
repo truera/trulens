@@ -856,10 +856,12 @@ class TruSession(
         Returns:
             pd.DataFrame: Ground truth data as a DataFrame.
         """
-
+        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping = groundtruth_schema.VirtualGroundTruthSchemaMapping.validate_mapping(
+            user_schema_mapping
+        )
         return self.connector.db.get_virtual_ground_truth(
             user_table_name=user_table_name,
-            user_schema_mapping=user_schema_mapping,
+            virtual_gt_schema_mapping=virtual_gt_schema_mapping,
             user_schema_name=user_schema_name,
         )
 
