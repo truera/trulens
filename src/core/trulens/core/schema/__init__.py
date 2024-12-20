@@ -22,9 +22,11 @@ feature information about the encoded object types in the dictionary under the
 # WARNING: This file does not follow the no-init aliases import standard.
 
 from trulens.core.schema.app import AppDefinition
+from trulens.core.schema.dataset import Dataset
 from trulens.core.schema.feedback import FeedbackDefinition
 from trulens.core.schema.feedback import FeedbackMode
 from trulens.core.schema.feedback import FeedbackResult
+from trulens.core.schema.groundtruth import GroundTruth
 from trulens.core.schema.record import Record
 from trulens.core.schema.select import Select
 
@@ -35,4 +37,6 @@ __all__ = [
     "FeedbackResult",
     "FeedbackMode",
     "Record",
+    "GroundTruth",
+    "Dataset",
 ]
