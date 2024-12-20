@@ -833,37 +833,31 @@ class TruSession(
         if buffer:
             self.connector.db.batch_insert_ground_truth(buffer)
 
-    def get_ground_truth(self, dataset_name: str) -> pandas.DataFrame:
-        """Get ground truth data from the dataset.
-        dataset_name: Name of the dataset.
-        """
-
-        return self.connector.db.get_ground_truths_by_dataset(dataset_name)
-
-    def get_virtual_ground_truth(
+    def get_ground_truth(
         self,
-        user_table_name: str,
-        user_schema_mapping: Dict[str, str],
+        dataset_name: Optional[str] = None,
+        user_table_name: Optional[str] = None,
+        user_schema_mapping: Optional[Dict[str, str]] = None,
         user_schema_name: Optional[str] = None,
     ) -> pandas.DataFrame:
+        """Get ground truth data from the dataset. If `user_table_name` and `user_schema_mapping` are provided,
+        load a virtual dataset from the user's table using the schema mapping. If `dataset_name` is provided,
+        load ground truth data from the dataset by name.
+        dataset_name: Name of the dataset.
+        user_table_name: Name of the user's table to load ground truth data from.
+        user_schema_mapping: Mapping of user table columns to internal `GroundTruth` schema fields.
+        user_schema_name: Name of the user's schema to load ground truth data from.
         """
-        Load a virtual dataset from the user's table using the schema mapping.
-
-        Args:
-            user_table_name (str): Name of the user's table to load ground truth data from.
-            user_schema_mapping (Dict[str, str]): Mapping of user table columns to internal `GroundTruth` schema fields.
-
-        Returns:
-            pd.DataFrame: Ground truth data as a DataFrame.
-        """
-        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping = groundtruth_schema.VirtualGroundTruthSchemaMapping.validate_mapping(
-            user_schema_mapping
-        )
-        return self.connector.db.get_virtual_ground_truth(
-            user_table_name=user_table_name,
-            virtual_gt_schema_mapping=virtual_gt_schema_mapping,
-            user_schema_name=user_schema_name,
-        )
+        if user_table_name and user_schema_mapping:
+            return self.connector.db.get_virtual_ground_truth(
+                user_table_name, user_schema_mapping, user_schema_name
+            )
+        elif dataset_name:
+            return self.connector.db.get_ground_truths_by_dataset(dataset_name)
+        else:
+            raise ValueError(
+                "Either `dataset_name` or `user_table_name` and `user_schema_mapping` must be provided."
+            )
 
     def start_evaluator(
         self,

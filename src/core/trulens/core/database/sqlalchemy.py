@@ -941,9 +941,12 @@ class SQLAlchemyDB(core_db.DB):
     def get_virtual_ground_truth(
         self,
         user_table_name: str,
-        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping,
+        user_schema_mapping: Dict[str, str],
         user_schema_name: Optional[str] = None,
     ) -> pd.DataFrame:
+        virtual_gt_schema_mapping: groundtruth_schema.VirtualGroundTruthSchemaMapping = groundtruth_schema.VirtualGroundTruthSchemaMapping.validate_mapping(
+            user_schema_mapping
+        )
         with self.session.begin() as session:
             try:
                 # Dynamically construct the column mappings
