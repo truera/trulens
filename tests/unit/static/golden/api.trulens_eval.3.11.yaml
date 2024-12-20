@@ -866,7 +866,6 @@ trulens_eval.Tru:
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
-    get_virtual_ground_truth: builtins.function
     json: builtins.function
     migrate_database: builtins.function
     model_computed_fields: builtins.property
@@ -6980,7 +6979,6 @@ trulens_eval.tru.Tru:
     get_ground_truth: builtins.function
     get_leaderboard: builtins.function
     get_records_and_feedback: builtins.function
-    get_virtual_ground_truth: builtins.function
     json: builtins.function
     migrate_database: builtins.function
     model_computed_fields: builtins.property
