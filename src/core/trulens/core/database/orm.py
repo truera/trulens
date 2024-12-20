@@ -472,21 +472,13 @@ def new_orm(base: Type[T], prefix: str = "trulens_") -> Type[ORM[T]]:
             ) -> ORM.EventTable:
                 return cls(
                     event_id=obj.event_id,
-                    record=json_utils.json_str_of_obj(
-                        obj.record, redact_keys=redact_keys
-                    ),
-                    record_attributes=json_utils.json_str_of_obj(
-                        obj.record_attributes, redact_keys=redact_keys
-                    ),
+                    record=obj.record,
+                    record_attributes=obj.record_attributes,
                     record_type=obj.record_type,
-                    resource_attributes=json_utils.json_str_of_obj(
-                        obj.resource_attributes, redact_keys=redact_keys
-                    ),
+                    resource_attributes=obj.resource_attributes,
                     start_timestamp=obj.start_timestamp,
                     timestamp=obj.timestamp,
-                    trace=json_utils.json_str_of_obj(
-                        obj.trace, redact_keys=redact_keys
-                    ),
+                    trace=obj.trace,
                 )
 
     configure_mappers()  # IMPORTANT
