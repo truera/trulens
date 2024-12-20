@@ -518,10 +518,18 @@ trulens.core.feedback.feedback:
   __class__: builtins.module
   highs: {}
   lows:
+    GroundednessConfigs: pydantic._internal._model_construction.ModelMetaclass
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     InvalidSelector: builtins.type
     SkipEval: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
+trulens.core.feedback.feedback.GroundednessConfigs:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    use_sent_tokenize: typing.Optional[builtins.bool]
+    filter_trivial_statements: typing.Optional[builtins.bool]
 trulens.core.feedback.feedback.Feedback:
   __bases__:
   - trulens.core.schema.feedback.FeedbackDefinition
@@ -2254,6 +2262,7 @@ trulens.feedback.v2.feedback:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutput: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutputType: pydantic._internal._model_construction.ModelMetaclass
+    FewShotExample: builtins.type
     FewShotExamples: builtins.type
     GraphicViolence: pydantic._internal._model_construction.ModelMetaclass
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
@@ -2481,11 +2490,19 @@ trulens.feedback.v2.feedback.FeedbackOutputType:
     max_interpretation: typing.Optional[builtins.str, builtins.NoneType]
     min_feedback: builtins.float
     min_interpretation: typing.Optional[builtins.str, builtins.NoneType]
+trulens.feedback.v2.feedback.FewShotExample:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    feedback_args: typing.Optional[typing.Dict[builtins.str, builtins.str], builtins.NoneType]
+    score: typing.Optional[builtins.int, builtins.NoneType]
 trulens.feedback.v2.feedback.FewShotExamples:
   __bases__:
   - builtins.object
   __class__: builtins.type
   attributes:
+    examples: typing.List[trulens.feedback.v2.feedback.FewShotExample]
     from_list: builtins.classmethod
 trulens.feedback.v2.feedback.GraphicViolence:
   __bases__:
