@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.10
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.10
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -519,10 +519,18 @@ trulens.core.feedback.feedback:
   __class__: builtins.module
   highs: {}
   lows:
+    GroundednessConfigs: pydantic._internal._model_construction.ModelMetaclass
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     InvalidSelector: builtins.type
     SkipEval: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
+trulens.core.feedback.feedback.GroundednessConfigs:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    use_sent_tokenize: typing.Optional[builtins.bool]
+    filter_trivial_statements: typing.Optional[builtins.bool]
 trulens.core.feedback.feedback.Feedback:
   __bases__:
   - trulens.core.schema.feedback.FeedbackDefinition
@@ -537,15 +545,19 @@ trulens.core.feedback.feedback.Feedback:
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
       typing.Dict[builtins.str, typing.Any]]]], builtins.NoneType]
     implementation: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     of_feedback_definition: builtins.staticmethod
     'on': builtins.function
     on_default: builtins.function
@@ -561,6 +573,7 @@ trulens.core.feedback.feedback.Feedback:
     selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
     sig: builtins.property
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.core.feedback.feedback.InvalidSelector:
   __bases__:
@@ -583,18 +596,23 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
       typing.Dict[builtins.str, typing.Any]]]], builtins.NoneType]
     implementation: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     run_location: typing.Optional[trulens.core.schema.feedback.FeedbackRunLocation,
       builtins.NoneType]
     selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
 trulens.core.feedback.provider:
   __class__: builtins.module
@@ -841,6 +859,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
@@ -1658,7 +1677,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.10
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1946,7 +1965,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.10
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2260,6 +2279,8 @@ trulens.feedback.v2.feedback:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutput: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutputType: pydantic._internal._model_construction.ModelMetaclass
+    FewShotExample: pydantic.main.BaseModel
+    FewShotExamples: pydantic.main.BaseModel
     GraphicViolence: pydantic._internal._model_construction.ModelMetaclass
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
     Groundedness: pydantic._internal._model_construction.ModelMetaclass
@@ -2436,6 +2457,7 @@ trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin:
   - builtins.object
   __class__: builtins.type
   attributes:
+    examples: builtins.NoneType
     generate_system_prompt: builtins.classmethod
     validate_criteria_and_output_space: builtins.staticmethod
 trulens.feedback.v2.feedback.DigitalOutputType:
@@ -2485,6 +2507,21 @@ trulens.feedback.v2.feedback.FeedbackOutputType:
     max_interpretation: typing.Optional[builtins.str, builtins.NoneType]
     min_feedback: builtins.float
     min_interpretation: typing.Optional[builtins.str, builtins.NoneType]
+trulens.feedback.v2.feedback.FewShotExample:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: builtins.type
+  attributes:
+    feedback_args: typing.Optional[typing.Dict[builtins.str, builtins.str], builtins.NoneType]
+    score: typing.Optional[builtins.int, builtins.NoneType]
+trulens.feedback.v2.feedback.FewShotExamples:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: builtins.type
+  attributes:
+    examples: typing.List[trulens.feedback.v2.feedback.FewShotExample]
+    from_examples_list: builtins.classmethod
+    format_examples: builtins.classmethod
 trulens.feedback.v2.feedback.GraphicViolence:
   __bases__:
   - trulens.feedback.v2.feedback.Violence

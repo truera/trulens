@@ -21,6 +21,9 @@ class Feedback(pydantic.BaseModel):
     Base class for feedback functions.
     """
 
+    def __init__(self, examples):
+        self.examples = examples
+
     @classmethod
     def help(cls) -> None:
         print(cls.str_help())
@@ -178,6 +181,49 @@ class OutputSpace(Enum):
     BINARY = (0, 1)
 
 
+class FewShotExample(pydantic.BaseModel):
+    feedback_args: Dict[str, str]
+    score: int
+
+
+class FewShotExamples(pydantic.BaseModel):
+    examples: List[FewShotExample]
+
+    @classmethod
+    def from_examples_list(
+        cls, examples_list: List[Tuple[Dict[str, str], int]]
+    ) -> "FewShotExamples":
+        """
+        Create a FewShotExamples instance from a list of examples.
+
+        Args:
+            examples_list (List[Tuple[Dict[str, str], int]]): A list of tuples where the first element is the feedback_args,
+                                                              and the second element is the score.
+
+        Returns:
+            FewShotExamples: An instance of FewShotExamples with the provided examples.
+        """
+        examples = []
+        for feedback_args, score in examples_list:
+            examples.append(
+                FewShotExample(feedback_args=feedback_args, score=score)
+            )
+        return cls(examples=examples)
+
+    def format_examples(self) -> str:
+        formatted_examples = [
+            "\n\nUse the following examples to guide scoring: \n"
+        ]
+        for idx, example in enumerate(self.examples, start=1):
+            example_str = [f"Example {idx}:\n"]
+            for key, value in example.feedback_args.items():
+                example_str.append(f"{key}:\n{value}\n")
+            example_str.append(f"Score: {example.score}\n")
+            formatted_examples.append("\n".join(example_str))
+        formatted_examples.append("-----")
+        return "\n".join(formatted_examples)
+
+
 class EvalSchema(pydantic.BaseModel):
     criteria: str
     output_space: str
@@ -241,6 +287,7 @@ class CriteriaOutputSpaceMixin:
     output_space_prompt: ClassVar[str]
     system_prompt_template: ClassVar[str]
     criteria_template: ClassVar[str]
+    examples: ClassVar[Optional[str]] = None
 
     @staticmethod
     def validate_criteria_and_output_space(criteria: str, output_space: str):
@@ -254,6 +301,7 @@ class CriteriaOutputSpaceMixin:
         max_score: int,
         criteria: Optional[str] = None,
         output_space: Optional[str] = None,
+        examples: Optional[str] = None,
     ) -> str:
         if criteria is None and output_space is None:
             return cls.system_prompt
@@ -271,13 +319,19 @@ class CriteriaOutputSpaceMixin:
             )
             criteria = validated.criteria
             output_space_prompt = validated.get_output_scale_prompt()
-
-        return cleandoc(
-            cls.system_prompt_template.format(
-                output_space_prompt=output_space_prompt,
-                criteria=criteria,
+            prompt = cleandoc(
+                cls.system_prompt_template.format(
+                    output_space_prompt=output_space_prompt,
+                    criteria=criteria,
+                )
             )
-        )
+
+        if examples is not None:
+            fewshot_examples = FewShotExamples.from_examples_list(examples)
+            formatted_examples = fewshot_examples.format_examples()
+            prompt += formatted_examples
+
+        return prompt
 
 
 class Relevance(Semantics):
@@ -461,6 +515,11 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         - Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of {min_score}.
     """
 
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
         Respond only as a number from {output_space_prompt}.
@@ -475,6 +534,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """
     )
 
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
     user_prompt: ClassVar[str] = cleandoc(
         """PROMPT: {prompt}
 
@@ -482,17 +547,6 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         RELEVANCE:
         """
-    )
-
-    criteria: ClassVar[str] = criteria_template.format(
-        min_score=OutputSpace.LIKERT_0_3.value[0],
-        max_score=OutputSpace.LIKERT_0_3.value[1],
-    )
-
-    system_prompt: ClassVar[str] = cleandoc(
-        system_prompt_template.format(
-            output_space_prompt=output_space_prompt, criteria=criteria
-        )
     )
 
 

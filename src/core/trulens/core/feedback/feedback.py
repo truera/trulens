@@ -27,6 +27,7 @@ import munch
 import numpy as np
 import pandas
 import pydantic
+from pydantic import BaseModel
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
@@ -117,6 +118,11 @@ class InvalidSelector(Exception):
         return f"InvalidSelector({self.selector})"
 
 
+class GroundednessConfigs(BaseModel):
+    use_sent_tokenize: bool
+    filter_trivial_statements: bool
+
+
 class Feedback(feedback_schema.FeedbackDefinition):
     """Feedback function container.
 
@@ -152,10 +158,32 @@ class Feedback(feedback_schema.FeedbackDefinition):
     [FeedbackDefinition.aggregator][trulens.core.schema.feedback.FeedbackDefinition.aggregator].
     """
 
+    examples: Optional[List[Tuple]] = pydantic.Field(None, exclude=True)
+    """Examples to use when evaluating the feedback function."""
+
+    min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
+    """Minimum score value for the feedback function."""
+
+    max_score_val: Optional[int] = pydantic.Field(None, exclude=True)
+    """Maximum score value for the feedback function."""
+
+    temperature: Optional[float] = pydantic.Field(None, exclude=True)
+    """Temperature parameter for the feedback function."""
+
+    groundedness_configs: Optional[GroundednessConfigs] = pydantic.Field(
+        None, exclude=True
+    )
+    """Optional groundedness configuration parameters."""
+
     def __init__(
         self,
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
+        examples: Optional[List[Tuple]] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+        groundedness_configs: Optional[GroundednessConfigs] = None,
         **kwargs,
     ):
         # imp is the python function/method while implementation is a serialized
@@ -238,6 +266,11 @@ class Feedback(feedback_schema.FeedbackDefinition):
 
         self.imp = imp
         self.agg = agg
+        self.examples = examples
+        self.min_score_val = min_score_val
+        self.max_score_val = max_score_val
+        self.temperature = temperature
+        self.groundedness_configs = groundedness_configs
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:
@@ -450,7 +483,28 @@ class Feedback(feedback_schema.FeedbackDefinition):
         assert (
             self.imp is not None
         ), "Feedback definition needs an implementation to call."
-        return self.imp(*args, **kwargs)
+        if self.examples is not None:
+            kwargs["examples"] = self.examples
+        if self.min_score_val is not None:
+            kwargs["min_score_val"] = self.min_score_val
+        if self.max_score_val is not None:
+            kwargs["max_score_val"] = self.max_score_val
+        if self.temperature is not None:
+            kwargs["temperature"] = self.temperature
+        if self.groundedness_configs is not None:
+            if self.groundedness_configs.use_sent_tokenize is not None:
+                kwargs["use_sent_tokenize"] = (
+                    self.groundedness_configs.use_sent_tokenize
+                )
+            if self.groundedness_configs.filter_trivial_statements is not None:
+                kwargs["filter_trivial_statements"] = (
+                    self.groundedness_configs.filter_trivial_statements
+                )
+
+        # Filter out unexpected keyword arguments
+        sig = signature(self.imp)
+        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        return self.imp(*args, **valid_kwargs)
 
     def aggregate(
         self,
