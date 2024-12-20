@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.11
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.11
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -367,6 +367,12 @@ trulens.core.database.migrations.data:
     data_migrate: builtins.function
     sql_alchemy_migration_versions: builtins.list
     sqlalchemy_upgrade_paths: builtins.dict
+trulens.core.database.migrations.util:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    get_table_prefix_from_config: builtins.function
+    make_orm_from_config: builtins.function
 trulens.core.database.orm:
   __class__: builtins.module
   highs: {}
@@ -793,6 +799,41 @@ trulens.core.schema.dataset.Dataset:
     dataset_id: builtins.str
     meta: typing.Dict
     name: builtins.str
+trulens.core.schema.event:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Event: pydantic._internal._model_construction.ModelMetaclass
+    EventRecordType: enum.EnumType
+    Trace: typing_extensions._TypedDictMeta
+trulens.core.schema.event.Event:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    event_id: builtins.str
+    record: typing.Dict[builtins.str, typing.Any]
+    record_attributes: typing.Dict[builtins.str, typing.Any]
+    record_type: trulens.core.schema.event.EventRecordType
+    resource_attributes: typing.Dict[builtins.str, typing.Any]
+    start_timestamp: datetime.datetime
+    timestamp: datetime.datetime
+    trace: trulens.core.schema.event.Trace
+trulens.core.schema.event.EventRecordType:
+  __bases__:
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    SPAN: trulens.core.schema.event.EventRecordType
+    name: enum.property
+    value: enum.property
+trulens.core.schema.event.Trace:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
 trulens.core.schema.feedback:
   __class__: builtins.module
   highs: {}
@@ -1642,7 +1683,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.11
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1930,7 +1971,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.2.8
+  __version__: 1.2.11
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
