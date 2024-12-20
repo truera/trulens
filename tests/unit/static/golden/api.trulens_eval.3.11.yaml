@@ -312,11 +312,14 @@ trulens_eval.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -326,6 +329,8 @@ trulens_eval.Feedback:
       builtins.NoneType]
     json: builtins.function
     load: builtins.staticmethod
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     model_computed_fields: builtins.property
     model_config: builtins.dict
     model_construct: builtins.classmethod
@@ -366,6 +371,7 @@ trulens_eval.Feedback:
     selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
     sig: builtins.property
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2371,11 +2377,14 @@ trulens_eval.feedback.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -2385,6 +2394,8 @@ trulens_eval.feedback.Feedback:
       builtins.NoneType]
     json: builtins.function
     load: builtins.staticmethod
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     model_computed_fields: builtins.property
     model_config: builtins.dict
     model_construct: builtins.classmethod
@@ -2425,6 +2436,7 @@ trulens_eval.feedback.Feedback:
     selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
     sig: builtins.property
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -2922,11 +2934,14 @@ trulens_eval.feedback.feedback.Feedback:
     copy: builtins.function
     dict: builtins.function
     evaluate_deferred: builtins.staticmethod
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -2936,6 +2951,8 @@ trulens_eval.feedback.feedback.Feedback:
       builtins.NoneType]
     json: builtins.function
     load: builtins.staticmethod
+    max_score_val: typing.Optional[builtins.int, builtins.NoneType]
+    min_score_val: typing.Optional[builtins.int, builtins.NoneType]
     model_computed_fields: builtins.property
     model_config: builtins.dict
     model_construct: builtins.classmethod
@@ -2976,6 +2993,7 @@ trulens_eval.feedback.feedback.Feedback:
     selectors: typing.Dict[builtins.str, trulens.core.utils.serial.Lens]
     sig: builtins.property
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
+    temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
@@ -6582,6 +6600,7 @@ trulens_eval.schema.feedback.FeedbackDefinition:
     construct: builtins.classmethod
     copy: builtins.function
     dict: builtins.function
+    examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
