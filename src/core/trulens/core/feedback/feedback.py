@@ -491,10 +491,15 @@ class Feedback(feedback_schema.FeedbackDefinition):
             kwargs["max_score_val"] = self.max_score_val
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
-        if self.use_sent_tokenize is not None:
-            kwargs["use_sent_tokenize"] = self.use_sent_tokenize
-        if self.filter_trivial_statements is not None:
-            kwargs["filter_trivial_statements"] = self.filter_trivial_statements
+        if self.groundedness_configs is not None:
+            if self.groundedness_configs.use_sent_tokenize is not None:
+                kwargs["use_sent_tokenize"] = (
+                    self.groundedness_configs.use_sent_tokenize
+                )
+            if self.groundedness_configs.filter_trivial_statements is not None:
+                kwargs["filter_trivial_statements"] = (
+                    self.groundedness_configs.filter_trivial_statements
+                )
 
         # Filter out unexpected keyword arguments
         sig = signature(self.imp)

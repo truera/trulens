@@ -181,58 +181,48 @@ class OutputSpace(Enum):
     BINARY = (0, 1)
 
 
-class FewShotExamples:
-    """
-    Create few-shot examples to be used to customize the feedback function's behavior.
+class FewShotExample(pydantic.BaseModel):
+    question: str
+    answer: str
+    score: int
 
-    !!! example "Adding examples to a feedback function"
-        ```python
-        from trulens.feedback.v2.feedback import FewShotExamples
-        from trulens.providers.openai import OpenAI
 
-        fewshot_relevance_examples_list = [
-            ({"query": "I am having trouble accessing my account. Can you help me reset my password?",
-              "response": "Go to resetmypassword.com and enter the authentication code to get a new password"},
-             3),
-            ({"query": "I love this product! It's amazing and works perfectly.",
-              "response": "Very glad to hear it."},
-             3),
-            ({"query": "This is the worst experience I've ever had. Completely dissatisfied.",
-              "response": "Onomatopeia"},
-             0)
-        ]
-
-        fewshot_relevance_examples = FewShotExamples.from_list(fewshot_relevance_examples_list)
-        ```
-    """
+class FewShotExamples(pydantic.BaseModel):
+    examples: List[FewShotExample]
 
     @classmethod
-    def from_list(
-        cls, examples_list: List[Tuple[dict, int]]
+    def from_examples_list(
+        cls, examples_list: List[Tuple[str, str, int]]
     ) -> "FewShotExamples":
         """
         Create a FewShotExamples instance from a list of examples.
 
         Args:
-            examples_list (List[Tuple[dict, int]]): A list of tuples where the first element is a dictionary
-                                                    with the keys of the feedback function argument names and values,
-                                                    and the second element is the score.
+            examples_list (List[Tuple[str, str, int]]): A list of tuples where the first element is the question,
+                                                        the second element is the answer, and the third element is the score.
 
         Returns:
             FewShotExamples: An instance of FewShotExamples with the provided examples.
         """
-        examples = ["\n\nUse the following examples to guide scoring: \n"]
-        for idx, (example_dict, score) in enumerate(examples_list, start=1):
-            example_str = [f"Example {idx}:\n"]
-            for key, value in example_dict.items():
-                example_str.append(f"{key.capitalize()}:\n{value}\n")
-            example_str.append(f"Score: {score}\n")
-            examples.append("\n".join(example_str))
-        examples.append("-----")
-        return cls(examples="\n".join(examples))
+        examples = []
+        for question, answer, score in examples_list:
+            examples.append(
+                FewShotExample(question=question, answer=answer, score=score)
+            )
+        return cls(examples=examples)
 
-    def __init__(self, examples: str):
-        self.examples = examples
+    def format_examples(self) -> str:
+        formatted_examples = [
+            "\n\nUse the following examples to guide scoring: \n"
+        ]
+        for idx, example in enumerate(self.examples, start=1):
+            example_str = [f"Example {idx}:\n"]
+            example_str.append(f"Question:\n{example.question}\n")
+            example_str.append(f"Answer:\n{example.answer}\n")
+            example_str.append(f"Score: {example.score}\n")
+            formatted_examples.append("\n".join(example_str))
+        formatted_examples.append("-----")
+        return "\n".join(formatted_examples)
 
 
 class EvalSchema(pydantic.BaseModel):
@@ -338,10 +328,9 @@ class CriteriaOutputSpaceMixin:
             )
 
         if examples is not None:
-            examples_instance = FewShotExamples.from_list(
-                examples_list=examples
-            )
-            prompt += examples_instance.examples
+            fewshot_examples = FewShotExamples.from_examples_list(examples)
+            formatted_examples = fewshot_examples.format_examples()
+            prompt += formatted_examples
 
         return prompt
 
