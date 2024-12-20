@@ -8,6 +8,7 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.feedback import generated as feedback_generated
@@ -314,6 +315,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -353,6 +355,7 @@ class LLMProvider(core_provider.Provider):
             max_score=max_score_val,
             criteria=criteria,
             output_space=output_space,
+            examples=examples,
         )
 
         return self.generate_score(
@@ -372,6 +375,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -422,6 +426,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -438,6 +443,7 @@ class LLMProvider(core_provider.Provider):
         question: str,
         context: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -479,6 +485,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -504,6 +511,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -542,7 +550,11 @@ class LLMProvider(core_provider.Provider):
 
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
-                min_score_val, max_score_val, criteria, output_space
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                output_space=output_space,
+                examples=examples,
             )
         )
 
@@ -563,6 +575,7 @@ class LLMProvider(core_provider.Provider):
         prompt: str,
         response: str,
         criteria: Optional[str] = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -602,6 +615,7 @@ class LLMProvider(core_provider.Provider):
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
+                examples=examples,
                 output_space=output_space,
             )
         )
@@ -1530,8 +1544,10 @@ class LLMProvider(core_provider.Provider):
         source: str,
         statement: str,
         criteria: Optional[str] = None,
-        use_sent_tokenize: bool = True,
-        filter_trivial_statements: bool = True,
+        examples: Optional[str] = None,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1601,6 +1617,17 @@ class LLMProvider(core_provider.Provider):
         groundedness_scores = {}
         reasons_str = ""
 
+        use_sent_tokenize = (
+            groundedness_configs.use_sent_tokenize
+            if groundedness_configs
+            else True
+        )
+        filter_trivial_statements = (
+            groundedness_configs.filter_trivial_statements
+            if groundedness_configs
+            else True
+        )
+
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
             hypotheses = sent_tokenize(statement)
@@ -1630,6 +1657,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -1716,8 +1744,10 @@ class LLMProvider(core_provider.Provider):
         statement: str,
         question: str,
         criteria: Optional[str] = None,
-        use_sent_tokenize: bool = True,
-        filter_trivial_statements: bool = True,
+        examples: Optional[List[str]] = None,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1763,6 +1793,18 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+
+        use_sent_tokenize = (
+            groundedness_configs.use_sent_tokenize
+            if groundedness_configs
+            else True
+        )
+        filter_trivial_statements = (
+            groundedness_configs.filter_trivial_statements
+            if groundedness_configs
+            else True
+        )
+
         assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
@@ -1827,6 +1869,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
