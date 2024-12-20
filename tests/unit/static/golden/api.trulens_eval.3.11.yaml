@@ -315,10 +315,11 @@ trulens_eval.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
-    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -374,7 +375,6 @@ trulens_eval.Feedback:
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
-    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
     validate: builtins.classmethod
 trulens_eval.FeedbackMode:
   __bases__:
@@ -2380,10 +2380,11 @@ trulens_eval.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
-    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -2439,7 +2440,6 @@ trulens_eval.feedback.Feedback:
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
-    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
     validate: builtins.classmethod
 trulens_eval.feedback.GroundTruthAgreement:
   __bases__:
@@ -2937,10 +2937,11 @@ trulens_eval.feedback.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
-    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     get_class: builtins.staticmethod
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -2996,7 +2997,6 @@ trulens_eval.feedback.feedback.Feedback:
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
     update_forward_refs: builtins.classmethod
-    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
     validate: builtins.classmethod
 trulens_eval.feedback.feedback.InvalidSelector:
   __bases__:
