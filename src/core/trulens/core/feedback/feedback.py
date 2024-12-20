@@ -27,6 +27,7 @@ import munch
 import numpy as np
 import pandas
 import pydantic
+from pydantic import BaseModel
 from rich import print as rprint
 from rich.markdown import Markdown
 from rich.pretty import pretty_repr
@@ -117,6 +118,11 @@ class InvalidSelector(Exception):
         return f"InvalidSelector({self.selector})"
 
 
+class GroundednessConfigs(BaseModel):
+    use_sent_tokenize: bool
+    filter_trivial_statements: bool
+
+
 class Feedback(feedback_schema.FeedbackDefinition):
     """Feedback function container.
 
@@ -164,13 +170,10 @@ class Feedback(feedback_schema.FeedbackDefinition):
     temperature: Optional[float] = pydantic.Field(None, exclude=True)
     """Temperature parameter for the feedback function."""
 
-    use_sent_tokenize: Optional[bool] = pydantic.Field(None, exclude=True)
-    """Groundedness only: whether to use sentence tokenization."""
-
-    filter_trivial_statements: Optional[bool] = pydantic.Field(
+    groundedness_configs: Optional[GroundednessConfigs] = pydantic.Field(
         None, exclude=True
     )
-    """Groundedness only: filter trivial statements."""
+    """Optional groundedness configuration parameters."""
 
     def __init__(
         self,
@@ -180,8 +183,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
-        use_sent_tokenize: Optional[bool] = True,
-        filter_trivial_statements: Optional[bool] = True,
+        groundedness_configs: Optional[GroundednessConfigs] = None,
         **kwargs,
     ):
         # imp is the python function/method while implementation is a serialized
@@ -268,8 +270,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         self.min_score_val = min_score_val
         self.max_score_val = max_score_val
         self.temperature = temperature
-        self.use_sent_tokenize = use_sent_tokenize
-        self.filter_trivial_statements = filter_trivial_statements
+        self.groundedness_configs = groundedness_configs
 
         # Verify that `imp` expects the arguments specified in `selectors`:
         if self.imp is not None:

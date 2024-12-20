@@ -8,6 +8,7 @@ import warnings
 import nltk
 from nltk.tokenize import sent_tokenize
 import numpy as np
+from trulens.core.feedback import feedback as core_feedback
 from trulens.core.feedback import provider as core_provider
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.feedback import generated as feedback_generated
@@ -1544,8 +1545,9 @@ class LLMProvider(core_provider.Provider):
         statement: str,
         criteria: Optional[str] = None,
         examples: Optional[str] = None,
-        use_sent_tokenize: bool = True,
-        filter_trivial_statements: bool = True,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1614,6 +1616,17 @@ class LLMProvider(core_provider.Provider):
 
         groundedness_scores = {}
         reasons_str = ""
+
+        use_sent_tokenize = (
+            groundedness_configs.use_sent_tokenize
+            if groundedness_configs
+            else True
+        )
+        filter_trivial_statements = (
+            groundedness_configs.filter_trivial_statements
+            if groundedness_configs
+            else True
+        )
 
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
@@ -1732,8 +1745,9 @@ class LLMProvider(core_provider.Provider):
         question: str,
         criteria: Optional[str] = None,
         examples: Optional[List[str]] = None,
-        use_sent_tokenize: bool = True,
-        filter_trivial_statements: bool = True,
+        groundedness_configs: Optional[
+            core_feedback.GroundednessConfigs
+        ] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1779,6 +1793,18 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, dict]: A tuple containing a value between 0.0 (not grounded) and 1.0 (grounded) and a dictionary containing the reasons for the evaluation.
         """
+
+        use_sent_tokenize = (
+            groundedness_configs.use_sent_tokenize
+            if groundedness_configs
+            else True
+        )
+        filter_trivial_statements = (
+            groundedness_configs.filter_trivial_statements
+            if groundedness_configs
+            else True
+        )
+
         assert self.endpoint is not None, "Endpoint is not set."
         if use_sent_tokenize:
             nltk.download("punkt_tab", quiet=True)
