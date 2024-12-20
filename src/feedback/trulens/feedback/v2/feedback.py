@@ -182,8 +182,7 @@ class OutputSpace(Enum):
 
 
 class FewShotExample(pydantic.BaseModel):
-    question: str
-    answer: str
+    feedback_args: Dict[str, str]
     score: int
 
 
@@ -192,22 +191,22 @@ class FewShotExamples(pydantic.BaseModel):
 
     @classmethod
     def from_examples_list(
-        cls, examples_list: List[Tuple[str, str, int]]
+        cls, examples_list: List[Tuple[Dict[str, str], int]]
     ) -> "FewShotExamples":
         """
         Create a FewShotExamples instance from a list of examples.
 
         Args:
-            examples_list (List[Tuple[str, str, int]]): A list of tuples where the first element is the question,
-                                                        the second element is the answer, and the third element is the score.
+            examples_list (List[Tuple[Dict[str, str], int]]): A list of tuples where the first element is the feedback_args,
+                                                              and the second element is the score.
 
         Returns:
             FewShotExamples: An instance of FewShotExamples with the provided examples.
         """
         examples = []
-        for question, answer, score in examples_list:
+        for feedback_args, score in examples_list:
             examples.append(
-                FewShotExample(question=question, answer=answer, score=score)
+                FewShotExample(feedback_args=feedback_args, score=score)
             )
         return cls(examples=examples)
 
@@ -217,8 +216,8 @@ class FewShotExamples(pydantic.BaseModel):
         ]
         for idx, example in enumerate(self.examples, start=1):
             example_str = [f"Example {idx}:\n"]
-            example_str.append(f"Question:\n{example.question}\n")
-            example_str.append(f"Answer:\n{example.answer}\n")
+            for key, value in example.feedback_args.items():
+                example_str.append(f"{key}:\n{value}\n")
             example_str.append(f"Score: {example.score}\n")
             formatted_examples.append("\n".join(example_str))
         formatted_examples.append("-----")
