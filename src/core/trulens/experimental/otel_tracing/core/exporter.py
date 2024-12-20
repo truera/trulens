@@ -5,6 +5,7 @@ from typing import Optional, Sequence
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
+from opentelemetry.trace import StatusCode
 from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
 
@@ -20,7 +21,7 @@ def to_timestamp(timestamp: Optional[int]) -> datetime:
 
 class TruLensDBSpanExporter(SpanExporter):
     """
-    Implementation of :class:`SpanExporter` that flushes the spans to the database in the TruLens session.
+    Implementation of `SpanExporter` that flushes the spans to the database in the TruLens session.
     """
 
     connector: core_connector.DBConnector
@@ -37,8 +38,15 @@ class TruLensDBSpanExporter(SpanExporter):
 
         return event_schema.Event(
             event_id=str(context.span_id),
-            record=span.attributes,
-            record_attributes={},
+            record={
+                "name": span.name,
+                "kind": "SPAN_KIND_TRULENS",
+                "parent_span_id": str(parent.span_id if parent else ""),
+                "status": "STATUS_CODE_ERROR"
+                if span.status.status_code == StatusCode.ERROR
+                else "STATUS_CODE_UNSET",
+            },
+            record_attributes=span.attributes,
             record_type=event_schema.EventRecordType.SPAN,
             resource_attributes=span.resource.attributes,
             start_timestamp=to_timestamp(span.start_time),
