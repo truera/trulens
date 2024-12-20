@@ -539,8 +539,7 @@ trulens.core.feedback.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
-    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
-    higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
@@ -566,7 +565,6 @@ trulens.core.feedback.feedback.Feedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
-    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
 trulens.core.feedback.feedback.InvalidSelector:
   __bases__:
   - builtins.Exception
@@ -590,7 +588,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
-    filter_trivial_statements: typing.Optional[builtins.bool, builtins.NoneType]
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -606,7 +604,6 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
-    use_sent_tokenize: typing.Optional[builtins.bool, builtins.NoneType]
 trulens.core.feedback.provider:
   __class__: builtins.module
   highs: {}
