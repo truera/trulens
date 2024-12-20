@@ -547,6 +547,7 @@ trulens.core.feedback.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
+    higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
     groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
@@ -596,8 +597,8 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
-    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
