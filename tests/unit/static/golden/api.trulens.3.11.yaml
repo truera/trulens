@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.2.10
+  __version__: 1.2.11
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.2.10
+  __version__: 1.2.11
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -238,8 +238,10 @@ trulens.core.database.base.DB:
     get_ground_truth: builtins.function
     get_ground_truths_by_dataset: builtins.function
     get_records_and_feedback: builtins.function
+    get_virtual_ground_truth: builtins.function
     insert_app: builtins.function
     insert_dataset: builtins.function
+    insert_event: builtins.function
     insert_feedback: builtins.function
     insert_feedback_definition: builtins.function
     insert_ground_truth: builtins.function
@@ -269,6 +271,8 @@ trulens.core.database.connector.base.DBConnector:
   attributes:
     RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
     add_app: builtins.function
+    add_event: builtins.function
+    add_events: builtins.function
     add_feedback: builtins.function
     add_feedback_definition: builtins.function
     add_feedbacks: builtins.function
@@ -518,18 +522,11 @@ trulens.core.feedback.feedback:
   __class__: builtins.module
   highs: {}
   lows:
-    GroundednessConfigs: pydantic._internal._model_construction.ModelMetaclass
     Feedback: pydantic._internal._model_construction.ModelMetaclass
+    GroundednessConfigs: pydantic._internal._model_construction.ModelMetaclass
     InvalidSelector: builtins.type
     SkipEval: builtins.type
     SnowflakeFeedback: pydantic._internal._model_construction.ModelMetaclass
-trulens.core.feedback.feedback.GroundednessConfigs:
-  __bases__:
-  - pydantic.main.BaseModel
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    use_sent_tokenize: typing.Optional[builtins.bool]
-    filter_trivial_statements: typing.Optional[builtins.bool]
 trulens.core.feedback.feedback.Feedback:
   __bases__:
   - trulens.core.schema.feedback.FeedbackDefinition
@@ -547,8 +544,9 @@ trulens.core.feedback.feedback.Feedback:
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
     feedback_definition_id: builtins.str
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
-    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
@@ -574,6 +572,13 @@ trulens.core.feedback.feedback.Feedback:
     supplied_name: typing.Optional[builtins.str, builtins.NoneType]
     temperature: typing.Optional[builtins.float, builtins.NoneType]
     tru_class_info: trulens.core.utils.pyschema.Class
+trulens.core.feedback.feedback.GroundednessConfigs:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    filter_trivial_statements: builtins.bool
+    use_sent_tokenize: builtins.bool
 trulens.core.feedback.feedback.InvalidSelector:
   __bases__:
   - builtins.Exception
@@ -597,8 +602,9 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
+    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
+      builtins.NoneType]
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
-    groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs, builtins.NoneType]
     if_exists: typing.Optional[trulens.core.utils.serial.Lens, builtins.NoneType]
     if_missing: trulens.core.schema.feedback.FeedbackOnMissingParameters
     imp: typing.Optional[typing.Callable[[~A], typing.Union[builtins.float, typing.Tuple[builtins.float,
@@ -705,9 +711,11 @@ trulens.core.schema:
   __class__: builtins.module
   highs:
     AppDefinition: pydantic._internal._model_construction.ModelMetaclass
+    Dataset: pydantic._internal._model_construction.ModelMetaclass
     FeedbackDefinition: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
     FeedbackResult: pydantic._internal._model_construction.ModelMetaclass
+    GroundTruth: pydantic._internal._model_construction.ModelMetaclass
     Record: pydantic._internal._model_construction.ModelMetaclass
     Select: builtins.type
   lows:
@@ -811,6 +819,41 @@ trulens.core.schema.dataset.Dataset:
     dataset_id: builtins.str
     meta: typing.Dict
     name: builtins.str
+trulens.core.schema.event:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    Event: pydantic._internal._model_construction.ModelMetaclass
+    EventRecordType: enum.EnumType
+    Trace: typing_extensions._TypedDictMeta
+trulens.core.schema.event.Event:
+  __bases__:
+  - trulens.core.utils.serial.SerialModel
+  - collections.abc.Hashable
+  - typing.Generic
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    event_id: builtins.str
+    record: typing.Dict[builtins.str, typing.Any]
+    record_attributes: typing.Dict[builtins.str, typing.Any]
+    record_type: trulens.core.schema.event.EventRecordType
+    resource_attributes: typing.Dict[builtins.str, typing.Any]
+    start_timestamp: datetime.datetime
+    timestamp: datetime.datetime
+    trace: trulens.core.schema.event.Trace
+trulens.core.schema.event.EventRecordType:
+  __bases__:
+  - enum.Enum
+  __class__: enum.EnumType
+  attributes:
+    SPAN: trulens.core.schema.event.EventRecordType
+    name: enum.property
+    value: enum.property
+trulens.core.schema.event.Trace:
+  __bases__:
+  - builtins.dict
+  __class__: typing_extensions._TypedDictMeta
+  attributes: {}
 trulens.core.schema.feedback:
   __class__: builtins.module
   highs: {}
@@ -936,6 +979,7 @@ trulens.core.schema.groundtruth:
   highs: {}
   lows:
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
+    VirtualGroundTruthSchemaMapping: pydantic._internal._model_construction.ModelMetaclass
 trulens.core.schema.groundtruth.GroundTruth:
   __bases__:
   - trulens.core.utils.serial.SerialModel
@@ -950,6 +994,17 @@ trulens.core.schema.groundtruth.GroundTruth:
     meta: typing.Optional[typing.Dict, builtins.NoneType]
     query: builtins.str
     query_id: typing.Optional[builtins.str, builtins.NoneType]
+trulens.core.schema.groundtruth.VirtualGroundTruthSchemaMapping:
+  __bases__:
+  - pydantic.main.BaseModel
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    dataset_id: typing.Optional[builtins.str, builtins.NoneType]
+    expected_chunks: typing.Optional[builtins.str, builtins.NoneType]
+    expected_response: typing.Optional[builtins.str, builtins.NoneType]
+    query: builtins.str
+    query_id: builtins.str
+    validate_mapping: builtins.classmethod
 trulens.core.schema.record:
   __class__: builtins.module
   highs: {}
@@ -1661,7 +1716,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.2.10
+  __version__: 1.2.11
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
@@ -1949,7 +2004,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.2.10
+  __version__: 1.2.11
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2263,8 +2318,8 @@ trulens.feedback.v2.feedback:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutput: pydantic._internal._model_construction.ModelMetaclass
     FeedbackOutputType: pydantic._internal._model_construction.ModelMetaclass
-    FewShotExample: pydantic.main.BaseModel
-    FewShotExamples: pydantic.main.BaseModel
+    FewShotExample: pydantic._internal._model_construction.ModelMetaclass
+    FewShotExamples: pydantic._internal._model_construction.ModelMetaclass
     GraphicViolence: pydantic._internal._model_construction.ModelMetaclass
     GroundTruth: pydantic._internal._model_construction.ModelMetaclass
     Groundedness: pydantic._internal._model_construction.ModelMetaclass
@@ -2494,18 +2549,18 @@ trulens.feedback.v2.feedback.FeedbackOutputType:
 trulens.feedback.v2.feedback.FewShotExample:
   __bases__:
   - pydantic.main.BaseModel
-  __class__: builtins.type
+  __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    feedback_args: typing.Optional[typing.Dict[builtins.str, builtins.str], builtins.NoneType]
-    score: typing.Optional[builtins.int, builtins.NoneType]
+    feedback_args: typing.Dict[builtins.str, builtins.str]
+    score: builtins.int
 trulens.feedback.v2.feedback.FewShotExamples:
   __bases__:
   - pydantic.main.BaseModel
-  __class__: builtins.type
+  __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     examples: typing.List[trulens.feedback.v2.feedback.FewShotExample]
+    format_examples: builtins.function
     from_examples_list: builtins.classmethod
-    format_examples: builtins.classmethod
 trulens.feedback.v2.feedback.GraphicViolence:
   __bases__:
   - trulens.feedback.v2.feedback.Violence
