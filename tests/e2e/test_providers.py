@@ -579,7 +579,7 @@ class TestProviders(TestCase):
         function once for each model.
         """
 
-        models = ["gpt-3.5-turbo"]
+        models = ["gpt-4o-mini"]
         provider_models = [
             (openai_provider.OpenAI(model_engine=model), model)
             for model in models
@@ -701,7 +701,7 @@ class TestProviders(TestCase):
 
         provider_models = [
             (openai_provider.OpenAI(model_engine=model), model)
-            for model in ["gpt-3.5-turbo", "gpt-4"]
+            for model in ["gpt-4o-mini", "gpt-4o"]
         ]
         for provider, model in provider_models:
             provider_name = provider.__class__.__name__

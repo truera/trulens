@@ -31,7 +31,7 @@ sys.path.insert(0, dev_path)
 os.environ["OPENAI_API_KEY"] = "..."
 
 # Set up GPT-3 model
-model_name = "gpt-3.5-turbo"
+model_name = "gpt-4o-mini"
 session = core_session.TruSession()
 
 
