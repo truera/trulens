@@ -368,12 +368,6 @@ trulens.core.database.migrations.data:
     data_migrate: builtins.function
     sql_alchemy_migration_versions: builtins.list
     sqlalchemy_upgrade_paths: builtins.dict
-trulens.core.database.migrations.util:
-  __class__: builtins.module
-  highs: {}
-  lows:
-    get_table_prefix_from_config: builtins.function
-    make_orm_from_config: builtins.function
 trulens.core.database.orm:
   __class__: builtins.module
   highs: {}
