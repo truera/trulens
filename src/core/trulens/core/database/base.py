@@ -92,15 +92,6 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def get_db_dialect(self) -> Optional[str]:
-        """Get the dialect of the database.
-
-        Returns:
-            The dialect of the database.
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
     def get_db_revision(self) -> Optional[str]:
         """Get the current revision of the database.
 

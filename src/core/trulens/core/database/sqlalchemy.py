@@ -252,9 +252,6 @@ class SQLAlchemyDB(core_db.DB):
 
         db_utils.check_db_revision(self.engine, self.table_prefix)
 
-    def get_db_dialect(self) -> Optional[str]:
-        return self.engine.dialect.name if self.engine else None
-
     def get_db_revision(self) -> Optional[str]:
         if self.engine is None:
             raise ValueError("Database engine not initialized.")
