@@ -4,16 +4,19 @@ from typing import Any, Callable, Optional, Union
 
 from opentelemetry import trace
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
-from trulens.experimental.otel_tracing.core.semantic import (
-    TRULENS_SELECTOR_NAME,
-)
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 
 def instrument(
     attributes: Optional[
-        Union[dict[str, Any], Callable[[Any, Any, Any], dict[str, Any]]]
+        Union[
+            dict[str, Any],
+            Callable[
+                [Optional[Any], Optional[Exception], Any, Any], dict[str, Any]
+            ],
+        ]
     ] = {},
 ):
     """
@@ -21,16 +24,35 @@ def instrument(
     wrapped by TruCustomApp, with OpenTelemetry tracing.
     """
 
-    def _validate_selector_name(final_attributes: dict[str, Any]):
-        if TRULENS_SELECTOR_NAME in final_attributes:
-            selector_name = final_attributes[TRULENS_SELECTOR_NAME]
+    def _validate_selector_name(attributes: dict[str, Any]) -> dict[str, Any]:
+        result = attributes.copy()
+
+        if (
+            SpanAttributes.SELECTOR_NAME_KEY in result
+            and SpanAttributes.SELECTOR_NAME in result
+        ):
+            raise ValueError(
+                f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
+            )
+
+        if SpanAttributes.SELECTOR_NAME in result:
+            # Transfer the trulens namespaced to the non-trulens namespaced key.
+            result[SpanAttributes.SELECTOR_NAME_KEY] = result[
+                SpanAttributes.SELECTOR_NAME
+            ]
+            del result[SpanAttributes.SELECTOR_NAME]
+
+        if SpanAttributes.SELECTOR_NAME_KEY in result:
+            selector_name = result[SpanAttributes.SELECTOR_NAME_KEY]
             if not isinstance(selector_name, str):
                 raise ValueError(
                     f"Selector name must be a string, not {type(selector_name)}"
                 )
 
-    def _validate_attributes(final_attributes: dict[str, Any]):
-        _validate_selector_name(final_attributes)
+        return result
+
+    def _validate_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+        return _validate_selector_name(attributes)
         # TODO: validate OTEL attributes.
         # TODO: validate span type attributes.
 
@@ -43,39 +65,64 @@ def instrument(
                 .start_as_current_span(
                     name=func.__name__,
                 )
-            ) as parent_span:
-                span = trace.get_current_span()
+            ) as span:
+                ret = None
+                exception: Optional[Exception] = None
 
-                span.set_attribute("name", func.__name__)
-                span.set_attribute("kind", "SPAN_KIND_TRULENS")
-                span.set_attribute(
-                    "parent_span_id", parent_span.get_span_context().span_id
-                )
-
-                ret = func(*args, **kwargs)
+                try:
+                    ret = func(*args, **kwargs)
+                except Exception as e:
+                    # We want to get into the next clause to allow the users to still add attributes.
+                    # It's on the user to deal with None as a return value.
+                    exception = e
 
                 try:
                     attributes_to_add = {}
 
+                    # Since we're decoratoring a method in a trulens app, the first argument is self,
+                    # which we should ignore.
+                    _self, *rest = args
+
                     # Set the user provider attributes.
                     if attributes:
                         if callable(attributes):
-                            attributes_to_add = attributes(ret, *args, **kwargs)
+                            attributes_to_add = attributes(
+                                ret, exception, *rest, **kwargs
+                            )
                         else:
                             attributes_to_add = attributes
 
                     logger.info(f"Attributes to add: {attributes_to_add}")
 
-                    _validate_attributes(attributes_to_add)
+                    final_attributes = _validate_attributes(attributes_to_add)
 
-                    for key, value in attributes_to_add.items():
-                        span.set_attribute(key, value)
+                    prefix = "trulens."
+                    if (
+                        SpanAttributes.SPAN_TYPE in final_attributes
+                        and final_attributes[SpanAttributes.SPAN_TYPE]
+                        != SpanAttributes.SpanType.UNKNOWN
+                    ):
+                        prefix += (
+                            final_attributes[SpanAttributes.SPAN_TYPE] + "."
+                        )
 
-                except Exception:
-                    span.set_attribute("status", "STATUS_CODE_ERROR")
+                    for key, value in final_attributes.items():
+                        span.set_attribute(prefix + key, value)
+
+                        if (
+                            key != SpanAttributes.SELECTOR_NAME_KEY
+                            and SpanAttributes.SELECTOR_NAME_KEY
+                            in final_attributes
+                        ):
+                            span.set_attribute(
+                                f"trulens.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
+                                value,
+                            )
+
+                except Exception as e:
+                    logger.error(f"Error setting attributes: {e}")
                     return None
 
-                span.set_attribute("status", "STATUS_CODE_UNSET")
                 return ret
 
         return wrapper

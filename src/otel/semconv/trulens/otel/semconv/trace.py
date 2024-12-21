@@ -34,7 +34,21 @@ class SpanAttributes:
     In some cases below, we also include span name or span name prefix.
     """
 
-    SPAN_TYPES = "trulens.span_types"
+    BASE = "trulens."
+    """
+    Base prefix for the other keys.
+    """
+
+    SPAN_TYPE = BASE + "span_type"
+
+    SPAN_TYPES = BASE + "span_types"
+
+    SELECTOR_NAME_KEY = "selector_name"
+
+    SELECTOR_NAME = BASE + "selector_name"
+    """
+    User-defined selector name for the current span.
+    """
 
     class SpanType(str, Enum):
         """Span type attribute values.
