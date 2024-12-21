@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def instrument(
+    *,
     attributes: Optional[
         Union[
             dict[str, Any],
@@ -52,6 +53,12 @@ def instrument(
         return result
 
     def _validate_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+        if not isinstance(attributes, dict) or any([
+            not isinstance(key, str) for key in attributes.keys()
+        ]):
+            raise ValueError(
+                "Attributes must be a dictionary with string keys."
+            )
         return _validate_selector_name(attributes)
         # TODO: validate OTEL attributes.
         # TODO: validate span type attributes.
@@ -67,27 +74,28 @@ def instrument(
                 )
             ) as span:
                 ret = None
-                exception: Optional[Exception] = None
+                func_exception: Optional[Exception] = None
+                attributes_exception: Optional[Exception] = None
 
                 try:
                     ret = func(*args, **kwargs)
                 except Exception as e:
                     # We want to get into the next clause to allow the users to still add attributes.
                     # It's on the user to deal with None as a return value.
-                    exception = e
+                    func_exception = e
 
                 try:
                     attributes_to_add = {}
 
-                    # Since we're decoratoring a method in a trulens app, the first argument is self,
+                    # Since we're decorating a method in a trulens app, the first argument is self,
                     # which we should ignore.
-                    _self, *rest = args
+                    args = args[1:]
 
                     # Set the user provider attributes.
                     if attributes:
                         if callable(attributes):
                             attributes_to_add = attributes(
-                                ret, exception, *rest, **kwargs
+                                ret, func_exception, *args, **kwargs
                             )
                         else:
                             attributes_to_add = attributes
@@ -120,8 +128,13 @@ def instrument(
                             )
 
                 except Exception as e:
+                    attributes_exception = e
                     logger.error(f"Error setting attributes: {e}")
-                    return None
+
+                if func_exception:
+                    raise func_exception
+                if attributes_exception:
+                    raise attributes_exception
 
                 return ret
 
