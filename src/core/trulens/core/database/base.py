@@ -6,6 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import pandas as pd
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import dataset as dataset_schema
+from trulens.core.schema import event as event_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import groundtruth as groundtruth_schema
 from trulens.core.schema import record as record_schema
@@ -444,5 +445,17 @@ class DB(serial_utils.SerialModel, abc.ABC, text_utils.WithIdentString):
 
         Returns:
             A dataframe with the datasets.
+        """
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def insert_event(self, event: event_schema.Event) -> types_schema.EventID:
+        """Insert an event into the database.
+
+        Args:
+            event: The event to insert.
+
+        Returns:
+            The id of the given event.
         """
         raise NotImplementedError()

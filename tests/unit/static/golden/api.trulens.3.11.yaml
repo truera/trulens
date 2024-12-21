@@ -241,6 +241,7 @@ trulens.core.database.base.DB:
     get_virtual_ground_truth: builtins.function
     insert_app: builtins.function
     insert_dataset: builtins.function
+    insert_event: builtins.function
     insert_feedback: builtins.function
     insert_feedback_definition: builtins.function
     insert_ground_truth: builtins.function
@@ -270,6 +271,8 @@ trulens.core.database.connector.base.DBConnector:
   attributes:
     RECORDS_BATCH_TIMEOUT_IN_SEC: builtins.int
     add_app: builtins.function
+    add_event: builtins.function
+    add_events: builtins.function
     add_feedback: builtins.function
     add_feedback_definition: builtins.function
     add_feedbacks: builtins.function
