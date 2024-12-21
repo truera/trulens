@@ -39,11 +39,6 @@ class SpanAttributes:
     Base prefix for the other keys.
     """
 
-    SPAN_TYPE = BASE + "span_type"
-    """
-    Span type attribute.
-    """
-
     SELECTOR_NAME_KEY = "selector_name"
     """
     Key for the user-defined selector name for the current span.
