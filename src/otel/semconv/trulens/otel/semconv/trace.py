@@ -40,12 +40,18 @@ class SpanAttributes:
     """
 
     SPAN_TYPE = BASE + "span_type"
-
-    SPAN_TYPES = BASE + "span_types"
+    """
+    Span type attribute.
+    """
 
     SELECTOR_NAME_KEY = "selector_name"
+    """
+    Key for the user-defined selector name for the current span.
+    Here to help us check both trulens.selector_name and selector_name
+    to verify the user attributes and make corrections if necessary.
+    """
 
-    SELECTOR_NAME = BASE + "selector_name"
+    SELECTOR_NAME = BASE + SELECTOR_NAME_KEY
     """
     User-defined selector name for the current span.
     """
