@@ -1824,6 +1824,7 @@ trulens_eval.database.base.DB:
     get_virtual_ground_truth: builtins.function
     insert_app: builtins.function
     insert_dataset: builtins.function
+    insert_event: builtins.function
     insert_feedback: builtins.function
     insert_feedback_definition: builtins.function
     insert_ground_truth: builtins.function
@@ -1982,6 +1983,7 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     get_virtual_ground_truth: builtins.function
     insert_app: builtins.function
     insert_dataset: builtins.function
+    insert_event: builtins.function
     insert_feedback: builtins.function
     insert_feedback_definition: builtins.function
     insert_ground_truth: builtins.function
