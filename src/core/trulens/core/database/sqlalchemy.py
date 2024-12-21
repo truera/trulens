@@ -251,6 +251,9 @@ class SQLAlchemyDB(core_db.DB):
 
         db_utils.check_db_revision(self.engine, self.table_prefix)
 
+    def get_db_dialect(self) -> Optional[str]:
+        return self.engine.dialect.name if self.engine else None
+
     def get_db_revision(self) -> Optional[str]:
         if self.engine is None:
             raise ValueError("Database engine not initialized.")
@@ -976,6 +979,7 @@ class SQLAlchemyDB(core_db.DB):
 
     def insert_event(self, event: Event) -> types_schema.EventID:
         """See [DB.insert_event][trulens.core.database.base.DB.insert_event]."""
+
         with self.session.begin() as session:
             _event = self.orm.Event.parse(event, redact_keys=self.redact_keys)
             session.add(_event)
