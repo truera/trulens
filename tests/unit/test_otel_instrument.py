@@ -128,7 +128,14 @@ class TestOtelInstrument(TruTestCase):
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
-        compare_dfs_accounting_for_ids_and_timestamps(self, expected, actual)
+        compare_dfs_accounting_for_ids_and_timestamps(
+            self,
+            expected,
+            actual,
+            ignore_locators=[
+                "df.iloc[0][resource_attributes][telemetry.sdk.version]"
+            ],
+        )
 
 
 if __name__ == "__main__":

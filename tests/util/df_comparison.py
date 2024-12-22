@@ -1,12 +1,15 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Sequence
 from unittest import TestCase
 
 import pandas as pd
 
 
 def compare_dfs_accounting_for_ids_and_timestamps(
-    test_case: TestCase, expected: pd.DataFrame, actual: pd.DataFrame
-):
+    test_case: TestCase,
+    expected: pd.DataFrame,
+    actual: pd.DataFrame,
+    ignore_locators: Optional[Sequence[str]],
+) -> None:
     """
     Compare two Dataframes are equal, accounting for ids and timestamps. That
     is:
@@ -17,8 +20,10 @@ def compare_dfs_accounting_for_ids_and_timestamps(
        have to be in the same order.
 
     Args:
+        test_case: unittest.TestCase instance to use for assertions
         expected: expected results
         actual: actual results
+        ignore_locators: locators to ignore when comparing the Dataframes
     """
     id_mapping: Dict[str, str] = {}
     timestamp_mapping: Dict[pd.Timestamp, pd.Timestamp] = {}
@@ -34,6 +39,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
                 timestamp_mapping,
                 is_id=col.endswith("_id"),
                 locator=f"df.iloc[{i}][{col}]",
+                ignore_locators=ignore_locators,
             )
     # Ensure that the id mapping is a bijection.
     test_case.assertEqual(
@@ -61,7 +67,10 @@ def _compare_entity(
     timestamp_mapping: Dict[pd.Timestamp, pd.Timestamp],
     is_id: bool,
     locator: str,
-):
+    ignore_locators: Optional[Sequence[str]],
+) -> None:
+    if locator in ignore_locators:
+        return
     test_case.assertEqual(
         type(expected), type(actual), f"Types of {locator} do not match!"
     )
@@ -90,7 +99,8 @@ def _compare_entity(
                 id_mapping,
                 timestamp_mapping,
                 is_id=k.endswith("_id"),
-                locator=f"{locator}[k]",
+                locator=f"{locator}[{k}]",
+                ignore_locators=ignore_locators,
             )
     elif isinstance(expected, pd.Timestamp):
         if expected not in timestamp_mapping:
