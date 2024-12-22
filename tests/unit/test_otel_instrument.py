@@ -30,7 +30,7 @@ class _TestApp:
     @instrument(
         attributes=lambda ret, exception, *args, **kwargs: {
             "nested2_ret": ret,
-            "nested2_args[0]": args[0],
+            "nested2_args[1]": args[1],
         }
     )
     def nested2(self, query: str) -> str:
@@ -58,6 +58,29 @@ class _TestApp:
 
 
 class TestOtelInstrument(TruTestCase):
+    @classmethod
+    def clear_TruSession_singleton(cls) -> None:
+        # [HACK!] Clean up any instances of `TruSession` so tests don't
+        # interfere with each other.
+        for key in [
+            curr
+            for curr in TruSession._singleton_instances
+            if curr[0] == "trulens.core.session.TruSession"
+        ]:
+            del TruSession._singleton_instances[key]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.clear_TruSession_singleton()
+        tru_session = TruSession()
+        tru_session.experimental_enable_feature("otel_tracing")
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.clear_TruSession_singleton()
+        return super().tearDownClass()
+
     @staticmethod
     def _get_events() -> pd.DataFrame:
         tru_session = TruSession()
@@ -67,7 +90,7 @@ class TestOtelInstrument(TruTestCase):
             return pd.read_sql(q, db_session.bind)
 
     @staticmethod
-    def _convert_column_types(df: pd.DataFrame):
+    def _convert_column_types(df: pd.DataFrame) -> None:
         # Writing to CSV and the reading back causes some type issues so we
         # hackily convert things here.
         df["event_id"] = df["event_id"].apply(str)
@@ -86,10 +109,9 @@ class TestOtelInstrument(TruTestCase):
         ]:
             df[json_column] = df[json_column].apply(lambda x: eval(x))
 
-    def test_instrument_decorator(self):
+    def test_instrument_decorator(self) -> None:
         # Set up.
         tru_session = TruSession()
-        tru_session.experimental_enable_feature("otel_tracing")
         tru_session.reset_database()
         init(tru_session, debug=True)
         # Create and run app.
