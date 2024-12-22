@@ -28,15 +28,16 @@ env-%:
 
 env-tests:
 	poetry run pip install \
-		pytest \
+		jsondiff \
 		nbconvert \
 		nbformat \
-		pytest-subtests \
-		pytest-azurepipelines \
-		ruff \
+		opentelemetry-sdk \
 		pre-commit \
+		pytest \
+		pytest-azurepipelines \
 		pytest-cov \
-		jsondiff
+		pytest-subtests \
+		ruff \
 
 env-tests-required:
 	poetry install --only required \

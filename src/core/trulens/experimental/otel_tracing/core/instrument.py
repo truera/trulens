@@ -87,10 +87,6 @@ def instrument(
                 try:
                     attributes_to_add = {}
 
-                    # Since we're decorating a method in a trulens app, the first argument is self,
-                    # which we should ignore.
-                    args = args[1:]
-
                     # Set the user provider attributes.
                     if attributes:
                         if callable(attributes):

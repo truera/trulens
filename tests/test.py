@@ -227,7 +227,8 @@ class WithJSONTestCase(TestCase):
     handling."""
 
     def load_golden(
-        self, golden_path: Union[str, Path]
+        self,
+        golden_path: Union[str, Path],
     ) -> Union[serial_utils.JSON, pd.DataFrame]:
         """Load the golden file `path` and return its contents.
 
@@ -235,7 +236,6 @@ class WithJSONTestCase(TestCase):
             golden_path: The name of the golden file to load. The file must
                 have an extension of either `.json` or `.yaml`. The extension
                 determines the input format.
-
         """
         golden_path = Path(golden_path)
 
@@ -245,8 +245,6 @@ class WithJSONTestCase(TestCase):
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
         elif ".csv" in golden_path.suffixes:
             loader = functools.partial(pd.read_csv, index_col=0)
-        elif ".parquet" in golden_path.suffixes:
-            loader = functools.partial(pd.read_parquet, index_col=0)
         else:
             raise ValueError(f"Unknown file extension {golden_path}.")
 
