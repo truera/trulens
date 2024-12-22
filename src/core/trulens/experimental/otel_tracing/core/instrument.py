@@ -1,6 +1,6 @@
 from functools import wraps
 import logging
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from opentelemetry import trace
 from trulens.experimental.otel_tracing.core.init import TRULENS_SERVICE_NAME
@@ -13,9 +13,9 @@ def instrument(
     *,
     attributes: Optional[
         Union[
-            dict[str, Any],
+            Dict[str, Any],
             Callable[
-                [Optional[Any], Optional[Exception], Any, Any], dict[str, Any]
+                [Optional[Any], Optional[Exception], Any, Any], Dict[str, Any]
             ],
         ]
     ] = {},
@@ -25,7 +25,7 @@ def instrument(
     wrapped by TruCustomApp, with OpenTelemetry tracing.
     """
 
-    def _validate_selector_name(attributes: dict[str, Any]) -> dict[str, Any]:
+    def _validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
         result = attributes.copy()
 
         if (
@@ -52,7 +52,7 @@ def instrument(
 
         return result
 
-    def _validate_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+    def _validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(attributes, dict) or any([
             not isinstance(key, str) for key in attributes.keys()
         ]):
