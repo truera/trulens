@@ -27,6 +27,7 @@ from typing import (
 import unittest
 from unittest import TestCase
 
+import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from trulens.core._utils.pycompat import ReferenceType
@@ -225,7 +226,9 @@ class WithJSONTestCase(TestCase):
     """TestCase mixin class that adds JSON comparisons and golden expectation
     handling."""
 
-    def load_golden(self, golden_path: Union[str, Path]) -> serial_utils.JSON:
+    def load_golden(
+        self, golden_path: Union[str, Path]
+    ) -> Union[serial_utils.JSON, pd.DataFrame]:
         """Load the golden file `path` and return its contents.
 
         Args:
@@ -240,6 +243,10 @@ class WithJSONTestCase(TestCase):
             loader = functools.partial(json.load)
         elif ".yaml" in golden_path.suffixes or ".yml" in golden_path.suffixes:
             loader = functools.partial(yaml.load, Loader=yaml.FullLoader)
+        elif ".csv" in golden_path.suffixes:
+            loader = functools.partial(pd.read_csv, index_col=0)
+        elif ".parquet" in golden_path.suffixes:
+            loader = functools.partial(pd.read_parquet, index_col=0)
         else:
             raise ValueError(f"Unknown file extension {golden_path}.")
 
@@ -250,7 +257,9 @@ class WithJSONTestCase(TestCase):
             return loader(f)
 
     def write_golden(
-        self, golden_path: Union[str, Path], data: serial_utils.JSON
+        self,
+        golden_path: Union[str, Path],
+        data: Union[serial_utils.JSON, pd.DataFrame],
     ) -> None:
         """If writing golden file is enabled, write the golden file `path` with
         `data` and raise exception indicating so.
@@ -272,6 +281,10 @@ class WithJSONTestCase(TestCase):
             writer = functools.partial(json.dump, indent=2, sort_keys=True)
         elif golden_path.suffix == ".yaml":
             writer = functools.partial(yaml.dump, sort_keys=True)
+        elif golden_path.suffix == ".csv":
+            writer = lambda data, f: data.to_csv(f)
+        elif golden_path.suffix == ".parquet":
+            writer = lambda data, f: data.to_parquet(f)
         else:
             raise ValueError(f"Unknown file extension {golden_path.suffix}.")
 
