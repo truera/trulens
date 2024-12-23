@@ -69,7 +69,7 @@ def _compare_entity(
     locator: str,
     ignore_locators: Optional[Sequence[str]],
 ) -> None:
-    if locator in ignore_locators:
+    if ignore_locators and locator in ignore_locators:
         return
     test_case.assertEqual(
         type(expected), type(actual), f"Types of {locator} do not match!"
