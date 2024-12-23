@@ -133,7 +133,8 @@ class TestOtelInstrument(TruTestCase):
             expected,
             actual,
             ignore_locators=[
-                "df.iloc[0][resource_attributes][telemetry.sdk.version]"
+                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
+                for i in range(8)
             ],
         )
 
