@@ -59,8 +59,6 @@ class SpanAttributes:
     RECORD_ID = BASE + "record_id"
     """ID of the record that the span belongs to."""
 
-    SPAN_TYPES = BASE + "span_types"
-
     class SpanType(str, Enum):
         """Span type attribute values.
 
