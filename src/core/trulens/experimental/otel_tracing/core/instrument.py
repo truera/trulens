@@ -88,7 +88,7 @@ def instrument(
 class App(core_app.App):
     # For use as a context manager.
     def __enter__(self):
-        logging.debug("Entering the OTEL app context.")
+        logger.debug("Entering the OTEL app context.")
 
         # Note: This is not the same as the record_id in the core app since the OTEL
         # tracing is currently separate from the old records behavior
@@ -103,9 +103,9 @@ class App(core_app.App):
                 set_baggage(SpanAttributes.RECORD_ID, otel_record_id)
             )
         )
-        # self.tokens.append(context_api.attach(
-        #     set_baggage(SpanAttributes.APP_ID, self.app_id)
-        # ))
+        self.tokens.append(
+            context_api.attach(set_baggage(SpanAttributes.APP_ID, self.app_id))
+        )
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("root")
@@ -138,7 +138,9 @@ class App(core_app.App):
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         remove_baggage(SpanAttributes.RECORD_ID)
-        logging.debug("Exiting the OTEL app context.")
+        remove_baggage(SpanAttributes.APP_ID)
+
+        logger.debug("Exiting the OTEL app context.")
 
         while len(self.tokens) > 0:
             # Clearing the context once we're done with this root span.
