@@ -1,10 +1,6 @@
 from functools import wraps
 import logging
-<<<<<<< HEAD
 from typing import Callable, Optional
-=======
-from typing import Any, Callable, Dict, Optional, Union
->>>>>>> d4bbf065b (remove artifacts)
 import uuid
 
 from opentelemetry import trace
@@ -102,9 +98,14 @@ class App(core_app.App):
 
         # Calling set_baggage does not actually add the baggage to the current context, but returns a new one
         # To avoid issues with remembering to add/remove the baggage, we attach it to the runtime context.
-        self.token = context_api.attach(
-            set_baggage(SpanAttributes.RECORD_ID, otel_record_id)
+        self.tokens.append(
+            context_api.attach(
+                set_baggage(SpanAttributes.RECORD_ID, otel_record_id)
+            )
         )
+        # self.tokens.append(context_api.attach(
+        #     set_baggage(SpanAttributes.APP_ID, self.app_id)
+        # ))
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("root")
@@ -112,11 +113,16 @@ class App(core_app.App):
 
         logger.debug(str(get_baggage(SpanAttributes.RECORD_ID)))
 
+        # Set general span attributes
         root_span.set_attribute("kind", "SPAN_KIND_TRULENS")
         root_span.set_attribute("name", "root")
         root_span.set_attribute(
             SpanAttributes.SPAN_TYPE, SpanAttributes.SpanType.RECORD_ROOT
         )
+        root_span.set_attribute(SpanAttributes.APP_ID, self.app_id)
+        root_span.set_attribute(SpanAttributes.RECORD_ID, otel_record_id)
+
+        # Set record root specific attributes
         root_span.set_attribute(
             SpanAttributes.RECORD_ROOT.APP_NAME, self.app_name
         )
@@ -134,10 +140,10 @@ class App(core_app.App):
         remove_baggage(SpanAttributes.RECORD_ID)
         logging.debug("Exiting the OTEL app context.")
 
-        if self.token:
+        while len(self.tokens) > 0:
             # Clearing the context once we're done with this root span.
             # See https://github.com/open-telemetry/opentelemetry-python/issues/2432#issuecomment-1593458684
-            context_api.detach(self.token)
+            context_api.detach(self.tokens.pop())
 
         if self.span_context:
             self.span_context.__exit__(exc_type, exc_value, exc_tb)
