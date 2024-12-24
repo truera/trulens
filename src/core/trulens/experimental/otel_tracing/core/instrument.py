@@ -142,7 +142,7 @@ class App(core_app.App):
 
         logger.debug("Exiting the OTEL app context.")
 
-        while len(self.tokens) > 0:
+        while self.tokens:
             # Clearing the context once we're done with this root span.
             # See https://github.com/open-telemetry/opentelemetry-python/issues/2432#issuecomment-1593458684
             context_api.detach(self.tokens.pop())

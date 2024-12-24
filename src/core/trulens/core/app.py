@@ -423,7 +423,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    tokens: list[object] = []
+    tokens: List[object] = []
     """
     OTEL context tokens for the current context manager. These tokens are how the OTEL
     context api keeps track of what is changed in the context, and used to undo the changes.
