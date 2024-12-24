@@ -1,6 +1,10 @@
 from functools import wraps
 import logging
+<<<<<<< HEAD
 from typing import Callable, Optional
+=======
+from typing import Any, Callable, Dict, Optional, Union
+>>>>>>> d4bbf065b (remove artifacts)
 import uuid
 
 from opentelemetry import trace
