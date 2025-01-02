@@ -36,6 +36,8 @@ class TruLensDBSpanExporter(SpanExporter):
         if context is None:
             raise ValueError("Span context is None")
 
+        print(span.attributes)
+
         return event_schema.Event(
             event_id=str(context.span_id),
             record={

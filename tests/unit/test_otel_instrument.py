@@ -2,6 +2,7 @@
 Tests for OTEL instrument decorator.
 """
 
+from unittest import TestCase
 from unittest import main
 
 import pandas as pd
@@ -11,6 +12,10 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.experimental.otel_tracing.core.instrument import (
+    validate_selector_name,
+)
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -124,7 +129,7 @@ class TestOtelInstrument(TruTestCase):
         # Compare results to expected.
         GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
         actual = self._get_events()
-        self.assertEqual(len(actual), 8)
+        self.assertEqual(len(actual), 10)
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
@@ -134,9 +139,53 @@ class TestOtelInstrument(TruTestCase):
             actual,
             ignore_locators=[
                 f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(8)
+                for i in range(10)
             ],
         )
+
+
+class TestOtelValidation(TestCase):
+    def test_validate_selector_name(self):
+        with self.subTest("No selector name"):
+            self.assertEqual(
+                validate_selector_name({}),
+                {},
+            )
+
+        with self.subTest(
+            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
+        ):
+            self.assertRaises(
+                ValueError,
+                validate_selector_name,
+                {
+                    SpanAttributes.SELECTOR_NAME_KEY: "key",
+                    SpanAttributes.SELECTOR_NAME: "name",
+                },
+            )
+
+        with self.subTest("Non-string"):
+            self.assertRaises(
+                ValueError,
+                validate_selector_name,
+                {
+                    SpanAttributes.SELECTOR_NAME_KEY: 42,
+                },
+            )
+
+        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME}"):
+            self.assertEqual(
+                validate_selector_name({SpanAttributes.SELECTOR_NAME: "name"}),
+                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
+            )
+
+        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME_KEY}"):
+            self.assertEqual(
+                validate_selector_name({
+                    SpanAttributes.SELECTOR_NAME_KEY: "name"
+                }),
+                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
+            )
 
 
 if __name__ == "__main__":

@@ -1,10 +1,9 @@
 from functools import wraps
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Dict, Optional
 import uuid
 
 from opentelemetry import trace
-from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
@@ -20,6 +19,51 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
+
+
+def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Utility function to validate the selector name in the attributes.
+    """
+
+    result = attributes.copy()
+
+    if (
+        SpanAttributes.SELECTOR_NAME_KEY in result
+        and SpanAttributes.SELECTOR_NAME in result
+    ):
+        raise ValueError(
+            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
+        )
+
+    if SpanAttributes.SELECTOR_NAME in result:
+        # Transfer the trulens namespaced to the non-trulens namespaced key.
+        result[SpanAttributes.SELECTOR_NAME_KEY] = result[
+            SpanAttributes.SELECTOR_NAME
+        ]
+        del result[SpanAttributes.SELECTOR_NAME]
+
+    if SpanAttributes.SELECTOR_NAME_KEY in result:
+        selector_name = result[SpanAttributes.SELECTOR_NAME_KEY]
+        if not isinstance(selector_name, str):
+            raise ValueError(
+                f"Selector name must be a string, not {type(selector_name)}"
+            )
+
+    return result
+
+
+def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Utility function to validate span attributes based on the span type.
+    """
+    if not isinstance(attributes, dict) or any([
+        not isinstance(key, str) for key in attributes.keys()
+    ]):
+        raise ValueError("Attributes must be a dictionary with string keys.")
+    return validate_selector_name(attributes)
+    # TODO: validate OTEL attributes.
+    # TODO: validate span type attributes.
 
 
 def instrument(
@@ -110,8 +154,6 @@ class App(core_app.App):
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("root")
         root_span = self.span_context.__enter__()
-
-        logger.debug(str(get_baggage(SpanAttributes.RECORD_ID)))
 
         # Set general span attributes
         root_span.set_attribute("kind", "SPAN_KIND_TRULENS")

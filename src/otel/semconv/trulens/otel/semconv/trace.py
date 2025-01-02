@@ -62,6 +62,9 @@ class SpanAttributes:
     APP_ID = BASE + "app_id"
     """ID of the app that the span belongs to."""
 
+    ROOT_SPAN_ID = BASE + "root_span_id"
+    """ID of the root span of the record that the span belongs to."""
+
     class SpanType(str, Enum):
         """Span type attribute values.
 
@@ -95,6 +98,9 @@ class SpanAttributes:
 
         RECORD_ROOT = "record_root"
         """Spans as collected by tracing system."""
+
+        MAIN = "main"
+        """The main span of a record."""
 
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation span."""
@@ -159,6 +165,25 @@ class SpanAttributes:
 
         base = "trulens.unknown"
 
+    class MAIN:
+        """Attributes for the main span of a record."""
+
+        base = "trulens.main"
+
+        SPAN_NAME_PREFIX = base + "."
+
+        MAIN_INPUT = base + ".main_input"
+        """Main input to the app."""
+
+        MAIN_OUTPUT = base + ".main_output"
+        """Main output of the app."""
+
+        MAIN_ERROR = base + ".main_error"
+        """Main error of the app.
+
+        Exclusive with main output.
+        """
+
     class RECORD_ROOT:
         """Attributes for the root span of a record.
 
@@ -186,18 +211,6 @@ class SpanAttributes:
 
         Note that child spans might include cost type spans. This is the sum of
         all those costs.
-        """
-
-        MAIN_INPUT = base + ".main_input"
-        """Main input to the app."""
-
-        MAIN_OUTPUT = base + ".main_output"
-        """Main output of the app."""
-
-        MAIN_ERROR = base + ".main_error"
-        """Main error of the app.
-
-        Exclusive with main output.
         """
 
     class EVAL_ROOT:
