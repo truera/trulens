@@ -310,7 +310,6 @@ class CriteriaOutputSpaceMixin:
             criteria = cls.criteria_template.format(
                 min_score=min_score, max_score=max_score
             )
-
         if output_space is None:
             output_space_prompt = cls.output_space_prompt
         else:
@@ -330,6 +329,8 @@ class CriteriaOutputSpaceMixin:
             fewshot_examples = FewShotExamples.from_examples_list(examples)
             formatted_examples = fewshot_examples.format_examples()
             prompt += formatted_examples
+
+        print(prompt)
 
         return prompt
 
@@ -524,11 +525,12 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.
         Respond only as a number from {output_space_prompt}.
 
+        Criteria for evaluating relevance:
+        {criteria}
+
         A few additional scoring guidelines:
 
         - Long RESPONSES should score equally well as short RESPONSES.
-
-        {criteria}
 
         - Never elaborate.
         """
@@ -550,28 +552,40 @@ class PromptResponseRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
 
-class Sentiment(Semantics, WithPrompt):
+class Sentiment(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     """
     This evaluates the *positive sentiment* of either the prompt or response.
-
-    Sentiment is currently available to use with OpenAI, HuggingFace or Cohere as
-    the model provider.
-
-    * The OpenAI sentiment feedback function prompts a Chat Completion model to rate
-    the sentiment from 0 to 10, and then scales the response down to 0-1.
-    * The HuggingFace sentiment feedback function returns a raw score from 0 to 1.
-    * The Cohere sentiment feedback function uses the classification endpoint and a
-    small set of examples stored in `feedback_prompts.py` to return either a 0 or
-    a 1.
     """
 
-    # openai.sentiment
-    # openai.sentiment_with_cot_reasons
-    # hugs.positive_sentiment
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    - Sentiment should be evaluated based on the overall tone of the submission.
+    - Negative sentiment should get a score of {min_score}.
+    - Positive sentiment should get a score of {max_score}.
+    """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        You are a SENTIMENT grader; providing the sentiment of the given SUBMISSION.
+        Respond only as a number from {output_space_prompt}.
+
+        Criteria for evaluating sentiment:
+        {criteria}
+        """
+    )
 
     system_prompt: ClassVar[str] = cleandoc(
-        """Please classify the sentiment of the submission as {max_score} if positive or {min_score} if not positive. Respond only as a number from {min_score} to {max_score}, nothing more."""
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
     )
+
     user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
@@ -581,7 +595,14 @@ class Helpfulness(Semantics):
 
     # langchain Criteria.HELPFULNESS
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["helpfulness"]} Respond only as a number from {"{min_score}"} (least helpful) to {"{max_score}"} (most helpful)"""
+        f"""{supported_criteria["helpfulness"]}
+
+        Criteria for evluating helpfulness:
+        {"{criteria}"}
+
+        Respond only as a number from {"{min_score}"} (least helpful) to {"{max_score}"} (most helpful).
+
+        """
     )
 
 
@@ -591,7 +612,12 @@ class Controversiality(Semantics):
 
     # langchain Criteria.CONTROVERSIALITY
     system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["controversiality"]} Respond only as a number from {"{min_score}"} to {"{max_score}"} where {"{max_score}"} is the most controversial and {"{min_score}"} is the least controversial."""
+        f"""{supported_criteria["controversiality"]}
+
+        Criteria for evluating controversiality:
+        {"{criteria}"}
+
+        Respond only as a number from {"{min_score}"} (least controversial) to {"{max_score}"} (most controversial)."""
     )
 
 
