@@ -587,18 +587,32 @@ class Sentiment(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
-class Helpfulness(Semantics):
-    # langchain Criteria.HELPFULNESS
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["helpfulness"]}
+class Helpfulness(Semantics, CriteriaOutputSpaceMixin):
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["helpfulness"]}
+        """
 
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
         Criteria for evluating helpfulness:
-        {"{criteria}"}
-
-        Respond only as a number from {"{min_score}"} (least helpful) to {"{max_score}"} (most helpful).
-
+        {criteria}
         """
     )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Controversiality(Semantics):

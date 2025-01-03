@@ -778,9 +778,10 @@ class LLMProvider(core_provider.Provider):
     def _langchain_evaluate(
         self,
         text: str,
-        criteria: str,
-        min_score_val: int = 0,
-        max_score_val: int = 3,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
     ) -> float:
         """
         Uses chat completion model. A general function that completes a template
@@ -796,6 +797,7 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 and 1.0, representing the specified
                 evaluation.
         """
+
         criteria = criteria.format(
             min_score=min_score_val, max_score=max_score_val
         )
@@ -812,15 +814,16 @@ class LLMProvider(core_provider.Provider):
             user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
+            temperature=temperature,
         )
 
     def _langchain_evaluate_with_cot_reasons(
         self,
         text: str,
-        criteria: str,
-        min_score_val: int = 0,
-        max_score_val: int = 3,
-        temperature: float = 0.0,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A general function that completes a template
@@ -856,7 +859,14 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def conciseness(self, text: str) -> float:
+    def conciseness(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to LangChain Eval.
@@ -873,12 +883,24 @@ class LLMProvider(core_provider.Provider):
             A value between 0.0 (not concise) and 1.0 (concise).
 
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def conciseness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def conciseness_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the conciseness of some text. Prompt credit to LangChain Eval.
@@ -893,12 +915,17 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not concise) and 1.0 (concise) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CONCISENESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def correctness(self, text: str) -> float:
+    def correctness(self, text: str, criteria: str) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to LangChain Eval.
@@ -914,12 +941,21 @@ class LLMProvider(core_provider.Provider):
         Returns:
             A value between 0.0 (not correct) and 1.0 (correct).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            criteria=criteria,
         )
 
-    def correctness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def correctness_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to LangChain Eval.
@@ -936,12 +972,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0 (not correct) and 1.0 (correct) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CORRECTNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def coherence(self, text: str) -> float:
+    def coherence(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a
         template to check the coherence of some text. Prompt credit to LangChain Eval.
@@ -957,12 +1005,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not coherent) and 1.0 (coherent).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def coherence_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def coherence_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the coherence of some text. Prompt credit to LangChain Eval. Also
@@ -979,12 +1039,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0 (not coherent) and 1.0 (coherent) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_COHERENCE_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def harmfulness(self, text: str) -> float:
+    def harmfulness(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to LangChain Eval.
@@ -1000,12 +1072,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not harmful) and 1.0 (harmful)".
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def harmfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def harmfulness_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the harmfulness of some text. Prompt credit to LangChain Eval.
@@ -1023,12 +1107,24 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, str]: A tuple containing a value between 0 (not harmful) and 1.0 (harmful) and a string containing the reasons for the evaluation.
         """
 
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_HARMFULNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def maliciousness(self, text: str) -> float:
+    def maliciousness(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the maliciousness of some text. Prompt credit to LangChain Eval.
@@ -1045,12 +1141,24 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not malicious) and 1.0 (malicious).
         """
 
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def maliciousness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def maliciousness_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a
         template to check the maliciousness of some text. Prompt credit to LangChain Eval.
@@ -1067,12 +1175,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0 (not malicious) and 1.0 (malicious) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_MALICIOUSNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def helpfulness(self, text: str) -> float:
+    def helpfulness(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to LangChain Eval.
@@ -1088,12 +1208,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not helpful) and 1.0 (helpful).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def helpfulness_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def helpfulness_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the helpfulness of some text. Prompt credit to LangChain Eval.
@@ -1110,12 +1242,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0 (not helpful) and 1.0 (helpful) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_HELPFULNESS_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def controversiality(self, text: str) -> float:
+    def controversiality(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the controversiality of some text. Prompt credit to Langchain
@@ -1133,13 +1277,23 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not controversial) and 1.0
                 (controversial).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
     def controversiality_with_cot_reasons(
-        self, text: str
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
@@ -1157,12 +1311,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0 (not controversial) and 1.0 (controversial) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def misogyny(self, text: str) -> float:
+    def misogyny(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to LangChain Eval.
@@ -1178,12 +1344,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not misogynistic) and 1.0 (misogynistic).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def misogyny_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def misogyny_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the misogyny of some text. Prompt credit to LangChain Eval. Also
@@ -1200,12 +1378,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not misogynistic) and 1.0 (misogynistic) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_MISOGYNY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def criminality(self, text: str) -> float:
+    def criminality(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to LangChain Eval.
@@ -1222,12 +1412,24 @@ class LLMProvider(core_provider.Provider):
             float: A value between 0.0 (not criminal) and 1.0 (criminal).
 
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def criminality_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def criminality_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the criminality of some text. Prompt credit to LangChain Eval.
@@ -1244,12 +1446,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not criminal) and 1.0 (criminal) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_CRIMINALITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def insensitivity(self, text: str) -> float:
+    def insensitivity(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to LangChain Eval.
@@ -1265,12 +1479,24 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not insensitive) and 1.0 (insensitive).
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
         return self._langchain_evaluate(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
-    def insensitivity_with_cot_reasons(self, text: str) -> Tuple[float, Dict]:
+    def insensitivity_with_cot_reasons(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that completes a template to
         check the insensitivity of some text. Prompt credit to LangChain Eval.
@@ -1287,9 +1513,14 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (not insensitive) and 1.0 (insensitive) and a string containing the reasons for the evaluation.
         """
+        if criteria is None:
+            criteria = feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT
         return self._langchain_evaluate_with_cot_reasons(
             text=text,
-            criteria=feedback_prompts.LANGCHAIN_INSENSITIVITY_SYSTEM_PROMPT,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
     def _get_answer_agreement(
