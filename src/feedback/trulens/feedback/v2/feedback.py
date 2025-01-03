@@ -350,13 +350,9 @@ class Relevance(Semantics):
 
 
 class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
-    # hugs._summarized_groundedness
-    # hugs._doc_groundedness
-
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
-    You should score the groundedness of the statement based on the following criteria:
     - Statements that are directly supported by the source should be considered grounded and should get a high score.
     - Statements that are not directly supported by the source should be considered not grounded and should get a low score.
     - Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of {max_score}.
@@ -367,7 +363,9 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
         Respond only as a number from {output_space_prompt}.
 
+        You should score the groundedness of the statement based on the following criteria:
         {criteria}
+
         Never elaborate."""
     )
 
@@ -590,9 +588,6 @@ class Sentiment(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
 
 
 class Helpfulness(Semantics):
-    # openai.helpfulness
-    # openai.helpfulness_with_cot_reasons
-
     # langchain Criteria.HELPFULNESS
     system_prompt: ClassVar[str] = cleandoc(
         f"""{supported_criteria["helpfulness"]}

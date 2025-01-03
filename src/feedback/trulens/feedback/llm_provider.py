@@ -354,8 +354,8 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
-            output_space=output_space,
             examples=examples,
+            output_space=output_space,
         )
 
         return self.generate_score(
@@ -553,8 +553,8 @@ class LLMProvider(core_provider.Provider):
                 min_score=min_score_val,
                 max_score=max_score_val,
                 criteria=criteria,
-                output_space=output_space,
                 examples=examples,
+                output_space=output_space,
             )
         )
 
@@ -639,9 +639,11 @@ class LLMProvider(core_provider.Provider):
     def sentiment(
         self,
         text: str,
+        criteria: str = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
-        criteria: str = None,
+        temperature: float = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -670,6 +672,7 @@ class LLMProvider(core_provider.Provider):
             min_score=min_score_val,
             max_score=max_score_val,
             criteria=criteria,
+            examples=examples,
             output_space=output_space,
         )
 
@@ -679,11 +682,14 @@ class LLMProvider(core_provider.Provider):
             user_prompt,
             min_score_val=min_score_val,
             max_score_val=max_score_val,
+            temperature=temperature,
         )
 
     def sentiment_with_cot_reasons(
         self,
         text: str,
+        criteria: str = None,
+        examples: Optional[List[str]] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -707,7 +713,17 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (negative sentiment) and 1.0 (positive sentiment).
         """
-        system_prompt = feedback_prompts.SENTIMENT_SYSTEM
+        output_space = self._determine_output_space(
+            min_score_val=min_score_val, max_score_val=max_score_val
+        )
+
+        system_prompt = feedback_v2.Sentiment.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            examples=examples,
+            output_space=output_space,
+        )
         user_prompt = (
             feedback_prompts.SENTIMENT_USER
             + text
