@@ -798,13 +798,29 @@ class LLMProvider(core_provider.Provider):
                 evaluation.
         """
 
+        output_space = self._determine_output_space(
+            min_score_val=min_score_val, max_score_val=max_score_val
+        )
+
         criteria = criteria.format(
             min_score=min_score_val, max_score=max_score_val
         )
 
-        system_prompt = str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM, criteria=criteria
+        validated = feedback_v2.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
+            criteria=criteria, output_space=output_space
         )
+
+        output_space_prompt = (
+            "Respond only as a number from "
+            + validated.get_output_scale_prompt()
+            + "\n"
+        )
+
+        system_prompt = output_space_prompt + str.format(
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM,
+            criteria=validated.criteria,
+        )
+        print(system_prompt)
         user_prompt = str.format(
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
@@ -840,14 +856,30 @@ class LLMProvider(core_provider.Provider):
             Tuple[float, str]: A tuple containing a value between 0.0 and 1.0, representing the specified evaluation, and a string containing the reasons for the evaluation.
         """
 
+        output_space = self._determine_output_space(
+            min_score_val=min_score_val, max_score_val=max_score_val
+        )
+
         criteria = criteria.format(
             min_score=min_score_val, max_score=max_score_val
         )
 
-        system_prompt = str.format(
-            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
-            criteria=criteria,
+        validated = feedback_v2.CriteriaOutputSpaceMixin.validate_criteria_and_output_space(
+            criteria=criteria, output_space=output_space
         )
+
+        output_space_prompt = (
+            "Respond only as a number from "
+            + validated.get_output_scale_prompt()
+            + "\n"
+        )
+
+        system_prompt = output_space_prompt + str.format(
+            feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
+            criteria=validated.criteria,
+        )
+        print(system_prompt)
+
         user_prompt = str.format(
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
@@ -1279,6 +1311,7 @@ class LLMProvider(core_provider.Provider):
         """
         if criteria is None:
             criteria = feedback_prompts.LANGCHAIN_CONTROVERSIALITY_SYSTEM_PROMPT
+
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,

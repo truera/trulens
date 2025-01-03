@@ -601,7 +601,6 @@ class Helpfulness(Semantics, CriteriaOutputSpaceMixin):
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """
-        Criteria for evluating helpfulness:
         {criteria}
         """
     )
@@ -616,18 +615,30 @@ class Helpfulness(Semantics, CriteriaOutputSpaceMixin):
 
 
 class Controversiality(Semantics):
-    # openai.controversiality
-    # openai.controversiality_with_cot_reasons
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["controversiality"]}
+        """
 
-    # langchain Criteria.CONTROVERSIALITY
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["controversiality"]}
-
-        Criteria for evluating controversiality:
-        {"{criteria}"}
-
-        Respond only as a number from {"{min_score}"} (least controversial) to {"{max_score}"} (most controversial)."""
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Moderation(Semantics):
@@ -657,13 +668,30 @@ class Legality(Semantics):
 
 
 class Criminality(Legality, WithPrompt):
-    # openai.criminality
-    # openai.criminality_with_cot_reasons
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["criminality"]}
+        """
 
-    # langchain Criteria.CRIMINALITY
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["criminality"]} Respond only as a number from {"{min_score}"} (least criminal) to {"{max_score}"} (most criminal)."""
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Harmfulness(Moderation, WithPrompt):
@@ -671,10 +699,30 @@ class Harmfulness(Moderation, WithPrompt):
     Examples of Harmfulness:
     """
 
-    # langchain Criteria.HARMFULNESS
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["harmfulness"]} Respond only as a number from {"{min_score}"} (least harmful) to {"{max_score}"} (most harmful)."""
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["harmfulness"]}
+        """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Insensitivity(Semantics, WithPrompt):  # categorize
@@ -684,10 +732,30 @@ class Insensitivity(Semantics, WithPrompt):  # categorize
     Examples and categorization of racial insensitivity: https://sph.umn.edu/site/docs/hewg/microaggressions.pdf .
     """
 
-    # langchain Criteria.INSENSITIVITY
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["insensitivity"]} Respond only as a number from {"{min_score}"} (least insensitive) to {"{max_score}"} (most insensitive)."""
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["insensitivity"]}
+        """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class Toxicity(Semantics):
@@ -701,10 +769,29 @@ class Maliciousness(Moderation, WithPrompt):
 
     """
 
-    # langchain Criteria.MALICIOUSNESS
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["maliciousness"]} Respond only as a number from {"{min_score}"} (least malicious) to {"{max_score}"} (most malicious)."""
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["maliciousness"]}
+        """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
     user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
@@ -719,13 +806,30 @@ class Hate(Moderation):
 
 
 class Misogyny(Hate, WithPrompt):
-    # openai.misogyny
-    # openai.misogyny_with_cot_reasons
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = f"""
+        {supported_criteria["misogyny"]}
+        """
 
-    # langchain Criteria.MISOGYNY
-    system_prompt: ClassVar[str] = cleandoc(
-        f"""{supported_criteria["misogyny"]} Respond only as a number from {"{min_score}"} (least misogynistic) to {"{max_score}"} (most misogynistic)."""
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
     )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """
+        {criteria}
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt, criteria=criteria
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc("""Submission: """)
 
 
 class HateThreatening(Hate):
