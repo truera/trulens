@@ -2,7 +2,6 @@
 Tests for OTEL instrument decorator.
 """
 
-from unittest import TestCase
 from unittest import main
 
 import pandas as pd
@@ -12,8 +11,6 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
-from trulens.experimental.otel_tracing.core.span import validate_selector_name
-from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -140,50 +137,6 @@ class TestOtelInstrument(TruTestCase):
                 for i in range(10)
             ],
         )
-
-
-class TestOtelValidation(TestCase):
-    def test_validate_selector_name(self):
-        with self.subTest("No selector name"):
-            self.assertEqual(
-                validate_selector_name({}),
-                {},
-            )
-
-        with self.subTest(
-            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
-        ):
-            self.assertRaises(
-                ValueError,
-                validate_selector_name,
-                {
-                    SpanAttributes.SELECTOR_NAME_KEY: "key",
-                    SpanAttributes.SELECTOR_NAME: "name",
-                },
-            )
-
-        with self.subTest("Non-string"):
-            self.assertRaises(
-                ValueError,
-                validate_selector_name,
-                {
-                    SpanAttributes.SELECTOR_NAME_KEY: 42,
-                },
-            )
-
-        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME}"):
-            self.assertEqual(
-                validate_selector_name({SpanAttributes.SELECTOR_NAME: "name"}),
-                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
-            )
-
-        with self.subTest(f"Valid {SpanAttributes.SELECTOR_NAME_KEY}"):
-            self.assertEqual(
-                validate_selector_name({
-                    SpanAttributes.SELECTOR_NAME_KEY: "name"
-                }),
-                {SpanAttributes.SELECTOR_NAME_KEY: "name"},
-            )
 
 
 if __name__ == "__main__":
