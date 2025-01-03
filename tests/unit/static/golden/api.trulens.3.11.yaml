@@ -1654,6 +1654,12 @@ trulens.core.utils.serial.StepItemOrAttribute:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     get_item_or_attribute: builtins.function
+trulens.core.utils.signature:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main_input: builtins.function
+    main_output: builtins.function
 trulens.core.utils.text:
   __class__: builtins.module
   highs: {}
