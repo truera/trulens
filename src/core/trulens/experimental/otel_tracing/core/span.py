@@ -5,7 +5,7 @@ This file contains utility functions specific to certain span types.
 from inspect import signature
 import logging
 from typing import Any, Callable, Dict, Optional, Union
-
+from opentelemetry.baggage import get_baggage
 from opentelemetry.trace.span import Span
 from trulens.core.utils import signature as signature_utils
 from trulens.otel.semconv.trace import SpanAttributes
@@ -87,6 +87,12 @@ def set_general_span_attributes(
 ) -> Span:
     span.set_attribute("kind", "SPAN_KIND_TRULENS")
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
+    span.set_attribute(
+        SpanAttributes.APP_ID, str(get_baggage(SpanAttributes.APP_ID))
+    )
+    span.set_attribute(
+        SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
+    )
 
     return span
 
@@ -138,3 +144,26 @@ def get_main_input(func: Callable, args: tuple, kwargs: dict) -> str:
     sig = signature(func)
     bindings = signature(func).bind(*args, **kwargs)
     return signature_utils.main_input(func, sig, bindings)
+
+
+def set_main_span_attributes(
+    span: Span,
+    /,
+    func: Callable,
+    args: tuple,
+    kwargs: dict,
+    ret,
+    exception: Optional[Exception],
+) -> None:
+    span.set_attribute(
+        SpanAttributes.MAIN.MAIN_INPUT, get_main_input(func, args, kwargs)
+    )
+
+    if exception:
+        span.set_attribute(SpanAttributes.MAIN.MAIN_ERROR, str(exception))
+
+    elif ret is not None:
+        span.set_attribute(
+            SpanAttributes.MAIN.MAIN_OUTPUT,
+            signature_utils.main_output(func, ret),
+        )

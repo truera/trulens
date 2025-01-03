@@ -13,13 +13,7 @@ from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.experimental.otel_tracing.core.instrument import (
-    validate_list_of_values_for_attribute,
-)
-from trulens.experimental.otel_tracing.core.instrument import (
     validate_selector_name,
-)
-from trulens.experimental.otel_tracing.core.instrument import (
-    validate_value_for_attribute,
 )
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -191,57 +185,6 @@ class TestOtelValidation(TestCase):
                     SpanAttributes.SELECTOR_NAME_KEY: "name"
                 }),
                 {SpanAttributes.SELECTOR_NAME_KEY: "name"},
-            )
-
-    def test_validate_value_for_attribute(self):
-        with self.subTest("None"):
-            self.assertEqual(validate_value_for_attribute(None), "None")
-
-        with self.subTest("number"):
-            self.assertEqual(
-                validate_value_for_attribute(42),
-                42,
-            )
-
-        with self.subTest("string"):
-            self.assertEqual(
-                validate_value_for_attribute("31"),
-                "31",
-            )
-
-        with self.subTest("bool"):
-            self.assertFalse(
-                validate_value_for_attribute(False),
-            )
-
-        with self.subTest("float"):
-            self.assertEqual(
-                validate_value_for_attribute(3.14),
-                3.14,
-            )
-
-        with self.subTest("dict"):
-            self.assertEqual(
-                validate_value_for_attribute({"key": "value"}),
-                "{'key': 'value'}",
-            )
-
-    def test_validate_list_of_values_for_attribute(self):
-        with self.subTest("list of primitives"):
-            self.assertEqual(
-                validate_list_of_values_for_attribute([1, "2", True]),
-                [1, "2", True],
-            )
-
-        with self.subTest("list of primitives and non-primitives"):
-            self.assertEqual(
-                validate_list_of_values_for_attribute([
-                    1,
-                    "2",
-                    True,
-                    {"key": "value"},
-                ]),
-                [1, "2", True, "{'key': 'value'}"],
             )
 
 

@@ -16,90 +16,12 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
+from trulens.experimental.otel_tracing.core.span import (
+    set_main_span_attributes,
+)
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
-
-
-VALID_ATTR_VALUE_TYPES = (bool, str, int, float)
-"""
-Per the OTEL [documentation](https://opentelemetry.io/docs/specs/otel/common/#attribute),
-valid attribute value types are either:
-- A primitive type: string, boolean, double precision floating point (IEEE 754-1985) or signed 64 bit integer.
-- An array of primitive type values. The array MUST be homogeneous, i.e., it MUST NOT contain values of different types.
-"""
-
-
-def validate_value_for_attribute(value):
-    """
-    Ensure that value is a valid attribute value type, and coerce it to a string if it is not.
-
-    This is helpful for lists/etc because if any single value is not a valid attribute value type, the entire list
-    will not be added as a span attribute.
-    """
-    arg_type = type(value)
-
-    # Coerge the argument to a string if it is not a valid attribute value type.
-    if arg_type not in VALID_ATTR_VALUE_TYPES:
-        return str(value)
-
-    return value
-
-
-def validate_list_of_values_for_attribute(arguments: list):
-    """
-    Ensure that all values in a list are valid attribute value types, and coerce them to strings if they are not.
-    """
-    return list(map(validate_value_for_attribute, arguments))
-
-
-def validate_selector_name(attributes: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Utility function to validate the selector name in the attributes.
-
-    It does the following:
-    1. Ensure that the selector name is a string.
-    2. Ensure that the selector name is keyed with either the trulens/non-trulens key variations.
-    3. Ensure that the selector name is not set in both the trulens and non-trulens key variations.
-    """
-
-    result = attributes.copy()
-
-    if (
-        SpanAttributes.SELECTOR_NAME_KEY in result
-        and SpanAttributes.SELECTOR_NAME in result
-    ):
-        raise ValueError(
-            f"Both {SpanAttributes.SELECTOR_NAME_KEY} and {SpanAttributes.SELECTOR_NAME} cannot be set."
-        )
-
-    if SpanAttributes.SELECTOR_NAME in result:
-        # Transfer the trulens namespaced to the non-trulens namespaced key.
-        result[SpanAttributes.SELECTOR_NAME_KEY] = result[
-            SpanAttributes.SELECTOR_NAME
-        ]
-        del result[SpanAttributes.SELECTOR_NAME]
-
-    if SpanAttributes.SELECTOR_NAME_KEY in result:
-        selector_name = result[SpanAttributes.SELECTOR_NAME_KEY]
-        if not isinstance(selector_name, str):
-            raise ValueError(
-                f"Selector name must be a string, not {type(selector_name)}"
-            )
-
-    return result
-
-
-def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Utility function to validate span attributes based on the span type.
-    """
-    if not isinstance(attributes, dict) or any([
-        not isinstance(key, str) for key in attributes.keys()
-    ]):
-        raise ValueError("Attributes must be a dictionary with string keys.")
-    return validate_selector_name(attributes)
-    # TODO: validate Span type attributes.
 
 
 def instrument(
@@ -137,6 +59,14 @@ def instrument(
 
                 set_general_span_attributes(span, span_type)
                 attributes_exception = None
+
+                if span_type == SpanAttributes.SpanType.MAIN:
+                    # Only an exception in calling the function should determine whether
+                    # to set the main error. Errors in setting attributes should not be classified
+                    # as main errors.
+                    set_main_span_attributes(
+                        span, func, args, kwargs, ret, func_exception
+                    )
 
                 try:
                     set_user_defined_attributes(
@@ -192,13 +122,10 @@ class App(core_app.App):
         root_span = self.span_context.__enter__()
 
         # Set general span attributes
-        root_span.set_attribute("kind", "SPAN_KIND_TRULENS")
         root_span.set_attribute("name", "root")
-        root_span.set_attribute(
-            SpanAttributes.SPAN_TYPE, SpanAttributes.SpanType.RECORD_ROOT
+        set_general_span_attributes(
+            root_span, SpanAttributes.SpanType.RECORD_ROOT
         )
-        root_span.set_attribute(SpanAttributes.APP_ID, self.app_id)
-        root_span.set_attribute(SpanAttributes.RECORD_ID, otel_record_id)
 
         # Set record root specific attributes
         root_span.set_attribute(
@@ -226,4 +153,5 @@ class App(core_app.App):
             context_api.detach(self.tokens.pop())
 
         if self.span_context:
+            # TODO[SNOW-1854360]: Add in feature function spans.
             self.span_context.__exit__(exc_type, exc_value, exc_tb)
