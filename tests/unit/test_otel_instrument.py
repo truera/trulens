@@ -12,9 +12,7 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
-from trulens.experimental.otel_tracing.core.instrument import (
-    validate_selector_name,
-)
+from trulens.experimental.otel_tracing.core.span import validate_selector_name
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
