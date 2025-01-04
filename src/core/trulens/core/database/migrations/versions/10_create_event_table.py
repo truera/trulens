@@ -21,6 +21,9 @@ def upgrade(config) -> None:
     if prefix is None:
         raise RuntimeError("trulens.table_prefix is not set")
 
+    if op.get_context().dialect.name == "snowflake":
+        return
+
     op.create_table(
         prefix + "events",
         sa.Column("event_id", sa.VARCHAR(length=256), nullable=False),
@@ -37,6 +40,9 @@ def upgrade(config) -> None:
 
 def downgrade(config) -> None:
     prefix = config.get_main_option("trulens.table_prefix")
+
+    if op.get_context().dialect.name == "snowflake":
+        return
 
     if prefix is None:
         raise RuntimeError("trulens.table_prefix is not set")

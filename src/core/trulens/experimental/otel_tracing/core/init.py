@@ -3,6 +3,7 @@ import logging
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from trulens.core.session import TruSession
@@ -23,7 +24,7 @@ def init(session: TruSession, debug: bool = False):
     trace.set_tracer_provider(provider)
 
     if debug:
-        logging.debug(
+        logger.debug(
             "Initializing OpenTelemetry with TruLens configuration for console debugging"
         )
         # Add a console exporter for debugging purposes
@@ -32,7 +33,7 @@ def init(session: TruSession, debug: bool = False):
         provider.add_span_processor(console_processor)
 
     if session.connector:
-        logging.debug("Exporting traces to the TruLens database")
+        logger.debug("Exporting traces to the TruLens database")
 
         # Check the database revision
         try:
@@ -50,5 +51,5 @@ def init(session: TruSession, debug: bool = False):
 
         # Add the TruLens database exporter
         db_exporter = TruLensDBSpanExporter(session.connector)
-        db_processor = SimpleSpanProcessor(db_exporter)
+        db_processor = BatchSpanProcessor(db_exporter)
         provider.add_span_processor(db_processor)

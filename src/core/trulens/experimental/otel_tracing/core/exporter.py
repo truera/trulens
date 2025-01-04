@@ -1,11 +1,15 @@
+import csv
 from datetime import datetime
 import logging
+import tempfile
+import traceback
 from typing import Optional, Sequence
 
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.trace import StatusCode
+from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
 
@@ -23,8 +27,6 @@ class TruLensDBSpanExporter(SpanExporter):
     """
     Implementation of `SpanExporter` that flushes the spans to the database in the TruLens session.
     """
-
-    connector: core_connector.DBConnector
 
     def __init__(self, connector: core_connector.DBConnector):
         self.connector = connector
@@ -59,12 +61,70 @@ class TruLensDBSpanExporter(SpanExporter):
         )
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+        def check_if_trulens_span(span: ReadableSpan) -> bool:
+            if not span.attributes:
+                return False
+
+            return span.attributes.get("kind") == "SPAN_KIND_TRULENS"
+
+        trulens_spans = list(filter(check_if_trulens_span, spans))
+
+        if not trulens_spans:
+            return SpanExportResult.SUCCESS
+
+        if isinstance(self.connector, SnowflakeConnector):
+            tmp_file_path = ""
+
+            try:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".csv", mode="w", newline=""
+                ) as tmp_file:
+                    tmp_file_path = tmp_file.name
+                    logger.debug(
+                        f"Writing spans to the csv file: {tmp_file_path}"
+                    )
+                    writer = csv.writer(tmp_file)
+                    writer.writerow(["span"])
+                    for span in trulens_spans:
+                        writer.writerow([span.to_json()])
+                    logger.debug(
+                        f"Spans written to the csv file: {tmp_file_path}"
+                    )
+            except Exception as e:
+                logger.error(f"Error writing spans to the csv file: {e}")
+                return SpanExportResult.FAILURE
+
+            try:
+                logger.debug("Uploading file to Snowflake stage")
+                snowpark_session = self.connector.snowpark_session
+
+                logger.debug("Creating Snowflake stage if it does not exist")
+                snowpark_session.sql(
+                    "CREATE STAGE IF NOT EXISTS trulens_spans"
+                ).collect()
+
+                logger.debug("Uploading the csv file to the stage")
+                snowpark_session.sql(
+                    f"PUT file://{tmp_file_path} @trulens_spans"
+                ).collect()
+
+            except Exception as e:
+                print(f"Error uploading the csv file to the stage: {e}")
+                traceback.print_exc()
+                logger.error(f"Error uploading the csv file to the stage: {e}")
+                return SpanExportResult.FAILURE
+
+            return SpanExportResult.SUCCESS
+
+        # For non-snowflake:
         try:
-            events = list(map(self._construct_event, spans))
+            events = list(map(self._construct_event, trulens_spans))
             self.connector.add_events(events)
 
         except Exception as e:
-            logger.error("Error exporting spans to the database: %s", e)
+            logger.error(
+                f"Error exporting spans to the database: {e}",
+            )
             return SpanExportResult.FAILURE
 
         return SpanExportResult.SUCCESS
