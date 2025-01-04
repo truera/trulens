@@ -3,7 +3,6 @@ from datetime import datetime
 import logging
 import os
 import tempfile
-import traceback
 from typing import Optional, Sequence
 
 from opentelemetry.sdk.trace import ReadableSpan
@@ -110,8 +109,6 @@ class TruLensDBSpanExporter(SpanExporter):
                 ).collect()
 
             except Exception as e:
-                print(f"Error uploading the csv file to the stage: {e}")
-                traceback.print_exc()
                 logger.error(f"Error uploading the csv file to the stage: {e}")
                 return SpanExportResult.FAILURE
 
