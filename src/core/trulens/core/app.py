@@ -720,64 +720,8 @@ class App(
         sig: Signature,  # pylint: disable=W0613
         bindings: BoundArguments,  # pylint: disable=W0613
         ret: Any,
-    ) -> serial_utils.JSON:
-        """Determine (guess) the "main output" string for a given main app call.
-
-        This is for functions whose output is not a string.
-
-        Args:
-            func: The main function whose main output we are guessing.
-
-            sig: The signature of the above function.
-
-            bindings: The arguments that were passed to that function.
-
-            ret: The return value of the function.
-        """
-
-        if isinstance(ret, serial_utils.JSON_BASES):
-            return str(ret)
-
-        if isinstance(ret, Sequence) and all(isinstance(x, str) for x in ret):
-            # Chunked/streamed outputs.
-            return "".join(ret)
-
-        # Use _extract_content to get the content out of the return value
-        content = self._extract_content(ret, content_keys=["content", "output"])
-
-        if isinstance(content, str):
-            return content
-
-        if isinstance(content, float):
-            return str(content)
-
-        if isinstance(content, Dict):
-            return str(next(iter(content.values()), ""))
-
-        elif isinstance(content, Sequence):
-            if len(content) > 0:
-                return str(content[0])
-            else:
-                return (
-                    f"Could not determine main output of {func.__name__}"
-                    f" from {python_utils.class_name(type(content))} value {content}."
-                )
-
-        else:
-            logger.warning(
-                "Could not determine main output of %s from %s value %s.",
-                func.__name__,
-                python_utils.class_name(type(content)),
-                content,
-            )
-            return (
-                str(content)
-                if content is not None
-                else (
-                    f"TruLens: could not determine main output of {func.__name__} "
-                    f"from {python_utils.class_name(type(content))} value {content}."
-                )
-            )
+    ) -> str:
+        return signature_utils.main_output(func, ret)
 
     # Experimental OTEL WithInstrumentCallbacks requirement
     def _on_new_recording_span(
