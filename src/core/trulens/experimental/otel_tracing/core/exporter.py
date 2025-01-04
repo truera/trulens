@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 import logging
+import os
 import tempfile
 import traceback
 from typing import Optional, Sequence
@@ -113,6 +114,13 @@ class TruLensDBSpanExporter(SpanExporter):
                 traceback.print_exc()
                 logger.error(f"Error uploading the csv file to the stage: {e}")
                 return SpanExportResult.FAILURE
+
+            try:
+                logger.debug("Removing the temporary csv file")
+                os.remove(tmp_file_path)
+            except Exception as e:
+                # Not returning failure here since the export was technically a success
+                logger.error(f"Error removing the temporary csv file: {e}")
 
             return SpanExportResult.SUCCESS
 
