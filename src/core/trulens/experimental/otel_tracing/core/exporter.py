@@ -106,7 +106,7 @@ class TruLensDBSpanExporter(SpanExporter):
 
                 logger.debug("Uploading the csv file to the stage")
                 snowpark_session.sql(
-                    f"PUT file://{tmp_file_path} @trulens_spans"
+                    f"PUT file://{tmp_file_path} @trulens_spans AUTO_COMPRESS=FALSE"
                 ).collect()
 
             except Exception as e:
