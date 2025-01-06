@@ -2406,6 +2406,7 @@ trulens.feedback.v2.feedback.Comprehensiveness:
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
 trulens.feedback.v2.feedback.COTExplained:
   __bases__:
   - trulens.feedback.v2.feedback.Feedback
@@ -2488,7 +2489,6 @@ trulens.feedback.v2.feedback.Criminality:
   __bases__:
   - trulens.feedback.v2.feedback.Legality
   - trulens.feedback.v2.feedback.WithPrompt
-  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
@@ -2623,7 +2623,6 @@ trulens.feedback.v2.feedback.Harmfulness:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation
   - trulens.feedback.v2.feedback.WithPrompt
-  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
@@ -2649,6 +2648,7 @@ trulens.feedback.v2.feedback.HateThreatening:
 trulens.feedback.v2.feedback.Helpfulness:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     criteria: builtins.str
