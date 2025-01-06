@@ -51,6 +51,10 @@ def init(session: TruSession, debug: bool = False):
 
         # Add the TruLens database exporter
         db_exporter = TruLensDBSpanExporter(session.connector)
+
+        # When testing, use a simple span processor to avoid issues with batching/
+        # asynchronous processing of the spans that results in the database not
+        # being updated in time for the tests.
         db_processor = (
             SimpleSpanProcessor(db_exporter)
             if debug
