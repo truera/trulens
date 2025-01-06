@@ -2401,12 +2401,12 @@ trulens.feedback.v2.feedback.Comprehensiveness:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
 trulens.feedback.v2.feedback.COTExplained:
   __bases__:
   - trulens.feedback.v2.feedback.Feedback
