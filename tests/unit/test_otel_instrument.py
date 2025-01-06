@@ -11,6 +11,7 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -19,7 +20,7 @@ from tests.util.df_comparison import (
 
 
 class _TestApp:
-    @instrument()
+    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
