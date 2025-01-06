@@ -878,7 +878,6 @@ class LLMProvider(core_provider.Provider):
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_WITH_COT_REASONS_SYSTEM,
             criteria=validated.criteria,
         )
-        print(system_prompt)
 
         user_prompt = str.format(
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
@@ -957,7 +956,14 @@ class LLMProvider(core_provider.Provider):
             temperature=temperature,
         )
 
-    def correctness(self, text: str, criteria: str) -> float:
+    def correctness(
+        self,
+        text: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
+    ) -> float:
         """
         Uses chat completion model. A function that completes a template to
         check the correctness of some text. Prompt credit to LangChain Eval.
@@ -978,6 +984,9 @@ class LLMProvider(core_provider.Provider):
         return self._langchain_evaluate(
             text=text,
             criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
 
     def correctness_with_cot_reasons(
@@ -1620,8 +1629,9 @@ class LLMProvider(core_provider.Provider):
         self,
         key_points: str,
         summary: str,
-        min_score: int = 0,
-        max_score: int = 3,
+        min_score_val: int = 0,
+        max_score_val: int = 3,
+        criteria: Optional[str] = None,
         temperature: float = 0.0,
     ) -> List:
         """
@@ -1639,9 +1649,18 @@ class LLMProvider(core_provider.Provider):
             point.strip() for point in key_points.split("\n") if point.strip()
         ]
 
-        system_prompt = feedback_prompts.COMPREHENSIVENESS_SYSTEM_PROMPT.format(
-            min_score=min_score, max_score=max_score
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
         )
+
+        system_prompt = feedback_v2.Comprehensiveness.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
+
+        print(system_prompt)
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
@@ -1665,7 +1684,13 @@ class LLMProvider(core_provider.Provider):
         return inclusion_assessments
 
     def comprehensiveness_with_cot_reasons(
-        self, source: str, summary: str, min_score: int = 0, max_score: int = 3
+        self,
+        source: str,
+        summary: str,
+        criteria: Optional[str] = None,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
     ) -> Tuple[float, Dict]:
         """
         Uses chat completion model. A function that tries to distill main points
@@ -1688,7 +1713,12 @@ class LLMProvider(core_provider.Provider):
 
         key_points = self._generate_key_points(source)
         key_point_inclusion_assessments = self._assess_key_point_inclusion(
-            key_points, summary, min_score=min_score, max_score=max_score
+            key_points,
+            summary,
+            criteria=criteria,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
         )
         scores = []
         reasons = ""
@@ -1697,13 +1727,16 @@ class LLMProvider(core_provider.Provider):
             if assessment:
                 first_line = assessment.split("\n")[0]
                 score = feedback_generated.re_configured_rating(
-                    first_line, min_score_val=min_score, max_score_val=max_score
-                ) / (max_score - min_score)
+                    first_line,
+                    min_score_val=min_score_val,
+                    max_score_val=max_score_val,
+                ) / (max_score_val - min_score_val)
                 scores.append(score)
 
         score = sum(scores) / len(scores) if scores else 0
         return score, {"reasons": reasons}
 
+    @deprecation_utils.method_renamed("comprehensiveness_with_cot_reasons")
     def summarization_with_cot_reasons(
         self, source: str, summary: str
     ) -> Tuple[float, Dict]:
@@ -1718,8 +1751,9 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
-        min_score_val: int = 0,
-        max_score_val: int = 3,
+        min_score_val: Optional[int] = 0,
+        max_score_val: Optional[int] = 3,
+        temperature: Optional[float] = 0.0,
     ) -> float:
         """
         Uses chat completion model. A function that completes a template to
@@ -1748,7 +1782,13 @@ class LLMProvider(core_provider.Provider):
             prompt=prompt,
             response=response,
         )
-        return self.generate_score(system_prompt, user_prompt)
+        return self.generate_score(
+            system_prompt,
+            user_prompt,
+            min_score_val=min_score_val,
+            max_score_val=max_score_val,
+            temperature=temperature,
+        )
 
     def stereotypes_with_cot_reasons(
         self,

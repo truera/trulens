@@ -1028,3 +1028,58 @@ class BinarySentimentModel(ClassificationModel):
     )
 
     # def classify()
+
+
+class Comprehensiveness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
+    output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
+    output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
+    criteria_template: ClassVar[str] = """
+    - {min_score} - The key point is not included in the summary.
+    - A middle score - The key point is vaguely mentioned or partially included in the summary.
+    - {max_score} - The key point is fully included in the summary.
+    """
+
+    criteria: ClassVar[str] = criteria_template.format(
+        min_score=OutputSpace.LIKERT_0_3.value[0],
+        max_score=OutputSpace.LIKERT_0_3.value[1],
+    )
+
+    system_prompt_template: ClassVar[str] = cleandoc(
+        """You are tasked with evaluating summarization quality. Please follow the instructions below.
+
+        INSTRUCTIONS:
+
+        1. Given a key point, score well the summary captures that key points.
+
+        Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
+
+        Scoring criteria:
+        {criteria}
+
+        Answer using the entire template below.
+
+        TEMPLATE:
+        Score: {output_space_prompt}
+        Key Point: <Mention the key point from the source text being evaluated>
+        Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
+        """
+    )
+
+    system_prompt: ClassVar[str] = cleandoc(
+        system_prompt_template.format(
+            output_space_prompt=output_space_prompt,
+            criteria=criteria,
+        )
+    )
+
+    user_prompt: ClassVar[str] = cleandoc(
+        """
+        /KEY POINT/
+        {key_point}
+        /END OF KEY POINT/
+
+        /SUMMARY/
+        {summary}
+        /END OF SUMMARY/
+        """
+    )

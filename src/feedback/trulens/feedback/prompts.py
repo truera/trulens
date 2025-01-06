@@ -143,34 +143,6 @@ GENERATE_KEY_POINTS_USER_PROMPT = """
 /END OF SOURCE TEXT/
 """
 
-COMPREHENSIVENESS_SYSTEM_PROMPT = """
-You are tasked with evaluating summarization quality. Please follow the instructions below.
+COMPREHENSIVENESS_SYSTEM_PROMPT = v2.Comprehensiveness.system_prompt
 
-INSTRUCTIONS:
-
-1. Given a key point, score well the summary captures that key points.
-
-Are the key points from the source text comprehensively included in the summary? More important key points matter more in the evaluation.
-
-Scoring criteria:
-{min_score} - The key point is not included in the summary.
-A middle score - The key point is vaguely mentioned or partially included in the summary.
-{max_score} - The key point is fully included in the summary.
-
-Answer using the entire template below.
-
-TEMPLATE:
-Score: <The score from {min_score} (the key point is not captured at all) to {max_score} (the key point is fully captured).>
-Key Point: <Mention the key point from the source text being evaluated>
-Supporting Evidence: <Evidence of whether the key point is present or absent in the summary.>
-"""
-
-COMPREHENSIVENESS_USER_PROMPT = """
-/KEY POINT/
-{key_point}
-/END OF KEY POINT/
-
-/SUMMARY/
-{summary}
-/END OF SUMMARY/
-"""
+COMPREHENSIVENESS_USER_PROMPT = v2.Comprehensiveness.user_prompt
