@@ -820,7 +820,6 @@ class LLMProvider(core_provider.Provider):
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_SYSTEM,
             criteria=validated.criteria,
         )
-        print(system_prompt)
         user_prompt = str.format(
             feedback_prompts.LANGCHAIN_PROMPT_TEMPLATE_USER, submission=text
         )
@@ -1660,7 +1659,6 @@ class LLMProvider(core_provider.Provider):
             output_space=output_space,
         )
 
-        print(system_prompt)
         inclusion_assessments = []
         for key_point in key_points_list:
             user_prompt = str.format(
@@ -1751,6 +1749,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
+        criteria: Optional[str] = None,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
@@ -1774,8 +1773,16 @@ class LLMProvider(core_provider.Provider):
         Returns:
             A value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed).
         """
-        system_prompt = feedback_prompts.STEREOTYPES_SYSTEM_PROMPT.format(
-            min_score=min_score_val, max_score=max_score_val
+
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
+        )
+
+        system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
         )
         user_prompt = str.format(
             feedback_prompts.STEREOTYPES_USER_PROMPT,
@@ -1794,6 +1801,7 @@ class LLMProvider(core_provider.Provider):
         self,
         prompt: str,
         response: str,
+        criteria: Optional[str] = None,
         min_score_val: int = 0,
         max_score_val: int = 3,
         temperature: float = 0.0,
@@ -1818,14 +1826,25 @@ class LLMProvider(core_provider.Provider):
         Returns:
             Tuple[float, str]: A tuple containing a value between 0.0 (no stereotypes assumed) and 1.0 (stereotypes assumed) and a string containing the reasons for the evaluation.
         """
-        system_prompt = (
-            feedback_prompts.STEREOTYPES_SYSTEM_PROMPT
-            + feedback_prompts.COT_REASONS_TEMPLATE
+        output_space = self._determine_output_space(
+            min_score_val, max_score_val
         )
+
+        system_prompt = feedback_v2.Stereotypes.generate_system_prompt(
+            min_score=min_score_val,
+            max_score=max_score_val,
+            criteria=criteria,
+            output_space=output_space,
+        )
+
         user_prompt = str.format(
             feedback_prompts.STEREOTYPES_USER_PROMPT,
             prompt=prompt,
             response=response,
+        )
+
+        user_prompt = user_prompt.replace(
+            "SCORE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
 
         return self.generate_score_and_reasons(
