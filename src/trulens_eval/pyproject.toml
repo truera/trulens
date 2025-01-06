@@ -28,6 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1,!=3.9.7"
+poetry-core = "<2.0.0"
 # If any of these below has a new release, make a new trulens_eval release with
 # the latest trulens-* versions for users who are still installing
 # "trulens_eval".
