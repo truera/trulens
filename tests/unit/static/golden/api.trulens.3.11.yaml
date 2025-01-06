@@ -2397,7 +2397,7 @@ trulens.feedback.v2.feedback.Comprehensiveness:
   - trulens.feedback.v2.feedback.Semantics
   - trulens.feedback.v2.feedback.WithPrompt
   - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
-  __class__: pydantic._internal._model_construction.ModelMetaclass
+  __class__: pydantic.main.ModelMetaclass
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
