@@ -330,8 +330,6 @@ class CriteriaOutputSpaceMixin:
             formatted_examples = fewshot_examples.format_examples()
             prompt += formatted_examples
 
-        print(prompt)
-
         return prompt
 
 
