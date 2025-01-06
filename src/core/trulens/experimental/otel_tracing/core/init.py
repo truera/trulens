@@ -51,5 +51,9 @@ def init(session: TruSession, debug: bool = False):
 
         # Add the TruLens database exporter
         db_exporter = TruLensDBSpanExporter(session.connector)
-        db_processor = BatchSpanProcessor(db_exporter)
+        db_processor = (
+            SimpleSpanProcessor(db_exporter)
+            if debug
+            else BatchSpanProcessor(db_exporter)
+        )
         provider.add_span_processor(db_processor)

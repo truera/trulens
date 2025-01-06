@@ -122,6 +122,7 @@ class TestOtelInstrument(TruTestCase):
             test_app.respond_to_query("test")
         with custom_app:
             test_app.respond_to_query("throw")
+
         # Compare results to expected.
         GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
         actual = self._get_events()
