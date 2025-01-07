@@ -540,12 +540,15 @@ class LLMProvider(core_provider.Provider):
             min_score_val, max_score_val
         )
 
+        # adalflow_optimized_system_prompt = """You are a RELEVANCE grader; providing the relevance of the given RESPONSE to the given PROMPT.\nRespond only as a number from 0 to 3, where 0 is the lowest score according to the criteria and 3 is the highest possible score.\n\nA few additional scoring guidelines:\n\n- Long RESPONSES should score equally well as short RESPONSES.\n\n- RESPONSE must be relevant to the entire PROMPT to get a maximum score of 3.\n- RELEVANCE score should increase as the RESPONSE provides RELEVANT context to more parts of the PROMPT.\n- RESPONSE that is RELEVANT to none of the PROMPT should get a minimum score of 0.\n- RESPONSE that is RELEVANT and answers the entire PROMPT completely should get a score of 3.\n- RESPONSE that confidently FALSE should get a score of 0.\n- RESPONSE that is only seemingly RELEVANT should get a score of 0.\n- Answers that intentionally do not answer the question, such as 'I don't know' and model refusals, should also be counted as the least RELEVANT and get a score of 0.\n\n- Be cautious of false negatives, as they are heavily penalized. Ensure that relevant responses are not mistakenly classified as irrelevant.\n\n- Never elaborate."""
+
         system_prompt = (
             feedback_v2.PromptResponseRelevance.generate_system_prompt(
                 min_score_val, max_score_val, criteria, output_space
             )
         )
 
+        # print(adalflow_optimized_system_prompt)
         return self.generate_score(
             system_prompt=system_prompt,
             user_prompt=str.format(
