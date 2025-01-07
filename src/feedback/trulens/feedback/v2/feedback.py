@@ -354,6 +354,9 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     - Statements that are directly supported by the source should be considered grounded and should get a high score.
     - Statements that are not directly supported by the source should be considered not grounded and should get a low score.
     - Statements of doubt, that admissions of uncertainty or not knowing the answer are considered abstention, and should be counted as the most overlap and therefore get a max score of {max_score}.
+    - Consider indirect or implicit evidence, or the context of the statement, to avoid penalizing potentially factual claims due to lack of explicit support.
+    - Be cautious of false positives; ensure that high scores are only given when there is clear supporting evidence.
+    - Pay special attention to ensure that indirect evidence is not mistaken for direct support.
     """
 
     system_prompt_template: ClassVar[str] = cleandoc(
