@@ -43,7 +43,7 @@ class Thread(fThread):
         kwargs={},
         daemon=None,
     ):
-        present_stack = python_utils.WeakWrapper(inspect.stack())
+        present_stack = python_utils.WeakWrapper(inspect.stack(0))
         present_context = contextvars.copy_context()
 
         fThread.__init__(
@@ -73,7 +73,7 @@ class ThreadPoolExecutor(fThreadPoolExecutor):
         super().__init__(*args, **kwargs)
 
     def submit(self, fn, /, *args, **kwargs):
-        present_stack = python_utils.WeakWrapper(inspect.stack())
+        present_stack = python_utils.WeakWrapper(inspect.stack(0))
         present_context = contextvars.copy_context()
 
         return super().submit(
