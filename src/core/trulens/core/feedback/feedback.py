@@ -161,6 +161,9 @@ class Feedback(feedback_schema.FeedbackDefinition):
     examples: Optional[List[Tuple]] = pydantic.Field(None, exclude=True)
     """Examples to use when evaluating the feedback function."""
 
+    criteria: Optional[str] = pydantic.Field(None, exclude=True)
+    """Criteria for the feedback function."""
+
     min_score_val: Optional[int] = pydantic.Field(None, exclude=True)
     """Minimum score value for the feedback function."""
 
@@ -180,6 +183,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         imp: Optional[Callable] = None,
         agg: Optional[Callable] = None,
         examples: Optional[List[Tuple]] = None,
+        criteria: Optional[str] = None,
         min_score_val: Optional[int] = 0,
         max_score_val: Optional[int] = 3,
         temperature: Optional[float] = 0.0,
@@ -267,6 +271,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         self.imp = imp
         self.agg = agg
         self.examples = examples
+        self.criteria = criteria
         self.min_score_val = min_score_val
         self.max_score_val = max_score_val
         self.temperature = temperature
@@ -485,6 +490,8 @@ class Feedback(feedback_schema.FeedbackDefinition):
         ), "Feedback definition needs an implementation to call."
         if self.examples is not None:
             kwargs["examples"] = self.examples
+        if self.criteria is not None:
+            kwargs["criteria"] = self.criteria
         if self.min_score_val is not None:
             kwargs["min_score_val"] = self.min_score_val
         if self.max_score_val is not None:

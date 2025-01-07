@@ -538,6 +538,7 @@ trulens.core.feedback.feedback.Feedback:
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
     check_selectors: builtins.function
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
@@ -600,6 +601,7 @@ trulens.core.feedback.feedback.SnowflakeFeedback:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     groundedness_configs: typing.Optional[trulens.core.feedback.feedback.GroundednessConfigs,
@@ -899,6 +901,7 @@ trulens.core.schema.feedback.FeedbackDefinition:
       builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     feedback_definition_id: builtins.str
     higher_is_better: typing.Optional[builtins.bool, builtins.NoneType]
@@ -2389,6 +2392,21 @@ trulens.feedback.v2.feedback.BinarySentimentModel:
     feedback: trulens.feedback.v2.feedback.Feedback
     id: builtins.str
     output_type: trulens.feedback.v2.feedback.FeedbackOutputType
+trulens.feedback.v2.feedback.Comprehensiveness:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.COTExplained:
   __bases__:
   - trulens.feedback.v2.feedback.Feedback
@@ -2451,8 +2469,14 @@ trulens.feedback.v2.feedback.Controversiality:
   - trulens.feedback.v2.feedback.Semantics
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Correctness:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
@@ -2467,8 +2491,14 @@ trulens.feedback.v2.feedback.Criminality:
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Criteria:
   __bases__:
   - builtins.str
@@ -2595,8 +2625,14 @@ trulens.feedback.v2.feedback.Harmfulness:
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Hate:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation
@@ -2612,18 +2648,31 @@ trulens.feedback.v2.feedback.HateThreatening:
 trulens.feedback.v2.feedback.Helpfulness:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Insensitivity:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.LanguageMatch:
   __bases__:
   - trulens.feedback.v2.feedback.Syntax
@@ -2642,8 +2691,13 @@ trulens.feedback.v2.feedback.Maliciousness:
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Misogyny:
   __bases__:
@@ -2651,8 +2705,14 @@ trulens.feedback.v2.feedback.Misogyny:
   - trulens.feedback.v2.feedback.WithPrompt
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Model:
   __bases__:
   - pydantic.main.BaseModel
@@ -2734,10 +2794,16 @@ trulens.feedback.v2.feedback.Sentiment:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
   - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Sexual:
   __bases__:
@@ -2755,10 +2821,16 @@ trulens.feedback.v2.feedback.Stereotypes:
   __bases__:
   - trulens.feedback.v2.feedback.Moderation
   - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    output_space: builtins.str
+    output_space_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
+    system_prompt_template: builtins.str
     user_prompt: builtins.str
 trulens.feedback.v2.feedback.Syntax:
   __bases__:
