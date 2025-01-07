@@ -28,6 +28,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
+poetry-core = "<2.0.0"
 # This package only has pre-releases:
 opentelemetry-semantic-conventions = { version = ">=0.36b0", allow-prereleases = true }
 # This package requires python 3.9 so we are avoiding using it for now:
