@@ -3,7 +3,7 @@
 from inspect import BoundArguments
 from inspect import Signature
 import logging
-from typing import Callable, Dict, Sequence
+from typing import Any, Callable, Dict, Sequence
 
 import pydantic
 from trulens.core.utils import python as python_utils
@@ -148,7 +148,7 @@ def main_input(func: Callable, sig: Signature, bindings: BoundArguments) -> str:
     return "TruLens: Could not determine main input from " + str(all_args)
 
 
-def main_output(func: Callable, ret) -> str:
+def main_output(func: Callable, ret: Any) -> str:
     """Determine (guess) the "main output" string for a given main app call.
 
     This is for functions whose output is not a string.
@@ -182,27 +182,21 @@ def main_output(func: Callable, ret) -> str:
     if isinstance(content, Dict):
         return str(next(iter(content.values()), ""))
 
-    elif isinstance(content, Sequence):
+    error_message = (
+        f"Could not determine main output of {func.__name__}"
+        f" from {python_utils.class_name(type(content))} value {content}."
+    )
+
+    if isinstance(content, Sequence):
         if len(content) > 0:
             return str(content[0])
         else:
-            return (
-                f"Could not determine main output of {func.__name__}"
-                f" from {python_utils.class_name(type(content))} value {content}."
-            )
+            return error_message
 
     else:
-        logger.warning(
-            "Could not determine main output of %s from %s value %s.",
-            func.__name__,
-            python_utils.class_name(type(content)),
-            content,
-        )
+        logger.warning(error_message)
         return (
             str(content)
             if content is not None
-            else (
-                f"TruLens: could not determine main output of {func.__name__} "
-                f"from {python_utils.class_name(type(content))} value {content}."
-            )
+            else (f"TruLens: {error_message}")
         )
