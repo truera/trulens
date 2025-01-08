@@ -5,11 +5,8 @@ import os
 import pprint
 from typing import Any, Callable, ClassVar, Optional
 
-from snowflake.connector.cursor import SnowflakeCursor
 from snowflake.cortex._sse_client import Event
 from snowflake.cortex._sse_client import SSEClient
-from snowflake.snowpark import DataFrame
-from snowflake.snowpark import Session
 from trulens.core.feedback import endpoint as core_endpoint
 
 logger = logging.getLogger(__name__)
@@ -99,9 +96,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
 
         super().__init__(*args, **kwargs)
 
-        # we instrument sql and fetchall in case users are calling Cortex LLM functions via Snowflake SQL
-        self._instrument_class(Session, "sql")
-        self._instrument_class(SnowflakeCursor, "fetchall")
         # we instrument the SSEClient class from snowflake.cortex module to get the usage information from the HTTP response when calling the REST Complete endpoint
         self._instrument_class(SSEClient, "events")
 
@@ -121,11 +115,6 @@ class CortexEndpoint(core_endpoint.Endpoint):
                 response_dict = json.loads(
                     response.data
                 )  # response is a server-sent event (SSE). see _sse_client.py from snowflake.cortex module for reference
-
-            elif isinstance(response, DataFrame):
-                response_dict = json.loads(response.collect()[0][0])
-            elif isinstance(response, list):
-                response_dict = json.loads(response[0][0])
 
         except Exception as e:
             logger.error(f"Error occurred while parsing response: {e}")
