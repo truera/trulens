@@ -1,6 +1,6 @@
 from functools import wraps
 import logging
-from typing import Any, Callable, Dict, Optional
+from typing import Callable, Optional
 import uuid
 
 from opentelemetry import trace
@@ -13,11 +13,9 @@ from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
+from trulens.experimental.otel_tracing.core.span import set_main_span_attributes
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
-)
-from trulens.experimental.otel_tracing.core.span import (
-    set_main_span_attributes,
 )
 from trulens.otel.semconv.trace import SpanAttributes
 
