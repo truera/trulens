@@ -5,6 +5,7 @@ This file contains utility functions specific to certain span types.
 from inspect import signature
 import logging
 from typing import Any, Callable, Dict, Optional, Union
+
 from opentelemetry.baggage import get_baggage
 from opentelemetry.trace.span import Span
 from trulens.core.utils import signature as signature_utils
@@ -152,7 +153,7 @@ def set_main_span_attributes(
     func: Callable,
     args: tuple,
     kwargs: dict,
-    ret,
+    ret: Any,
     exception: Optional[Exception],
 ) -> None:
     span.set_attribute(
@@ -162,7 +163,7 @@ def set_main_span_attributes(
     if exception:
         span.set_attribute(SpanAttributes.MAIN.MAIN_ERROR, str(exception))
 
-    elif ret is not None:
+    if ret is not None:
         span.set_attribute(
             SpanAttributes.MAIN.MAIN_OUTPUT,
             signature_utils.main_output(func, ret),
