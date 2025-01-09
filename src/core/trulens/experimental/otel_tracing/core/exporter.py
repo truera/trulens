@@ -13,6 +13,7 @@ from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.trace import StatusCode
+from snowflake.snowpark import Session
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
@@ -22,6 +23,19 @@ logger = logging.getLogger(__name__)
 
 
 def convert_to_any_value(value: Any) -> AnyValue:
+    """
+    Converts a given value to an AnyValue object.
+    This function takes a value of various types (str, bool, int, float, bytes, list, dict)
+    and converts it into an AnyValue object. If the value is a list or a dictionary, it
+    recursively converts the elements or key-value pairs. Tuples are converted into lists.
+    Args:
+        value (Any): The value to be converted. It can be of type str, bool, int, float,
+                     bytes, list, tuple, or dict.
+    Returns:
+        AnyValue: The converted AnyValue object.
+    Raises:
+        ValueError: If the value type is unsupported.
+    """
     if isinstance(value, tuple):
         value = list(value)
     any_value = AnyValue()
@@ -54,6 +68,13 @@ def convert_to_any_value(value: Any) -> AnyValue:
 
 
 def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
+    """
+    Converts a ReadableSpan object to a the protobuf object for a Span.
+    Args:
+        span (ReadableSpan): The span to be converted.
+    Returns:
+        SpanProto: The converted span in SpanProto format.
+    """
     span_proto = SpanProto(
         trace_id=span.context.trace_id.to_bytes(16, byteorder="big")
         if span.context
@@ -79,10 +100,81 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
 
 
 def to_timestamp(timestamp: Optional[int]) -> datetime:
+    """
+    Utility function for converting OTEL timestamps to datetime objects.
+    """
     if timestamp:
         return datetime.fromtimestamp(timestamp * 1e-9)
 
     return datetime.now()
+
+
+def export_to_snowflake_stage(
+    spans: Sequence[ReadableSpan], snowpark_session: Session
+) -> SpanExportResult:
+    """
+    Exports a list of spans to a Snowflake stage as a protobuf file.
+    This function performs the following steps:
+    1. Writes the provided spans to a temporary protobuf file.
+    2. Creates a Snowflake stage if it does not already exist.
+    3. Uploads the temporary protobuf file to the Snowflake stage.
+    4. Removes the temporary protobuf file.
+    Args:
+        spans (Sequence[ReadableSpan]): A sequence of spans to be exported.
+        snowpark_session (Session): The Snowpark session used to execute SQL commands.
+    Returns:
+        SpanExportResult: The result of the export operation, either SUCCESS or FAILURE.
+    """
+
+    tmp_file_path = ""
+
+    try:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".pb", mode="wb"
+        ) as tmp_file:
+            tmp_file_path = tmp_file.name
+            logger.debug(f"Writing spans to the protobuf file: {tmp_file_path}")
+
+            for span in spans:
+                span_proto = convert_readable_span_to_proto(span)
+                tmp_file.write(span_proto.SerializeToString())
+            logger.debug(f"Spans written to the protobuf file: {tmp_file_path}")
+    except Exception as e:
+        logger.error(f"Error writing spans to the protobuf file: {e}")
+        return SpanExportResult.FAILURE
+
+    try:
+        logger.debug("Uploading file to Snowflake stage")
+
+        logger.debug("Creating Snowflake stage if it does not exist")
+        snowpark_session.sql(
+            "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+        ).collect()
+
+        logger.debug("Uploading the protobuf file to the stage")
+        snowpark_session.sql(
+            f"PUT file://{tmp_file_path} @trulens_spans"
+        ).collect()
+
+    except Exception as e:
+        logger.error(f"Error uploading the protobuf file to the stage: {e}")
+        return SpanExportResult.FAILURE
+
+    try:
+        logger.debug("Removing the temporary protobuf file")
+        os.remove(tmp_file_path)
+    except Exception as e:
+        # Not returning failure here since the export was technically a success
+        logger.error(f"Error removing the temporary protobuf file: {e}")
+
+    return SpanExportResult.SUCCESS
+
+
+def check_if_trulens_span(span: ReadableSpan) -> bool:
+    if not span.attributes:
+        return False
+
+    return bool(span.attributes.get(SpanAttributes.RECORD_ID))
 
 
 class TruLensDBSpanExporter(SpanExporter):
@@ -123,69 +215,15 @@ class TruLensDBSpanExporter(SpanExporter):
         )
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        def check_if_trulens_span(span: ReadableSpan) -> bool:
-            if not span.attributes:
-                return False
-
-            return bool(
-                span.attributes.get(SpanAttributes.GENERATED_BY_INSTRUMENTATION)
-            )
-
         trulens_spans = list(filter(check_if_trulens_span, spans))
 
         if not trulens_spans:
             return SpanExportResult.SUCCESS
 
         if isinstance(self.connector, SnowflakeConnector):
-            tmp_file_path = ""
-
-            try:
-                with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".pb", mode="wb"
-                ) as tmp_file:
-                    tmp_file_path = tmp_file.name
-                    logger.debug(
-                        f"Writing spans to the protobuf file: {tmp_file_path}"
-                    )
-
-                    for span in trulens_spans:
-                        span_proto = convert_readable_span_to_proto(span)
-                        tmp_file.write(span_proto.SerializeToString())
-                    logger.debug(
-                        f"Spans written to the protobuf file: {tmp_file_path}"
-                    )
-            except Exception as e:
-                logger.error(f"Error writing spans to the protobuf file: {e}")
-                return SpanExportResult.FAILURE
-
-            try:
-                logger.debug("Uploading file to Snowflake stage")
-                snowpark_session = self.connector.snowpark_session
-
-                logger.debug("Creating Snowflake stage if it does not exist")
-                snowpark_session.sql(
-                    "CREATE STAGE IF NOT EXISTS trulens_spans"
-                ).collect()
-
-                logger.debug("Uploading the protobuf file to the stage")
-                snowpark_session.sql(
-                    f"PUT file://{tmp_file_path} @trulens_spans"
-                ).collect()
-
-            except Exception as e:
-                logger.error(
-                    f"Error uploading the protobuf file to the stage: {e}"
-                )
-                return SpanExportResult.FAILURE
-
-            try:
-                logger.debug("Removing the temporary protobuf file")
-                os.remove(tmp_file_path)
-            except Exception as e:
-                # Not returning failure here since the export was technically a success
-                logger.error(f"Error removing the temporary protobuf file: {e}")
-
-            return SpanExportResult.SUCCESS
+            return export_to_snowflake_stage(
+                trulens_spans, self.connector.snowpark_session
+            )
 
         # For non-snowflake:
         try:
