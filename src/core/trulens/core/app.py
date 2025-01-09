@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
+import contextlib
 import contextvars
 import datetime
 import inspect
@@ -421,6 +422,18 @@ class App(
     _context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
         pydantic.PrivateAttr(default_factory=dict)
     )
+
+    tokens: List[object] = []
+    """
+    OTEL context tokens for the current context manager. These tokens are how the OTEL
+    context api keeps track of what is changed in the context, and used to undo the changes.
+    """
+
+    span_context: Optional[contextlib.AbstractContextManager] = None
+    """
+    Span context manager. Required to help keep track of the appropriate span context
+    to enter/exit.
+    """
 
     def __init__(
         self,
@@ -884,16 +897,16 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return _App.__enter__(self)
+            return OTELApp.__enter__(self)
 
         ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
         ctx.token = token
-
-        # self._set_context_vars()
 
         return ctx
 
@@ -902,9 +915,11 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return _App.__exit__(self, exc_type, exc_value, exc_tb)
+            return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
@@ -921,9 +936,11 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return await _App.__aenter__(self)
+            return OTELApp.__enter__(self)
 
         ctx = core_instruments._RecordingContext(app=self)
 
@@ -939,9 +956,11 @@ class App(
         if self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
-            from trulens.experimental.otel_tracing.core.app import _App
+            from trulens.experimental.otel_tracing.core.instrument import (
+                App as OTELApp,
+            )
 
-            return await _App.__aexit__(self, exc_type, exc_value, exc_tb)
+            return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
