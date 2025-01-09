@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import os
 import tempfile
-from typing import Optional, Sequence
+from typing import Any, Optional, Sequence
 
 from opentelemetry.proto.common.v1.common_pb2 import AnyValue
 from opentelemetry.proto.common.v1.common_pb2 import ArrayValue
@@ -16,11 +16,14 @@ from opentelemetry.trace import StatusCode
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
 
-def convert_to_any_value(value) -> AnyValue:
+def convert_to_any_value(value: Any) -> AnyValue:
+    if isinstance(value, tuple):
+        value = list(value)
     any_value = AnyValue()
 
     if isinstance(value, str):
@@ -121,7 +124,12 @@ class TruLensDBSpanExporter(SpanExporter):
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         def check_if_trulens_span(span: ReadableSpan) -> bool:
-            return span.resource.attributes.get("service.name") == "trulens"
+            if not span.attributes:
+                return False
+
+            return bool(
+                span.attributes.get(SpanAttributes.GENERATED_BY_INSTRUMENTATION)
+            )
 
         trulens_spans = list(filter(check_if_trulens_span, spans))
 
@@ -159,21 +167,23 @@ class TruLensDBSpanExporter(SpanExporter):
                     "CREATE STAGE IF NOT EXISTS trulens_spans"
                 ).collect()
 
-                logger.debug("Uploading the csv file to the stage")
+                logger.debug("Uploading the protobuf file to the stage")
                 snowpark_session.sql(
                     f"PUT file://{tmp_file_path} @trulens_spans"
                 ).collect()
 
             except Exception as e:
-                logger.error(f"Error uploading the csv file to the stage: {e}")
+                logger.error(
+                    f"Error uploading the protobuf file to the stage: {e}"
+                )
                 return SpanExportResult.FAILURE
 
             try:
-                logger.debug("Removing the temporary csv file")
+                logger.debug("Removing the temporary protobuf file")
                 os.remove(tmp_file_path)
             except Exception as e:
                 # Not returning failure here since the export was technically a success
-                logger.error(f"Error removing the temporary csv file: {e}")
+                logger.error(f"Error removing the temporary protobuf file: {e}")
 
             return SpanExportResult.SUCCESS
 

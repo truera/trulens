@@ -68,3 +68,16 @@ def test_convert_to_any_value_unsupported_type():
         ValueError, match="Unsupported value type: <class 'set'>"
     ):
         convert_to_any_value(value)
+
+
+def test_convert_to_any_value_tuple():
+    value = ("test_string", 123, 123.45, True)
+    any_value = convert_to_any_value(value)
+    assert any_value.array_value == ArrayValue(
+        values=[
+            AnyValue(string_value="test_string"),
+            AnyValue(int_value=123),
+            AnyValue(double_value=123.45),
+            AnyValue(bool_value=True),
+        ]
+    )
