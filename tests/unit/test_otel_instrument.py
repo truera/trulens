@@ -11,6 +11,7 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -19,7 +20,7 @@ from tests.util.df_comparison import (
 
 
 class _TestApp:
-    @instrument()
+    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
 
@@ -124,7 +125,7 @@ class TestOtelInstrument(TruTestCase):
         # Compare results to expected.
         GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
         actual = self._get_events()
-        self.assertEqual(len(actual), 8)
+        self.assertEqual(len(actual), 10)
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
@@ -134,7 +135,7 @@ class TestOtelInstrument(TruTestCase):
             actual,
             ignore_locators=[
                 f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(8)
+                for i in range(10)
             ],
         )
 
