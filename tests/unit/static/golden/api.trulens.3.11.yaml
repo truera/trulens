@@ -141,7 +141,9 @@ trulens.core.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
+    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     wait_for_feedback_results: builtins.function
