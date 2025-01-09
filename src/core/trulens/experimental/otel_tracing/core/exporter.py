@@ -1,10 +1,14 @@
-import csv
 from datetime import datetime
 import logging
 import os
 import tempfile
 from typing import Optional, Sequence
 
+from opentelemetry.proto.common.v1.common_pb2 import AnyValue
+from opentelemetry.proto.common.v1.common_pb2 import ArrayValue
+from opentelemetry.proto.common.v1.common_pb2 import KeyValue
+from opentelemetry.proto.common.v1.common_pb2 import KeyValueList
+from opentelemetry.proto.trace.v1.trace_pb2 import Span as SpanProto
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExporter
 from opentelemetry.sdk.trace.export import SpanExportResult
@@ -14,6 +18,61 @@ from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
 
 logger = logging.getLogger(__name__)
+
+
+def convert_to_any_value(value) -> AnyValue:
+    any_value = AnyValue()
+
+    if isinstance(value, str):
+        any_value.string_value = value
+    elif isinstance(value, bool):
+        any_value.bool_value = value
+    elif isinstance(value, int):
+        any_value.int_value = value
+    elif isinstance(value, float):
+        any_value.double_value = value
+    elif isinstance(value, bytes):
+        any_value.bytes_value = value
+    elif isinstance(value, list):
+        array_value = ArrayValue()
+        for item in value:
+            array_value.values.append(convert_to_any_value(item))
+        any_value.array_value.CopyFrom(array_value)
+    elif isinstance(value, dict):
+        kv_list = KeyValueList()
+        for k, v in value.items():
+            kv = KeyValue(key=k, value=convert_to_any_value(v))
+            kv_list.values.append(kv)
+        any_value.kvlist_value.CopyFrom(kv_list)
+    else:
+        raise ValueError(f"Unsupported value type: {type(value)}")
+
+    return any_value
+
+
+def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
+    span_proto = SpanProto(
+        trace_id=span.context.trace_id.to_bytes(16, byteorder="big")
+        if span.context
+        else b"",
+        span_id=span.context.span_id.to_bytes(8, byteorder="big")
+        if span.context
+        else b"",
+        parent_span_id=span.parent.span_id.to_bytes(8, byteorder="big")
+        if span.parent
+        else b"",
+        name=span.name,
+        kind=SpanProto.SpanKind.SPAN_KIND_INTERNAL,
+        start_time_unix_nano=span.start_time if span.start_time else 0,
+        end_time_unix_nano=span.end_time if span.end_time else 0,
+        attributes=[
+            KeyValue(key=k, value=convert_to_any_value(v))
+            for k, v in span.attributes.items()
+        ]
+        if span.attributes
+        else None,
+    )
+    return span_proto
 
 
 def to_timestamp(timestamp: Optional[int]) -> datetime:
@@ -42,7 +101,7 @@ class TruLensDBSpanExporter(SpanExporter):
             event_id=str(context.span_id),
             record={
                 "name": span.name,
-                "kind": "SPAN_KIND_TRULENS",
+                "kind": SpanProto.SpanKind.SPAN_KIND_INTERNAL,
                 "parent_span_id": str(parent.span_id if parent else ""),
                 "status": "STATUS_CODE_ERROR"
                 if span.status.status_code == StatusCode.ERROR
@@ -62,10 +121,7 @@ class TruLensDBSpanExporter(SpanExporter):
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         def check_if_trulens_span(span: ReadableSpan) -> bool:
-            if not span.attributes:
-                return False
-
-            return span.attributes.get("kind") == "SPAN_KIND_TRULENS"
+            return span.resource.attributes.get("service.name") == "trulens"
 
         trulens_spans = list(filter(check_if_trulens_span, spans))
 
@@ -77,21 +133,21 @@ class TruLensDBSpanExporter(SpanExporter):
 
             try:
                 with tempfile.NamedTemporaryFile(
-                    delete=False, suffix=".csv", mode="w", newline=""
+                    delete=False, suffix=".pb", mode="wb"
                 ) as tmp_file:
                     tmp_file_path = tmp_file.name
                     logger.debug(
-                        f"Writing spans to the csv file: {tmp_file_path}"
+                        f"Writing spans to the protobuf file: {tmp_file_path}"
                     )
-                    writer = csv.writer(tmp_file)
-                    writer.writerow(["span"])
+
                     for span in trulens_spans:
-                        writer.writerow([span.to_json()])
+                        span_proto = convert_readable_span_to_proto(span)
+                        tmp_file.write(span_proto.SerializeToString())
                     logger.debug(
-                        f"Spans written to the csv file: {tmp_file_path}"
+                        f"Spans written to the protobuf file: {tmp_file_path}"
                     )
             except Exception as e:
-                logger.error(f"Error writing spans to the csv file: {e}")
+                logger.error(f"Error writing spans to the protobuf file: {e}")
                 return SpanExportResult.FAILURE
 
             try:

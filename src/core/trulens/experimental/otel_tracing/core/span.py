@@ -86,7 +86,6 @@ def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
 def set_general_span_attributes(
     span: Span, /, span_type: SpanAttributes.SpanType
 ) -> Span:
-    span.set_attribute("kind", "SPAN_KIND_TRULENS")
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
     span.set_attribute(
         SpanAttributes.APP_ID, str(get_baggage(SpanAttributes.APP_ID))
