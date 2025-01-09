@@ -114,7 +114,7 @@ def set_user_defined_attributes(
 
     final_attributes = validate_attributes(attributes_to_add)
 
-    prefix = f"trulens.{span_type}."
+    prefix = f"trulens.{span_type.value}."
 
     for key, value in final_attributes.items():
         span.set_attribute(prefix + key, value)
