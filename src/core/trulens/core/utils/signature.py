@@ -156,10 +156,6 @@ def main_output(func: Callable, ret: Any) -> str:
     Args:
         func: The main function whose main output we are guessing.
 
-        sig: The signature of the above function.
-
-        bindings: The arguments that were passed to that function.
-
         ret: The return value of the function.
     """
 
