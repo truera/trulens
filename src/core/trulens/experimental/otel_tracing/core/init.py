@@ -4,7 +4,6 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.exporter import (
@@ -23,14 +22,7 @@ def init(session: TruSession, debug: bool = False):
     provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(provider)
 
-    if debug:
-        logger.debug(
-            "Initializing OpenTelemetry with TruLens configuration for console debugging"
-        )
-        # Add a console exporter for debugging purposes
-        console_exporter = ConsoleSpanExporter()
-        console_processor = SimpleSpanProcessor(console_exporter)
-        provider.add_span_processor(console_processor)
+    session.experimental_enable_feature("otel_tracing")
 
     if session.connector:
         logger.debug("Exporting traces to the TruLens database")
