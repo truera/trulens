@@ -141,7 +141,9 @@ trulens.core.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
+    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     wait_for_feedback_results: builtins.function
@@ -538,9 +540,9 @@ trulens.core.feedback.feedback.Feedback:
     aggregator: typing.Union[trulens.core.utils.pyschema.Function, trulens.core.utils.pyschema.Method,
       builtins.NoneType]
     check_selectors: builtins.function
-    criteria: typing.Optional[builtins.str, builtins.NoneType]
     combinations: typing.Optional[trulens.core.schema.feedback.FeedbackCombinations,
       builtins.NoneType]
+    criteria: typing.Optional[builtins.str, builtins.NoneType]
     evaluate_deferred: builtins.staticmethod
     examples: typing.Optional[typing.List[typing.Tuple], builtins.NoneType]
     extract_selection: builtins.function
@@ -1654,6 +1656,12 @@ trulens.core.utils.serial.StepItemOrAttribute:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     get_item_or_attribute: builtins.function
+trulens.core.utils.signature:
+  __class__: builtins.module
+  highs: {}
+  lows:
+    main_input: builtins.function
+    main_output: builtins.function
 trulens.core.utils.text:
   __class__: builtins.module
   highs: {}
@@ -2308,6 +2316,7 @@ trulens.feedback.v2.feedback:
     ClassificationModel: pydantic._internal._model_construction.ModelMetaclass
     Coherence: pydantic._internal._model_construction.ModelMetaclass
     CompletionModel: pydantic._internal._model_construction.ModelMetaclass
+    Comprehensiveness: pydantic._internal._model_construction.ModelMetaclass
     Conciseness: pydantic._internal._model_construction.ModelMetaclass
     ContextRelevance: pydantic._internal._model_construction.ModelMetaclass
     Controversiality: pydantic._internal._model_construction.ModelMetaclass
@@ -2392,21 +2401,6 @@ trulens.feedback.v2.feedback.BinarySentimentModel:
     feedback: trulens.feedback.v2.feedback.Feedback
     id: builtins.str
     output_type: trulens.feedback.v2.feedback.FeedbackOutputType
-trulens.feedback.v2.feedback.Comprehensiveness:
-  __bases__:
-  - trulens.feedback.v2.feedback.Semantics
-  - trulens.feedback.v2.feedback.WithPrompt
-  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
-  __class__: pydantic._internal._model_construction.ModelMetaclass
-  attributes:
-    criteria: builtins.str
-    criteria_template: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
-    output_space: builtins.str
-    output_space_prompt: builtins.str
-    system_prompt: builtins.str
-    system_prompt_template: builtins.str
-    user_prompt: builtins.str
 trulens.feedback.v2.feedback.COTExplained:
   __bases__:
   - trulens.feedback.v2.feedback.Feedback
@@ -2440,6 +2434,21 @@ trulens.feedback.v2.feedback.CompletionModel:
     max_output_tokens: builtins.int
     max_prompt_tokens: builtins.int
     of_langchain_llm: builtins.staticmethod
+trulens.feedback.v2.feedback.Comprehensiveness:
+  __bases__:
+  - trulens.feedback.v2.feedback.Semantics
+  - trulens.feedback.v2.feedback.WithPrompt
+  - trulens.feedback.v2.feedback.CriteriaOutputSpaceMixin
+  __class__: pydantic._internal._model_construction.ModelMetaclass
+  attributes:
+    criteria: builtins.str
+    criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    output_space: builtins.str
+    output_space_prompt: builtins.str
+    system_prompt: builtins.str
+    system_prompt_template: builtins.str
+    user_prompt: builtins.str
 trulens.feedback.v2.feedback.Conciseness:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
@@ -2471,9 +2480,9 @@ trulens.feedback.v2.feedback.Controversiality:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2493,9 +2502,9 @@ trulens.feedback.v2.feedback.Criminality:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2627,9 +2636,9 @@ trulens.feedback.v2.feedback.Harmfulness:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2653,9 +2662,9 @@ trulens.feedback.v2.feedback.Helpfulness:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2667,9 +2676,9 @@ trulens.feedback.v2.feedback.Insensitivity:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2693,9 +2702,9 @@ trulens.feedback.v2.feedback.Maliciousness:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2707,9 +2716,9 @@ trulens.feedback.v2.feedback.Misogyny:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2799,9 +2808,9 @@ trulens.feedback.v2.feedback.Sentiment:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
@@ -2826,9 +2835,9 @@ trulens.feedback.v2.feedback.Stereotypes:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
-    languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
