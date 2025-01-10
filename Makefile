@@ -39,6 +39,7 @@ env-tests:
 		pytest-cov \
 		pytest-subtests \
 		ruff \
+		snowflake
 
 env-tests-required:
 	poetry install --only required \
