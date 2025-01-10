@@ -152,6 +152,8 @@ def run_dashboard(
         **env_opts,
     )
 
+    _ = proc
+
     started = threading.Event()
     tunnel_started = threading.Event()
     if notebook_utils.is_notebook():
@@ -219,7 +221,7 @@ def run_dashboard(
                         line  # store the url when dashboard is started
                     )
             else:
-                if "Network URL: " in line:
+                if "Local URL: " in line:
                     url = line.split(": ")[1]
                     url = url.rstrip()
                     print(f"Dashboard started at {url} .")
