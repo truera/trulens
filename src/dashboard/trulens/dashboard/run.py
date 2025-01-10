@@ -152,8 +152,6 @@ def run_dashboard(
         **env_opts,
     )
 
-    _ = proc
-
     started = threading.Event()
     tunnel_started = threading.Event()
     if notebook_utils.is_notebook():
