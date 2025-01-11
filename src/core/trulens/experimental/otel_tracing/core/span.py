@@ -87,8 +87,12 @@ def set_general_span_attributes(
     span: Span, /, span_type: SpanAttributes.SpanType
 ) -> Span:
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
+
     span.set_attribute(
-        SpanAttributes.APP_ID, str(get_baggage(SpanAttributes.APP_ID))
+        SpanAttributes.APP_NAME, str(get_baggage(SpanAttributes.APP_NAME))
+    )
+    span.set_attribute(
+        SpanAttributes.APP_VERSION, str(get_baggage(SpanAttributes.APP_VERSION))
     )
     span.set_attribute(
         SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))

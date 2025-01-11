@@ -112,7 +112,14 @@ class App(core_app.App):
             )
         )
         self.tokens.append(
-            context_api.attach(set_baggage(SpanAttributes.APP_ID, self.app_id))
+            context_api.attach(
+                set_baggage(SpanAttributes.APP_NAME, self.app_name)
+            )
+        )
+        self.tokens.append(
+            context_api.attach(
+                set_baggage(SpanAttributes.APP_VERSION, self.app_version)
+            )
         )
 
         # Use start_as_current_span as a context manager
@@ -132,7 +139,6 @@ class App(core_app.App):
         root_span.set_attribute(
             SpanAttributes.RECORD_ROOT.APP_VERSION, self.app_version
         )
-        root_span.set_attribute(SpanAttributes.RECORD_ROOT.APP_ID, self.app_id)
         root_span.set_attribute(
             SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
         )
@@ -141,7 +147,8 @@ class App(core_app.App):
 
     def __exit__(self, exc_type, exc_value, exc_tb):
         remove_baggage(SpanAttributes.RECORD_ID)
-        remove_baggage(SpanAttributes.APP_ID)
+        remove_baggage(SpanAttributes.APP_NAME)
+        remove_baggage(SpanAttributes.APP_VERSION)
 
         logger.debug("Exiting the OTEL app context.")
 
