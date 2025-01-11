@@ -141,7 +141,13 @@ class SQLAlchemyDB(core_db.DB):
                 "url" in self.engine_params
                 and "snowflake" in self.engine_params["url"]
             ):
-                self.engine_params.setdefault("isolation_level", "AUTOCOMMIT")
+                temp_engine = sa.create_engine(**self.engine_params)
+                if temp_engine.dialect.name == "snowflake":
+                    self.engine_params.setdefault(
+                        "isolation_level", "AUTOCOMMIT"
+                    )
+                # Dispose of the temporary engine
+                temp_engine.dispose()
             self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
