@@ -136,6 +136,12 @@ class SQLAlchemyDB(core_db.DB):
 
     def _reload_engine(self):
         if self.engine is None:
+            # Check if the dialect is snowflake and set isolation_level
+            if (
+                "url" in self.engine_params
+                and "snowflake" in self.engine_params["url"]
+            ):
+                self.engine_params.setdefault("isolation_level", "AUTOCOMMIT")
             self.engine = sa.create_engine(**self.engine_params)
         self.session = sessionmaker(self.engine, **self.session_params)
 
