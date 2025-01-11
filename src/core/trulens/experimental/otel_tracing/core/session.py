@@ -25,10 +25,6 @@ class _TruSession(core_session.TruSession):
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
     ):
-        assert isinstance(
-            exporter, otel_export_sdk.SpanExporter
-        ), "otel_exporter must be an OpenTelemetry SpanExporter."
-
         self._experimental_feature(
             flag=core_experimental.Feature.OTEL_TRACING, value=True, freeze=True
         )
@@ -43,6 +39,7 @@ class _TruSession(core_session.TruSession):
         resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
         provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
+        self._experimental_tracer_provider = provider
 
         # Export to the connector provided.
         provider.add_span_processor(
@@ -52,6 +49,10 @@ class _TruSession(core_session.TruSession):
         )
 
         if exporter:
+            assert isinstance(
+                exporter, otel_export_sdk.SpanExporter
+            ), "otel_exporter must be an OpenTelemetry SpanExporter."
+
             # When testing, use a simple span processor to avoid issues with batching/
             # asynchronous processing of the spans that results in the database not
             # being updated in time for the tests.

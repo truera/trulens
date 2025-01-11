@@ -45,6 +45,7 @@ from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
 
@@ -162,10 +163,14 @@ class TruSession(
         None
     )
 
+    _experimental_tracer_provider: Optional[TracerProvider] = (
+        pydantic.PrivateAttr(None)
+    )
+
     @property
     def experimental_otel_exporter(
         self,
-    ) -> Optional[SpanExporter]:  # Any = Optional[otel_export_sdk.SpanExporter]
+    ) -> Optional[SpanExporter]:
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -176,14 +181,37 @@ class TruSession(
         return self._experimental_otel_exporter
 
     @experimental_otel_exporter.setter
-    def experimental_otel_exporter(
-        self, value: Optional[SpanExporter]
-    ):  # Any = otel_export_sdk.SpanExporter
+    def experimental_otel_exporter(self, value: Optional[SpanExporter]):
         otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
         from trulens.experimental.otel_tracing.core.session import _TruSession
 
         _TruSession._setup_otel_exporter(self, value)
+
+    def experimental_force_flush(
+        self, timeout_millis: Optional[int] = None
+    ) -> bool:
+        """
+        Force flush the OpenTelemetry exporters.
+
+        Args:
+            timeout_millis: The maximum amount of time to wait for spans to be
+                processed.
+
+        Returns:
+            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+        """
+        timeout_millis = timeout_millis or 300000
+
+        if (
+            not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            or self._experimental_tracer_provider is None
+        ):
+            return False
+
+        return self._experimental_tracer_provider.force_flush(timeout_millis)
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
