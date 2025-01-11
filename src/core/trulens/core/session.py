@@ -45,6 +45,7 @@ from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
 
 tqdm = None
@@ -157,16 +158,14 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    _experimental_otel_exporter: Optional[
-        Any
-    ] = (  # Any = otel_export_sdk.SpanExporter
-        pydantic.PrivateAttr(None)
+    _experimental_otel_exporter: Optional[SpanExporter] = pydantic.PrivateAttr(
+        None
     )
 
     @property
     def experimental_otel_exporter(
         self,
-    ) -> Any:  # Any = Optional[otel_export_sdk.SpanExporter]
+    ) -> Optional[SpanExporter]:  # Any = Optional[otel_export_sdk.SpanExporter]
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -178,7 +177,7 @@ class TruSession(
 
     @experimental_otel_exporter.setter
     def experimental_otel_exporter(
-        self, value: Optional[Any]
+        self, value: Optional[SpanExporter]
     ):  # Any = otel_export_sdk.SpanExporter
         otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
@@ -205,9 +204,7 @@ class TruSession(
                 Iterable[core_experimental.Feature],
             ]
         ] = None,
-        _experimental_otel_exporter: Optional[
-            Any
-        ] = None,  # Any = otel_export_sdk.SpanExporter
+        _experimental_otel_exporter: Optional[SpanExporter] = None,
         **kwargs,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -236,24 +233,33 @@ class TruSession(
                 f"Cannot provide both `connector` and connector argument(s) {extra_keys}."
             )
 
+        connector = connector or core_connector.DefaultDBConnector(
+            **connector_args
+        )
+
         super().__init__(
-            connector=connector
-            or core_connector.DefaultDBConnector(**connector_args),
+            connector=connector,
             **self_args,
         )
+
+        self.connector
 
         # for WithExperimentalSettings mixin
         if experimental_feature_flags is not None:
             self.experimental_set_features(experimental_feature_flags)
 
-        if _experimental_otel_exporter is not None:
-            otel_tracing_feature.assert_optionals_installed()
+        if _experimental_otel_exporter is not None or self.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
             from trulens.experimental.otel_tracing.core.session import (
                 _TruSession,
             )
 
-            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
+            _TruSession._setup_otel_exporter(
+                self, connector, _experimental_otel_exporter
+            )
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
