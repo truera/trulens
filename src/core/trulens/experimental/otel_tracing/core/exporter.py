@@ -109,6 +109,16 @@ def to_timestamp(timestamp: Optional[int]) -> datetime:
 
 
 def check_if_trulens_span(span: ReadableSpan) -> bool:
+    """
+    Check if a given span is a TruLens span.
+    This function checks the attributes of the provided span to determine if it
+    contains a TruLens-specific attribute, identified by the presence of
+    `SpanAttributes.RECORD_ID`.
+    Args:
+        span (ReadableSpan): The span to be checked.
+    Returns:
+        bool: True if the span contains the TruLens-specific attribute, False otherwise.
+    """
     if not span.attributes:
         return False
 

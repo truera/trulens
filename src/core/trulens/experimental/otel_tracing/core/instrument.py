@@ -104,12 +104,6 @@ class OTELRecordingContext(core_app.App):
     The ID of the input that the recording context is currently processing.
     """
 
-    def _set_run_information(self, *, run_name: str, input_id: str):
-        self.run_name = run_name
-        self.input_id = input_id
-
-        return self
-
     # For use as a context manager.
     def __enter__(self):
         logger.debug("Entering the OTEL app context.")
