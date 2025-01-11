@@ -38,8 +38,7 @@ env-tests:
 		pytest-azurepipelines \
 		pytest-cov \
 		pytest-subtests \
-		ruff \
-		snowflake
+		ruff
 
 env-tests-required:
 	poetry install --only required \

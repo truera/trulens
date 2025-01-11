@@ -270,8 +270,6 @@ class TruSession(
             **self_args,
         )
 
-        self.connector
-
         # for WithExperimentalSettings mixin
         if experimental_feature_flags is not None:
             self.experimental_set_features(experimental_feature_flags)
