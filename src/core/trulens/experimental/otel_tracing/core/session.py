@@ -39,10 +39,18 @@ class _TruSession(core_session.TruSession):
         resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
         provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
-        self._experimental_tracer_provider = provider
+
+        # The opentelemetry.sdk.trace.TracerProvider class is what OTEL uses under the hood,
+        # even though OTEL only chooses to expose a subset of the class attributes in
+        # the opentelemetry.trace module.
+        # See : https://github.com/search?q=repo%3Aopen-telemetry%2Fopentelemetry-python+get_tracer_provider&type=code
+        # for examples of how the TracerProvider class is used in the OTEL codebase.
+        # Hence, here we force the typing to ignore the error.
+        tracer_provider: TracerProvider = trace.get_tracer_provider()  # type: ignore
+        self._experimental_tracer_provider = tracer_provider
 
         # Export to the connector provided.
-        provider.add_span_processor(
+        tracer_provider.add_span_processor(
             otel_export_sdk.BatchSpanProcessor(
                 TruLensOTELSpanExporter(connector)
             )
@@ -57,4 +65,4 @@ class _TruSession(core_session.TruSession):
             # asynchronous processing of the spans that results in the database not
             # being updated in time for the tests.
             db_processor = otel_export_sdk.BatchSpanProcessor(exporter)
-            provider.add_span_processor(db_processor)
+            tracer_provider.add_span_processor(db_processor)

@@ -180,17 +180,7 @@ class TruSession(
 
         return self._experimental_otel_exporter
 
-    @experimental_otel_exporter.setter
-    def experimental_otel_exporter(self, value: Optional[SpanExporter]):
-        otel_tracing_feature._FeatureSetup.assert_optionals_installed()
-
-        from trulens.experimental.otel_tracing.core.session import _TruSession
-
-        _TruSession._setup_otel_exporter(self, value)
-
-    def experimental_force_flush(
-        self, timeout_millis: Optional[int] = None
-    ) -> bool:
+    def experimental_force_flush(self, timeout_millis: int = 300000) -> bool:
         """
         Force flush the OpenTelemetry exporters.
 
@@ -201,7 +191,6 @@ class TruSession(
         Returns:
             False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
         """
-        timeout_millis = timeout_millis or 300000
 
         if (
             not self.experimental_feature(
