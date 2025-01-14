@@ -898,7 +898,7 @@ class App(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
+                OTELRecordingContext as OTELApp,
             )
 
             return OTELApp.__enter__(self)
@@ -916,15 +916,13 @@ class App(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
+                OTELRecordingContext as OTELApp,
             )
 
             return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
-
-        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value
@@ -937,7 +935,7 @@ class App(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
+                OTELRecordingContext as OTELApp,
             )
 
             return OTELApp.__enter__(self)
@@ -957,7 +955,7 @@ class App(
             core_experimental.Feature.OTEL_TRACING
         ):
             from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
+                OTELRecordingContext as OTELApp,
             )
 
             return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
@@ -971,6 +969,22 @@ class App(
             raise exc_value
 
         return
+
+    def __call__(self, *, run_name: str, input_id: str):
+        if not self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            raise RuntimeError("OTEL Tracing is not enabled for this session.")
+
+        from trulens.experimental.otel_tracing.core.instrument import (
+            OTELRecordingContext as OTELApp,
+        )
+
+        # Pylance shows an error here, but it is likely a false positive. due to the overriden
+        # model dump returning json instead of a dict.
+        return OTELApp.model_construct(
+            **self.model_dump(), run_name=run_name, input_id=input_id
+        )
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars

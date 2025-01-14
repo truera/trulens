@@ -59,11 +59,20 @@ class SpanAttributes:
     RECORD_ID = BASE + "record_id"
     """ID of the record that the span belongs to."""
 
-    APP_ID = BASE + "app_id"
-    """ID of the app that the span belongs to."""
+    APP_NAME = BASE + "app_name"
+    """Fully qualified name of the app that the span belongs to."""
+
+    APP_VERSION = BASE + "app_version"
+    """Name of the version that the span belongs to."""
 
     ROOT_SPAN_ID = BASE + "root_span_id"
     """ID of the root span of the record that the span belongs to."""
+
+    RUN_NAME = BASE + "run_name"
+    """Name of the run that the span belongs to."""
+
+    INPUT_ID = BASE + "input_id"
+    """ID of the input that the span belongs to."""
 
     class SpanType(str, Enum):
         """Span type attribute values.
@@ -201,8 +210,6 @@ class SpanAttributes:
 
         APP_VERSION = base + ".app_version"
         """Version of the app for whom this is the root."""
-
-        APP_ID = base + ".app_id"
 
         RECORD_ID = base + ".record_id"
 
