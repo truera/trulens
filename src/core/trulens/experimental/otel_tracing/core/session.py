@@ -1,3 +1,8 @@
+"""OTEL tracing additions on top of TruSession.
+
+Adds the code for setting up an otel exporter.
+"""
+
 from typing import Any, Optional
 
 from trulens.core import experimental as core_experimental
