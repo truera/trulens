@@ -9,3 +9,4 @@ trulens-dashboard >= 1.0.0
 # talk about these packages as required.
 opentelemetry-api >= 1.0.0
 opentelemetry-sdk >= 1.0.0
+opentelemetry-proto >= 1.0.0

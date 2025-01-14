@@ -49,6 +49,7 @@ importlib-resources = "^6.0"
 trulens-otel-semconv = { version = "^1.0.0", optional = true }
 opentelemetry-api = { version = "^1.0.0", optional = true }
 opentelemetry-sdk = { version = "^1.0.0", optional = true }
+opentelemetry-proto = { version = "^1.0.0", optional = true }
 
 [tool.poetry.group.tqdm]
 optional = true

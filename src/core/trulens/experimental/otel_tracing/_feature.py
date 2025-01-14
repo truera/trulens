@@ -8,7 +8,7 @@ FEATURE = experimental.Feature.OTEL_TRACING
 """Feature controlling the use of this module."""
 
 REQUIREMENT = import_utils.format_import_errors(
-    ["opentelemetry-api", "opentelemetry-sdk"],
+    ["opentelemetry-api", "opentelemetry-sdk", "opentelemetry-proto"],
     purpose="otel_tracing experimental feature",
 )
 """Optional modules required for the otel_tracing experimental feature."""
