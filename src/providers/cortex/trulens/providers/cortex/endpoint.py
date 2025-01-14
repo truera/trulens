@@ -26,6 +26,7 @@ class CortexCallback(core_endpoint.EndpointCallback):
             if self._model_costs is None:
                 # the credit consumption table needs to be kept up-to-date with
                 # the latest cost information https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf#page=9.
+                # We should refer to the latest model availability of REST api https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-llm-rest-api#model-availability
 
                 with open(
                     os.path.join(
