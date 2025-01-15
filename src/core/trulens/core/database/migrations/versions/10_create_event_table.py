@@ -15,7 +15,17 @@ branch_labels = None
 depends_on = None
 
 
+def _is_snowflake_dialect(config):
+    return (
+        config.get_main_option("sqlalchemy.url").startswith("snowflake")
+        or config.get_main_option("dialect") == "snowflake"
+    )
+
+
 def upgrade(config) -> None:
+    if _is_snowflake_dialect(config):
+        return
+
     prefix = config.get_main_option("trulens.table_prefix")
 
     if prefix is None:
@@ -36,6 +46,9 @@ def upgrade(config) -> None:
 
 
 def downgrade(config) -> None:
+    if _is_snowflake_dialect(config):
+        return
+
     prefix = config.get_main_option("trulens.table_prefix")
 
     if prefix is None:
