@@ -367,7 +367,9 @@ def get_class_members(
     # Cannot get attributes of pydantic models in the above ways so we have
     # special handling for them here:
     fields_members = []
-    if hasattr(class_, "model_fields"):  # pydantic.BaseModel (v2)
+    if hasattr(class_, "model_fields") and hasattr(
+        class_.model_fields, "items"
+    ):  # pydantic.BaseModel (v2)
         fields_members = [
             (name, field.default, field.annotation)
             for name, field in class_.model_fields.items()
