@@ -317,7 +317,7 @@ class CriteriaOutputSpaceMixin:
                 criteria, output_space
             )
             criteria = validated.criteria
-        output_space_prompt = validated.get_output_scale_prompt()
+            output_space_prompt = validated.get_output_scale_prompt()
 
         prompt = cleandoc(
             cls.system_prompt_template.format(
