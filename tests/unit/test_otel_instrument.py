@@ -2,6 +2,7 @@
 Tests for OTEL instrument decorator.
 """
 
+import os
 from unittest import main
 
 import pandas as pd
@@ -72,6 +73,7 @@ class TestOtelInstrument(TruTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
         cls.clear_TruSession_singleton()
         tru_session = TruSession()
         tru_session.experimental_enable_feature("otel_tracing")
