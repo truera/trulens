@@ -301,7 +301,7 @@ class CriteriaOutputSpaceMixin:
         max_score: int,
         criteria: Optional[str] = None,
         output_space: Optional[str] = None,
-        examples: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
         if criteria is None and output_space is None:
             return cls.system_prompt
@@ -317,13 +317,14 @@ class CriteriaOutputSpaceMixin:
                 criteria, output_space
             )
             criteria = validated.criteria
-            output_space_prompt = validated.get_output_scale_prompt()
-            prompt = cleandoc(
-                cls.system_prompt_template.format(
-                    output_space_prompt=output_space_prompt,
-                    criteria=criteria,
-                )
+        output_space_prompt = validated.get_output_scale_prompt()
+
+        prompt = cleandoc(
+            cls.system_prompt_template.format(
+                output_space_prompt=output_space_prompt,
+                criteria=criteria,
             )
+        )
 
         if examples is not None:
             fewshot_examples = FewShotExamples.from_examples_list(examples)
