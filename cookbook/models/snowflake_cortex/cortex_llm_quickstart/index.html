@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../../local_and_OSS_models/ollama_quickstart/">
+        <link rel="prev" href="../cortex_finetuning_experiments/">
       
       
-        <link rel="next" href="../cortex_finetuning_experiments/">
+        <link rel="next" href="../../../use_cases/context_filters/">
       
       
       <link rel="icon" href="../../../../img/favicon.ico">
@@ -22,7 +22,7 @@
     
     
       
-        <title>❄️ Snowflake Arctic Quickstart with Cortex LLM Functions - 🦑 TruLens</title>
+        <title>❄️ Snowflake Quickstart with Cortex LLM Functions - 🦑 TruLens</title>
       
     
     
@@ -88,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#snowflake-arctic-quickstart-with-cortex-llm-functions" class="md-skip">
+        <a href="#snowflake-quickstart-with-cortex-llm-functions" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ❄️ Snowflake Arctic Quickstart with Cortex LLM Functions
+              ❄️ Snowflake Quickstart with Cortex LLM Functions
             
           </span>
         </div>
@@ -8714,6 +8714,27 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cortex_finetuning_experiments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cortex Finetuning Experiments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -8730,7 +8751,7 @@
           
   
   <span class="md-ellipsis">
-    ❄️ Snowflake Arctic Quickstart with Cortex LLM Functions
+    ❄️ Snowflake Quickstart with Cortex LLM Functions
   </span>
   
 
@@ -8741,7 +8762,7 @@
         
   
   <span class="md-ellipsis">
-    ❄️ Snowflake Arctic Quickstart with Cortex LLM Functions
+    ❄️ Snowflake Quickstart with Cortex LLM Functions
   </span>
   
 
@@ -8820,27 +8841,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cortex_finetuning_experiments/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Cortex Finetuning Experiments
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -10644,11 +10644,11 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="snowflake-arctic-quickstart-with-cortex-llm-functions">❄️ Snowflake Arctic Quickstart with Cortex LLM Functions<a class="anchor-link" href="#snowflake-arctic-quickstart-with-cortex-llm-functions">¶</a></h1><p>In this quickstart you will learn build and evaluate a RAG application with Snowflake Arctic.</p>
-<p>Building and evaluating RAG applications with Snowflake Arctic offers developers a unique opportunity to leverage a top-tier, enterprise-focused LLM that is both cost-effective and open-source. Arctic excels in enterprise tasks like SQL generation and coding, providing a robust foundation for developing intelligent applications with significant cost savings. <a href="https://www.snowflake.com/blog/arctic-open-efficient-foundation-language-models-snowflake/">Learn more about Snowflake Arctic</a></p>
-<p>In this example, we will use Arctic Embed (<code>snowflake-arctic-embed-m</code>) as our embedding model via HuggingFace, and Arctic, a 480B hybrid MoE LLM for both generation and as the LLM to power TruLens feedback functions. The Arctic LLM is fully-mananaged by <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions">Cortex LLM functions</a></p>
+<h1 id="snowflake-quickstart-with-cortex-llm-functions">❄️ Snowflake Quickstart with Cortex LLM Functions<a class="anchor-link" href="#snowflake-quickstart-with-cortex-llm-functions">¶</a></h1><p>In this quickstart you will learn build and evaluate a RAG application with Snowflake Cortex LLM Functions.</p>
+<p>Building and evaluating RAG applications with Snowflake Cortex offers developers a unique opportunity to leverage a top-tier, enterprise-focused LLM that is both cost-effective and open-source. Cortex excels in enterprise tasks like SQL generation and coding, providing a robust foundation for developing intelligent applications with significant cost savings.</p>
+<p>In this example, we will use Arctic Embed (<code>snowflake-arctic-embed-m</code>) as our embedding model via HuggingFace, and LLM of your choice for both generation and as the LLM judge to power TruLens feedback functions. The LLM models are fully-mananaged by <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/llm-functions">Cortex LLM functions</a></p>
 <p>Note, you'll need to have an <a href="https://signup.snowflake.com/">active Snowflake account</a> to run Cortex LLM functions from Snowflake's data warehouse.</p>
-<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/examples/expositional/models/snowflake_cortex/arctic_quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a></p>
+<p><a href="https://colab.research.google.com/github/truera/trulens/blob/main/examples/expositional/models/snowflake_cortex/cortex_llm_quickstart.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg"/></a></p>
 </div>
 </div>
 </div>
@@ -11030,7 +11030,7 @@ session.reset_database()</div>
 <span class="s2">            </span><span class="si">{</span><span class="n">context_str</span><span class="si">}</span>
 <span class="s2">            Given this information, please answer the question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span>
 <span class="s2">        """</span>
-        <span class="n">resp</span> <span class="o">=</span> <span class="n">Complete</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">'snowflake-arctic'</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="p">[{</span><span class="s1">'role'</span><span class="p">:</span> <span class="s1">'user'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}],</span> <span class="n">session</span><span class="o">=</span><span class="n">snowpark_session</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">Complete</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">'mistral-large2'</span><span class="p">,</span> <span class="n">prompt</span><span class="o">=</span><span class="p">[{</span><span class="s1">'role'</span><span class="p">:</span> <span class="s1">'user'</span><span class="p">,</span> <span class="s1">'content'</span><span class="p">:</span> <span class="n">prompt</span><span class="p">}],</span> <span class="n">session</span><span class="o">=</span><span class="n">snowpark_session</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">resp</span>
 
@@ -11069,7 +11069,7 @@ class RAG_from_scratch:
             {context_str}
             Given this information, please answer the question: {query}
         """
-        resp = Complete(model='snowflake-arctic', prompt=[{'role': 'user', 'content': prompt}], session=snowpark_session)
+        resp = Complete(model='mistral-large2', prompt=[{'role': 'user', 'content': prompt}], session=snowpark_session)
         
         return resp
 
@@ -11124,7 +11124,7 @@ rag = RAG_from_scratch()</div>
 
 <span class="n">provider</span> <span class="o">=</span> <span class="n">Cortex</span><span class="p">(</span>
     <span class="n">snowpark_session</span><span class="o">=</span><span class="n">snowpark_session</span><span class="p">,</span>
-    <span class="n">model_engine</span><span class="o">=</span><span class="s2">"snowflake-arctic"</span><span class="p">,</span>
+    <span class="n">model_engine</span><span class="o">=</span><span class="s2">"llama3.1-8b"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -11166,7 +11166,7 @@ from trulens.providers.cortex import Cortex
 
 provider = Cortex(
     snowpark_session=snowpark_session,
-    model_engine="snowflake-arctic",
+    model_engine="llama3.1-8b",
 )
 
 
