@@ -1245,8 +1245,8 @@ class AddInstruments:
         of_cls: type,
         name: str,
         *,
-        span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-        attributes: Attributes = {},
+        span_type: Optional[SpanAttributes.SpanType] = None,
+        span_attributes: Attributes = None,
     ) -> None:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
@@ -1259,6 +1259,8 @@ class AddInstruments:
             InstrumentedMethod(
                 method=name,
                 class_filter=of_cls,
+                span_type=span_type,
+                span_attributes=span_attributes,
             )
         )
 
