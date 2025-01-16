@@ -4,7 +4,7 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional, Sequence
+from typing import Any, Callable, ClassVar, Dict, List, Optional, Sequence
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
@@ -18,8 +18,8 @@ from pydantic import Field
 from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
+from trulens.core.instruments import InstrumentedMethod
 from trulens.core.schema import select as select_schema
-from trulens.core.utils import containers as container_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -79,42 +79,46 @@ class LangChainInstrument(core_instruments.Instrument):
         """Filter for classes to be instrumented."""
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, core_instruments.ClassFilter] = (
-            container_utils.dict_set_with_multikey(
-                {},
-                {
-                    (
-                        "invoke",
-                        "ainvoke",
-                        "stream",
-                        "astream",
-                    ): Runnable,
-                    ("save_context", "clear"): BaseMemory,
-                    (
-                        "run",
-                        "arun",
-                        "_call",
-                        "__call__",
-                        "_acall",
-                        "acall",
-                    ): Chain,
-                    (
-                        "_get_relevant_documents",
-                        "get_relevant_documents",
-                        "aget_relevant_documents",
-                        "_aget_relevant_documents",
-                    ): RunnableSerializable,
-                    # "format_prompt": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                    # "format": lambda o: isinstance(o, langchain.prompts.base.BasePromptTemplate),
-                    # the prompt calls might be too small to be interesting
-                    ("plan", "aplan"): (
-                        BaseSingleActionAgent,
-                        BaseMultiActionAgent,
-                    ),
-                    ("_arun", "_run"): BaseTool,
-                },
-            )
-        )
+        METHODS: List[InstrumentedMethod] = [
+            InstrumentedMethod("invoke", Runnable),
+            InstrumentedMethod("ainvoke", Runnable),
+            InstrumentedMethod("stream", Runnable),
+            InstrumentedMethod("astream", Runnable),
+            InstrumentedMethod("save_context", BaseMemory),
+            InstrumentedMethod("clear", BaseMemory),
+            InstrumentedMethod("run", Chain),
+            InstrumentedMethod("arun", Chain),
+            InstrumentedMethod("_call", Chain),
+            InstrumentedMethod("__call__", Chain),
+            InstrumentedMethod("_acall", Chain),
+            InstrumentedMethod("acall", Chain),
+            InstrumentedMethod(
+                "_get_relevant_documents",
+                RunnableSerializable,
+                *core_instruments.Instrument.Default.retrieval_span("query"),
+            ),
+            InstrumentedMethod(
+                "get_relevant_documents",
+                RunnableSerializable,
+                *core_instruments.Instrument.Default.retrieval_span("query"),
+            ),
+            InstrumentedMethod(
+                "aget_relevant_documents",
+                RunnableSerializable,
+                *core_instruments.Instrument.Default.retrieval_span("query"),
+            ),
+            InstrumentedMethod(
+                "_aget_relevant_documents",
+                RunnableSerializable,
+                *core_instruments.Instrument.Default.retrieval_span("query"),
+            ),
+            InstrumentedMethod("plan", BaseSingleActionAgent),
+            InstrumentedMethod("aplan", BaseSingleActionAgent),
+            InstrumentedMethod("plan", BaseMultiActionAgent),
+            InstrumentedMethod("aplan", BaseMultiActionAgent),
+            InstrumentedMethod("_arun", BaseTool),
+            InstrumentedMethod("_run", BaseTool),
+        ]
         """Methods to be instrumented.
 
         Key is method name and value is filter for objects that need those

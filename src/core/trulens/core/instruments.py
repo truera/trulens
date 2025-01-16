@@ -43,13 +43,15 @@ from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.utils import containers as container_utils
+from trulens.core.session import TruSession
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
+from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -374,6 +376,14 @@ class _RecordingContext:
 ClassFilter = Union[Type, Tuple[Type, ...]]
 
 
+@dataclasses.dataclass
+class InstrumentedMethod:
+    method: str
+    class_filter: ClassFilter
+    span_type: Optional[SpanAttributes.SpanType] = None
+    span_attributes: Attributes = None
+
+
 def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
     """Create a disjunction of two class filters.
 
@@ -440,11 +450,30 @@ class Instrument:
         CLASSES = set([core_feedback.Feedback])
         """Classes to instrument."""
 
-        METHODS: Dict[str, ClassFilter] = {"__call__": core_feedback.Feedback}
+        METHODS = [InstrumentedMethod("__call__", core_feedback.Feedback)]
         """Methods to instrument.
 
         Methods matching name have to pass the filter to be instrumented.
         """
+
+        @staticmethod
+        def retrieval_span(
+            query_argname: str,
+        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
+            return (
+                SpanAttributes.SpanType.RETRIEVAL,
+                # TODO(this_pr): convert all args to kwargs in general.
+                lambda ret, exception, *args, **kwargs: {
+                    SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs[query_argname]
+                    if query_argname in kwargs
+                    else args[
+                        1
+                    ],  # TODO: this doesn't even make sense without converting everything to kwargs!
+                    SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
+                        curr.page_content for curr in ret
+                    ],
+                },
+            )
 
     def print_instrumentation(self) -> None:
         """Print out description of the modules, classes, methods this class
@@ -475,7 +504,9 @@ class Instrument:
 
                 print(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
 
-                for method, class_filter in self.include_methods.items():
+                for instrumented_method in self.include_methods:
+                    method = instrumented_method.method
+                    class_filter = instrumented_method.class_filter
                     if class_filter_matches(
                         f=class_filter, obj=cls
                     ) and python_utils.safe_hasattr(cls, method):
@@ -516,7 +547,7 @@ class Instrument:
         self,
         include_modules: Optional[Iterable[str]] = None,
         include_classes: Optional[Iterable[type]] = None,
-        include_methods: Optional[Dict[str, ClassFilter]] = None,
+        include_methods: Optional[List[InstrumentedMethod]] = None,
         app: Optional[WithInstrumentCallbacks] = None,
     ):
         if include_modules is None:
@@ -524,21 +555,15 @@ class Instrument:
         if include_classes is None:
             include_classes = []
         if include_methods is None:
-            include_methods = {}
+            include_methods = []
 
         self.include_modules = Instrument.Default.MODULES.union(
             set(include_modules)
         )
-
         self.include_classes = Instrument.Default.CLASSES.union(
             set(include_classes)
         )
-
-        self.include_methods = container_utils.dict_merge_with(
-            dict1=Instrument.Default.METHODS,
-            dict2=include_methods,
-            merge=class_filter_disjunction,
-        )
+        self.include_methods = Instrument.Default.METHODS + include_methods
 
         # NOTE(piotrm): This is a weakref to prevent capturing a reference to
         # the app in method wrapper closures.
@@ -567,6 +592,8 @@ class Instrument:
         method_name: str,
         cls: type,
         obj: object,
+        span_type: Optional[SpanAttributes.SpanType] = None,
+        span_attributes: Optional[Attributes] = None,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
@@ -576,18 +603,19 @@ class Instrument:
         if self.app.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
-            from trulens.experimental.otel_tracing.core.instruments import (
-                _Instrument,
+            from trulens.experimental.otel_tracing.core.instrument import (
+                instrument,
             )
 
-            return _Instrument.tracked_method_wrapper(
-                self,
-                query=query,
-                func=func,
-                method_name=method_name,
-                cls=cls,
-                obj=obj,
+            if span_type is None:
+                span_type = SpanAttributes.SpanType.UNKNOWN
+            wrapper = instrument(
+                span_type=span_type,
+                attributes=span_attributes,
             )
+            # return wrapper(func)?
+            of_cls_method = getattr(cls, method_name)
+            return wrapper(of_cls_method)
 
         if python_utils.safe_hasattr(func, "__func__"):
             raise ValueError("Function expected but method received.")
@@ -1090,7 +1118,9 @@ class Instrument:
 
             print(f"instrumenting {obj.__class__} for base {base}")
 
-            for method_name, class_filter in self.include_methods.items():
+            for instrumented_method in self.include_methods:
+                method_name = instrumented_method.method
+                class_filter = instrumented_method.class_filter
                 if python_utils.safe_hasattr(base, method_name):
                     if not class_filter_matches(f=class_filter, obj=obj):
                         continue
@@ -1129,6 +1159,8 @@ class Instrument:
                             method_name=method_name,
                             cls=base,
                             obj=obj,
+                            span_type=instrumented_method.span_type,
+                            span_attributes=instrumented_method.span_attributes,
                         ),
                     )
 
@@ -1209,19 +1241,40 @@ class AddInstruments:
     """Utilities for adding more things to default instrumentation filters."""
 
     @classmethod
-    def method(cls, of_cls: type, name: str) -> None:
+    def method(
+        cls,
+        of_cls: type,
+        name: str,
+        *,
+        span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
+        attributes: Attributes = {},
+    ) -> None:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
-        print("adding method", of_cls, name, of_cls.__module__)
+        if TruSession().experimental_feature(  # TODO: this creates `TruSession` if it's not already created which is problematic.
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            if not python_utils.safe_hasattr(of_cls, name):
+                raise ValueError(f"Method {name} not found in class {of_cls}.")
+            from trulens.experimental.otel_tracing.core.instrument import (
+                instrument,
+            )
 
-        Instrument.Default.MODULES.add(of_cls.__module__)
-        Instrument.Default.CLASSES.add(of_cls)
+            wrapper = instrument(span_type=span_type, attributes=attributes)
+            of_cls_method = getattr(of_cls, name)
+            setattr(of_cls, name, wrapper(of_cls_method))
+        else:
+            print("adding method", of_cls, name, of_cls.__module__)
 
-        check_o: ClassFilter = Instrument.Default.METHODS.get(name, ())
-        Instrument.Default.METHODS[name] = class_filter_disjunction(
-            check_o, of_cls
-        )
+            Instrument.Default.MODULES.add(of_cls.__module__)
+            Instrument.Default.CLASSES.add(of_cls)
+            Instrument.Default.METHODS.append(
+                InstrumentedMethod(
+                    method=name,
+                    class_filter=of_cls,
+                )
+            )
 
     @classmethod
     def methods(cls, of_cls: type, names: Iterable[str]) -> None:

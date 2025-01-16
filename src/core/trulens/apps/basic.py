@@ -5,11 +5,12 @@ from inspect import Signature
 from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, Optional
+from typing import Any, Callable, ClassVar, List, Optional
 
 from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
+from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
 
 logger = logging.getLogger(__name__)
@@ -49,9 +50,9 @@ class TruBasicCallableInstrument(core_instruments.Instrument):
         CLASSES = lambda: {TruWrapperApp}
 
         # Instrument only methods with these names and of these classes.
-        METHODS: Dict[str, core_instruments.ClassFilter] = {
-            "_call": TruWrapperApp
-        }
+        METHODS: List[InstrumentedMethod] = [
+            InstrumentedMethod("_call", TruWrapperApp)
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(
