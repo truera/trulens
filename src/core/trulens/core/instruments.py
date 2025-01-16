@@ -43,7 +43,6 @@ from trulens.core.feedback import feedback as core_feedback
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import types as types_schema
-from trulens.core.session import TruSession
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
@@ -1252,29 +1251,16 @@ class AddInstruments:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
-        if TruSession().experimental_feature(  # TODO: this creates `TruSession` if it's not already created which is problematic.
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            if not python_utils.safe_hasattr(of_cls, name):
-                raise ValueError(f"Method {name} not found in class {of_cls}.")
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument,
-            )
+        print("adding method", of_cls, name, of_cls.__module__)
 
-            wrapper = instrument(span_type=span_type, attributes=attributes)
-            of_cls_method = getattr(of_cls, name)
-            setattr(of_cls, name, wrapper(of_cls_method))
-        else:
-            print("adding method", of_cls, name, of_cls.__module__)
-
-            Instrument.Default.MODULES.add(of_cls.__module__)
-            Instrument.Default.CLASSES.add(of_cls)
-            Instrument.Default.METHODS.append(
-                InstrumentedMethod(
-                    method=name,
-                    class_filter=of_cls,
-                )
+        Instrument.Default.MODULES.add(of_cls.__module__)
+        Instrument.Default.CLASSES.add(of_cls)
+        Instrument.Default.METHODS.append(
+            InstrumentedMethod(
+                method=name,
+                class_filter=of_cls,
             )
+        )
 
     @classmethod
     def methods(cls, of_cls: type, names: Iterable[str]) -> None:
