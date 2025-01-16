@@ -55,8 +55,8 @@ class _TestApp:
         return "nested3"
 
 
-class TestOtelInstrument(OtelAppTestCase):
-    def test_instrument_decorator(self) -> None:
+class TestOtelTruCustom(OtelAppTestCase):
+    def test_smoke(self) -> None:
         # Set up.
         tru_session = TruSession()
         tru_session.reset_database()
@@ -69,7 +69,9 @@ class TestOtelInstrument(OtelAppTestCase):
         with custom_app:
             test_app.respond_to_query("throw")
         # Compare results to expected.
-        GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
+        GOLDEN_FILENAME = (
+            "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
+        )
         actual = self._get_events()
         self.assertEqual(len(actual), 10)
         self.write_golden(GOLDEN_FILENAME, actual)
