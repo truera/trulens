@@ -98,14 +98,14 @@ def set_general_span_attributes(
         SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
     )
 
-    run_name_baggage: str = str(get_baggage(SpanAttributes.RUN_NAME))
-    input_id_baggage: str = str(get_baggage(SpanAttributes.INPUT_ID))
+    run_name_baggage = get_baggage(SpanAttributes.RUN_NAME)
+    input_id_baggage = get_baggage(SpanAttributes.INPUT_ID)
 
     if run_name_baggage:
-        span.set_attribute(SpanAttributes.RUN_NAME, run_name_baggage)
+        span.set_attribute(SpanAttributes.RUN_NAME, str(run_name_baggage))
 
     if input_id_baggage:
-        span.set_attribute(SpanAttributes.INPUT_ID, input_id_baggage)
+        span.set_attribute(SpanAttributes.INPUT_ID, str(input_id_baggage))
 
     return span
 
@@ -133,7 +133,7 @@ def set_user_defined_attributes(
 
     final_attributes = validate_attributes(attributes_to_add)
 
-    prefix = f"trulens.{span_type.value}."
+    prefix = f"{SpanAttributes.BASE}{span_type.value}."
 
     for key, value in final_attributes.items():
         span.set_attribute(prefix + key, value)
@@ -143,7 +143,7 @@ def set_user_defined_attributes(
             and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
         ):
             span.set_attribute(
-                f"trulens.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
+                f"{SpanAttributes.BASE}{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
                 value,
             )
 

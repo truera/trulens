@@ -10,7 +10,7 @@ from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
-from trulens.experimental.otel_tracing.core.exporter import (
+from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
 )
 
