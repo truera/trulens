@@ -30,6 +30,7 @@ env-tests:
 	poetry run pip install \
 		jsondiff \
 		langchain \
+		langchain-community \
 		nbconvert \
 		nbformat \
 		opentelemetry-sdk \
