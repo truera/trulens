@@ -124,9 +124,9 @@ class TestOtelInstrument(TruTestCase):
         # Create and run app.
         test_app = _TestApp()
         custom_app = TruCustomApp(test_app)
-        with custom_app:
+        with custom_app(run_name="test run", input_id="456"):
             test_app.respond_to_query("test")
-        with custom_app:
+        with custom_app():
             test_app.respond_to_query("throw")
         # Compare results to expected.
         GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
