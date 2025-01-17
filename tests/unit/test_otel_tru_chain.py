@@ -55,8 +55,8 @@ class TestOtelTruChain(OtelAppTestCase):
         )
         return (
             {
-                "context": retriever | format_docs,
                 "question": RunnablePassthrough(),
+                "context": retriever | format_docs,
             }
             | prompt
             | llm
