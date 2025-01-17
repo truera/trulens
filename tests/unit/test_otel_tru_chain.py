@@ -86,6 +86,16 @@ class TestOtelTruChain(OtelAppTestCase):
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
+        pd.set_option("display.max_rows", None)
+        pd.set_option("display.max_columns", None)
+        print()
+        print("EXPECTED:")
+        print(expected)
+        print()
+        print()
+        print("ACTUAL:")
+        print(actual)
+        print()
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,
