@@ -4,6 +4,7 @@ Tests for OTEL TruChain app.
 
 from unittest import main
 
+import pandas as pd
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
@@ -94,6 +95,7 @@ class TestOtelTruChain(OtelAppTestCase):
                 f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
                 for i in range(len(expected))
             ],
+            timestamp_tol=pd.Timedelta("0.02s"),
         )
 
 

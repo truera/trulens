@@ -9,7 +9,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
     expected: pd.DataFrame,
     actual: pd.DataFrame,
     ignore_locators: Optional[Sequence[str]],
-    timestamp_tol: pd.Timedelta = pd.Timedelta(0.001),
+    timestamp_tol: pd.Timedelta = pd.Timedelta(0),
 ) -> None:
     """
     Compare two Dataframes are equal, accounting for ids and timestamps. That
