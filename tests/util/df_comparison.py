@@ -9,6 +9,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
     expected: pd.DataFrame,
     actual: pd.DataFrame,
     ignore_locators: Optional[Sequence[str]],
+    timestamp_tol: pd.Timedelta = pd.Timedelta(0.001),
 ) -> None:
     """
     Compare two Dataframes are equal, accounting for ids and timestamps. That
@@ -24,6 +25,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
         expected: expected results
         actual: actual results
         ignore_locators: locators to ignore when comparing the Dataframes
+        timestamp_tol: the tolerance for comparing timestamps
     """
     id_mapping: Dict[str, str] = {}
     timestamp_mapping: Dict[pd.Timestamp, pd.Timestamp] = {}
@@ -52,7 +54,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
     for curr in sorted(timestamp_mapping.keys()):
         if prev_value is not None:
             test_case.assertLess(
-                prev_value,
+                prev_value - timestamp_tol,
                 timestamp_mapping[curr],
                 "Timestamps are not in the same order!",
             )
