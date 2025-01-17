@@ -461,13 +461,8 @@ class Instrument:
         ) -> Tuple[SpanAttributes.SpanType, Attributes]:
             return (
                 SpanAttributes.SpanType.RETRIEVAL,
-                # TODO(this_pr): convert all args to kwargs in general.
                 lambda ret, exception, *args, **kwargs: {
-                    SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs[query_argname]
-                    if query_argname in kwargs
-                    else args[
-                        1
-                    ],  # TODO: this doesn't even make sense without converting everything to kwargs!
+                    SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs[query_argname],
                     SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
                         curr.page_content for curr in ret
                     ],

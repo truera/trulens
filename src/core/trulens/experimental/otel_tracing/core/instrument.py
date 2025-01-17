@@ -1,4 +1,5 @@
 from functools import wraps
+import inspect
 import logging
 from typing import Callable, Optional
 import uuid
@@ -67,11 +68,14 @@ def instrument(
                     )
 
                 try:
+                    sig = inspect.signature(func)
+                    bound_args = sig.bind_partial(*args, **kwargs).arguments
+                    all_kwargs = {**kwargs, **bound_args}
                     set_user_defined_attributes(
                         span,
                         span_type=span_type,
                         args=args,
-                        kwargs=kwargs,
+                        kwargs=all_kwargs,
                         ret=ret,
                         func_exception=func_exception,
                         attributes=attributes,

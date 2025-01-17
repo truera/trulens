@@ -4,7 +4,7 @@ This file contains utility functions specific to certain span types.
 
 from inspect import signature
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from opentelemetry.baggage import get_baggage
 from opentelemetry.trace.span import Span
@@ -20,7 +20,13 @@ Attributes = Optional[
     Union[
         Dict[str, Any],
         Callable[
-            [Optional[Any], Optional[Exception], Any, Any], Dict[str, Any]
+            [
+                Optional[Any],
+                Optional[Exception],
+                List[Any],
+                Optional[Dict[str, Any]],
+            ],
+            Dict[str, Any],
         ],
     ]
 ]

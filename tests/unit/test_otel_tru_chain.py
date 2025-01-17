@@ -32,10 +32,7 @@ class TestOtelTruChain(OtelAppTestCase):
             return "\n\n".join(doc.page_content for doc in docs)
 
         # Create documents.
-        loader = PyPDFLoader(
-            # TODO(this_pr): Remove hardcoded path.
-            "/Users/dkurokawa/Work/code/trulens/trulens/tests/unit/data/attention_is_all_you_need.pdf"
-        )
+        loader = PyPDFLoader("./tests/unit/data/attention_is_all_you_need.pdf")
         docs = loader.load_and_split()
         # Create vector store.
         embeddings = DeterministicFakeEmbedding(size=10)
