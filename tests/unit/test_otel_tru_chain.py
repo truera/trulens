@@ -4,26 +4,31 @@ Tests for OTEL TruChain app.
 
 from unittest import main
 
-from langchain import hub
-from langchain.schema import StrOutputParser
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.embeddings import DeterministicFakeEmbedding
-from langchain_community.llms import FakeListLLM
-from langchain_community.vectorstores import FAISS
-from langchain_core.runnables import RunnablePassthrough
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 
 from tests.test import optional_test
+from tests.test import run_optional_tests
 from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
 from tests.util.otel_app_test_case import OtelAppTestCase
 
+if run_optional_tests():
+    # These imports require optional dependencies to be installed.
+    from langchain import hub
+    from langchain.schema import StrOutputParser
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_community.embeddings import DeterministicFakeEmbedding
+    from langchain_community.llms import FakeListLLM
+    from langchain_community.vectorstores import FAISS
+    from langchain_core.runnables import RunnablePassthrough
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from trulens.apps.langchain import TruChain
 
+
+@optional_test
 class TestOtelTruChain(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
@@ -58,7 +63,6 @@ class TestOtelTruChain(OtelAppTestCase):
             | StrOutputParser()
         )
 
-    @optional_test
     def test_smoke(self) -> None:
         # Set up.
         tru_session = TruSession()
