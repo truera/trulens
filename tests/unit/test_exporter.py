@@ -4,7 +4,9 @@ from opentelemetry.proto.common.v1.common_pb2 import AnyValue
 from opentelemetry.proto.common.v1.common_pb2 import ArrayValue
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
 from opentelemetry.proto.common.v1.common_pb2 import KeyValueList
-from trulens.experimental.otel_tracing.core.exporter import convert_to_any_value
+from trulens.experimental.otel_tracing.core.exporter.utils import (
+    convert_to_any_value,
+)
 
 
 class TestExporterUtils(unittest.TestCase):

@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 from opentelemetry.proto.common.v1.common_pb2 import AnyValue
 from opentelemetry.proto.common.v1.common_pb2 import ArrayValue
@@ -8,10 +8,7 @@ from opentelemetry.proto.common.v1.common_pb2 import KeyValue
 from opentelemetry.proto.common.v1.common_pb2 import KeyValueList
 from opentelemetry.proto.trace.v1.trace_pb2 import Span as SpanProto
 from opentelemetry.sdk.trace import ReadableSpan
-from opentelemetry.sdk.trace.export import SpanExporter
-from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.trace import StatusCode
-from trulens.core.database import connector as core_connector
 from trulens.core.schema import event as event_schema
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -110,7 +107,6 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     Returns:
         bool: True if the span contains the TruLens-specific attribute, False otherwise.
     """
-
     if not span.attributes:
         return False
 
@@ -145,28 +141,3 @@ def construct_event(span: ReadableSpan) -> event_schema.Event:
             "parent_id": str(parent.span_id if parent else ""),
         },
     )
-
-
-class TruLensDBSpanExporter(SpanExporter):
-    """
-    Implementation of `SpanExporter` that flushes the spans in the TruLens session to the connector.
-    """
-
-    connector: core_connector.DBConnector
-    """
-    The database connector used to export the spans.
-    """
-
-    def __init__(self, connector: core_connector.DBConnector):
-        self.connector = connector
-
-    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        try:
-            events = list(map(construct_event, spans))
-            self.connector.add_events(events)
-
-        except Exception as e:
-            logger.error("Error exporting spans to the database: %s", e)
-            return SpanExportResult.FAILURE
-
-        return SpanExportResult.SUCCESS

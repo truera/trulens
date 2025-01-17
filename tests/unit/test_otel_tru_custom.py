@@ -5,8 +5,8 @@ Tests for OTEL instrument decorator and custom app.
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
+from trulens.core.experimental import Feature
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -58,20 +58,23 @@ class _TestApp:
 class TestOtelTruCustom(OtelAppTestCase):
     def test_smoke(self) -> None:
         # Set up.
-        tru_session = TruSession()
+        tru_session = TruSession(
+            experimental_feature_flags=[Feature.OTEL_TRACING]
+        )
         tru_session.reset_database()
-        init(tru_session, debug=True)
+
         # Create and run app.
         test_app = _TestApp()
         custom_app = TruCustomApp(test_app)
-        with custom_app:
+        with custom_app(run_name="test run", input_id="456"):
             test_app.respond_to_query("test")
-        with custom_app:
+        with custom_app():
             test_app.respond_to_query("throw")
         # Compare results to expected.
         GOLDEN_FILENAME = (
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
+        tru_session.experimental_force_flush()
         actual = self._get_events()
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)

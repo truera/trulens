@@ -6,7 +6,6 @@ from unittest import main
 
 import pandas as pd
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 
 from tests.test import optional_test
@@ -68,7 +67,6 @@ class TestOtelTruChain(OtelAppTestCase):
         # Set up.
         tru_session = TruSession()
         tru_session.reset_database()
-        init(tru_session, debug=True)
         # Create app.
         rag_chain = self._create_simple_rag()
         tru_recorder = TruChain(
@@ -77,12 +75,13 @@ class TestOtelTruChain(OtelAppTestCase):
             app_version="v1",
         )
         # Record and invoke.
-        with tru_recorder:
+        with tru_recorder(run_name="test run", input_id="42"):
             rag_chain.invoke("What is multi-headed attention?")
         # Compare results to expected.
         GOLDEN_FILENAME = (
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
+        tru_session.experimental_force_flush()
         actual = self._get_events()
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
