@@ -97,12 +97,15 @@ def set_general_span_attributes(
     span.set_attribute(
         SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
     )
-    span.set_attribute(
-        SpanAttributes.RUN_NAME, str(get_baggage(SpanAttributes.RUN_NAME))
-    )
-    span.set_attribute(
-        SpanAttributes.INPUT_ID, str(get_baggage(SpanAttributes.INPUT_ID))
-    )
+
+    run_name_baggage: str = str(get_baggage(SpanAttributes.RUN_NAME))
+    input_id_baggage: str = str(get_baggage(SpanAttributes.INPUT_ID))
+
+    if run_name_baggage:
+        span.set_attribute(SpanAttributes.RUN_NAME, run_name_baggage)
+
+    if input_id_baggage:
+        span.set_attribute(SpanAttributes.INPUT_ID, input_id_baggage)
 
     return span
 

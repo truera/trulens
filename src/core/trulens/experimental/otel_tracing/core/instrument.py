@@ -1,10 +1,10 @@
 from functools import wraps
 import logging
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 import uuid
 
 from opentelemetry import trace
-from opentelemetry.baggage import clear as clear_baggage
+from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from trulens.core import app as core_app
@@ -93,41 +93,53 @@ def instrument(
     return inner_decorator
 
 
-class OTELRecordingContext(core_app.App):
-    run_name: Optional[str]
+class OTELRecordingContext:
+    run_name: str
     """
     The name of the run that the recording context is currently processing.
     """
 
-    input_id: Optional[str]
+    input_id: str
     """
     The ID of the input that the recording context is currently processing.
     """
 
+    tokens: List[object] = []
+    """
+    OTEL context tokens for the current context manager. These tokens are how the OTEL
+    context api keeps track of what is changed in the context, and used to undo the changes.
+    """
+
+    def __init__(self, *, app: core_app.App, run_name: str, input_id: str):
+        self.app = app
+        self.run_name = run_name
+        self.input_id = input_id
+        self.tokens = []
+        self.span_context = None
+
+    # Calling set_baggage does not actually add the baggage to the current context, but returns a new one
+    # To avoid issues with remembering to add/remove the baggage, we attach it to the runtime context.
+    def attach_to_context(self, key: str, value: object):
+        self.tokens.append(context_api.attach(set_baggage(key, value)))
+
     # For use as a context manager.
     def __enter__(self):
-        logger.debug("Entering the OTEL app context.")
-
         # Note: This is not the same as the record_id in the core app since the OTEL
         # tracing is currently separate from the old records behavior
         otel_record_id = str(uuid.uuid4())
 
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
-        # Calling set_baggage does not actually add the baggage to the current context, but returns a new one
-        # To avoid issues with remembering to add/remove the baggage, we attach it to the runtime context.
-        def attach_to_context(key: str, value: object):
-            self.tokens.append(context_api.attach(set_baggage(key, value)))
+        self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
+        self.attach_to_context(SpanAttributes.APP_NAME, self.app.app_name)
+        self.attach_to_context(SpanAttributes.APP_VERSION, self.app.app_version)
 
-        attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
-        attach_to_context(SpanAttributes.APP_NAME, self.app_name)
-        attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+        if self.run_name:
+            logger.debug(f"Setting run name: '{self.run_name}'")
+            self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
 
-        if hasattr(self, "run_name") and self.run_name:
-            attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
-
-        if hasattr(self, "run_name") and self.input_id:
-            attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        if self.input_id:
+            self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("root")
@@ -141,10 +153,10 @@ class OTELRecordingContext(core_app.App):
 
         # Set record root specific attributes
         root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_NAME, self.app_name
+            SpanAttributes.RECORD_ROOT.APP_NAME, self.app.app_name
         )
         root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app_version
+            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app.app_version
         )
         root_span.set_attribute(
             SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
@@ -153,15 +165,22 @@ class OTELRecordingContext(core_app.App):
         return root_span
 
     def __exit__(self, exc_type, exc_value, exc_tb):
-        clear_baggage()
+        if self.span_context:
+            # TODO[SNOW-1854360]: Add in feature function spans.
+            self.span_context.__exit__(exc_type, exc_value, exc_tb)
+
+        remove_baggage(SpanAttributes.RECORD_ID)
+        remove_baggage(SpanAttributes.APP_NAME)
+        remove_baggage(SpanAttributes.APP_VERSION)
+
+        # Safe to remove baggage keys even if we did not set them
+        remove_baggage(SpanAttributes.RUN_NAME)
+        remove_baggage(SpanAttributes.INPUT_ID)
 
         logger.debug("Exiting the OTEL app context.")
 
         while self.tokens:
+            logger.debug(self.tokens[-1])
             # Clearing the context once we're done with this root span.
             # See https://github.com/open-telemetry/opentelemetry-python/issues/2432#issuecomment-1593458684
             context_api.detach(self.tokens.pop())
-
-        if self.span_context:
-            # TODO[SNOW-1854360]: Add in feature function spans.
-            self.span_context.__exit__(exc_type, exc_value, exc_tb)

@@ -40,29 +40,21 @@ class _TruSession(core_session.TruSession):
         provider = TracerProvider(resource=resource)
         trace.set_tracer_provider(provider)
 
-        # The opentelemetry.sdk.trace.TracerProvider class is what OTEL uses under the hood,
-        # even though OTEL only chooses to expose a subset of the class attributes in
-        # the opentelemetry.trace module.
-        # See : https://github.com/search?q=repo%3Aopen-telemetry%2Fopentelemetry-python+get_tracer_provider&type=code
-        # for examples of how the TracerProvider class is used in the OTEL codebase.
-        # Hence, here we force the typing to ignore the error.
-        tracer_provider: TracerProvider = trace.get_tracer_provider()  # type: ignore
+        global_trace_provider = trace.get_tracer_provider()
+        if not isinstance(global_trace_provider, TracerProvider):
+            raise ValueError("Received a TracerProvider of an unexpected type!")
+
+        tracer_provider: TracerProvider = global_trace_provider
+
+        # Setting it here for easy access without having to assert the type every time
         self._experimental_tracer_provider = tracer_provider
 
-        # Export to the connector provided.
-        tracer_provider.add_span_processor(
-            otel_export_sdk.BatchSpanProcessor(
-                TruLensOTELSpanExporter(connector)
+        if exporter and not isinstance(exporter, otel_export_sdk.SpanExporter):
+            raise ValueError(
+                "Provided exporter must be an OpenTelemetry SpanExporter"
             )
+
+        db_processor = otel_export_sdk.BatchSpanProcessor(
+            exporter if exporter else TruLensOTELSpanExporter(connector)
         )
-
-        if exporter:
-            assert isinstance(
-                exporter, otel_export_sdk.SpanExporter
-            ), "otel_exporter must be an OpenTelemetry SpanExporter."
-
-            # When testing, use a simple span processor to avoid issues with batching/
-            # asynchronous processing of the spans that results in the database not
-            # being updated in time for the tests.
-            db_processor = otel_export_sdk.BatchSpanProcessor(exporter)
-            tracer_provider.add_span_processor(db_processor)
+        tracer_provider.add_span_processor(db_processor)
