@@ -363,7 +363,7 @@ class GetItemOrAttribute(StepItemOrAttribute):
                         pass
 
         # Otherwise handle a dict or object with the named attribute.
-        elif isinstance(obj, Dict):
+        elif hasattr(obj, "__getitem__"):
             if self.item_or_attribute in obj:
                 yield obj[self.item_or_attribute]
             else:
