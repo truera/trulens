@@ -1735,7 +1735,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.3.1
+  __version__: 1.3.2
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
