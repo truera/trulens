@@ -127,6 +127,9 @@ class OTELRecordingContext:
     # Calling set_baggage does not actually add the baggage to the current context, but returns a new one
     # To avoid issues with remembering to add/remove the baggage, we attach it to the runtime context.
     def attach_to_context(self, key: str, value: object):
+        if get_baggage(key) or value is None:
+            return
+
         self.tokens.append(context_api.attach(set_baggage(key, value)))
         self.context_keys_added.append(key)
 
@@ -138,19 +141,12 @@ class OTELRecordingContext:
 
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
-        # There might be nested records - in those scenarios use the outer one.
-        if not get_baggage(SpanAttributes.RECORD_ID):
-            self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
-
+        self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
         self.attach_to_context(SpanAttributes.APP_NAME, self.app.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app.app_version)
 
-        if self.run_name:
-            logger.debug(f"Setting run name: '{self.run_name}'")
-            self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
-
-        if self.input_id:
-            self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
+        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("root")
