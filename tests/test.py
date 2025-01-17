@@ -89,6 +89,10 @@ def async_test(func):
     return wrapper
 
 
+def run_optional_tests() -> bool:
+    return TruTestCase.env_true(OPTIONAL_VAR)
+
+
 def optional_test(testmethodorclass):
     """Only run the decorated test if the environment variable with_optional
     evaluates true.
@@ -97,9 +101,9 @@ def optional_test(testmethodorclass):
     all optional packages have been installed.
     """
 
-    return unittest.skipIf(
-        not TruTestCase.env_true(OPTIONAL_VAR), "optional test"
-    )(testmethodorclass)
+    return unittest.skipIf(not run_optional_tests(), "optional test")(
+        testmethodorclass
+    )
 
 
 def requiredonly_test(testmethodorclass):

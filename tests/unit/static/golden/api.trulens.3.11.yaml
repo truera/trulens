@@ -666,6 +666,7 @@ trulens.core.instruments:
   lows:
     AddInstruments: builtins.type
     Instrument: builtins.type
+    InstrumentedMethod: builtins.type
     WithInstrumentCallbacks: builtins.type
     class_filter_disjunction: builtins.function
     class_filter_matches: builtins.function
@@ -693,6 +694,13 @@ trulens.core.instruments.Instrument:
     to_instrument_module: builtins.function
     to_instrument_object: builtins.function
     tracked_method_wrapper: builtins.function
+trulens.core.instruments.InstrumentedMethod:
+  __bases__:
+  - builtins.object
+  __class__: builtins.type
+  attributes:
+    span_attributes: builtins.NoneType
+    span_type: builtins.NoneType
 trulens.core.instruments.WithInstrumentCallbacks:
   __bases__:
   - builtins.object

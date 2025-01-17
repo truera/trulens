@@ -21,15 +21,14 @@ from pydantic import Field
 from trulens.apps.langchain import LangChainInstrument
 from trulens.core import app as core_app
 from trulens.core.feedback import feedback as core_feedback
-from trulens.core.instruments import ClassFilter
 from trulens.core.instruments import Instrument
+from trulens.core.instruments import InstrumentedMethod
 from trulens.core.schema import select as select_schema
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.core.utils.containers import dict_set_with_multikey
 
 logger = logging.getLogger(__name__)
 
@@ -336,30 +335,30 @@ class RailsInstrument(Instrument):
         }.union(LangChainInstrument.Default.CLASSES())
         """Instrument only these classes."""
 
-        METHODS: Dict[str, ClassFilter] = dict_set_with_multikey(
-            dict(LangChainInstrument.Default.METHODS),  # copy
-            {
-                ("execute_action"): ActionDispatcher,
-                (
-                    "generate",
-                    "generate_async",
-                    "stream_async",
-                    "generate_events",
-                    "generate_events_async",
-                    "_get_events_for_messages",
-                ): LLMRails,
-                "search_relevant_chunks": KnowledgeBase,
-                (
-                    "generate_user_intent",
-                    "generate_next_step",
-                    "generate_bot_message",
-                    "generate_value",
-                    "generate_intent_steps_message",
-                ): LLMGenerationActions,
-                # TODO: Include feedback method in FeedbackActions, currently
-                # bugged and will not be logged.
-                "feedback": FeedbackActions,
-            },
+        METHODS: List[InstrumentedMethod] = (
+            LangChainInstrument.Default.METHODS
+            + [
+                InstrumentedMethod("execute_action", ActionDispatcher),
+                InstrumentedMethod("generate", LLMRails),
+                InstrumentedMethod("generate_async", LLMRails),
+                InstrumentedMethod("stream_async", LLMRails),
+                InstrumentedMethod("generate_events", LLMRails),
+                InstrumentedMethod("generate_events_async", LLMRails),
+                InstrumentedMethod("_get_events_for_messages", LLMRails),
+                InstrumentedMethod("search_relevant_chunks", KnowledgeBase),
+                InstrumentedMethod(
+                    "generate_user_intent", LLMGenerationActions
+                ),
+                InstrumentedMethod("generate_next_step", LLMGenerationActions),
+                InstrumentedMethod(
+                    "generate_bot_message", LLMGenerationActions
+                ),
+                InstrumentedMethod("generate_value", LLMGenerationActions),
+                InstrumentedMethod(
+                    "generate_intent_steps_message", LLMGenerationActions
+                ),
+                InstrumentedMethod("feedback", FeedbackActions),
+            ]
         )
         """Instrument only methods with these names and of these classes."""
 
