@@ -8,9 +8,9 @@ from unittest import main
 import pandas as pd
 import sqlalchemy as sa
 from trulens.apps.custom import TruCustomApp
+from trulens.core.experimental import Feature
 from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -75,7 +75,9 @@ class TestOtelInstrument(TruTestCase):
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         cls.clear_TruSession_singleton()
-        tru_session = TruSession()
+        tru_session = TruSession(
+            experimental_feature_flags=[Feature.OTEL_TRACING]
+        )
         tru_session.experimental_enable_feature("otel_tracing")
         return super().setUpClass()
 
@@ -114,19 +116,24 @@ class TestOtelInstrument(TruTestCase):
 
     def test_instrument_decorator(self) -> None:
         # Set up.
-        tru_session = TruSession()
+        tru_session = TruSession(
+            experimental_feature_flags=[Feature.OTEL_TRACING]
+        )
         tru_session.reset_database()
-        init(tru_session, debug=True)
+
         # Create and run app.
         test_app = _TestApp()
         custom_app = TruCustomApp(test_app)
-        with custom_app:
+        with custom_app(run_name="test run", input_id="456"):
             test_app.respond_to_query("test")
-        with custom_app:
+        with custom_app():
             test_app.respond_to_query("throw")
         # Compare results to expected.
         GOLDEN_FILENAME = "tests/unit/static/golden/test_otel_instrument__test_instrument_decorator.csv"
+
+        tru_session.experimental_force_flush()
         actual = self._get_events()
+
         self.assertEqual(len(actual), 10)
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)

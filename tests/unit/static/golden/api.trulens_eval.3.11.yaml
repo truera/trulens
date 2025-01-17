@@ -78,7 +78,7 @@ trulens_eval.AzureOpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -86,7 +86,7 @@ trulens_eval.AzureOpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -170,7 +170,7 @@ trulens_eval.Bedrock:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -178,7 +178,7 @@ trulens_eval.Bedrock:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_id: builtins.str
     model_json_schema: builtins.classmethod
@@ -256,7 +256,7 @@ trulens_eval.Cortex:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -264,7 +264,7 @@ trulens_eval.Cortex:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -332,14 +332,14 @@ trulens_eval.Feedback:
     load: builtins.staticmethod
     max_score_val: typing.Optional[builtins.int, builtins.NoneType]
     min_score_val: typing.Optional[builtins.int, builtins.NoneType]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -407,14 +407,14 @@ trulens_eval.Huggingface:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -457,14 +457,14 @@ trulens_eval.HuggingfaceLocal:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -533,7 +533,7 @@ trulens_eval.Langchain:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -541,7 +541,7 @@ trulens_eval.Langchain:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -624,7 +624,7 @@ trulens_eval.LiteLLM:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -632,7 +632,7 @@ trulens_eval.LiteLLM:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -707,7 +707,7 @@ trulens_eval.OpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -715,7 +715,7 @@ trulens_eval.OpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -769,14 +769,14 @@ trulens_eval.Provider:
     get_class: builtins.staticmethod
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -869,14 +869,14 @@ trulens_eval.Tru:
     get_records_and_feedback: builtins.function
     json: builtins.function
     migrate_database: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -947,14 +947,14 @@ trulens_eval.TruBasicApp:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -989,9 +989,7 @@ trulens_eval.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1048,14 +1046,14 @@ trulens_eval.TruChain:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1090,9 +1088,7 @@ trulens_eval.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1150,14 +1146,14 @@ trulens_eval.TruCustomApp:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1192,9 +1188,7 @@ trulens_eval.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1249,14 +1243,14 @@ trulens_eval.TruLlama:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1292,9 +1286,7 @@ trulens_eval.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1349,14 +1341,14 @@ trulens_eval.TruRails:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1391,9 +1383,7 @@ trulens_eval.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1450,14 +1440,14 @@ trulens_eval.TruVirtual:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1492,9 +1482,7 @@ trulens_eval.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1582,14 +1570,14 @@ trulens_eval.app.App:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -1623,9 +1611,7 @@ trulens_eval.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -1846,14 +1832,14 @@ trulens_eval.database.base.DB:
     insert_record: builtins.function
     json: builtins.function
     migrate_database: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2005,14 +1991,14 @@ trulens_eval.database.sqlalchemy.SQLAlchemyDB:
     insert_record: builtins.function
     json: builtins.function
     migrate_database: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2117,7 +2103,7 @@ trulens_eval.feedback.AzureOpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2125,7 +2111,7 @@ trulens_eval.feedback.AzureOpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2209,7 +2195,7 @@ trulens_eval.feedback.Bedrock:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2217,7 +2203,7 @@ trulens_eval.feedback.Bedrock:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_id: builtins.str
     model_json_schema: builtins.classmethod
@@ -2295,7 +2281,7 @@ trulens_eval.feedback.Cortex:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2303,7 +2289,7 @@ trulens_eval.feedback.Cortex:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2351,14 +2337,14 @@ trulens_eval.feedback.Embeddings:
     json: builtins.function
     load: builtins.staticmethod
     manhattan_distance: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2416,14 +2402,14 @@ trulens_eval.feedback.Feedback:
     load: builtins.staticmethod
     max_score_val: typing.Optional[builtins.int, builtins.NoneType]
     min_score_val: typing.Optional[builtins.int, builtins.NoneType]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2485,14 +2471,14 @@ trulens_eval.feedback.GroundTruthAgreement:
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2537,14 +2523,14 @@ trulens_eval.feedback.Huggingface:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2587,14 +2573,14 @@ trulens_eval.feedback.HuggingfaceLocal:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2663,7 +2649,7 @@ trulens_eval.feedback.Langchain:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2671,7 +2657,7 @@ trulens_eval.feedback.Langchain:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2747,7 +2733,7 @@ trulens_eval.feedback.LiteLLM:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2755,7 +2741,7 @@ trulens_eval.feedback.LiteLLM:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2830,7 +2816,7 @@ trulens_eval.feedback.OpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -2838,7 +2824,7 @@ trulens_eval.feedback.OpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2900,14 +2886,14 @@ trulens_eval.feedback.embeddings.Embeddings:
     json: builtins.function
     load: builtins.staticmethod
     manhattan_distance: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -2974,14 +2960,14 @@ trulens_eval.feedback.feedback.Feedback:
     load: builtins.staticmethod
     max_score_val: typing.Optional[builtins.int, builtins.NoneType]
     min_score_val: typing.Optional[builtins.int, builtins.NoneType]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3059,14 +3045,14 @@ trulens_eval.feedback.groundtruth.GroundTruthAgreement:
     json: builtins.function
     load: builtins.staticmethod
     mae: builtins.property
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3197,7 +3183,7 @@ trulens_eval.feedback.provider.AzureOpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3205,7 +3191,7 @@ trulens_eval.feedback.provider.AzureOpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3289,7 +3275,7 @@ trulens_eval.feedback.provider.Bedrock:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3297,7 +3283,7 @@ trulens_eval.feedback.provider.Bedrock:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_id: builtins.str
     model_json_schema: builtins.classmethod
@@ -3375,7 +3361,7 @@ trulens_eval.feedback.provider.Cortex:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3383,7 +3369,7 @@ trulens_eval.feedback.provider.Cortex:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3432,14 +3418,14 @@ trulens_eval.feedback.provider.Huggingface:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3482,14 +3468,14 @@ trulens_eval.feedback.provider.HuggingfaceLocal:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3558,7 +3544,7 @@ trulens_eval.feedback.provider.Langchain:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3566,7 +3552,7 @@ trulens_eval.feedback.provider.Langchain:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3642,7 +3628,7 @@ trulens_eval.feedback.provider.LiteLLM:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3650,7 +3636,7 @@ trulens_eval.feedback.provider.LiteLLM:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3725,7 +3711,7 @@ trulens_eval.feedback.provider.OpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3733,7 +3719,7 @@ trulens_eval.feedback.provider.OpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3787,14 +3773,14 @@ trulens_eval.feedback.provider.Provider:
     get_class: builtins.staticmethod
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3866,7 +3852,7 @@ trulens_eval.feedback.provider.base.LLMProvider:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -3874,7 +3860,7 @@ trulens_eval.feedback.provider.base.LLMProvider:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3919,14 +3905,14 @@ trulens_eval.feedback.provider.base.Provider:
     get_class: builtins.staticmethod
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -3998,7 +3984,7 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -4006,7 +3992,7 @@ trulens_eval.feedback.provider.bedrock.Bedrock:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_id: builtins.str
     model_json_schema: builtins.classmethod
@@ -4090,7 +4076,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -4098,7 +4084,7 @@ trulens_eval.feedback.provider.cortex.Cortex:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4171,14 +4157,14 @@ trulens_eval.feedback.provider.endpoint.BedrockEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4237,14 +4223,14 @@ trulens_eval.feedback.provider.endpoint.CortexEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4312,14 +4298,14 @@ trulens_eval.feedback.provider.endpoint.DummyEndpoint:
     load: builtins.staticmethod
     loading_prob: builtins.property
     loading_time: builtins.property
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4382,14 +4368,14 @@ trulens_eval.feedback.provider.endpoint.Endpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4450,14 +4436,14 @@ trulens_eval.feedback.provider.endpoint.HuggingfaceEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4518,14 +4504,14 @@ trulens_eval.feedback.provider.endpoint.LangchainEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4584,14 +4570,14 @@ trulens_eval.feedback.provider.endpoint.LiteLLMEndpoint:
     json: builtins.function
     litellm_provider: builtins.str
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4640,14 +4626,14 @@ trulens_eval.feedback.provider.endpoint.OpenAIClient:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4690,14 +4676,14 @@ trulens_eval.feedback.provider.endpoint.OpenAIEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4776,14 +4762,14 @@ trulens_eval.feedback.provider.endpoint.base.DummyEndpoint:
     load: builtins.staticmethod
     loading_prob: builtins.property
     loading_time: builtins.property
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4846,14 +4832,14 @@ trulens_eval.feedback.provider.endpoint.base.Endpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4906,14 +4892,14 @@ trulens_eval.feedback.provider.endpoint.base.EndpointCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -4957,14 +4943,14 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5007,14 +4993,14 @@ trulens_eval.feedback.provider.endpoint.bedrock.BedrockEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5075,14 +5061,14 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5124,14 +5110,14 @@ trulens_eval.feedback.provider.endpoint.cortex.CortexEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5191,14 +5177,14 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5243,14 +5229,14 @@ trulens_eval.feedback.provider.endpoint.hugs.HuggingfaceEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5312,14 +5298,14 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5362,14 +5348,14 @@ trulens_eval.feedback.provider.endpoint.langchain.LangchainEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5429,14 +5415,14 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMCallback:
     handle_generation: builtins.function
     handle_generation_chunk: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5479,14 +5465,14 @@ trulens_eval.feedback.provider.endpoint.litellm.LiteLLMEndpoint:
     json: builtins.function
     litellm_provider: builtins.str
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5549,14 +5535,14 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAICallback:
     handle_generation_chunk: builtins.function
     json: builtins.function
     langchain_handler: langchain_community.callbacks.openai_info.OpenAICallbackHandler
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5589,14 +5575,14 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIClient:
     formatted_objects: _contextvars.ContextVar
     from_orm: builtins.classmethod
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5639,14 +5625,14 @@ trulens_eval.feedback.provider.endpoint.openai.OpenAIEndpoint:
     instrumented_methods: collections.defaultdict
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5716,14 +5702,14 @@ trulens_eval.feedback.provider.hugs.Dummy:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5766,14 +5752,14 @@ trulens_eval.feedback.provider.hugs.Huggingface:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5816,14 +5802,14 @@ trulens_eval.feedback.provider.hugs.HuggingfaceBase:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5866,14 +5852,14 @@ trulens_eval.feedback.provider.hugs.HuggingfaceLocal:
     json: builtins.function
     language_match: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -5948,7 +5934,7 @@ trulens_eval.feedback.provider.langchain.Langchain:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -5956,7 +5942,7 @@ trulens_eval.feedback.provider.langchain.Langchain:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6038,7 +6024,7 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -6046,7 +6032,7 @@ trulens_eval.feedback.provider.litellm.LiteLLM:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6129,7 +6115,7 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -6137,7 +6123,7 @@ trulens_eval.feedback.provider.openai.AzureOpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6221,7 +6207,7 @@ trulens_eval.feedback.provider.openai.OpenAI:
     misogyny: builtins.function
     misogyny_with_cot_reasons: builtins.function
     model_agreement: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
@@ -6229,7 +6215,7 @@ trulens_eval.feedback.provider.openai.OpenAI:
     model_dump_json: builtins.function
     model_engine: builtins.str
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6459,14 +6445,14 @@ trulens_eval.schema.app.AppDefinition:
     jsonify_extra: builtins.function
     load: builtins.staticmethod
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6569,14 +6555,14 @@ trulens_eval.schema.feedback.FeedbackCall:
     from_orm: builtins.classmethod
     json: builtins.function
     meta: typing.Dict[builtins.str, typing.Any]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6634,14 +6620,14 @@ trulens_eval.schema.feedback.FeedbackDefinition:
       builtins.NoneType]
     json: builtins.function
     load: builtins.staticmethod
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6707,14 +6693,14 @@ trulens_eval.schema.feedback.FeedbackResult:
     from_orm: builtins.classmethod
     json: builtins.function
     last_ts: datetime.datetime
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6814,14 +6800,14 @@ trulens_eval.schema.record.Record:
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     meta: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6860,14 +6846,14 @@ trulens_eval.schema.record.RecordAppCall:
     from_orm: builtins.classmethod
     json: builtins.function
     method: builtins.property
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -6904,14 +6890,14 @@ trulens_eval.schema.record.RecordAppCallMethod:
     from_orm: builtins.classmethod
     json: builtins.function
     method: trulens.core.utils.pyschema.Method
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7001,14 +6987,14 @@ trulens_eval.tru.Tru:
     get_records_and_feedback: builtins.function
     json: builtins.function
     migrate_database: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7087,14 +7073,14 @@ trulens_eval.tru_basic_app.TruBasicApp:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7129,9 +7115,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7232,14 +7216,14 @@ trulens_eval.tru_chain.TruChain:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7274,9 +7258,7 @@ trulens_eval.tru_chain.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7342,14 +7324,14 @@ trulens_eval.tru_custom_app.TruCustomApp:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7384,9 +7366,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7472,14 +7452,14 @@ trulens_eval.tru_llama.TruLlama:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7515,9 +7495,7 @@ trulens_eval.tru_llama.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7640,14 +7618,14 @@ trulens_eval.tru_rails.TruRails:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7682,9 +7660,7 @@ trulens_eval.tru_rails.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7749,14 +7725,14 @@ trulens_eval.tru_virtual.TruVirtual:
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
     metadata: typing.Dict
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -7791,9 +7767,7 @@ trulens_eval.tru_virtual.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    span_context: typing.Optional[contextlib.AbstractContextManager, builtins.NoneType]
     tags: builtins.str
-    tokens: typing.List[builtins.object]
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
     update: builtins.function
@@ -7840,14 +7814,14 @@ trulens_eval.tru_virtual.VirtualRecord:
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
     meta: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8181,14 +8155,14 @@ trulens_eval.utils.pyschema.Bindings:
     json: builtins.function
     kwargs: typing.Dict[builtins.str, typing.Any]
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8221,14 +8195,14 @@ trulens_eval.utils.pyschema.Class:
     from_orm: builtins.classmethod
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8265,14 +8239,14 @@ trulens_eval.utils.pyschema.Function:
     from_orm: builtins.classmethod
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8306,14 +8280,14 @@ trulens_eval.utils.pyschema.FunctionOrMethod:
     from_orm: builtins.classmethod
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8344,14 +8318,14 @@ trulens_eval.utils.pyschema.Method:
     from_orm: builtins.classmethod
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8385,14 +8359,14 @@ trulens_eval.utils.pyschema.Module:
     from_orm: builtins.classmethod
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8429,14 +8403,14 @@ trulens_eval.utils.pyschema.Obj:
     init_bindings: typing.Optional[trulens.core.utils.pyschema.Bindings, builtins.NoneType]
     json: builtins.function
     load: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8589,14 +8563,14 @@ trulens_eval.utils.serial.Collect:
     get: builtins.function
     get_sole_item: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8627,14 +8601,14 @@ trulens_eval.utils.serial.GetAttribute:
     get_item_or_attribute: builtins.function
     get_sole_item: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8664,14 +8638,14 @@ trulens_eval.utils.serial.GetIndex:
     get_sole_item: builtins.function
     index: builtins.int
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8701,14 +8675,14 @@ trulens_eval.utils.serial.GetIndices:
     get_sole_item: builtins.function
     indices: typing.Tuple[builtins.int, ...]
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8739,14 +8713,14 @@ trulens_eval.utils.serial.GetItem:
     get_sole_item: builtins.function
     item: builtins.str
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8777,14 +8751,14 @@ trulens_eval.utils.serial.GetItemOrAttribute:
     get_sole_item: builtins.function
     item_or_attribute: builtins.str
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8814,14 +8788,14 @@ trulens_eval.utils.serial.GetItems:
     get_sole_item: builtins.function
     items: typing.Tuple[builtins.str, ...]
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8850,14 +8824,14 @@ trulens_eval.utils.serial.GetSlice:
     get: builtins.function
     get_sole_item: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
@@ -8939,14 +8913,14 @@ trulens_eval.utils.serial.StepItemOrAttribute:
     get_item_or_attribute: builtins.function
     get_sole_item: builtins.function
     json: builtins.function
-    model_computed_fields: builtins.property
+    model_computed_fields: builtins.dict
     model_config: builtins.dict
     model_construct: builtins.classmethod
     model_copy: builtins.function
     model_dump: builtins.function
     model_dump_json: builtins.function
     model_extra: builtins.property
-    model_fields: builtins.property
+    model_fields: builtins.dict
     model_fields_set: builtins.property
     model_json_schema: builtins.classmethod
     model_parametrized_name: builtins.classmethod
