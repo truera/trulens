@@ -165,6 +165,8 @@ class OTELRecordingContext:
         return root_span
 
     def __exit__(self, exc_type, exc_value, exc_tb):
+        # Exiting the span context before updating the context to ensure nothing
+        # carries over unintentionally
         if self.span_context:
             # TODO[SNOW-1854360]: Add in feature function spans.
             self.span_context.__exit__(exc_type, exc_value, exc_tb)
@@ -180,7 +182,6 @@ class OTELRecordingContext:
         logger.debug("Exiting the OTEL app context.")
 
         while self.tokens:
-            logger.debug(self.tokens[-1])
             # Clearing the context once we're done with this root span.
             # See https://github.com/open-telemetry/opentelemetry-python/issues/2432#issuecomment-1593458684
             context_api.detach(self.tokens.pop())
