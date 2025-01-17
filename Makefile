@@ -29,6 +29,7 @@ env-%:
 env-tests:
 	poetry run pip install \
 		jsondiff \
+		langchain \
 		nbconvert \
 		nbformat \
 		opentelemetry-sdk \
