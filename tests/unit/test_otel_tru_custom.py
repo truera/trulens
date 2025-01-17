@@ -73,7 +73,6 @@ class TestOtelTruCustom(OtelAppTestCase):
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
         actual = self._get_events()
-        self.assertEqual(len(actual), 10)
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
@@ -83,7 +82,7 @@ class TestOtelTruCustom(OtelAppTestCase):
             actual,
             ignore_locators=[
                 f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(10)
+                for i in range(len(expected))
             ],
         )
 

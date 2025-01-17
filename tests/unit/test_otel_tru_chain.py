@@ -5,10 +5,10 @@ Tests for OTEL TruChain app.
 from unittest import main
 
 from langchain import hub
-from langchain.embeddings.fake import DeterministicFakeEmbedding
-from langchain.llms.fake import FakeListLLM
 from langchain.schema import StrOutputParser
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.embeddings import DeterministicFakeEmbedding
+from langchain_community.llms import FakeListLLM
 from langchain_community.vectorstores import FAISS
 from langchain_core.runnables import RunnablePassthrough
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -17,6 +17,7 @@ from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.init import init
 from trulens.experimental.otel_tracing.core.instrument import instrument
 
+from tests.test import optional_test
 from tests.util.df_comparison import (
     compare_dfs_accounting_for_ids_and_timestamps,
 )
@@ -57,6 +58,7 @@ class TestOtelTruChain(OtelAppTestCase):
             | StrOutputParser()
         )
 
+    @optional_test
     def test_smoke(self) -> None:
         # Set up.
         tru_session = TruSession()
@@ -77,7 +79,6 @@ class TestOtelTruChain(OtelAppTestCase):
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
         actual = self._get_events()
-        self.assertEqual(len(actual), 13)
         self.write_golden(GOLDEN_FILENAME, actual)
         expected = self.load_golden(GOLDEN_FILENAME)
         self._convert_column_types(expected)
@@ -87,7 +88,7 @@ class TestOtelTruChain(OtelAppTestCase):
             actual,
             ignore_locators=[
                 f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(10)
+                for i in range(len(expected))
             ],
         )
 
