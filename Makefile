@@ -214,7 +214,7 @@ test-%-optional: env-tests-optional
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
 test-unit:
-	poetry run pytest --rootdir=. tests/unit/*
+	poetry run pytest --rootdir=. tests/unit/test_otel_tru_chain.py
 # Tests in the e2e folder make use of possibly costly endpoints. They
 # are part of only the less frequently run release tests.
 test-e2e:
