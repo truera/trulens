@@ -261,7 +261,8 @@ class TruChain(core_app.App):
             sig = inspect.signature(func)
             wrapper = instrument(
                 span_type=SpanAttributes.SpanType.MAIN,
-                attributes=lambda ret, exception, *args, **kwargs: {
+                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+                    # langchain has specific main input/output logic.
                     SpanAttributes.MAIN.MAIN_INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)
                     ),

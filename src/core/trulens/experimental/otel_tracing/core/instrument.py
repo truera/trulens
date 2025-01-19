@@ -1,7 +1,7 @@
 from functools import wraps
 import inspect
 import logging
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Sequence
 import uuid
 
 from opentelemetry import trace
@@ -24,10 +24,25 @@ from trulens.otel.semconv.trace import SpanAttributes
 logger = logging.getLogger(__name__)
 
 
+def _resolve_attributes(
+    attributes: Attributes,
+    ret: Optional[Any],
+    exception: Optional[Exception],
+    args: Sequence[Any],
+    all_kwargs: Dict[str, Any],
+) -> Dict[str, Any]:
+    if attributes is None:
+        return {}
+    if callable(attributes):
+        return attributes(ret, exception, *args, **all_kwargs)
+    return attributes.copy()
+
+
 def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
-    attributes: Attributes = {},
+    attributes: Attributes = dict(),
+    full_scoped_attributes: Attributes = dict(),
 ):
     """
     Decorator for marking functions to be instrumented in custom classes that are
@@ -72,14 +87,30 @@ def instrument(
                     sig = inspect.signature(func)
                     bound_args = sig.bind_partial(*args, **kwargs).arguments
                     all_kwargs = {**kwargs, **bound_args}
+                    # Combine the attributes with the full_scoped_attributes.
+                    resolved_attributes = _resolve_attributes(
+                        attributes, ret, func_exception, args, all_kwargs
+                    )
+                    resolved_attributes = {
+                        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+                        for k, v in resolved_attributes.items()
+                    }
+                    resolved_full_scoped_attributes = _resolve_attributes(
+                        full_scoped_attributes,
+                        ret,
+                        func_exception,
+                        args,
+                        all_kwargs,
+                    )
+                    all_attributes = {
+                        **resolved_attributes,
+                        **resolved_full_scoped_attributes,
+                    }
+                    # Set the user-provided attributes.
                     set_user_defined_attributes(
                         span,
                         span_type=span_type,
-                        args=args,
-                        kwargs=all_kwargs,
-                        ret=ret,
-                        func_exception=func_exception,
-                        attributes=attributes,
+                        attributes=all_attributes,
                     )
 
                 except Exception as e:
