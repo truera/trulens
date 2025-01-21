@@ -52,18 +52,29 @@ def instrument(
     def inner_decorator(func: Callable):
         @wrapt.decorator
         def wrapper(func, instance, args, kwargs):
+            if (
+                hasattr(func, "__module__")
+                and func.__module__
+                and hasattr(func, "__qualname__")
+                and func.__qualname__
+            ):
+                name = f"{func.__module__}.{func.__qualname__}"
+            elif hasattr(func, "__qualname__") and func.__qualname__:
+                name = func.__qualname__
+            else:
+                name = func.__name__
             with (
                 trace.get_tracer_provider()
                 .get_tracer(TRULENS_SERVICE_NAME)
                 .start_as_current_span(
-                    name=func.__name__,
+                    name=name,
                 )
             ) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
 
-                span.set_attribute("name", func.__name__)
+                span.set_attribute("name", name)
 
                 try:
                     ret = func(*args, **kwargs)
@@ -80,16 +91,29 @@ def instrument(
                     # to set the main error. Errors in setting attributes should not be classified
                     # as main errors.
                     set_main_span_attributes(
-                        span, func, args, kwargs, ret, func_exception
+                        span,
+                        func,
+                        args,
+                        kwargs,
+                        ret,
+                        func_exception,
                     )
 
                 try:
                     sig = inspect.signature(func)
                     bound_args = sig.bind_partial(*args, **kwargs).arguments
                     all_kwargs = {**kwargs, **bound_args}
+                    if instance is not None:
+                        args_with_self_possibly = (instance,) + args
+                    else:
+                        args_with_self_possibly = args
                     # Combine the attributes with the full_scoped_attributes.
                     resolved_attributes = _resolve_attributes(
-                        attributes, ret, func_exception, args, all_kwargs
+                        attributes,
+                        ret,
+                        func_exception,
+                        args_with_self_possibly,
+                        all_kwargs,
                     )
                     resolved_attributes = {
                         f"{SpanAttributes.BASE}{span_type.value}.{k}": v
@@ -99,7 +123,7 @@ def instrument(
                         full_scoped_attributes,
                         ret,
                         func_exception,
-                        args,
+                        args_with_self_possibly,
                         all_kwargs,
                     )
                     all_attributes = {
