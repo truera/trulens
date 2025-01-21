@@ -130,6 +130,14 @@ def instrument(
                         **resolved_attributes,
                         **resolved_full_scoped_attributes,
                     }
+                    if (
+                        span_type == SpanAttributes.SpanType.UNKNOWN
+                        and not all_attributes
+                    ):
+                        all_attributes = {
+                            f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+                            for k, v in all_kwargs.items()
+                        }
                     # Set the user-provided attributes.
                     set_user_defined_attributes(
                         span,
