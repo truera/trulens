@@ -1,4 +1,3 @@
-from functools import wraps
 import inspect
 import logging
 from typing import Any, Callable, Dict, List, Optional, Sequence
@@ -20,6 +19,7 @@ from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
 from trulens.otel.semconv.trace import SpanAttributes
+import wrapt
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def instrument(
     """
 
     def inner_decorator(func: Callable):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
+        @wrapt.decorator
+        def wrapper(func, instance, args, kwargs):
             with (
                 trace.get_tracer_provider()
                 .get_tracer(TRULENS_SERVICE_NAME)
@@ -124,7 +124,7 @@ def instrument(
 
             return ret
 
-        return wrapper
+        return wrapper(func)
 
     return inner_decorator
 
