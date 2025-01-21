@@ -2,7 +2,6 @@
 Tests for OTEL TruLlama app.
 """
 
-import os
 from unittest import main
 
 from llama_index.core import Settings
@@ -32,10 +31,7 @@ class TestOtelTruLlama(OtelAppTestCase):
         Settings.chunk_overlap = 16
         Settings.llm = MockLLM()
         reader = SimpleDirectoryReader(
-            input_dir=os.path.dirname(
-                "./tests/unit/data/attention_is_all_you_need.pdf"
-            ),
-            file_extractor={".pdf": "pdfminer"},
+            input_files=["./tests/unit/data/attention_is_all_you_need.pdf"],
         )
         documents = reader.load_data()
         index = VectorStoreIndex.from_documents(documents)
@@ -48,7 +44,6 @@ class TestOtelTruLlama(OtelAppTestCase):
         tru_session.reset_database()
         # Create app.
         rag = self._create_simple_rag()
-        rag.query("What did the author do growing up?")
         tru_recorder = TruLlama(
             rag,
             app_name="Simple RAG",
