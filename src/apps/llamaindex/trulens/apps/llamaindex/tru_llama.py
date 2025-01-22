@@ -9,8 +9,8 @@ from typing import (
     AsyncGenerator,
     Callable,
     ClassVar,
-    Dict,
     Generator,
+    List,
     Optional,
     TypeVar,
     Union,
@@ -25,9 +25,9 @@ from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
 )
+from trulens.core.instruments import InstrumentedMethod
 
 # TODO: Do we need to depend on this?
-from trulens.core.utils import containers as container_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -174,65 +174,51 @@ class LlamaInstrument(core_instruments.Instrument):
         }.union(mod_tru_chain.LangChainInstrument.Default.CLASSES())
         """Classes to instrument."""
 
-        METHODS: Dict[str, core_instruments.ClassFilter] = (
-            container_utils.dict_set_with_multikey(
-                dict(mod_tru_chain.LangChainInstrument.Default.METHODS),
-                {
-                    # LLM:
-                    (
-                        "chat",
-                        "complete",
-                        "stream_chat",
-                        "stream_complete",
-                        "achat",
-                        "acomplete",
-                        "astream_chat",
-                        "astream_complete",
-                    ): BaseLLM,
-                    # BaseTool/AsyncBaseTool:
-                    ("__call__", "call"): BaseTool,
-                    ("acall"): AsyncBaseTool,
-                    # Memory:
-                    ("put"): BaseMemory,
-                    # Misc.:
-                    ("get_response"): Refine,
-                    (
-                        "predict",
-                        "apredict",
-                        "stream",
-                        "astream",
-                    ): BaseLLMPredictor,
-                    (
-                        "query",
-                        "aquery",
-                        "synthesize",
-                        "asynthesize",
-                    ): BaseQueryEngine,
-                    (
-                        "chat",
-                        "achat",
-                        "stream_chat",
-                        "astream_chat",
-                        "complete",
-                        "acomplete",
-                        "stream_complete",
-                        "astream_complete",
-                    ): (BaseChatEngine,),
-                    # BaseRetriever/BaseQueryEngine:
-                    ("retrieve", "_retrieve", "_aretrieve"): (
-                        BaseQueryEngine,
-                        BaseRetriever,
-                        WithFeedbackFilterNodes,
-                    ),
-                    # BaseNodePostProcessor
-                    ("_postprocess_nodes"): BaseNodePostprocessor,
-                    # Components
-                    ("_run_component"): (
-                        QueryEngineComponent,
-                        RetrieverComponent,
-                    ),
-                },
-            )
+        METHODS: List[InstrumentedMethod] = (
+            mod_tru_chain.LangChainInstrument.Default.METHODS
+            + [
+                InstrumentedMethod("chat", BaseLLM),
+                InstrumentedMethod("complete", BaseLLM),
+                InstrumentedMethod("stream_chat", BaseLLM),
+                InstrumentedMethod("stream_complete", BaseLLM),
+                InstrumentedMethod("achat", BaseLLM),
+                InstrumentedMethod("acomplete", BaseLLM),
+                InstrumentedMethod("astream_chat", BaseLLM),
+                InstrumentedMethod("astream_complete", BaseLLM),
+                InstrumentedMethod("__call__", BaseTool),
+                InstrumentedMethod("call", BaseTool),
+                InstrumentedMethod("acall", AsyncBaseTool),
+                InstrumentedMethod("put", BaseMemory),
+                InstrumentedMethod("get_response", Refine),
+                InstrumentedMethod("predict", BaseLLMPredictor),
+                InstrumentedMethod("apredict", BaseLLMPredictor),
+                InstrumentedMethod("stream", BaseLLMPredictor),
+                InstrumentedMethod("astream", BaseLLMPredictor),
+                InstrumentedMethod("query", BaseQueryEngine),
+                InstrumentedMethod("aquery", BaseQueryEngine),
+                InstrumentedMethod("synthesize", BaseQueryEngine),
+                InstrumentedMethod("asynthesize", BaseQueryEngine),
+                InstrumentedMethod("chat", BaseChatEngine),
+                InstrumentedMethod("achat", BaseChatEngine),
+                InstrumentedMethod("stream_chat", BaseChatEngine),
+                InstrumentedMethod("astream_chat", BaseChatEngine),
+                InstrumentedMethod("complete", BaseChatEngine),
+                InstrumentedMethod("acomplete", BaseChatEngine),
+                InstrumentedMethod("stream_complete", BaseChatEngine),
+                InstrumentedMethod("astream_complete", BaseChatEngine),
+                InstrumentedMethod("retrieve", BaseQueryEngine),
+                InstrumentedMethod("_retrieve", BaseQueryEngine),
+                InstrumentedMethod("_aretrieve", BaseQueryEngine),
+                InstrumentedMethod("retrieve", BaseRetriever),
+                InstrumentedMethod("_retrieve", BaseRetriever),
+                InstrumentedMethod("_aretrieve", BaseRetriever),
+                InstrumentedMethod("retrieve", WithFeedbackFilterNodes),
+                InstrumentedMethod("_retrieve", WithFeedbackFilterNodes),
+                InstrumentedMethod("_aretrieve", WithFeedbackFilterNodes),
+                InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
+                InstrumentedMethod("_run_component", QueryEngineComponent),
+                InstrumentedMethod("_run_component", RetrieverComponent),
+            ]
         )
         """Methods to instrument."""
 

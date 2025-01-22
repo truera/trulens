@@ -32,6 +32,7 @@ env-tests:
 		nbconvert \
 		nbformat \
 		opentelemetry-sdk \
+		opentelemetry-proto \
 		pre-commit \
 		pytest \
 		pytest-azurepipelines \
@@ -45,6 +46,7 @@ env-tests-required:
 
 env-tests-optional: env env-tests
 	poetry run pip install \
+	 	faiss-cpu \
 		llama-index-embeddings-huggingface \
 		llama-index-embeddings-openai \
 		unstructured \

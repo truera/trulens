@@ -301,7 +301,7 @@ class CriteriaOutputSpaceMixin:
         max_score: int,
         criteria: Optional[str] = None,
         output_space: Optional[str] = None,
-        examples: Optional[str] = None,
+        examples: Optional[List[Tuple[Dict[str, str], int]]] = None,
     ) -> str:
         if criteria is None and output_space is None:
             return cls.system_prompt
@@ -318,12 +318,13 @@ class CriteriaOutputSpaceMixin:
             )
             criteria = validated.criteria
             output_space_prompt = validated.get_output_scale_prompt()
-            prompt = cleandoc(
-                cls.system_prompt_template.format(
-                    output_space_prompt=output_space_prompt,
-                    criteria=criteria,
-                )
+
+        prompt = cleandoc(
+            cls.system_prompt_template.format(
+                output_space_prompt=output_space_prompt,
+                criteria=criteria,
             )
+        )
 
         if examples is not None:
             fewshot_examples = FewShotExamples.from_examples_list(examples)
@@ -373,11 +374,11 @@ class Groundedness(Semantics, WithPrompt, CriteriaOutputSpaceMixin):
     user_prompt: ClassVar[str] = cleandoc(
         """SOURCE: {premise}
 
-        Hypothesis: {hypothesis}
+        Statement: {hypothesis}
 
         Please meticulously answer with the template below for ALL statement sentences:
 
-        Criteria: <Statement Sentence>
+        Criteria: <Statement>
         Supporting Evidence: <Identify and describe the location in the source where the information matches the statement. Provide a detailed, human-readable summary indicating the path or key details. if nothing matches, say NOTHING FOUND. For the case where the statement is an abstention, say ABSTENTION>
         Score: <Output a number based on the scoring output space / range>
         """
