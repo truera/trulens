@@ -120,29 +120,12 @@ def set_user_defined_attributes(
     span: Span,
     *,
     span_type: SpanAttributes.SpanType,
-    args: tuple,
-    kwargs: dict,
-    ret,
-    func_exception: Optional[Exception],
-    attributes: Attributes,
+    attributes: Dict[str, Any],
 ) -> None:
-    attributes_to_add = {}
-
-    # Set the user-provided attributes.
-    if attributes:
-        if callable(attributes):
-            attributes_to_add = attributes(ret, func_exception, *args, **kwargs)
-        else:
-            attributes_to_add = attributes
-
-    logger.info(f"Attributes to add: {attributes_to_add}")
-
-    final_attributes = validate_attributes(attributes_to_add)
-
-    prefix = f"{SpanAttributes.BASE}{span_type.value}."
+    final_attributes = validate_attributes(attributes)
 
     for key, value in final_attributes.items():
-        span.set_attribute(prefix + key, value)
+        span.set_attribute(key, value)
 
         if (
             key != SpanAttributes.SELECTOR_NAME_KEY
