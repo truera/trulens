@@ -28,7 +28,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8.1"
-poetry-core = "<2.0.0"
 numpy = [
   { version = ">=1.23.0,<1.25.0", python = "<3.9" },
   { version = ">=1.23.0", python = ">=3.9" },
@@ -49,6 +48,7 @@ importlib-resources = "^6.0"
 trulens-otel-semconv = { version = "^1.0.0", optional = true }
 opentelemetry-api = { version = "^1.0.0", optional = true }
 opentelemetry-sdk = { version = "^1.0.0", optional = true }
+opentelemetry-proto = { version = "^1.0.0", optional = true }
 
 [tool.poetry.group.tqdm]
 optional = true

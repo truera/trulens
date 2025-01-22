@@ -3,7 +3,6 @@ from __future__ import annotations
 from abc import ABC
 from abc import ABCMeta
 from abc import abstractmethod
-import contextlib
 import contextvars
 import datetime
 import inspect
@@ -422,18 +421,6 @@ class App(
     _context_vars_tokens: Dict[contextvars.ContextVar, contextvars.Token] = (
         pydantic.PrivateAttr(default_factory=dict)
     )
-
-    tokens: List[object] = []
-    """
-    OTEL context tokens for the current context manager. These tokens are how the OTEL
-    context api keeps track of what is changed in the context, and used to undo the changes.
-    """
-
-    span_context: Optional[contextlib.AbstractContextManager] = None
-    """
-    Span context manager. Required to help keep track of the appropriate span context
-    to enter/exit.
-    """
 
     def __init__(
         self,
@@ -889,20 +876,18 @@ class App(
             **kwargs,
         )
 
+    def _prevent_invalid_otel_syntax(self):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            raise RuntimeError("Invalid TruLens OTEL Tracing syntax.")
+
     # For use as a context manager.
     def __enter__(self):
         if not core_instruments.Instrument._have_context():
             raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
 
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
-            )
-
-            return OTELApp.__enter__(self)
-
+        self._prevent_invalid_otel_syntax()
         ctx = core_instruments._RecordingContext(app=self)
 
         token = self.recording_contexts.set(ctx)
@@ -912,19 +897,10 @@ class App(
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
-            )
-
-            return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
+        self._prevent_invalid_otel_syntax()
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
-
-        # self._reset_context_vars()
 
         if exc_type is not None:
             raise exc_value
@@ -933,14 +909,7 @@ class App(
 
     # For use as a context manager.
     async def __aenter__(self):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
-            )
-
-            return OTELApp.__enter__(self)
+        self._prevent_invalid_otel_syntax()
 
         ctx = core_instruments._RecordingContext(app=self)
 
@@ -953,14 +922,7 @@ class App(
 
     # For use as a context manager.
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                App as OTELApp,
-            )
-
-            return OTELApp.__exit__(self, exc_type, exc_value, exc_tb)
+        self._prevent_invalid_otel_syntax()
 
         ctx = self.recording_contexts.get()
         self.recording_contexts.reset(ctx.token)
@@ -971,6 +933,20 @@ class App(
             raise exc_value
 
         return
+
+    def __call__(self, *, run_name: str = "", input_id: str = ""):
+        if not self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            raise RuntimeError("OTEL Tracing is not enabled for this session.")
+
+        from trulens.experimental.otel_tracing.core.instrument import (
+            OTELRecordingContext as OTELApp,
+        )
+
+        # Pylance shows an error here, but it is likely a false positive. due to the overriden
+        # model dump returning json instead of a dict.
+        return OTELApp(app=self, run_name=run_name, input_id=input_id)
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars

@@ -4,7 +4,7 @@ This file contains utility functions specific to certain span types.
 
 from inspect import signature
 import logging
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from opentelemetry.baggage import get_baggage
 from opentelemetry.trace.span import Span
@@ -20,7 +20,13 @@ Attributes = Optional[
     Union[
         Dict[str, Any],
         Callable[
-            [Optional[Any], Optional[Exception], Any, Any], Dict[str, Any]
+            [
+                Optional[Any],
+                Optional[Exception],
+                List[Any],
+                Optional[Dict[str, Any]],
+            ],
+            Dict[str, Any],
         ],
     ]
 ]
@@ -86,14 +92,26 @@ def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
 def set_general_span_attributes(
     span: Span, /, span_type: SpanAttributes.SpanType
 ) -> Span:
-    span.set_attribute("kind", "SPAN_KIND_TRULENS")
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
+
     span.set_attribute(
-        SpanAttributes.APP_ID, str(get_baggage(SpanAttributes.APP_ID))
+        SpanAttributes.APP_NAME, str(get_baggage(SpanAttributes.APP_NAME))
+    )
+    span.set_attribute(
+        SpanAttributes.APP_VERSION, str(get_baggage(SpanAttributes.APP_VERSION))
     )
     span.set_attribute(
         SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
     )
+
+    run_name_baggage = get_baggage(SpanAttributes.RUN_NAME)
+    input_id_baggage = get_baggage(SpanAttributes.INPUT_ID)
+
+    if run_name_baggage:
+        span.set_attribute(SpanAttributes.RUN_NAME, str(run_name_baggage))
+
+    if input_id_baggage:
+        span.set_attribute(SpanAttributes.INPUT_ID, str(input_id_baggage))
 
     return span
 
@@ -121,7 +139,7 @@ def set_user_defined_attributes(
 
     final_attributes = validate_attributes(attributes_to_add)
 
-    prefix = f"trulens.{span_type.value}."
+    prefix = f"{SpanAttributes.BASE}{span_type.value}."
 
     for key, value in final_attributes.items():
         span.set_attribute(prefix + key, value)
@@ -131,7 +149,7 @@ def set_user_defined_attributes(
             and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
         ):
             span.set_attribute(
-                f"trulens.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
+                f"{SpanAttributes.BASE}{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
                 value,
             )
 

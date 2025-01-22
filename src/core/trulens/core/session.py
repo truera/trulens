@@ -45,6 +45,8 @@ from trulens.core.utils import threading as threading_utils
 from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 if TYPE_CHECKING:
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SpanExporter
     from trulens.core import app as base_app
 
 tqdm = None
@@ -157,16 +159,18 @@ class TruSession(
     """Database Connector to use. If not provided, a default is created and
     used."""
 
-    _experimental_otel_exporter: Optional[
-        Any
-    ] = (  # Any = otel_export_sdk.SpanExporter
+    _experimental_otel_exporter: Optional[SpanExporter] = pydantic.PrivateAttr(
+        None
+    )
+
+    _experimental_tracer_provider: Optional[TracerProvider] = (
         pydantic.PrivateAttr(None)
     )
 
     @property
     def experimental_otel_exporter(
         self,
-    ) -> Any:  # Any = Optional[otel_export_sdk.SpanExporter]
+    ) -> Optional[SpanExporter]:
         """EXPERIMENTAL(otel_tracing): OpenTelemetry SpanExporter to send spans
         to.
 
@@ -176,15 +180,27 @@ class TruSession(
 
         return self._experimental_otel_exporter
 
-    @experimental_otel_exporter.setter
-    def experimental_otel_exporter(
-        self, value: Optional[Any]
-    ):  # Any = otel_export_sdk.SpanExporter
-        otel_tracing_feature._FeatureSetup.assert_optionals_installed()
+    def experimental_force_flush(self, timeout_millis: int = 300000) -> bool:
+        """
+        Force flush the OpenTelemetry exporters.
 
-        from trulens.experimental.otel_tracing.core.session import _TruSession
+        Args:
+            timeout_millis: The maximum amount of time to wait for spans to be
+                processed.
 
-        _TruSession._setup_otel_exporter(self, value)
+        Returns:
+            False if the timeout is exceeded, feature is not enabled, or the provider doesn't exist, True otherwise.
+        """
+
+        if (
+            not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            or self._experimental_tracer_provider is None
+        ):
+            return False
+
+        return self._experimental_tracer_provider.force_flush(timeout_millis)
 
     def __str__(self) -> str:
         return f"TruSession({self.connector})"
@@ -205,9 +221,7 @@ class TruSession(
                 Iterable[core_experimental.Feature],
             ]
         ] = None,
-        _experimental_otel_exporter: Optional[
-            Any
-        ] = None,  # Any = otel_export_sdk.SpanExporter
+        _experimental_otel_exporter: Optional[SpanExporter] = None,
         **kwargs,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -236,9 +250,12 @@ class TruSession(
                 f"Cannot provide both `connector` and connector argument(s) {extra_keys}."
             )
 
+        connector = connector or core_connector.DefaultDBConnector(
+            **connector_args
+        )
+
         super().__init__(
-            connector=connector
-            or core_connector.DefaultDBConnector(**connector_args),
+            connector=connector,
             **self_args,
         )
 
@@ -246,14 +263,18 @@ class TruSession(
         if experimental_feature_flags is not None:
             self.experimental_set_features(experimental_feature_flags)
 
-        if _experimental_otel_exporter is not None:
-            otel_tracing_feature.assert_optionals_installed()
+        if _experimental_otel_exporter is not None or self.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
             from trulens.experimental.otel_tracing.core.session import (
                 _TruSession,
             )
 
-            _TruSession._setup_otel_exporter(self, _experimental_otel_exporter)
+            _TruSession._setup_otel_exporter(
+                self, connector, _experimental_otel_exporter
+            )
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing
