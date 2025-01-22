@@ -802,7 +802,11 @@ class SQLAlchemyDB(core_db.DB):
                     self.orm.AppDefinition.app_name == app_name
                 )
 
-            stmt = stmt.options(joinedload(self.orm.Record.feedback_results))
+            # Only load feedback results where the status column is "done".
+            stmt = stmt.join(self.orm.Record.feedback_results).filter(
+                self.orm.FeedbackResult.status
+                == feedback_schema.FeedbackResultStatus.DONE.value
+            )
             stmt = stmt.options(joinedload(self.orm.Record.app))
             # NOTE(piotrm): The joinedload here makes it so that the
             # feedback_results and app definitions get loaded eagerly instead if lazily when
