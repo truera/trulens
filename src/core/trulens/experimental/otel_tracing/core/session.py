@@ -19,8 +19,19 @@ TRULENS_SERVICE_NAME = "trulens"
 logger = logging.getLogger(__name__)
 
 
+def _set_up_tracer_provider() -> TracerProvider:
+    resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
+    provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(provider)
+
+    global_tracer_provider = trace.get_tracer_provider()
+    if not isinstance(global_tracer_provider, TracerProvider):
+        raise ValueError("Received a TracerProvider of an unexpected type!")
+    return global_tracer_provider
+
+
 class _TruSession(core_session.TruSession):
-    def _setup_otel_exporter(
+    def _set_up_otel_exporter(
         self,
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
@@ -35,16 +46,7 @@ class _TruSession(core_session.TruSession):
 
         self._experimental_otel_exporter = exporter
 
-        """Initialize the OpenTelemetry SDK with TruLens configuration."""
-        resource = Resource.create({"service.name": TRULENS_SERVICE_NAME})
-        provider = TracerProvider(resource=resource)
-        trace.set_tracer_provider(provider)
-
-        global_trace_provider = trace.get_tracer_provider()
-        if not isinstance(global_trace_provider, TracerProvider):
-            raise ValueError("Received a TracerProvider of an unexpected type!")
-
-        tracer_provider: TracerProvider = global_trace_provider
+        tracer_provider = _set_up_tracer_provider()
 
         # Setting it here for easy access without having to assert the type every time
         self._experimental_tracer_provider = tracer_provider
