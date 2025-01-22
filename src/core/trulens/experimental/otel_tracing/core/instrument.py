@@ -25,7 +25,6 @@ import wrapt
 logger = logging.getLogger(__name__)
 
 
-# TODO(this_pr): unit test this.
 def _get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")

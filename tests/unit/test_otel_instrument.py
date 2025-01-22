@@ -6,6 +6,8 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
+import pandas as pd
+from trulens.experimental.otel_tracing.core.instrument import _get_func_name
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
@@ -24,6 +26,20 @@ class TestOtelInstrument(unittest.TestCase):
     def tearDown(self) -> None:
         self.span_processor.shutdown()
         return super().tearDown()
+
+    def test__get_func_name(self):
+        self.assertEqual(
+            _get_func_name(lambda: None),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name.<locals>.<lambda>",
+        )
+        self.assertEqual(
+            _get_func_name(self.test__get_func_name),
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test__get_func_name",
+        )
+        self.assertEqual(
+            _get_func_name(pd.DataFrame.transpose),
+            "pandas.core.frame.DataFrame.transpose",
+        )
 
     def test_sync_non_generator_function(self):
         # Set up instrumented function.
