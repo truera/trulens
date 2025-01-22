@@ -44,6 +44,7 @@ from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
 from trulens.core.schema import record as record_schema
 from trulens.core.schema import select as select_schema
+from trulens.core.session import TruSession
 from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import constants as constant_utils
 from trulens.core.utils import containers as container_utils
@@ -55,6 +56,7 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -464,6 +466,41 @@ class App(
         if self.manage_pending_feedback_results_thread is not None:
             self.records_with_pending_feedback_results.shutdown()
             self.manage_pending_feedback_results_thread.join()
+
+    def _wrap_main_function(self, app: Any, method_name: str) -> None:
+        if TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, freeze=True
+        ):
+            from trulens.experimental.otel_tracing.core.instrument import (
+                instrument,
+            )
+
+            if not hasattr(app, method_name):
+                raise ValueError(f"App must have an `{method_name}` method!")
+            func = getattr(app, method_name)
+            sig = inspect.signature(func)
+            wrapper = instrument(
+                span_type=SpanAttributes.SpanType.MAIN,
+                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+                    # langchain has specific main input/output logic.
+                    SpanAttributes.MAIN.MAIN_INPUT: self.main_input(
+                        func, sig, sig.bind_partial(**kwargs)
+                    ),
+                    SpanAttributes.MAIN.MAIN_OUTPUT: self.main_output(
+                        func, sig, sig.bind_partial(**kwargs), ret
+                    ),
+                },
+            )
+            # HACK!: This is a major hack to get around the fact that we can't
+            # set the desired method on the app object due to Pydantic only
+            # allowing fields to be set on the class, not on the instance for
+            # some reason. To get around this, we're setting it on the __dict__
+            # of the app object, which is mutable and is the first place that
+            # the field is looked up it seems. There's another implication of
+            # this, which is that the desired method for this object will not
+            # run whatever is instrumented by TruChain otherwise but that's
+            # fine.
+            app.__dict__[method_name] = wrapper(func)
 
     def _start_manage_pending_feedback_results(self) -> None:
         """Start the thread that manages the queue of records with
