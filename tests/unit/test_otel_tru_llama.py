@@ -4,10 +4,6 @@ Tests for OTEL TruLlama app.
 
 from unittest import main
 
-from llama_index.core import Settings
-from llama_index.core import SimpleDirectoryReader
-from llama_index.core import VectorStoreIndex
-from llama_index.core.llms.mock import MockLLM
 from trulens.core.session import TruSession
 
 from tests.test import optional_test
@@ -16,6 +12,10 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 if run_optional_tests():
     # These imports require optional dependencies to be installed.
+    from llama_index.core import Settings
+    from llama_index.core import SimpleDirectoryReader
+    from llama_index.core import VectorStoreIndex
+    from llama_index.core.llms.mock import MockLLM
     from trulens.apps.llamaindex import TruLlama
 
 
