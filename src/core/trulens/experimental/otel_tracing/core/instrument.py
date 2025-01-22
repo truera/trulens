@@ -1,5 +1,6 @@
 import inspect
 import logging
+from types import TracebackType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import uuid
 
@@ -157,7 +158,7 @@ def instrument(
         span_name = _get_func_name(func)
 
         @wrapt.decorator
-        def wrapper(func, instance, args, kwargs):
+        def sync_wrapper(func, instance, args, kwargs):
             with _create_span(span_name) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
@@ -193,6 +194,51 @@ def instrument(
                 if exception:
                     raise exception
             return ret
+
+        @wrapt.decorator
+        def sync_generator_wrapper(func, instance, args, kwargs):
+            def generator():
+                with _create_span(span_name) as span:
+                    ret = None
+                    func_exception: Optional[Exception] = None
+                    attributes_exception: Optional[Exception] = None
+                    # Run function.
+                    try:
+                        result = func(*args, **kwargs)
+                        ret = []
+                        for curr in result:
+                            ret.append(curr)
+                            yield curr
+                    except Exception as e:
+                        # We want to get into the next clause to allow the users
+                        # to still add attributes. It's on the user to deal with
+                        # None as a return value.
+                        func_exception = e
+                    # Set span attributes.
+                    try:
+                        _set_span_attributes(
+                            span,
+                            span_type,
+                            span_name,
+                            func,
+                            func_exception,
+                            attributes,
+                            full_scoped_attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error setting attributes: {e}")
+                        attributes_exception = e
+                    # Raise any exceptions that occurred.
+                    exception = func_exception or attributes_exception
+                    if exception:
+                        raise exception
+                return ret
+
+            return generator()
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
@@ -232,10 +278,55 @@ def instrument(
                     raise exception
             return ret
 
-        if inspect.iscoroutinefunction(func):
+        @wrapt.decorator
+        async def async_generator_wrapper(func, instance, args, kwargs):
+            with _create_span(span_name) as span:
+                ret = None
+                func_exception: Optional[Exception] = None
+                attributes_exception: Optional[Exception] = None
+                # Run function.
+                try:
+                    result = func(*args, **kwargs)
+                    ret = []
+                    async for curr in result:
+                        ret.append(curr)
+                        yield curr
+                except Exception as e:
+                    # We want to get into the next clause to allow the users
+                    # to still add attributes. It's on the user to deal with
+                    # None as a return value.
+                    func_exception = e
+                # Set span attributes.
+                try:
+                    _set_span_attributes(
+                        span,
+                        span_type,
+                        span_name,
+                        func,
+                        func_exception,
+                        attributes,
+                        full_scoped_attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                    )
+                except Exception as e:
+                    logger.error(f"Error setting attributes: {e}")
+                    attributes_exception = e
+                # Raise any exceptions that occurred.
+                exception = func_exception or attributes_exception
+                if exception:
+                    raise exception
+
+        if inspect.isasyncgenfunction(func):
+            return async_generator_wrapper(func)
+        elif inspect.iscoroutinefunction(func):
             return async_wrapper(func)
+        elif inspect.isgeneratorfunction(func):
+            return sync_generator_wrapper(func)
         else:
-            return wrapper(func)
+            return sync_wrapper(func)
 
     return inner_decorator
 
@@ -317,6 +408,9 @@ class OTELRecordingContext:
 
         return root_span
 
+    async def __aenter__(self):
+        return self.__enter__()
+
     def __exit__(self, exc_type, exc_value, exc_tb):
         # Exiting the span context before updating the context to ensure nothing
         # carries over unintentionally
@@ -334,3 +428,11 @@ class OTELRecordingContext:
             # Clearing the context once we're done with this root span.
             # See https://github.com/open-telemetry/opentelemetry-python/issues/2432#issuecomment-1593458684
             context_api.detach(self.tokens.pop())
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[BaseException],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        return self.__exit__(exc_type, exc_val, exc_tb)

@@ -244,7 +244,8 @@ class TruChain(core_app.App):
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
 
-        self._wrap_main_function(app, "invoke")
+        for method_name in ["invoke", "ainvoke", "stream", "astream"]:
+            self._wrap_main_function(app, method_name)
 
         super().__init__(**kwargs)
 
