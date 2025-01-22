@@ -1,6 +1,5 @@
 """LlamaIndex instrumentation."""
 
-import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
@@ -21,21 +20,18 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as core_app
-from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
     getmembers_static,  # import style exception
 )
 from trulens.core.instruments import InstrumentedMethod
-from trulens.core.session import TruSession
 
 # TODO: Do we need to depend on this?
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.otel.semconv.trace import SpanAttributes
 
 T = TypeVar("T")
 
@@ -330,39 +326,7 @@ class TruLlama(core_app.App):
         )  # TODO: make class property
         kwargs["instrument"] = LlamaInstrument(app=self)
 
-        if TruSession().experimental_feature(
-            core_experimental.Feature.OTEL_TRACING, freeze=True
-        ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument,
-            )
-
-            if not hasattr(app, "query"):
-                raise ValueError("App must have an `query` method!")
-            func = app.query
-            sig = inspect.signature(func)
-            wrapper = instrument(
-                span_type=SpanAttributes.SpanType.MAIN,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                    # llamaindex has specific main input/output logic.
-                    SpanAttributes.MAIN.MAIN_INPUT: self.main_input(
-                        func, sig, sig.bind_partial(**kwargs)
-                    ),
-                    SpanAttributes.MAIN.MAIN_OUTPUT: self.main_output(
-                        func, sig, sig.bind_partial(**kwargs), ret
-                    ),
-                },
-            )
-            # HACK!: This is a major hack to get around the fact that we can't
-            # set the query method on the app object due to Pydantic only
-            # allowing fields to be set on the class, not on the instance for
-            # some reason. To get around this, we're setting it on the __dict__
-            # of the app object, which is mutable and is the first place that
-            # the field is looked up it seems. There's another implication of
-            # this, which is that the query method for this object will not
-            # run whatever is instrumented by TruChain otherwise but that's
-            # fine.
-            app.__dict__["query"] = wrapper(func)
+        self._wrap_main_function(app, "query")
 
         super().__init__(**kwargs)
 
