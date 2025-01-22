@@ -45,8 +45,18 @@ def instrument(
     full_scoped_attributes: Attributes = dict(),
 ):
     """
-    Decorator for marking functions to be instrumented in custom classes that are
-    wrapped by TruCustomApp, with OpenTelemetry tracing.
+    Decorator for marking functions to be instrumented with OpenTelemetry
+    tracing.
+
+    span_type: Span type to be used for the span.
+    attributes:
+        A dictionary or a callable that returns a dictionary of attributes
+        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span where
+        each key in the dictionary will be an attribute in the span type's
+        scope.
+    full_scoped_attributes:
+        A dictionary or a callable that returns a dictionary of attributes
+        (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
     """
 
     def inner_decorator(func: Callable):
