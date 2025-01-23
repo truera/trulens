@@ -346,6 +346,7 @@ class LLMProvider(core_provider.Provider):
         Returns:
             float: A value between 0.0 (not relevant) and 1.0 (relevant).
         """
+
         output_space = self._determine_output_space(
             min_score_val, max_score_val
         )
@@ -417,18 +418,20 @@ class LLMProvider(core_provider.Provider):
         user_prompt = user_prompt.replace(
             "RELEVANCE:", feedback_prompts.COT_REASONS_TEMPLATE
         )
+        if criteria is None:
+            system_prompt = feedback_v2.ContextRelevance.default_cot_prompt
+        else:
+            output_space = self._determine_output_space(
+                min_score_val, max_score_val
+            )
 
-        output_space = self._determine_output_space(
-            min_score_val, max_score_val
-        )
-
-        system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
-            min_score=min_score_val,
-            max_score=max_score_val,
-            criteria=criteria,
-            examples=examples,
-            output_space=output_space,
-        )
+            system_prompt = feedback_v2.ContextRelevance.generate_system_prompt(
+                min_score=min_score_val,
+                max_score=max_score_val,
+                criteria=criteria,
+                examples=examples,
+                output_space=output_space,
+            )
 
         return self.generate_score_and_reasons(
             system_prompt=system_prompt,
