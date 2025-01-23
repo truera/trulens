@@ -10,9 +10,6 @@ from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
-from tests.util.df_comparison import (
-    compare_dfs_accounting_for_ids_and_timestamps,
-)
 from tests.util.otel_app_test_case import OtelAppTestCase
 
 
@@ -62,7 +59,6 @@ class TestOtelTruCustom(OtelAppTestCase):
             experimental_feature_flags=[Feature.OTEL_TRACING]
         )
         tru_session.reset_database()
-
         # Create and run app.
         test_app = _TestApp()
         custom_app = TruCustomApp(test_app)
@@ -71,22 +67,8 @@ class TestOtelTruCustom(OtelAppTestCase):
         with custom_app():
             test_app.respond_to_query("throw")
         # Compare results to expected.
-        GOLDEN_FILENAME = (
+        self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
-        )
-        tru_session.experimental_force_flush()
-        actual = self._get_events()
-        self.write_golden(GOLDEN_FILENAME, actual)
-        expected = self.load_golden(GOLDEN_FILENAME)
-        self._convert_column_types(expected)
-        compare_dfs_accounting_for_ids_and_timestamps(
-            self,
-            expected,
-            actual,
-            ignore_locators=[
-                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(len(expected))
-            ],
         )
 
 
