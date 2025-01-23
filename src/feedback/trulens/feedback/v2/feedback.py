@@ -451,11 +451,11 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
 
-        - CONTEXT that is IRRELEVANT to the QUESTION should score {min_score}.
-        - CONTEXT that is RELEVANT to some of the QUESTION should get an intermediate score.
-        - CONTEXT that is RELEVANT to most of the QUESTION should get a score closer to {max_score}.
-        - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of {max_score}, which is the full mark.
-        - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of {max_score}.
+        - SEARCH RESULT that is IRRELEVANT to the USER QUERY should score {min_score}.
+        - SEARCH RESULT that is RELEVANT to some of the USER QUERY should get an intermediate score.
+        - SEARCH RESULT that is RELEVANT to most of the USER QUERY should get a score closer to {max_score}.
+        - SEARCH RESULT that is RELEVANT to the entirety of the USER QUERY should get a score of {max_score}, which is the full mark.
+        - SEARCH RESULT must be relevant and helpful for answering the entire USER QUERY to get a score of {max_score}.
         """
 
     default_cot_prompt: ClassVar[str] = cleandoc(
@@ -474,7 +474,7 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     system_prompt_template: ClassVar[str] = cleandoc(
-        """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
+        """You are a RELEVANCE grader; providing the relevance of the given USER QUERY to the given SEARCH RESULT.
         Respond only as a number from {output_space_prompt}.
 
         Criteria for evaluating relevance:
@@ -482,11 +482,11 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
 
         A few additional scoring guidelines:
 
-        - Long CONTEXTS should score equally well as short CONTEXTS.
+        - Long SEARCH RESULT should score equally well as short SEARCH RESULT.
 
-        - RELEVANCE score should increase as the CONTEXTS provides more RELEVANT context to the QUESTION.
+        - RELEVANCE score should increase as the SEARCH RESULT provides more RELEVANT context to the USER QUERY.
 
-        - RELEVANCE score should increase as the CONTEXTS provides RELEVANT context to more parts of the QUESTION.
+        - RELEVANCE score should increase as the SEARCH RESULT provides RELEVANT context to more parts of the USER QUERY.
 
         - Never elaborate.
         """
@@ -497,14 +497,6 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
         SEARCH RESULT: {context}
 
         RELEVANCE:
-        """
-    )
-
-    verb_confidence_prompt: ClassVar[str] = cleandoc(
-        """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
-        other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
-        0 and 1.0 that your scoring is accurate, without any extra commentary whatsoever;
-        just the probability!>
         """
     )
 
