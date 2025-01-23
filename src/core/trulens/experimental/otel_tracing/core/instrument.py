@@ -138,9 +138,7 @@ def instrument(
                         all_kwargs,
                     )
                     resolved_attributes = {
-                        f"{SpanAttributes.BASE}{span_type.value}.{k}": _convert_to_valid_span_attribute_type(
-                            v
-                        )
+                        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
                         for k, v in resolved_attributes.items()
                     }
                     resolved_full_scoped_attributes = _resolve_attributes(
@@ -162,6 +160,10 @@ def instrument(
                             f"{SpanAttributes.BASE}{span_type.value}.{k}": v
                             for k, v in all_kwargs.items()
                         }
+                    all_attributes = {
+                        k: _convert_to_valid_span_attribute_type(v)
+                        for k, v in all_attributes.items()
+                    }
                     # Set the user-provided attributes.
                     set_user_defined_attributes(
                         span,
