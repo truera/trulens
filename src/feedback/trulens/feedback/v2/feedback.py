@@ -450,12 +450,28 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     output_space_prompt: ClassVar[str] = LIKERT_0_3_PROMPT
     output_space: ClassVar[str] = OutputSpace.LIKERT_0_3.name
     criteria_template: ClassVar[str] = """
+
         - CONTEXT that is IRRELEVANT to the QUESTION should score {min_score}.
         - CONTEXT that is RELEVANT to some of the QUESTION should get an intermediate score.
         - CONTEXT that is RELEVANT to most of the QUESTION should get a score closer to {max_score}.
         - CONTEXT that is RELEVANT to the entirety of the QUESTION should get a score of {max_score}, which is the full mark.
         - CONTEXT must be relevant and helpful for answering the entire QUESTION to get a score of {max_score}.
         """
+
+    default_cot_prompt: ClassVar[str] = cleandoc(
+        """You are an EXPERT SEARCH RESULT RATER. You are given a USER QUERY and a SEARCH RESULT.
+        Your task is to rate the search result based on its relevance to the user query. You should rate the search result on a scale of 0 to 3, where:
+        0: The search result has no relevance to the user query.
+        1: The search result has low relevance to the user query. It may contain some information that is very slightly related to the user query but not enough to answer it. The search result contains some references or very limited information about some entities present in the user query. In case the query is a statement on a topic, the search result should be tangentially related to it.
+        2: The search result has medium relevance to the user query. If the user query is a question, the search result may contain some information that is relevant to the user query but not enough to answer it. If the user query is a search phrase/sentence, either the search result is centered around most but not all entities present in the user query, or if all the entities are present in the result, the search result while not being centered around it has medium level of relevance. In case the query is a statement on a topic, the search result should be related to the topic.
+        3: The search result has high relevance to the user query. If the user query is a question, the search result contains information that can answer the user query. Otherwise, if the search query is a search phrase/sentence, it provides relevant information about all entities that are present in the user query and the search result is centered around the entities mentioned in the query. In case the query is a statement on a topic, the search result should be either directly addressing it or be on the same topic.
+
+        You should think step by step about the user query and the search result and rate the search result. Be critical and strict with your ratings to ensure accuracy.
+
+        Think step by step about the user query and the search result and rate the search result. Provide a reasoning for your rating.
+
+        """
+    )
 
     system_prompt_template: ClassVar[str] = cleandoc(
         """You are a RELEVANCE grader; providing the relevance of the given CONTEXT to the given QUESTION.
@@ -477,12 +493,13 @@ class ContextRelevance(Relevance, WithPrompt, CriteriaOutputSpaceMixin):
     )
 
     user_prompt: ClassVar[str] = cleandoc(
-        """QUESTION: {question}
-        CONTEXT: {context}
+        """USER QUERY: {question}
+        SEARCH RESULT: {context}
 
         RELEVANCE:
         """
     )
+
     verb_confidence_prompt: ClassVar[str] = cleandoc(
         """Finally after generating the RELEVANCE score, provide the confidence score CONFIDENCE between 0.0 to 1.0 that your RELEVANCE scoring is accurate (i.e. how confident you are with your evaluation score). Give ONLY the confidence score, no
         other words or explanation.\n\nFor example: CONFIDENCE: <the probability between
