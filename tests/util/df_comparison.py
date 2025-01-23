@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, Optional, Sequence
 from unittest import TestCase
 
@@ -10,6 +11,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
     actual: pd.DataFrame,
     ignore_locators: Optional[Sequence[str]],
     timestamp_tol: pd.Timedelta = pd.Timedelta(0),
+    ignore_memory_locations: bool = True,
 ) -> None:
     """
     Compare two Dataframes are equal, accounting for ids and timestamps. That
@@ -26,6 +28,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
         actual: actual results
         ignore_locators: locators to ignore when comparing the Dataframes
         timestamp_tol: the tolerance for comparing timestamps
+        ignore_memory_locations: whether to ignore memory locations in strings (e.g. "0x1234abcd")
     """
     id_mapping: Dict[str, str] = {}
     timestamp_mapping: Dict[pd.Timestamp, pd.Timestamp] = {}
@@ -42,6 +45,7 @@ def compare_dfs_accounting_for_ids_and_timestamps(
                 is_id=col.endswith("_id"),
                 locator=f"df.iloc[{i}][{col}]",
                 ignore_locators=ignore_locators,
+                ignore_memory_locations=ignore_memory_locations,
             )
     # Ensure that the id mapping is a bijection.
     test_case.assertEqual(
@@ -70,6 +74,7 @@ def _compare_entity(
     is_id: bool,
     locator: str,
     ignore_locators: Optional[Sequence[str]],
+    ignore_memory_locations: bool,
 ) -> None:
     if ignore_locators and locator in ignore_locators:
         return
@@ -105,6 +110,7 @@ def _compare_entity(
                 is_id=k.endswith("_id"),
                 locator=f"{locator}[{k}]",
                 ignore_locators=ignore_locators,
+                ignore_memory_locations=ignore_memory_locations,
             )
     elif isinstance(expected, pd.Timestamp):
         if expected not in timestamp_mapping:
@@ -115,4 +121,21 @@ def _compare_entity(
             f"Timestamps of {locator} are not consistent!",
         )
     else:
-        test_case.assertEqual(expected, actual, f"{locator} does not match!")
+        if ignore_memory_locations and isinstance(expected, str):
+            expected = _replace_memory_address(expected)
+            actual = _replace_memory_address(actual)
+        test_case.assertEqual(
+            expected,
+            actual,
+            f"{locator} does not match!\nEXPECTED: {expected}\nACTUAL: {actual}",
+        )
+
+
+def _replace_memory_address(text: str) -> str:
+    """
+    Replaces memory address representations like "<foo at 0xblah>"
+    with "<foo at memory_location>" in a given string.
+    """
+    regex = r"<([0-9a-zA-Z\._-]+) object at 0x[0-9a-fA-F]+>"
+    replacement = r"<\1 at memory_location>"
+    return re.sub(regex, replacement, text)
