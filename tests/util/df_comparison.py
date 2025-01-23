@@ -74,7 +74,9 @@ def _compare_entity(
     if ignore_locators and locator in ignore_locators:
         return
     test_case.assertEqual(
-        type(expected), type(actual), f"Types of {locator} do not match!"
+        type(expected),
+        type(actual),
+        f"Types of {locator} do not match!\nEXPECTED: {type(expected)}\nACTUAL: {type(actual)}",
     )
     if is_id:
         test_case.assertEqual(
@@ -91,7 +93,7 @@ def _compare_entity(
         test_case.assertEqual(
             expected.keys(),
             actual.keys(),
-            f"Keys of {locator} do not match!",
+            f"Keys of {locator} do not match!\nEXPECTED: {expected.keys()}\nACTUAL: {actual.keys()}",
         )
         for k in expected.keys():
             _compare_entity(
