@@ -6,6 +6,9 @@ from unittest import TestCase
 from unittest import main
 from unittest.mock import Mock
 
+from trulens.experimental.otel_tracing.core.instrument import (
+    _resolve_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
@@ -15,7 +18,44 @@ from trulens.otel.semconv.trace import SpanAttributes
 
 
 class TestOTELSpan(TestCase):
-    def testValidateSelectorName(self):
+    def test__resolve_attributes(self):
+        with self.subTest("None attributes"):
+            self.assertEqual(
+                {},
+                _resolve_attributes(
+                    None,
+                    ret=None,
+                    exception=None,
+                    args=(),
+                    all_kwargs={},
+                ),
+            )
+        with self.subTest("Callable attributes"):
+            attributes_callable = Mock(return_value={"key1": "value1"})
+            self.assertEqual(
+                {"key1": "value1"},
+                _resolve_attributes(
+                    attributes_callable,
+                    ret=None,
+                    exception=None,
+                    args=(),
+                    all_kwargs={},
+                ),
+            )
+        with self.subTest("Dictionary attributes"):
+            attributes_dict = {"key2": "value2"}
+            self.assertEqual(
+                {"key2": "value2"},
+                _resolve_attributes(
+                    attributes_dict,
+                    ret=None,
+                    exception=None,
+                    args=(),
+                    all_kwargs={},
+                ),
+            )
+
+    def test_validate_selector_name(self):
         with self.subTest("No selector name"):
             self.assertEqual(
                 validate_selector_name({}),
@@ -57,7 +97,7 @@ class TestOTELSpan(TestCase):
                 {SpanAttributes.SELECTOR_NAME_KEY: "name"},
             )
 
-    def testValidateAttributes(self):
+    def test_validate_attributes(self):
         with self.subTest("Empty attributes"):
             self.assertEqual(
                 validate_attributes({}),
@@ -96,51 +136,22 @@ class TestOTELSpan(TestCase):
                 },
             )
 
-    def testSetUserDefinedAttributes(self):
+    def test_set_user_defined_attributes(self):
         span = Mock()
         span_type = SpanAttributes.SpanType.UNKNOWN
-
-        with self.subTest("Callable attributes"):
-
-            def attributes_callable(ret, func_exception, *args, **kwargs):
-                return {"key1": "value1"}
-
-            set_user_defined_attributes(
-                span,
-                span_type=span_type,
-                args=(),
-                kwargs={},
-                ret=None,
-                func_exception=None,
-                attributes=attributes_callable,
-            )
-            span.set_attribute.assert_any_call("trulens.unknown.key1", "value1")
-
         with self.subTest("Dictionary attributes"):
             attributes_dict = {"key2": "value2"}
-
             set_user_defined_attributes(
                 span,
                 span_type=span_type,
-                args=(),
-                kwargs={},
-                ret=None,
-                func_exception=None,
                 attributes=attributes_dict,
             )
-            span.set_attribute.assert_any_call("trulens.unknown.key2", "value2")
-
         with self.subTest("Invalid attributes"):
             attributes_invalid = {123: "value"}
-
             with self.assertRaises(ValueError):
                 set_user_defined_attributes(
                     span,
                     span_type=span_type,
-                    args=(),
-                    kwargs={},
-                    ret=None,
-                    func_exception=None,
                     attributes=attributes_invalid,  # type: ignore
                 )
 
