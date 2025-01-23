@@ -42,7 +42,7 @@ def _resolve_attributes(
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
     if isinstance(val, (bool, int, float, str)):
         return val
-    if isinstance(val, list):
+    if isinstance(val, (list, tuple)):
         for curr_type in [bool, int, float, str]:
             if all([isinstance(curr, curr_type) for curr in val]):
                 return val
