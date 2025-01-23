@@ -10,6 +10,7 @@ from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from opentelemetry.trace.span import Span
+from opentelemetry.util.types import AttributeValue
 from trulens.core import app as core_app
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
@@ -106,7 +107,9 @@ def _set_span_attributes(
         all_kwargs,
     )
     resolved_attributes = {
-        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+        f"{SpanAttributes.BASE}{span_type.value}.{k}": _convert_to_valid_span_attribute_type(
+            v
+        )
         for k, v in resolved_attributes.items()
     }
     resolved_full_scoped_attributes = _resolve_attributes(
@@ -131,6 +134,17 @@ def _set_span_attributes(
         span_type=span_type,
         attributes=all_attributes,
     )
+
+
+def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
+    if isinstance(val, (bool, int, float, str)):
+        return val
+    if isinstance(val, list):
+        for curr_type in [bool, int, float, str]:
+            if all([isinstance(curr, curr_type) for curr in val]):
+                return val
+        return [str(curr) for curr in val]
+    return str(val)
 
 
 def instrument(
