@@ -11,6 +11,9 @@ from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 
 from tests.test import TruTestCase
+from tests.util.df_comparison import (
+    compare_dfs_accounting_for_ids_and_timestamps,
+)
 
 
 class OtelAppTestCase(TruTestCase):
@@ -40,6 +43,14 @@ class OtelAppTestCase(TruTestCase):
         cls.clear_TruSession_singleton()
         return super().tearDownClass()
 
+    def setUp(self) -> None:
+        tru_session = TruSession(
+            experimental_feature_flags=[Feature.OTEL_TRACING]
+        )
+        tru_session.experimental_enable_feature("otel_tracing")
+        tru_session.reset_database()
+        return super().setUp()
+
     @staticmethod
     def _get_events() -> pd.DataFrame:
         tru_session = TruSession()
@@ -67,3 +78,21 @@ class OtelAppTestCase(TruTestCase):
             "trace",
         ]:
             df[json_column] = df[json_column].apply(lambda x: eval(x))
+
+    def _compare_events_to_golden_dataframe(self, golden_filename: str) -> None:
+        tru_session = TruSession()
+        tru_session.experimental_force_flush()
+        actual = self._get_events()
+        self.write_golden(golden_filename, actual)
+        expected = self.load_golden(golden_filename)
+        self._convert_column_types(expected)
+        compare_dfs_accounting_for_ids_and_timestamps(
+            self,
+            expected,
+            actual,
+            ignore_locators=[
+                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
+                for i in range(len(expected))
+            ],
+            timestamp_tol=pd.Timedelta("0.02s"),
+        )

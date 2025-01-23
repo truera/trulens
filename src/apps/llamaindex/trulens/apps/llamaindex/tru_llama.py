@@ -326,6 +326,8 @@ class TruLlama(core_app.App):
         )  # TODO: make class property
         kwargs["instrument"] = LlamaInstrument(app=self)
 
+        self._wrap_main_function(app, "query")
+
         super().__init__(**kwargs)
 
     @classmethod
