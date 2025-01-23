@@ -126,6 +126,7 @@ def _set_span_attributes(
             f"{SpanAttributes.BASE}{span_type.value}.{k}": v
             for k, v in all_kwargs.items()
         }
+        all_attributes[f"{SpanAttributes.BASE}{span_type.value}.return"] = ret
     all_attributes = {
         k: _convert_to_valid_span_attribute_type(v)
         for k, v in all_attributes.items()
