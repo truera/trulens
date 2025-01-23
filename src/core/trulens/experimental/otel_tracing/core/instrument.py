@@ -230,29 +230,30 @@ def instrument(
                         # to still add attributes. It's on the user to deal with
                         # None as a return value.
                         func_exception = e
-                    # Set span attributes.
-                    try:
-                        _set_span_attributes(
-                            span,
-                            span_type,
-                            span_name,
-                            func,
-                            func_exception,
-                            attributes,
-                            full_scoped_attributes,
-                            instance,
-                            args,
-                            kwargs,
-                            ret,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error setting attributes: {e}")
-                        attributes_exception = e
-                    # Raise any exceptions that occurred.
-                    exception = func_exception or attributes_exception
-                    if exception:
-                        raise exception
-                return ret
+                    finally:
+                        # Set span attributes.
+                        try:
+                            _set_span_attributes(
+                                span,
+                                span_type,
+                                span_name,
+                                func,
+                                func_exception,
+                                attributes,
+                                full_scoped_attributes,
+                                instance,
+                                args,
+                                kwargs,
+                                ret,
+                            )
+                        except Exception as e:
+                            logger.error(f"Error setting attributes: {e}")
+                            attributes_exception = e
+                        # Raise any exceptions that occurred.
+                        exception = func_exception or attributes_exception
+                        if exception:
+                            raise exception
+                        return ret
 
             return generator()
 
@@ -312,28 +313,29 @@ def instrument(
                     # to still add attributes. It's on the user to deal with
                     # None as a return value.
                     func_exception = e
-                # Set span attributes.
-                try:
-                    _set_span_attributes(
-                        span,
-                        span_type,
-                        span_name,
-                        func,
-                        func_exception,
-                        attributes,
-                        full_scoped_attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                    )
-                except Exception as e:
-                    logger.error(f"Error setting attributes: {e}")
-                    attributes_exception = e
-                # Raise any exceptions that occurred.
-                exception = func_exception or attributes_exception
-                if exception:
-                    raise exception
+                finally:
+                    # Set span attributes.
+                    try:
+                        _set_span_attributes(
+                            span,
+                            span_type,
+                            span_name,
+                            func,
+                            func_exception,
+                            attributes,
+                            full_scoped_attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error setting attributes: {e}")
+                        attributes_exception = e
+                    # Raise any exceptions that occurred.
+                    exception = func_exception or attributes_exception
+                    if exception:
+                        raise exception
 
         if inspect.isasyncgenfunction(func):
             return async_generator_wrapper(func)
