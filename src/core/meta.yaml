@@ -1,13 +1,15 @@
 {% set name = "trulens-core" %}
-{% set version = "1.3.2" %}
+{% set version = "1.3.3" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
+  # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # https://pypi.org/project/trulens-core/#files
+  # Get SHA256 from https://pypi.org/project/trulens-core/#files
   sha256: b4baf2a126be88b59f7145027f9b52ffd9cf45e10606e88aed5397c9783fb186
 
 build:
@@ -25,6 +27,7 @@ requirements:
     - trulens-otel-semconv >=1.0.0,<2.0.0
     - opentelemetry-api >=1.0.0,<2.0.0
     - opentelemetry-sdk >=1.0.0,<2.0.0
+    - opentelemetry-proto >=1.0.0,<2.0.0
     - numpy >=1.23
     - munch >=2.5.0,<3.0.0
     - dill >=0.3.8,<0.4.0
