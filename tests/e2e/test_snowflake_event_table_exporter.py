@@ -111,7 +111,6 @@ class TestSnowflakeEventTableExporter(unittest.TestCase):
             rag.query("What is multi-headed attention?")
         # Flush exporter and wait for data to be made to stage.
         self.tru_session.experimental_force_flush()
-        time.sleep(20)  # TODO(this_pr): is there a better way to do this?
         # Check that the data is in the event table.
         self._wait_for_num_results(
             f"""
@@ -126,5 +125,6 @@ class TestSnowflakeEventTableExporter(unittest.TestCase):
             ORDER BY TIMESTAMP DESC
             LIMIT 50
         """,
-            13,
+            13,  # TODO(this_pr): get this from the exporter or something.
         )
+        # TODO(this_pr): call the feedback computation and check that it's fine.
