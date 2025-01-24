@@ -21,6 +21,7 @@ from trulens.experimental.otel_tracing.core.span import set_main_span_attributes
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
@@ -107,7 +108,7 @@ def _set_span_attributes(
         all_kwargs,
     )
     resolved_attributes = {
-        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+        f"{BASE_SCOPE}.{span_type.value}.{k}": v
         for k, v in resolved_attributes.items()
     }
     resolved_full_scoped_attributes = _resolve_attributes(
@@ -123,10 +124,10 @@ def _set_span_attributes(
     }
     if span_type == SpanAttributes.SpanType.UNKNOWN and not all_attributes:
         all_attributes = {
-            f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+            f"{BASE_SCOPE}.{span_type.value}.{k}": v
             for k, v in all_kwargs.items()
         }
-        all_attributes[f"{SpanAttributes.BASE}{span_type.value}.return"] = ret
+        all_attributes[f"{BASE_SCOPE}.{span_type.value}.return"] = ret
     all_attributes = {
         k: _convert_to_valid_span_attribute_type(v)
         for k, v in all_attributes.items()
@@ -397,6 +398,7 @@ class OTELRecordingContext:
 
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
+        self.attach_to_context(SpanAttributes.DOMAIN, "module")
         self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
         self.attach_to_context(SpanAttributes.APP_NAME, self.app.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app.app_version)

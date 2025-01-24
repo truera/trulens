@@ -28,18 +28,16 @@ class ResourceAttributes:
     pass
 
 
+BASE_SCOPE = "ai_observability"
+
+
 class SpanAttributes:
     """Names of keys in the attributes field of a span.
 
     In some cases below, we also include span name or span name prefix.
     """
 
-    BASE = "trulens."
-    """
-    Base prefix for the other keys.
-    """
-
-    SPAN_TYPE = BASE + "span_type"
+    SPAN_TYPE = BASE_SCOPE + ".span_type"
     """
     Span type attribute.
     """
@@ -51,28 +49,31 @@ class SpanAttributes:
     to verify the user attributes and make corrections if necessary.
     """
 
-    SELECTOR_NAME = BASE + SELECTOR_NAME_KEY
+    SELECTOR_NAME = BASE_SCOPE + "." + SELECTOR_NAME_KEY
     """
     User-defined selector name for the current span.
     """
 
-    RECORD_ID = BASE + "record_id"
+    RECORD_ID = BASE_SCOPE + ".record_id"
     """ID of the record that the span belongs to."""
 
-    APP_NAME = BASE + "app_name"
+    APP_NAME = BASE_SCOPE + ".app_name"
     """Fully qualified name of the app that the span belongs to."""
 
-    APP_VERSION = BASE + "app_version"
+    APP_VERSION = BASE_SCOPE + ".app_version"
     """Name of the version that the span belongs to."""
 
-    ROOT_SPAN_ID = BASE + "root_span_id"
+    ROOT_SPAN_ID = BASE_SCOPE + ".root_span_id"
     """ID of the root span of the record that the span belongs to."""
 
-    RUN_NAME = BASE + "run_name"
+    RUN_NAME = BASE_SCOPE + ".run_name"
     """Name of the run that the span belongs to."""
 
-    INPUT_ID = BASE + "input_id"
+    INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
+
+    DOMAIN = BASE_SCOPE + ".domain"
+    """Domain of the app that the span belongs to. "module" for external apps."""
 
     class SpanType(str, Enum):
         """Span type attribute values.
@@ -156,7 +157,7 @@ class SpanAttributes:
         a RECORDING span without a RECORD_ROOT.
         """
 
-        base = "trulens.recording"
+        base = BASE_SCOPE + ".recording"
 
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
@@ -167,17 +168,17 @@ class SpanAttributes:
     class SEMANTIC:
         """Attributes relevant to all semantic span types."""
 
-        base = "trulens.semantic"
+        base = BASE_SCOPE + ".semantic"
 
     class UNKNOWN:
         """Attributes relevant for spans that could not be categorized otherwise."""
 
-        base = "trulens.unknown"
+        base = BASE_SCOPE + ".unknown"
 
     class MAIN:
         """Attributes for the main span of a record."""
 
-        base = "trulens.main"
+        base = BASE_SCOPE + ".main"
 
         SPAN_NAME_PREFIX = base + "."
 
@@ -200,7 +201,7 @@ class SpanAttributes:
         [trulens.core.schema.base.Record][trulens.core.schema.base.Record].
         """
 
-        base = "trulens.record_root"
+        base = BASE_SCOPE + ".record_root"
 
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
@@ -227,7 +228,7 @@ class SpanAttributes:
         [trulens.core.schema.feedback.FeedbackResult][trulens.core.schema.feedback.FeedbackResult].
         """
 
-        base = "trulens.eval_root"
+        base = BASE_SCOPE + ".eval_root"
 
         TARGET_RECORD_ID = base + ".target_record_id"
         """Record id of the record being evaluated."""
@@ -262,7 +263,7 @@ class SpanAttributes:
     class COST:
         """Attributes for spans with a cost."""
 
-        base = "trulens.cost"
+        base = BASE_SCOPE + ".cost"
 
         COST = base + ".cost"
         """Cost of the span.
@@ -274,7 +275,7 @@ class SpanAttributes:
     class RECORD:
         """Attributes for spans traced as part of a recording."""
 
-        base = "trulens.record"
+        base = BASE_SCOPE + ".record"
 
         APP_IDS = base + ".app_ids"
         """Ids of apps that were tracing this span."""
@@ -285,7 +286,7 @@ class SpanAttributes:
     class CALL:
         """Instrumented method call attributes."""
 
-        base = "trulens.call"
+        base = BASE_SCOPE + ".call"
 
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with the function name."""
@@ -362,7 +363,7 @@ class SpanAttributes:
     class RETRIEVAL:
         """A retrieval."""
 
-        base = "trulens.sem.retrieval"
+        base = BASE_SCOPE + ".sem.retrieval"
 
         QUERY_TEXT = base + ".query_text"
         """Input text whose related contexts are being retrieved."""
@@ -388,7 +389,7 @@ class SpanAttributes:
     class RERANKING:
         """A reranker call."""
 
-        base = "trulens.sem.reranking"
+        base = BASE_SCOPE + ".sem.reranking"
 
         QUERY_TEXT = base + ".query_text"
         """The query text."""
@@ -409,7 +410,7 @@ class SpanAttributes:
         """Reranked indexes into `input_context_texts`."""
 
     class GENERATION:
-        base = "trulens.sem.generation"
+        base = BASE_SCOPE + ".sem.generation"
 
         # GEN_AI_*
 
@@ -446,7 +447,7 @@ class SpanAttributes:
     class MEMORIZATION:
         """A memory saving call."""
 
-        base = "trulens.sem.memorization"
+        base = BASE_SCOPE + ".sem.memorization"
 
         MEMORY_TYPE = base + ".memory_type"
         """The type of memory."""
@@ -457,7 +458,7 @@ class SpanAttributes:
     class EMBEDDING:
         """An embedding call."""
 
-        base = "trulens.sem.embedding"
+        base = BASE_SCOPE + ".sem.embedding"
 
         INPUT_TEXT = base + ".input_text"
         """The text being embedded."""
@@ -471,7 +472,7 @@ class SpanAttributes:
     class TOOL_INVOCATION:
         """A tool invocation."""
 
-        base = "trulens.sem.tool_invocation"
+        base = BASE_SCOPE + ".sem.tool_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the tool."""
@@ -479,7 +480,7 @@ class SpanAttributes:
     class AGENT_INVOCATION:
         """An agent invocation."""
 
-        base = "trulens.sem.agent_invocation"
+        base = BASE_SCOPE + ".sem.agent_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the agent."""
