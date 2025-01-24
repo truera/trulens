@@ -29,7 +29,7 @@ class TestOtelTruChain(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
         # Helper function.
-        @instrument(attributes={"best_baby": "kojikun"})
+        @instrument(attributes={"best_baby": "Kojikun"})
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
 

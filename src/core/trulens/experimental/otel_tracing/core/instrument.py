@@ -1,6 +1,6 @@
 import inspect
 import logging
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import uuid
 
 from opentelemetry import trace
@@ -8,6 +8,7 @@ from opentelemetry.baggage import get_baggage
 from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
+from opentelemetry.trace.span import Span
 from opentelemetry.util.types import AttributeValue
 from trulens.core import app as core_app
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
@@ -25,6 +26,28 @@ import wrapt
 logger = logging.getLogger(__name__)
 
 
+def _get_func_name(func: Callable) -> str:
+    if (
+        hasattr(func, "__module__")
+        and func.__module__
+        and hasattr(func, "__qualname__")
+        and func.__qualname__
+    ):
+        return f"{func.__module__}.{func.__qualname__}"
+    elif hasattr(func, "__qualname__") and func.__qualname__:
+        return func.__qualname__
+    else:
+        return func.__name__
+
+
+def _create_span(span_name: str) -> Span:
+    return (
+        trace.get_tracer_provider()
+        .get_tracer(TRULENS_SERVICE_NAME)
+        .start_as_current_span(name=span_name)
+    )
+
+
 def _resolve_attributes(
     attributes: Attributes,
     ret: Optional[Any],
@@ -37,6 +60,81 @@ def _resolve_attributes(
     if callable(attributes):
         return attributes(ret, exception, *args, **all_kwargs)
     return attributes.copy()
+
+
+def _set_span_attributes(
+    span: Span,
+    span_type: SpanAttributes.SpanType,
+    span_name: str,
+    func: Callable,
+    func_exception: Optional[Exception],
+    attributes: Attributes,
+    full_scoped_attributes: Attributes,
+    instance: Any,
+    args: Tuple[Any],
+    kwargs: Dict[str, Any],
+    ret: Any,
+):
+    # Set general span attributes.
+    span.set_attribute("name", span_name)
+    set_general_span_attributes(span, span_type)
+    # Set main span attributes if necessary.
+    if span_type == SpanAttributes.SpanType.MAIN:
+        set_main_span_attributes(
+            span,
+            func,
+            args,
+            kwargs,
+            ret,
+            func_exception,
+        )
+    # Determine args/kwargs to pass to the attributes/full_scoped_attributes
+    # callable.
+    sig = inspect.signature(func)
+    bound_args = sig.bind_partial(*args, **kwargs).arguments
+    all_kwargs = {**kwargs, **bound_args}
+    if instance is not None:
+        args_with_self_possibly = (instance,) + args
+    else:
+        args_with_self_possibly = args
+    # Combine the attributes with the full_scoped_attributes.
+    resolved_attributes = _resolve_attributes(
+        attributes,
+        ret,
+        func_exception,
+        args_with_self_possibly,
+        all_kwargs,
+    )
+    resolved_attributes = {
+        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+        for k, v in resolved_attributes.items()
+    }
+    resolved_full_scoped_attributes = _resolve_attributes(
+        full_scoped_attributes,
+        ret,
+        func_exception,
+        args_with_self_possibly,
+        all_kwargs,
+    )
+    all_attributes = {
+        **resolved_attributes,
+        **resolved_full_scoped_attributes,
+    }
+    if span_type == SpanAttributes.SpanType.UNKNOWN and not all_attributes:
+        all_attributes = {
+            f"{SpanAttributes.BASE}{span_type.value}.{k}": v
+            for k, v in all_kwargs.items()
+        }
+    all_attributes = {
+        k: _convert_to_valid_span_attribute_type(v)
+        for k, v in all_attributes.items()
+    }
+    # Set the user-provided attributes.
+    set_user_defined_attributes(
+        span,
+        span_type=span_type,
+        attributes=all_attributes,
+    )
 
 
 def _convert_to_valid_span_attribute_type(val: Any) -> AttributeValue:
@@ -72,117 +170,88 @@ def instrument(
     """
 
     def inner_decorator(func: Callable):
+        span_name = _get_func_name(func)
+
         @wrapt.decorator
         def wrapper(func, instance, args, kwargs):
-            if (
-                hasattr(func, "__module__")
-                and func.__module__
-                and hasattr(func, "__qualname__")
-                and func.__qualname__
-            ):
-                name = f"{func.__module__}.{func.__qualname__}"
-            elif hasattr(func, "__qualname__") and func.__qualname__:
-                name = func.__qualname__
-            else:
-                name = func.__name__
-            with (
-                trace.get_tracer_provider()
-                .get_tracer(TRULENS_SERVICE_NAME)
-                .start_as_current_span(
-                    name=name,
-                )
-            ) as span:
+            with _create_span(span_name) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
-
-                span.set_attribute("name", name)
-
+                # Run function.
                 try:
                     ret = func(*args, **kwargs)
                 except Exception as e:
-                    # We want to get into the next clause to allow the users to still add attributes.
-                    # It's on the user to deal with None as a return value.
+                    # We want to get into the next clause to allow the users
+                    # to still add attributes. It's on the user to deal with
+                    # None as a return value.
                     func_exception = e
-
-                set_general_span_attributes(span, span_type)
-                attributes_exception = None
-
-                if span_type == SpanAttributes.SpanType.MAIN:
-                    # Only an exception in calling the function should determine whether
-                    # to set the main error. Errors in setting attributes should not be classified
-                    # as main errors.
-                    set_main_span_attributes(
+                # Set span attributes.
+                try:
+                    _set_span_attributes(
                         span,
+                        span_type,
+                        span_name,
                         func,
+                        func_exception,
+                        attributes,
+                        full_scoped_attributes,
+                        instance,
                         args,
                         kwargs,
                         ret,
-                        func_exception,
                     )
-
-                try:
-                    sig = inspect.signature(func)
-                    bound_args = sig.bind_partial(*args, **kwargs).arguments
-                    all_kwargs = {**kwargs, **bound_args}
-                    if instance is not None:
-                        args_with_self_possibly = (instance,) + args
-                    else:
-                        args_with_self_possibly = args
-                    # Combine the attributes with the full_scoped_attributes.
-                    resolved_attributes = _resolve_attributes(
-                        attributes,
-                        ret,
-                        func_exception,
-                        args_with_self_possibly,
-                        all_kwargs,
-                    )
-                    resolved_attributes = {
-                        f"{SpanAttributes.BASE}{span_type.value}.{k}": v
-                        for k, v in resolved_attributes.items()
-                    }
-                    resolved_full_scoped_attributes = _resolve_attributes(
-                        full_scoped_attributes,
-                        ret,
-                        func_exception,
-                        args_with_self_possibly,
-                        all_kwargs,
-                    )
-                    all_attributes = {
-                        **resolved_attributes,
-                        **resolved_full_scoped_attributes,
-                    }
-                    if (
-                        span_type == SpanAttributes.SpanType.UNKNOWN
-                        and not all_attributes
-                    ):
-                        all_attributes = {
-                            f"{SpanAttributes.BASE}{span_type.value}.{k}": v
-                            for k, v in all_kwargs.items()
-                        }
-                    all_attributes = {
-                        k: _convert_to_valid_span_attribute_type(v)
-                        for k, v in all_attributes.items()
-                    }
-                    # Set the user-provided attributes.
-                    set_user_defined_attributes(
-                        span,
-                        span_type=span_type,
-                        attributes=all_attributes,
-                    )
-
                 except Exception as e:
-                    attributes_exception = e
                     logger.error(f"Error setting attributes: {e}")
-
+                    attributes_exception = e
+                # Raise any exceptions that occurred.
                 exception = func_exception or attributes_exception
-
                 if exception:
                     raise exception
-
             return ret
 
-        return wrapper(func)
+        @wrapt.decorator
+        async def async_wrapper(func, instance, args, kwargs):
+            with _create_span(span_name) as span:
+                ret = None
+                func_exception: Optional[Exception] = None
+                attributes_exception: Optional[Exception] = None
+                # Run function.
+                try:
+                    ret = await func(*args, **kwargs)
+                except Exception as e:
+                    # We want to get into the next clause to allow the users
+                    # to still add attributes. It's on the user to deal with
+                    # None as a return value.
+                    func_exception = e
+                # Set span attributes.
+                try:
+                    _set_span_attributes(
+                        span,
+                        span_type,
+                        span_name,
+                        func,
+                        func_exception,
+                        attributes,
+                        full_scoped_attributes,
+                        instance,
+                        args,
+                        kwargs,
+                        ret,
+                    )
+                except Exception as e:
+                    logger.error(f"Error setting attributes: {e}")
+                    attributes_exception = e
+                # Raise any exceptions that occurred.
+                exception = func_exception or attributes_exception
+                if exception:
+                    raise exception
+            return ret
+
+        if inspect.iscoroutinefunction(func):
+            return async_wrapper(func)
+        else:
+            return wrapper(func)
 
     return inner_decorator
 

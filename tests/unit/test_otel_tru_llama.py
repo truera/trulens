@@ -34,7 +34,6 @@ class TestOtelTruLlama(OtelAppTestCase):
         return index.as_query_engine(similarity_top_k=3)
 
     def test_smoke(self) -> None:
-        # TODO(this_pr): extract this out with tru_chain testing.
         # Set up.
         tru_session = TruSession()
         tru_session.reset_database()
