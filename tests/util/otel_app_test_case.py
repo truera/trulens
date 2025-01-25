@@ -3,6 +3,7 @@ Tests for OTEL app.
 """
 
 import os
+from typing import List, Optional, Tuple
 
 import pandas as pd
 import sqlalchemy as sa
@@ -79,7 +80,11 @@ class OtelAppTestCase(TruTestCase):
         ]:
             df[json_column] = df[json_column].apply(lambda x: eval(x))
 
-    def _compare_events_to_golden_dataframe(self, golden_filename: str) -> None:
+    def _compare_events_to_golden_dataframe(
+        self,
+        golden_filename: str,
+        regex_replacements: Optional[List[Tuple[str, str]]] = None,
+    ) -> None:
         tru_session = TruSession()
         tru_session.experimental_force_flush()
         actual = self._get_events()
@@ -95,4 +100,5 @@ class OtelAppTestCase(TruTestCase):
                 for i in range(len(expected))
             ],
             timestamp_tol=pd.Timedelta("0.02s"),
+            regex_replacements=regex_replacements,
         )

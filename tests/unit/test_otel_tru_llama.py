@@ -18,6 +18,17 @@ if run_optional_tests():
     from llama_index.core.llms.mock import MockLLM
     from trulens.apps.llamaindex import TruLlama
 
+_UUID_REGEX = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+_FLOAT_REGEX = r"[-]?\d+\.\d+"
+_CONTEXT_RETRIEVAL_REGEX = (
+    r"Node ID: "
+    + _UUID_REGEX
+    + r"\n([\s\S]*?)\nScore:\s*"
+    + _FLOAT_REGEX
+    + "\n"
+)
+_CONTEXT_RETRIEVAL_REPLACEMENT = r"\1"
+
 
 @optional_test
 class TestOtelTruLlama(OtelAppTestCase):
@@ -49,7 +60,10 @@ class TestOtelTruLlama(OtelAppTestCase):
             rag.query("What is multi-headed attention?")
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
-            "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv"
+            "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
+            regex_replacements=[
+                (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
+            ],
         )
 
 
