@@ -1,13 +1,15 @@
 {% set name = "trulens-feedback" %}
-{% set version = "1.3.2" %}
+{% set version = "1.3.3" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
+  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
+  # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # https://pypi.org/project/trulens-feedback/#files
+  # Get SHA256 from https://pypi.org/project/trulens-feedback/#files
   sha256: 803a7157f38420a6c9d8ced39c1b57e4fffc5e8bd4f169addda7eb2e8018af5b
 
 build:
