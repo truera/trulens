@@ -4,7 +4,15 @@ from inspect import BoundArguments
 from inspect import Signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Dict, List, Optional, Sequence
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+)
 
 from langchain_core.language_models.base import BaseLanguageModel
 from langchain_core.language_models.llms import BaseLLM
@@ -235,6 +243,8 @@ class TruChain(core_app.App):
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
+
+        self._wrap_main_function(app, "invoke")
 
         super().__init__(**kwargs)
 

@@ -272,7 +272,7 @@ class TruSession(
                 _TruSession,
             )
 
-            _TruSession._setup_otel_exporter(
+            _TruSession._set_up_otel_exporter(
                 self, connector, _experimental_otel_exporter
             )
 

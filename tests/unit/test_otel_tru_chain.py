@@ -4,15 +4,11 @@ Tests for OTEL TruChain app.
 
 from unittest import main
 
-import pandas as pd
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.instrument import instrument
 
 from tests.test import optional_test
 from tests.test import run_optional_tests
-from tests.util.df_comparison import (
-    compare_dfs_accounting_for_ids_and_timestamps,
-)
 from tests.util.otel_app_test_case import OtelAppTestCase
 
 if run_optional_tests():
@@ -33,7 +29,7 @@ class TestOtelTruChain(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
         # Helper function.
-        @instrument(attributes={"best_baby": "kojikun"})
+        @instrument(attributes={"best_baby": "Kojikun"})
         def format_docs(docs):
             return "\n\n".join(doc.page_content for doc in docs)
 
@@ -78,23 +74,8 @@ class TestOtelTruChain(OtelAppTestCase):
         with tru_recorder(run_name="test run", input_id="42"):
             rag_chain.invoke("What is multi-headed attention?")
         # Compare results to expected.
-        GOLDEN_FILENAME = (
+        self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
-        )
-        tru_session.experimental_force_flush()
-        actual = self._get_events()
-        self.write_golden(GOLDEN_FILENAME, actual)
-        expected = self.load_golden(GOLDEN_FILENAME)
-        self._convert_column_types(expected)
-        compare_dfs_accounting_for_ids_and_timestamps(
-            self,
-            expected,
-            actual,
-            ignore_locators=[
-                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(len(expected))
-            ],
-            timestamp_tol=pd.Timedelta("0.02s"),
         )
 
 
