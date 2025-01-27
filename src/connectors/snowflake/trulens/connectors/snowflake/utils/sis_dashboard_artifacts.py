@@ -1,5 +1,6 @@
 import glob
 import os
+import re
 import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -32,6 +33,7 @@ class SiSDashboardArtifacts:
         warehouse: str,
         use_staged_packages: bool,
     ) -> None:
+        self._validate_streamlit_name(streamlit_name)
         self._streamlit_name = streamlit_name
         self._session = session
         self._database = database
@@ -59,6 +61,12 @@ class SiSDashboardArtifacts:
         self._run_query(
             f"PUT file://{file_path} @{full_stage_path} OVERWRITE = TRUE AUTO_COMPRESS = FALSE"
         )
+
+    def _validate_streamlit_name(self, streamlit_name: str):
+        if not re.match(r"^[A-Za-z0-9_]+$", streamlit_name):
+            raise ValueError(
+                "`streamlit_name` must contain only alphanumeric and underscore characters!"
+            )
 
     def _set_up_environment_file(self, environment_filepath: str) -> None:
         if self._use_staged_packages:
