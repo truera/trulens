@@ -63,6 +63,8 @@ class SiSDashboardArtifacts:
         )
 
     def _validate_streamlit_name(self, streamlit_name: str):
+        if not streamlit_name:
+            raise ValueError("`streamlit_name` cannot be empty!")
         if not re.match(r"^[A-Za-z0-9_]+$", streamlit_name):
             raise ValueError(
                 "`streamlit_name` must contain only alphanumeric and underscore characters!"
