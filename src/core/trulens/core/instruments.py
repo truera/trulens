@@ -576,6 +576,34 @@ class Instrument:
                     **kwargs: CortexCostComputer.handle_response(ret),
                 )
             )
+        if can_import("trulens.providers.openai.endpoint"):
+            import openai
+            from openai import resources
+            from openai.resources import chat
+            from trulens.providers.openai.endpoint import OpenAICostComputer
+
+            for module in [openai, resources, chat]:
+                for cls in dir(module):
+                    obj = python_utils.safer_getattr(module, cls)
+                    if (
+                        obj is not None
+                        and isinstance(obj, type)
+                        and hasattr(obj, "create")
+                    ):
+                        print(cls)
+                        include_methods.append(
+                            InstrumentedMethod(
+                                "create",
+                                obj,
+                                span_type=SpanAttributes.SpanType.UNKNOWN,
+                                full_scoped_span_attributes=lambda ret,
+                                exception,
+                                *args,
+                                **kwargs: OpenAICostComputer.handle_response(
+                                    ret
+                                ),
+                            )
+                        )
 
         self.include_modules = Instrument.Default.MODULES.union(
             set(include_modules)

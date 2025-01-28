@@ -575,16 +575,16 @@ class Endpoint(
                 change after this method returns in case of Awaitable results.
         """
 
-        # session = core_session.TruSession()
-        #
-        # if session.experimental_feature(
-        #    core_experimental.Feature.OTEL_TRACING, freeze=True
-        # ):
-        #    from trulens.experimental.otel_tracing.core.feedback.endpoint import (
-        #        _Endpoint,
-        #    )
-        #
-        #    return _Endpoint.track_all_costs_tally(__func, *args, **kwargs)
+        session = core_session.TruSession()
+
+        if session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING, freeze=True
+        ):
+            from trulens.experimental.otel_tracing.core.feedback.endpoint import (
+                _Endpoint,
+            )
+
+            return _Endpoint.track_all_costs_tally(__func, *args, **kwargs)
 
         result, cbs = Endpoint.track_all_costs(
             __func,

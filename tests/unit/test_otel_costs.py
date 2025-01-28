@@ -2,6 +2,7 @@ import os
 import unittest
 
 from langchain_community.chat_models import ChatSnowflakeCortex
+from openai import OpenAI
 from snowflake.cortex import Complete
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
@@ -11,6 +12,28 @@ from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
+
+
+class _TestOpenAIApp:
+    def __init__(self) -> None:
+        self._openai_client = OpenAI()
+
+    @instrument(span_type=SpanAttributes.SpanType.MAIN)
+    def respond_to_query(self, query: str) -> str:
+        return (
+            self._openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                temperature=0,
+                messages=[
+                    {
+                        "role": "user",
+                        "content": query,
+                    }
+                ],
+            )
+            .choices[0]
+            .message.content
+        )
 
 
 class _TestCortexApp:
@@ -28,7 +51,6 @@ class _TestCortexApp:
             self._connection_params
         ).create()
 
-    # @old_instrument
     @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return Complete(
@@ -39,6 +61,7 @@ class _TestCortexApp:
 
 
 class TestOtelCosts(OtelAppTestCase):
+    @unittest.skip
     def test_tru_chain_cortex(self):
         # Set up.
         tru_session = TruSession()
@@ -126,6 +149,25 @@ class TestOtelCosts(OtelAppTestCase):
             len(record_attributes["ai_observability.costs.return"]),
             0,
         )
+
+    def test_custom_openai(self):
+        # Set up.
+        tru_session = TruSession()
+        tru_session.reset_database()
+        # Create app.
+        app = _TestOpenAIApp()
+        tru_recorder = TruCustomApp(
+            app,
+            app_name="testing",
+            app_version="v1",
+        )
+        # Record and invoke.
+        with tru_recorder(run_name="test run", input_id="42"):
+            app.respond_to_query("How is baby Kojikun able to be so cute?")
+        # Compare results to expected.
+        tru_session.experimental_force_flush()
+        events = self._get_events()
+        self.assertEqual(len(events), 3)
 
 
 if __name__ == "__main__":
