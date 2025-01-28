@@ -57,6 +57,14 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
+def can_import(to_import: str) -> bool:
+    try:
+        __import__(to_import)
+        return True
+    except Exception:
+        return False
+
+
 class WithInstrumentCallbacks:
     """Abstract definition of callbacks invoked by Instrument during
     instrumentation or when instrumented methods are called.
@@ -552,6 +560,22 @@ class Instrument:
             include_classes = []
         if include_methods is None:
             include_methods = []
+
+        if can_import("trulens.providers.cortex.endpoint"):
+            from snowflake.cortex._sse_client import SSEClient
+            from trulens.providers.cortex.endpoint import CortexCostComputer
+
+            include_methods.append(
+                InstrumentedMethod(
+                    "events",
+                    SSEClient,
+                    span_type=SpanAttributes.SpanType.UNKNOWN,
+                    full_scoped_span_attributes=lambda ret,
+                    exception,
+                    *args,
+                    **kwargs: CortexCostComputer.handle_response(ret),
+                )
+            )
 
         self.include_modules = Instrument.Default.MODULES.union(
             set(include_modules)
