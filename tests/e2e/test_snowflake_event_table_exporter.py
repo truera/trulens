@@ -125,6 +125,6 @@ class TestSnowflakeEventTableExporter(unittest.TestCase):
             ORDER BY TIMESTAMP DESC
             LIMIT 50
         """,
-            13,  # TODO(this_pr): get this from the exporter or something.
+            13,  # TODO: get this from the exporter or something?
         )
-        # TODO(this_pr): call the feedback computation and check that it's fine.
+        # TODO: call the feedback computation and check that it's fine.
