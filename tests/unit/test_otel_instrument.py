@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import unittest
 
 from opentelemetry import trace
@@ -64,31 +65,53 @@ class TestOtelInstrument(unittest.TestCase):
             spans[0].attributes["trulens.unknown.best_baby"], "Kojikun"
         )
 
-    # def test_sync_generator_function(self):
-    #     # Set up instrumented function.
-    #     @instrument(
-    #         attributes=lambda ret, exception, *args, **kwargs: {
-    #             "best_babies": ret
-    #         }
-    #     )
-    #     def my_function():
-    #         yield "Kojikun"
-    #         yield "Nolan"
-    #         yield "Sachiboy"
-    #
-    #     # Run the function.
-    #     my_function()
-    #     # Verify that the span is emitted correctly.
-    #     spans = self.exporter.get_finished_spans()
-    #     self.assertEqual(len(spans), 1)
-    #     self.assertEqual(
-    #         spans[0].name,
-    #         "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
-    #     )
-    #     self.assertListEqual(
-    #         spans[0].attributes["trulens.unknown.best_babies"],
-    #         ["Kojikun", "Nolan", "Sachiboy"],
-    #     )
+    def test_sync_generator_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        def my_function():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        # Run the generator to completion.
+        best_babies = my_function()
+        for curr in best_babies:
+            print(f"best_baby: {curr}")
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[0].attributes["trulens.unknown.best_babies"],
+            ("Kojikun", "Nolan", "Sachiboy"),
+        )
+        # Run the generator partially.
+        best_babies = my_function()
+        for i, curr in enumerate(best_babies):
+            print(f"best_baby: {curr}")
+            if i == 1:
+                break
+        # Delete generator to ensure that the span is emitted.
+        del best_babies
+        gc.collect()
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(
+            spans[1].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[1].attributes["trulens.unknown.best_babies"],
+            ("Kojikun", "Nolan"),
+        )
 
     def test_async_non_generator_function(self):
         # Set up instrumented function.
@@ -114,36 +137,57 @@ class TestOtelInstrument(unittest.TestCase):
             spans[0].attributes["trulens.unknown.best_baby"], "Kojikun"
         )
 
-    # def test_async_generator_function(self):
-    #     # Set up instrumented function.
-    #     @instrument(
-    #         attributes=lambda ret, exception, *args, **kwargs: {
-    #             "best_babies": ret
-    #         }
-    #     )
-    #     async def my_function():
-    #         await asyncio.sleep(0.00001)
-    #         yield "Kojikun"
-    #         yield "Nolan"
-    #         yield "Sachiboy"
-    #
-    #     # Run the function.
-    #     async def consume_async_generator(async_generator):
-    #         async for curr in async_generator:
-    #             print(f"\t{curr}")
-    #
-    #     asyncio.run(consume_async_generator(my_function()))
-    #     # Verify that the span is emitted correctly.
-    #     spans = self.exporter.get_finished_spans()
-    #     self.assertEqual(len(spans), 1)
-    #     self.assertEqual(
-    #         spans[0].name,
-    #         "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
-    #     )
-    #     self.assertListEqual(
-    #         spans[0].attributes["trulens.unknown.best_babies"],
-    #         ["Kojikun", "Nolan", "Sachiboy"],
-    #     )
+    def test_async_generator_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        async def my_function():
+            await asyncio.sleep(0.00001)
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        # Helper to run the function.
+        async def consume_async_generator(async_generator, num_iters):
+            i = 0
+            async for curr in async_generator:
+                print(f"\t{curr}")
+                i += 1
+                if i == num_iters:
+                    break
+
+        # Run the generator to completion.
+        asyncio.run(consume_async_generator(my_function(), 100))
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(
+            spans[0].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[0].attributes["trulens.unknown.best_babies"],
+            ("Kojikun", "Nolan", "Sachiboy"),
+        )
+        # Run the generator partially.
+        generator = my_function()
+        asyncio.run(consume_async_generator(generator, 2))
+        del generator
+        gc.collect()
+        # Verify that the span is emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        self.assertEqual(
+            spans[1].name,
+            "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
+        )
+        self.assertTupleEqual(
+            spans[1].attributes["trulens.unknown.best_babies"],
+            ("Kojikun", "Nolan"),
+        )
 
 
 if __name__ == "__main__":
