@@ -1,5 +1,6 @@
 import asyncio
 import gc
+from typing import Callable
 import unittest
 
 from opentelemetry import trace
@@ -65,18 +66,9 @@ class TestOtelInstrument(unittest.TestCase):
             spans[0].attributes["ai_observability.unknown.best_baby"], "Kojikun"
         )
 
-    def test_sync_generator_function(self):
-        # Set up instrumented function.
-        @instrument(
-            attributes=lambda ret, exception, *args, **kwargs: {
-                "best_babies": ret
-            }
-        )
-        def my_function():
-            yield "Kojikun"
-            yield "Nolan"
-            yield "Sachiboy"
-
+    def _test_sync_generator_function(
+        self, my_function: Callable, test_name: str
+    ):
         # Run the generator to completion.
         best_babies = my_function()
         for curr in best_babies:
@@ -86,7 +78,7 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 1)
         self.assertEqual(
             spans[0].name,
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+            f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
             spans[0].attributes["ai_observability.unknown.best_babies"],
@@ -106,11 +98,46 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 2)
         self.assertEqual(
             spans[1].name,
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+            f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
             spans[1].attributes["ai_observability.unknown.best_babies"],
             ("Kojikun", "Nolan"),
+        )
+
+    def test_sync_generator_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        def my_function():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        self._test_sync_generator_function(
+            my_function, "test_sync_generator_function"
+        )
+
+    def test_sync_generator_passed_through_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        def my_function():
+            return my_generator()
+
+        def my_generator():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        self._test_sync_generator_function(
+            my_function, "test_sync_generator_passed_through_function"
         )
 
     def test_async_non_generator_function(self):
