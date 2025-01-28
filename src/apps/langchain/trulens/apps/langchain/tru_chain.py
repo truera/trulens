@@ -245,7 +245,10 @@ class TruChain(core_app.App):
         kwargs["instrument"] = LangChainInstrument(app=self)
 
         for method_name in ["invoke", "ainvoke", "stream", "astream"]:
-            self._wrap_main_function(app, method_name)
+            if hasattr(app, method_name) and callable(
+                getattr(app, method_name)
+            ):
+                self._wrap_main_function(app, method_name)
 
         super().__init__(**kwargs)
 

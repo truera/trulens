@@ -41,6 +41,7 @@ LLM_TRIVIAL_USER = v2.Trivial.user_prompt
 
 CONTEXT_RELEVANCE_SYSTEM = v2.ContextRelevance.system_prompt
 CONTEXT_RELEVANCE_USER = v2.ContextRelevance.user_prompt
+CONTEXT_RELEVANCE_DEFAULT_COT_PROMPT = v2.ContextRelevance.default_cot_prompt
 
 ANSWER_RELEVANCE_SYSTEM = v2.PromptResponseRelevance.system_prompt
 ANSWER_RELEVANCE_USER = v2.PromptResponseRelevance.user_prompt
