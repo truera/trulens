@@ -62,6 +62,10 @@ class TestOtelTruLlama(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
             regex_replacements=[
+                # This changes [Node ID <UUID>: <TEXT_WE_WANT> Score: <SCORE>]
+                # strings to just <TEXT_WE_WANT>. We don't want the SCORE
+                # due to precision issues causing it to be slightly different
+                # in some runs.
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
