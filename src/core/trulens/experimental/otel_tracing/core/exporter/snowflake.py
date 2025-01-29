@@ -105,7 +105,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         except Exception as e:
             logger.error(f"Error writing spans to the protobuf file: {e}")
             return SpanExportResult.FAILURE
-        # Upload temp file to Snowflake stag.
+        # Upload temp file to Snowflake stage.
         try:
             logger.debug("Uploading file to Snowflake stage")
             logger.debug("Creating Snowflake stage if it does not exist")
