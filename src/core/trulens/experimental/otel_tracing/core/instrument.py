@@ -1,5 +1,6 @@
 import inspect
 import logging
+import types
 from types import TracebackType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import uuid
@@ -177,87 +178,67 @@ def instrument(
 
         @wrapt.decorator
         def sync_wrapper(func, instance, args, kwargs):
+            ret = convert_to_generator(func, instance, args, kwargs)
+            if next(ret) == "is_not_generator":
+                res = next(ret)
+                # Check that there are no more entries in the generator.
+                valid = False
+                try:
+                    next(ret)
+                except StopIteration:
+                    valid = True
+                if not valid:
+                    raise ValueError("The generator is not empty!")
+                ret = res
+            return ret
+
+        def convert_to_generator(func, instance, args, kwargs):
             with _create_span(span_name) as span:
                 ret = None
                 func_exception: Optional[Exception] = None
                 attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
-                    ret = func(*args, **kwargs)
+                    result = func(*args, **kwargs)
+                    if isinstance(result, types.GeneratorType):
+                        yield "is_generator"
+                        ret = []
+                        for curr in result:
+                            ret.append(curr)
+                            yield curr
+                    else:
+                        yield "is_not_generator"
+                        ret = result
+                        yield ret
                 except Exception as e:
                     # We want to get into the next clause to allow the users
                     # to still add attributes. It's on the user to deal with
                     # None as a return value.
                     func_exception = e
-                # Set span attributes.
-                try:
-                    _set_span_attributes(
-                        span,
-                        span_type,
-                        span_name,
-                        func,
-                        func_exception,
-                        attributes,
-                        full_scoped_attributes,
-                        instance,
-                        args,
-                        kwargs,
-                        ret,
-                    )
-                except Exception as e:
-                    logger.error(f"Error setting attributes: {e}")
-                    attributes_exception = e
-                # Raise any exceptions that occurred.
-                exception = func_exception or attributes_exception
-                if exception:
-                    raise exception
-            return ret
-
-        @wrapt.decorator
-        def sync_generator_wrapper(func, instance, args, kwargs):
-            def generator():
-                with _create_span(span_name) as span:
-                    ret = None
-                    func_exception: Optional[Exception] = None
-                    attributes_exception: Optional[Exception] = None
-                    # Run function.
+                finally:
+                    # Set span attributes.
                     try:
-                        result = func(*args, **kwargs)
-                        ret = []
-                        for curr in result:
-                            ret.append(curr)
-                            yield curr
+                        _set_span_attributes(
+                            span,
+                            span_type,
+                            span_name,
+                            func,
+                            func_exception,
+                            attributes,
+                            full_scoped_attributes,
+                            instance,
+                            args,
+                            kwargs,
+                            ret,
+                        )
                     except Exception as e:
-                        # We want to get into the next clause to allow the users
-                        # to still add attributes. It's on the user to deal with
-                        # None as a return value.
-                        func_exception = e
-                    finally:
-                        # Set span attributes.
-                        try:
-                            _set_span_attributes(
-                                span,
-                                span_type,
-                                span_name,
-                                func,
-                                func_exception,
-                                attributes,
-                                full_scoped_attributes,
-                                instance,
-                                args,
-                                kwargs,
-                                ret,
-                            )
-                        except Exception as e:
-                            logger.error(f"Error setting attributes: {e}")
-                            attributes_exception = e
-                        # Raise any exceptions that occurred.
-                        exception = func_exception or attributes_exception
-                        if exception:
-                            raise exception
-                        return ret
-
-            return generator()
+                        logger.error(f"Error setting attributes: {e}")
+                        attributes_exception = e
+                    # Raise any exceptions that occurred.
+                    exception = func_exception or attributes_exception
+                    if exception:
+                        raise exception
+                    return ret
 
         @wrapt.decorator
         async def async_wrapper(func, instance, args, kwargs):
@@ -343,8 +324,6 @@ def instrument(
             return async_generator_wrapper(func)
         elif inspect.iscoroutinefunction(func):
             return async_wrapper(func)
-        elif inspect.isgeneratorfunction(func):
-            return sync_generator_wrapper(func)
         else:
             return sync_wrapper(func)
 
