@@ -377,11 +377,11 @@ class _WithExperimentalSettings(
         if value is not None and changed:
             if val:
                 print(
-                    f"{text_utils.UNICODE_CHECK} experimental {flag} enabled for {self._ident_str()}."
+                    f"{text_utils.UNICODE_CHECK} experimental {flag} enabled."
                 )
             else:
                 print(
-                    f"{text_utils.UNICODE_STOP} experimental {flag} disabled for {self._ident_str()}"
+                    f"{text_utils.UNICODE_STOP} experimental {flag} disabled."
                 )
 
         if val and freeze and not was_frozen:

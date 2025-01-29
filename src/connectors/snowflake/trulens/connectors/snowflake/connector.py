@@ -50,6 +50,7 @@ class SnowflakeConnector(DBConnector):
         database_prefix: Optional[str] = None,
         database_args: Optional[Dict[str, Any]] = None,
         database_check_revision: bool = True,
+        init_database: bool = True,
     ):
         connection_parameters = {
             "account": account,
@@ -75,17 +76,18 @@ class SnowflakeConnector(DBConnector):
         self.connection_parameters: Dict[str, str] = connection_parameters
         self.use_staged_packages: bool = init_server_side_with_staged_packages
 
-        self._init_with_snowpark_session(
-            snowpark_session,
-            init_server_side,
-            init_server_side_with_staged_packages,
-            init_sis_dashboard,
-            database_redact_keys,
-            database_prefix,
-            database_args,
-            database_check_revision,
-            connection_parameters,
-        )
+        if init_database:
+            self._init_with_snowpark_session(
+                snowpark_session,
+                init_server_side,
+                init_server_side_with_staged_packages,
+                init_sis_dashboard,
+                database_redact_keys,
+                database_prefix,
+                database_args,
+                database_check_revision,
+                connection_parameters,
+            )
 
     def _create_snowpark_session(
         self, connection_parameters: Dict[str, Optional[str]]

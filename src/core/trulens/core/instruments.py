@@ -381,6 +381,7 @@ class InstrumentedMethod:
     class_filter: ClassFilter
     span_type: Optional[SpanAttributes.SpanType] = None
     span_attributes: Attributes = None
+    full_scoped_span_attributes: Attributes = None
 
 
 def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
@@ -458,9 +459,10 @@ class Instrument:
         @staticmethod
         def retrieval_span(
             query_argname: str,
-        ) -> Tuple[SpanAttributes.SpanType, Attributes]:
+        ) -> Tuple[SpanAttributes.SpanType, Attributes, Attributes]:
             return (
                 SpanAttributes.SpanType.RETRIEVAL,
+                {},
                 lambda ret, exception, *args, **kwargs: {
                     SpanAttributes.RETRIEVAL.QUERY_TEXT: kwargs[query_argname],
                     SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: [
@@ -588,6 +590,7 @@ class Instrument:
         obj: object,
         span_type: Optional[SpanAttributes.SpanType] = None,
         span_attributes: Optional[Attributes] = None,
+        full_scoped_span_attributes: Optional[Attributes] = None,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
@@ -606,6 +609,7 @@ class Instrument:
             wrapper = instrument(
                 span_type=span_type,
                 attributes=span_attributes,
+                full_scoped_attributes=full_scoped_span_attributes,
             )
             # return wrapper(func)?
             of_cls_method = getattr(cls, method_name)
@@ -1155,6 +1159,7 @@ class Instrument:
                             obj=obj,
                             span_type=instrumented_method.span_type,
                             span_attributes=instrumented_method.span_attributes,
+                            full_scoped_span_attributes=instrumented_method.full_scoped_span_attributes,
                         ),
                     )
 

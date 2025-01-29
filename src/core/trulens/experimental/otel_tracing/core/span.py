@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from opentelemetry.baggage import get_baggage
 from opentelemetry.trace.span import Span
 from trulens.core.utils import signature as signature_utils
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -95,6 +96,9 @@ def set_general_span_attributes(
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
     span.set_attribute(
+        SpanAttributes.DOMAIN, str(get_baggage(SpanAttributes.DOMAIN))
+    )
+    span.set_attribute(
         SpanAttributes.APP_NAME, str(get_baggage(SpanAttributes.APP_NAME))
     )
     span.set_attribute(
@@ -132,7 +136,7 @@ def set_user_defined_attributes(
             and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
         ):
             span.set_attribute(
-                f"{SpanAttributes.BASE}{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
+                f"{BASE_SCOPE}.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
                 value,
             )
 

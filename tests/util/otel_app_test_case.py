@@ -41,6 +41,7 @@ class OtelAppTestCase(TruTestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
+        del os.environ["TRULENS_OTEL_TRACING"]
         cls.clear_TruSession_singleton()
         return super().tearDownClass()
 
