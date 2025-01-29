@@ -42,6 +42,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         self._tru_session.experimental_enable_feature("otel_tracing")
 
+    def tearDown(self) -> None:
+        del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDown()
+
     def _wait_for_num_results(
         self,
         q: str,

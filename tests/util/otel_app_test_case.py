@@ -34,6 +34,11 @@ class OtelAppTestCase(TruTestCase):
         os.environ["TRULENS_OTEL_TRACING"] = "1"
         return super().setUpClass()
 
+    @classmethod
+    def tearDownClass(cls) -> None:
+        del os.environ["TRULENS_OTEL_TRACING"]
+        return super().tearDownClass()
+
     def setUp(self) -> None:
         self.clear_TruSession_singleton()
         tru_session = TruSession(
