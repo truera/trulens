@@ -9,6 +9,7 @@ import inspect
 from inspect import BoundArguments
 from inspect import Signature
 import logging
+import os
 import threading
 from typing import (
     Any,
@@ -644,7 +645,10 @@ class App(
                     "No feedback evaluation and logging will occur."
                 )
 
-        if self.connector is not None:
+        otel_tracing_enabled = os.getenv(
+            "TRULENS_OTEL_TRACING", ""
+        ).lower() in ["1", "true"]
+        if self.connector is not None and not otel_tracing_enabled:
             self.connector.add_app(app=self)
 
             if self.feedback_mode != feedback_schema.FeedbackMode.NONE:

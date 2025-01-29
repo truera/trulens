@@ -125,10 +125,10 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
             ).collect()
             snowpark_session.sql(f"""
-                # TODO(this_pr): the name of the SPROC is going to change hopefully...
+                -- TODO(this_pr): the name of the SPROC is going to change hopefully...
                 CALL YUZHAO.AI_OBS.DELIMITED_INGEST_AI_OBS_SPANS(
                     BUILD_SCOPED_FILE_URL(
-                        @{os.environ["SNOWFLAKE_DATABASE"]}.{os.environ["SNOWFLAKE_SCHEMA"]}.trulens_spans,
+                        @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
                         '{tmp_file_basename}.gz'
                     ),
                     '{app_name}',

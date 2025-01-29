@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.3.1
+  __version__: 1.3.2
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.3.1
+  __version__: 1.3.2
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -2021,7 +2021,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.3.1
+  __version__: 1.3.2
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
@@ -2223,7 +2223,6 @@ trulens.feedback.llm_provider.LLMProvider:
     conciseness: builtins.function
     conciseness_with_cot_reasons: builtins.function
     context_relevance: builtins.function
-    context_relevance_verb_confidence: builtins.function
     context_relevance_with_cot_reasons: builtins.function
     controversiality: builtins.function
     controversiality_with_cot_reasons: builtins.function
@@ -2232,7 +2231,6 @@ trulens.feedback.llm_provider.LLMProvider:
     criminality: builtins.function
     criminality_with_cot_reasons: builtins.function
     endpoint: typing.Optional[trulens.core.feedback.endpoint.Endpoint, builtins.NoneType]
-    generate_confidence_score: builtins.function
     generate_score: builtins.function
     generate_score_and_reasons: builtins.function
     groundedness_measure_with_cot_reasons: builtins.function
@@ -2268,6 +2266,7 @@ trulens.feedback.prompts:
     ANSWER_RELEVANCE_USER: builtins.str
     COMPREHENSIVENESS_SYSTEM_PROMPT: builtins.str
     COMPREHENSIVENESS_USER_PROMPT: builtins.str
+    CONTEXT_RELEVANCE_DEFAULT_COT_PROMPT: builtins.str
     CONTEXT_RELEVANCE_SYSTEM: builtins.str
     CONTEXT_RELEVANCE_USER: builtins.str
     CORRECT_SYSTEM: builtins.str
@@ -2472,13 +2471,13 @@ trulens.feedback.v2.feedback.ContextRelevance:
   attributes:
     criteria: builtins.str
     criteria_template: builtins.str
+    default_cot_prompt: builtins.str
     languages: typing.Optional[typing.List[builtins.str], builtins.NoneType]
     output_space: builtins.str
     output_space_prompt: builtins.str
     system_prompt: builtins.str
     system_prompt_template: builtins.str
     user_prompt: builtins.str
-    verb_confidence_prompt: builtins.str
 trulens.feedback.v2.feedback.Controversiality:
   __bases__:
   - trulens.feedback.v2.feedback.Semantics
