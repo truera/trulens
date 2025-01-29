@@ -5,7 +5,6 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
-from trulens.apps.basic import can_import
 from trulens.core import experimental as core_experimental
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
@@ -31,6 +30,14 @@ def _set_up_tracer_provider() -> TracerProvider:
     if not isinstance(global_tracer_provider, TracerProvider):
         raise ValueError("Received a TracerProvider of an unexpected type!")
     return global_tracer_provider
+
+
+def _can_import(to_import: str) -> bool:
+    try:
+        __import__(to_import)
+        return True
+    except ImportError:
+        return False
 
 
 class _TruSession(core_session.TruSession):
@@ -70,7 +77,7 @@ class _TruSession(core_session.TruSession):
 
     @staticmethod
     def _track_costs():
-        if can_import("trulens.providers.cortex.endpoint"):
+        if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
             from trulens.experimental.otel_tracing.core.instrument import (
                 instrument_method,
@@ -88,7 +95,7 @@ class _TruSession(core_session.TruSession):
                 },
                 must_be_first_wrapper=True,
             )
-        if can_import("trulens.providers.openai.endpoint"):
+        if _can_import("trulens.providers.openai.endpoint"):
             import openai
             from openai import resources
             from openai.resources import chat

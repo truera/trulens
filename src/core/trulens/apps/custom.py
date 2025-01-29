@@ -198,7 +198,6 @@ from typing import Any, Callable, ClassVar, Optional, Set
 
 import pydantic
 from pydantic import Field
-from trulens.apps.basic import can_import
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
@@ -206,8 +205,6 @@ from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
-from trulens.otel.semconv.trace import BASE_SCOPE
-from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -409,58 +406,6 @@ class TruCustomApp(core_app.App):
             instrument.include_methods.append(
                 InstrumentedMethod(main_name, cls)
             )
-
-        if can_import("trulens.providers.cortex.endpoint"):
-            from snowflake.cortex._sse_client import SSEClient
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
-            from trulens.providers.cortex.endpoint import CortexCostComputer
-
-            cost_attributes_prefix = f"{BASE_SCOPE}.costs."
-            instrument_method(
-                SSEClient,
-                "events",
-                span_type=SpanAttributes.SpanType.UNKNOWN,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                    cost_attributes_prefix + k: v
-                    for k, v in CortexCostComputer.handle_response(ret).items()
-                },
-                must_be_first_wrapper=True,
-            )
-        if can_import("trulens.providers.openai.endpoint"):
-            import openai
-            from openai import resources
-            from openai.resources import chat
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
-            from trulens.providers.openai.endpoint import OpenAICostComputer
-
-            for module in [openai, resources, chat]:
-                for cls in dir(module):
-                    obj = python_utils.safer_getattr(module, cls)
-                    if (
-                        obj is not None
-                        and isinstance(obj, type)
-                        and hasattr(obj, "create")
-                    ):
-                        cost_attributes_prefix = f"{BASE_SCOPE}.costs."
-                        instrument_method(
-                            obj,
-                            "create",
-                            span_type=SpanAttributes.SpanType.UNKNOWN,
-                            full_scoped_attributes=lambda ret,
-                            exception,
-                            *args,
-                            **kwargs: {
-                                cost_attributes_prefix + k: v
-                                for k, v in OpenAICostComputer.handle_response(
-                                    ret
-                                ).items()
-                            },
-                            must_be_first_wrapper=True,
-                        )
 
         # This does instrumentation:
         super().__init__(**kwargs)

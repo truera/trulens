@@ -12,20 +12,10 @@ from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.otel.semconv.trace import SpanAttributes
-from trulens.providers.cortex.endpoint import CortexCostComputer
 
 logger = logging.getLogger(__name__)
 
 pp = PrettyPrinter()
-
-
-def can_import(to_import: str) -> bool:
-    try:
-        __import__(to_import)
-        return True
-    except Exception:
-        return False
 
 
 class TruWrapperApp:
@@ -63,21 +53,6 @@ class TruBasicCallableInstrument(core_instruments.Instrument):
         METHODS: List[InstrumentedMethod] = [
             InstrumentedMethod("_call", TruWrapperApp)
         ]
-        if can_import("trulens.providers.cortex.endpoint"):
-            from snowflake.cortex._sse_client import SSEClient
-            from trulens.providers.cortex.endpoint import CortexCostComputer
-
-            METHODS.append(
-                InstrumentedMethod(
-                    "events",
-                    SSEClient,
-                    span_type=SpanAttributes.SpanType.UNKNOWN,
-                    full_scoped_span_attributes=lambda ret,
-                    exception,
-                    *args,
-                    **kwargs: CortexCostComputer.handle_response(ret),
-                )
-            )
 
     def __init__(self, *args, **kwargs):
         super().__init__(
