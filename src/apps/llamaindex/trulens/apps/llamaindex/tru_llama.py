@@ -9,6 +9,7 @@ from typing import (
     AsyncGenerator,
     Callable,
     ClassVar,
+    Dict,
     Generator,
     List,
     Optional,
@@ -32,6 +33,8 @@ from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.experimental.otel_tracing.core.span import Attributes
+from trulens.otel.semconv.trace import SpanAttributes
 
 T = TypeVar("T")
 
@@ -72,6 +75,7 @@ if not legacy:
     from llama_index.core.response_synthesizers import Refine
     from llama_index.core.retrievers import BaseRetriever
     from llama_index.core.schema import BaseComponent
+    from llama_index.core.schema import NodeWithScore
     from llama_index.core.schema import QueryBundle
     from llama_index.core.service_context_elements.llm_predictor import (
         BaseLLMPredictor,
@@ -131,6 +135,41 @@ else:
 
 
 pp = PrettyPrinter()
+
+
+def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
+    def _full_scoped_span_attributes(
+        ret, exception, *args, **kwargs
+    ) -> Attributes:
+        attributes = {}
+        # Guess query text.
+        possible_query_texts = []
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                possible_query_texts.append(v)
+            elif isinstance(v, QueryBundle):
+                possible_query_texts.append(v.query_str)
+        # Guess retrieved contexts.
+        retrieved_context = ret
+        if isinstance(ret, list):
+            if all(isinstance(curr, NodeWithScore) for curr in ret):
+                retrieved_context = [curr.get_content() for curr in ret]
+            elif all(hasattr(curr, "text") for curr in ret):
+                retrieved_context = [curr.text for curr in ret]
+        # Return.
+        attributes = {
+            SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: retrieved_context
+        }
+        if len(possible_query_texts) == 1:
+            attributes[SpanAttributes.RETRIEVAL.QUERY_TEXT] = (
+                possible_query_texts[0]
+            )
+        return attributes
+
+    return {
+        "span_type": SpanAttributes.SpanType.RETRIEVAL,
+        "full_scoped_span_attributes": _full_scoped_span_attributes,
+    }
 
 
 class LlamaInstrument(core_instruments.Instrument):
@@ -206,15 +245,51 @@ class LlamaInstrument(core_instruments.Instrument):
                 InstrumentedMethod("acomplete", BaseChatEngine),
                 InstrumentedMethod("stream_complete", BaseChatEngine),
                 InstrumentedMethod("astream_complete", BaseChatEngine),
-                InstrumentedMethod("retrieve", BaseQueryEngine),
-                InstrumentedMethod("_retrieve", BaseQueryEngine),
-                InstrumentedMethod("_aretrieve", BaseQueryEngine),
-                InstrumentedMethod("retrieve", BaseRetriever),
-                InstrumentedMethod("_retrieve", BaseRetriever),
-                InstrumentedMethod("_aretrieve", BaseRetriever),
-                InstrumentedMethod("retrieve", WithFeedbackFilterNodes),
-                InstrumentedMethod("_retrieve", WithFeedbackFilterNodes),
-                InstrumentedMethod("_aretrieve", WithFeedbackFilterNodes),
+                InstrumentedMethod(
+                    "retrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    BaseQueryEngine,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "retrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    BaseRetriever,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "retrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_retrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
+                InstrumentedMethod(
+                    "_aretrieve",
+                    WithFeedbackFilterNodes,
+                    **_retrieval_span(),
+                ),
                 InstrumentedMethod("_postprocess_nodes", BaseNodePostprocessor),
                 InstrumentedMethod("_run_component", QueryEngineComponent),
                 InstrumentedMethod("_run_component", RetrieverComponent),
