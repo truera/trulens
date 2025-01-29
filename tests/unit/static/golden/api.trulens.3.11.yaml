@@ -700,6 +700,7 @@ trulens.core.instruments.InstrumentedMethod:
   __class__: builtins.type
   attributes:
     full_scoped_span_attributes: builtins.NoneType
+    must_be_first_wrapper: builtins.bool
     span_attributes: builtins.NoneType
     span_type: builtins.NoneType
 trulens.core.instruments.WithInstrumentCallbacks:
