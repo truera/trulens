@@ -323,6 +323,16 @@ def instrument(
                     if exception:
                         raise exception
 
+        # Check if already wrapped.
+        if hasattr(func, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+            return func
+        curr = func
+        while hasattr(curr, "__wrapped__"):
+            curr = curr.__wrapped__
+            if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                return func
+
+        # Wrap.
         ret = None
         if inspect.isasyncgenfunction(func):
             ret = async_generator_wrapper(func)
@@ -330,7 +340,7 @@ def instrument(
             ret = async_wrapper(func)
         else:
             ret = sync_wrapper(func)
-        setattr(ret, _TRULENS_INSTRUMENT_WRAPPER_FLAG, True)
+        ret.__dict__[_TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 
     return inner_decorator
@@ -343,15 +353,6 @@ def instrument_method(
     attributes: Attributes = None,
     full_scoped_attributes: Attributes = None,
 ):
-    # Check if already wrapped.
-    curr = getattr(cls, method_name)
-    if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
-        return
-    while hasattr(curr, "__wrapped__"):
-        curr = curr.__wrapped__
-        if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
-            return
-    # Wrap method.
     wrapper = instrument(
         span_type=span_type,
         attributes=attributes,
