@@ -426,6 +426,7 @@ class TruCustomApp(core_app.App):
                     cost_attributes_prefix + k: v
                     for k, v in CortexCostComputer.handle_response(ret).items()
                 },
+                must_be_first_wrapper=True,
             )
         if can_import("trulens.providers.openai.endpoint"):
             import openai
@@ -458,6 +459,7 @@ class TruCustomApp(core_app.App):
                                     ret
                                 ).items()
                             },
+                            must_be_first_wrapper=True,
                         )
 
         # This does instrumentation:

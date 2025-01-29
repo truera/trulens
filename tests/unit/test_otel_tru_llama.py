@@ -18,6 +18,8 @@ if run_optional_tests():
     from llama_index.core.llms.mock import MockLLM
     from trulens.apps.llamaindex import TruLlama
 
+    from tests.util.llama_index_mock_embedder import MockEmbedding
+
 _UUID_REGEX = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _FLOAT_REGEX = r"[-]?\d+\.\d+"
 _CONTEXT_RETRIEVAL_REGEX = (
@@ -41,7 +43,9 @@ class TestOtelTruLlama(OtelAppTestCase):
             input_files=["./tests/unit/data/attention_is_all_you_need.pdf"],
         )
         documents = reader.load_data()
-        index = VectorStoreIndex.from_documents(documents)
+        index = VectorStoreIndex.from_documents(
+            documents, embed_model=MockEmbedding(10)
+        )
         return index.as_query_engine(similarity_top_k=3)
 
     def test_smoke(self) -> None:
