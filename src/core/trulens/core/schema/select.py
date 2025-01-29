@@ -53,15 +53,8 @@ class Select:
     RecordRets: Lens = RecordCall.rets
     """Selector for the whole output of the first called / last returned method call."""
 
-    RecordSpans: Lens = Record.spans
-    """EXPERIMENTAL(otel_tracing): OTEL spans produced during tracing of a record.
-
-    This can include spans not created by trulens.
-    """
-
     _PREFIXES = [
         ("Select.RecordInput", RecordInput),
-        ("Select.RecordSpans", RecordSpans),
         ("Select.RecordOutput", RecordOutput),
         ("Select.RecordArgs", RecordArgs),
         ("Select.RecordRets", RecordRets),
@@ -137,12 +130,6 @@ class Select:
         """Add the App prefix to the beginning of the given lens."""
 
         return Select.Lens(path=Select.App.path + lens.path)
-
-    @staticmethod
-    def is_for_record_spans(lens: Select.Lens) -> bool:
-        """Check if the given lens is for the spans of a record."""
-
-        return Select.RecordSpans.is_prefix_of(lens)
 
     @staticmethod
     def render_for_dashboard(lens: Select.Lens) -> str:

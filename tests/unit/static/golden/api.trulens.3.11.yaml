@@ -808,13 +808,10 @@ trulens.core.schema.base.Perf:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    end_ns_timestamp: builtins.property
     end_time: datetime.datetime
     latency: builtins.property
     min: builtins.staticmethod
     now: builtins.staticmethod
-    of_ns_timestamps: builtins.staticmethod
-    start_ns_timestamp: builtins.property
     start_time: datetime.datetime
 trulens.core.schema.dataset:
   __class__: builtins.module
@@ -1100,13 +1097,11 @@ trulens.core.schema.select.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
-    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
-    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens.core.schema.types:
