@@ -44,7 +44,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def tearDown(self) -> None:
         del os.environ["TRULENS_OTEL_TRACING"]
-        super().tearDown()
+        return super().tearDown()
 
     def _wait_for_num_results(
         self,

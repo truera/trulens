@@ -29,6 +29,9 @@ import wrapt
 logger = logging.getLogger(__name__)
 
 
+_TRULENS_INSTRUMENT_WRAPPER_FLAG = "__trulens_instrument_wrapper"
+
+
 def _get_func_name(func: Callable) -> str:
     if (
         hasattr(func, "__module__")
@@ -157,6 +160,7 @@ def instrument(
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
     attributes: Attributes = dict(),
     full_scoped_attributes: Attributes = dict(),
+    must_be_first_wrapper: bool = False,
 ):
     """
     Decorator for marking functions to be instrumented with OpenTelemetry
@@ -171,6 +175,9 @@ def instrument(
     full_scoped_attributes:
         A dictionary or a callable that returns a dictionary of attributes
         (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
+    must_be_first_wrapper:
+        If this is True and the function is already wrapped with the TruLens
+        decorator, then the function will not be wrapped again.
     """
 
     def inner_decorator(func: Callable):
@@ -320,14 +327,45 @@ def instrument(
                     if exception:
                         raise exception
 
+        # Check if already wrapped if not allowing multiple wrappers.
+        if must_be_first_wrapper:
+            if hasattr(func, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                return func
+            curr = func
+            while hasattr(curr, "__wrapped__"):
+                curr = curr.__wrapped__
+                if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                    return func
+
+        # Wrap.
+        ret = None
         if inspect.isasyncgenfunction(func):
-            return async_generator_wrapper(func)
+            ret = async_generator_wrapper(func)
         elif inspect.iscoroutinefunction(func):
-            return async_wrapper(func)
+            ret = async_wrapper(func)
         else:
-            return sync_wrapper(func)
+            ret = sync_wrapper(func)
+        ret.__dict__[_TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        return ret
 
     return inner_decorator
+
+
+def instrument_method(
+    cls: type,
+    method_name: str,
+    span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
+    attributes: Attributes = None,
+    full_scoped_attributes: Attributes = None,
+    must_be_first_wrapper: bool = False,
+):
+    wrapper = instrument(
+        span_type=span_type,
+        attributes=attributes,
+        full_scoped_attributes=full_scoped_attributes,
+        must_be_first_wrapper=must_be_first_wrapper,
+    )
+    setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
 class OTELRecordingContext:

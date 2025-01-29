@@ -200,6 +200,7 @@ import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
+from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
@@ -402,7 +403,9 @@ class TruCustomApp(core_app.App):
 
             instrument.include_modules.add(mod)
             instrument.include_classes.add(cls)
-            instrument.include_methods[main_name] = lambda o: isinstance(o, cls)
+            instrument.include_methods.append(
+                InstrumentedMethod(main_name, cls)
+            )
 
         # This does instrumentation:
         super().__init__(**kwargs)

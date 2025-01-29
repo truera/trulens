@@ -382,6 +382,7 @@ class InstrumentedMethod:
     span_type: Optional[SpanAttributes.SpanType] = None
     span_attributes: Attributes = None
     full_scoped_span_attributes: Attributes = None
+    must_be_first_wrapper: bool = True
 
 
 def class_filter_disjunction(f1: ClassFilter, f2: ClassFilter) -> ClassFilter:
@@ -591,6 +592,7 @@ class Instrument:
         span_type: Optional[SpanAttributes.SpanType] = None,
         span_attributes: Optional[Attributes] = None,
         full_scoped_span_attributes: Optional[Attributes] = None,
+        must_be_first_wrapper: bool = False,
     ):
         """Wrap a method to capture its inputs/outputs/errors."""
 
@@ -610,6 +612,7 @@ class Instrument:
                 span_type=span_type,
                 attributes=span_attributes,
                 full_scoped_attributes=full_scoped_span_attributes,
+                must_be_first_wrapper=must_be_first_wrapper,
             )
             # return wrapper(func)?
             of_cls_method = getattr(cls, method_name)
@@ -1160,6 +1163,7 @@ class Instrument:
                             span_type=instrumented_method.span_type,
                             span_attributes=instrumented_method.span_attributes,
                             full_scoped_span_attributes=instrumented_method.full_scoped_span_attributes,
+                            must_be_first_wrapper=instrumented_method.must_be_first_wrapper,
                         ),
                     )
 

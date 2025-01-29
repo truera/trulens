@@ -32,11 +32,6 @@ class OtelAppTestCase(TruTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         os.environ["TRULENS_OTEL_TRACING"] = "1"
-        cls.clear_TruSession_singleton()
-        tru_session = TruSession(
-            experimental_feature_flags=[Feature.OTEL_TRACING]
-        )
-        tru_session.experimental_enable_feature("otel_tracing")
         return super().setUpClass()
 
     @classmethod
@@ -46,12 +41,20 @@ class OtelAppTestCase(TruTestCase):
         return super().tearDownClass()
 
     def setUp(self) -> None:
+        self.clear_TruSession_singleton()
         tru_session = TruSession(
             experimental_feature_flags=[Feature.OTEL_TRACING]
         )
         tru_session.experimental_enable_feature("otel_tracing")
         tru_session.reset_database()
         return super().setUp()
+
+    def tearDown(self) -> None:
+        tru_session = TruSession()
+        tru_session.experimental_force_flush()
+        tru_session._experimental_otel_span_processor.shutdown()
+        self.clear_TruSession_singleton()
+        return super().tearDown()
 
     @staticmethod
     def _get_events() -> pd.DataFrame:

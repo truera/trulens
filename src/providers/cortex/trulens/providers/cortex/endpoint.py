@@ -3,7 +3,7 @@ import json
 import logging
 import os
 import pprint
-from typing import Any, Callable, ClassVar, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 from snowflake.cortex._sse_client import Event
 from snowflake.cortex._sse_client import SSEClient
@@ -12,6 +12,34 @@ from trulens.core.feedback import endpoint as core_endpoint
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+class CortexCostComputer:
+    @staticmethod
+    def handle_response(response: Any) -> Dict[str, Any]:
+        response_content = []
+        for curr in response:
+            data = json.loads(curr.data)
+            choice = data["choices"][0]
+            if "finish_reason" in choice and choice["finish_reason"] == "stop":
+                model = data["model"]
+                usage = data["usage"]
+                break
+            response_content.append(choice["delta"]["content"])
+        endpoint = CortexEndpoint()
+        callback = CortexCallback(endpoint=endpoint)
+        return {
+            "model": model,
+            "cost_currency": "Snowflake credits",
+            "cost": callback._compute_credits_consumed(
+                model, usage.get("total_tokens", 0)
+            ),
+            "n_tokens": usage.get("total_tokens", 0),
+            "n_cortex_guardrails_tokens": usage.get("guardrails_tokens", 0),
+            "n_prompt_tokens": usage.get("prompt_tokens", 0),
+            "n_completion_tokens": usage.get("completion_tokens", 0),
+            "return": "".join(response_content),
+        }
 
 
 class CortexCallback(core_endpoint.EndpointCallback):
