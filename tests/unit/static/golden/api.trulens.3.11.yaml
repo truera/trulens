@@ -699,6 +699,7 @@ trulens.core.instruments.InstrumentedMethod:
   - builtins.object
   __class__: builtins.type
   attributes:
+    full_scoped_span_attributes: builtins.NoneType
     span_attributes: builtins.NoneType
     span_type: builtins.NoneType
 trulens.core.instruments.WithInstrumentCallbacks:
@@ -1733,7 +1734,7 @@ trulens.core.utils.trulens.Other:
   attributes: {}
 trulens.dashboard:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs:
     run_dashboard: builtins.function
     run_dashboard_sis: builtins.function
