@@ -18,7 +18,6 @@ import random
 from time import sleep
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Dict,
     List,
@@ -26,7 +25,6 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    Union,
 )
 
 import numpy as np
@@ -36,12 +34,10 @@ from pydantic import Field
 import requests
 from requests import structures as request_structures
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.utils import asynchro as asynchro_utils
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import threading as threading_utils
-from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 logger = logging.getLogger(__name__)
 
@@ -531,133 +527,6 @@ class DummyAPICreator:
         )
 
 
-if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-    from trulens.experimental.otel_tracing.core.feedback import (
-        endpoint as experimental_core_endpoint,
-    )
-
-    class _WrapperDummyEndpointCallback(
-        experimental_core_endpoint._WrapperEndpointCallback[
-            asynchro_utils.MaybeAwaitable[requests.Response], serial_utils.JSON
-        ]
-    ):
-        """EXPERIMENTAL(otel_tracing): Callbacks for instrumented methods in
-        DummyAPI to recover costs from those calls."""
-
-        def on_callable_call(self, bindings, **kwargs):
-            # Can now determine what type of call this was. DummyAPI post/apost
-            # requests have an arg "json" which is json dict with key named
-            # "mode".
-
-            super().on_callable_call(
-                bindings, **kwargs
-            )  # increments n_requests
-
-            # Requests made by DummyProvider have "mode" in their data portion
-            # to indicate whether they are classification or completion.
-            if (json := bindings.arguments.get("json")) is not None:
-                if (mode := json.get("mode")) is not None:
-                    if mode == "completion":
-                        self.cost.n_completion_requests += 1
-                    elif mode == "classification":
-                        self.cost.n_classification_requests += 1
-                    else:
-                        logger.warning(
-                            "Unknown mode %s for post call %s.",
-                            mode,
-                            self.func.__name__,
-                        )
-                else:
-                    # Requests made by huggingface provider do not have the
-                    # "mode" but only make classification requests presently.
-                    url = bindings.arguments["url"]
-                    if not url.startswith(
-                        "https://api-inference.huggingface.co"
-                    ):
-                        logger.debug(
-                            "Unknown dummy huggingface api request: %s. Cost tracking will not be available.",
-                            url,
-                        )
-                        return
-
-                    self.cost.n_classification_requests += 1
-
-        def on_endpoint_generation(self, response: serial_utils.JSON) -> None:
-            super().on_endpoint_generation(
-                response
-            )  # increments n_successful_requests
-
-            if isinstance(response, dict):
-                self.cost.cost += response.get("cost", 0.0)
-                self.cost.n_tokens += response.get("n_tokens", 0)
-                self.cost.n_prompt_tokens += response.get("n_prompt_tokens", 0)
-                self.cost.n_completion_tokens += response.get(
-                    "n_completion_tokens", 0
-                )
-            else:
-                logger.warning(
-                    "Unexpected response for generation: %s",
-                    response,
-                )
-
-        def on_endpoint_classification(
-            self, response: serial_utils.JSON
-        ) -> None:
-            super().on_endpoint_classification(
-                response
-            )  # increments n_successful_requests
-
-            if isinstance(response, Sequence):
-                self.cost.n_classes += len(response)
-            else:
-                logger.warning(
-                    "Unexpected response for classification: %s",
-                    response,
-                )
-
-        def on_callable_return(
-            self,
-            ret: asynchro_utils.MaybeAwaitable[requests.Response],
-            **kwargs,
-        ) -> asynchro_utils.MaybeAwaitable[requests.Response]:
-            """Handle a requests.Response response.
-
-            The logic handles responses of the form produced by huggingface api
-            and dummy completion api superficially resembling openai completion.
-            """
-
-            if isinstance(ret, Awaitable):
-                # Note that awaitable returns are handled by wrap_callable so we
-                # should never get here.
-                raise RuntimeError("Awaitable return not expected.")
-
-            json: Union[serial_utils.JSON, List[serial_utils.JSON]] = ret.json()
-
-            if not isinstance(json, list):
-                logger.warning("List of json expected but got: %s", json)
-                return ret
-
-            for item in json:
-                if isinstance(item, dict) and "usage" in item:
-                    # openai completion results are list of dict
-                    self.on_endpoint_generation(response=item["usage"])
-
-                elif isinstance(item, list) and all(
-                    isinstance(i, dict) for i in item
-                ):
-                    # huggingface classification results are list of list of dict
-                    self.on_endpoint_classification(response=item)
-
-                else:
-                    logger.warning(
-                        "Unknown response format for %s: %s.",
-                        self.func.__name__,
-                        item,
-                    )
-
-            return ret
-
-
 class DummyEndpointCallback(core_endpoint.EndpointCallback):
     """Callbacks for instrumented methods in DummyAPI to recover costs from those calls."""
 
@@ -734,12 +603,6 @@ class DummyEndpoint(core_endpoint._WithPost, core_endpoint.Endpoint):
     )
     def overloaded_prob(self) -> float:
         return self.api.overloaded_prob
-
-    _experimental_wrapper_callback_class = (
-        _WrapperDummyEndpointCallback
-        if otel_tracing_feature._FeatureSetup.are_optionals_installed()
-        else None
-    )
 
     def __init__(
         self,
