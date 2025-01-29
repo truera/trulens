@@ -28,7 +28,7 @@ class ResourceAttributes:
     pass
 
 
-BASE_SCOPE = "ai_observability"
+BASE_SCOPE = "ai.observability"
 
 
 class SpanAttributes:

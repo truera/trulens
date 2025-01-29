@@ -63,7 +63,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes["ai_observability.unknown.best_baby"], "Kojikun"
+            spans[0].attributes["ai.observability.unknown.best_baby"], "Kojikun"
         )
 
     def _test_sync_generator_function(
@@ -81,7 +81,7 @@ class TestOtelInstrument(unittest.TestCase):
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes["ai_observability.unknown.best_babies"],
+            spans[0].attributes["ai.observability.unknown.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -101,7 +101,7 @@ class TestOtelInstrument(unittest.TestCase):
             f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes["ai_observability.unknown.best_babies"],
+            spans[1].attributes["ai.observability.unknown.best_babies"],
             ("Kojikun", "Nolan"),
         )
 
@@ -161,7 +161,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes["ai_observability.unknown.best_baby"], "Kojikun"
+            spans[0].attributes["ai.observability.unknown.best_baby"], "Kojikun"
         )
 
     def test_async_generator_function(self):
@@ -196,7 +196,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes["ai_observability.unknown.best_babies"],
+            spans[0].attributes["ai.observability.unknown.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -212,7 +212,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes["ai_observability.unknown.best_babies"],
+            spans[1].attributes["ai.observability.unknown.best_babies"],
             ("Kojikun", "Nolan"),
         )
 

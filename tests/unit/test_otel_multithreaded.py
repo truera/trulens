@@ -60,22 +60,22 @@ class TestOtelMultiThreaded(OtelAppTestCase):
         seen_span_ids = set()
         for _, row in actual.iterrows():
             record_attributes = row["record_attributes"]
-            span_type = record_attributes["ai_observability.span_type"]
+            span_type = record_attributes["ai.observability.span_type"]
             if span_type == SpanAttributes.SpanType.UNKNOWN:
                 best_baby = record_attributes[
-                    "ai_observability.unknown.best_baby"
+                    "ai.observability.unknown.best_baby"
                 ]
                 self.assertEqual(best_baby, "Kojikun")
-                span_id = record_attributes["ai_observability.unknown.span_id"]
+                span_id = record_attributes["ai.observability.unknown.span_id"]
                 self.assertEqual(span_id, row["trace"]["span_id"])
                 seen_span_ids.add(span_id)
             elif span_type == SpanAttributes.SpanType.MAIN:
                 self.assertEqual(
-                    record_attributes["ai_observability.main.main_input"],
+                    record_attributes["ai.observability.main.main_input"],
                     "test",
                 )
                 self.assertEqual(
-                    record_attributes["ai_observability.main.main_output"],
+                    record_attributes["ai.observability.main.main_output"],
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)

@@ -122,31 +122,31 @@ class TestOtelCosts(OtelAppTestCase):
             "snowflake.cortex._sse_client.SSEClient.events",
         )
         self.assertEqual(
-            record_attributes["ai_observability.costs.model"],
+            record_attributes["ai.observability.costs.model"],
             "mistral-large2",
         )
         self.assertEqual(
-            record_attributes["ai_observability.costs.cost_currency"],
+            record_attributes["ai.observability.costs.cost_currency"],
             "Snowflake credits",
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.cost"],
+            record_attributes["ai.observability.costs.cost"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_tokens"],
+            record_attributes["ai.observability.costs.n_tokens"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_tokens"],
+            record_attributes["ai.observability.costs.n_tokens"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_completion_tokens"],
+            record_attributes["ai.observability.costs.n_completion_tokens"],
             0,
         )
         self.assertGreater(
-            len(record_attributes["ai_observability.costs.return"]),
+            len(record_attributes["ai.observability.costs.return"]),
             0,
         )
 
