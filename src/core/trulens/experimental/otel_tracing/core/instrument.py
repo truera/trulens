@@ -176,8 +176,8 @@ def instrument(
         A dictionary or a callable that returns a dictionary of attributes
         (i.e. a `typing.Dict[str, typing.Any]`) to be set on the span.
     must_be_first_wrapper:
-        If this is True and the functions is already wrapped with the
-        TruLens decorator, then the function will not be wrapped again.
+        If this is True and the function is already wrapped with the TruLens
+        decorator, then the function will not be wrapped again.
     """
 
     def inner_decorator(func: Callable):

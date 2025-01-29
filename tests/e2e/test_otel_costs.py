@@ -73,24 +73,7 @@ class TestOtelCosts(OtelAppTestCase):
         app = ChatSnowflakeCortex(
             model="mistral-large2",
             cortex_function="complete",
-            # account=os.environ["SNOWFLAKE_ACCOUNT"],
-            # username=os.environ["SNOWFLAKE_USER"],
-            # password=os.environ["SNOWFLAKE_USER_PASSWORD"],
-            # database=os.environ["SNOWFLAKE_DATABASE"],
-            # schema=os.environ["SNOWFLAKE_SCHEMA"],
-            # role=os.environ["SNOWFLAKE_ROLE"],
-            # warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
         )
-        # # Sample input prompt
-        # messages = [
-        #     SystemMessage(content="You are a friendly assistant."),
-        #     HumanMessage(content="What are large language models?"),
-        # ]
-        # # Invoke the stream method and print each chunk as it arrives
-        # print("Stream Method Response:")
-        #
-        # for chunk in app._stream(messages):
-        #     print(chunk.message.content)
         tru_recorder = TruChain(app, app_name="testing", app_version="v1")
         with tru_recorder(run_name="test run", input_id="42"):
             app.invoke("How is baby Kojikun able to be so cute?")
@@ -139,7 +122,7 @@ class TestOtelCosts(OtelAppTestCase):
             0,
         )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_tokens"],
+            record_attributes[f"{BASE_SCOPE}.costs.n_prompt_tokens"],
             0,
         )
         self.assertGreater(
