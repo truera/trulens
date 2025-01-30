@@ -126,7 +126,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             ).collect()
             snowpark_session.sql(f"""
                 -- TODO(this_pr): the name of the SPROC is going to change hopefully...
-                CALL YUZHAO.AI_OBS.DELIMITED_INGEST_AI_OBS_SPANS(
+                CALL YUZHAO.AI_OBS.INGEST_AI_OBSERVABILITY_SPANS(
                     BUILD_SCOPED_FILE_URL(
                         @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
                         '{tmp_file_basename}.gz'
