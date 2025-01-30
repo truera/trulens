@@ -472,9 +472,7 @@ class App(
         if TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument,
-            )
+            from trulens.core.otel.instrument import instrument
 
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
@@ -962,9 +960,7 @@ class App(
         ):
             raise RuntimeError("OTEL Tracing is not enabled for this session.")
 
-        from trulens.experimental.otel_tracing.core.instrument import (
-            OTELRecordingContext as OTELApp,
-        )
+        from trulens.core.otel.instrument import OTELRecordingContext as OTELApp
 
         # Pylance shows an error here, but it is likely a false positive. due to the overriden
         # model dump returning json instead of a dict.

@@ -7,9 +7,8 @@ import numpy as np
 from opentelemetry import trace
 from opentelemetry.baggage import get_baggage
 from trulens.apps.custom import TruCustomApp
-from trulens.core.experimental import Feature
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -44,9 +43,7 @@ class _TestApp:
 class TestOtelMultiThreaded(OtelAppTestCase):
     def test_multithreaded(self):
         # Set up.
-        tru_session = TruSession(
-            experimental_feature_flags=[Feature.OTEL_TRACING]
-        )
+        tru_session = TruSession()
         tru_session.reset_database()
         # Create TruCustomApp that runs many things in parallel.
         test_app = _TestApp()

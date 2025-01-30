@@ -5,7 +5,6 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
-from trulens.core import experimental as core_experimental
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
@@ -41,32 +40,48 @@ def _can_import(to_import: str) -> bool:
 
 
 class _TruSession(core_session.TruSession):
+    def _validate_otel_exporter(
+        self,
+        exporter: Optional[otel_export_sdk.SpanExporter],
+        connector: DBConnector,
+    ) -> otel_export_sdk.SpanExporter:
+        if (
+            exporter is None
+            and _can_import("trulens.connectors.snowflake")
+            and _can_import("trulens.connectors.snowflake.otel_exporter")
+        ):
+            from trulens.connectors.snowflake import SnowflakeConnector
+            from trulens.connectors.snowflake.otel_exporter import (
+                TruLensSnowflakeSpanExporter,
+            )
+
+            if isinstance(connector, SnowflakeConnector):
+                exporter = TruLensSnowflakeSpanExporter(connector)
+        if not exporter:
+            exporter = TruLensOTELSpanExporter(connector)
+        if not isinstance(exporter, otel_export_sdk.SpanExporter):
+            raise ValueError(
+                "Provided exporter must be an OpenTelemetry SpanExporter!"
+            )
+        self._experimental_otel_exporter = exporter
+        return exporter
+
     def _set_up_otel_exporter(
         self,
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
     ):
-        self._experimental_feature(
-            flag=core_experimental.Feature.OTEL_TRACING, value=True, freeze=True
-        )
-
         logger.info(
             f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {python_utils.class_name(exporter.__class__)}"
         )
 
-        if not exporter:
-            exporter = TruLensOTELSpanExporter(connector)
-        self._experimental_otel_exporter = exporter
-
         tracer_provider = _set_up_tracer_provider()
-
         # Setting it here for easy access without having to assert the type every time
         self._experimental_tracer_provider = tracer_provider
 
-        if exporter and not isinstance(exporter, otel_export_sdk.SpanExporter):
-            raise ValueError(
-                "Provided exporter must be an OpenTelemetry SpanExporter"
-            )
+        exporter = _TruSession._validate_otel_exporter(
+            self, exporter, connector
+        )
 
         self._experimental_otel_span_processor = (
             otel_export_sdk.BatchSpanProcessor(exporter)
@@ -79,9 +94,7 @@ class _TruSession(core_session.TruSession):
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
+            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
             cost_attributes_prefix = f"{BASE_SCOPE}.costs."
@@ -99,9 +112,7 @@ class _TruSession(core_session.TruSession):
             import openai
             from openai import resources
             from openai.resources import chat
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
+            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.openai.endpoint import OpenAICostComputer
 
             for module in [openai, resources, chat]:

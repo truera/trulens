@@ -7,7 +7,6 @@ from typing import List, Optional, Tuple
 
 import pandas as pd
 import sqlalchemy as sa
-from trulens.core.experimental import Feature
 from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
 
@@ -42,10 +41,7 @@ class OtelAppTestCase(TruTestCase):
 
     def setUp(self) -> None:
         self.clear_TruSession_singleton()
-        tru_session = TruSession(
-            experimental_feature_flags=[Feature.OTEL_TRACING]
-        )
-        tru_session.experimental_enable_feature("otel_tracing")
+        tru_session = TruSession()
         tru_session.reset_database()
         return super().setUp()
 

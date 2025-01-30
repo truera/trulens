@@ -7,8 +7,8 @@ from snowflake.cortex import Complete
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 

@@ -602,9 +602,7 @@ class Instrument:
         if self.app.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument,
-            )
+            from trulens.core.otel.instrument import instrument
 
             if span_type is None:
                 span_type = SpanAttributes.SpanType.UNKNOWN

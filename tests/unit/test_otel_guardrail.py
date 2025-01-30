@@ -4,8 +4,8 @@ import unittest
 from trulens.apps.custom import TruCustomApp
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
