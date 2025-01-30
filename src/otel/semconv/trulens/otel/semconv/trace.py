@@ -28,7 +28,7 @@ class ResourceAttributes:
     pass
 
 
-BASE_SCOPE = "ai_observability"
+BASE_SCOPE = "ai.observability"
 
 
 class SpanAttributes:
@@ -363,7 +363,7 @@ class SpanAttributes:
     class RETRIEVAL:
         """A retrieval."""
 
-        base = BASE_SCOPE + ".sem.retrieval"
+        base = BASE_SCOPE + ".retrieval"
 
         QUERY_TEXT = base + ".query_text"
         """Input text whose related contexts are being retrieved."""
@@ -389,7 +389,7 @@ class SpanAttributes:
     class RERANKING:
         """A reranker call."""
 
-        base = BASE_SCOPE + ".sem.reranking"
+        base = BASE_SCOPE + ".reranking"
 
         QUERY_TEXT = base + ".query_text"
         """The query text."""
@@ -410,7 +410,7 @@ class SpanAttributes:
         """Reranked indexes into `input_context_texts`."""
 
     class GENERATION:
-        base = BASE_SCOPE + ".sem.generation"
+        base = BASE_SCOPE + ".generation"
 
         # GEN_AI_*
 
@@ -447,7 +447,7 @@ class SpanAttributes:
     class MEMORIZATION:
         """A memory saving call."""
 
-        base = BASE_SCOPE + ".sem.memorization"
+        base = BASE_SCOPE + ".memorization"
 
         MEMORY_TYPE = base + ".memory_type"
         """The type of memory."""
@@ -458,7 +458,7 @@ class SpanAttributes:
     class EMBEDDING:
         """An embedding call."""
 
-        base = BASE_SCOPE + ".sem.embedding"
+        base = BASE_SCOPE + ".embedding"
 
         INPUT_TEXT = base + ".input_text"
         """The text being embedded."""
@@ -472,7 +472,7 @@ class SpanAttributes:
     class TOOL_INVOCATION:
         """A tool invocation."""
 
-        base = BASE_SCOPE + ".sem.tool_invocation"
+        base = BASE_SCOPE + ".tool_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the tool."""
@@ -480,7 +480,7 @@ class SpanAttributes:
     class AGENT_INVOCATION:
         """An agent invocation."""
 
-        base = BASE_SCOPE + ".sem.agent_invocation"
+        base = BASE_SCOPE + ".agent_invocation"
 
         DESCRIPTION = base + ".description"
         """The description of the agent."""

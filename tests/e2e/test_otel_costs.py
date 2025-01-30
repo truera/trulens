@@ -9,6 +9,7 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -105,31 +106,31 @@ class TestOtelCosts(OtelAppTestCase):
             "snowflake.cortex._sse_client.SSEClient.events",
         )
         self.assertEqual(
-            record_attributes["ai_observability.costs.model"],
+            record_attributes[f"{BASE_SCOPE}.costs.model"],
             "mistral-large2",
         )
         self.assertEqual(
-            record_attributes["ai_observability.costs.cost_currency"],
+            record_attributes[f"{BASE_SCOPE}.costs.cost_currency"],
             "Snowflake credits",
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.cost"],
+            record_attributes[f"{BASE_SCOPE}.costs.cost"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_tokens"],
+            record_attributes[f"{BASE_SCOPE}.costs.n_tokens"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_prompt_tokens"],
+            record_attributes[f"{BASE_SCOPE}.costs.n_prompt_tokens"],
             0,
         )
         self.assertGreater(
-            record_attributes["ai_observability.costs.n_completion_tokens"],
+            record_attributes[f"{BASE_SCOPE}.costs.n_completion_tokens"],
             0,
         )
         self.assertGreater(
-            len(record_attributes["ai_observability.costs.return"]),
+            len(record_attributes[f"{BASE_SCOPE}.costs.return"]),
             0,
         )
 

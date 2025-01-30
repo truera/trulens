@@ -160,9 +160,18 @@ def _retrieval_span() -> Dict[str, Union[SpanAttributes.SpanType, Attributes]]:
         attributes = {
             SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS: retrieved_context
         }
-        if len(possible_query_texts) == 1:
+        if len(possible_query_texts) < 1:
+            logger.info(
+                "Could not guess query text for retrieval span as no likely candidates found!"
+            )
+        elif len(possible_query_texts) == 1:
             attributes[SpanAttributes.RETRIEVAL.QUERY_TEXT] = (
                 possible_query_texts[0]
+            )
+        elif len(possible_query_texts) > 1:
+            logger.info(
+                "Could not guess query text for retrieval span! Found multiple possible query texts: %s",
+                pp.pformat(possible_query_texts),
             )
         return attributes
 

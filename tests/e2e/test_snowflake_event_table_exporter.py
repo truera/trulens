@@ -12,6 +12,7 @@ from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.exporter.snowflake import (
     TruLensSnowflakeSpanExporter,
 )
+from trulens.otel.semconv.trace import BASE_SCOPE
 
 from tests.unit.test_otel_tru_llama import TestOtelTruLlama
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -77,6 +78,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             rag.query("What is multi-headed attention?")
         # Flush exporter and wait for data to be made to stage.
         self._tru_session.experimental_force_flush()
+        # Check that there are no other tables in the schema.
+        self.assertListEqual(
+            self.run_query("SHOW TABLES"),
+            [],
+        )
         # Check that the data is in the event table.
         self._wait_for_num_results(
             f"""
@@ -86,7 +92,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             WHERE
                 RECORD_TYPE = 'SPAN'
                 AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-28 00:00:00')
-                AND RECORD_ATTRIBUTES['ai_observability.run_name'] = '{run_name}'
+                AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
         """,

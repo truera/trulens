@@ -10,6 +10,7 @@ from trulens.apps.custom import TruCustomApp
 from trulens.core.experimental import Feature
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -60,22 +61,20 @@ class TestOtelMultiThreaded(OtelAppTestCase):
         seen_span_ids = set()
         for _, row in actual.iterrows():
             record_attributes = row["record_attributes"]
-            span_type = record_attributes["ai_observability.span_type"]
+            span_type = record_attributes[f"{BASE_SCOPE}.span_type"]
             if span_type == SpanAttributes.SpanType.UNKNOWN:
-                best_baby = record_attributes[
-                    "ai_observability.unknown.best_baby"
-                ]
+                best_baby = record_attributes[f"{BASE_SCOPE}.unknown.best_baby"]
                 self.assertEqual(best_baby, "Kojikun")
-                span_id = record_attributes["ai_observability.unknown.span_id"]
+                span_id = record_attributes[f"{BASE_SCOPE}.unknown.span_id"]
                 self.assertEqual(span_id, row["trace"]["span_id"])
                 seen_span_ids.add(span_id)
             elif span_type == SpanAttributes.SpanType.MAIN:
                 self.assertEqual(
-                    record_attributes["ai_observability.main.main_input"],
+                    record_attributes[f"{BASE_SCOPE}.main.main_input"],
                     "test",
                 )
                 self.assertEqual(
-                    record_attributes["ai_observability.main.main_output"],
+                    record_attributes[f"{BASE_SCOPE}.main.main_output"],
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)
