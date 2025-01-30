@@ -4,6 +4,7 @@ import unittest
 from trulens.apps.custom import TruCustomApp
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
+from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -47,15 +48,16 @@ class TestOtelGuardrail(OtelAppTestCase):
             "4. This is a relevant comment.",
         ]
         self.assertListEqual(sorted(result), expected_result)
+        TruSession().experimental_force_flush()
         # Check that the span only contains the relevant comments.
         seen = False
         for _, curr in self._get_events().iterrows():
-            record_attributes = curr["RecordAttributes"]
+            record_attributes = curr["record_attributes"]
             return_key = f"{SpanAttributes.RETRIEVAL.base}.return"
             if return_key in record_attributes:
                 self.assertFalse(seen)
                 self.assertListEqual(
-                    sorted(curr["RecordAttributes"][return_key]),
+                    sorted(record_attributes[return_key]),
                     expected_result,
                 )
                 seen = True
