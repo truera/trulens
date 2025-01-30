@@ -217,6 +217,26 @@ class TestOtelInstrument(unittest.TestCase):
             ("Kojikun", "Nolan"),
         )
 
+    def test_multiple_wrappers(self):
+        # Set up instrumented function.
+        @instrument(attributes={"number": 3}, must_be_first_wrapper=False)
+        @instrument(attributes={"number": 2}, must_be_first_wrapper=True)
+        @instrument(attributes={"number": 1}, must_be_first_wrapper=False)
+        def my_function():
+            return "Kojikun"
+
+        # Run the function.
+        my_function()
+        # Verify that the spans are emitted correctly.
+        spans = self.exporter.get_finished_spans()
+        self.assertEqual(len(spans), 2)
+        for i, span in zip([1, 3], spans):
+            self.assertEqual(
+                span.name,
+                "tests.unit.test_otel_instrument.TestOtelInstrument.test_multiple_wrappers.<locals>.my_function",
+            )
+            self.assertEqual(span.attributes[f"{BASE_SCOPE}.unknown.number"], i)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -90,6 +90,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             ORDER BY TIMESTAMP DESC
             LIMIT 50
         """,
-            8,  # TODO: get this from the exporter or something?
+            8,  # TODO(otel): get this from the exporter or something?
         )
-        # TODO: call the feedback computation and check that it's fine.
+        # TODO(otel): call the feedback computation and check that it's fine.
