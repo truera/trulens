@@ -6,15 +6,15 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
 from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.otel_exporter import (
+    TruLensSnowflakeSpanExporter,
+)
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
-)
-from trulens.experimental.otel_tracing.core.exporter.snowflake import (
-    TruLensSnowflakeSpanExporter,
 )
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
