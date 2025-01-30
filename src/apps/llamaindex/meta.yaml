@@ -1,0 +1,49 @@
+{% set name = "trulens-apps-llamaindex" %}
+{% set version = "1.3.3" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
+  # path: .
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
+  # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
+  sha256: c78189e709d2efa4b28c58dc044c38f306ef12849ed288e254120f269a2cc79a
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python >=3.9,<3.12
+    - poetry-core <2.0.0
+    - pip
+  run:
+    - python >=3.9,<3.12
+    - trulens-core >=1.0.0,<2.0.0
+    - trulens-apps-langchain >=1.0.0,<2.0.0
+    - pydantic >=2.4.2
+    - llama-index >=0.8.0
+    - tiktoken >=0.3.3
+
+test:
+  imports:
+    - trulens.dashboard
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://trulens.org/
+  summary: Library to systematically track and evaluate LLM based applications.
+  license: MIT
+
+extra:
+  recipe-maintainers:
+    - sfc-gh-srudenko
+    - sfc-gh-chu
