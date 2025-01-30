@@ -32,7 +32,7 @@ requirements:
 
 test:
   imports:
-    - trulens.dashboard
+    - trulens.apps.llamaindex
   commands:
     - pip check
   requires:
