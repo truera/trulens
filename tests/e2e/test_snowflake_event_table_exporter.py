@@ -7,7 +7,6 @@ import uuid
 from snowflake.snowpark import Session
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
-from trulens.core.experimental import Feature
 from trulens.core.session import TruSession
 from trulens.experimental.otel_tracing.core.exporter.snowflake import (
     TruLensSnowflakeSpanExporter,
@@ -25,27 +24,29 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     def _create_db_connector(snowpark_session: Session):
         return snowflake_connector.SnowflakeConnector(
             snowpark_session=snowpark_session,
-            init_database=False,
         )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        os.environ["TRULENS_OTEL_TRACING"] = "1"
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        del os.environ["TRULENS_OTEL_TRACING"]
+        super().tearDownClass()
 
     def setUp(self) -> None:
         super().setUp()
         self.create_and_use_schema(
             "TestSnowflakeEventTableExporter", append_uuid=True
         )
-        os.environ["TRULENS_OTEL_TRACING"] = "1"
         db_connector = self._create_db_connector(self._snowpark_session)
         exporter = TruLensSnowflakeSpanExporter(db_connector)
         self._tru_session = TruSession(
             db_connector,
-            experimental_feature_flags=[Feature.OTEL_TRACING],
             _experimental_otel_exporter=exporter,
         )
-        self._tru_session.experimental_enable_feature("otel_tracing")
-
-    def tearDown(self) -> None:
-        del os.environ["TRULENS_OTEL_TRACING"]
-        return super().tearDown()
 
     def _wait_for_num_results(
         self,
