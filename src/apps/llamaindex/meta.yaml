@@ -9,7 +9,7 @@ source:
   # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
   # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
-  # Get SHA256 from https://pypi.org/project/trulens-dashboard/#files
+  # Get SHA256 from https://pypi.org/project/trulens-apps-llamaindex/#files
   sha256: c78189e709d2efa4b28c58dc044c38f306ef12849ed288e254120f269a2cc79a
 
 build:
