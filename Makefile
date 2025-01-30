@@ -41,7 +41,11 @@ env-tests:
 		ruff \
 
 env-tests-required:
-	poetry install --only required \
+	pip install zipp \
+		&& echo "INSTALLED zipp" \
+		&& pip install alembic \
+		&& echo "INSTALLED alembic" \
+		&& poetry install --only required \
 		&& make env-tests
 
 env-tests-optional: env env-tests
