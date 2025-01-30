@@ -59,6 +59,7 @@ class TestOtelGuardrail(OtelAppTestCase):
                     expected_result,
                 )
                 seen = True
+        self.assertTrue(seen)
 
 
 if __name__ == "__main__":
