@@ -5,13 +5,16 @@ from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
-from trulens.core import experimental as core_experimental
+from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
+)
+from trulens.experimental.otel_tracing.core.exporter.snowflake import (
+    TruLensSnowflakeSpanExporter,
 )
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
@@ -46,16 +49,15 @@ class _TruSession(core_session.TruSession):
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
     ):
-        self._experimental_feature(
-            flag=core_experimental.Feature.OTEL_TRACING, value=True, freeze=True
-        )
-
         logger.info(
             f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {python_utils.class_name(exporter.__class__)}"
         )
 
         if not exporter:
-            exporter = TruLensOTELSpanExporter(connector)
+            if isinstance(connector, SnowflakeConnector):
+                exporter = TruLensSnowflakeSpanExporter(connector)
+            else:
+                exporter = TruLensOTELSpanExporter(connector)
         self._experimental_otel_exporter = exporter
 
         tracer_provider = _set_up_tracer_provider()

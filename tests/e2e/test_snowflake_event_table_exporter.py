@@ -8,9 +8,6 @@ from snowflake.snowpark import Session
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.exporter.snowflake import (
-    TruLensSnowflakeSpanExporter,
-)
 from trulens.otel.semconv.trace import BASE_SCOPE
 
 from tests.unit.test_otel_tru_llama import TestOtelTruLlama
@@ -42,11 +39,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             "TestSnowflakeEventTableExporter", append_uuid=True
         )
         db_connector = self._create_db_connector(self._snowpark_session)
-        exporter = TruLensSnowflakeSpanExporter(db_connector)
-        self._tru_session = TruSession(
-            db_connector,
-            _experimental_otel_exporter=exporter,
-        )
+        self._tru_session = TruSession(db_connector)
 
     def _wait_for_num_results(
         self,
