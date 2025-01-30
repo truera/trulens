@@ -79,9 +79,7 @@ class _TruSession(core_session.TruSession):
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
+            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
             cost_attributes_prefix = f"{BASE_SCOPE}.costs."
@@ -99,9 +97,7 @@ class _TruSession(core_session.TruSession):
             import openai
             from openai import resources
             from openai.resources import chat
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument_method,
-            )
+            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.openai.endpoint import OpenAICostComputer
 
             for module in [openai, resources, chat]:

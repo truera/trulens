@@ -4,8 +4,8 @@ Tests for OTEL TruChain app.
 
 from unittest import main
 
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 
 from tests.test import optional_test
 from tests.test import run_optional_tests

@@ -7,8 +7,8 @@ import numpy as np
 from opentelemetry import trace
 from opentelemetry.baggage import get_baggage
 from trulens.apps.custom import TruCustomApp
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 

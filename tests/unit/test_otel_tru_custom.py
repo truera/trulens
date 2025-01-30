@@ -5,8 +5,8 @@ Tests for OTEL instrument decorator and custom app.
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
