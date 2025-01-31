@@ -5,6 +5,7 @@ from pandas import read_csv
 from trulens.hotspots import HotspotsConfig
 from trulens.hotspots import hotspots
 
+from tests import test as test_utils
 
 def clean_up_feature(feat: str) -> str:
     """Helper function to clean up a feature before comparison"""
@@ -15,6 +16,7 @@ def clean_up_feature(feat: str) -> str:
 class TestHotspots(TestCase):
     """Tests for hotspots."""
 
+    @test_utils.optional_test
     def test_simple(self) -> None:
         """Run the simple tests."""
         df = read_csv("tests/files/sample.csv.gz")
