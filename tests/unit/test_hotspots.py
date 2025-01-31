@@ -1,10 +1,6 @@
 import re
 from unittest import TestCase
 
-from pandas import read_csv
-from trulens.hotspots import HotspotsConfig
-from trulens.hotspots import hotspots
-
 from tests import test as test_utils
 
 def clean_up_feature(feat: str) -> str:
@@ -19,6 +15,11 @@ class TestHotspots(TestCase):
     @test_utils.optional_test
     def test_simple(self) -> None:
         """Run the simple tests."""
+
+        from pandas import read_csv
+        from trulens.hotspots import HotspotsConfig
+        from trulens.hotspots import hotspots
+
         df = read_csv("tests/files/sample.csv.gz")
 
         config = HotspotsConfig(score_column="score")
