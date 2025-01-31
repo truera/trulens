@@ -195,6 +195,7 @@ from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
+import warnings
 
 import pydantic
 from pydantic import Field
@@ -351,6 +352,12 @@ class TruCustomApp(core_app.App):
     """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
+        warnings.warn(
+            "TruCustomApp is deprecated and will be removed in a future release. "
+            "Please use TruApp instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
 
