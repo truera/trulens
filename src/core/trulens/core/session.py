@@ -84,7 +84,7 @@ class TruSession(
         [TruBasicApp][trulens.apps.basic.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.apps.custom.TruCustomApp]:
+        [TruApp][trulens.apps.app.TruApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
