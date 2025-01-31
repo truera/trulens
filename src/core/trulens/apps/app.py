@@ -10,7 +10,7 @@ Example: Instrumenting a custom class
     ### `custom_app.py`
 
     ```python
-    from trulens.apps.custom import instrument
+    from trulens.apps.app import instrument
     from custom_retriever import CustomRetriever
 
 
@@ -33,7 +33,7 @@ Example: Instrumenting a custom class
     ### `custom_retriever.py`
 
     ```python
-    from trulens.apps.custom import instrument
+    from trulens.apps.app import instrument
 
     class CustomRetriever:
         # NOTE: No restriction on this class either.
@@ -58,7 +58,7 @@ Example:
 
     ```python
     from custom_app import CustomApp
-    from trulens.apps.custom import TruApp
+    from trulens.apps.app import TruApp
 
     custom_app = CustomApp()
 
@@ -87,7 +87,7 @@ Example:
     ```python
     # custom_app.py`:
 
-    from trulens.apps.custom import instrument
+    from trulens.apps.app import instrument
     from some_package.from custom_retriever import CustomRetriever
 
     instrument.method(CustomRetriever, "retrieve_chunks")
@@ -306,7 +306,7 @@ class TruApp(core_app.App):
 
     Example: Using the `TruApp` recorder
         ```python
-        from trulens.apps.custom import TruApp
+        from trulens.apps.app import TruApp
 
         tru_recorder = TruApp(custom_app,
             app_name="Custom Application",
