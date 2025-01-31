@@ -433,6 +433,15 @@ class App(
         feedbacks: Optional[Iterable[core_feedback.Feedback]] = None,
         **kwargs,
     ):
+        otel_tracing_enabled = TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        )
+
+        if otel_tracing_enabled and "main_method" not in kwargs:
+            raise ValueError(
+                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+            )
+
         if feedbacks is not None:
             feedbacks = list(feedbacks)
         else:
