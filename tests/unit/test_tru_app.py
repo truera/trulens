@@ -19,7 +19,7 @@ class TestTruApp(TruTestCase):
 
     def _create_app(self):
         dummy_app = DummyApp()
-        recorder = app.TruApp(app, app_name="tru_app", app_version="v1")
+        recorder = app.TruApp(dummy_app, app_name="tru_app", app_version="v1")
 
         return dummy_app, recorder
 
