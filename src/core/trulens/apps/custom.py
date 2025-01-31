@@ -191,21 +191,12 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
 import warnings
 
-import pydantic
-from pydantic import Field
-from trulens.core import app as core_app
+from trulens.apps.app import TruApp
 from trulens.core import instruments as core_instruments
-from trulens.core.instruments import InstrumentedMethod
-from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils import python as python_utils
-from trulens.core.utils import serial as serial_utils
-from trulens.core.utils import text as text_utils
 
 logger = logging.getLogger(__name__)
 
@@ -217,308 +208,23 @@ pp = PrettyPrinter()
 PLACEHOLDER = "__tru_placeholder"
 
 
-class TruCustomApp(core_app.App):
-    """
-    This recorder is the most flexible option for instrumenting an application,
-    and can be used to instrument any custom python class.
-
-    Track any custom app using methods decorated with `@instrument`, or whose
-    methods are instrumented after the fact by `instrument.method`.
-
-    Example: Using the `@instrument` decorator
-        ```python
-        from trulens.core import instrument
-
-        class CustomApp:
-
-            def __init__(self):
-                self.retriever = CustomRetriever()
-                self.llm = CustomLLM()
-                self.template = CustomTemplate(
-                    "The answer to {question} is probably {answer} or something ..."
-                )
-
-            @instrument
-            def retrieve_chunks(self, data):
-                return self.retriever.retrieve_chunks(data)
-
-            @instrument
-            def respond_to_query(self, input):
-                chunks = self.retrieve_chunks(input)
-                answer = self.llm.generate(",".join(chunks))
-                output = self.template.fill(question=input, answer=answer)
-
-                return output
-
-        ca = CustomApp()
-        ```
-
-    Example: Using `instrument.method`
-        ```python
-        from trulens.core import instrument
-
-        class CustomApp:
-
-            def __init__(self):
-                self.retriever = CustomRetriever()
-                self.llm = CustomLLM()
-                self.template = CustomTemplate(
-                    "The answer to {question} is probably {answer} or something ..."
-                )
-
-            def retrieve_chunks(self, data):
-                return self.retriever.retrieve_chunks(data)
-
-            def respond_to_query(self, input):
-                chunks = self.retrieve_chunks(input)
-                answer = self.llm.generate(",".join(chunks))
-                output = self.template.fill(question=input, answer=answer)
-
-                return output
-
-        custom_app = CustomApp()
-
-        instrument.method(CustomApp, "retrieve_chunks")
-        ```
-
-    Once a method is tracked, its arguments and returns are available to be used
-    in feedback functions. This is done by using the `Select` class to select
-    the arguments and returns of the method.
-
-    Doing so follows the structure:
-
-    - For args: `Select.RecordCalls.<method_name>.args.<arg_name>`
-
-    - For returns: `Select.RecordCalls.<method_name>.rets.<ret_name>`
-
-    Example: "Defining feedback functions with instrumented methods"
-
-        ```python
-        f_context_relevance = (
-            Feedback(provider.context_relevance_with_cot_reasons, name = "Context Relevance")
-            .on(Select.RecordCalls.retrieve_chunks.args.query) # refers to the query arg of CustomApp's retrieve_chunks method
-            .on(Select.RecordCalls.retrieve_chunks.rets.collect())
-            .aggregate(np.mean)
-            )
-        ```
-
-    Last, the `TruCustomApp` recorder can wrap our custom application, and
-    provide logging and evaluation upon its use.
-
-    Example: Using the `TruCustomApp` recorder
-        ```python
-        from trulens.apps.custom import TruCustomApp
-
-        tru_recorder = TruCustomApp(custom_app,
-            app_name="Custom Application",
-            app_version="base",
-            feedbacks=[f_context_relevance])
-
-        with tru_recorder as recording:
-            custom_app.respond_to_query("What is the capital of Indonesia?")
-        ```
-
-        See [Feedback
-        Functions](https://www.trulens.org/trulens/api/feedback/) for
-        instantiating feedback functions.
-
-    Args:
-        app: Any class.
-
-        **kwargs: Additional arguments to pass to [App][trulens.core.app.App]
-            and [AppDefinition][trulens.core.schema.app.AppDefinition]
-    """
-
-    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
-        arbitrary_types_allowed=True
-    )
-
-    app: Any
-
-    root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
-
-    functions_to_instrument: ClassVar[Set[Callable]] = set()
-    """Methods marked as needing instrumentation.
-
-    These are checked to make sure the object walk finds them. If not, a message
-    is shown to let user know how to let the TruCustomApp constructor know where
-    these methods are.
-    """
-
-    main_method_loaded: Optional[Callable] = Field(None, exclude=True)
-    """Main method of the custom app."""
-
-    main_method: Optional[pyschema_utils.Function] = None
-    """Serialized version of the main method."""
-
-    def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
+class TruCustomApp(TruApp):
+    def __init__(self, *args, **kwargs):
         warnings.warn(
-            "TruCustomApp is deprecated and will be removed in a future release. "
-            "Please use TruApp instead.",
+            "TruCustomApp is being deprecated in the next major version; use TruApp instead.",
             DeprecationWarning,
             stacklevel=2,
         )
-        kwargs["app"] = app
-        kwargs["root_class"] = pyschema_utils.Class.of_object(app)
+        super().__init__(*args, **kwargs)
 
-        instrument = core_instruments.Instrument(
-            app=self  # App mixes in WithInstrumentCallbacks
-        )
-        kwargs["instrument"] = instrument
 
-        if "main_method" in kwargs:
-            main_method = kwargs["main_method"]
-
-            # TODO: ARGPARSE
-            if isinstance(main_method, dict):
-                main_method = pyschema_utils.Function.model_validate(
-                    main_method
-                )
-
-            if isinstance(main_method, pyschema_utils.Function):
-                main_method_loaded = main_method.load()
-                main_name = main_method.name
-
-                cls = main_method.cls.load()
-                mod = main_method.module.load().__name__
-
-            else:
-                main_name = main_method.__name__
-                main_method_loaded = main_method
-                main_method = pyschema_utils.Function.of_function(
-                    main_method_loaded
-                )
-
-                if not python_utils.safe_hasattr(
-                    main_method_loaded, "__self__"
-                ):
-                    raise ValueError(
-                        "Please specify `main_method` as a bound method (like `some_app.some_method` instead of `SomeClass.some_method`)."
-                    )
-
-                app_self = main_method_loaded.__self__
-
-                assert (
-                    app_self == app
-                ), "`main_method`'s bound self must be the same as `app`."
-
-                cls = app_self.__class__
-                mod = cls.__module__
-
-            kwargs["main_method"] = main_method
-            kwargs["main_method_loaded"] = main_method_loaded
-
-            instrument.include_modules.add(mod)
-            instrument.include_classes.add(cls)
-            instrument.include_methods.append(
-                InstrumentedMethod(main_name, cls)
-            )
-
-        # This does instrumentation:
-        super().__init__(**kwargs)
-
-        # Needed to split this part to after the instrumentation so that the
-        # getattr below gets the instrumented version of main method.
-        if "main_method" in kwargs:
-            # Set main_method to the unbound version. Will be passing in app for
-            # "self" manually when needed.
-            main_method_loaded = getattr(cls, main_name)
-
-            # This will be serialized as part of this TruCustomApp. Importantly, it is unbound.
-            main_method = pyschema_utils.Function.of_function(
-                main_method_loaded, cls=cls
-            )
-
-            self.main_method = main_method
-            self.main_method_loaded = main_method_loaded
-
-        methods_to_instrument = methods_to_instrument or dict()
-
-        # The rest of this code instruments methods explicitly passed to
-        # constructor as needing instrumentation and checks that methods
-        # decorated with @instrument or passed explicitly belong to some
-        # component as per serialized version of this app. If they are not,
-        # placeholders are made in `app_extra_json` so that subsequent
-        # serialization looks like the components exist.
-        json = self.model_dump()
-
-        for m, path in methods_to_instrument.items():
-            method_name = m.__name__
-
-            full_path = serial_utils.Lens().app + path
-
-            self.instrument.instrument_method(
-                method_name=method_name, obj=m.__self__, query=full_path
-            )
-
-            # TODO: DEDUP with next condition
-
-            # Check whether the path/location of the method is in json serialization and
-            # if not, add a placeholder to app_extra_json.
-            try:
-                next(full_path(json))
-
-                print(
-                    f"{text_utils.UNICODE_CHECK} Added method {m.__name__} under component at path {full_path}"
-                )
-
-            except Exception:
-                logger.warning(
-                    f"App has no component at path {full_path} . "
-                    f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                    f"Creating a placeholder there for now."
-                )
-
-                path.set(
-                    self.app_extra_json,
-                    {
-                        PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
-                        m.__name__: f"Placeholder for method {m.__name__}.",
-                    },
-                )
-
-        # Check that any functions marked with `TruCustomApp.instrument` has been
-        # instrumented as a method under some object.
-        for f in TruCustomApp.functions_to_instrument:
-            obj_ids_methods_and_full_paths = list(self.get_methods_for_func(f))
-
-            if len(obj_ids_methods_and_full_paths) == 0:
-                logger.warning(
-                    f"Function {f} was not found during instrumentation walk. "
-                    f"Make sure it is accessible by traversing app {app} "
-                    f"or provide a bound method for it as TruCustomApp constructor argument `methods_to_instrument`."
-                )
-
-            else:
-                for obj_id, m, full_path in obj_ids_methods_and_full_paths:
-                    try:
-                        next(full_path.get(json))
-
-                    except Exception:
-                        logger.warning(
-                            f"App has no component owner of instrumented method {m} at path {full_path}. "
-                            f"Specify the component with the `app_extra_json` argument to TruCustomApp constructor. "
-                            f"Creating a placeholder there for now."
-                        )
-
-                        full_path.set(
-                            self.app_extra_json,
-                            {
-                                PLACEHOLDER: "I was automatically added to `app_extra_json` because there was nothing here to refer to an instrumented method owner.",
-                                m.__name__: f"Placeholder for method {m.__name__}.",
-                            },
-                        )
-
-    def main_call(self, human: str):
-        if self.main_method_loaded is None:
-            raise RuntimeError(
-                "`main_method` was not specified so we do not know how to run this app."
-            )
-
-        sig = signature(self.main_method_loaded)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
-
-        return self.main_method_loaded(*bindings.args, **bindings.kwargs)
+warnings.warn(
+    """from trulens.apps.custom import instrument
+        is being deprecated in the next major version; use from trulens.apps.app import instrument
+        instead.""",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class instrument(core_instruments.instrument):
@@ -533,7 +239,7 @@ class instrument(core_instruments.instrument):
 
         # Also make note of it for verification that it was found by the walk
         # after init.
-        TruCustomApp.functions_to_instrument.add(getattr(inst_cls, name))
+        TruApp.functions_to_instrument.add(getattr(inst_cls, name))
 
 
 TruCustomApp.model_rebuild()
