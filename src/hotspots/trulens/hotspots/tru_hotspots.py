@@ -7,7 +7,7 @@ from trulens.hotspots import HotspotsConfig
 from trulens.hotspots import hotspots_as_df
 
 
-def hotspots_for_session(
+def get_hotspots(
     session: TruSession,
     app_ids: Optional[list[types_schema.AppID]] = None,
     hotspots_config: Optional[HotspotsConfig] = None,

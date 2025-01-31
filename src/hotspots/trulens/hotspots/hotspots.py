@@ -63,7 +63,7 @@ class HotspotsConfig:
     min_occurrences: int = 5
     max_features: int = 1000
     num_rounds: int = 20
-    the_lower_the_better: bool = False
+    higher_is_better: bool = True
 
 
 class Feature(ABC):
@@ -402,7 +402,7 @@ def initial_round(
 
     scores = df[config.score_column]
     ranks = df[config.score_column].rank(
-        method="average", ascending=config.the_lower_the_better
+        method="average", ascending=not config.higher_is_better
     )
     fs = (get_features_with_stats(ranks, scores, index, index.keys()))[
         : config.max_features
@@ -449,7 +449,7 @@ def do_round(
     scores: Series,  # type: ignore[type-arg]
     index: dict[Feature, list[int]],
     fs: list[tuple[Feature, FeatureStats]],
-    the_lower_the_better: bool,
+    higher_is_better: bool,
 ) -> tuple[Series, list[tuple[Feature, FeatureStats]]]:  # type: ignore[type-arg]
     top_fs = fs[0]
     fs_rest = fs[1:]
@@ -461,7 +461,7 @@ def do_round(
     for ix in index[top_fs[0]]:
         scores.at[ix] = scores[ix] - d
 
-    ranks = scores.rank(method="average", ascending=the_lower_the_better)
+    ranks = scores.rank(method="average", ascending=not higher_is_better)
     fs_rest = get_features_with_stats(
         ranks, scores, index, (f[0] for f in fs_rest)
     )
@@ -524,7 +524,7 @@ def hotspots(
         ))
         fs_listed.add(top_feature_name)
 
-        scores, fs = do_round(scores, index, fs, config.the_lower_the_better)
+        scores, fs = do_round(scores, index, fs, config.higher_is_better)
 
         while fs and is_feature_unwanted(index, fs_listed, fs[0][0]):
             fs = fs[1:]
@@ -603,7 +603,7 @@ def parse_args() -> tuple[str, HotspotsConfig]:
         help="Columns to be disregarded, adding to the list of columns inferred automatically using heuristics",
     )
     parser.add_argument(
-        "--the_lower_the_better",
+        "--lower_is_better",
         action="store_true",
         help="The-lower-the-better score, e.g. MAE, RMSE, WER",
     )
@@ -615,7 +615,7 @@ def parse_args() -> tuple[str, HotspotsConfig]:
             score_column=args.score_column,
             skip_columns=args.skip_columns,
             more_skipped_columns=args.more_skipped_columns,
-            the_lower_the_better=args.the_lower_the_better,
+            higher_is_better=not args.lower_is_better,
         ),
     )
 

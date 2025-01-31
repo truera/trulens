@@ -65,7 +65,7 @@ class TestHotspots(TestCase):
             expected_features[:non_standard_num_of_rounds],
         )
 
-        # the_lower_the_better (which is actually for the right
+        # lower_is_better (which is actually for the right
         # setup for the sample CSV, as it is MAE)
         inverted_expected_features = [
             "gold<1872.81",
@@ -90,7 +90,7 @@ class TestHotspots(TestCase):
             "text:table",
         ]
         inverted_config = HotspotsConfig(
-            score_column="score", the_lower_the_better=True
+            score_column="score", higher_is_better=False
         )
         _, _, out = hotspots(inverted_config, df)
         self.assertEqual(

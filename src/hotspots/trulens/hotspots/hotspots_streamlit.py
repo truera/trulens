@@ -162,14 +162,14 @@ def hotspots_in_streamlit(df: pd.DataFrame) -> None:
         "Column with the evaluation score", columns, index=None
     )
 
-    the_lower_the_better = st.checkbox(
+    lower_is_better = st.checkbox(
         "The-lower-the-better metric (e.g. MAE, RMSE, WER)", value=False
     )
 
     if selected_column:
         hotspots_config = HotspotsConfig(
             score_column=selected_column,
-            the_lower_the_better=the_lower_the_better,
+            higher_is_better=not lower_is_better,
         )
 
         hotspots_in_streamlit_with_config(hotspots_config, df)

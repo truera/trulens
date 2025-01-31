@@ -57,14 +57,14 @@ hotspots_df = hotspots_as_df(hotspots_config, evaluation_results_df)
 
 ```python
 from trulens.core.session import TruSession
-from trulens.tru_hotspots import hotspots_for_session
+from trulens.tru_hotspots import get_hotspots
 
 session = TruSession()
 
 # ... running the whole experiment
 
 feedback_name = "Comprehensiveness" # one of the feedbacks
-hotspots_df = hotspots_for_session(session, feedback="Comprehensiveness")
+hotspots_df = get_hotspots(session, feedback="Comprehensiveness")
 # hotspots_df is a data frame with hotspots
 ```
 
