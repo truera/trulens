@@ -202,7 +202,6 @@ from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 
@@ -376,18 +375,23 @@ class TruApp(core_app.App):
                 mod = main_method.module.load().__name__
 
             else:
+                # Handle both bound and unbound methods
+                if not hasattr(main_method, "__self__"):
+                    if hasattr(app, main_method.__name__):
+                        main_method = getattr(
+                            app, main_method.__name__
+                        )  # Bind to instance
+                    else:
+                        raise ValueError(
+                            f"main_method `{main_method.__name__}` is not bound to an instance, "
+                            "and could not be found in the given `app` instance."
+                        )
+
                 main_name = main_method.__name__
                 main_method_loaded = main_method
                 main_method = pyschema_utils.Function.of_function(
                     main_method_loaded
                 )
-
-                if not python_utils.safe_hasattr(
-                    main_method_loaded, "__self__"
-                ):
-                    raise ValueError(
-                        "Please specify `main_method` as a bound method (like `some_app.some_method` instead of `SomeClass.some_method`)."
-                    )
 
                 app_self = main_method_loaded.__self__
 
