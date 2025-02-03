@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -700,6 +700,7 @@ trulens.core.instruments.InstrumentedMethod:
   __class__: builtins.type
   attributes:
     full_scoped_span_attributes: builtins.NoneType
+    must_be_first_wrapper: builtins.bool
     span_attributes: builtins.NoneType
     span_type: builtins.NoneType
 trulens.core.instruments.WithInstrumentCallbacks:
@@ -807,13 +808,10 @@ trulens.core.schema.base.Perf:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    end_ns_timestamp: builtins.property
     end_time: datetime.datetime
     latency: builtins.property
     min: builtins.staticmethod
     now: builtins.staticmethod
-    of_ns_timestamps: builtins.staticmethod
-    start_ns_timestamp: builtins.property
     start_time: datetime.datetime
 trulens.core.schema.dataset:
   __class__: builtins.module
@@ -1099,13 +1097,11 @@ trulens.core.schema.select.Select:
     RecordInput: trulens.core.utils.serial.Lens
     RecordOutput: trulens.core.utils.serial.Lens
     RecordRets: trulens.core.utils.serial.Lens
-    RecordSpans: trulens.core.utils.serial.Lens
     Tru: trulens.core.utils.serial.Lens
     context: builtins.function
     dequalify: builtins.staticmethod
     for_app: builtins.staticmethod
     for_record: builtins.staticmethod
-    is_for_record_spans: builtins.staticmethod
     path_and_method: builtins.staticmethod
     render_for_dashboard: builtins.staticmethod
 trulens.core.schema.types:
@@ -2022,7 +2018,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass

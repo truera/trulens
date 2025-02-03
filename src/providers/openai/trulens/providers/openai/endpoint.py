@@ -47,7 +47,6 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
-from trulens.experimental.otel_tracing import _feature as otel_tracing_feature
 
 import openai
 from openai import resources
@@ -72,6 +71,22 @@ TOpenAIReturn = Union[
 TOpenAIResponse = TOpenAIReturn
 
 T = TypeVar("T")  # TODO bound
+
+
+class OpenAICostComputer:
+    @staticmethod
+    def handle_response(response: Any) -> Dict[str, Any]:
+        endpoint = OpenAIEndpoint()
+        callback = OpenAICallback(endpoint=endpoint)
+        model_name = ""
+        if getattr(response, "model"):
+            model_name = response.model
+        OpenAIEndpoint._handle_response(
+            model_name=model_name,
+            response=response,
+            callbacks=[callback],
+        )
+        return {curr[0]: curr[1] for curr in callback.cost}
 
 
 class OpenAIClient(serial_utils.SerialModel):
@@ -251,125 +266,6 @@ class OpenAICallback(core_endpoint.EndpointCallback):
         # TODO: there seems to be usage info in these responses sometimes as well
 
 
-if otel_tracing_feature._FeatureSetup.are_optionals_installed():
-    from trulens.experimental.otel_tracing.core.feedback import (
-        endpoint as experimental_core_endpoint,
-    )
-
-    class WrapperOpenAICallback(
-        experimental_core_endpoint._WrapperEndpointCallback[
-            TOpenAIReturn, TOpenAIResponse
-        ]
-    ):
-        """EXPERIMENTAL(otel_tracing): process the results of instrumented
-        openai calls to extract cost information."""
-
-        # _WrapperCallableCallback optional
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)  # increments n_requests
-
-            self.langchain_handler: OpenAICallbackHandler = (
-                OpenAICallbackHandler()
-            )
-
-            self.chunks: List[Any] = []
-
-            name = self.func.__qualname__
-
-            if name.startswith("Completions."):
-                self.cost.n_completion_requests += 1
-            elif name.startswith("Embeddings."):
-                self.cost.n_embedding_requests += 1
-            elif name.startswith("Moderations."):
-                self.cost.n_classification_requests += 1
-            else:
-                logger.warning(
-                    "Unknown openai call %s. Cost tracking will not be available.",
-                    self.func.__qualname__,
-                )
-
-        # _WrapperCallableCallback optional
-        def on_callable_return(
-            self,
-            ret: TOpenAIReturn,
-        ) -> TOpenAIReturn:
-            """Process a returned response from an openai call.
-
-            As there are multiple types of calls being handled here, we need to make
-            various checks to see what sort of data to process based on the call
-            made.
-            """
-
-            name = self.func.__qualname__
-
-            if name.startswith("Completions."):
-                if isinstance(ret, openai.Stream):
-                    # TODO: wrap this in a generator that will call on_endpoint_generation_chunk.
-                    pass
-
-                elif isinstance(
-                    ret,
-                    (
-                        openai.types.completion.Completion,
-                        openai.types.chat.chat_completion.ChatCompletion,
-                    ),
-                ):
-                    # Don't bother processing these and instead wait for chunks to be processed.
-                    self.on_endpoint_generation(response=ret)
-                    # TODO: implement this.
-                else:
-                    logger.warning(
-                        "Unknown openai completion response type %s.",
-                        type(ret),
-                    )
-
-            elif name.startswith("Embeddings."):
-                if isinstance(
-                    ret,
-                    openai.types.create_embedding_response.CreateEmbeddingResponse,
-                ):
-                    self.on_endpoint_embedding(response=ret)
-                else:
-                    logger.warning(
-                        "Unknown openai embedding response type %s.",
-                        type(ret),
-                    )
-
-            elif name.startswith("Moderations."):
-                if isinstance(ret, openai.types.moderation.Moderation):
-                    self.on_endpoint_classification(response=ret)
-                else:
-                    logger.warning(
-                        "Unknown openai moderation response type %s.",
-                        type(ret),
-                    )
-
-            else:
-                logger.warning(
-                    "Unknown openai call %s. Cost tracking will not be available.",
-                    self.func.__qualname__,
-                )
-
-            return ret
-
-        def on_endpoint_embedding(
-            self,
-            response: openai.types.create_embedding_response.CreateEmbeddingResponse,
-        ) -> None:
-            super().on_endpoint_embedding(response)
-
-            self.cost.n_embeddings += len(response.data)
-
-        def on_endpoint_classification(
-            self, response: openai.types.moderation.Moderation
-        ) -> None:
-            """Extract costs from a moderation classification response."""
-
-            super().on_endpoint_classification(response)
-
-            self.cost.n_classes += len(response.categories.model_fields)
-
-
 class OpenAIEndpoint(core_endpoint.Endpoint):
     """OpenAI endpoint.
 
@@ -442,6 +338,20 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
         response: Any,
         callback: Optional[core_endpoint.EndpointCallback],
     ) -> Any:
+        model_name = ""
+        if "model" in bindings.kwargs:
+            model_name = bindings.kwargs["model"]
+        callbacks = [self.global_callback]
+        if callback is not None:
+            callbacks.append(callback)
+        self._handle_response(model_name, response, callbacks)
+
+    @staticmethod
+    def _handle_response(
+        model_name: str,
+        response: Any,
+        callbacks: List[core_endpoint.EndpointCallback],
+    ) -> Any:
         # TODELETE(otel_tracing). Delete once otel_tracing is no longer
         # experimental.
 
@@ -462,9 +372,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
 
             def handle_chunk(chunk: T) -> T:
                 with python_utils.with_context(context_vars):
-                    self.global_callback.handle_generation_chunk(chunk)
-
-                    if callback is not None:
+                    for callback in callbacks:
                         callback.handle_generation_chunk(chunk)
 
                     return chunk
@@ -484,10 +392,6 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     context_vars=context_vars,
                 )
                 return response
-
-        model_name = ""
-        if "model" in bindings.kwargs:
-            model_name = bindings.kwargs["model"]
 
         results = None
         if "results" in response:
@@ -514,15 +418,11 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     run=None,
                 )
 
-                self.global_callback.handle_generation(response=llm_res)
-
-                if callback is not None:
+                for callback in callbacks:
                     callback.handle_generation(response=llm_res)
 
             elif isinstance(response, CreateEmbeddingResponse):
-                self.global_callback.handle_embedding(response=response)
-
-                if callback is not None:
+                for callback in callbacks:
                     callback.handle_embedding(response=response)
 
             else:
@@ -537,8 +437,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 content = response.choices[0].delta.content
 
                 gen = Generation(text=content or "", generation_info=response)
-                self.global_callback.handle_generation_chunk(gen)
-                if callback is not None:
+                for callback in callbacks:
                     callback.handle_generation_chunk(gen)
 
                 counted_something = True
@@ -552,9 +451,7 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
             for res in results:
                 if "categories" in res:
                     counted_something = True
-                    self.global_callback.handle_classification(response=res)
-
-                    if callback is not None:
+                    for callback in callbacks:
                         callback.handle_classification(response=res)
 
         if not counted_something:

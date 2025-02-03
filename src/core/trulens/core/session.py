@@ -84,7 +84,7 @@ class TruSession(
         [TruBasicApp][trulens.apps.basic.TruBasicApp]:
             Basic apps defined solely using a function from `str` to `str`.
 
-        [TruCustomApp][trulens.apps.custom.TruCustomApp]:
+        [TruApp][trulens.apps.app.TruApp]:
             Custom apps containing custom structures and methods. Requires
             annotation of methods to instrument.
 
@@ -218,7 +218,7 @@ class TruSession(
         experimental_feature_flags: Optional[
             Union[
                 Mapping[core_experimental.Feature, bool],
-                Iterable[core_experimental.Feature],
+                List[core_experimental.Feature],
             ]
         ] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
@@ -260,12 +260,18 @@ class TruSession(
         )
 
         # for WithExperimentalSettings mixin
-        if experimental_feature_flags is not None:
-            self.experimental_set_features(experimental_feature_flags)
+        self.experimental_set_features(experimental_feature_flags)
 
-        if _experimental_otel_exporter is not None or self.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
+        if (
+            _experimental_otel_exporter is not None
+            and not self.experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
         ):
+            raise ValueError(
+                "Cannot supply `_experimental_otel_exporter` without enabling OTEL tracing!"
+            )
+        if self.experimental_feature(core_experimental.Feature.OTEL_TRACING):
             otel_tracing_feature._FeatureSetup.assert_optionals_installed()
 
             from trulens.experimental.otel_tracing.core.session import (
@@ -275,6 +281,8 @@ class TruSession(
             _TruSession._set_up_otel_exporter(
                 self, connector, _experimental_otel_exporter
             )
+
+            _TruSession._track_costs()
 
     def App(self, *args, app: Optional[Any] = None, **kwargs) -> base_app.App:
         """Create an App from the given App constructor arguments by guessing

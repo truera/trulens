@@ -5,15 +5,14 @@ Tests for OTEL instrument decorator and custom app.
 from unittest import main
 
 from trulens.apps.custom import TruCustomApp
-from trulens.core.experimental import Feature
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.instrument import instrument
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
 
-class _TestApp:
+class TestApp:
     @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return f"answer: {self.nested(query)}"
@@ -55,12 +54,10 @@ class _TestApp:
 class TestOtelTruCustom(OtelAppTestCase):
     def test_smoke(self) -> None:
         # Set up.
-        tru_session = TruSession(
-            experimental_feature_flags=[Feature.OTEL_TRACING]
-        )
+        tru_session = TruSession()
         tru_session.reset_database()
         # Create and run app.
-        test_app = _TestApp()
+        test_app = TestApp()
         custom_app = TruCustomApp(test_app)
         with custom_app(run_name="test run", input_id="456"):
             test_app.respond_to_query("test")

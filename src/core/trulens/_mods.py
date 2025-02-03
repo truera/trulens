@@ -77,8 +77,6 @@ from trulens.dashboard.utils import notebook_utils
 from trulens.dashboard.utils import records_utils
 from trulens.dashboard.ux import components as dashboard_components
 from trulens.dashboard.ux import styles as dashboard_styles
-from trulens.experimental.otel_tracing.core import otel as core_otel
-from trulens.experimental.otel_tracing.core import trace as core_trace
 from trulens.experimental.otel_tracing.core._utils import wrap as wrap_utils
 from trulens.feedback import embeddings as feedback_embeddings
 from trulens.feedback import feedback as mod_feedback

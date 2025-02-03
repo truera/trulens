@@ -726,11 +726,6 @@ class Feedback(feedback_schema.FeedbackDefinition):
         check_good: bool = True
 
         for k, q in self.selectors.items():
-            if select_schema.Select.RecordSpans.is_prefix_of(q):
-                # Skip checking for RecordSpans as they are not known ahead of
-                # producing a record.
-                continue
-
             if q.exists(source_data):
                 continue
 

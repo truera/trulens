@@ -325,8 +325,10 @@ class App(
         apps.
     - [TruVirtual][trulens.apps.virtual.TruVirtual] for recording
         information about invocations of apps without access to those apps.
-    - [TruCustomApp][trulens.apps.custom.TruCustomApp] for custom
+    - [TruCustomApp][trulens.apps.custom.TruCustomApp] (To be deprecated in favor of TruApp) for custom
         apps. These need to be decorated to have appropriate data recorded.
+    - [TruApp][trulens.apps.app.TruApp] for custom
+        apps allowing maximized flexibility. These need to be decorated to have appropriate data recorded.
     - [TruBasicApp][trulens.apps.basic.TruBasicApp] for apps defined
         solely by a string-to-string method.
     """
@@ -472,9 +474,7 @@ class App(
         if TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
         ):
-            from trulens.experimental.otel_tracing.core.instrument import (
-                instrument,
-            )
+            from trulens.core.otel.instrument import instrument
 
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
@@ -764,25 +764,6 @@ class App(
     ) -> str:
         return signature_utils.main_output(func, ret)
 
-    # Experimental OTEL WithInstrumentCallbacks requirement
-    def _on_new_recording_span(
-        self,
-        recording_span: Any,  # Any = mod_trace.Span,
-    ):
-        from trulens.experimental.otel_tracing.core.app import _App
-
-        return _App._on_new_recording_span(self, recording_span)
-
-    # Experimental OTEL WithInstrumentCallbacks requirement
-    def _on_new_root_span(
-        self,
-        recording: core_instruments._RecordingContext,
-        root_span: Any,  # Any = mod_trace.Span,
-    ) -> record_schema.Record:
-        from trulens.experimental.otel_tracing.core.app import _App
-
-        return _App._on_new_root_span(self, recording, root_span)
-
     # WithInstrumentCallbacks requirement
     def on_method_instrumented(
         self, obj: object, func: Callable, path: serial_utils.Lens
@@ -981,9 +962,7 @@ class App(
         ):
             raise RuntimeError("OTEL Tracing is not enabled for this session.")
 
-        from trulens.experimental.otel_tracing.core.instrument import (
-            OTELRecordingContext as OTELApp,
-        )
+        from trulens.core.otel.instrument import OTELRecordingContext as OTELApp
 
         # Pylance shows an error here, but it is likely a false positive. due to the overriden
         # model dump returning json instead of a dict.

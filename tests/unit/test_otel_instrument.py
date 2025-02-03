@@ -1,5 +1,6 @@
 import asyncio
 import gc
+from typing import Callable
 import unittest
 
 from opentelemetry import trace
@@ -8,11 +9,12 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import (
     InMemorySpanExporter,
 )
 import pandas as pd
-from trulens.experimental.otel_tracing.core.instrument import _get_func_name
-from trulens.experimental.otel_tracing.core.instrument import instrument
+from trulens.core.otel.instrument import _get_func_name
+from trulens.core.otel.instrument import instrument
 from trulens.experimental.otel_tracing.core.session import (
     _set_up_tracer_provider,
 )
+from trulens.otel.semconv.trace import BASE_SCOPE
 
 
 class TestOtelInstrument(unittest.TestCase):
@@ -62,21 +64,12 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes["ai_observability.unknown.best_baby"], "Kojikun"
+            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_baby"], "Kojikun"
         )
 
-    def test_sync_generator_function(self):
-        # Set up instrumented function.
-        @instrument(
-            attributes=lambda ret, exception, *args, **kwargs: {
-                "best_babies": ret
-            }
-        )
-        def my_function():
-            yield "Kojikun"
-            yield "Nolan"
-            yield "Sachiboy"
-
+    def _test_sync_generator_function(
+        self, my_function: Callable, test_name: str
+    ):
         # Run the generator to completion.
         best_babies = my_function()
         for curr in best_babies:
@@ -86,10 +79,10 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 1)
         self.assertEqual(
             spans[0].name,
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+            f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes["ai_observability.unknown.best_babies"],
+            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -106,11 +99,46 @@ class TestOtelInstrument(unittest.TestCase):
         self.assertEqual(len(spans), 2)
         self.assertEqual(
             spans[1].name,
-            "tests.unit.test_otel_instrument.TestOtelInstrument.test_sync_generator_function.<locals>.my_function",
+            f"tests.unit.test_otel_instrument.TestOtelInstrument.{test_name}.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes["ai_observability.unknown.best_babies"],
+            spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan"),
+        )
+
+    def test_sync_generator_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        def my_function():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        self._test_sync_generator_function(
+            my_function, "test_sync_generator_function"
+        )
+
+    def test_sync_generator_passed_through_function(self):
+        # Set up instrumented function.
+        @instrument(
+            attributes=lambda ret, exception, *args, **kwargs: {
+                "best_babies": ret
+            }
+        )
+        def my_function():
+            return my_generator()
+
+        def my_generator():
+            yield "Kojikun"
+            yield "Nolan"
+            yield "Sachiboy"
+
+        self._test_sync_generator_function(
+            my_function, "test_sync_generator_passed_through_function"
         )
 
     def test_async_non_generator_function(self):
@@ -134,7 +162,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_non_generator_function.<locals>.my_function",
         )
         self.assertEqual(
-            spans[0].attributes["ai_observability.unknown.best_baby"], "Kojikun"
+            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_baby"], "Kojikun"
         )
 
     def test_async_generator_function(self):
@@ -169,7 +197,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[0].attributes["ai_observability.unknown.best_babies"],
+            spans[0].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan", "Sachiboy"),
         )
         # Run the generator partially.
@@ -185,7 +213,7 @@ class TestOtelInstrument(unittest.TestCase):
             "tests.unit.test_otel_instrument.TestOtelInstrument.test_async_generator_function.<locals>.my_function",
         )
         self.assertTupleEqual(
-            spans[1].attributes["ai_observability.unknown.best_babies"],
+            spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan"),
         )
 
