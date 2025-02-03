@@ -455,7 +455,7 @@ class App(
                 raise ValueError(
                     "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
                 )
-            if self.app is None:
+            if app is None:
                 raise ValueError(
                     "A valid app instance must be provided when specifying 'main_method'."
                 )
