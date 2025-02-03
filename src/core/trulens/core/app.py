@@ -431,7 +431,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    external_agent_dao: Optional[ExternalAgentDAO] = None
+    snowflake_app_manager: Optional[ExternalAgentDAO] = None
 
     def __init__(
         self,
@@ -455,8 +455,16 @@ class App(
                             f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
                         )
                     snowpark_session = connector.snowpark_session()
-                    self.external_agent_dao = ExternalAgentDAO(snowpark_session)
 
+                    if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
+                        self.snowflake_app_manager = ExternalAgentDAO(
+                            snowpark_session
+                        )
+                        self.snowflake_app_manager.create_agent(
+                            name=kwargs["app_name"],
+                            version=kwargs["app_version"],
+                        )
+                    # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
@@ -713,31 +721,6 @@ class App(
                     record=dummy,
                     warning=self.selector_check_warning,
                 )
-
-        self.external_agent_dao = None  # Default to None
-
-    def _validate_snowpark_session(self) -> None:
-        """
-        Helper function to check if a Snowpark session is available.
-
-        Raises:
-            NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
-        """
-        if self.external_agent_dao is None:
-            msg = (
-                "This API requires a Snowpark session. Please initialize App with "
-                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
-            )
-            logger.error(msg)
-            raise NotImplementedError(msg)
-
-    def require_snowpark_session(func: Callable):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            self._validate_snowpark_session()
-            return func(self, *args, **kwargs)
-
-        return wrapper
 
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""
@@ -1581,10 +1564,32 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         print("\n".join(object_strings))
 
+    def _validate_snowpark_session(self) -> None:
+        """
+        Helper function to check if a Snowpark session is available.
+
+        Raises:
+            NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
+        """
+        if self.external_agent_dao is None:
+            msg = (
+                "This API requires a Snowpark session. Please initialize App with "
+                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+            )
+            logger.error(msg)
+            raise NotImplementedError(msg)
+
+    def require_snowpark_session(func: Callable):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            self._validate_snowpark_session()
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
     @require_snowpark_session
     def add_run(self):
         pass
-        # TODO
 
     @require_snowpark_session
     def list_runs(self):
