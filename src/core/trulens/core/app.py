@@ -514,6 +514,16 @@ class App(
                 )
         super().__init__(**kwargs)
 
+        if self.instrument is not None:
+            self.instrument.instrument_object(
+                obj=self.app, query=select_schema.Select.Query().app
+            )
+        else:
+            pass
+
+        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
+            self._start_manage_pending_feedback_results()
+
         # Needed to split this part to after the instrumentation so that the
         # getattr below gets the instrumented version of main method.
         if otel_enabled:
@@ -528,16 +538,6 @@ class App(
 
             self.main_method = main_method
             self.main_method_loaded = main_method_loaded
-
-        if self.instrument is not None:
-            self.instrument.instrument_object(
-                obj=self.app, query=select_schema.Select.Query().app
-            )
-        else:
-            pass
-
-        if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
-            self._start_manage_pending_feedback_results()
 
         self._tru_post_init()
 
