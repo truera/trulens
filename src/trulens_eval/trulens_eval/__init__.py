@@ -16,6 +16,7 @@ deprecation_utils.packages_dep_warn()
 __version_info__ = (1, 0, 0, "a")
 __version__ = ".".join(map(str, __version_info__))
 
+from trulens.apps.app import TruApp
 from trulens.apps.basic import TruBasicApp
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.virtual import TruVirtual
@@ -81,6 +82,7 @@ __all__ = [
     "Tru",
     # app types
     "TruBasicApp",
+    "TruApp",
     "TruCustomApp",
     "TruChain",
     "TruLlama",
