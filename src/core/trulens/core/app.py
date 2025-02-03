@@ -479,7 +479,7 @@ class App(
                 if not hasattr(main_method, "__self__"):
                     if hasattr(app, main_method.__name__):
                         main_method = getattr(
-                            self.app, main_method.__name__
+                            app, main_method.__name__
                         )  # Bind to instance
                     else:
                         raise ValueError(
@@ -495,7 +495,7 @@ class App(
 
                 app_self = main_method_loaded.__self__
 
-                if app_self != self.app:
+                if app_self != app:
                     raise ValueError(
                         "`main_method`'s bound self must be the same as `app`."
                     )
