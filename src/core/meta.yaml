@@ -6,8 +6,6 @@ package:
   version: {{ version }}
 
 source:
-  # Replace url and sha256 with below line to test build locally with `conda build . -c https://conda.anaconda.org/sfe1ed40/``
-  # path: .
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
   sha256: 7d7627d594ac540e4be55e714f81e23e9fcb62d649a3532d98ccb908a60b2893
