@@ -191,7 +191,6 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-from inspect import signature
 import logging
 from pprint import PrettyPrinter
 from typing import Any, Callable, ClassVar, Optional, Set
@@ -438,15 +437,14 @@ class TruApp(core_app.App):
                         )
 
     def main_call(self, human: str):
-        if self.main_method_loaded is None:
+        if self.main_method_name is None:
             raise RuntimeError(
-                "`main_method` was not specified so we do not know how to run this app."
+                "`main_method_name` was not specified so we do not know how to run this app."
             )
 
-        sig = signature(self.main_method_loaded)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+        main_method = getattr(self.app, self.main_method_name)
 
-        return self.main_method_loaded(*bindings.args, **bindings.kwargs)
+        return main_method(human)
 
 
 class instrument(core_instruments.instrument):

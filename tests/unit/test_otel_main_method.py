@@ -1,7 +1,6 @@
 import unittest
 
 from trulens.apps.app import TruApp
-from trulens.core.session import TruSession
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -14,12 +13,10 @@ class DummyApp:
 
 class TestOtelMainMethod(OtelAppTestCase):
     def test_missing_main_method_raises_error(self):
-        tru_session = TruSession()
-        tru_session.reset_database()
         dummy_app = DummyApp()
         # Attempt to create a TruApp without specifying main_method.
         with self.assertRaises(ValueError) as context:
-            _ = TruApp(
+            TruApp(
                 dummy_app,
                 app_name="Dummy App",
                 app_version="v1",
