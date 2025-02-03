@@ -9,6 +9,7 @@ import pandas as pd
 import sqlalchemy as sa
 from trulens.core.schema.event import EventRecordType
 from trulens.core.session import TruSession
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.test import TruTestCase
 from tests.util.df_comparison import (
@@ -91,14 +92,19 @@ class OtelAppTestCase(TruTestCase):
         self.write_golden(golden_filename, actual)
         expected = self.load_golden(golden_filename)
         self._convert_column_types(expected)
+        ignore_locators = [
+            f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
+            for i in range(len(expected))
+        ]
+        ignore_locators += [
+            f"df.iloc[{i}][{SpanAttributes.CALL.STACK}]"
+            for i in range(len(expected))
+        ]
         compare_dfs_accounting_for_ids_and_timestamps(
             self,
             expected,
             actual,
-            ignore_locators=[
-                f"df.iloc[{i}][resource_attributes][telemetry.sdk.version]"
-                for i in range(len(expected))
-            ],
+            ignore_locators=ignore_locators,
             timestamp_tol=pd.Timedelta("0.02s"),
             regex_replacements=regex_replacements,
         )

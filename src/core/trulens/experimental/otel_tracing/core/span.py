@@ -149,7 +149,7 @@ def set_function_call_attributes(
     set_span_attribute_safely(span, SpanAttributes.CALL.RETURN, ret)
     set_span_attribute_safely(span, SpanAttributes.CALL.ERROR, func_exception)
     set_span_attribute_safely(
-        span, SpanAttributes.CALL.STACK, "\n".join(traceback.format_stack())
+        span, SpanAttributes.CALL.STACK, "".join(traceback.format_stack())
     )
     for k, v in all_kwargs.items():
         set_span_attribute_safely(span, f"{SpanAttributes.CALL.KWARGS}.{k}", v)
