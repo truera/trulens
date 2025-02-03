@@ -33,6 +33,7 @@ import weakref
 import pydantic
 from trulens.connectors.snowflake.connector import SnowflakeConnector
 from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
+from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDAO
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -429,6 +430,8 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
+    external_agent_dao: Optional[ExternalAgentDAO] = None
+
     def __init__(
         self,
         connector: Optional[core_connector.DBConnector] = None,
@@ -450,6 +453,8 @@ class App(
                         raise ValueError(
                             f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
                         )
+                    snowpark_session = connector.snowpark_session()
+                    self.external_agent_dao = ExternalAgentDAO(snowpark_session)
 
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
@@ -707,6 +712,23 @@ class App(
                     record=dummy,
                     warning=self.selector_check_warning,
                 )
+
+        self.external_agent_dao = None  # Default to None
+
+    def _require_snowpark_session(self) -> None:
+        """
+        Helper function to check if a Snowpark session is available.
+
+        Raises:
+            NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
+        """
+        if self.external_agent_dao is None:
+            msg = (
+                "This API requires a Snowpark session. Please initialize App with "
+                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+            )
+            logger.error(msg)
+            raise NotImplementedError(msg)
 
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""

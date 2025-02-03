@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+# snowflake object type
 class OBJECTTYPE(Enum):
     EXTERNAL_AGENT = "EXTERNAL_AGENT"
     # CORTEX_SEARCH_SERVICE = "CORTEX_SEARCH_SERVICE"  # TODO: to be finalized
