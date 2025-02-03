@@ -200,7 +200,6 @@ import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
-from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
@@ -358,76 +357,8 @@ class TruApp(core_app.App):
         )
         kwargs["instrument"] = instrument
 
-        if "main_method" in kwargs:
-            main_method = kwargs["main_method"]
-
-            # TODO: ARGPARSE
-            if isinstance(main_method, dict):
-                main_method = pyschema_utils.Function.model_validate(
-                    main_method
-                )
-
-            if isinstance(main_method, pyschema_utils.Function):
-                main_method_loaded = main_method.load()
-                main_name = main_method.name
-
-                cls = main_method.cls.load()
-                mod = main_method.module.load().__name__
-
-            else:
-                # Handle both bound and unbound methods
-                if not hasattr(main_method, "__self__"):
-                    if hasattr(app, main_method.__name__):
-                        main_method = getattr(
-                            app, main_method.__name__
-                        )  # Bind to instance
-                    else:
-                        raise ValueError(
-                            f"main_method `{main_method.__name__}` is not bound to an instance, "
-                            "and could not be found in the given `app` instance."
-                        )
-
-                main_name = main_method.__name__
-                main_method_loaded = main_method
-                main_method = pyschema_utils.Function.of_function(
-                    main_method_loaded
-                )
-
-                app_self = main_method_loaded.__self__
-
-                assert (
-                    app_self == app
-                ), "`main_method`'s bound self must be the same as `app`."
-
-                cls = app_self.__class__
-                mod = cls.__module__
-
-            kwargs["main_method"] = main_method
-            kwargs["main_method_loaded"] = main_method_loaded
-
-            instrument.include_modules.add(mod)
-            instrument.include_classes.add(cls)
-            instrument.include_methods.append(
-                InstrumentedMethod(main_name, cls)
-            )
-
         # This does instrumentation:
         super().__init__(**kwargs)
-
-        # Needed to split this part to after the instrumentation so that the
-        # getattr below gets the instrumented version of main method.
-        if "main_method" in kwargs:
-            # Set main_method to the unbound version. Will be passing in app for
-            # "self" manually when needed.
-            main_method_loaded = getattr(cls, main_name)
-
-            # This will be serialized as part of this TruApp. Importantly, it is unbound.
-            main_method = pyschema_utils.Function.of_function(
-                main_method_loaded, cls=cls
-            )
-
-            self.main_method = main_method
-            self.main_method_loaded = main_method_loaded
 
         methods_to_instrument = methods_to_instrument or dict()
 
