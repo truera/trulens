@@ -445,10 +445,7 @@ class App(
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
         )
-
-        super().__init__(**kwargs)
         app = kwargs["app"]
-        self.app = app
 
         otel_enabled = TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING
@@ -515,6 +512,10 @@ class App(
                 self.instrument.include_methods.append(
                     core_instruments.InstrumentedMethod(main_name, cls)
                 )
+
+        super().__init__(**kwargs)
+
+        self.app = app
 
         if self.instrument is not None:
             self.instrument.instrument_object(
