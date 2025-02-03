@@ -436,7 +436,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_manager = None
+    snowflake_app_manager: Optional[Any] = None
 
     def __init__(
         self,
