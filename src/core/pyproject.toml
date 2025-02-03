@@ -27,11 +27,8 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
-numpy = [
-  { version = ">=1.23.0,<1.25.0", python = "<3.9" },
-  { version = ">=1.23.0", python = ">=3.9" },
-]
+python = "^3.9"
+numpy = ">=1.23.0"
 munch = "^2.5"
 dill = ">=0.3.8"
 typing_extensions = "^4.9"
