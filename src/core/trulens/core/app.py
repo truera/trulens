@@ -34,7 +34,7 @@ import weakref
 import pydantic
 from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
-from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDAO
+from trulens.connectors.snowflake.dao.external_agent import ExternalAgentManager
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -431,7 +431,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_manager: Optional[ExternalAgentDAO] = None
+    snowflake_app_manager: Optional[ExternalAgentManager] = None
 
     def __init__(
         self,
@@ -457,7 +457,7 @@ class App(
                     snowpark_session = connector.snowpark_session()
 
                     if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
-                        self.snowflake_app_manager = ExternalAgentDAO(
+                        self.snowflake_app_manager = ExternalAgentManager(
                             snowpark_session
                         )
                         self.snowflake_app_manager.create_agent_if_not_exist(

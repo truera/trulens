@@ -6,8 +6,8 @@ from snowflake.snowpark import Session
 logger = logging.getLogger(__name__)
 
 
-class ExternalAgentDAO:
-    """Data Access Object (DAO) for managing External Agents in Snowflake."""
+class ExternalAgentManager:
+    """Data Access Object (DAO) layer for managing External Agents in Snowflake."""
 
     def __init__(self, snowpark_session: Session):
         """Initialize with an active Snowpark session."""
