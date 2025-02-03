@@ -32,9 +32,6 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
-from trulens.connectors.snowflake.dao.external_agent import ExternalAgentManager
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -312,6 +309,14 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
+def _can_import(to_import: str) -> bool:
+    try:
+        __import__(to_import)
+        return True
+    except ImportError:
+        return False
+
+
 class App(
     app_schema.AppDefinition,
     core_instruments.WithInstrumentCallbacks,
@@ -431,7 +436,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_manager: Optional[ExternalAgentManager] = None
+    snowflake_app_manager = None
 
     def __init__(
         self,
@@ -447,24 +452,30 @@ class App(
         # for us:
         if connector:
             kwargs["connector"] = connector
+            if _can_import("trulens.connectors.snowflake"):
+                from trulens.connectors.snowflake import SnowflakeConnector
+                from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
+                from trulens.connectors.snowflake.dao.external_agent import (
+                    ExternalAgentManager,
+                )
 
-            if isinstance(connector, SnowflakeConnector):
-                if "object_type" in kwargs:
-                    if kwargs["object_type"] not in OBJECTTYPE:
-                        raise ValueError(
-                            f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
-                        )
-                    snowpark_session = connector.snowpark_session()
+                if isinstance(connector, SnowflakeConnector):
+                    if "object_type" in kwargs:
+                        if kwargs["object_type"] not in OBJECTTYPE:
+                            raise ValueError(
+                                f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
+                            )
+                        snowpark_session = connector.snowpark_session()
 
-                    if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
-                        self.snowflake_app_manager = ExternalAgentManager(
-                            snowpark_session
-                        )
-                        self.snowflake_app_manager.create_agent_if_not_exist(
-                            name=kwargs["app_name"],
-                            version=kwargs["app_version"],
-                        )
-                    # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
+                        if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
+                            self.snowflake_app_manager = ExternalAgentManager(
+                                snowpark_session
+                            )
+                            self.snowflake_app_manager.create_agent_if_not_exist(
+                                name=kwargs["app_name"],
+                                version=kwargs["app_version"],
+                            )
+                            # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
