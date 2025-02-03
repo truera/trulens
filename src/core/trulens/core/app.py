@@ -446,21 +446,11 @@ class App(
             "recording_contexts", default=None
         )
 
-        super().__init__(**kwargs)
-
-        app = kwargs["app"]
-        self.app = app
-
-        if self.instrument is not None:
-            self.instrument.instrument_object(
-                obj=self.app, query=select_schema.Select.Query().app
-            )
-        else:
-            pass
-
         otel_tracing_enabled = TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         )
+        app = kwargs["app"]
+        self.app = app
 
         if otel_tracing_enabled:
             if "main_method" not in kwargs:
@@ -491,7 +481,7 @@ class App(
                 if not hasattr(main_method, "__self__"):
                     if hasattr(app, main_method.__name__):
                         main_method = getattr(
-                            app, main_method.__name__
+                            self.app, main_method.__name__
                         )  # Bind to instance
                     else:
                         raise ValueError(
@@ -507,9 +497,10 @@ class App(
 
                 app_self = main_method_loaded.__self__
 
-                assert (
-                    app_self == app
-                ), "`main_method`'s bound self must be the same as `app`."
+                if app_self != self.app:
+                    raise ValueError(
+                        "`main_method`'s bound self must be the same as `app`."
+                    )
 
                 cls = app_self.__class__
                 mod = cls.__module__
@@ -534,6 +525,15 @@ class App(
 
             self.main_method = main_method
             self.main_method_loaded = main_method_loaded
+
+        if self.instrument is not None:
+            self.instrument.instrument_object(
+                obj=self.app, query=select_schema.Select.Query().app
+            )
+        else:
+            pass
+
+        super().__init__(**kwargs)
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
