@@ -445,14 +445,12 @@ class App(
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
         )
-
-        otel_tracing_enabled = TruSession().experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        )
         app = kwargs["app"]
         self.app = app
-
-        if otel_tracing_enabled:
+        otel_enabled = TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        )
+        if otel_enabled:
             if "main_method" not in kwargs:
                 raise ValueError(
                     "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
@@ -514,6 +512,11 @@ class App(
                 self.instrument.include_methods.append(
                     core_instruments.InstrumentedMethod(main_name, cls)
                 )
+        super().__init__(**kwargs)
+
+        # Needed to split this part to after the instrumentation so that the
+        # getattr below gets the instrumented version of main method.
+        if otel_enabled:
             # Set main_method to the unbound version. Will be passing in app for
             # "self" manually when needed.
             main_method_loaded = getattr(cls, main_name)
@@ -535,8 +538,6 @@ class App(
 
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
-
-        super().__init__(**kwargs)
 
         self._tru_post_init()
 
