@@ -533,10 +533,10 @@ class App(
         else:
             pass
 
-        super().__init__(**kwargs)
-
         if self.feedback_mode == feedback_schema.FeedbackMode.WITH_APP_THREAD:
             self._start_manage_pending_feedback_results()
+
+        super().__init__(**kwargs)
 
         self._tru_post_init()
 
