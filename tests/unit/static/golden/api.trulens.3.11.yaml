@@ -103,6 +103,7 @@ trulens.core.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -123,6 +124,7 @@ trulens.core.app.App:
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
+    list_runs: builtins.function
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
@@ -136,11 +138,13 @@ trulens.core.app.App:
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
+    require_snowpark_session: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -719,6 +723,10 @@ trulens.core.instruments.instrument:
   - trulens.core.instruments.AddInstruments
   __class__: builtins.type
   attributes: {}
+trulens.core.run:
+  __class__: builtins.module
+  highs: {}
+  lows: {}
 trulens.core.schema:
   __class__: builtins.module
   highs:
