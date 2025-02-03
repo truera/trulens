@@ -31,6 +31,8 @@ from typing import (
 import weakref
 
 import pydantic
+from trulens.connectors.snowflake.connector import SnowflakeConnector
+from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -441,6 +443,14 @@ class App(
         # for us:
         if connector:
             kwargs["connector"] = connector
+
+            if isinstance(connector, SnowflakeConnector):
+                if "object_type" in kwargs:
+                    if kwargs["object_type"] not in OBJECTTYPE:
+                        raise ValueError(
+                            f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
+                        )
+
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
@@ -648,6 +658,7 @@ class App(
         otel_tracing_enabled = os.getenv(
             "TRULENS_OTEL_TRACING", ""
         ).lower() in ["1", "true"]
+
         if self.connector is not None and not otel_tracing_enabled:
             self.connector.add_app(app=self)
 
