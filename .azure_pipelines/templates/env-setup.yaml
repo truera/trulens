@@ -10,9 +10,6 @@ steps:
       # Install poetry
       curl -sSL https://install.python-poetry.org | python3 - --version 1.8.5
 
-      # set poetry to version 1.8.5 to support python 3.8
-      poetry self update 1.8.5
-
       # Show python version
       echo "Using $(python --version) ($(which python))"
       poetry config virtualenvs.create false
