@@ -499,14 +499,7 @@ class Feedback(feedback_schema.FeedbackDefinition):
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
         if self.groundedness_configs is not None:
-            if self.groundedness_configs.use_sent_tokenize is not None:
-                kwargs["use_sent_tokenize"] = (
-                    self.groundedness_configs.use_sent_tokenize
-                )
-            if self.groundedness_configs.filter_trivial_statements is not None:
-                kwargs["filter_trivial_statements"] = (
-                    self.groundedness_configs.filter_trivial_statements
-                )
+            kwargs["groundedness_configs"] = self.groundedness_configs
 
         # Filter out unexpected keyword arguments
         sig = signature(self.imp)
