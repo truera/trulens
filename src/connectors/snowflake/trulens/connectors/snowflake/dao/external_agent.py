@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class ExternalAgentDAO:
-    """Data Access Object (DAO) for managing External Agents in Snowflake using qmark parameter binding."""
+    """Data Access Object (DAO) for managing External Agents in Snowflake."""
 
     def __init__(self, snowpark_session: Session):
         """Initialize with an active Snowpark session."""
@@ -16,9 +16,13 @@ class ExternalAgentDAO:
         self.schema = snowpark_session.get_current_schema()
         logger.info("Initialized ExternalAgentDAO with a Snowpark session.")
 
-    def create_agent(self, name: str, version: str) -> None:
+    def _get_agent_fqn(self, name: str) -> str:
+        """Return the fully qualified name (FQN) for an External Agent."""
+        return f"{self.database}.{self.schema}.{name}"
+
+    def create_new_agent(self, name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "CREATE EXTERNAL AGENT ? WITH VERSION ?;"
         parameters = (agent_fqn, version)
         self._execute_query(
@@ -26,6 +30,13 @@ class ExternalAgentDAO:
             parameters,
             f"Created External Agent {agent_fqn} with version {version}.",
         )
+
+    def create_agent_if_not_exist(self, name: str, version: str) -> None:
+        # get the agent if it already exists, otherwise create it
+        if name not in self.list_agents():
+            self.create_new_agent(name, version)
+        else:
+            logger.info(f"External Agent {name} already exists.")
 
     def clone_agent(
         self,
@@ -35,7 +46,7 @@ class ExternalAgentDAO:
         source_version: str,
     ) -> None:
         """Create a new External Agent from an existing one."""
-        agent_fqn = f"{self.database}.{self.schema}.{new_name}"
+        agent_fqn = new_name
 
         query = "CREATE EXTERNAL AGENT ? WITH VERSION ? FROM EXTERNAL AGENT ? VERSION ?;"
         parameters = (agent_fqn, new_version, source_fqn, source_version)
@@ -47,7 +58,7 @@ class ExternalAgentDAO:
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "DROP EXTERNAL AGENT ?;"
         parameters = (agent_fqn,)
         self._execute_query(
@@ -56,7 +67,7 @@ class ExternalAgentDAO:
 
     def add_version(self, name: str, version: str) -> None:
         """Add a new version to an existing External Agent."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "ALTER EXTERNAL AGENT ? ADD VERSION ?;"
         parameters = (agent_fqn, version)
         self._execute_query(
@@ -67,7 +78,7 @@ class ExternalAgentDAO:
 
     def drop_version(self, name: str, version: str) -> None:
         """Drop a specific version from an External Agent."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "ALTER EXTERNAL AGENT ? DROP VERSION ?;"
         parameters = (agent_fqn, version)
         self._execute_query(
@@ -82,7 +93,7 @@ class ExternalAgentDAO:
         version: str,
     ) -> None:
         """Set the default version for an External Agent."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "ALTER EXTERNAL AGENT ? SET DEFAULT_VERSION = ?;"
         parameters = (agent_fqn, version)
         self._execute_query(
@@ -100,7 +111,7 @@ class ExternalAgentDAO:
 
     def list_versions(self, name: str) -> List[str]:
         """Retrieve all versions of a specific External Agent."""
-        agent_fqn = f"{self.database}.{self.schema}.{name}"
+        agent_fqn = self._get_agent_fqn(name)
         query = "SHOW VERSIONS IN EXTERNAL AGENT ?;"
         parameters = (agent_fqn,)
         return self._fetch_query(

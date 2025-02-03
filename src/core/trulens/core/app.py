@@ -32,7 +32,7 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.connectors.snowflake.connector import SnowflakeConnector
+from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
 from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDAO
 from trulens.core import experimental as core_experimental
@@ -460,7 +460,7 @@ class App(
                         self.snowflake_app_manager = ExternalAgentDAO(
                             snowpark_session
                         )
-                        self.snowflake_app_manager.create_agent(
+                        self.snowflake_app_manager.create_agent_if_not_exist(
                             name=kwargs["app_name"],
                             version=kwargs["app_version"],
                         )
