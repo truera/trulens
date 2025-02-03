@@ -506,10 +506,10 @@ class App(
             kwargs["main_method"] = main_method
             kwargs["main_method_loaded"] = main_method_loaded
 
-            if self.instrument is not None:
-                self.instrument.include_modules.add(mod)
-                self.instrument.include_classes.add(cls)
-                self.instrument.include_methods.append(
+            if "instrument" in kwargs:
+                kwargs["instrument"].include_modules.add(mod)
+                kwargs["instrument"].include_classes.add(cls)
+                kwargs["instrument"].include_methods.append(
                     core_instruments.InstrumentedMethod(main_name, cls)
                 )
 
