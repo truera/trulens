@@ -4,7 +4,7 @@ trulens:
   lows: {}
 trulens.benchmark:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs: {}
   lows:
     __version__: builtins.str
@@ -60,7 +60,7 @@ trulens.benchmark.test_cases:
     generate_summeval_groundedness_golden_set: builtins.function
 trulens.core:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs:
     Feedback: pydantic._internal._model_construction.ModelMetaclass
     FeedbackMode: enum.EnumType
@@ -2018,7 +2018,7 @@ trulens.dashboard.ux.styles.ResultCategoryType:
     value: enum.property
 trulens.feedback:
   __class__: builtins.module
-  __version__: 1.3.2
+  __version__: 1.3.3
   highs:
     Embeddings: pydantic._internal._model_construction.ModelMetaclass
     GroundTruthAggregator: pydantic._internal._model_construction.ModelMetaclass
