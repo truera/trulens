@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.9"
 trulens-core = { version = "^1.0.0" }
 trulens-feedback = { version = "^1.0.0" }
 boto3 = "^1.33"

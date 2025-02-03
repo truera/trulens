@@ -18,8 +18,6 @@ jobs:
       matrix:
         default: # name is important
           python-version: 3.12
-        py308-static:
-          python-version: 3.8
         py309-static:
           python-version: 3.9
         py310-static:
