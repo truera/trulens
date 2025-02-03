@@ -1,7 +1,5 @@
 import inspect
 import logging
-import re
-import traceback
 import types
 from types import TracebackType
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
@@ -141,18 +139,6 @@ def _set_span_attributes(
         )
 
 
-def _set_stack_as_if_at_next_line(span: Span):
-    stack = traceback.format_stack()
-    fake_stack = stack[:-2]
-    m = re.match(
-        r'(  File ".*", line )(\d+)(, in [_a-zA-Z][_a-zA-Z0-9]*)', stack[-2]
-    )
-    fake_stack.append(m.group(1) + str(int(m.group(2)) + 1) + m.group(3))
-    fake_stack.append("    result = func(*args, **kwargs)")
-    fake_stack = "".join(fake_stack)
-    span.set_attribute(SpanAttributes.CALL.STACK, fake_stack)
-
-
 def instrument(
     *,
     span_type: SpanAttributes.SpanType = SpanAttributes.SpanType.UNKNOWN,
@@ -204,7 +190,6 @@ def instrument(
                 attributes_exception: Optional[Exception] = None
                 # Run function.
                 try:
-                    _set_stack_as_if_at_next_line(span)
                     result = func(*args, **kwargs)
                     if isinstance(result, types.GeneratorType):
                         yield "is_generator"

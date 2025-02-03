@@ -4,7 +4,6 @@ This file contains utility functions specific to certain span types.
 
 from inspect import signature
 import logging
-import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from opentelemetry.baggage import get_baggage
@@ -148,9 +147,6 @@ def set_function_call_attributes(
 ) -> None:
     set_span_attribute_safely(span, SpanAttributes.CALL.RETURN, ret)
     set_span_attribute_safely(span, SpanAttributes.CALL.ERROR, func_exception)
-    set_span_attribute_safely(
-        span, SpanAttributes.CALL.STACK, "".join(traceback.format_stack())
-    )
     for k, v in all_kwargs.items():
         set_span_attribute_safely(span, f"{SpanAttributes.CALL.KWARGS}.{k}", v)
 
@@ -164,13 +160,12 @@ def set_user_defined_attributes(
     final_attributes = validate_attributes(attributes)
 
     for key, value in final_attributes.items():
-        set_span_attribute_safely(span, key, value)
+        span.set_attribute(key, value)
         if (
             key != SpanAttributes.SELECTOR_NAME_KEY
             and SpanAttributes.SELECTOR_NAME_KEY in final_attributes
         ):
-            set_span_attribute_safely(
-                span,
+            span.set_attribute(
                 f"{BASE_SCOPE}.{final_attributes[SpanAttributes.SELECTOR_NAME_KEY]}.{key}",
                 value,
             )
