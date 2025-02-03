@@ -5,6 +5,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import contextvars
 import datetime
+from functools import wraps
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -715,7 +716,7 @@ class App(
 
         self.external_agent_dao = None  # Default to None
 
-    def _require_snowpark_session(self) -> None:
+    def _validate_snowpark_session(self) -> None:
         """
         Helper function to check if a Snowpark session is available.
 
@@ -729,6 +730,14 @@ class App(
             )
             logger.error(msg)
             raise NotImplementedError(msg)
+
+    def require_snowpark_session(func: Callable):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            self._validate_snowpark_session()
+            return func(self, *args, **kwargs)
+
+        return wrapper
 
     def main_call(self, human: str) -> str:
         """If available, a single text to a single text invocation of this app."""
@@ -1571,6 +1580,16 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
         print("\n".join(object_strings))
+
+    @require_snowpark_session
+    def add_run(self):
+        pass
+        # TODO
+
+    @require_snowpark_session
+    def list_runs(self):
+        pass
+        # TODO
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
