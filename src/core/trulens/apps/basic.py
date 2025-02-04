@@ -141,7 +141,9 @@ class TruBasicApp(core_app.App):
     def main_input(
         self, func: Callable, sig: Signature, bindings: BoundArguments
     ) -> str:
-        if func == getattr(
+        if hasattr(
+            TruWrapperApp._call, core_instruments.Instrument.INSTRUMENT
+        ) and func == getattr(
             TruWrapperApp._call, core_instruments.Instrument.INSTRUMENT
         ):
             # If func is the wrapper app _call, replace the signature and

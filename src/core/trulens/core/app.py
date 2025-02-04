@@ -481,7 +481,17 @@ class App(
                     raise ValueError(
                         f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                     )
+            cls = app.__class__
+            mod = cls.__module__
 
+            if "instrument" in kwargs:
+                kwargs["instrument"].include_modules.add(mod)
+                kwargs["instrument"].include_classes.add(cls)
+                kwargs["instrument"].include_methods.append(
+                    core_instruments.InstrumentedMethod(
+                        main_method.__name__, cls
+                    )
+                )
             self._wrap_main_function(app, main_method.__name__)
 
             kwargs["main_method_name"] = (
