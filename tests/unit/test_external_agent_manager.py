@@ -1,4 +1,4 @@
-import unittest
+from unittest import main
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -61,4 +61,4 @@ class TestExternalAgentManager(TruTestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
