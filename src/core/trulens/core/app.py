@@ -459,7 +459,7 @@ class App(
                 from trulens.connectors.snowflake import SnowflakeConnector
                 from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
                 from trulens.connectors.snowflake.dao.external_agent import (
-                    ExternalAgentManager,
+                    ExternalAgentDao,
                 )
 
                 if isinstance(connector, SnowflakeConnector):
@@ -471,7 +471,7 @@ class App(
                         snowpark_session = connector.snowpark_session()
 
                         if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
-                            self.snowflake_app_manager = ExternalAgentManager(
+                            self.snowflake_app_manager = ExternalAgentDao(
                                 snowpark_session
                             )
                             self.snowflake_app_manager.create_agent_if_not_exist(

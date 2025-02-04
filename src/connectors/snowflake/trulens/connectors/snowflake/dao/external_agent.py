@@ -6,7 +6,7 @@ from snowflake.snowpark import Session
 logger = logging.getLogger(__name__)
 
 
-class ExternalAgentManager:
+class ExternalAgentDao:
     """Data Access Object (DAO) layer for managing External Agents in Snowflake."""
 
     def __init__(self, snowpark_session: Session):
@@ -14,7 +14,7 @@ class ExternalAgentManager:
         self.session = snowpark_session
         self.database = snowpark_session.get_current_database()
         self.schema = snowpark_session.get_current_schema()
-        logger.info("Initialized ExternalAgentManager with a Snowpark session.")
+        logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
     def _get_agent_fqn(self, name: str) -> str:
         """Return the fully qualified name (FQN) for an External Agent."""

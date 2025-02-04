@@ -10,7 +10,7 @@ from tests.unit.test_otel_tru_custom import TestApp
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
-class TestSnowflakeExternalAgentManager(SnowflakeTestCase):
+class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
     logger = logging.getLogger(__name__)
 
     @staticmethod

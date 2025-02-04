@@ -10,23 +10,23 @@ from tests.test import run_optional_tests
 try:
     if run_optional_tests() and sys.version_info < (3, 12):
         from trulens.connectors.snowflake.dao.external_agent import (
-            ExternalAgentManager,
+            ExternalAgentDao,
         )
 
     else:
         raise ImportError("Optional tests disabled")
 except ImportError:
-    # Define a dummy ExternalAgentManager so that patch decorators have something to reference.
-    class ExternalAgentManager:
+    # Define a dummy ExternalAgentDao so that patch decorators have something to reference.
+    class ExternalAgentDao:
         pass
 
 
 @optional_test
-class TestExternalAgentManager(TruTestCase):
+class TestExternalAgentDao(TruTestCase):
     def setUp(self):
-        if ExternalAgentManager is None:
+        if ExternalAgentDao is None:
             self.skipTest(
-                "ExternalAgentManager is not available because optional tests are disabled."
+                "ExternalAgentDao is not available because optional tests are disabled."
             )
         self.sf_session = MagicMock()
         self.sf_session.get_current_database.return_value = "DB"
@@ -34,10 +34,10 @@ class TestExternalAgentManager(TruTestCase):
         dummy_sql = MagicMock()
         dummy_sql.collect.return_value = []
         self.sf_session.sql.return_value = dummy_sql
-        self.manager = ExternalAgentManager(snowpark_session=self.sf_session)
+        self.manager = ExternalAgentDao(snowpark_session=self.sf_session)
 
-    @patch.object(ExternalAgentManager, "_execute_query")
-    @patch.object(ExternalAgentManager, "_fetch_query")
+    @patch.object(ExternalAgentDao, "_execute_query")
+    @patch.object(ExternalAgentDao, "_fetch_query")
     def test_create_agent_if_not_exist_agent_not_exists(
         self, mock_fetch_query, mock_execute_query
     ):
@@ -54,8 +54,8 @@ class TestExternalAgentManager(TruTestCase):
         )
         mock_fetch_query.assert_called_once()
 
-    @patch.object(ExternalAgentManager, "_execute_query")
-    @patch.object(ExternalAgentManager, "_fetch_query")
+    @patch.object(ExternalAgentDao, "_execute_query")
+    @patch.object(ExternalAgentDao, "_fetch_query")
     def test_create_agent_if_not_exist_agent_exists(
         self, mock_fetch_query, mock_execute_query
     ):
