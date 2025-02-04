@@ -33,7 +33,7 @@ class TestExternalAgentManager(TruTestCase):
         dummy_sql = MagicMock()
         dummy_sql.collect.return_value = []
         self.sf_session.sql.return_value = dummy_sql
-        self.manager = ExternalAgentManager(self.sf_session)
+        self.manager = ExternalAgentManager(snowpark_session=self.sf_session)
 
     @patch.object(ExternalAgentManager, "_execute_query")
     @patch.object(ExternalAgentManager, "_fetch_query")
