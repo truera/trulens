@@ -8,8 +8,18 @@ from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.test import run_optional_tests
 
-if run_optional_tests():
-    from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+try:
+    if run_optional_tests():
+        from trulens.connectors.snowflake.dao.external_agent import (
+            ExternalAgentDao,
+        )
+
+    else:
+        raise ImportError("Optional tests disabled")
+except ImportError:
+    # Define a dummy ExternalAgentDao so that patch decorators have something to reference.
+    class ExternalAgentDao:
+        pass
 
 
 @skipIf(
