@@ -1,7 +1,9 @@
 import logging
 from typing import List
 
+import pandas
 from snowflake.snowpark import Session
+import trulens.connectors.snowflake.dao.sql_utils as sql_utils
 
 logger = logging.getLogger(__name__)
 
@@ -20,58 +22,67 @@ class ExternalAgentDao:
         """Return the fully qualified name (FQN) for an External Agent."""
         return f"{self.database}.{self.schema}.{name}"
 
+    def resolve_agent_name(self, name: str) -> str:
+        """
+        Resolve the agent name into a fully qualified name.
+        If the provided name already appears fully qualified (e.g. it has three parts), return it as is.
+        Otherwise, use _get_agent_fqn to create a FQN.
+        """
+        parts = name.split(".")
+        # Assuming a fully qualified name has exactly three parts: database, schema, and object name.
+        if len(parts) == 3:
+            return name
+        return self._get_agent_fqn(name)
+
     def create_new_agent(self, name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
-        agent_fqn = self._get_agent_fqn(name)
+        agent_fqn = self.resolve_agent_name(name)
         query = "CREATE EXTERNAL AGENT ? WITH VERSION ?;"
         parameters = (agent_fqn, version)
-        self._execute_query(
+        sql_utils.execute_query(
+            self.session,
             query,
             parameters,
             f"Created External Agent {agent_fqn} with version {version}.",
         )
 
     def create_agent_if_not_exist(self, name: str, version: str) -> None:
-        # get the agent if it already exists, otherwise create it
-        agent_fqn = self._get_agent_fqn(name)
-        if agent_fqn not in self.list_agents():
+        # Get the agent if it already exists, otherwise create it
+        agent_fqn = self.resolve_agent_name(name)
+        if agent_fqn not in self.list_agents()["name"].values:
             self.create_new_agent(name, version)
         else:
-            logger.info(f"External Agent {name} already exists.")
-
-    def clone_agent(
-        self,
-        new_name: str,
-        new_version: str,
-        source_fqn: str,
-        source_version: str,
-    ) -> None:
-        """Create a new External Agent from an existing one."""
-        agent_fqn = self._get_agent_fqn(new_name)
-
-        query = "CREATE EXTERNAL AGENT ? WITH VERSION ? FROM EXTERNAL AGENT ? VERSION ?;"
-        parameters = (agent_fqn, new_version, source_fqn, source_version)
-        self._execute_query(
-            query,
-            parameters,
-            f"Cloned External Agent {new_name} from {source_fqn} (version {source_version}).",
-        )
+            # Check if the version exists for the agent
+            existing_versions = self.list_agent_versions(name)
+            if version not in existing_versions:
+                self.add_version(name, version)
+                logger.info(
+                    f"Added version {version} to External Agent {name}."
+                )
+            else:
+                logger.info(
+                    f"External Agent {name} with version {version} already exists."
+                )
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
-        agent_fqn = self._get_agent_fqn(name)
+        agent_fqn = self.resolve_agent_name(name)
         query = "DROP EXTERNAL AGENT ?;"
         parameters = (agent_fqn,)
-        self._execute_query(
-            query, parameters, f"Dropped External Agent {agent_fqn}."
+        sql_utils.execute_query(
+            self.session,
+            query,
+            parameters,
+            f"Dropped External Agent {agent_fqn}.",
         )
 
     def add_version(self, name: str, version: str) -> None:
         """Add a new version to an existing External Agent."""
-        agent_fqn = self._get_agent_fqn(name)
+        agent_fqn = self.resolve_agent_name(name)
         query = "ALTER EXTERNAL AGENT ? ADD VERSION ?;"
         parameters = (agent_fqn, version)
-        self._execute_query(
+        sql_utils.execute_query(
+            self.session,
             query,
             parameters,
             f"Added version {version} to External Agent {agent_fqn}.",
@@ -79,80 +90,36 @@ class ExternalAgentDao:
 
     def drop_version(self, name: str, version: str) -> None:
         """Drop a specific version from an External Agent."""
-        agent_fqn = self._get_agent_fqn(name)
+        agent_fqn = self.resolve_agent_name(name)
         query = "ALTER EXTERNAL AGENT ? DROP VERSION ?;"
         parameters = (agent_fqn, version)
-        self._execute_query(
+        sql_utils.execute_query(
+            self.session,
             query,
             parameters,
             f"Dropped version {version} from External Agent {agent_fqn}.",
         )
 
-    def set_default_version(
-        self,
-        name: str,
-        version: str,
-    ) -> None:
-        """Set the default version for an External Agent."""
-        agent_fqn = self._get_agent_fqn(name)
-        query = "ALTER EXTERNAL AGENT ? SET DEFAULT_VERSION = ?;"
-        parameters = (agent_fqn, version)
-        self._execute_query(
-            query,
-            parameters,
-            f"Set default version {version} for External Agent {agent_fqn}.",
-        )
-
-    def list_agents(self) -> List[str]:
+    def list_agents(self) -> pandas.DataFrame:
         """Retrieve a list of all External Agents."""
         query = "SHOW EXTERNAL AGENTS;"
-        return self._fetch_query(
-            query, "Retrieved list of External Agents.", "name", parameters=()
+        return sql_utils.fetch_query(
+            self.session,
+            query,
+            "Retrieved list of External Agents.",
+            parameters=(),
         )
 
-    def list_versions(self, name: str) -> List[str]:
+    def list_agent_versions(self, name: str) -> List[str]:
         """Retrieve all versions of a specific External Agent."""
-        agent_fqn = self._get_agent_fqn(name)
+        agent_fqn = self.resolve_agent_name(name)
         query = "SHOW VERSIONS IN EXTERNAL AGENT ?;"
         parameters = (agent_fqn,)
-        return self._fetch_query(
+        result_df = sql_utils.fetch_query(
+            self.session,
             query,
             f"Retrieved versions for External Agent {agent_fqn}.",
-            "version",
             parameters,
         )
 
-    def _execute_query(
-        self, query: str, parameters: tuple, success_message: str
-    ) -> None:
-        """Executes a query with parameters and logs the result, with error handling."""
-        try:
-            # Execute the SQL with parameter binding using qmark style
-            self.session.sql(query, params=parameters).collect()
-            logger.info(success_message)
-        except Exception as e:
-            logger.error(
-                f"Error executing query: {query}\nParameters: {parameters}\nError: {e}"
-            )
-            raise RuntimeError(f"Failed to execute query: {query}") from e
-
-    def _fetch_query(
-        self,
-        query: str,
-        success_message: str,
-        field_name: str,
-        parameters: tuple,
-    ) -> List[str]:
-        """Executes a query and returns a list of values from a specified field."""
-        try:
-            if parameters:
-                result = self.session.sql(query, params=parameters).collect()
-            else:
-                result = self.session.sql(query).collect()
-            logger.info(success_message)
-            return [row[field_name] for row in result]
-        except Exception as e:
-            logger.error(
-                f"Error fetching query: {query}\nParameters: {parameters}\nError: {e}"
-            )
-            raise RuntimeError(f"Failed to fetch query: {query}") from e
+        return result_df["version"].values.tolist()

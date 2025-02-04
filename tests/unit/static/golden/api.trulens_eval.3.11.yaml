@@ -980,7 +980,7 @@ trulens_eval.TruApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1082,7 +1082,7 @@ trulens_eval.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1185,7 +1185,7 @@ trulens_eval.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1288,7 +1288,7 @@ trulens_eval.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1390,7 +1390,7 @@ trulens_eval.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1491,7 +1491,7 @@ trulens_eval.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1594,7 +1594,7 @@ trulens_eval.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1727,7 +1727,7 @@ trulens_eval.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7192,7 +7192,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7339,7 +7339,7 @@ trulens_eval.tru_chain.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7450,7 +7450,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7583,7 +7583,7 @@ trulens_eval.tru_llama.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7750,7 +7750,7 @@ trulens_eval.tru_rails.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7861,7 +7861,7 @@ trulens_eval.tru_virtual.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
-    snowflake_app_manager: typing.Optional[typing.Any, builtins.NoneType]
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class

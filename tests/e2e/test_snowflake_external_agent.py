@@ -47,7 +47,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             object_type="RANDOM_UNSUPPORTED",
         )
 
-        self.assertIsNone(tru_recorder.snowflake_app_manager)
+        self.assertIsNone(tru_recorder.snowflake_app_dao)
 
     def test_tru_app_supported_object_type(self):
         # Create app.
@@ -56,13 +56,43 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             app,
             app_name="custom app",
             app_version="v1",
-            object_type="EXTERNAL_AGENT",
+            # object_type default to EXTERNAL_AGENT when snowflake connector is used
         )
 
-        self.assertIsNotNone(tru_recorder.snowflake_app_manager)
+        self.assertIsNotNone(tru_recorder.snowflake_app_dao)
 
-        # list_agents() to see if the agent has been created.
-        agents = tru_recorder.snowflake_app_manager.list_agents()
+        agents_df = tru_recorder.snowflake_app_dao.list_agents()
+        agent_names = agents_df["name"].values
+
         expected_fqn = f"{self._snowpark_session.get_current_database()}.{self._snowpark_session.get_current_schema()}.custom app"
 
-        self.assertIn(expected_fqn, agents)
+        self.assertIn(expected_fqn, agent_names)
+
+    def test_tru_app_multiple_versions(self):
+        # Create app version 1.
+        app_v1 = TestApp()
+        tru_recorder_v1 = TruCustomApp(
+            app_v1,
+            app_name="custom app",
+            app_version="v1",
+        )
+
+        self.assertIsNotNone(tru_recorder_v1.snowflake_app_dao)
+
+        # Create app version 2.
+        app_v2 = TestApp()
+        tru_recorder_v2 = TruCustomApp(
+            app_v2,
+            app_name="custom app",
+            app_version="v2",
+        )
+
+        self.assertIsNotNone(tru_recorder_v2.snowflake_app_dao)
+
+        agents_df = tru_recorder_v1.snowflake_app_dao.list_agents()
+        agent_names = agents_df["name"].values
+        expected_fqn_v1 = f"{self._snowpark_session.get_current_database()}.{self._snowpark_session.get_current_schema()}.custom app.v1"
+        expected_fqn_v2 = f"{self._snowpark_session.get_current_database()}.{self._snowpark_session.get_current_schema()}.custom app.v2"
+
+        self.assertIn(expected_fqn_v1, agent_names)
+        self.assertIn(expected_fqn_v2, agent_names)

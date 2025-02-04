@@ -439,7 +439,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_manager: Optional[Any] = None
+    snowflake_app_dao: Optional[Any] = None
 
     def __init__(
         self,
@@ -457,28 +457,34 @@ class App(
             kwargs["connector"] = connector
             if _can_import("trulens.connectors.snowflake"):
                 from trulens.connectors.snowflake import SnowflakeConnector
-                from trulens.connectors.snowflake.dao.enums import OBJECTTYPE
+                from trulens.connectors.snowflake.dao.enums import ObjectType
                 from trulens.connectors.snowflake.dao.external_agent import (
                     ExternalAgentDao,
                 )
 
                 if isinstance(connector, SnowflakeConnector):
-                    if "object_type" in kwargs:
-                        if kwargs["object_type"] not in OBJECTTYPE:
-                            raise ValueError(
-                                f"Invalid object_type to initialize Snowflake app: {kwargs['object_type']}"
-                            )
-                        snowpark_session = connector.snowpark_session()
+                    object_type = kwargs.get(
+                        "object_type", ObjectType.EXTERNAL_AGENT
+                    )
 
-                        if kwargs["object_type"] == OBJECTTYPE.EXTERNAL_AGENT:
-                            self.snowflake_app_manager = ExternalAgentDao(
-                                snowpark_session
-                            )
-                            self.snowflake_app_manager.create_agent_if_not_exist(
-                                name=kwargs["app_name"],
-                                version=kwargs["app_version"],
-                            )
-                            # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
+                    if object_type not in ObjectType:
+                        raise ValueError(
+                            f"Invalid object_type to initialize Snowflake app: {object_type}"
+                        )
+
+                    snowpark_session = connector.snowpark_session()
+
+                    if object_type == ObjectType.EXTERNAL_AGENT:
+                        # side effect: create external agent if not exist
+                        self.snowflake_app_dao = ExternalAgentDao(
+                            snowpark_session
+                        )
+                        self.snowflake_app_dao.create_agent_if_not_exist(
+                            name=kwargs["app_name"],
+                            version=kwargs["app_version"],
+                        )
+
+                    # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
