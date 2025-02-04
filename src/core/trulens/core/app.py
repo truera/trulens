@@ -508,10 +508,29 @@ class App(
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        try:
+            # Use object.__getattribute__ to avoid triggering __getattr__
+            m_thread = object.__getattribute__(
+                self, "manage_pending_feedback_results_thread"
+            )
+        except Exception:
+            m_thread = None
 
-        if self.manage_pending_feedback_results_thread is not None:
-            self.records_with_pending_feedback_results.shutdown()
-            self.manage_pending_feedback_results_thread.join()
+        if m_thread is not None:
+            try:
+                records = object.__getattribute__(
+                    self, "records_with_pending_feedback_results"
+                )
+                if records is not None:
+                    records.shutdown()
+            except Exception:
+                # If records or shutdown is not available, ignore.
+                pass
+
+            try:
+                m_thread.join()
+            except Exception:
+                pass
 
     def _wrap_main_function(self, app: Any, method_name: str) -> None:
         if TruSession().experimental_feature(
