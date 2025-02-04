@@ -473,7 +473,7 @@ class App(
             except ImportError:
                 TruWrapperApp = None
 
-            if not (TruWrapperApp and isinstance(app, TruWrapperApp)):
+            if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
                 if (
                     not hasattr(main_method, "__self__")
                     or main_method.__self__ != app
