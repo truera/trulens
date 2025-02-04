@@ -193,7 +193,7 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
 
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
+from typing import Any, Callable, ClassVar, Set
 
 import pydantic
 from pydantic import Field
@@ -340,12 +340,6 @@ class TruApp(core_app.App):
     is shown to let user know how to let the TruApp constructor know where
     these methods are.
     """
-
-    main_method_loaded: Optional[Callable] = Field(None, exclude=True)
-    """Main method of the custom app."""
-
-    main_method: Optional[pyschema_utils.Function] = None
-    """Serialized version of the main method."""
 
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
         kwargs["app"] = app
