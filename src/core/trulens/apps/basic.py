@@ -125,6 +125,7 @@ class TruBasicApp(core_app.App):
             assert (
                 app is not None
             ), "Need to provide either `app: TruWrapperApp` or a `text_to_text: Callable`."
+        kwargs["main_method"] = app._call
 
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
