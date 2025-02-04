@@ -31,7 +31,6 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.apps.basic import TruWrapperApp
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -468,14 +467,20 @@ class App(
 
             main_method = kwargs["main_method"]
 
-            if (
-                not hasattr(main_method, "__self__")
-                or main_method.__self__ != app
-                or not isinstance(app, TruWrapperApp)
-            ):
-                raise ValueError(
-                    f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
-                )
+            # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+            try:
+                from trulens.apps.basic import TruWrapperApp
+            except ImportError:
+                TruWrapperApp = None
+
+            if not (TruWrapperApp and isinstance(app, TruWrapperApp)):
+                if (
+                    not hasattr(main_method, "__self__")
+                    or main_method.__self__ != app
+                ):
+                    raise ValueError(
+                        f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                    )
 
             cls = app.__class__
             mod = cls.__module__
