@@ -370,6 +370,9 @@ class App(
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
 
+    main_method_name: Optional[str] = pydantic.Field(None)
+    """Name of the main method of the app to be recorded. For serialization and this is required for OTEL."""
+
     instrument: Optional[core_instruments.Instrument] = pydantic.Field(
         None, exclude=True
     )
@@ -450,6 +453,8 @@ class App(
         otel_enabled = TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         )
+        main_method = None
+
         if otel_enabled:
             if "main_method" not in kwargs:
                 raise ValueError(
@@ -470,8 +475,6 @@ class App(
                     f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                 )
 
-            self.main_method_name = main_method.__name__  # for serialization
-
             cls = app.__class__
             mod = cls.__module__
 
@@ -482,11 +485,14 @@ class App(
                 kwargs["instrument"].include_classes.add(cls)
                 kwargs["instrument"].include_methods.append(
                     core_instruments.InstrumentedMethod(
-                        self.main_method_name, cls
+                        main_method.__name__, cls
                     )
                 )
 
         super().__init__(**kwargs)
+
+        if main_method:
+            self.main_method_name = main_method.__name__  # for serialization
 
         self.app = app
 
