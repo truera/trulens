@@ -150,6 +150,7 @@ class TestOtelCosts(OtelAppTestCase):
             app,
             app_name="testing",
             app_version="v1",
+            main_method=app.respond_to_query,
         )
         # Record and invoke.
         with tru_recorder(run_name="test run", input_id="42"):
