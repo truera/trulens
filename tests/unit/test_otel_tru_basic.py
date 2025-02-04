@@ -16,7 +16,10 @@ class TestOtelTruBasic(OtelAppTestCase):
         tru_session = TruSession()
         tru_session.reset_database()
         # Create and run app.
-        basic_app = TruBasicApp(text_to_text=lambda name: f"Hi, {name}!")
+        text_to_text_fn = lambda name: f"Hi, {name}!"
+        basic_app = TruBasicApp(
+            text_to_text=text_to_text_fn, main_method=text_to_text_fn
+        )
         with basic_app(run_name="test run", input_id="42"):
             basic_app.app("Kojikun")
         # Compare results to expected.
