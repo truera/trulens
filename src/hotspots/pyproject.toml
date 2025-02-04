@@ -30,7 +30,10 @@ classifiers = [
 python = "^3.9"
 pandas = ">=1.0.0"
 regex = ">2021.8.28"
-scipy = "^1.10.1"
+scipy = [
+  { version = ">=1.7.0,<1.11.1", python = "<3.9" },
+  { version = ">=1.11.1", python = ">=3.9" },
+]
 trulens-core = { version = "^1.0.0" }
 
 [tool.poetry.group.dev.dependencies]
