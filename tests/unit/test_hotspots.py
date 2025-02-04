@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from tests import test as test_utils
 
+
 def clean_up_feature(feat: str) -> str:
     """Helper function to clean up a feature before comparison"""
     # consider only two digits for numerical features
