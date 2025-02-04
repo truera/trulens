@@ -109,6 +109,9 @@ class SpanAttributes:
         RECORD_ROOT = "record_root"
         """Spans as collected by tracing system."""
 
+        MAIN = "main"
+        """The main span of a record."""
+
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation span."""
 
@@ -179,6 +182,18 @@ class SpanAttributes:
 
         SPAN_NAME_PREFIX = base + "."
 
+        MAIN_INPUT = base + ".main_input"
+        """Main input to the app."""
+
+        MAIN_OUTPUT = base + ".main_output"
+        """Main output of the app."""
+
+        MAIN_ERROR = base + ".main_error"
+        """Main error of the app.
+
+        Exclusive with main output.
+        """
+
     class RECORD_ROOT:
         """Attributes for the root span of a record.
 
@@ -198,19 +213,7 @@ class SpanAttributes:
         """Version of the app for whom this is the root."""
 
         RECORD_ID = base + ".record_id"
-        """Record if."""
-
-        MAIN_INPUT = base + ".main_input"
-        """Main input to the app."""
-
-        MAIN_OUTPUT = base + ".main_output"
-        """Main output of the app."""
-
-        MAIN_ERROR = base + ".main_error"
-        """Main error of the app.
-
-        Exclusive with main output.
-        """
+        """Record ID."""
 
     class EVAL_ROOT:
         """Attributes for the root span of a feedback evaluation.

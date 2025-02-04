@@ -541,13 +541,13 @@ class App(
             func = getattr(app, method_name)
             sig = inspect.signature(func)
             wrapper = instrument(
-                span_type=SpanAttributes.SpanType.RECORD_ROOT,
+                span_type=SpanAttributes.SpanType.MAIN,
                 full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
                     # langchain has specific main input/output logic.
-                    SpanAttributes.RECORD_ROOT.MAIN_INPUT: self.main_input(
+                    SpanAttributes.MAIN.MAIN_INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)
                     ),
-                    SpanAttributes.RECORD_ROOT.MAIN_OUTPUT: self.main_output(
+                    SpanAttributes.MAIN.MAIN_OUTPUT: self.main_output(
                         func, sig, sig.bind_partial(**kwargs), ret
                     ),
                 },

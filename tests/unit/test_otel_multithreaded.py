@@ -64,13 +64,13 @@ class TestOtelMultiThreaded(OtelAppTestCase):
                 span_id = record_attributes[f"{BASE_SCOPE}.unknown.span_id"]
                 self.assertEqual(span_id, row["trace"]["span_id"])
                 seen_span_ids.add(span_id)
-            elif span_type == SpanAttributes.SpanType.RECORD_ROOT:
+            elif span_type == SpanAttributes.SpanType.MAIN:
                 self.assertEqual(
-                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_INPUT],
+                    record_attributes[SpanAttributes.MAIN.MAIN_INPUT],
                     "test",
                 )
                 self.assertEqual(
-                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_OUTPUT],
+                    record_attributes[SpanAttributes.MAIN.MAIN_OUTPUT],
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)
