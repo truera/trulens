@@ -89,7 +89,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # TODO(otel): call the feedback computation and check that it's fine.
 
-    def test_custom_app(self):
+    def test_tru_custom_app(self):
         # Create app.
         app = TestApp()
         tru_recorder = TruCustomApp(
@@ -101,8 +101,12 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         run_name = str(uuid.uuid4())
         with tru_recorder(run_name=run_name, input_id="42"):
             app.respond_to_query("Kojikun")
+        # Record and invoke again.
+        self._tru_session.experimental_force_flush()
+        with tru_recorder(run_name=run_name, input_id="21"):
+            app.respond_to_query("Nolan")
         # Validate results.
-        self._validate_results(run_name, 5)
+        self._validate_results(run_name, 10)
 
     def test_tru_llama(self):
         # Create app.
