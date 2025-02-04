@@ -12,8 +12,12 @@ try:
             ExternalAgentManager,
         )
 
+    else:
+        raise ImportError("Optional tests disabled")
 except ImportError:
-    ExternalAgentManager = None
+    # Define a dummy ExternalAgentManager so that patch decorators have something to reference.
+    class ExternalAgentManager:
+        pass
 
 
 @optional_test
