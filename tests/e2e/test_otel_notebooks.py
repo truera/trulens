@@ -22,21 +22,14 @@ class TestOtelNotebooks(unittest.TestCase):
             )
         ) as f:
             nb = nbformat.read(f, as_version=nbformat.NO_CONVERT)
+        # Execute.
         if kernel_name:
             ep = ExecutePreprocessor(
                 timeout=timeout_in_seconds, kernel_name=kernel_name
             )
         else:
             ep = ExecutePreprocessor(timeout=timeout_in_seconds)
-        # Execute.
-        ep.preprocess(
-            nb,
-            {
-                "metadata": {
-                    "path": "/Users/dkurokawa/Work/code/trulens/trulens/tests/unit/"
-                }
-            },
-        )
+        ep.preprocess(nb)
 
     def test_otel_exporter(self) -> None:
         # TODO(otel): This notebook should be made more expositional and made
