@@ -1,6 +1,5 @@
 import logging
 import os
-import unittest
 
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
@@ -62,17 +61,8 @@ class TestSnowflakeExternalAgentManager(SnowflakeTestCase):
 
         self.assertIsNotNone(tru_recorder.snowflake_app_manager)
 
-        # Mock the create_agent method
-        tru_recorder.snowflake_app_manager.create_agent_if_not_exist = (
-            unittest.mock.Mock()
-        )
+        # list_agents() to see if the agent has been created.
+        agents = tru_recorder.snowflake_app_manager.list_agents()
+        expected_fqn = f"{self._snowpark_session.get_current_database()}.{self._snowpark_session.get_current_schema()}.custom app"
 
-        # Trigger the method that should call create_agent
-        tru_recorder.snowflake_app_manager.create_agent_if_not_exist(
-            tru_recorder.app_name, tru_recorder.app_version
-        )
-
-        # Assert create_agent was called with the correct arguments
-        tru_recorder.snowflake_app_manager.create_agent_if_not_exist.assert_called_with(
-            "custom app", "v1"
-        )
+        self.assertIn(expected_fqn, agents)
