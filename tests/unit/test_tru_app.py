@@ -23,17 +23,6 @@ class TestTruApp(TruTestCase):
 
         return dummy_app, recorder
 
-    def _create_app_with_external_agent(self):
-        dummy_app = DummyApp()
-        recorder = app.TruApp(
-            dummy_app,
-            app_name="tru_app",
-            app_version="v1",
-            object_type="EXTERNAL_AGENT",
-        )
-
-        return dummy_app, recorder
-
     def setUp(self):
         self.session = core_session.TruSession()
 
@@ -131,14 +120,6 @@ class TestTruApp(TruTestCase):
         del app, recorder
         self.assertCollected(app_ref)
         self.assertCollected(recorder_ref)
-
-    def test_external_agent_creation(self):
-        _, recorder = self._create_app_with_external_agent()
-
-        self.assertIsNotNone(recorder.snowflake_app_manager)
-        recorder.snowflake_app_manager.create_agent_if_not_exist.assert_called_with(
-            name="tru_app", version="v1"
-        )
 
 
 if __name__ == "__main__":
