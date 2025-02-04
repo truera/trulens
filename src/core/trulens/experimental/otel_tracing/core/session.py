@@ -148,6 +148,7 @@ class _TruSession(core_session.TruSession):
                 )
         if _can_import("trulens.providers.litellm.endpoint"):
             import litellm
+            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.litellm.endpoint import LiteLLMCostComputer
 
             cost_attributes_prefix = f"{BASE_SCOPE}.costs."
