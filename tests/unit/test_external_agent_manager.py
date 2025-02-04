@@ -2,21 +2,18 @@ import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
+from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.test import run_optional_tests
 
-try:
-    if run_optional_tests():
-        from trulens.connectors.snowflake.dao.external_agent import (
-            ExternalAgentManager,
-        )
-
-except ImportError:
-    ExternalAgentManager = None
+if run_optional_tests():
+    from trulens.connectors.snowflake.dao.external_agent import (
+        ExternalAgentManager,
+    )
 
 
 @optional_test
-class TestExternalAgentManager(unittest.TestCase):
+class TestExternalAgentManager(TruTestCase):
     def setUp(self):
         if ExternalAgentManager is None:
             self.skipTest(
