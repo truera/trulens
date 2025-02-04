@@ -1240,8 +1240,7 @@ trulens_eval.TruCustomApp:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
-    main_method: typing.Optional[trulens.core.utils.pyschema.Function, builtins.NoneType]
-    main_method_loaded: typing.Optional[typing.Callable, builtins.NoneType]
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]

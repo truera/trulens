@@ -33,7 +33,8 @@ class ExternalAgentManager:
 
     def create_agent_if_not_exist(self, name: str, version: str) -> None:
         # get the agent if it already exists, otherwise create it
-        if name not in self.list_agents():
+        agent_fqn = self._get_agent_fqn(name)
+        if agent_fqn not in self.list_agents():
             self.create_new_agent(name, version)
         else:
             logger.info(f"External Agent {name} already exists.")

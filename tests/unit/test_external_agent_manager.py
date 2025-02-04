@@ -58,7 +58,7 @@ class TestExternalAgentManager(TruTestCase):
     def test_create_agent_if_not_exist_agent_exists(
         self, mock_fetch_query, mock_execute_query
     ):
-        mock_fetch_query.return_value = ["agent1"]
+        mock_fetch_query.return_value = ["DB.SCH.agent1"]
         self.manager.create_agent_if_not_exist("agent1", "v1")
         mock_execute_query.assert_not_called()
         mock_fetch_query.assert_called_once()
