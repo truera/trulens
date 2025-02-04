@@ -5,7 +5,7 @@ from typing import Sequence
 import uuid
 
 from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
@@ -92,7 +92,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     def test_tru_custom_app(self):
         # Create app.
         app = TestApp()
-        tru_recorder = TruCustomApp(
+        tru_recorder = TruApp(
             app,
             app_name="custom app",
             app_version="v1",
