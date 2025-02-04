@@ -20,7 +20,9 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_general_span_attributes,
 )
-from trulens.experimental.otel_tracing.core.span import set_main_span_attributes
+from trulens.experimental.otel_tracing.core.span import (
+    set_record_root_span_attributes,
+)
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
@@ -87,8 +89,8 @@ def _set_span_attributes(
     span.set_attribute("name", span_name)
     set_general_span_attributes(span, span_type)
     # Set main span attributes if necessary.
-    if span_type == SpanAttributes.SpanType.MAIN:
-        set_main_span_attributes(
+    if span_type == SpanAttributes.SpanType.RECORD_ROOT:
+        set_record_root_span_attributes(
             span,
             func,
             args,

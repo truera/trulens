@@ -182,7 +182,7 @@ def get_main_input(func: Callable, args: tuple, kwargs: dict) -> str:
     return signature_utils.main_input(func, sig, bindings)
 
 
-def set_main_span_attributes(
+def set_record_root_span_attributes(
     span: Span,
     /,
     func: Callable,
@@ -192,17 +192,17 @@ def set_main_span_attributes(
     exception: Optional[Exception],
 ) -> None:
     set_span_attribute_safely(
-        span, SpanAttributes.MAIN.MAIN_INPUT, get_main_input(func, args, kwargs)
+        span,
+        SpanAttributes.RECORD_ROOT.MAIN_INPUT,
+        get_main_input(func, args, kwargs),
     )
-
     if exception:
         set_span_attribute_safely(
-            span, SpanAttributes.MAIN.MAIN_ERROR, str(exception)
+            span, SpanAttributes.RECORD_ROOT.MAIN_ERROR, str(exception)
         )
-
     if ret is not None:
         set_span_attribute_safely(
             span,
-            SpanAttributes.MAIN.MAIN_OUTPUT,
+            SpanAttributes.RECORD_ROOT.MAIN_OUTPUT,
             signature_utils.main_output(func, ret),
         )
