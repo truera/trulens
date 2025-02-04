@@ -2,13 +2,9 @@ import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
-from tests.test import optional_test
-from tests.test import run_optional_tests
+from trulens.connectors.snowflake.dao.external_agent import ExternalAgentManager
 
-if run_optional_tests():
-    from trulens.connectors.snowflake.dao.external_agent import (
-        ExternalAgentManager,
-    )
+from tests.test import optional_test
 
 
 @optional_test
