@@ -1600,12 +1600,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
     @require_snowpark_session
     def add_run(self):
-        pass
+        raise NotImplementedError("Not implemented yet.")
 
     @require_snowpark_session
     def list_runs(self):
-        pass
-        # TODO
+        raise NotImplementedError("Not implemented yet.")
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
