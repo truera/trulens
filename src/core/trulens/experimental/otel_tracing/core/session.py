@@ -150,6 +150,14 @@ class _TruSession(core_session.TruSession):
             import litellm
             from trulens.providers.litellm.endpoint import LiteLLMCostComputer
 
-            _TruSession._track_costs_for_module_member(
-                litellm, "completion", LiteLLMCostComputer.handle_response
+            cost_attributes_prefix = f"{BASE_SCOPE}.costs."
+            instrument_method(
+                litellm,
+                "completion",
+                span_type=SpanAttributes.SpanType.GENERATION,
+                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+                    cost_attributes_prefix + k: v
+                    for k, v in LiteLLMCostComputer.handle_response(ret).items()
+                },
+                must_be_first_wrapper=True,
             )

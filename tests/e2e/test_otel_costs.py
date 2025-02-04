@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict
+from typing import Any, Dict, List
 import unittest
 
 from langchain_community.chat_models import ChatSnowflakeCortex
@@ -96,6 +96,7 @@ class TestOtelCosts(OtelAppTestCase):
         span_name: str,
         cost_model: str,
         cost_currency: str,
+        free: bool,
     ):
         self.assertEqual(
             record_attributes["name"],
@@ -109,10 +110,16 @@ class TestOtelCosts(OtelAppTestCase):
             record_attributes[f"{BASE_SCOPE}.costs.cost_currency"],
             cost_currency,
         )
-        self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.cost"],
-            0,
-        )
+        if free:
+            self.assertEqual(
+                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                0,
+            )
+        else:
+            self.assertGreater(
+                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                0,
+            )
         self.assertGreater(
             record_attributes[f"{BASE_SCOPE}.costs.n_tokens"],
             0,
@@ -131,7 +138,12 @@ class TestOtelCosts(OtelAppTestCase):
         )
 
     def _test_tru_custom_app(
-        self, app: Any, cost_function: str, model: str, currency: str
+        self,
+        app: Any,
+        cost_functions: List[str],
+        model: str,
+        currency: str,
+        free: bool = False,
     ):
         # Create app.
         tru_recorder = TruCustomApp(
@@ -145,16 +157,19 @@ class TestOtelCosts(OtelAppTestCase):
         # Compare results to expected.
         TruSession().experimental_force_flush()
         events = self._get_events()
-        self.assertEqual(len(events), 3)
-        record_attributes = events.iloc[-1]["record_attributes"]
-        self._check_costs(
-            record_attributes,
-            cost_function,
-            model,
-            currency,
-        )
+        self.assertEqual(len(events), 2 + len(cost_functions))
+        for i, cost_function in enumerate(cost_functions):
+            record_attributes = events.iloc[-i - 1]["record_attributes"]
+            self._check_costs(
+                record_attributes,
+                cost_function,
+                model[(model.find("/") + 1) :],
+                currency,
+                free,
+            )
 
-    @unittest.skip
+    # TODO(otel): Fix this test!
+    @unittest.skip("Not currently working!")
     def test_tru_chain_cortex(self):
         # Set up.
         tru_session = TruSession()
@@ -177,7 +192,7 @@ class TestOtelCosts(OtelAppTestCase):
     def test_tru_custom_app_cortex(self):
         self._test_tru_custom_app(
             _TestCortexApp(),
-            "snowflake.cortex._sse_client.SSEClient.events",
+            ["snowflake.cortex._sse_client.SSEClient.events"],
             "mistral-large2",
             "Snowflake credits",
         )
@@ -185,7 +200,7 @@ class TestOtelCosts(OtelAppTestCase):
     def test_tru_custom_app_openai(self):
         self._test_tru_custom_app(
             _TestOpenAIApp(),
-            "openai.resources.chat.completions.Completions.create",
+            ["openai.resources.chat.completions.Completions.create"],
             "gpt-3.5-turbo-0125",
             "USD",
         )
@@ -194,16 +209,31 @@ class TestOtelCosts(OtelAppTestCase):
         model = "gpt-3.5-turbo-0125"
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
-            "openai.resources.chat.completions.Completions.create",
+            [
+                "openai.resources.chat.completions.Completions.create",
+                "litellm.main.completion",
+            ],
             model,
             "USD",
         )
 
+    def test_tru_custom_app_litellm_gemini(self):
+        model = "gemini/gemini-2.0-flash-exp"
+        self._test_tru_custom_app(
+            _TestLiteLLMApp(model),
+            ["litellm.main.completion"],
+            model,
+            "USD",
+            free=True,
+        )
+
+    # TODO(otel): Get keys for this!
+    @unittest.skip("Don't have keys")
     def test_tru_custom_app_litellm_huggingface(self):
         model = "huggingface/meta-llama/Meta-Llama-3.1-8B-Instruct"
         self._test_tru_custom_app(
             _TestLiteLLMApp(model),
-            "openai.resources.chat.completions.Completions.create",  # TODO(this_pr)
+            ["litellm.main.completion"],
             model,
             "USD",
         )

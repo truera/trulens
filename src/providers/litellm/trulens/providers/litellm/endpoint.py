@@ -5,6 +5,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
+from trulens.core.schema import base as base_schema
 
 import litellm
 from litellm import completion_cost
@@ -17,17 +18,21 @@ pp = pprint.PrettyPrinter()
 class LiteLLMCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
-        endpoint = LiteLLMEndpoint(litellm_provider="")
-        callback = LiteLLMCallback(endpoint=endpoint)
-        model_name = ""
-        if getattr(response, "model"):
-            model_name = response.model
-        LiteLLMEndpoint.handle_generation(
-            model_name=model_name,
-            response=response,
-            callbacks=[callback],
+        usage = response.usage
+        costs = base_schema.Cost(
+            n_tokens=usage["total_tokens"],
+            n_prompt_tokens=usage["prompt_tokens"],
+            n_completion_tokens=usage["completion_tokens"],
+            cost=completion_cost(response),
+            cost_currency="USD",
         )
-        return {curr[0]: curr[1] for curr in callback.cost}
+        ret = {curr[0]: curr[1] for curr in costs}
+        ret["model"] = response.model
+        content = [curr.message.content for curr in response.choices]
+        if len(content) == 1:
+            content = content[0]
+        ret["return"] = content
+        return ret
 
 
 class LiteLLMCallback(core_endpoint.EndpointCallback):
@@ -39,9 +44,9 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
     def handle_generation(self, response: pydantic.BaseModel) -> None:
         """Get the usage information from litellm response's usage field."""
 
-        response = response.model_dump()
+        response_dict = response.model_dump()
 
-        usage = response["usage"]
+        usage = response_dict["usage"]
 
         self.endpoint: LiteLLMEndpoint
         if self.endpoint.litellm_provider not in ["openai", "azure", "bedrock"]:
@@ -49,7 +54,7 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
             # should not double count here.
 
             # Increment number of requests.
-            super().handle_generation(response)
+            super().handle_generation(response_dict)
 
             # Assume a response that had usage field was successful. Otherwise
             # litellm does not provide success counts unlike openai.
@@ -71,7 +76,7 @@ class LiteLLMCallback(core_endpoint.EndpointCallback):
             # The total cost does not seem to be properly tracked except by
             # openai so we can use litellm costs for this.
 
-            setattr(self.cost, "cost", completion_cost(response))
+            setattr(self.cost, "cost", completion_cost(response_dict))
 
 
 class LiteLLMEndpoint(core_endpoint.Endpoint):
