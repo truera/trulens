@@ -14,7 +14,7 @@ class ExternalAgentManager:
         self.session = snowpark_session
         self.database = snowpark_session.get_current_database()
         self.schema = snowpark_session.get_current_schema()
-        logger.info("Initialized ExternalAgentDAO with a Snowpark session.")
+        logger.info("Initialized ExternalAgentManager with a Snowpark session.")
 
     def _get_agent_fqn(self, name: str) -> str:
         """Return the fully qualified name (FQN) for an External Agent."""
@@ -46,7 +46,7 @@ class ExternalAgentManager:
         source_version: str,
     ) -> None:
         """Create a new External Agent from an existing one."""
-        agent_fqn = new_name
+        agent_fqn = self._get_agent_fqn(new_name)
 
         query = "CREATE EXTERNAL AGENT ? WITH VERSION ? FROM EXTERNAL AGENT ? VERSION ?;"
         parameters = (agent_fqn, new_version, source_fqn, source_version)
