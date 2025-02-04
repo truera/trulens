@@ -379,6 +379,9 @@ class App(
     app: Any = pydantic.Field(exclude=True)
     """The app to be recorded."""
 
+    main_method_name: Optional[str] = pydantic.Field(None)
+    """Name of the main method of the app to be recorded. For serialization and this is required for OTEL."""
+
     instrument: Optional[core_instruments.Instrument] = pydantic.Field(
         None, exclude=True
     )
@@ -480,10 +483,57 @@ class App(
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
         )
+        app = kwargs["app"]
+
+        otel_enabled = TruSession().experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        )
+        main_method = None
+
+        if otel_enabled:
+            if "main_method" not in kwargs:
+                raise ValueError(
+                    "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+                )
+            if app is None:
+                raise ValueError(
+                    "A valid app instance must be provided when specifying 'main_method'."
+                )
+
+            main_method = kwargs["main_method"]
+
+            # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+            try:
+                from trulens.apps.basic import TruWrapperApp
+            except ImportError:
+                TruWrapperApp = None
+
+            if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
+                if (
+                    not hasattr(main_method, "__self__")
+                    or main_method.__self__ != app
+                ):
+                    raise ValueError(
+                        f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                    )
+
+            cls = app.__class__
+            mod = cls.__module__
+
+            if "instrument" in kwargs:
+                kwargs["instrument"].include_modules.add(mod)
+                kwargs["instrument"].include_classes.add(cls)
+                kwargs["instrument"].include_methods.append(
+                    core_instruments.InstrumentedMethod(
+                        main_method.__name__, cls
+                    )
+                )
 
         super().__init__(**kwargs)
 
-        app = kwargs["app"]
+        if main_method:
+            self.main_method_name = main_method.__name__  # for serialization
+
         self.app = app
 
         if self.instrument is not None:
@@ -500,10 +550,29 @@ class App(
 
     def __del__(self):
         """Shut down anything associated with this app that might persist otherwise."""
+        try:
+            # Use object.__getattribute__ to avoid triggering __getattr__
+            m_thread = object.__getattribute__(
+                self, "manage_pending_feedback_results_thread"
+            )
+        except Exception:
+            m_thread = None
 
-        if self.manage_pending_feedback_results_thread is not None:
-            self.records_with_pending_feedback_results.shutdown()
-            self.manage_pending_feedback_results_thread.join()
+        if m_thread is not None:
+            try:
+                records = object.__getattribute__(
+                    self, "records_with_pending_feedback_results"
+                )
+                if records is not None:
+                    records.shutdown()
+            except Exception:
+                # If records or shutdown is not available, ignore.
+                pass
+
+            try:
+                m_thread.join()
+            except Exception:
+                pass
 
     def _wrap_main_function(self, app: Any, method_name: str) -> None:
         if TruSession().experimental_feature(

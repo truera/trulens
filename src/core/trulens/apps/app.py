@@ -191,18 +191,15 @@ Function <function CustomLLM.generate at 0x1779471f0> was not found during instr
   solution as needed.
 """
 
-from inspect import signature
 import logging
 from pprint import PrettyPrinter
-from typing import Any, Callable, ClassVar, Optional, Set
+from typing import Any, Callable, ClassVar, Set
 
 import pydantic
 from pydantic import Field
 from trulens.core import app as core_app
 from trulens.core import instruments as core_instruments
-from trulens.core.instruments import InstrumentedMethod
 from trulens.core.utils import pyschema as pyschema_utils
-from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import text as text_utils
 
@@ -344,12 +341,6 @@ class TruApp(core_app.App):
     these methods are.
     """
 
-    main_method_loaded: Optional[Callable] = Field(None, exclude=True)
-    """Main method of the custom app."""
-
-    main_method: Optional[pyschema_utils.Function] = None
-    """Serialized version of the main method."""
-
     def __init__(self, app: Any, methods_to_instrument=None, **kwargs: Any):
         kwargs["app"] = app
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
@@ -359,71 +350,8 @@ class TruApp(core_app.App):
         )
         kwargs["instrument"] = instrument
 
-        if "main_method" in kwargs:
-            main_method = kwargs["main_method"]
-
-            # TODO: ARGPARSE
-            if isinstance(main_method, dict):
-                main_method = pyschema_utils.Function.model_validate(
-                    main_method
-                )
-
-            if isinstance(main_method, pyschema_utils.Function):
-                main_method_loaded = main_method.load()
-                main_name = main_method.name
-
-                cls = main_method.cls.load()
-                mod = main_method.module.load().__name__
-
-            else:
-                main_name = main_method.__name__
-                main_method_loaded = main_method
-                main_method = pyschema_utils.Function.of_function(
-                    main_method_loaded
-                )
-
-                if not python_utils.safe_hasattr(
-                    main_method_loaded, "__self__"
-                ):
-                    raise ValueError(
-                        "Please specify `main_method` as a bound method (like `some_app.some_method` instead of `SomeClass.some_method`)."
-                    )
-
-                app_self = main_method_loaded.__self__
-
-                assert (
-                    app_self == app
-                ), "`main_method`'s bound self must be the same as `app`."
-
-                cls = app_self.__class__
-                mod = cls.__module__
-
-            kwargs["main_method"] = main_method
-            kwargs["main_method_loaded"] = main_method_loaded
-
-            instrument.include_modules.add(mod)
-            instrument.include_classes.add(cls)
-            instrument.include_methods.append(
-                InstrumentedMethod(main_name, cls)
-            )
-
         # This does instrumentation:
         super().__init__(**kwargs)
-
-        # Needed to split this part to after the instrumentation so that the
-        # getattr below gets the instrumented version of main method.
-        if "main_method" in kwargs:
-            # Set main_method to the unbound version. Will be passing in app for
-            # "self" manually when needed.
-            main_method_loaded = getattr(cls, main_name)
-
-            # This will be serialized as part of this TruApp. Importantly, it is unbound.
-            main_method = pyschema_utils.Function.of_function(
-                main_method_loaded, cls=cls
-            )
-
-            self.main_method = main_method
-            self.main_method_loaded = main_method_loaded
 
         methods_to_instrument = methods_to_instrument or dict()
 
@@ -503,15 +431,14 @@ class TruApp(core_app.App):
                         )
 
     def main_call(self, human: str):
-        if self.main_method_loaded is None:
+        if self.main_method_name is None:
             raise RuntimeError(
-                "`main_method` was not specified so we do not know how to run this app."
+                "`main_method_name` was not specified so we do not know how to run this app."
             )
 
-        sig = signature(self.main_method_loaded)
-        bindings = sig.bind(self.app, human)  # self.app is app's "self"
+        main_method = getattr(self.app, self.main_method_name)
 
-        return self.main_method_loaded(*bindings.args, **bindings.kwargs)
+        return main_method(human)
 
 
 class instrument(core_instruments.instrument):

@@ -1,7 +1,7 @@
 from typing import List
 import unittest
 
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.core import Feedback
 from trulens.core.guardrails.base import context_filter
 from trulens.core.otel.instrument import instrument
@@ -39,7 +39,9 @@ class _TestApp:
 class TestOtelGuardrail(OtelAppTestCase):
     def test_context_relevance(self) -> None:
         app = _TestApp()
-        tru_recorder = TruCustomApp(app, app_name="Test App", app_version="v1")
+        tru_recorder = TruApp(
+            app, app_name="Test App", app_version="v1", main_method=app.retrieve
+        )
         with tru_recorder(run_name="test run", input_id="42"):
             result = app.retrieve("test")
         # Check that only relevant comments are returned.

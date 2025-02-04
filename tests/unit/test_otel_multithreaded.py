@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from opentelemetry import trace
 from opentelemetry.baggage import get_baggage
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import BASE_SCOPE
@@ -45,9 +45,9 @@ class TestOtelMultiThreaded(OtelAppTestCase):
         # Set up.
         tru_session = TruSession()
         tru_session.reset_database()
-        # Create TruCustomApp that runs many things in parallel.
+        # Create TruApp that runs many things in parallel.
         test_app = _TestApp()
-        custom_app = TruCustomApp(test_app)
+        custom_app = TruApp(test_app, main_method=test_app.respond_to_query)
         recorder = custom_app(run_name="test run", input_id="456")
         with recorder:
             recorder.attach_to_context("best_baby", "Kojikun")
