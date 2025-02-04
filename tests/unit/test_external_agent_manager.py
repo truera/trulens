@@ -15,10 +15,6 @@ if run_optional_tests():
 @optional_test
 class TestExternalAgentManager(TruTestCase):
     def setUp(self):
-        if ExternalAgentManager is None:
-            self.skipTest(
-                "ExternalAgentManager is not available because optional tests are disabled."
-            )
         self.sf_session = MagicMock()
         self.sf_session.get_current_database.return_value = "DB"
         self.sf_session.get_current_schema.return_value = "SCH"
