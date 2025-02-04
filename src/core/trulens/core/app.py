@@ -478,8 +478,6 @@ class App(
             cls = app.__class__
             mod = cls.__module__
 
-            kwargs["main_method"] = main_method
-
             if "instrument" in kwargs:
                 kwargs["instrument"].include_modules.add(mod)
                 kwargs["instrument"].include_classes.add(cls)
