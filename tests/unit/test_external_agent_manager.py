@@ -6,15 +6,23 @@ from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.test import run_optional_tests
 
-if run_optional_tests():
-    from trulens.connectors.snowflake.dao.external_agent import (
-        ExternalAgentManager,
-    )
+try:
+    if run_optional_tests():
+        from trulens.connectors.snowflake.dao.external_agent import (
+            ExternalAgentManager,
+        )
+
+except ImportError:
+    ExternalAgentManager = None
 
 
 @optional_test
 class TestExternalAgentManager(TruTestCase):
     def setUp(self):
+        if ExternalAgentManager is None:
+            self.skipTest(
+                "ExternalAgentManager is not available because optional tests are disabled."
+            )
         self.sf_session = MagicMock()
         self.sf_session.get_current_database.return_value = "DB"
         self.sf_session.get_current_schema.return_value = "SCH"
