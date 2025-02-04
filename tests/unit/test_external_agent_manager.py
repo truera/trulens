@@ -1,3 +1,4 @@
+import sys
 from unittest import main
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -7,7 +8,7 @@ from tests.test import optional_test
 from tests.test import run_optional_tests
 
 try:
-    if run_optional_tests():
+    if run_optional_tests() and sys.version_info <= (3, 11):
         from trulens.connectors.snowflake.dao.external_agent import (
             ExternalAgentManager,
         )
