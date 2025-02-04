@@ -8,7 +8,7 @@ from tests.test import optional_test
 from tests.test import run_optional_tests
 
 try:
-    if run_optional_tests() and sys.version_info <= (3, 11):
+    if run_optional_tests() and sys.version_info < (3, 12):
         from trulens.connectors.snowflake.dao.external_agent import (
             ExternalAgentManager,
         )
