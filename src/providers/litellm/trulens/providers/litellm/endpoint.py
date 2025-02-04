@@ -1,7 +1,7 @@
 import inspect
 import logging
 import pprint
-from typing import Any, Callable, ClassVar, Optional
+from typing import Any, Callable, ClassVar, Dict, Optional
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
@@ -12,6 +12,22 @@ from litellm import completion_cost
 logger = logging.getLogger(__name__)
 
 pp = pprint.PrettyPrinter()
+
+
+class LiteLLMCostComputer:
+    @staticmethod
+    def handle_response(response: Any) -> Dict[str, Any]:
+        endpoint = LiteLLMEndpoint(litellm_provider="")
+        callback = LiteLLMCallback(endpoint=endpoint)
+        model_name = ""
+        if getattr(response, "model"):
+            model_name = response.model
+        LiteLLMEndpoint.handle_generation(
+            model_name=model_name,
+            response=response,
+            callbacks=[callback],
+        )
+        return {curr[0]: curr[1] for curr in callback.cost}
 
 
 class LiteLLMCallback(core_endpoint.EndpointCallback):

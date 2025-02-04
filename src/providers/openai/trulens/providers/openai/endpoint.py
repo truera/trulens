@@ -76,6 +76,10 @@ T = TypeVar("T")  # TODO bound
 class OpenAICostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
+        if isinstance(response, openai._legacy_response.LegacyAPIResponse):
+            if response.http_response.status_code != 200:
+                raise ValueError("OpenAI API returned non-200 status code!")
+            response = response.parse()
         endpoint = OpenAIEndpoint()
         callback = OpenAICallback(endpoint=endpoint)
         model_name = ""
@@ -86,7 +90,12 @@ class OpenAICostComputer:
             response=response,
             callbacks=[callback],
         )
-        return {curr[0]: curr[1] for curr in callback.cost}
+        ret = {curr[0]: curr[1] for curr in callback.cost}
+        if model_name:
+            ret["model"] = model_name
+        if isinstance(response, ChatCompletion):
+            ret["return"] = response.choices[0].message.content
+        return ret
 
 
 class OpenAIClient(serial_utils.SerialModel):
@@ -393,6 +402,11 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                 )
                 return response
 
+        if isinstance(response, openai._legacy_response.LegacyAPIResponse):
+            if response.http_response.status_code != 200:
+                raise ValueError("OpenAI API returned non-200 status code!")
+            response = response.parse()
+
         results = None
         if "results" in response:
             results = response["results"]
@@ -417,14 +431,11 @@ class OpenAIEndpoint(core_endpoint.Endpoint):
                     llm_output=dict(token_usage=usage, model_name=model_name),
                     run=None,
                 )
-
                 for callback in callbacks:
                     callback.handle_generation(response=llm_res)
-
             elif isinstance(response, CreateEmbeddingResponse):
                 for callback in callbacks:
                     callback.handle_embedding(response=response)
-
             else:
                 logger.warning(
                     "Unknown openai response type with usage information:\n%s",

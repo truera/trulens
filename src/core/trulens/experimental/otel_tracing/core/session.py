@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -91,6 +91,34 @@ class _TruSession(core_session.TruSession):
         )
 
     @staticmethod
+    def _track_costs_for_module_member(
+        module, method: str, cost_computer: Callable[[Any], Dict[str, Any]]
+    ):
+        from trulens.core.otel.instrument import instrument_method
+
+        for cls in dir(module):
+            obj = python_utils.safer_getattr(module, cls)
+            if (
+                obj is not None
+                and isinstance(obj, type)
+                and hasattr(obj, method)
+            ):
+                cost_attributes_prefix = f"{BASE_SCOPE}.costs."
+                instrument_method(
+                    obj,
+                    method,
+                    span_type=SpanAttributes.SpanType.UNKNOWN,
+                    full_scoped_attributes=lambda ret,
+                    exception,
+                    *args,
+                    **kwargs: {
+                        cost_attributes_prefix + k: v
+                        for k, v in cost_computer(ret).items()
+                    },
+                    must_be_first_wrapper=True,
+                )
+
+    @staticmethod
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
@@ -112,30 +140,16 @@ class _TruSession(core_session.TruSession):
             import openai
             from openai import resources
             from openai.resources import chat
-            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.openai.endpoint import OpenAICostComputer
 
             for module in [openai, resources, chat]:
-                for cls in dir(module):
-                    obj = python_utils.safer_getattr(module, cls)
-                    if (
-                        obj is not None
-                        and isinstance(obj, type)
-                        and hasattr(obj, "create")
-                    ):
-                        cost_attributes_prefix = f"{BASE_SCOPE}.costs."
-                        instrument_method(
-                            obj,
-                            "create",
-                            span_type=SpanAttributes.SpanType.UNKNOWN,
-                            full_scoped_attributes=lambda ret,
-                            exception,
-                            *args,
-                            **kwargs: {
-                                cost_attributes_prefix + k: v
-                                for k, v in OpenAICostComputer.handle_response(
-                                    ret
-                                ).items()
-                            },
-                            must_be_first_wrapper=True,
-                        )
+                _TruSession._track_costs_for_module_member(
+                    module, "create", OpenAICostComputer.handle_response
+                )
+        if _can_import("trulens.providers.litellm.endpoint"):
+            import litellm
+            from trulens.providers.litellm.endpoint import LiteLLMCostComputer
+
+            _TruSession._track_costs_for_module_member(
+                litellm, "completion", LiteLLMCostComputer.handle_response
+            )
