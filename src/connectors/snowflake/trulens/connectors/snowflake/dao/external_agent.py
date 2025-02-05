@@ -19,10 +19,6 @@ class ExternalAgentDao:
         self.schema: str = snowpark_session.get_current_schema()
         logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
-    def _get_agent_fqn(self, name: str) -> str:
-        """Return the fully qualified name (FQN) for an External Agent."""
-        return f"{self.database}.{self.schema}.{name}"
-
     def _quote_if_needed(self, identifier: str) -> str:
         """
         Note we only use qmark style parameter binding in our Snowflake connector.
@@ -68,15 +64,17 @@ class ExternalAgentDao:
             f"Created External Agent {agent_fqn} with version {version}.",
         )
 
-    def create_agent_if_not_exist(self, name: str, version: str) -> None:
+    def create_agent_if_not_exist(self, name: str, version: str) -> str:
         """
         Args:
             name (str): unique name of the external agent
             version (str): version is mandatory for now
+        Returns:
+            str: fully qualified name of the external agent
         """
         # Get the agent if it already exists, otherwise create it
-        agent_fqn = self.resolve_agent_name(name)
-        if agent_fqn not in self.list_agents()["name"].values:
+        new_agent_fqn = self.resolve_agent_name(name)
+        if new_agent_fqn not in self.list_agents()["name"].values:
             self.create_new_agent(name, version)
         else:
             # Check if the version exists for the agent
@@ -90,6 +88,7 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
+        return new_agent_fqn
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
