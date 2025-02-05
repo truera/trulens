@@ -2,6 +2,8 @@ import logging
 import os
 import time
 from typing import List, Sequence
+import unittest
+import unittest.mock
 import uuid
 
 from snowflake.snowpark import Session
@@ -9,6 +11,10 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.otel_exporter import (
+    TruLensSnowflakeSpanExporter,
+)
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import BASE_SCOPE
 
@@ -154,3 +160,33 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             rag.invoke("What is multi-headed attention?")
         # Validate results.
         self._validate_results("langchain app", run_name, 10)
+
+    def test_dry_run_success(self) -> None:
+        # Mock SnowflakeConnector.
+        mock_connector = unittest.mock.MagicMock()
+        mock_connector.__class__ = SnowflakeConnector
+        # Initialize exporter with mock connector.
+        TruLensSnowflakeSpanExporter(
+            connector=mock_connector, verify_via_dry_run=True
+        )
+        # Verify that the SQL commands were called.
+        mock_connector.snowpark_session.sql.assert_any_call("SELECT 20240131")
+        mock_connector.snowpark_session.sql.assert_any_call(
+            "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+        )
+        mock_connector.snowpark_session.file.put.assert_called_once()
+
+    def test_dry_run_failure(self) -> None:
+        # Mock SnowflakeConnector.
+        mock_connector = unittest.mock.MagicMock()
+        mock_connector.__class__ = SnowflakeConnector
+        mock_connector.snowpark_session.file.put.side_effect = ValueError(
+            "Error while putting to stage!"
+        )
+        # Initialize exporter with mock connector.
+        with self.assertRaisesRegex(
+            ValueError, "Error while putting to stage!"
+        ):
+            TruLensSnowflakeSpanExporter(
+                connector=mock_connector, verify_via_dry_run=True
+            )
