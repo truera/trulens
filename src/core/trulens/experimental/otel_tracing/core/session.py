@@ -91,7 +91,10 @@ class _TruSession(core_session.TruSession):
 
     @staticmethod
     def _track_costs_for_module_member(
-        module, method: str, cost_computer: Callable[[Any], Dict[str, Any]]
+        module,
+        method: str,
+        cost_computer: Callable[[Any], Dict[str, Any]],
+        span_type: SpanAttributes.SpanType,
     ):
         from trulens.core.otel.instrument import instrument_method
 
@@ -105,7 +108,7 @@ class _TruSession(core_session.TruSession):
                 instrument_method(
                     obj,
                     method,
-                    span_type=SpanAttributes.SpanType.UNKNOWN,
+                    span_type=span_type,
                     full_scoped_attributes=lambda ret,
                     exception,
                     *args,
@@ -138,7 +141,10 @@ class _TruSession(core_session.TruSession):
 
             for module in [openai, resources, chat]:
                 _TruSession._track_costs_for_module_member(
-                    module, "create", OpenAICostComputer.handle_response
+                    module,
+                    "create",
+                    OpenAICostComputer.handle_response,
+                    SpanAttributes.SpanType.UNKNOWN,
                 )
         if _can_import("trulens.providers.litellm.endpoint"):
             import litellm
