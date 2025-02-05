@@ -47,7 +47,7 @@ class OtelAppTestCase(TruTestCase):
 
     def tearDown(self) -> None:
         tru_session = TruSession()
-        tru_session.experimental_force_flush()
+        tru_session.force_flush()
         tru_session._experimental_otel_span_processor.shutdown()
         self.clear_TruSession_singleton()
         return super().tearDown()
@@ -86,7 +86,7 @@ class OtelAppTestCase(TruTestCase):
         regex_replacements: Optional[List[Tuple[str, str]]] = None,
     ) -> None:
         tru_session = TruSession()
-        tru_session.experimental_force_flush()
+        tru_session.force_flush()
         actual = self._get_events()
         self.write_golden(golden_filename, actual)
         expected = self.load_golden(golden_filename)
