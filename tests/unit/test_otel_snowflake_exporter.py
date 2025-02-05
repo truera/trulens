@@ -1,3 +1,7 @@
+"""
+Tests for OTEL Snowflake Exporter.
+"""
+
 import unittest
 import unittest.mock
 
@@ -5,10 +9,6 @@ from trulens.connectors.snowflake import SnowflakeConnector
 from trulens.connectors.snowflake.otel_exporter import (
     TruLensSnowflakeSpanExporter,
 )
-
-"""
-Tests for OTEL Snowflake Exporter.
-"""
 
 
 class TestOtelSnowflakeExporter(unittest.TestCase):
