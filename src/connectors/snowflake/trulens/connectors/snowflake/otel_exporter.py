@@ -110,12 +110,10 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             logger.debug("Uploading file to Snowflake stage")
             logger.debug("Creating Snowflake stage if it does not exist")
             snowpark_session.sql(
-                "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+                "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"  # TODO: not sure if we have to have a permanent one
             ).collect()
             logger.debug("Uploading the protobuf file to the stage")
-            snowpark_session.sql(
-                f"PUT file://{tmp_file_path} @trulens_spans"
-            ).collect()
+            snowpark_session.file.put(tmp_file_path, "@trulens_spans")
         except Exception as e:
             logger.error(f"Error uploading the protobuf file to the stage: {e}")
             return SpanExportResult.FAILURE
