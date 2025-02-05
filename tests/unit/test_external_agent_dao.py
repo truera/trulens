@@ -10,8 +10,17 @@ from tests.test import TruTestCase
 from tests.test import optional_test
 from tests.test import run_optional_tests
 
-if run_optional_tests():
-    from trulens.connectors.snowflake.dao.external_agent import ExternalAgentDao
+try:
+    if run_optional_tests():
+        from trulens.connectors.snowflake.dao.external_agent import (
+            ExternalAgentDao,
+        )
+    else:
+        raise ImportError("Optional tests disabled")
+except ImportError:
+
+    class ExternalAgentDao:
+        pass
 
 
 @skipIf(
@@ -63,8 +72,9 @@ class TestExternalAgentDao(TruTestCase):
         self, mock_fetch_query, mock_execute_query
     ):
         df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
-        # For the subsequent call to list_agent_versions, simulate that version "v1" already exists.
-        mock_fetch_query.side_effect = [df_agents, ["v1"]]
+        # For list_agent_versions, simulate that version "v1" already exists by returning a DataFrame.
+        df_versions = pd.DataFrame({"version": ["v1"]})
+        mock_fetch_query.side_effect = [df_agents, df_versions]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
@@ -78,8 +88,9 @@ class TestExternalAgentDao(TruTestCase):
         self, mock_fetch_query, mock_execute_query
     ):
         df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
+        df_versions = pd.DataFrame({"version": []})
         # For the subsequent call to list_agent_versions, simulate that no version exists. This should be rare.
-        mock_fetch_query.side_effect = [df_agents, []]
+        mock_fetch_query.side_effect = [df_agents, df_versions]
 
         self.dao.create_agent_if_not_exist("agent1", "v2")
 
@@ -105,8 +116,9 @@ class TestExternalAgentDao(TruTestCase):
         # agent exists and some versions are present,
         # but different from the version we want to add.
         df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
+        df_versions = pd.DataFrame({"version": ["v1", "v2"]})
         # Existing versions do not include "v3"
-        mock_fetch_query.side_effect = [df_agents, ["v1", "v2"]]
+        mock_fetch_query.side_effect = [df_agents, df_versions]
 
         self.dao.create_agent_if_not_exist("agent1", "v3")
 
@@ -136,6 +148,8 @@ class TestExternalAgentDao(TruTestCase):
         self.dao.create_new_agent(fully_qualified_name, version)
 
         expected_query = "CREATE EXTERNAL AGENT ? WITH VERSION ?;"
+        # In this case, since the provided name is already fully qualified and all-uppercase,
+        # our logic may decide not to quote it further.
         expected_parameters = (fully_qualified_name, version)
         expected_message = f"Created External Agent {fully_qualified_name} with version {version}."
 
@@ -145,6 +159,29 @@ class TestExternalAgentDao(TruTestCase):
             expected_parameters,
             expected_message,
         )
+
+    def test_resolve_agent_name_with_special_chars(self):
+        """
+        Test that resolve_agent_name correctly quotes identifiers when:
+          - The agent name contains special characters or lower-case letters.
+          - An already fully qualified name is provided.
+        """
+        # Case 1: An agent name with special characters that requires quoting.
+        agent_name = "agent# 1"
+        expected_fqn = 'DB.SCH."agent# 1"'
+        self.assertEqual(self.dao.resolve_agent_name(agent_name), expected_fqn)
+
+        # Case 2: An already fully qualified name - no quoting will be done.
+        agent_name_fqn = "otherdb.othersch.agentX"
+        expected_fqn = "otherdb.othersch.agentX"
+        self.assertEqual(
+            self.dao.resolve_agent_name(agent_name_fqn), expected_fqn
+        )
+
+        # Case 3: A simple agent name with lower case.
+        agent_name = "agentx"
+        expected_fqn = "DB.SCH.agentx"
+        self.assertEqual(self.dao.resolve_agent_name(agent_name), expected_fqn)
 
 
 if __name__ == "__main__":
