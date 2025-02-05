@@ -68,7 +68,6 @@ class _TestLiteLLMApp:
         self._model = model
 
     @instrument(span_type=SpanAttributes.SpanType.MAIN)
-    # @old_instrument
     def respond_to_query(self, query: str) -> str:
         completion = (
             litellm.completion(

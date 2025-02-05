@@ -2,7 +2,7 @@ from collections import defaultdict
 import logging
 import os
 import tempfile
-from typing import Sequence
+from typing import Sequence, Tuple
 
 from google.protobuf.internal.encoder import _EncodeVarint
 from opentelemetry.sdk.trace import ReadableSpan
@@ -17,6 +17,8 @@ from trulens.experimental.otel_tracing.core.exporter.utils import (
     convert_readable_span_to_proto,
 )
 from trulens.otel.semconv.trace import SpanAttributes
+
+from snowflake.snowpark import Session
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,85 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 return res
         return SpanExportResult.SUCCESS
 
+    @staticmethod
+    def _write_spans_to_temp_file(
+        spans: Sequence[ReadableSpan], dry_run: bool
+    ) -> Tuple[str, str]:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".pb", mode="wb"
+        ) as tmp_file:
+            tmp_file_basename = os.path.basename(tmp_file.name)
+            tmp_file_path = tmp_file.name
+            logger.debug(f"Writing spans to the protobuf file: {tmp_file_path}")
+            for span in spans:
+                span_proto = convert_readable_span_to_proto(span)
+                _EncodeVarint(tmp_file.write, span_proto.ByteSize())
+                tmp_file.write(span_proto.SerializeToString())
+            logger.debug(f"Spans written to the protobuf file: {tmp_file_path}")
+        return tmp_file_path, tmp_file_basename
+
+    @staticmethod
+    def _upload_temp_file_to_stage(
+        snowpark_session: Session, tmp_file_path: str
+    ):
+        logger.debug("Uploading file to Snowflake stage")
+        logger.debug("Creating Snowflake stage if it does not exist")
+        snowpark_session.sql(
+            "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+        ).collect()
+        logger.debug("Uploading the protobuf file to the stage")
+        snowpark_session.file.put(tmp_file_path, "@trulens_spans")
+
+    @staticmethod
+    def _ingest_spans_from_stage(
+        snowpark_session: Session,
+        tmp_file_basename: str,
+        app_name: str,
+        app_version: str,
+        run_name: str,
+        dry_run: bool,
+    ):
+        original_trace_level = (
+            snowpark_session.sql("SHOW PARAMETERS LIKE 'TRACE_LEVEL'")
+            .collect()[0]
+            .value.upper()
+        )
+        try:
+            if original_trace_level != "ALWAYS":
+                try:
+                    snowpark_session.sql(
+                        "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
+                    ).collect()
+                except Exception as e:
+                    logger.error(f"Error setting trace level to ALWAYS: {e}!")
+                    raise e
+            sql_cmd = snowpark_session.sql(
+                f"""
+                CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
+                    BUILD_SCOPED_FILE_URL(
+                        @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
+                        ?
+                    ),
+                    ?,
+                    ?,
+                    ?
+                )
+                """,
+                params=[
+                    tmp_file_basename + ".gz",
+                    app_name or "",
+                    app_version or "",
+                    run_name or "",
+                ],
+            )
+            if not dry_run:
+                sql_cmd.collect()
+        finally:
+            if original_trace_level != "ALWAYS":
+                snowpark_session.sql(
+                    f"ALTER SESSION SET TRACE_LEVEL={original_trace_level}"
+                ).collect()
+
     def _export_to_snowflake_stage_for_app_and_run(
         self,
         app_name: str,
@@ -107,21 +188,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         snowpark_session = self.connector.snowpark_session
         # Write spans to temp file.
         try:
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=".pb", mode="wb"
-            ) as tmp_file:
-                tmp_file_basename = os.path.basename(tmp_file.name)
-                tmp_file_path = tmp_file.name
-                logger.debug(
-                    f"Writing spans to the protobuf file: {tmp_file_path}"
-                )
-                for span in spans:
-                    span_proto = convert_readable_span_to_proto(span)
-                    _EncodeVarint(tmp_file.write, span_proto.ByteSize())
-                    tmp_file.write(span_proto.SerializeToString())
-                logger.debug(
-                    f"Spans written to the protobuf file: {tmp_file_path}"
-                )
+            tmp_file_path, tmp_file_basename = self._write_spans_to_temp_file(
+                spans, dry_run
+            )
         except Exception as e:
             logger.error(f"Error writing spans to the protobuf file: {e}")
             if dry_run:
@@ -129,13 +198,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             return SpanExportResult.FAILURE
         # Upload temp file to Snowflake stage.
         try:
-            logger.debug("Uploading file to Snowflake stage")
-            logger.debug("Creating Snowflake stage if it does not exist")
-            snowpark_session.sql(
-                "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
-            ).collect()
-            logger.debug("Uploading the protobuf file to the stage")
-            snowpark_session.file.put(tmp_file_path, "@trulens_spans")
+            self._upload_temp_file_to_stage(snowpark_session, tmp_file_path)
         except Exception as e:
             logger.error(f"Error uploading the protobuf file to the stage: {e}")
             if dry_run:
@@ -143,48 +206,14 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             return SpanExportResult.FAILURE
         # Call the stored procedure to ingest the spans to the event table.
         try:
-            original_trace_level = (
-                snowpark_session.sql("SHOW PARAMETERS LIKE 'TRACE_LEVEL'")
-                .collect()[0]
-                .value.upper()
+            self._ingest_spans_from_stage(
+                snowpark_session,
+                tmp_file_basename,
+                app_name,
+                app_version,
+                run_name,
+                dry_run,
             )
-            try:
-                if original_trace_level != "ALWAYS":
-                    try:
-                        snowpark_session.sql(
-                            "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
-                        ).collect()
-                    except Exception as e:
-                        logger.error(
-                            f"Error setting trace level to ALWAYS: {e}!"
-                        )
-                        raise e
-                sql_cmd = snowpark_session.sql(
-                    f"""
-                    CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
-                        BUILD_SCOPED_FILE_URL(
-                            @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
-                            ?
-                        ),
-                        ?,
-                        ?,
-                        ?
-                    )
-                    """,
-                    params=[
-                        tmp_file_basename + ".gz",
-                        app_name or "",
-                        app_version or "",
-                        run_name or "",
-                    ],
-                )
-                if not dry_run:
-                    sql_cmd.collect()
-            finally:
-                if original_trace_level != "ALWAYS":
-                    snowpark_session.sql(
-                        f"ALTER SESSION SET TRACE_LEVEL={original_trace_level}"
-                    ).collect()
         except Exception as e:
             logger.error(f"Error running stored procedure to ingest spans: {e}")
             if dry_run:
