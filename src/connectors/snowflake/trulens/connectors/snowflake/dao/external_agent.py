@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import List
 
 import pandas
@@ -13,26 +14,45 @@ class ExternalAgentDao:
 
     def __init__(self, snowpark_session: Session):
         """Initialize with an active Snowpark session."""
-        self.session = snowpark_session
-        self.database = snowpark_session.get_current_database()
-        self.schema = snowpark_session.get_current_schema()
+        self.session: Session = snowpark_session
+        self.database: str = snowpark_session.get_current_database()
+        self.schema: str = snowpark_session.get_current_schema()
         logger.info("Initialized ExternalAgentDao with a Snowpark session.")
 
     def _get_agent_fqn(self, name: str) -> str:
         """Return the fully qualified name (FQN) for an External Agent."""
         return f"{self.database}.{self.schema}.{name}"
 
+    def _quote_if_needed(self, identifier: str) -> str:
+        """
+        Note we only use qmark style parameter binding in our Snowflake connector.
+        Return the identifier wrapped in double quotes if it does not match the pattern
+        for a simple unquoted identifier in Snowflake. If the identifier is already quoted,
+        return it unchanged.
+        """
+        if identifier.startswith('"') and identifier.endswith('"'):
+            return identifier
+        # A simple unquoted identifier in Snowflake must be all uppercase/lowercase letters, digits, dollar sign, or underscores.
+        # https://docs.snowflake.com/en/sql-reference/identifiers-syntax
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_$]*", identifier):
+            return identifier
+        return f'"{identifier}"'
+
     def resolve_agent_name(self, name: str) -> str:
         """
         Resolve the agent name into a fully qualified name.
-        If the provided name already appears fully qualified (e.g. it has three parts), return it as is.
-        Otherwise, use _get_agent_fqn to create a FQN.
+        If the provided name is already fully qualified (three dot-separated parts), return directly.
+        Otherwise, construct the FQN from the current database and schema, quoting each part if needed.
         """
         parts = name.split(".")
         # Assuming a fully qualified name has exactly three parts: database, schema, and object name.
         if len(parts) == 3:
-            return name
-        return self._get_agent_fqn(name)
+            return ".".join(self._quote_if_needed(part) for part in parts)
+        return (
+            f"{self._quote_if_needed(self.database)}."
+            f"{self._quote_if_needed(self.schema)}."
+            f"{self._quote_if_needed(name)}"
+        )
 
     def create_new_agent(self, name: str, version: str) -> None:
         """Create a new External Agent with a specified version."""
@@ -47,6 +67,11 @@ class ExternalAgentDao:
         )
 
     def create_agent_if_not_exist(self, name: str, version: str) -> None:
+        """
+        Args:
+            name (str): unique name of the external agent
+            version (str): version is mandatory for now
+        """
         # Get the agent if it already exists, otherwise create it
         agent_fqn = self.resolve_agent_name(name)
         if agent_fqn not in self.list_agents()["name"].values:
