@@ -21,17 +21,13 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
         self._upload_and_run_notebook("simple", _TRULENS_PACKAGES)
 
     def test_staged_packages(self) -> None:
-        self.get_session(
-            "test_staged_packages"
-        )  # TODO(this_pr): why do we need to get a session?
+        self.get_session("test_staged_packages")
         self._upload_and_run_notebook(
             "staged_packages", _TRULENS_PACKAGES_DEPENDENCIES
         )
 
     def test_staged_packages_with_otel(self) -> None:
-        self.get_session(
-            "test_staged_packages_with_otel"
-        )  # TODO(this_pr): why do we need to get a session?
+        self.get_session("test_staged_packages_with_otel")
         self._upload_and_run_notebook(
             "staged_packages_with_otel", _TRULENS_PACKAGES_DEPENDENCIES
         )
