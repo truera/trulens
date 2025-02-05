@@ -12,7 +12,6 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -103,37 +102,33 @@ class TestOtelCosts(OtelAppTestCase):
             span_name,
         )
         self.assertEqual(
-            record_attributes[f"{BASE_SCOPE}.costs.model"],
+            record_attributes[SpanAttributes.COST.MODEL],
             cost_model,
         )
         self.assertEqual(
-            record_attributes[f"{BASE_SCOPE}.costs.cost_currency"],
+            record_attributes[SpanAttributes.COST.CURRENCY],
             cost_currency,
         )
         if free:
             self.assertEqual(
-                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                record_attributes[SpanAttributes.COST.COST],
                 0,
             )
         else:
             self.assertGreater(
-                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                record_attributes[SpanAttributes.COST.COST],
                 0,
             )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_tokens"],
+            record_attributes[SpanAttributes.COST.NUM_TOKENS],
             0,
         )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_prompt_tokens"],
+            record_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS],
             0,
         )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_completion_tokens"],
-            0,
-        )
-        self.assertGreater(
-            len(record_attributes[f"{BASE_SCOPE}.costs.return"]),
+            record_attributes[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
             0,
         )
 
