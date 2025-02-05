@@ -53,7 +53,6 @@ class RunDao:
             "run_name": run_name,
             "description": run_config.description,
             "label": run_config.label,
-            "llm_judge_name": run_config.llm_judge_name,
         }
 
         # Convert the payload to JSON. You might also use sql_utils.to_json(req_payload)

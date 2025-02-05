@@ -40,10 +40,6 @@ class RunConfig(BaseModel):
         None,
         description="Optional column name mapping from reserved dataset fields to column names in user's table.",
     )
-    llm_judge_name: Optional[str] = Field(
-        "mistral-large2",  # TODO: PENDING, to be finalized after judge benchmarking is done
-        description="The name of the LLM judge to use (e.g. 'mistral-large2').",
-    )
 
 
 class Run(BaseModel):
@@ -71,6 +67,10 @@ class Run(BaseModel):
     run_config: RunConfig = Field(
         ...,
         description="Run configuration that maintains states needed for app invocation and metrics computation.",
+    )
+
+    run_type: Optional[str] = Field(
+        None, description="Type of the run. i.e. AI_EVALUATION"
     )
 
     description: Optional[str] = Field(
