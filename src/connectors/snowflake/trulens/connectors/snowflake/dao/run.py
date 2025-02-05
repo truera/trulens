@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, List
+from typing import List
 
 from snowflake.snowpark import Session
 import trulens.connectors.snowflake.dao.sql_utils as sql_utils
@@ -32,7 +32,7 @@ class RunDao:
         object_type: str,
         run_name: str,
         run_config: RunConfig,
-    ) -> Any:
+    ) -> None:
         """
         Create a new RunMetadata entity in Snowflake.
 
@@ -44,7 +44,7 @@ class RunDao:
             run_config: The configuration for the run.
 
         Returns:
-            The result of the Snowflake SQL execution.
+            The result of the Snowflake SQL execution - returning a success message but not the created entity.
         """
         # Build the request payload dictionary.
         req_payload = {
@@ -75,7 +75,7 @@ class RunDao:
             success_message=success_message,
         )
 
-    def get_run(self, object_name: str, run_name: str) -> Any:
+    def get_run(self, object_name: str, run_name: str) -> dict:
         """
         Retrieve a run by its run_name (assumed unique) and object_name.
 
@@ -158,6 +158,7 @@ class RunDao:
                 run_name=run_name,
                 run_config=run_config,
             )
+            logger.info("Created new run '%s' successfully.", run_name)
         else:
             logger.info("Run '%s' already exists; skipping creation.", run_name)
 

@@ -1688,7 +1688,17 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return wrapper
 
     @require_snowflake
-    def add_run(self, run_name: str, run_config: RunConfig):
+    def add_run(self, run_name: str, run_config: RunConfig) -> dict:
+        """add a new run to the snowflake App (if not already exists) or retrieve
+        the run if it already exists.
+
+        Args:
+            run_name (str): unique name of the run
+            run_config (RunConfig): optional run config
+
+        Returns:
+            dict: JSON response of the created run
+        """
         self.snowflake_run_dao.create_run_if_not_exist(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
@@ -1696,15 +1706,25 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             run_config=run_config,
         )
 
+        return self.snowflake_run_dao.get_run(
+            object_name=self.snowflake_object_name, run_name=run_name
+        )
+
     @require_snowflake
-    def list_runs(self):
-        self.snowflake_run_dao.list_all_runs(
+    def list_runs(self) -> List[dict]:
+        """Retrieve all runs belong to the snowflake App.
+
+        Returns:
+            List[dict]: List of JSON responses of Run metadata
+        """
+        return self.snowflake_run_dao.list_all_runs(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
         )
 
     @require_snowflake
-    def delete_snowflake_app(self):
+    def delete_snowflake_app(self) -> None:
+        """Delete the snowflake App (managing object) in snowflake, if applicable."""
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
 
 
