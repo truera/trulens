@@ -95,8 +95,8 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             LIMIT 50
             """,
             [
-                self._snowpark_session.get_current_database(),
-                self._snowpark_session.get_current_schema(),
+                self._snowpark_session.get_current_database().lower(),
+                self._snowpark_session.get_current_schema().lower(),
                 app_name,
             ],
             num_expected_spans,

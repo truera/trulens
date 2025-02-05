@@ -11,7 +11,7 @@ from trulens.connectors.snowflake.otel_exporter import (
 )
 
 
-class TestOtelSnowflakeExporter(unittest.TestCase):
+class TestOtelSnowflakeEventTableExporter(unittest.TestCase):
     def test_dry_run_success(self) -> None:
         # Mock SnowflakeConnector.
         mock_connector = unittest.mock.MagicMock()
