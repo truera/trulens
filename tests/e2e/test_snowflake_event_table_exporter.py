@@ -66,7 +66,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def _validate_results(self, run_name: str, num_expected_spans: int):
         # Flush exporter and wait for data to be made to stage.
-        self._tru_session.experimental_force_flush()
+        self._tru_session.force_flush()
         # Check that there are no other tables in the schema.
         self.assertListEqual(
             self.run_query("SHOW TABLES"),
@@ -96,13 +96,14 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             app,
             app_name="custom app",
             app_version="v1",
+            main_method=app.respond_to_query,
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
         with tru_recorder(run_name=run_name, input_id="42"):
             app.respond_to_query("Kojikun")
         # Record and invoke again.
-        self._tru_session.experimental_force_flush()
+        self._tru_session.force_flush()
         with tru_recorder(run_name=run_name, input_id="21"):
             app.respond_to_query("Nolan")
         # Validate results.
@@ -115,6 +116,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             rag,
             app_name="llama-index app",
             app_version="v1",
+            main_method=rag.query,
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
@@ -130,6 +132,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             rag,
             app_name="langchain app",
             app_version="v1",
+            main_method=rag.invoke,
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())

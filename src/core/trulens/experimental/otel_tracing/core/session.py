@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
@@ -12,7 +12,6 @@ from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 TRULENS_SERVICE_NAME = "trulens"
@@ -91,51 +90,74 @@ class _TruSession(core_session.TruSession):
         )
 
     @staticmethod
+    def _track_costs_for_module_member(
+        module,
+        method: str,
+        cost_computer: Callable[[Any], Dict[str, Any]],
+        span_type: SpanAttributes.SpanType,
+    ):
+        from trulens.core.otel.instrument import instrument_method
+
+        for cls in dir(module):
+            obj = python_utils.safer_getattr(module, cls)
+            if (
+                obj is not None
+                and isinstance(obj, type)
+                and hasattr(obj, method)
+            ):
+                instrument_method(
+                    obj,
+                    method,
+                    span_type=span_type,
+                    full_scoped_attributes=lambda ret,
+                    exception,
+                    *args,
+                    **kwargs: cost_computer(ret),
+                    must_be_first_wrapper=True,
+                )
+
+    @staticmethod
     def _track_costs():
         if _can_import("trulens.providers.cortex.endpoint"):
             from snowflake.cortex._sse_client import SSEClient
             from trulens.core.otel.instrument import instrument_method
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
-            cost_attributes_prefix = f"{BASE_SCOPE}.costs."
             instrument_method(
                 SSEClient,
                 "events",
                 span_type=SpanAttributes.SpanType.UNKNOWN,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                    cost_attributes_prefix + k: v
-                    for k, v in CortexCostComputer.handle_response(ret).items()
-                },
+                full_scoped_attributes=lambda ret,
+                exception,
+                *args,
+                **kwargs: CortexCostComputer.handle_response(ret),
                 must_be_first_wrapper=True,
             )
         if _can_import("trulens.providers.openai.endpoint"):
             import openai
             from openai import resources
             from openai.resources import chat
-            from trulens.core.otel.instrument import instrument_method
             from trulens.providers.openai.endpoint import OpenAICostComputer
 
             for module in [openai, resources, chat]:
-                for cls in dir(module):
-                    obj = python_utils.safer_getattr(module, cls)
-                    if (
-                        obj is not None
-                        and isinstance(obj, type)
-                        and hasattr(obj, "create")
-                    ):
-                        cost_attributes_prefix = f"{BASE_SCOPE}.costs."
-                        instrument_method(
-                            obj,
-                            "create",
-                            span_type=SpanAttributes.SpanType.UNKNOWN,
-                            full_scoped_attributes=lambda ret,
-                            exception,
-                            *args,
-                            **kwargs: {
-                                cost_attributes_prefix + k: v
-                                for k, v in OpenAICostComputer.handle_response(
-                                    ret
-                                ).items()
-                            },
-                            must_be_first_wrapper=True,
-                        )
+                _TruSession._track_costs_for_module_member(
+                    module,
+                    "create",
+                    OpenAICostComputer.handle_response,
+                    SpanAttributes.SpanType.UNKNOWN,
+                )
+        if _can_import("trulens.providers.litellm.endpoint"):
+            import litellm
+            from trulens.core.otel.instrument import instrument_method
+            from trulens.providers.litellm.endpoint import LiteLLMCostComputer
+
+            instrument_method(
+                litellm,
+                "completion",
+                span_type=SpanAttributes.SpanType.GENERATION,
+                full_scoped_attributes=lambda ret,
+                exception,
+                *args,
+                **kwargs: LiteLLMCostComputer.handle_response(ret),
+                must_be_first_wrapper=True,
+            )
