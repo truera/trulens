@@ -47,6 +47,7 @@ from trulens.core.utils import pace as pace_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
+from trulens.otel.semconv.trace import SpanAttributes
 
 import openai
 from openai import resources
@@ -90,11 +91,15 @@ class OpenAICostComputer:
             response=response,
             callbacks=[callback],
         )
-        ret = {curr[0]: curr[1] for curr in callback.cost}
+        ret = {
+            SpanAttributes.COST.COST: callback.cost.cost,
+            SpanAttributes.COST.CURRENCY: callback.cost.cost_currency,
+            SpanAttributes.COST.NUM_TOKENS: callback.cost.n_tokens,
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: callback.cost.n_prompt_tokens,
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: callback.cost.n_completion_tokens,
+        }
         if model_name:
-            ret["model"] = model_name
-        if isinstance(response, ChatCompletion):
-            ret["return"] = response.choices[0].message.content
+            ret[SpanAttributes.COST.MODEL] = model_name
         return ret
 
 

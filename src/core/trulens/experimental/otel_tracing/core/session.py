@@ -12,7 +12,6 @@ from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
 )
-from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 TRULENS_SERVICE_NAME = "trulens"
@@ -103,7 +102,6 @@ class _TruSession(core_session.TruSession):
                 and isinstance(obj, type)
                 and hasattr(obj, method)
             ):
-                cost_attributes_prefix = f"{BASE_SCOPE}.costs."
                 instrument_method(
                     obj,
                     method,
@@ -111,10 +109,7 @@ class _TruSession(core_session.TruSession):
                     full_scoped_attributes=lambda ret,
                     exception,
                     *args,
-                    **kwargs: {
-                        cost_attributes_prefix + k: v
-                        for k, v in cost_computer(ret).items()
-                    },
+                    **kwargs: cost_computer(ret),
                     must_be_first_wrapper=True,
                 )
 
@@ -125,15 +120,14 @@ class _TruSession(core_session.TruSession):
             from trulens.core.otel.instrument import instrument_method
             from trulens.providers.cortex.endpoint import CortexCostComputer
 
-            cost_attributes_prefix = f"{BASE_SCOPE}.costs."
             instrument_method(
                 SSEClient,
                 "events",
                 span_type=SpanAttributes.SpanType.UNKNOWN,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                    cost_attributes_prefix + k: v
-                    for k, v in CortexCostComputer.handle_response(ret).items()
-                },
+                full_scoped_attributes=lambda ret,
+                exception,
+                *args,
+                **kwargs: CortexCostComputer.handle_response(ret),
                 must_be_first_wrapper=True,
             )
         if _can_import("trulens.providers.openai.endpoint"):
@@ -151,14 +145,13 @@ class _TruSession(core_session.TruSession):
             from trulens.core.otel.instrument import instrument_method
             from trulens.providers.litellm.endpoint import LiteLLMCostComputer
 
-            cost_attributes_prefix = f"{BASE_SCOPE}.costs."
             instrument_method(
                 litellm,
                 "completion",
                 span_type=SpanAttributes.SpanType.GENERATION,
-                full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                    cost_attributes_prefix + k: v
-                    for k, v in LiteLLMCostComputer.handle_response(ret).items()
-                },
+                full_scoped_attributes=lambda ret,
+                exception,
+                *args,
+                **kwargs: LiteLLMCostComputer.handle_response(ret),
                 must_be_first_wrapper=True,
             )
