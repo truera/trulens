@@ -31,11 +31,29 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     The database connector used to export the spans.
     """
 
-    def __init__(self, connector: core_connector.DBConnector):
+    def __init__(
+        self,
+        connector: core_connector.DBConnector,
+        verify_via_dry_run: bool = True,
+    ):
         self.connector = connector
+        # Try to verify that this exporter will work as much as possible since
+        # afterwards it'll run in its own thread and thus is hard to tell when
+        # it fails.
+        if not isinstance(self.connector, SnowflakeConnector):
+            raise ValueError("Provided connector is not a SnowflakeConnector")
+        self.connector.snowpark_session.sql("SELECT 20240131").collect()
+        if verify_via_dry_run:
+            test_span = ReadableSpan(name="test_span")
+            res = self.export([test_span], dry_run=True)
+            if res != SpanExportResult.SUCCESS:
+                # This shouldn't happen since we should have been thrown errors.
+                raise ValueError(
+                    "OTEL Exporter failed dry run during initialization!"
+                )
 
     def _export_to_snowflake_stage(
-        self, spans: Sequence[ReadableSpan]
+        self, spans: Sequence[ReadableSpan], dry_run: bool
     ) -> SpanExportResult:
         """
         Exports a list of spans to a Snowflake stage as a protobuf file.
@@ -45,7 +63,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         3. Uploads the temporary protobuf file to the Snowflake stage.
         4. Removes the temporary protobuf file.
         Args:
-            spans (Sequence[ReadableSpan]): A sequence of spans to be exported.
+            spans: A sequence of spans to be exported.
+            dry_run: Whether to do everything but run the ingestion SPROC.
         Returns:
             SpanExportResult: The result of the export operation, either SUCCESS or FAILURE.
         """
@@ -71,7 +90,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             run_name,
         ), spans in app_and_run_info_to_spans.items():
             res = self._export_to_snowflake_stage_for_app_and_run(
-                app_name, app_version, run_name, spans
+                app_name, app_version, run_name, spans, dry_run
             )
             if res == SpanExportResult.FAILURE:
                 return res
@@ -83,6 +102,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         app_version: str,
         run_name: str,
         spans: Sequence[ReadableSpan],
+        dry_run: bool,
     ) -> SpanExportResult:
         snowpark_session = self.connector.snowpark_session
         # Write spans to temp file.
@@ -104,6 +124,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 )
         except Exception as e:
             logger.error(f"Error writing spans to the protobuf file: {e}")
+            if dry_run:
+                raise e
             return SpanExportResult.FAILURE
         # Upload temp file to Snowflake stage.
         try:
@@ -116,14 +138,15 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             snowpark_session.file.put(tmp_file_path, "@trulens_spans")
         except Exception as e:
             logger.error(f"Error uploading the protobuf file to the stage: {e}")
+            if dry_run:
+                raise e
             return SpanExportResult.FAILURE
         # Call the stored procedure to ingest the spans to the event table.
         try:
             original_trace_level = (
                 snowpark_session.sql("SHOW PARAMETERS LIKE 'TRACE_LEVEL'")
-                .collect()
-                .loc[0, "value"]
-                .upper()
+                .collect()[0]
+                .value.upper()
             )
             try:
                 if original_trace_level != "ALWAYS":
@@ -136,7 +159,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                             f"Error setting trace level to ALWAYS: {e}!"
                         )
                         raise e
-                snowpark_session.sql(
+                sql_cmd = snowpark_session.sql(
                     f"""
                     CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
                         BUILD_SCOPED_FILE_URL(
@@ -154,7 +177,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                         app_version or "",
                         run_name or "",
                     ],
-                ).collect()
+                )
+                if not dry_run:
+                    sql_cmd.collect()
             finally:
                 if original_trace_level != "ALWAYS":
                     snowpark_session.sql(
@@ -162,6 +187,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     ).collect()
         except Exception as e:
             logger.error(f"Error running stored procedure to ingest spans: {e}")
+            if dry_run:
+                raise e
             return SpanExportResult.FAILURE
         # Remove the temp file.
         try:
@@ -170,10 +197,17 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         except Exception as e:
             # Not returning failure here since the export was technically a success
             logger.error(f"Error removing the temporary protobuf file: {e}")
+            if dry_run:
+                raise e
         # Successful return.
         return SpanExportResult.SUCCESS
 
-    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        trulens_spans = list(filter(check_if_trulens_span, spans))
+    def export(
+        self, spans: Sequence[ReadableSpan], dry_run: bool = False
+    ) -> SpanExportResult:
+        if dry_run:
+            trulens_spans = spans
+        else:
+            trulens_spans = list(filter(check_if_trulens_span, spans))
 
-        return self._export_to_snowflake_stage(trulens_spans)
+        return self._export_to_snowflake_stage(trulens_spans, dry_run)
