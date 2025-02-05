@@ -119,29 +119,47 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             return SpanExportResult.FAILURE
         # Call the stored procedure to ingest the spans to the event table.
         try:
-            snowpark_session.sql(
-                "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
-            ).collect()
-            snowpark_session.sql(
-                f"""
-                -- TODO(this_pr): the name of the SPROC is going to change hopefully...
-                CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
-                    BUILD_SCOPED_FILE_URL(
-                        @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
+            original_trace_level = (
+                snowpark_session.sql("SHOW PARAMETERS LIKE 'TRACE_LEVEL'")
+                .collect()
+                .loc[0, "value"]
+                .upper()
+            )
+            try:
+                if original_trace_level != "ALWAYS":
+                    try:
+                        snowpark_session.sql(
+                            "ALTER SESSION SET TRACE_LEVEL=ALWAYS"
+                        ).collect()
+                    except Exception as e:
+                        logger.error(
+                            f"Error setting trace level to ALWAYS: {e}!"
+                        )
+                        raise e
+                snowpark_session.sql(
+                    f"""
+                    CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
+                        BUILD_SCOPED_FILE_URL(
+                            @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
+                            ?
+                        ),
+                        ?,
+                        ?,
                         ?
-                    ),
-                    ?,
-                    ?,
-                    ?
-                )
-                """,
-                params=[
-                    tmp_file_basename + ".gz",
-                    app_name or "",
-                    app_version or "",
-                    run_name or "",
-                ],
-            ).collect()
+                    )
+                    """,
+                    params=[
+                        tmp_file_basename + ".gz",
+                        app_name or "",
+                        app_version or "",
+                        run_name or "",
+                    ],
+                ).collect()
+            finally:
+                if original_trace_level != "ALWAYS":
+                    snowpark_session.sql(
+                        f"ALTER SESSION SET TRACE_LEVEL={original_trace_level}"
+                    ).collect()
         except Exception as e:
             logger.error(f"Error running stored procedure to ingest spans: {e}")
             return SpanExportResult.FAILURE
