@@ -84,7 +84,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
-        """,
+            """,
             num_expected_spans,
         )
         # TODO(otel): call the feedback computation and check that it's fine.

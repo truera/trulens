@@ -504,7 +504,7 @@ class Endpoint(
                     # at getattr. Skip either way.
                     continue
                 except Exception as e:
-                    logger.warning(
+                    logger.debug(
                         "Could not import tracking module %s. "
                         "trulens will not track costs/usage of this endpoint. %s",
                         endpoint_setup.module_name,
@@ -520,7 +520,7 @@ class Endpoint(
                 try:
                     if endpoint is None:
                         if cls.__name__ not in Endpoint.BASE_ENDPOINTS:
-                            logger.warning(
+                            logger.debug(
                                 "Could not find an instance of %s. "
                                 "trulens will create an endpoint for cost tracking.",
                                 cls.__name__,
