@@ -25,17 +25,18 @@ class ExternalAgentDao:
 
     def _quote_if_needed(self, identifier: str) -> str:
         """
-        Note we only use qmark style parameter binding in our Snowflake connector.
-        Return the identifier wrapped in double quotes if it does not match the pattern
-        for a simple unquoted identifier in Snowflake. If the identifier is already quoted,
-        return it unchanged.
+        Note we only use qmark style parameter binding in our Snowflake connector
+        If the identifier is already quoted or satisfies criteria of a simple unquoted identifier, return it unchanged.
+        Return the identifier wrapped in double quotes if it does not match the pattern of
+        a simple unquoted identifier specified by Snowflake.
         """
-        if identifier.startswith('"') and identifier.endswith('"'):
+        if (
+            identifier.startswith('"') and identifier.endswith('"')
+        ) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_$]*", identifier):
+            # A simple unquoted identifier in Snowflake must be all uppercase/lowercase letters, digits, dollar sign, or underscores.
+            # https://docs.snowflake.com/en/sql-reference/identifiers-syntax
             return identifier
-        # A simple unquoted identifier in Snowflake must be all uppercase/lowercase letters, digits, dollar sign, or underscores.
-        # https://docs.snowflake.com/en/sql-reference/identifiers-syntax
-        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_$]*", identifier):
-            return identifier
+
         return f'"{identifier}"'
 
     def resolve_agent_name(self, name: str) -> str:
