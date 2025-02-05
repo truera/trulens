@@ -156,7 +156,7 @@ class TestOtelCosts(OtelAppTestCase):
         with tru_recorder(run_name="test run", input_id="42"):
             app.respond_to_query("How is baby Kojikun able to be so cute?")
         # Compare results to expected.
-        TruSession().experimental_force_flush()
+        TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 2 + len(cost_functions))
         for i, cost_function in enumerate(cost_functions):
@@ -185,7 +185,7 @@ class TestOtelCosts(OtelAppTestCase):
         tru_recorder = TruChain(app, app_name="testing", app_version="v1")
         with tru_recorder(run_name="test run", input_id="42"):
             app.invoke("How is baby Kojikun able to be so cute?")
-        tru_session.experimental_force_flush()
+        tru_session.force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 3)
         # TODO: do some asserts

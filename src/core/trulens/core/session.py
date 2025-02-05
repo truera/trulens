@@ -180,7 +180,7 @@ class TruSession(
 
         return self._experimental_otel_exporter
 
-    def experimental_force_flush(self, timeout_millis: int = 300000) -> bool:
+    def force_flush(self, timeout_millis: int = 300000) -> bool:
         """
         Force flush the OpenTelemetry exporters.
 
