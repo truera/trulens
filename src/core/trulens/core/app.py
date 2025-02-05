@@ -41,6 +41,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.run import Run
 from trulens.core.run import RunConfig
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
@@ -1688,7 +1689,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         return wrapper
 
     @require_snowflake
-    def add_run(self, run_name: str, run_config: RunConfig) -> dict:
+    def add_run(self, run_name: str, run_config: RunConfig) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
 
@@ -1697,30 +1698,34 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             run_config (RunConfig): optional run config
 
         Returns:
-            dict: JSON response of the created run
+            Run: Run instance
         """
-        self.snowflake_run_dao.create_run_if_not_exist(
+        run_metadata_json = self.snowflake_run_dao.create_run_if_not_exist(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
             run_name=run_name,
             run_config=run_config,
         )
+        run_metadata_json["_app"] = self.app
+        run_metadata_json["_main_method_name"] = self.main_method_name
 
-        return self.snowflake_run_dao.get_run(
-            object_name=self.snowflake_object_name, run_name=run_name
-        )
+        return Run.model_validate(run_metadata_json)
 
     @require_snowflake
-    def list_runs(self) -> List[dict]:
+    def list_runs(self) -> List[Run]:
         """Retrieve all runs belong to the snowflake App.
 
         Returns:
-            List[dict]: List of JSON responses of Run metadata
+            List[Run]: List of Run instances
         """
-        return self.snowflake_run_dao.list_all_runs(
+        run_metadata_json_lst = self.snowflake_run_dao.list_all_runs(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
         )
+        return [
+            Run.model_validate(run_metadata_json)
+            for run_metadata_json in run_metadata_json_lst
+        ]
 
     @require_snowflake
     def delete_snowflake_app(self) -> None:

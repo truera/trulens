@@ -140,7 +140,7 @@ class RunDao:
         object_type: str,
         run_name: str,
         run_config: RunConfig,
-    ) -> None:
+    ) -> dict:
         """
         Create a new run if one with the given run_name does not already exist.
 
@@ -161,6 +161,8 @@ class RunDao:
             logger.info("Created new run '%s' successfully.", run_name)
         else:
             logger.info("Run '%s' already exists; skipping creation.", run_name)
+
+        return run_result
 
     def delete_run(self, run_name: str, object_name: str, object_type: str):
         """

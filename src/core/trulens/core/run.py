@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from pydantic import BaseModel
@@ -46,53 +46,101 @@ class RunConfig(BaseModel):
     )
 
 
-class Run:
-    def __init__(self) -> None:
-        raise RuntimeError(
-            "Run's initializer is not meant to be directly used."
-        )
+class Run(BaseModel):
+    """
+    Run class for managing run state / attributes in the SDK client.
 
-    run_name: str
-    run_dao: RunDao
+    This model is meant to be used and accessed through
+    methods like describe() (which uses the underlying RunDao) to obtain the run metadata.
+    """
 
-    @classmethod
-    def _ref(
-        cls,
-        run_dao: RunDao,
-        name: str,
-    ) -> "Run":
-        self: "Run" = object.__new__(cls)
-        self.run_name = name
-        self.run_dao = run_dao
-        return self
+    _run_dao: RunDao = Field(
+        ..., description="DAO instance for run operations.", exclude=True
+    )
+
+    _app: Any = Field(
+        ..., description="App instance to be invoked during run.", exclude=True
+    )
+
+    _main_method_name: str = Field(
+        ..., description="Main method of the app.", exclude=True
+    )
+
+    run_name: str = Field(..., description="Unique name of the run.")
+
+    run_config: RunConfig = Field(
+        ...,
+        description="Run configuration that maintains states needed for app invocation and metrics computation.",
+    )
+
+    description: Optional[str] = Field(
+        None, description="Description of the run."
+    )
+    label: Optional[str] = Field(None, description="Label for grouping runs.")
+
+    object_name: str = Field(
+        ...,
+        description="Name of the managing object (e.g. name of 'EXTERNAL_AGENT').",
+    )
+
+    object_type: str = Field(
+        ..., description="Type of the managing object (e.g. 'EXTERNAL_AGENT')."
+    )
+
+    status: Optional[str] = Field(None, description="Status of the run.")
+
+    class Config:
+        arbitrary_types_allowed = True
+        extra = "ignore"
+        # allow custom obj like RunDao to be passed as a parameter and more importantly, account for
+        # additional fields in Run metadata JSON response.
 
     def start(self, batch_size: Optional[int] = None):
-        raise NotImplementedError("Not yet implemented.")
+        raise NotImplementedError("start is not implemented yet.")
 
-    def status(self):
-        raise NotImplementedError("Not yet implemented.")
+    def get_status(self):
+        raise NotImplementedError("status is not implemented yet.")
 
     def compute_metrics(self, metrics: List[str], params: dict):
-        raise NotImplementedError("Not yet implemented.")
+        raise NotImplementedError("compute_metrics is not implemented yet.")
 
     def cancel(self):
-        raise NotImplementedError("Not yet implemented.")
+        raise NotImplementedError("cancel is not implemented yet.")
 
     def update(
         self, description: Optional[str] = None, label: Optional[str] = None
     ):
-        """Only description and label are allowed to be updated at the moment.
-
-        Args:
-            description (Optional[str], optional): Run description.
-            label (Optional[str], optional): Run label for grouping runs.
         """
-        raise NotImplementedError(
-            "Not yet implemented. Only description and label are allowed to be updated at the moment."
+        Only description and label are allowed to be updated at the moment.
+        """
+        raise NotImplementedError("update is not implemented yet.")
+
+    def describe(self) -> Dict:
+        """
+        Retrieve the run metadata by querying the underlying DAO and return it as a dictionary.
+
+        The underlying DAO method is expected to return
+        a dictionary (JSON) representing the run's metadata response for flexibility (instead of a Run instance).
+        """
+        # TODO/TBD:  should we just return Run instance instead?
+
+        result = self._run_dao.get_run(
+            object_name=self.object_name, run_name=self.run_name
         )
+        if isinstance(result, dict):
+            return result
+        elif hasattr(result, "empty") and not result.empty:
+            # Return the first row as a dictionary.
+            return result.iloc[0].to_dict()
+        else:
+            return {}
 
-    def describe(self):  # GET run from DPO
-        pass
-
-    def delete(self):
-        pass
+    def delete(self) -> None:
+        """
+        Delete the run by its name and object name.
+        """
+        self._run_dao.delete_run(
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+        )
