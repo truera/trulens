@@ -25,7 +25,8 @@ class ExternalAgentDao:
 
     def _quote_if_needed(self, identifier: str) -> str:
         """
-        Note we only use qmark style parameter binding in our Snowflake connector
+        Note we only use qmark style parameter binding in our Snowflake connector.
+
         If the identifier is already quoted or satisfies criteria of a simple unquoted identifier, return it unchanged.
         Return the identifier wrapped in double quotes if it does not match the pattern of
         a simple unquoted identifier specified by Snowflake.
