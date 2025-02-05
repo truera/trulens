@@ -1644,7 +1644,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def print_instrumented_methods(self) -> None:
         """Print instrumented methods."""
 
-        print(self.format_instrumented_methods())
+        logger.info(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
         """Print instrumented components and their categories."""
@@ -1658,7 +1658,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
 
-        print("\n".join(object_strings))
+        logger.info("\n".join(object_strings))
 
     def _validate_snowflake_attributes(self) -> None:
         """
