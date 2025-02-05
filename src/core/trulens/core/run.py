@@ -8,7 +8,6 @@ from trulens.connectors.snowflake.dao.run import RunDao
 
 
 class RunConfig(BaseModel):
-    name: str = Field(..., description="Unique run name.")
     description: Optional[str] = Field(
         None, description="A description for the run."
     )
@@ -53,8 +52,8 @@ class Run:
             "Run's initializer is not meant to be directly used."
         )
 
-    name: str
-    _run_dao: RunDao
+    run_name: str
+    run_dao: RunDao
 
     @classmethod
     def _ref(
@@ -63,21 +62,21 @@ class Run:
         name: str,
     ) -> "Run":
         self: "Run" = object.__new__(cls)
-        self.name = name
-        self._run_dao = run_dao
+        self.run_name = name
+        self.run_dao = run_dao
         return self
 
     def start(self, batch_size: Optional[int] = None):
-        pass
+        raise NotImplementedError("Not yet implemented.")
 
     def status(self):
-        pass
+        raise NotImplementedError("Not yet implemented.")
 
     def compute_metrics(self, metrics: List[str], params: dict):
-        pass
+        raise NotImplementedError("Not yet implemented.")
 
     def cancel(self):
-        pass
+        raise NotImplementedError("Not yet implemented.")
 
     def update(
         self, description: Optional[str] = None, label: Optional[str] = None
@@ -88,7 +87,12 @@ class Run:
             description (Optional[str], optional): Run description.
             label (Optional[str], optional): Run label for grouping runs.
         """
-        pass
+        raise NotImplementedError(
+            "Not yet implemented. Only description and label are allowed to be updated at the moment."
+        )
 
     def describe(self):  # GET run from DPO
+        pass
+
+    def delete(self):
         pass

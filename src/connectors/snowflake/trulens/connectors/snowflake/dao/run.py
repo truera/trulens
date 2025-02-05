@@ -149,7 +149,7 @@ class RunDao:
             run_name: The name of the run.
             run_config: The configuration for the run.
         """
-        run_result = self.get_run(object_name, run_name)
+        run_result = self.get_run(object_name=object_name, run_name=run_name)
         if run_result is None:
             logger.info("Run '%s' does not exist; creating new run.", run_name)
             self.create_new_run(

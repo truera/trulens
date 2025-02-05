@@ -41,6 +41,7 @@ from trulens.core.database import base as core_db
 from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
+from trulens.core.run import RunConfig
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -440,6 +441,9 @@ class App(
     )
 
     snowflake_app_dao: Optional[Any] = None
+    snowflake_run_dao: Optional[Any] = None
+    snowflake_object_type: Optional[str] = None
+    snowflake_object_name: Optional[str] = None
 
     def __init__(
         self,
@@ -461,27 +465,32 @@ class App(
                 from trulens.connectors.snowflake.dao.external_agent import (
                     ExternalAgentDao,
                 )
+                from trulens.connectors.snowflake.dao.run import RunDao
 
                 if isinstance(connector, SnowflakeConnector):
-                    object_type = kwargs.get(
+                    self.snowflake_object_type = kwargs.get(
                         "object_type", ObjectType.EXTERNAL_AGENT
                     )
 
-                    if object_type not in ObjectType:
+                    if self.snowflake_object_type not in ObjectType:
                         raise ValueError(
-                            f"Invalid object_type to initialize Snowflake app: {object_type}"
+                            f"Invalid object_type to initialize Snowflake app: {self.snowflake_object_type}"
                         )
 
                     snowpark_session = connector.snowpark_session()
 
-                    if object_type == ObjectType.EXTERNAL_AGENT:
+                    if self.snowflake_object_type == ObjectType.EXTERNAL_AGENT:
                         # side effect: create external agent if not exist
                         self.snowflake_app_dao = ExternalAgentDao(
                             snowpark_session
                         )
-                        self.snowflake_app_dao.create_agent_if_not_exist(
-                            name=kwargs["app_name"],
-                            version=kwargs["app_version"],
+                        self.snowflake_run_dao = RunDao(snowpark_session)
+
+                        self.snowflake_object_name = (
+                            self.snowflake_app_dao.create_agent_if_not_exist(
+                                name=kwargs["app_name"],
+                                version=kwargs["app_version"],
+                            )
                         )
 
                     # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
@@ -1650,36 +1659,53 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         print("\n".join(object_strings))
 
-    def _validate_snowpark_session(self) -> None:
+    def _validate_snowflake_attributes(self) -> None:
         """
         Helper function to check if a Snowpark session is available.
 
         Raises:
             NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
         """
-        if self.external_agent_dao is None:
+        if (
+            self.snowflake_app_dao is None
+            or self.snowflake_object_type is None
+            or self.snowflake_object_name is None
+            or self.snowflake_run_dao is None
+        ):
             msg = (
-                "This API requires a Snowpark session. Please initialize App with "
-                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+                "This API currently requires Snowflake attributes. Please initialize App with "
+                "a valid snowpark_session."
             )
             logger.error(msg)
             raise NotImplementedError(msg)
 
-    def require_snowpark_session(func: Callable):
+    def require_snowflake(func: Callable):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
-            self._validate_snowpark_session()
+            self._validate_snowflake_attributes()
             return func(self, *args, **kwargs)
 
         return wrapper
 
-    @require_snowpark_session
-    def add_run(self):
-        raise NotImplementedError("Not implemented yet.")
+    @require_snowflake
+    def add_run(self, run_name: str, run_config: RunConfig):
+        self.snowflake_run_dao.create_run_if_not_exist(
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+            run_name=run_name,
+            run_config=run_config,
+        )
 
-    @require_snowpark_session
+    @require_snowflake
     def list_runs(self):
-        raise NotImplementedError("Not implemented yet.")
+        self.snowflake_run_dao.list_all_runs(
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+        )
+
+    @require_snowflake
+    def delete_snowflake_app(self):
+        self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
