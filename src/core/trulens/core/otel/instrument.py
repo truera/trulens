@@ -70,6 +70,26 @@ def _resolve_attributes(
     return attributes.copy()
 
 
+def set_garett_span_attributes(span: Span):
+    import os
+
+    from trulens.core.session import TruSession
+
+    TruSession().connector
+    span.set_attribute(
+        "snow.ai.observability.database.name",
+        os.environ["SNOWFLAKE_DATABASE"].upper(),
+    )
+    span.set_attribute(
+        "snow.ai.observability.schema.name",
+        os.environ["SNOWFLAKE_SCHEMA"].upper(),
+    )
+    span.set_attribute(
+        "snow.ai.observability.object.name", "dkurokawa's test app"
+    )
+    span.set_attribute("snow.ai.observability.object.type", "external agent")
+
+
 def _set_span_attributes(
     span: Span,
     span_type: SpanAttributes.SpanType,
@@ -86,6 +106,7 @@ def _set_span_attributes(
     # Set general span attributes.
     span.set_attribute("name", span_name)
     set_general_span_attributes(span, span_type)
+    set_garett_span_attributes(span)
     # Set main span attributes if necessary.
     if span_type == SpanAttributes.SpanType.MAIN:
         set_main_span_attributes(
@@ -413,6 +434,7 @@ class OTELRecordingContext:
 
         # Set general span attributes
         root_span.set_attribute("name", "root")
+        set_garett_span_attributes(root_span)
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.RECORD_ROOT
         )
