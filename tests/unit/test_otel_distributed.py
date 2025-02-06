@@ -42,6 +42,12 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(self.capitalize(name).encode())
             TruSession().force_flush()
+        elif self.path.startswith("/ping"):
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+        else:
+            raise ValueError("Unknown path!")
 
     @instrument(full_scoped_attributes={"process_id": os.getpid()})
     def capitalize(self, name: str) -> str:
@@ -60,7 +66,13 @@ class TestOtelDistributed(OtelAppTestCase):
     def setUpClass(cls):
         cls.server_process = multiprocessing.Process(target=run_server)
         cls.server_process.start()
-        time.sleep(2)  # Give the server time to start
+        for _ in range(40):
+            try:
+                requests.get("http://localhost:8000/ping")
+                break
+            except requests.exceptions.ConnectionError:
+                pass
+            time.sleep(0.25)
         super().setUpClass()
 
     @classmethod
