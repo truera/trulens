@@ -5,10 +5,10 @@ import pytest
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--run_basic_tests",
+        "--skip_basic_tests",
         action="store_true",
-        default=True,
-        help="Run tests not marked optional/snowflake",
+        default=False,
+        help="Skip tests not marked optional/snowflake",
     )
     parser.addoption(
         "--run_optional_tests",
@@ -25,7 +25,7 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
-    basic = config.getoption("--run_basic_tests") or os.environ.get(
+    basic = not config.getoption("--skip_basic_tests") or os.environ.get(
         "TEST_BASIC", ""
     ).lower() in ["1", "true"]
     optional = config.getoption("--run_optional_tests") or os.environ.get(

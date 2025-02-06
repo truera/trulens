@@ -16,7 +16,7 @@ steps:
   - bash: |
       set -e
       make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
-    condition: ne(variables['python-version'], 3.12)
+    condition: ne(variables['python-version'], 3.12) or ne(parameters.pytestMarker, 'snowflake')
     env:
       # tests make use of various APIs:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
