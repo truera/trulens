@@ -62,26 +62,37 @@ def run_server():
 
 
 class TestOtelDistributed(OtelAppTestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.server_process = multiprocessing.Process(target=run_server)
-        cls.server_process.start()
-        for _ in range(40):
+    @staticmethod
+    def _wait_for_server(
+        num_retries: int = 40, sleep_time: float = 0.25
+    ) -> None:
+        server_up = False
+        for _ in range(num_retries):
             try:
-                requests.get("http://localhost:8000/ping")
-                break
+                res = requests.get("http://localhost:8000/ping")
+                if res.status_code == 200:
+                    server_up = True
+                    break
             except requests.exceptions.ConnectionError:
                 pass
-            time.sleep(0.25)
-        super().setUpClass()
+            time.sleep(sleep_time)
+        if not server_up:
+            raise ValueError("Server not up.")
 
     @classmethod
-    def tearDownClass(cls):
+    def setUpClass(cls) -> None:
+        cls.server_process = multiprocessing.Process(target=run_server)
+        cls.server_process.start()
+        cls._wait_for_server()
+        return super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
         cls.server_process.terminate()
         cls.server_process.join()
-        super().tearDownClass()
+        return super().tearDownClass()
 
-    def test_distributed(self):
+    def test_distributed(self) -> None:
         # Set up.
         tru_session = TruSession()
         tru_session.reset_database()
