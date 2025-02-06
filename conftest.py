@@ -25,9 +25,9 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
-    basic = not config.getoption("--skip_basic_tests") or os.environ.get(
-        "TEST_BASIC", ""
-    ).lower() in ["1", "true"]
+    basic = not config.getoption("--skip_basic_tests") and os.environ.get(
+        "SKIP_BASIC_TESTS", ""
+    ).lower() not in ["1", "true"]
     optional = config.getoption("--run_optional_tests") or os.environ.get(
         "TEST_OPTIONAL", ""
     ).lower() in ["1", "true"]

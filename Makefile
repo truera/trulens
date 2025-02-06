@@ -208,11 +208,11 @@ test-%-basic: env-tests-basic
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
-	TEST_OPTIONAL=true make test-$*
+	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
 
 # Requires the full optional environment to be set up, with Snowflake specific packages.
 test-unit-snowflake: env-tests-snowflake
-	TEST_SNOWFLAKE=true make test-unit
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
 
 test-%-all: env-tests env-tests-optional env-tests-snowflake
 	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
