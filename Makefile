@@ -53,8 +53,7 @@ env-tests-optional: env env-tests
 		chromadb
 
 env-tests-snowflake: env-tests-optional
-	poetry run pip install \
-		./dist/trulens-connectors-snowflake/trulens_connectors_snowflake-*-py3-none-any.whl
+	poetry install --with snowflake
 
 env-tests-db: env-tests
 	poetry run pip install \

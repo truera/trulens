@@ -87,6 +87,9 @@ trulens-providers-litellm = { path = "src/providers/litellm", develop = true }
 [tool.poetry.group.connectors.dependencies]
 trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
 
+[tool.poetry.group.snowflake.dependencies]
+trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
+
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }
