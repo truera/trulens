@@ -37,7 +37,14 @@ def pytest_collection_modifyitems(config, items):
     skip_snowflake = pytest.mark.skip(reason="Skipping snowflake tests")
 
     for item in items:
-        if optional and "optional" in item.keywords:
+        if "required_only" in item.keywords:
+            if optional or snowflake:
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason="Skipping as optional/snowflake tests are running"
+                    )
+                )
+        elif optional and "optional" in item.keywords:
             continue
         elif snowflake and "snowflake" in item.keywords:
             continue

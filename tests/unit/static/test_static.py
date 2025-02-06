@@ -156,7 +156,7 @@ class TestStatic(TestCase):
 
         self._test_instrumentation(RailsInstrument())
 
-    # @requiredonly_test # TODO(this_pr): is this a problem?
+    @pytest.mark.required_only
     def test_import_optional_fail(self) -> None:
         """
         Check that directly importing a module that depends on an optional
