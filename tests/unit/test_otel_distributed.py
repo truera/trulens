@@ -39,6 +39,7 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             name = self.path.split("=")[1]
             capitalized_name = self.capitalize(name)
             TruSession().force_flush()
+            time.sleep(10)  # Give time to flush.
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
