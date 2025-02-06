@@ -1,7 +1,9 @@
 import logging
 import os
 import time
-from typing import Sequence
+from typing import List, Sequence
+import unittest
+import unittest.mock
 import uuid
 
 from snowflake.snowpark import Session
@@ -9,6 +11,10 @@ from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
+from trulens.connectors.snowflake import SnowflakeConnector
+from trulens.connectors.snowflake.otel_exporter import (
+    TruLensSnowflakeSpanExporter,
+)
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import BASE_SCOPE
 
@@ -48,23 +54,26 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     def _wait_for_num_results(
         self,
         q: str,
+        params: List[str],
         expected_num_results: int,
         num_retries: int = 15,
         retry_cooldown_in_seconds: int = 10,
     ) -> Sequence:
         for _ in range(num_retries):
-            results = self.run_query(q)
+            results = self.run_query(q, params)
+            if len(results) == expected_num_results:
+                return results
             self.logger.info(
                 f"Got {len(results)} results, expecting {expected_num_results}"
             )
-            if len(results) == expected_num_results:
-                return results
             time.sleep(retry_cooldown_in_seconds)
         raise ValueError(
             f"Did not get the expected number of results! Expected {expected_num_results} results, but last found: {len(results)}! The results:\n{results}"
         )
 
-    def _validate_results(self, run_name: str, num_expected_spans: int):
+    def _validate_results(
+        self, app_name: str, run_name: str, num_expected_spans: int
+    ):
         # Flush exporter and wait for data to be made to stage.
         self._tru_session.force_flush()
         # Check that there are no other tables in the schema.
@@ -77,14 +86,25 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             f"""
             SELECT
                 *
-            FROM EVENT_DB.PUBLIC.EVENTS
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'external agent'
+                ))
             WHERE
                 RECORD_TYPE = 'SPAN'
-                AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-28 00:00:00')
+                AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
                 AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
             """,
+            [
+                self._snowpark_session.get_current_database().lower(),
+                self._snowpark_session.get_current_schema().lower(),
+                app_name,
+            ],
             num_expected_spans,
         )
         # TODO(otel): call the feedback computation and check that it's fine.
@@ -107,7 +127,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="21"):
             app.respond_to_query("Nolan")
         # Validate results.
-        self._validate_results(run_name, 10)
+        self._validate_results("custom app", run_name, 10)
 
     def test_tru_llama(self):
         # Create app.
@@ -123,7 +143,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             rag.query("What is multi-headed attention?")
         # Validate results.
-        self._validate_results(run_name, 8)
+        self._validate_results("llama-index app", run_name, 8)
 
     def test_tru_chain(self):
         # Create app.
@@ -139,4 +159,34 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             rag.invoke("What is multi-headed attention?")
         # Validate results.
-        self._validate_results(run_name, 10)
+        self._validate_results("langchain app", run_name, 10)
+
+    def test_dry_run_success(self) -> None:
+        # Mock SnowflakeConnector.
+        mock_connector = unittest.mock.MagicMock()
+        mock_connector.__class__ = SnowflakeConnector
+        # Initialize exporter with mock connector.
+        TruLensSnowflakeSpanExporter(
+            connector=mock_connector, verify_via_dry_run=True
+        )
+        # Verify that the SQL commands were called.
+        mock_connector.snowpark_session.sql.assert_any_call("SELECT 20240131")
+        mock_connector.snowpark_session.sql.assert_any_call(
+            "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+        )
+        mock_connector.snowpark_session.file.put.assert_called_once()
+
+    def test_dry_run_failure(self) -> None:
+        # Mock SnowflakeConnector.
+        mock_connector = unittest.mock.MagicMock()
+        mock_connector.__class__ = SnowflakeConnector
+        mock_connector.snowpark_session.file.put.side_effect = ValueError(
+            "Error while putting to stage!"
+        )
+        # Initialize exporter with mock connector.
+        with self.assertRaisesRegex(
+            ValueError, "Error while putting to stage!"
+        ):
+            TruLensSnowflakeSpanExporter(
+                connector=mock_connector, verify_via_dry_run=True
+            )
