@@ -1,5 +1,5 @@
 {% set name = "trulens-core" %}
-{% set version = "1.3.4" %}
+{% set version = "1.3.5" %}
 
 package:
   name: {{ name|lower }}
@@ -8,7 +8,7 @@ package:
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name.replace('-', '_') }}-{{ version }}.tar.gz
   # Get SHA256 from https://pypi.org/project/trulens-core/#files
-  sha256: b22920c7c41236733cd785732a12f99b03aa54203864fee32253a8e1fdfc2952
+  sha256: 3dc849ef2c9474a8fd1b913222052536568ceded14914c2c14bf36c0c892d425
 
 build:
   noarch: python

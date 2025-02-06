@@ -12,6 +12,10 @@ POETRY_DIRS := $(shell find . \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
 	-exec dirname {} \;)
+CONDA_BUILD_DIRS := $(shell find . \
+	-maxdepth 4 \
+	-name "*meta.yaml" \
+	-exec dirname {} \;)
 LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
 
 # Global setting: execute all commands of a target in a single shell session.
@@ -72,6 +76,14 @@ lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
+	done
+
+# Test build of conda packages against the Snowflake channel
+# This does not publish packages, only builds them locally.
+conda-build: $(CONDA_BUILD_DIRS)
+	for dir in $(CONDA_BUILD_DIRS); do \
+		echo "Testing conda build for $$dir/meta.yaml"; \
+		conda build $$dir -c https://conda.anaconda.org/sfe1ed40/; \
 	done
 
 # Run the ruff linter.
