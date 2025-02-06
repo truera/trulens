@@ -38,8 +38,8 @@ jobs:
         parameters:
           pytestMarker: optional
           testSuite: unit
-      - template: templates/run-tests.yaml
-        condition: ne(variables['python-version'], 3.12)
-        parameters:
-          pytestMarker: snowflake
-          testSuite: unit
+      - ${{ if ne(variables['python-version'], 3.12) }}:
+        - template: templates/run-tests.yaml
+          parameters:
+            pytestMarker: snowflake
+            testSuite: unit
