@@ -40,7 +40,7 @@ env-tests:
 		pytest-subtests \
 		ruff \
 
-env-tests-required:
+env-tests-basic:
 	poetry install --only required \
 		&& make env-tests
 
@@ -204,7 +204,7 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-tests-required
+test-%-basic: env-tests-basic
 	make test-$*
 
 # Requires the full optional environment to be set up.
@@ -214,6 +214,9 @@ test-%-optional: env-tests-optional
 # Requires the full optional environment to be set up, with Snowflake specific packages.
 test-unit-snowflake: env-tests-snowflake
 	TEST_SNOWFLAKE=true make test-unit
+
+test-%-all: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
