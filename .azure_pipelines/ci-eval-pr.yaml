@@ -30,17 +30,15 @@ jobs:
     steps:
       - template: templates/env-setup.yaml
       - template: templates/run-precommits.yaml
-      #- template: templates/run-tests.yaml
-      #  parameters:
-      #    pytestMarker: basic
-      #    testSuite: unit
-      #- template: templates/run-tests.yaml
-      #  parameters:
-      #    pytestMarker: optional
-      #    testSuite: unit
-      - $[ if ne(variables['python-version'], 3.12) ]:
-        - template: templates/run-tests.yaml
-          parameters:
-            #pytestMarker: snowflake
-            pytestMarker: '$(python-version)'
-            testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: basic
+          testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: optional
+          testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: snowflake
+          testSuite: unit
