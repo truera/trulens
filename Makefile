@@ -52,6 +52,10 @@ env-tests-optional: env env-tests
 		unstructured \
 		chromadb
 
+env-tests-snowflake: env-tests-optional
+	poetry run pip install \
+		./dist/trulens-connectors-snowflake/trulens_connectors_snowflake-*-py3-none-any.whl
+
 env-tests-db: env-tests
 	poetry run pip install \
 		cryptography \
@@ -125,7 +129,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -179,7 +183,7 @@ test-snowflake:
 		&& make zip-wheels \
 		&& make build \
 		&& make env \
-		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+		&& TEST_OPTIONAL=1 $(PYTEST) \
 			./tests/e2e/test_context_variables.py \
 			./tests/e2e/test_snowflake_*
 
@@ -203,13 +207,13 @@ test-optional-file-%: tests/unit/static/%
 test-%-required: env-tests-required
 	make test-$*
 
-# Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: env
-	ALLOW_OPTIONALS=true make test-$*
-
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
 	TEST_OPTIONAL=true make test-$*
+
+# Requires the full optional environment to be set up, with Snowflake specific packages.
+test-unit-snowflake: env-tests-snowflake
+	TEST_SNOWFLAKE=true make test-unit
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.
