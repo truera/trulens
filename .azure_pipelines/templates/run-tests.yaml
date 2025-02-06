@@ -15,7 +15,7 @@ parameters:
 steps:
   - bash: |
       set -e
-      make test-${{ parameters.pytestMarker }}-${{ parameters.testSuite }}
+      make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
     env:
       # tests make use of various APIs:
       OPENAI_API_KEY: $(OPENAI_API_KEY)
