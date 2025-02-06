@@ -37,11 +37,12 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             context = extract(self.headers)
             context_api.attach(context)
             name = self.path.split("=")[1]
+            capitalized_name = self.capitalize(name)
+            TruSession().force_flush()
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write(self.capitalize(name).encode())
-            TruSession().force_flush()
+            self.wfile.write(capitalized_name.encode())
         elif self.path.startswith("/ping"):
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
