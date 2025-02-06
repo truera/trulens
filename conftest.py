@@ -64,10 +64,10 @@ def pytest_collection_modifyitems(config, items):
                 )
             if not basic:
                 item.add_marker(skip_basic)
-        elif "optional" in item.keywords():
+        elif "optional" in item.keywords:
             if not optional:
                 item.add_marker(skip_optional)
-        elif "snowflake" in item.keywords():
+        elif "snowflake" in item.keywords:
             if not snowflake:
                 item.add_marker(skip_snowflake)
         else:
