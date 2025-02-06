@@ -40,7 +40,7 @@ env-tests:
 		pytest-subtests \
 		ruff \
 
-env-tests-required:
+env-tests-basic:
 	poetry install --only required \
 		&& make env-tests
 
@@ -51,6 +51,9 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		unstructured \
 		chromadb
+
+env-tests-snowflake: env-tests-optional
+	poetry install --with snowflake
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -125,7 +128,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -179,7 +182,7 @@ test-snowflake:
 		&& make zip-wheels \
 		&& make build \
 		&& make env \
-		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+		&& TEST_OPTIONAL=1 $(PYTEST) \
 			./tests/e2e/test_context_variables.py \
 			./tests/e2e/test_snowflake_*
 
@@ -200,16 +203,19 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-tests-required
+test-%-basic: env-tests-basic
 	make test-$*
-
-# Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: env
-	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
-	TEST_OPTIONAL=true make test-$*
+	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
+
+# Requires the full optional environment to be set up, with Snowflake specific packages.
+test-unit-snowflake: env-tests-snowflake
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
+
+test-%-all: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.

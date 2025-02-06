@@ -13,6 +13,7 @@ from unittest import skipIf
 from jsondiff import SymmetricJsonDiffSyntax
 from jsondiff import diff
 from jsondiff.symbols import Symbol
+import pytest
 from trulens.core.utils import deprecation as deprecation_utils
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import serial as serial_utils
@@ -168,7 +169,7 @@ class TestAPI(mod_test.TruTestCase):
 
     # @skip("Compat not ready.")
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_api_trulens_eval_compat(self):
         """Check that the trulens_eval API members are still present.
 
@@ -224,7 +225,7 @@ class TestAPI(mod_test.TruTestCase):
             fh.close()
 
     @skipIf(sys.version_info[0:2] != (3, 11), "Only run on Python 3.11")
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_api_trulens(self):
         """Check that the trulens API members are still present.
 

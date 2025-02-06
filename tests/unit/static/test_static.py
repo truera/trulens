@@ -9,13 +9,12 @@ from unittest import TestCase
 from unittest import main
 from unittest import skipIf
 
+import pytest
 import trulens
 from trulens.core.instruments import Instrument
 from trulens.core.utils.imports import Dummy
 
 from tests.test import module_installed
-from tests.test import optional_test
-from tests.test import requiredonly_test
 from tests.utils import get_submodule_names
 
 # Importing any of these should throw ImportError (or its subclass
@@ -131,7 +130,7 @@ class TestStatic(TestCase):
                         f"Instrumented class {cls} is in module {cls.__module__} which is not to be instrumented."
                     )
 
-    @optional_test
+    @pytest.mark.optional
     def test_instrumentation_langchain(self):
         """Check that the langchain instrumentation is up to date."""
 
@@ -139,7 +138,7 @@ class TestStatic(TestCase):
 
         self._test_instrumentation(LangChainInstrument())
 
-    @optional_test
+    @pytest.mark.optional
     def test_instrumentation_llama_index(self) -> None:
         """Check that the llama_index instrumentation is up to date."""
 
@@ -150,14 +149,14 @@ class TestStatic(TestCase):
     @skipIf(
         sys.version_info >= (3, 12), "nemo is not yet supported in Python 3.12"
     )
-    @optional_test
+    @pytest.mark.optional
     def test_instrumentation_nemo(self):
         """Check that the nemo guardrails instrumentation is up to date."""
         from trulens.apps.nemo import RailsInstrument
 
         self._test_instrumentation(RailsInstrument())
 
-    @requiredonly_test
+    @pytest.mark.required_only
     def test_import_optional_fail(self) -> None:
         """
         Check that directly importing a module that depends on an optional
@@ -179,7 +178,7 @@ class TestStatic(TestCase):
                         with self.assertRaises(ImportError):
                             importlib.import_module(mod)
 
-    @optional_test
+    @pytest.mark.optional
     def test_import_optional_success(self):
         """
         Do the same imports as the prior tests except now expecting success as

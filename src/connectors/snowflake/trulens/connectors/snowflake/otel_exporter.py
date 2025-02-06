@@ -100,7 +100,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
 
     @staticmethod
     def _write_spans_to_temp_file(
-        spans: Sequence[ReadableSpan], dry_run: bool
+        spans: Sequence[ReadableSpan],
     ) -> Tuple[str, str]:
         with tempfile.NamedTemporaryFile(
             delete=False, suffix=".pb", mode="wb"
@@ -189,7 +189,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         # Write spans to temp file.
         try:
             tmp_file_path, tmp_file_basename = self._write_spans_to_temp_file(
-                spans, dry_run
+                spans
             )
         except Exception as e:
             logger.error(f"Error writing spans to the protobuf file: {e}")

@@ -71,7 +71,6 @@ class _TestLiteLLMApp:
     def respond_to_query(self, query: str) -> str:
         completion = (
             litellm.completion(
-                # model="mistral/mistral-small", # TODO(this_pr) test this?
                 model=self._model,
                 temperature=0,
                 messages=[
