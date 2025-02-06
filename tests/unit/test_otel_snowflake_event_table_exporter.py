@@ -5,12 +5,19 @@ Tests for OTEL Snowflake Exporter.
 import unittest
 import unittest.mock
 
-from trulens.connectors.snowflake import SnowflakeConnector
-from trulens.connectors.snowflake.otel_exporter import (
-    TruLensSnowflakeSpanExporter,
-)
+import pytest
+
+try:
+    # These imports require snowflake dependencies to be installed.
+    from trulens.connectors.snowflake import SnowflakeConnector
+    from trulens.connectors.snowflake.otel_exporter import (
+        TruLensSnowflakeSpanExporter,
+    )
+except Exception:
+    pass
 
 
+@pytest.mark.snowflake
 class TestOtelSnowflakeEventTableExporter(unittest.TestCase):
     def test_dry_run_success(self) -> None:
         # Mock SnowflakeConnector.
