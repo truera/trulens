@@ -27,7 +27,7 @@ DEFAULT_DATABASE_PREFIX: str = "trulens_"
 This includes alembic's version table.
 """
 
-DEFAULT_DATABASE_FILE: str = "/tmp/default.sqlite"
+DEFAULT_DATABASE_FILE: str = "default.sqlite"
 """Filename for default sqlite database.
 
 The sqlalchemy url for this default local sqlite database is `sqlite:///default.sqlite`.

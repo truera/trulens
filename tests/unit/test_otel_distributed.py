@@ -1,38 +1,26 @@
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
-import logging
-import logging.handlers
 import multiprocessing
 import os
-import pprint
 import time
 import unittest
 
 import opentelemetry.context as context_api
 from opentelemetry.propagate import extract
 from opentelemetry.propagate import inject
-import pandas as pd
 import requests
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
-from trulens.experimental.otel_tracing.core.exporter.connector import (
-    set_up_logging,
-)
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
-
-LOG_FILE = "/tmp/all_logs.txt"
 
 
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.MAIN,
-        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-            "process_id": os.getpid(),
-            "from_child": False,
-        },
+        full_scoped_attributes={"process_id": os.getpid()},
     )
     def greet(self, name: str) -> str:
         headers = {}
@@ -51,6 +39,7 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             name = self.path.split("=")[1]
             capitalized_name = self.capitalize(name)
             TruSession().force_flush()
+            time.sleep(10)  # Give time to flush.
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
@@ -62,20 +51,12 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
         else:
             raise ValueError("Unknown path!")
 
-    @instrument(
-        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-            "process_id": os.getpid(),
-            "from_child": True,
-        }
-    )
+    @instrument(full_scoped_attributes={"process_id": os.getpid()})
     def capitalize(self, name: str) -> str:
         return name.upper()
 
 
 def run_server():
-    set_up_logging(log_level=logging.DEBUG, start_fresh=False)
-    logger = logging.getLogger(__name__)
-    logger.info("THIS IS THE CHILD!")
     os.environ["TRULENS_OTEL_TRACING"] = "1"
     TruSession()  # This starts an exporter.
     server = HTTPServer(("localhost", 8000), CapitalizeHandler)
@@ -100,51 +81,32 @@ class TestOtelDistributed(OtelAppTestCase):
         if not server_up:
             raise ValueError("Server not up.")
 
-    def setUp(self) -> None:
-        set_up_logging(log_level=logging.DEBUG)
-        time.sleep(1)
-        super().setUp()
-        TruSession()
-        time.sleep(1)
-        logger = logging.getLogger(__name__)
-        logger.info("THIS IS THE PARENT!")
-        self.server_process = multiprocessing.Process(target=run_server)
-        self.server_process.start()
-        self._wait_for_server()
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.server_process = multiprocessing.Process(target=run_server)
+        cls.server_process.start()
+        cls._wait_for_server()
+        return super().setUpClass()
 
-    def tearDown(self) -> None:
-        self.server_process.terminate()
-        self.server_process.join()
-        super().tearDown()
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.server_process.terminate()
+        cls.server_process.join()
+        return super().tearDownClass()
 
     def test_distributed(self) -> None:
+        # Set up.
+        tru_session = TruSession()
+        tru_session.reset_database()
         # Create TruApp that makes a network call.
         test_app = _TestApp()
         custom_app = TruApp(test_app, main_method=test_app.greet)
         recorder = custom_app(run_name="test run", input_id="789")
         with recorder:
-            res = test_app.greet("test")
+            test_app.greet("test")
         # Compare results to expected.
-        TruSession().force_flush()
+        tru_session.force_flush()
         actual = self._get_events()
-        for _ in range(10):
-            print("START LOGS:")
-        with open(LOG_FILE, "r") as fh:
-            print(fh.read())
-        for _ in range(10):
-            print("STOP LOGS!")
-        for _ in range(10):
-            print("START EVENTS:")
-        pd.set_option("display.max_rows", None)
-        pd.set_option("display.max_columns", None)
-        print(actual.T)
-        print("JUST RECORD ATTRIBUTES:")
-        for i, x in enumerate(actual["record_attributes"].to_numpy()):
-            print(i)
-            pprint.pprint(x)
-        for _ in range(10):
-            print("STOP EVENTS!")
-        self.assertEqual(res, "TEST")
         self.assertEqual(len(actual), 3)
         self.assertNotEqual(
             actual.iloc[1]["record_attributes"]["process_id"],

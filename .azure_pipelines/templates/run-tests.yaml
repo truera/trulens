@@ -15,7 +15,7 @@ parameters:
 steps:
   - bash: |
       set -e
-      make env-tests-basic
+      make test-${{ parameters.testSuite }}-${{ parameters.pytestMarker }}
     condition: or(ne(variables['python-version'], 3.12), ne('${{ parameters.pytestMarker }}', 'snowflake'))
     env:
       # tests make use of various APIs:
@@ -33,7 +33,3 @@ steps:
       SNOWFLAKE_ROLE: $(SNOWFLAKE_ROLE)
       SNOWFLAKE_WAREHOUSE: $(SNOWFLAKE_WAREHOUSE)
     displayName: Run ${{ parameters.pytestMarker }} ${{ parameters.testSuite }} Test Suite
-  - bash: |
-      set -e
-      poetry run pytest -s --rootdir=. ./tests/unit/test_otel_distributed.py
-    displayName: Run test again
