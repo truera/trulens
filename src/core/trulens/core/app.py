@@ -5,7 +5,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 import contextvars
 import datetime
-from functools import wraps
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -457,32 +456,15 @@ class App(
             kwargs["connector"] = connector
             if _can_import("trulens.connectors.snowflake"):
                 from trulens.connectors.snowflake import SnowflakeConnector
-                from trulens.connectors.snowflake.dao.enums import ObjectType
-                from trulens.connectors.snowflake.dao.external_agent import (
-                    ExternalAgentDao,
-                )
 
                 if isinstance(connector, SnowflakeConnector):
-                    object_type = kwargs.get(
-                        "object_type", ObjectType.EXTERNAL_AGENT
+                    self.snowflake_app_dao = (
+                        connector.initialize_snowflake_app_dao(
+                            object_type=kwargs["object_type"],
+                            app_name=kwargs["app_name"],
+                            app_version=kwargs["app_version"],
+                        )
                     )
-
-                    if object_type not in ObjectType:
-                        raise ValueError(
-                            f"Invalid object_type to initialize Snowflake app: {object_type}"
-                        )
-
-                    snowpark_session = connector.snowpark_session()
-
-                    if object_type == ObjectType.EXTERNAL_AGENT:
-                        # side effect: create external agent if not exist
-                        self.snowflake_app_dao = ExternalAgentDao(
-                            snowpark_session
-                        )
-                        self.snowflake_app_dao.create_agent_if_not_exist(
-                            name=kwargs["app_name"],
-                            version=kwargs["app_version"],
-                        )
 
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
@@ -1649,35 +1631,24 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         logger.info("\n".join(object_strings))
 
-    def _validate_snowpark_session(self) -> None:
-        """
-        Helper function to check if a Snowpark session is available.
-
-        Raises:
-            NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
-        """
-        if self.external_agent_dao is None:
+    def _check_snowflake_dao(self):
+        if (
+            not hasattr(self, "snowflake_app_dao")
+            or self.snowflake_app_dao is None
+        ):
             msg = (
-                "This API requires a Snowpark session. Please initialize App with "
+                "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
                 "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
             )
             logger.error(msg)
             raise NotImplementedError(msg)
 
-    def require_snowpark_session(func: Callable):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            self._validate_snowpark_session()
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    @require_snowpark_session
     def add_run(self):
+        self._check_snowflake_dao()
         raise NotImplementedError("Not implemented yet.")
 
-    @require_snowpark_session
     def list_runs(self):
+        self._check_snowflake_dao()
         raise NotImplementedError("Not implemented yet.")
 
 
