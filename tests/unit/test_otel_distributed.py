@@ -113,7 +113,7 @@ class TestOtelDistributed(OtelAppTestCase):
         custom_app = TruApp(test_app, main_method=test_app.greet)
         recorder = custom_app(run_name="test run", input_id="789")
         with recorder:
-            test_app.greet("test")
+            res = test_app.greet("test")
         # Compare results to expected.
         tru_session.force_flush()
         actual = self._get_events()
@@ -123,6 +123,7 @@ class TestOtelDistributed(OtelAppTestCase):
             print(fh.read())
         for _ in range(10):
             print("STOP LOGS!")
+        self.assertEqual(res, "TEST")
         self.assertEqual(len(actual), 3)
         self.assertNotEqual(
             actual.iloc[1]["record_attributes"]["process_id"],
