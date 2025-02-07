@@ -48,7 +48,7 @@ class RecordGraphNode:
         return root
 
 
-def _compute(
+def _compute_feedback(
     record_root: RecordGraphNode,
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
@@ -56,12 +56,17 @@ def _compute(
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
-    Compute feedback for a record.
+    Compute feedback for a record. This is a utility function that can compute
+    feedback functions quite arbitrarily and so is quite powerful.
 
     Args:
         record: Record to compute feedback for.
         feedback_function: Function to compute feedback.
-        selector_function: Function to select inputs for feedback computation.
+        selector_function:
+            Function to select inputs for feedback computation. Given a record
+            in graph form, it returns a list of inputs to the feedback
+            function. Each entry in the list is a dictionary that represents
+            the kwargs to the feedback function.
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes

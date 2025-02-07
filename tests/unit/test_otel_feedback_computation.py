@@ -10,7 +10,7 @@ from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
-from trulens.feedback.computer import _compute
+from trulens.feedback.computer import _compute_feedback
 from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.unit.test_otel_tru_chain
@@ -82,7 +82,9 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
             return 0.42, {"best_baby": "Kojikun"}
 
         # Compute feedback.
-        _compute(record_root, feedback_function, all_retrieval_span_attributes)
+        _compute_feedback(
+            record_root, feedback_function, all_retrieval_span_attributes
+        )
         tru_session.force_flush()
         # Check that there are feedback events.
         events = self._get_events()
