@@ -500,7 +500,7 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
 
         self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
         self.attach_to_context(
-            SpanAttributes.EVAL_CHILD.TARGET_RECORD_ID, self.target_record_id
+            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
 
@@ -525,7 +525,7 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
             SpanAttributes.EVAL_ROOT.APP_VERSION, self.app_version
         )
         root_span.set_attribute(
-            SpanAttributes.EVAL_CHILD.TARGET_RECORD_ID, self.target_record_id
+            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         root_span.set_attribute(
             SpanAttributes.EVAL_ROOT.EVAL_ROOT_ID,

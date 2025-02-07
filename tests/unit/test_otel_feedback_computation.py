@@ -83,11 +83,11 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
 
         # Define feedback function.
         @instrument(
-            span_type=SpanAttributes.SpanType.EVAL_CHILD,
+            span_type=SpanAttributes.SpanType.EVAL,
             full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
-                SpanAttributes.EVAL_CHILD.CRITERIA: kwargs["criteria"],
-                SpanAttributes.EVAL_CHILD.EVIDENCE: ret[1],
-                SpanAttributes.EVAL_CHILD.SCORE: ret[0],
+                SpanAttributes.EVAL.CRITERIA: kwargs["criteria"],
+                SpanAttributes.EVAL.EVIDENCE: ret[1],
+                SpanAttributes.EVAL.SCORE: ret[0],
             },
         )
         def child_feedback_function(criteria: str) -> Tuple[float, str]:

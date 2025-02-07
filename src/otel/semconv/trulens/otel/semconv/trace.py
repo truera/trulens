@@ -112,7 +112,7 @@ class SpanAttributes:
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation root span."""
 
-        EVAL_CHILD = "eval_child"
+        EVAL = "eval"
         """Feedback function evaluation child span denoting important sub-steps."""
 
         # Non-semantic mixable types indicate presence of common sets of attributes.
@@ -256,13 +256,13 @@ class SpanAttributes:
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
 
-    class EVAL_CHILD:
+    class EVAL:
         """
         Attributes for the children span of a feedback evaluation that
         represent important sub-steps of the evaluation.
         """
 
-        base = BASE_SCOPE + ".eval_child"
+        base = BASE_SCOPE + ".eval"
 
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""

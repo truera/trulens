@@ -129,10 +129,10 @@ def set_general_span_attributes(
         span.set_attribute(
             SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
         )
-    target_record_id = get_baggage(SpanAttributes.EVAL_CHILD.TARGET_RECORD_ID)
+    target_record_id = get_baggage(SpanAttributes.EVAL.TARGET_RECORD_ID)
     if target_record_id:
         span.set_attribute(
-            SpanAttributes.EVAL_CHILD.TARGET_RECORD_ID, target_record_id
+            SpanAttributes.EVAL.TARGET_RECORD_ID, target_record_id
         )
 
     run_name_baggage = get_baggage(SpanAttributes.RUN_NAME)
