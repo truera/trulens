@@ -223,9 +223,6 @@ class SpanAttributes:
         APP_VERSION = base + ".app_version"
         """Version of the app for whom this is the root."""
 
-        EVAL_ROOT_ID = base + ".eval_root_id"
-        """Span id for the EVAL_ROOT span this span is under."""
-
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
 
@@ -263,6 +260,9 @@ class SpanAttributes:
 
         TARGET_RECORD_ID = base + ".target_record_id"
         """Record id of the record being evaluated."""
+
+        EVAL_ROOT_ID = base + ".eval_root_id"
+        """Span id for the EVAL_ROOT span this span is under."""
 
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""

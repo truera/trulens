@@ -507,6 +507,12 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("eval_root")
         root_span = self.span_context.__enter__()
+        root_span_id = str(root_span.get_span_context().span_id)
+
+        self.attach_to_context(
+            SpanAttributes.EVAL.EVAL_ROOT_ID,
+            root_span_id,
+        )
 
         # Set general span attributes
         root_span.set_attribute("name", "eval_root")
@@ -527,9 +533,6 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         root_span.set_attribute(
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
-        root_span.set_attribute(
-            SpanAttributes.EVAL_ROOT.EVAL_ROOT_ID,
-            str(root_span.get_span_context().span_id),
-        )
+        root_span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, root_span_id)
 
         return root_span
