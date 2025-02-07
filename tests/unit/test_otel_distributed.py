@@ -90,24 +90,19 @@ class TestOtelDistributed(OtelAppTestCase):
         if not server_up:
             raise ValueError("Server not up.")
 
-    @classmethod
-    def setUpClass(cls) -> None:
+    def setUp(self) -> None:
         set_up_logging(log_level=logging.DEBUG)
-        cls.server_process = multiprocessing.Process(target=run_server)
-        cls.server_process.start()
-        cls._wait_for_server()
-        return super().setUpClass()
+        super().setUp()
+        self.server_process = multiprocessing.Process(target=run_server)
+        self.server_process.start()
+        self._wait_for_server()
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.server_process.terminate()
-        cls.server_process.join()
-        return super().tearDownClass()
+    def tearDown(self) -> None:
+        self.server_process.terminate()
+        self.server_process.join()
+        super().tearDown()
 
     def test_distributed(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create TruApp that makes a network call.
         test_app = _TestApp()
         custom_app = TruApp(test_app, main_method=test_app.greet)
@@ -115,7 +110,7 @@ class TestOtelDistributed(OtelAppTestCase):
         with recorder:
             res = test_app.greet("test")
         # Compare results to expected.
-        tru_session.force_flush()
+        TruSession().force_flush()
         actual = self._get_events()
         for _ in range(10):
             print("START LOGS:")
