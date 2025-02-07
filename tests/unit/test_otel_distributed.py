@@ -29,7 +29,10 @@ LOG_FILE = "/tmp/all_logs.txt"
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.MAIN,
-        full_scoped_attributes={"process_id": os.getpid(), "from_child": False},
+        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+            "process_id": os.getpid(),
+            "from_child": False,
+        },
     )
     def greet(self, name: str) -> str:
         headers = {}
@@ -60,7 +63,10 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             raise ValueError("Unknown path!")
 
     @instrument(
-        full_scoped_attributes={"process_id": os.getpid(), "from_child": True}
+        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+            "process_id": os.getpid(),
+            "from_child": True,
+        }
     )
     def capitalize(self, name: str) -> str:
         return name.upper()
