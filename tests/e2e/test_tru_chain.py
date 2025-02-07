@@ -7,6 +7,7 @@ import weakref
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai.chat_models.base import ChatOpenAI
+import pytest
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import session as core_session
 from trulens.core.schema import base as base_schema
@@ -17,7 +18,7 @@ from trulens.core.utils import keys as key_utils
 from tests import test as mod_test
 
 
-@mod_test.optional_test  # all tests are optional as langchain is optional
+@pytest.mark.optional  # all tests are optional as langchain is optional
 class TestTruChain(mod_test.TruTestCase):
     """Test TruChain apps."""
 

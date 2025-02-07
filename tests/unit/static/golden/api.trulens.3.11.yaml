@@ -1151,6 +1151,7 @@ trulens.core.session.TruSession:
     connector: typing.Optional[trulens.core.database.connector.base.DBConnector, builtins.NoneType]
     delete_app: builtins.function
     find_unused_port: builtins.function
+    force_flush: builtins.function
     get_app: builtins.function
     get_apps: builtins.function
     get_ground_truth: builtins.function
