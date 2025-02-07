@@ -969,7 +969,6 @@ trulens_eval.TruApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1071,7 +1070,6 @@ trulens_eval.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1174,7 +1172,6 @@ trulens_eval.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1277,7 +1274,6 @@ trulens_eval.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1378,7 +1374,6 @@ trulens_eval.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1480,7 +1475,6 @@ trulens_eval.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1583,7 +1577,6 @@ trulens_eval.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     schema: builtins.classmethod
@@ -1717,7 +1710,6 @@ trulens_eval.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
     schema_json: builtins.classmethod
@@ -7181,7 +7173,6 @@ trulens_eval.tru_basic_app.TruBasicApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -7328,7 +7319,6 @@ trulens_eval.tru_chain.TruChain:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -7439,7 +7429,6 @@ trulens_eval.tru_custom_app.TruCustomApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -7571,7 +7560,6 @@ trulens_eval.tru_llama.TruLlama:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -7739,7 +7727,6 @@ trulens_eval.tru_rails.TruRails:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -7850,7 +7837,6 @@ trulens_eval.tru_virtual.TruVirtual:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: trulens.core.utils.pyschema.Method
     root_class: typing.Any
     schema: builtins.classmethod
