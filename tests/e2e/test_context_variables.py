@@ -70,7 +70,3 @@ class TestContextVariables(unittest.TestCase):
         # in such a way that the following call will fail.
         # TODO: find a better way to check if the context variable is cleaned.
         self._snowpark_session.sql("SELECT 1").collect()
-
-
-if __name__ == "__main__":
-    unittest.main()

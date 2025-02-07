@@ -6,7 +6,6 @@ import logging
 import os
 from typing import Any, Dict, List, Optional
 from unittest import TestCase
-from unittest import main
 import uuid
 
 from snowflake.snowpark import Session
@@ -132,7 +131,3 @@ class SnowflakeTestCase(TestCase):
         self._snowflake_schemas_to_delete.add(schema_name)
         self._snowpark_session.use_schema(schema_name)
         return schema_name
-
-
-if __name__ == "__main__":
-    main()

@@ -1,7 +1,6 @@
 """Tests for Feedback class."""
 
 from unittest import TestCase
-from unittest import main
 
 import numpy as np
 from trulens.apps import basic as basic_app
@@ -187,7 +186,3 @@ class TestFeedbackConstructors(TestCase):
                         feedbacks=[f],
                         feedback_mode=feedback_schema.FeedbackMode.DEFERRED,
                     )
-
-
-if __name__ == "__main__":
-    main()

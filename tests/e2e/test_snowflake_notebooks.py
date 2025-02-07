@@ -1,6 +1,5 @@
 import tempfile
 from typing import Sequence
-from unittest import main
 
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _TRULENS_PACKAGES,
@@ -75,7 +74,3 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
         self.run_query(
             f"PUT file://{filename} @{_STAGE_NAME} AUTO_COMPRESS = FALSE"
         )
-
-
-if __name__ == "__main__":
-    main()

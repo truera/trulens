@@ -3,7 +3,6 @@ from http.server import HTTPServer
 import multiprocessing
 import os
 import time
-import unittest
 
 import opentelemetry.context as context_api
 from opentelemetry.propagate import extract
@@ -127,7 +126,3 @@ class TestOtelDistributed(OtelAppTestCase):
                     f"ai.observability.{attribute}"
                 ],
             )
-
-
-if __name__ == "__main__":
-    unittest.main()

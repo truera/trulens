@@ -231,7 +231,3 @@ class TestOtelCosts(OtelAppTestCase):
             model,
             "USD",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

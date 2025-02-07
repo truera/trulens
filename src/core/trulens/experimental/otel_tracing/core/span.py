@@ -120,9 +120,6 @@ def set_general_span_attributes(
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
     span.set_attribute(
-        SpanAttributes.DOMAIN, str(get_baggage(SpanAttributes.DOMAIN))
-    )
-    span.set_attribute(
         SpanAttributes.APP_NAME, str(get_baggage(SpanAttributes.APP_NAME))
     )
     span.set_attribute(

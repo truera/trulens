@@ -14,7 +14,6 @@ are expected.
 """
 
 from pathlib import Path
-from unittest import main
 
 from trulens.apps import custom as custom_app
 from trulens.core.feedback import feedback as core_feedback
@@ -150,7 +149,3 @@ class TestSerial(mod_test.TruTestCase):
                         "ret",
                     ]),
                 )
-
-
-if __name__ == "__main__":
-    main()
