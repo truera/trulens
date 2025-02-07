@@ -1,7 +1,7 @@
 import re
 from unittest import TestCase
 
-from tests import test as test_utils
+import pytest
 
 
 def clean_up_feature(feat: str) -> str:
@@ -13,7 +13,7 @@ def clean_up_feature(feat: str) -> str:
 class TestHotspots(TestCase):
     """Tests for hotspots."""
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_simple(self) -> None:
         """Run the simple tests."""
 
