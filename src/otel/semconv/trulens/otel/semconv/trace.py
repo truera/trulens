@@ -226,9 +226,6 @@ class SpanAttributes:
         EVAL_ROOT_ID = base + ".eval_root_id"
         """Span id for the EVAL_ROOT span this span is under."""
 
-        TARGET_RECORD_ID = base + ".target_record_id"
-        """Record id of the record being evaluated."""
-
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
 
@@ -275,6 +272,9 @@ class SpanAttributes:
 
         SCORE = base + ".score"
         """Score for this sub-step."""
+
+        TARGET_RECORD_ID = base + ".target_record_id"
+        """Record id of the record being evaluated."""
 
     class COST:
         """Attributes for spans with a cost."""
