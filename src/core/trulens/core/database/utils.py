@@ -131,6 +131,9 @@ def check_db_revision(
         logger.info("Found legacy SQLite file: %s", engine.url)
         raise db_exceptions.DatabaseVersionException.behind()
 
+    logger.info(
+        f"KOJIKUN:\nengine:\n{engine}\nprefix:\n{prefix}\nengine.url:\n{engine.url}"
+    )
     revisions = db_migrations.DbRevisions.load(engine, prefix=prefix)
 
     if revisions.current is None:
