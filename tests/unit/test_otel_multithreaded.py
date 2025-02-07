@@ -53,7 +53,7 @@ class TestOtelMultiThreaded(OtelAppTestCase):
             recorder.attach_to_context("best_baby", "Kojikun")
             test_app.respond_to_query("test")
         # Compare results to expected.
-        tru_session.experimental_force_flush()
+        tru_session.force_flush()
         actual = self._get_events()
         seen_span_ids = set()
         for _, row in actual.iterrows():

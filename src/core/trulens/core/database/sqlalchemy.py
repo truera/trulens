@@ -22,6 +22,7 @@ import warnings
 
 from alembic.ddl.impl import DefaultImpl
 import numpy as np
+from packaging.version import Version
 import pandas as pd
 import pydantic
 from pydantic import Field
@@ -137,8 +138,17 @@ class SQLAlchemyDB(core_db.DB):
     def _reload_engine(self):
         if self.engine is None:
             # Check if the dialect is snowflake and set isolation_level
+            snowflake_sqlalchemy_version = None
+            try:
+                import snowflake.sqlalchemy
+
+                snowflake_sqlalchemy_version = snowflake.sqlalchemy.__version__
+            except Exception:
+                pass
             if (
-                "url" in self.engine_params
+                snowflake_sqlalchemy_version
+                and Version(snowflake_sqlalchemy_version) >= Version("1.7.2")
+                and "url" in self.engine_params
                 and "snowflake" in self.engine_params["url"]
             ):
                 temp_engine = sa.create_engine(**self.engine_params)

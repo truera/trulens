@@ -120,12 +120,6 @@ class SpanAttributes:
         RECORD = "record"
         """A span in a record."""
 
-        CALL = "call"
-        """A function call."""
-
-        COST = "cost"
-        """A span with a cost."""
-
         # Semantic mixable types. A span can have multiple of these types.
 
         RETRIEVAL = "retrieval"
@@ -214,13 +208,6 @@ class SpanAttributes:
 
         RECORD_ID = base + ".record_id"
 
-        TOTAL_COST = base + ".total_cost"
-        """Total cost of the record.
-
-        Note that child spans might include cost type spans. This is the sum of
-        all those costs.
-        """
-
     class EVAL_ROOT:
         """Attributes for the root span of a feedback evaluation.
 
@@ -266,11 +253,26 @@ class SpanAttributes:
         base = BASE_SCOPE + ".cost"
 
         COST = base + ".cost"
-        """Cost of the span.
+        """Cost of the span."""
 
-        JSONization of
-        [trulens.core.schema.base.Cost][trulens.core.schema.base.Cost].
-        """
+        CURRENCY = base + ".cost_currency"
+        """Currency of the cost."""
+
+        MODEL = base + ".model"
+        """Model used that caused any costs."""
+
+        NUM_TOKENS = base + ".num_tokens"
+        """Total tokens processed. """
+
+        NUM_PROMPT_TOKENS = base + ".num_prompt_tokens"
+        """Number of prompt tokens supplied."""
+
+        NUM_COMPLETION_TOKENS = base + ".num_completion_tokens"
+        """Number of completion tokens generated."""
+
+        NUM_CORTEX_GUARDRAIL_TOKENS = base + ".num_cortex_guardrails_tokens"
+        """Number of guardrails tokens generated. This is only available for
+        requests instrumented by the Cortex endpoint."""
 
     class RECORD:
         """Attributes for spans traced as part of a recording."""

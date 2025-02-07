@@ -9,6 +9,7 @@ from pprint import PrettyPrinter
 from unittest import main
 from unittest import skip
 
+import pytest
 from snowflake.snowpark import Session
 from trulens.core import experimental as core_experimental
 from trulens.core import session as core_session
@@ -184,7 +185,7 @@ class TestEndpoints(test_utils.TruTestCase):
                     "Expected cost currency to be Snowflake credits.",
                 )
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_dummy_hugs(self):
         """Check that cost tracking works for the dummy huggingface provider."""
 
@@ -199,7 +200,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_llm_provider_endpoint(DummyProvider())
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_hugs(self):
         """Check that cost tracking works for the huggingface endpoint."""
 
@@ -207,7 +208,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_hugs_provider_endpoint(Huggingface())
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_openai(self):
         """Check that cost tracking works for openai models."""
 
@@ -220,7 +221,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_litellm_openai(self):
         """Check that cost tracking works for openai models through litellm."""
 
@@ -241,7 +242,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_openai_azure(self):
         """Check that cost tracking works for openai azure models."""
 
@@ -260,7 +261,7 @@ class TestEndpoints(test_utils.TruTestCase):
 
         self._test_llm_provider_endpoint(provider)
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_litellm_openai_azure(self):
         """Check that cost tracking works for openai models through litellm."""
 
@@ -285,7 +286,7 @@ class TestEndpoints(test_utils.TruTestCase):
         self._test_llm_provider_endpoint(provider)
 
     @skip("No keys available.")
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_bedrock(self):
         """Check that cost tracking works for bedrock models."""
 
@@ -297,7 +298,7 @@ class TestEndpoints(test_utils.TruTestCase):
         self._test_llm_provider_endpoint(provider, with_cost=False)
 
     @skip("No keys available.")
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_litellm_bedrock(self):
         """Check that cost tracking works for bedrock models through litellm."""
 
@@ -315,7 +316,7 @@ class TestEndpoints(test_utils.TruTestCase):
         # Litellm comes with cost tracking for bedrock though it may be inaccurate.
         self._test_llm_provider_endpoint(provider)
 
-    @test_utils.optional_test
+    @pytest.mark.optional
     def test_cortex(self):
         """Check that cost (token) tracking works for Cortex LLM Functions"""
         from trulens.providers.cortex import Cortex

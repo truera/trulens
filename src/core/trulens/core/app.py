@@ -5,7 +5,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 import contextvars
 import datetime
-from functools import wraps
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
@@ -462,39 +461,16 @@ class App(
             kwargs["connector"] = connector
             if _can_import("trulens.connectors.snowflake"):
                 from trulens.connectors.snowflake import SnowflakeConnector
-                from trulens.connectors.snowflake.dao.enums import ObjectType
-                from trulens.connectors.snowflake.dao.external_agent import (
-                    ExternalAgentDao,
-                )
-                from trulens.connectors.snowflake.dao.run import RunDao
 
                 if isinstance(connector, SnowflakeConnector):
-                    self.snowflake_object_type = kwargs.get(
-                        "object_type", ObjectType.EXTERNAL_AGENT
+                    self.snowflake_app_dao = (
+                        connector.initialize_snowflake_app_dao(
+                            object_type=kwargs["object_type"],
+                            app_name=kwargs["app_name"],
+                            app_version=kwargs["app_version"],
+                        )
                     )
 
-                    if self.snowflake_object_type not in ObjectType:
-                        raise ValueError(
-                            f"Invalid object_type to initialize Snowflake app: {self.snowflake_object_type}"
-                        )
-
-                    snowpark_session = connector.snowpark_session()
-
-                    if self.snowflake_object_type == ObjectType.EXTERNAL_AGENT:
-                        # side effect: create external agent if not exist
-                        self.snowflake_app_dao = ExternalAgentDao(
-                            snowpark_session
-                        )
-                        self.snowflake_run_dao = RunDao(snowpark_session)
-
-                        self.snowflake_object_name = (
-                            self.snowflake_app_dao.create_agent_if_not_exist(
-                                name=kwargs["app_name"],
-                                version=kwargs["app_version"],
-                            )
-                        )
-
-                    # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
@@ -1660,35 +1636,18 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         logger.info("\n".join(object_strings))
 
-    def _validate_snowflake_attributes(self) -> None:
-        """
-        Helper function to check if a Snowpark session is available.
-
-        Raises:
-            NotImplementedError: If no Snowpark session (and thus no ExternalAgentDAO) is available.
-        """
+    def _check_snowflake_dao(self):
         if (
-            self.snowflake_app_dao is None
-            or self.snowflake_object_type is None
-            or self.snowflake_object_name is None
-            or self.snowflake_run_dao is None
+            not hasattr(self, "snowflake_app_dao")
+            or self.snowflake_app_dao is None
         ):
             msg = (
-                "This API currently requires Snowflake attributes. Please initialize App with "
-                "a valid snowpark_session."
+                "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
+                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
             )
             logger.error(msg)
             raise NotImplementedError(msg)
-
-    def require_snowflake(func: Callable):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            self._validate_snowflake_attributes()
-            return func(self, *args, **kwargs)
-
-        return wrapper
-
-    @require_snowflake
+    
     def add_run(self, run_name: str, run_config: RunConfig) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
@@ -1700,6 +1659,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         Returns:
             Run: Run instance
         """
+        self._check_snowflake_dao()
         run_metadata_json = self.snowflake_run_dao.create_run_if_not_exist(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
@@ -1711,13 +1671,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         return Run.model_validate(run_metadata_json)
 
-    @require_snowflake
     def list_runs(self) -> List[Run]:
         """Retrieve all runs belong to the snowflake App.
 
         Returns:
             List[Run]: List of Run instances
         """
+        self._check_snowflake_dao()
         run_metadata_json_lst = self.snowflake_run_dao.list_all_runs(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
@@ -1727,9 +1687,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             for run_metadata_json in run_metadata_json_lst
         ]
 
-    @require_snowflake
     def delete_snowflake_app(self) -> None:
         """Delete the snowflake App (managing object) in snowflake, if applicable."""
+        self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
 
 
