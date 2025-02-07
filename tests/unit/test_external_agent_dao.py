@@ -40,16 +40,13 @@ class TestExternalAgentDao(TruTestCase):
         self.dao = ExternalAgentDao(snowpark_session=self.sf_session)
 
     @patch("trulens.connectors.snowflake.dao.sql_utils.execute_query")
-    @patch("trulens.connectors.snowflake.dao.sql_utils.fetch_query")
-    def test_create_agent_agent_not_exists(
-        self, mock_fetch_query, mock_execute_query
-    ):
+    def test_create_agent_agent_not_exists(self, mock_execute_query):
         empty_df = pd.DataFrame({"name": []})
-        mock_fetch_query.return_value = empty_df
+        mock_execute_query.return_value = empty_df
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
-        expected_fqn = "DB.SCH.agent1"
+        expected_fqn = "DB.SCH.AGENT1"
         expected_query = "CREATE EXTERNAL AGENT ? WITH VERSION ?;"
         expected_parameters = (expected_fqn, "v1")
         expected_message = (
@@ -57,84 +54,83 @@ class TestExternalAgentDao(TruTestCase):
         )
 
         # create_new_agent is called, so sql_utils.execute_query should be called once.
-        mock_execute_query.assert_called_once_with(
+        mock_execute_query.assert_any_call(
             self.sf_session,
             expected_query,
             expected_parameters,
             expected_message,
         )
-        # list_agents should be called once.
-        mock_fetch_query.assert_called_once()
+
+        self.assertEqual(mock_execute_query.call_count, 2)
 
     @patch("trulens.connectors.snowflake.dao.sql_utils.execute_query")
-    @patch("trulens.connectors.snowflake.dao.sql_utils.fetch_query")
-    def test_create_agent_agent_exists_version_exists(
-        self, mock_fetch_query, mock_execute_query
-    ):
+    def test_create_agent_agent_exists_version_exists(self, mock_execute_query):
         df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
         # For list_agent_versions, simulate that version "v1" already exists by returning a DataFrame.
         df_versions = pd.DataFrame({"version": ["v1"]})
-        mock_fetch_query.side_effect = [df_agents, df_versions]
+        mock_execute_query.side_effect = [df_agents, df_versions]
 
         self.dao.create_agent_if_not_exist("agent1", "v1")
 
         # No query should be executed since the agent and version already exist.
-        mock_execute_query.assert_not_called()
-        self.assertEqual(mock_fetch_query.call_count, 2)
+        self.assertEqual(mock_execute_query.call_count, 2)
 
     @patch("trulens.connectors.snowflake.dao.sql_utils.execute_query")
-    @patch("trulens.connectors.snowflake.dao.sql_utils.fetch_query")
     def test_create_agent_agent_exists_version_not_exists_empty_list(
-        self, mock_fetch_query, mock_execute_query
+        self, mock_execute_query
     ):
-        df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
+        # Simulate that the agent exists.
+        df_agents = pd.DataFrame({"name": ["DB.SCH.AGENT1"]})
+        # Simulate that no versions exist.
         df_versions = pd.DataFrame({"version": []})
+        # Then a creation call for adding the new version.
+        df_creation = pd.DataFrame()
         # For the subsequent call to list_agent_versions, simulate that no version exists. This should be rare.
-        mock_fetch_query.side_effect = [df_agents, df_versions]
+        mock_execute_query.side_effect = [df_agents, df_versions, df_creation]
 
         self.dao.create_agent_if_not_exist("agent1", "v2")
 
-        expected_fqn = "DB.SCH.agent1"
+        expected_fqn = "DB.SCH.AGENT1"
         expected_query = "ALTER EXTERNAL AGENT ? ADD VERSION ?;"
         expected_parameters = (expected_fqn, "v2")
         expected_message = f"Added version v2 to External Agent {expected_fqn}."
 
         # The DAO should call execute_query to add the new version.
-        mock_execute_query.assert_called_once_with(
+        mock_execute_query.assert_any_call(
             self.sf_session,
             expected_query,
             expected_parameters,
             expected_message,
         )
-        self.assertEqual(mock_fetch_query.call_count, 2)
+        self.assertEqual(mock_execute_query.call_count, 3)
 
     @patch("trulens.connectors.snowflake.dao.sql_utils.execute_query")
-    @patch("trulens.connectors.snowflake.dao.sql_utils.fetch_query")
     def test_create_agent_agent_exists_version_not_in_existing_list(
-        self, mock_fetch_query, mock_execute_query
+        self, mock_execute_query
     ):
         # agent exists and some versions are present,
         # but different from the version we want to add.
-        df_agents = pd.DataFrame({"name": ["DB.SCH.agent1"]})
+        df_agents = pd.DataFrame({"name": ["DB.SCH.AGENT1"]})
         df_versions = pd.DataFrame({"version": ["v1", "v2"]})
+        df_creation = pd.DataFrame()
         # Existing versions do not include "v3"
-        mock_fetch_query.side_effect = [df_agents, df_versions]
+        mock_execute_query.side_effect = [df_agents, df_versions, df_creation]
 
         self.dao.create_agent_if_not_exist("agent1", "v3")
 
-        expected_fqn = "DB.SCH.agent1"
+        expected_fqn = "DB.SCH.AGENT1"
         expected_query = "ALTER EXTERNAL AGENT ? ADD VERSION ?;"
         expected_parameters = (expected_fqn, "v3")
         expected_message = f"Added version v3 to External Agent {expected_fqn}."
 
         # The DAO should call execute_query to add the new version.
-        mock_execute_query.assert_called_once_with(
+        mock_execute_query.assert_any_call(
             self.sf_session,
             expected_query,
             expected_parameters,
             expected_message,
         )
-        self.assertEqual(mock_fetch_query.call_count, 2)
+        self.assertEqual(mock_execute_query.call_count, 3)
 
     @patch("trulens.connectors.snowflake.dao.sql_utils.execute_query")
     def test_create_new_agent_with_fqn(self, mock_execute_query):
@@ -143,7 +139,7 @@ class TestExternalAgentDao(TruTestCase):
         create_new_agent uses it unchanged.
         """
         # Provide a fully qualified agent name.
-        fully_qualified_name = "MYDB.MYSC.agentX"
+        fully_qualified_name = "MYDB.MYSC.AGENTX"
         version = "v1"
         self.dao.create_new_agent(fully_qualified_name, version)
 
@@ -173,14 +169,14 @@ class TestExternalAgentDao(TruTestCase):
 
         # Case 2: An already fully qualified name - no quoting will be done.
         agent_name_fqn = "otherdb.othersch.agentX"
-        expected_fqn = "otherdb.othersch.agentX"
+        expected_fqn = "OTHERDB.OTHERSCH.AGENTX"
         self.assertEqual(
             self.dao.resolve_agent_name(agent_name_fqn), expected_fqn
         )
 
         # Case 3: A simple agent name with lower case.
         agent_name = "agentx"
-        expected_fqn = "DB.SCH.agentx"
+        expected_fqn = "DB.SCH.AGENTX"
         self.assertEqual(self.dao.resolve_agent_name(agent_name), expected_fqn)
 
 

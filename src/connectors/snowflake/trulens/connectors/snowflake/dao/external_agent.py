@@ -21,19 +21,23 @@ class ExternalAgentDao:
 
     def _quote_if_needed(self, identifier: str) -> str:
         """
-        Note we only use qmark style parameter binding in our Snowflake connector.
-
-        If the identifier is already quoted or satisfies criteria of a simple unquoted identifier, return it unchanged.
-        Return the identifier wrapped in double quotes if it does not match the pattern of
-        a simple unquoted identifier specified by Snowflake.
+        If the identifier is already quoted, return it unchanged.
+        If the identifier matches the simple unquoted identifier pattern (i.e.
+        starts with a letter (A-Z, a-z) or an underscore, and contains only letters,
+        decimal digits (0-9), underscores, or dollar signs),
+        return the identifier in uppercase (since Snowflake stores unquoted identifiers as uppercase).
+        Otherwise, wrap the identifier in double quotes.
+        ref: https://docs.snowflake.com/en/sql-reference/identifiers-syntax
         """
-        if (
-            identifier.startswith('"') and identifier.endswith('"')
-        ) or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_$]*", identifier):
-            # A simple unquoted identifier in Snowflake must be all uppercase/lowercase letters, digits, dollar sign, or underscores.
-            # https://docs.snowflake.com/en/sql-reference/identifiers-syntax
+        # If already double-quoted, return as-is.
+        if identifier.startswith('"') and identifier.endswith('"'):
             return identifier
 
+        # If it matches the simple identifier pattern, return in uppercase.
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_$]*", identifier):
+            return identifier.upper()
+
+        # Otherwise, wrap it in double quotes.
         return f'"{identifier}"'
 
     def resolve_agent_name(self, name: str) -> str:
@@ -129,11 +133,11 @@ class ExternalAgentDao:
     def list_agents(self) -> pandas.DataFrame:
         """Retrieve a list of all External Agents."""
         query = "SHOW EXTERNAL AGENTS;"
-        return sql_utils.fetch_query(
+        return sql_utils.execute_query(
             self.session,
             query,
-            "Retrieved list of External Agents.",
             parameters=(),
+            success_message="Retrieved list of External Agents.",
         )
 
     def list_agent_versions(self, name: str) -> List[str]:
@@ -141,11 +145,16 @@ class ExternalAgentDao:
         agent_fqn = self.resolve_agent_name(name)
         query = "SHOW VERSIONS IN EXTERNAL AGENT ?;"
         parameters = (agent_fqn,)
-        result_df = sql_utils.fetch_query(
+        result_df = sql_utils.execute_query(
             self.session,
             query,
-            f"Retrieved versions for External Agent {agent_fqn}.",
             parameters,
+            f"Retrieved versions for External Agent {agent_fqn}.",
         )
 
         return result_df["version"].values.tolist()
+
+    def check_agent_exists(self, name: str) -> bool:
+        """Check if an External Agent exists."""
+        agent_fqn = self.resolve_agent_name(name)
+        return agent_fqn in self.list_agents()["name"].values

@@ -484,7 +484,6 @@ class App(
                             version=kwargs["app_version"],
                         )
 
-                    # TODO: figure out how to handle CORTEX_SEARCH_SERVICE and other object types like 1p agents
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
