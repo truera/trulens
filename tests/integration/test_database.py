@@ -27,7 +27,6 @@ import shutil
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, Literal, Union
 from unittest import TestCase
-from unittest import main
 
 import pandas as pd
 from sqlalchemy import Engine
@@ -492,7 +491,3 @@ def _populate_data(db: core_db.DB):
         print("  ", res)
 
     return fb, app, rec
-
-
-if __name__ == "__main__":
-    main()

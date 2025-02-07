@@ -5,7 +5,6 @@ import importlib
 import inspect
 import sys
 from unittest import TestCase
-from unittest import main
 
 import pytest
 
@@ -149,7 +148,3 @@ class TestDeprecation(TestCase):
                                 except BaseException:
                                     pass
                         """
-
-
-if __name__ == "__main__":
-    main()

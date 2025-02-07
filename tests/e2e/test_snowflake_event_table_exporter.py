@@ -12,9 +12,9 @@ from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import BASE_SCOPE
 
-from tests.unit.test_otel_tru_chain import TestOtelTruChain
-from tests.unit.test_otel_tru_custom import TestApp
-from tests.unit.test_otel_tru_llama import TestOtelTruLlama
+import tests.unit.test_otel_tru_chain
+import tests.unit.test_otel_tru_custom
+import tests.unit.test_otel_tru_llama
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
@@ -105,7 +105,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def test_tru_custom_app(self):
         # Create app.
-        app = TestApp()
+        app = tests.unit.test_otel_tru_custom.TestApp()
         tru_recorder = TruCustomApp(
             app,
             app_name="custom app",
@@ -125,7 +125,9 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def test_tru_llama(self):
         # Create app.
-        rag = TestOtelTruLlama._create_simple_rag()
+        rag = (
+            tests.unit.test_otel_tru_llama.TestOtelTruLlama._create_simple_rag()
+        )
         tru_recorder = TruLlama(
             rag,
             app_name="llama-index app",
@@ -141,7 +143,9 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
 
     def test_tru_chain(self):
         # Create app.
-        rag = TestOtelTruChain._create_simple_rag()
+        rag = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
         tru_recorder = TruChain(
             rag,
             app_name="langchain app",

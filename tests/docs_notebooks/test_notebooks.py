@@ -3,7 +3,6 @@ from os import listdir
 import shutil
 from typing import Sequence
 from unittest import TestCase
-from unittest import main
 
 from nbconvert.preprocessors import ExecutePreprocessor
 from nbformat import read
@@ -135,6 +134,3 @@ for filename in listdir("./tests/docs_notebooks/notebooks_to_test/"):
                         filename, db_compat_version=version
                     ),
                 )
-
-if __name__ == "__main__":
-    main()

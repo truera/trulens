@@ -3,7 +3,6 @@ Tests server-side feedback evaluations in Snowflake.
 """
 
 import time
-from unittest import main
 
 import pytest
 from trulens.apps.basic import TruBasicApp
@@ -279,7 +278,3 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
         )
-
-
-if __name__ == "__main__":
-    main()

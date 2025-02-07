@@ -1,5 +1,4 @@
 from typing import List
-import unittest
 
 from trulens.apps.app import TruApp
 from trulens.core import Feedback
@@ -64,7 +63,3 @@ class TestOtelGuardrail(OtelAppTestCase):
                 )
                 seen = True
         self.assertTrue(seen)
-
-
-if __name__ == "__main__":
-    unittest.main()

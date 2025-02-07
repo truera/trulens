@@ -2,7 +2,6 @@
 Tests for a Snowflake connection.
 """
 
-from unittest import main
 import uuid
 
 import pytest
@@ -101,7 +100,3 @@ class TestSnowflakeConnection(SnowflakeTestCase):
             SnowflakeConnector(snowpark_session=snowpark_session)
         finally:
             snowflake.connector.paramstyle = default_paramstyle
-
-
-if __name__ == "__main__":
-    main()

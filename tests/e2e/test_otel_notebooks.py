@@ -38,7 +38,3 @@ class TestOtelNotebooks(unittest.TestCase):
             os.path.join("examples/experimental/otel_exporter.ipynb"),
             timeout_in_seconds=300,
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

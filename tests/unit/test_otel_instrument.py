@@ -216,7 +216,3 @@ class TestOtelInstrument(unittest.TestCase):
             spans[1].attributes[f"{BASE_SCOPE}.unknown.best_babies"],
             ("Kojikun", "Nolan"),
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -7,7 +7,6 @@ import inspect
 import os
 import sys
 from typing import Any, Dict, Iterable, Optional, Sequence, Tuple
-from unittest import main
 from unittest import skipIf
 
 from jsondiff import SymmetricJsonDiffSyntax
@@ -251,7 +250,3 @@ class TestAPI(mod_test.TruTestCase):
                     self.fail(
                         f"API mismatch: {diff_type} at {diff_lens} value {diff_value}"
                     )
-
-
-if __name__ == "__main__":
-    main()

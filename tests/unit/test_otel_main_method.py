@@ -1,5 +1,3 @@
-import unittest
-
 from trulens.apps.app import TruApp
 
 from tests.util.otel_app_test_case import OtelAppTestCase
@@ -23,7 +21,3 @@ class TestOtelMainMethod(OtelAppTestCase):
                 # Intentionally omitting main_method
             )
         self.assertIn("main_method", str(context.exception))
-
-
-if __name__ == "__main__":
-    unittest.main()
