@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import multiprocessing
 import os
+import pprint
 import time
 import unittest
 
@@ -125,6 +126,11 @@ class TestOtelDistributed(OtelAppTestCase):
             print(fh.read())
         for _ in range(10):
             print("STOP LOGS!")
+        for _ in range(10):
+            print("START EVENTS:")
+        pprint.pprint(actual.T)
+        for _ in range(10):
+            print("STOP EVENTS!")
         self.assertEqual(res, "TEST")
         self.assertEqual(len(actual), 3)
         self.assertNotEqual(
