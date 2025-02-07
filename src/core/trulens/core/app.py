@@ -1031,11 +1031,16 @@ class App(
         ):
             raise RuntimeError("OTEL Tracing is not enabled for this session.")
 
-        from trulens.core.otel.instrument import OTELRecordingContext as OTELApp
+        from trulens.core.otel.instrument import OTELRecordingContext
 
         # Pylance shows an error here, but it is likely a false positive. due to the overriden
         # model dump returning json instead of a dict.
-        return OTELApp(app=self, run_name=run_name, input_id=input_id)
+        return OTELRecordingContext(
+            app_name=self.app_name,
+            app_version=self.app_version,
+            run_name=run_name,
+            input_id=input_id,
+        )
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
