@@ -6,7 +6,6 @@ various secrets configured. See `setUp` below.
 
 import os
 from pprint import PrettyPrinter
-from unittest import main
 from unittest import skip
 
 import pytest
@@ -339,7 +338,3 @@ class TestEndpoints(test_utils.TruTestCase):
         )
 
         self._test_llm_provider_endpoint(provider)
-
-
-if __name__ == "__main__":
-    main()

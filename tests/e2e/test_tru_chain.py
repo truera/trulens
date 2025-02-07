@@ -1,7 +1,6 @@
 """Tests for TruChain."""
 
 from typing import Optional
-from unittest import main
 import weakref
 
 from langchain.prompts import PromptTemplate
@@ -300,7 +299,3 @@ class TestTruChain(mod_test.TruTestCase):
         rec = record_schema.Record.model_validate_json(recs.iloc[0].record_json)
         self.assertNotEqual(rec.meta, meta)
         self.assertEqual(rec.meta, new_meta)
-
-
-if __name__ == "__main__":
-    main()

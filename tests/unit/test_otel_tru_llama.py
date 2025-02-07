@@ -2,8 +2,6 @@
 Tests for OTEL TruLlama app.
 """
 
-from unittest import main
-
 import pytest
 from trulens.core.session import TruSession
 
@@ -76,7 +74,3 @@ class TestOtelTruLlama(OtelAppTestCase):
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
-
-
-if __name__ == "__main__":
-    main()

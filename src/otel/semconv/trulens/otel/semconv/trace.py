@@ -72,9 +72,6 @@ class SpanAttributes:
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
 
-    DOMAIN = BASE_SCOPE + ".domain"  # TODO(otel): Is this necessary?
-    """Domain of the app that the span belongs to. "module" for external apps."""
-
     class SpanType(str, Enum):
         """Span type attribute values.
 

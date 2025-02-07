@@ -6,7 +6,6 @@ from pprint import PrettyPrinter
 from typing import Callable, Dict, List, Tuple
 import unittest
 from unittest import TestCase
-from unittest import main
 
 import pytest
 from trulens.core.utils import keys as key_utils
@@ -883,7 +882,3 @@ class TestProviders(TestCase):
             )
         else:
             print(f"{lc}: {total_tests}/{total_tests} tests passed.")
-
-
-if __name__ == "__main__":
-    main()

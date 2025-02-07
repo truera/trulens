@@ -48,7 +48,3 @@ class TestOtelSnowflakeEventTableExporter(unittest.TestCase):
             TruLensSnowflakeSpanExporter(
                 connector=mock_connector, verify_via_dry_run=True
             )
-
-
-if __name__ == "__main__":
-    unittest.main()

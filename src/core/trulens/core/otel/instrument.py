@@ -432,7 +432,6 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
-        self.attach_to_context(SpanAttributes.DOMAIN, "module")
         self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
@@ -473,7 +472,6 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
     def __enter__(self):
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
-        self.attach_to_context(SpanAttributes.DOMAIN, "module")
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
 

@@ -1,7 +1,6 @@
 import threading
 import time
 from typing import Tuple
-import unittest
 
 import numpy as np
 from opentelemetry import trace
@@ -75,7 +74,3 @@ class TestOtelMultiThreaded(OtelAppTestCase):
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)
-
-
-if __name__ == "__main__":
-    unittest.main()
