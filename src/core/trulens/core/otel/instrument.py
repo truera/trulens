@@ -502,7 +502,7 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         )
         root_span.set_attribute(
             SpanAttributes.EVAL_ROOT.EVAL_ROOT_ID,
-            root_span.get_span_context().span_id,
+            str(root_span.get_span_context().span_id),
         )
 
         return root_span

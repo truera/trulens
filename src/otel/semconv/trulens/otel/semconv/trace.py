@@ -110,7 +110,10 @@ class SpanAttributes:
         """The main span of a record."""
 
         EVAL_ROOT = "eval_root"
-        """Feedback function evaluation span."""
+        """Feedback function evaluation root span."""
+
+        EVAL_CHILD = "eval_child"
+        """Feedback function evaluation child span denoting important sub-steps."""
 
         # Non-semantic mixable types indicate presence of common sets of attributes.
 
@@ -255,6 +258,23 @@ class SpanAttributes:
 
         METADATA = base + ".metadata"
         """Any metadata of the evaluation."""
+
+    class EVAL_CHILD:
+        """
+        Attributes for the children span of a feedback evaluation that
+        represent important sub-steps of the evaluation.
+        """
+
+        base = BASE_SCOPE + ".eval_child"
+
+        CRITERIA = base + ".criteria"
+        """Criteria for this sub-step."""
+
+        EVIDENCE = base + ".evidence"
+        """Evidence for the score for this sub-step."""
+
+        SCORE = base + ".score"
+        """Score for this sub-step."""
 
     class COST:
         """Attributes for spans with a cost."""
