@@ -1,5 +1,7 @@
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
+import logging
+import logging.handlers
 import multiprocessing
 import os
 import time
@@ -12,15 +14,20 @@ import requests
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
+from trulens.experimental.otel_tracing.core.exporter.connector import (
+    set_up_logging,
+)
 from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
+
+LOG_FILE = "/tmp/all_logs.txt"
 
 
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.MAIN,
-        full_scoped_attributes={"process_id": os.getpid()},
+        full_scoped_attributes={"process_id": os.getpid(), "from_child": False},
     )
     def greet(self, name: str) -> str:
         headers = {}
@@ -39,7 +46,6 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             name = self.path.split("=")[1]
             capitalized_name = self.capitalize(name)
             TruSession().force_flush()
-            time.sleep(10)  # Give time to flush.
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
@@ -51,12 +57,15 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
         else:
             raise ValueError("Unknown path!")
 
-    @instrument(full_scoped_attributes={"process_id": os.getpid()})
+    @instrument(
+        full_scoped_attributes={"process_id": os.getpid(), "from_child": True}
+    )
     def capitalize(self, name: str) -> str:
         return name.upper()
 
 
 def run_server():
+    set_up_logging(log_level=logging.DEBUG, start_fresh=False)
     os.environ["TRULENS_OTEL_TRACING"] = "1"
     TruSession()  # This starts an exporter.
     server = HTTPServer(("localhost", 8000), CapitalizeHandler)
@@ -83,6 +92,7 @@ class TestOtelDistributed(OtelAppTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        set_up_logging(log_level=logging.DEBUG)
         cls.server_process = multiprocessing.Process(target=run_server)
         cls.server_process.start()
         cls._wait_for_server()
@@ -127,6 +137,12 @@ class TestOtelDistributed(OtelAppTestCase):
                     f"ai.observability.{attribute}"
                 ],
             )
+        for _ in range(10):
+            print("START LOGS:")
+        with open(LOG_FILE, "r") as fh:
+            print(fh.read())
+        for _ in range(10):
+            print("STOP LOGS!")
 
 
 if __name__ == "__main__":
