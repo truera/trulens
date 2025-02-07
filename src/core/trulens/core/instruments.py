@@ -1253,7 +1253,7 @@ class AddInstruments:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
-        print("adding method", of_cls, name, of_cls.__module__)
+        logger.debug("adding method", of_cls, name, of_cls.__module__)
 
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
