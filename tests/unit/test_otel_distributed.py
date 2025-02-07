@@ -117,6 +117,12 @@ class TestOtelDistributed(OtelAppTestCase):
         # Compare results to expected.
         tru_session.force_flush()
         actual = self._get_events()
+        for _ in range(10):
+            print("START LOGS:")
+        with open(LOG_FILE, "r") as fh:
+            print(fh.read())
+        for _ in range(10):
+            print("STOP LOGS!")
         self.assertEqual(len(actual), 3)
         self.assertNotEqual(
             actual.iloc[1]["record_attributes"]["process_id"],
@@ -137,12 +143,6 @@ class TestOtelDistributed(OtelAppTestCase):
                     f"ai.observability.{attribute}"
                 ],
             )
-        for _ in range(10):
-            print("START LOGS:")
-        with open(LOG_FILE, "r") as fh:
-            print(fh.read())
-        for _ in range(10):
-            print("STOP LOGS!")
 
 
 if __name__ == "__main__":
