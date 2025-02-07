@@ -6,15 +6,21 @@ from typing import Any, Dict, List
 
 import pandas as pd
 import pytest
-from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
 from trulens.feedback.computer import _compute_feedback
 from trulens.otel.semconv.trace import SpanAttributes
 
-import tests.unit.test_otel_tru_chain
 from tests.util.otel_app_test_case import OtelAppTestCase
+
+try:
+    # These imports require optional dependencies to be installed.
+    from trulens.apps.langchain import TruChain
+
+    import tests.unit.test_otel_tru_chain
+except Exception:
+    pass
 
 
 def _convert_events_to_MinimalSpanInfos(
