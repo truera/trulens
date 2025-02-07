@@ -20,7 +20,9 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 class _TestApp:
     @instrument(
         span_type=SpanAttributes.SpanType.MAIN,
-        full_scoped_attributes={"process_id": os.getpid()},
+        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+            "process_id": os.getpid()
+        },
     )
     def greet(self, name: str) -> str:
         headers = {}
@@ -39,7 +41,6 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
             name = self.path.split("=")[1]
             capitalized_name = self.capitalize(name)
             TruSession().force_flush()
-            time.sleep(10)  # Give time to flush.
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
@@ -51,7 +52,11 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
         else:
             raise ValueError("Unknown path!")
 
-    @instrument(full_scoped_attributes={"process_id": os.getpid()})
+    @instrument(
+        full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+            "process_id": os.getpid()
+        }
+    )
     def capitalize(self, name: str) -> str:
         return name.upper()
 
@@ -81,23 +86,18 @@ class TestOtelDistributed(OtelAppTestCase):
         if not server_up:
             raise ValueError("Server not up.")
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.server_process = multiprocessing.Process(target=run_server)
-        cls.server_process.start()
-        cls._wait_for_server()
-        return super().setUpClass()
+    def setUp(self) -> None:
+        super().setUp()
+        self.server_process = multiprocessing.Process(target=run_server)
+        self.server_process.start()
+        self._wait_for_server()
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.server_process.terminate()
-        cls.server_process.join()
-        return super().tearDownClass()
+    def tearDown(self) -> None:
+        self.server_process.terminate()
+        self.server_process.join()
+        super().tearDown()
 
     def test_distributed(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
         # Create TruApp that makes a network call.
         test_app = _TestApp()
         custom_app = TruApp(test_app, main_method=test_app.greet)
@@ -105,7 +105,7 @@ class TestOtelDistributed(OtelAppTestCase):
         with recorder:
             test_app.greet("test")
         # Compare results to expected.
-        tru_session.force_flush()
+        TruSession().force_flush()
         actual = self._get_events()
         self.assertEqual(len(actual), 3)
         self.assertNotEqual(
