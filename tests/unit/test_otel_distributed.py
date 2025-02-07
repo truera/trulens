@@ -11,6 +11,7 @@ import unittest
 import opentelemetry.context as context_api
 from opentelemetry.propagate import extract
 from opentelemetry.propagate import inject
+import pandas as pd
 import requests
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
@@ -128,7 +129,13 @@ class TestOtelDistributed(OtelAppTestCase):
             print("STOP LOGS!")
         for _ in range(10):
             print("START EVENTS:")
-        pprint.pprint(actual.T)
+        pd.set_option("display.max_rows", None)
+        pd.set_option("display.max_columns", None)
+        print(actual.T)
+        print("JUST RECORD ATTRIBUTES:")
+        for i, x in enumerate(actual["record_attributes"].to_numpy()):
+            print(i)
+            pprint.pprint(x)
         for _ in range(10):
             print("STOP EVENTS!")
         self.assertEqual(res, "TEST")
