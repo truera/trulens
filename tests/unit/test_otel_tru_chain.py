@@ -2,8 +2,6 @@
 Tests for OTEL TruChain app.
 """
 
-from unittest import main
-
 import pytest
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -79,7 +77,3 @@ class TestOtelTruChain(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
-
-
-if __name__ == "__main__":
-    main()

@@ -1253,7 +1253,7 @@ class AddInstruments:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
-        print("adding method", of_cls, name, of_cls.__module__)
+        logger.debug("adding method", of_cls, name, of_cls.__module__)
 
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
@@ -1282,7 +1282,7 @@ class instrument(AddInstruments):
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
     def __init__(self, func: Callable):
-        print("decorating", func)
+        logger.debug("decorating", func)
         self.func = func
 
     def __set_name__(self, cls: type, name: str):

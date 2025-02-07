@@ -116,7 +116,7 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     if not span.attributes:
         return False
 
-    return bool(span.attributes.get(SpanAttributes.RECORD_ID))
+    return bool(span.attributes.get(SpanAttributes.APP_NAME))
 
 
 def construct_event(span: ReadableSpan) -> event_schema.Event:

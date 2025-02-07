@@ -72,7 +72,7 @@ class SpanAttributes:
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
 
-    DOMAIN = BASE_SCOPE + ".domain"
+    DOMAIN = BASE_SCOPE + ".domain"  # TODO(otel): Is this necessary?
     """Domain of the app that the span belongs to. "module" for external apps."""
 
     class SpanType(str, Enum):
@@ -217,11 +217,17 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
+        APP_NAME = base + ".app_name"
+        """Name of the app for whom this is the root."""
+
+        APP_VERSION = base + ".app_version"
+        """Version of the app for whom this is the root."""
+
+        EVAL_ROOT_ID = base + ".eval_root_id"
+        """Span id for the EVAL_ROOT span this span is under."""
+
         TARGET_RECORD_ID = base + ".target_record_id"
         """Record id of the record being evaluated."""
-
-        TARGET_TRACE_ID = base + ".target_trace_id"
-        """Trace id of the root span of the record being evaluated."""
 
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
@@ -246,6 +252,12 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during evaluation."""
+
+        RESULT = base + ".result"
+        """Result of the evaluation."""
+
+        METADATA = base + ".metadata"
+        """Any metadata of the evaluation."""
 
     class COST:
         """Attributes for spans with a cost."""
