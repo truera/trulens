@@ -14,8 +14,6 @@ from trulens.experimental.otel_tracing.core.exporter.utils import (
     construct_event,
 )
 
-logger = logging.getLogger(__name__)
-
 LOG_FILE = "/tmp/all_logs.txt"
 
 
@@ -71,6 +69,7 @@ class TruLensOTELSpanExporter(SpanExporter):
 
     def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         set_up_logging(log_level=logging.DEBUG, start_fresh=False)
+        logger = logging.getLogger(__name__)
         trulens_spans = list(filter(check_if_trulens_span, spans))
 
         try:

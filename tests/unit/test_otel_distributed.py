@@ -66,6 +66,8 @@ class CapitalizeHandler(BaseHTTPRequestHandler):
 
 def run_server():
     set_up_logging(log_level=logging.DEBUG, start_fresh=False)
+    logger = logging.getLogger(__name__)
+    logger.info("THIS IS THE CHILD!")
     os.environ["TRULENS_OTEL_TRACING"] = "1"
     TruSession()  # This starts an exporter.
     server = HTTPServer(("localhost", 8000), CapitalizeHandler)
@@ -92,7 +94,12 @@ class TestOtelDistributed(OtelAppTestCase):
 
     def setUp(self) -> None:
         set_up_logging(log_level=logging.DEBUG)
+        time.sleep(1)
         super().setUp()
+        TruSession()
+        time.sleep(1)
+        logger = logging.getLogger(__name__)
+        logger.info("THIS IS THE PARENT!")
         self.server_process = multiprocessing.Process(target=run_server)
         self.server_process.start()
         self._wait_for_server()
