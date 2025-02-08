@@ -462,7 +462,7 @@ class OTELRecordingContext(OTELBaseRecordingContext):
         app_version: str,
         run_name: str,
         input_id: str,
-        ground_truth: Optional[str] = None,
+        ground_truth_output: Optional[str] = None,
     ) -> None:
         super().__init__(
             app_name=app_name,
@@ -470,7 +470,7 @@ class OTELRecordingContext(OTELBaseRecordingContext):
             run_name=run_name,
             input_id=input_id,
         )
-        self.ground_truth = ground_truth
+        self.ground_truth_output = ground_truth_output
 
     # For use as a context manager.
     def __enter__(self):
@@ -493,9 +493,10 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 
         # Set general span attributes
         root_span.set_attribute("name", "root")
-        if self.ground_truth is not None:
+        if self.ground_truth_output is not None:
             root_span.set_attribute(
-                SpanAttributes.RECORD_ROOT.GROUND_TRUTH, self.ground_truth
+                SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+                self.ground_truth_output,
             )
         set_snow_span_attributes(root_span)
         set_general_span_attributes(

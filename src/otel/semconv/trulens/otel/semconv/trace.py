@@ -200,7 +200,7 @@ class SpanAttributes:
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
 
-        GROUND_TRUTH = base + ".ground_truth"
+        GROUND_TRUTH_OUTPUT = base + ".ground_truth_output"
         """Ground truth of the record."""
 
     class EVAL_ROOT:
