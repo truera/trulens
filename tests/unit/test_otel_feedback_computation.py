@@ -55,7 +55,11 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
+        with tru_recorder(
+            run_name="test run",
+            input_id="42",
+            ground_truth="Like attention but with more heads.",
+        ):
             rag_chain.invoke("What is multi-headed attention?")
         TruSession().force_flush()
         # Get events.

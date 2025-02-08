@@ -200,7 +200,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(run_name=run_name, input_id="42"):
+        with tru_recorder(
+            run_name=run_name,
+            input_id="42",
+            ground_truth="Like attention but with more heads.",
+        ):
             rag_chain.invoke("What is multi-headed attention?")
         TruSession().force_flush()
         # Validate results.
