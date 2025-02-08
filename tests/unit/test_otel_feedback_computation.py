@@ -2,10 +2,11 @@
 Tests for OTEL Feedback Computation.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 import pytest
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
@@ -81,46 +82,37 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
             return ret
 
         # Define feedback function.
+        @instrument(
+            span_type=SpanAttributes.SpanType.EVAL,
+            full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
+                SpanAttributes.EVAL.CRITERIA: kwargs["criteria"],
+                SpanAttributes.EVAL.EVIDENCE: ret[1],
+                SpanAttributes.EVAL.SCORE: ret[0],
+            },
+        )
+        def child_feedback_function(criteria: str) -> Tuple[float, str]:
+            return {
+                "Is Kojikun the best baby?": (
+                    1,
+                    "Kojikun is extraordinarily cute and fun and is the best baby!",
+                ),
+                "Is Nolan the best baby?": (
+                    0.42,
+                    "Nolan is just another name for Kojikun so he is the best baby!",
+                ),
+            }[criteria]
+
         def feedback_function(**kwargs):
-            # query = kwargs[SpanAttributes.RETRIEVAL.QUERY_TEXT]
-            # contexts = kwargs[SpanAttributes.RETRIEVAL.RETRIEVED_CONTEXTS]
-            # TODO: Implement feedback computation.
-            return 0.42, {"best_baby": "Kojikun"}
+            child_feedback_function("Is Kojikun the best baby?")
+            child_feedback_function("Is Nolan the best baby?")
+            return 0.42, {"best_baby": "Kojikun/Nolan"}
 
         # Compute feedback.
         _compute_feedback(
             record_root, feedback_function, all_retrieval_span_attributes
         )
         tru_session.force_flush()
-        # Check that there are feedback events.
-        events = self._get_events()
-        record_trace_id = None
-        eval_trace_id = None
-        seen_eval_spans = False
-        for _, row in events.iterrows():
-            span_type = row["record_attributes"][SpanAttributes.SPAN_TYPE]
-            trace_id = row["trace"]["trace_id"]
-            if span_type == SpanAttributes.SpanType.RECORD_ROOT:
-                self.assertIsNone(record_trace_id)
-                record_trace_id = trace_id
-            elif span_type == SpanAttributes.SpanType.EVAL_ROOT:
-                seen_eval_spans = True
-                self.assertEqual(
-                    0.42,
-                    row["record_attributes"][SpanAttributes.EVAL_ROOT.RESULT],
-                )
-                self.assertEqual(
-                    "Kojikun",
-                    row["record_attributes"][
-                        f"{SpanAttributes.EVAL_ROOT.METADATA}.best_baby"
-                    ],
-                )
-                self.assertIsNone(eval_trace_id)
-                eval_trace_id = trace_id
-            if seen_eval_spans:
-                self.assertEqual(trace_id, eval_trace_id)
-            else:
-                self.assertEqual(trace_id, record_trace_id)
-        self.assertIsNotNone(record_trace_id)
-        self.assertIsNotNone(eval_trace_id)
-        self.assertNotEqual(record_trace_id, eval_trace_id)
+        # Compare results to expected.
+        self._compare_events_to_golden_dataframe(
+            "tests/unit/static/golden/test_otel_feedback_computation__test_feedback_computation.csv"
+        )
