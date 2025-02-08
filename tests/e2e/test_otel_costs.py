@@ -11,7 +11,7 @@ from snowflake.snowpark import Session
 from trulens.apps.app import TruApp
 from trulens.apps.langchain import TruChain
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import SpanAttributes
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -67,7 +67,6 @@ class _TestLiteLLMApp:
     def respond_to_query(self, query: str) -> str:
         completion = (
             litellm.completion(
-                # model="mistral/mistral-small", # TODO(this_pr) test this?
                 model=self._model,
                 temperature=0,
                 messages=[
@@ -97,37 +96,33 @@ class TestOtelCosts(OtelAppTestCase):
             span_name,
         )
         self.assertEqual(
-            record_attributes[f"{BASE_SCOPE}.costs.model"],
+            record_attributes[SpanAttributes.COST.MODEL],
             cost_model,
         )
         self.assertEqual(
-            record_attributes[f"{BASE_SCOPE}.costs.cost_currency"],
+            record_attributes[SpanAttributes.COST.CURRENCY],
             cost_currency,
         )
         if free:
             self.assertEqual(
-                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                record_attributes[SpanAttributes.COST.COST],
                 0,
             )
         else:
             self.assertGreater(
-                record_attributes[f"{BASE_SCOPE}.costs.cost"],
+                record_attributes[SpanAttributes.COST.COST],
                 0,
             )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_tokens"],
+            record_attributes[SpanAttributes.COST.NUM_TOKENS],
             0,
         )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_prompt_tokens"],
+            record_attributes[SpanAttributes.COST.NUM_PROMPT_TOKENS],
             0,
         )
         self.assertGreater(
-            record_attributes[f"{BASE_SCOPE}.costs.n_completion_tokens"],
-            0,
-        )
-        self.assertGreater(
-            len(record_attributes[f"{BASE_SCOPE}.costs.return"]),
+            record_attributes[SpanAttributes.COST.NUM_COMPLETION_TOKENS],
             0,
         )
 
@@ -150,7 +145,7 @@ class TestOtelCosts(OtelAppTestCase):
         with tru_recorder(run_name="test run", input_id="42"):
             app.respond_to_query("How is baby Kojikun able to be so cute?")
         # Compare results to expected.
-        TruSession().experimental_force_flush()
+        TruSession().force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 2 + len(cost_functions))
         for i, cost_function in enumerate(cost_functions):
@@ -179,7 +174,7 @@ class TestOtelCosts(OtelAppTestCase):
         tru_recorder = TruChain(app, app_name="testing", app_version="v1")
         with tru_recorder(run_name="test run", input_id="42"):
             app.invoke("How is baby Kojikun able to be so cute?")
-        tru_session.experimental_force_flush()
+        tru_session.force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 3)
         # TODO: do some asserts
@@ -232,7 +227,3 @@ class TestOtelCosts(OtelAppTestCase):
             model,
             "USD",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

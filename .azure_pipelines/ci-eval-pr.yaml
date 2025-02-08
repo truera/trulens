@@ -32,7 +32,13 @@ jobs:
       - template: templates/run-precommits.yaml
       - template: templates/run-tests.yaml
         parameters:
+          pytestMarker: basic
           testSuite: unit
-      - template: templates/run-optional-tests.yaml
+      - template: templates/run-tests.yaml
         parameters:
+          pytestMarker: optional
+          testSuite: unit
+      - template: templates/run-tests.yaml
+        parameters:
+          pytestMarker: snowflake
           testSuite: unit

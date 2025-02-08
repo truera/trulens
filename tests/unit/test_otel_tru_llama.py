@@ -2,15 +2,12 @@
 Tests for OTEL TruLlama app.
 """
 
-from unittest import main
-
+import pytest
 from trulens.core.session import TruSession
 
-from tests.test import optional_test
-from tests.test import run_optional_tests
 from tests.util.otel_app_test_case import OtelAppTestCase
 
-if run_optional_tests():
+try:
     # These imports require optional dependencies to be installed.
     from llama_index.core import Settings
     from llama_index.core import SimpleDirectoryReader
@@ -19,6 +16,9 @@ if run_optional_tests():
     from trulens.apps.llamaindex import TruLlama
 
     from tests.util.llama_index_mock_embedder import MockEmbedding
+except Exception:
+    pass
+
 
 _UUID_REGEX = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 _FLOAT_REGEX = r"[-]?\d+\.\d+"
@@ -32,7 +32,7 @@ _CONTEXT_RETRIEVAL_REGEX = (
 _CONTEXT_RETRIEVAL_REPLACEMENT = r"\1"
 
 
-@optional_test
+@pytest.mark.optional
 class TestOtelTruLlama(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
@@ -74,7 +74,3 @@ class TestOtelTruLlama(OtelAppTestCase):
                 (_CONTEXT_RETRIEVAL_REGEX, _CONTEXT_RETRIEVAL_REPLACEMENT)
             ],
         )
-
-
-if __name__ == "__main__":
-    main()

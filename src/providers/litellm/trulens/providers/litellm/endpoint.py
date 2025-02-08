@@ -5,7 +5,7 @@ from typing import Any, Callable, ClassVar, Dict, Optional
 
 import pydantic
 from trulens.core.feedback import endpoint as core_endpoint
-from trulens.core.schema import base as base_schema
+from trulens.otel.semconv.trace import SpanAttributes
 
 import litellm
 from litellm import completion_cost
@@ -19,20 +19,16 @@ class LiteLLMCostComputer:
     @staticmethod
     def handle_response(response: Any) -> Dict[str, Any]:
         usage = response.usage
-        costs = base_schema.Cost(
-            n_tokens=usage["total_tokens"],
-            n_prompt_tokens=usage["prompt_tokens"],
-            n_completion_tokens=usage["completion_tokens"],
-            cost=completion_cost(response),
-            cost_currency="USD",
-        )
-        ret = {curr[0]: curr[1] for curr in costs}
-        ret["model"] = response.model
-        content = [curr.message.content for curr in response.choices]
-        if len(content) == 1:
-            content = content[0]
-        ret["return"] = content
-        return ret
+        return {
+            SpanAttributes.COST.NUM_TOKENS: usage["total_tokens"],
+            SpanAttributes.COST.NUM_PROMPT_TOKENS: usage["prompt_tokens"],
+            SpanAttributes.COST.NUM_COMPLETION_TOKENS: usage[
+                "completion_tokens"
+            ],
+            SpanAttributes.COST.COST: completion_cost(response),
+            SpanAttributes.COST.CURRENCY: "USD",
+            SpanAttributes.COST.MODEL: response.model,
+        }
 
 
 class LiteLLMCallback(core_endpoint.EndpointCallback):

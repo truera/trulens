@@ -479,7 +479,7 @@ class Instrument:
         t = "  "
 
         for mod in sorted(self.include_modules):
-            print(f"Module {mod}*")
+            logger.info(f"Module {mod}*")
 
             for cls in sorted(
                 self.include_classes,
@@ -489,17 +489,17 @@ class Instrument:
                     continue
 
                 if isinstance(cls, import_utils.Dummy):
-                    print(
+                    logger.warning(
                         f"{t * 1}Class {cls.__module__}.{cls.__qualname__}\n{t * 2}WARNING: this class could not be imported. It may have been (re)moved. Error:"
                     )
-                    print(
+                    logger.warning(
                         text_utils.retab(
                             tab=f"{t * 3}> ", s=str(cls.original_exception)
                         )
                     )
                     continue
 
-                print(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
+                logger.info(f"{t * 1}Class {cls.__module__}.{cls.__qualname__}")
 
                 for instrumented_method in self.include_methods:
                     method = instrumented_method.method
@@ -508,9 +508,9 @@ class Instrument:
                         f=class_filter, obj=cls
                     ) and python_utils.safe_hasattr(cls, method):
                         f = getattr(cls, method)
-                        print(f"{t * 2}Method {method}: {inspect.signature(f)}")
-
-            print()
+                        logger.info(
+                            f"{t * 2}Method {method}: {inspect.signature(f)}"
+                        )
 
     def to_instrument_object(self, obj: object) -> bool:
         """Determine whether the given object should be instrumented."""
@@ -794,7 +794,7 @@ class Instrument:
                 # pairs even if positional arguments were provided.
                 bindings: BoundArguments = sig.bind(*args, **kwargs)
 
-                print(f"calling {func} with {args}")
+                logger.info(f"calling {func} with {args}")
 
                 rets, tally = core_endpoint.Endpoint.track_all_costs_tally(
                     func, *args, **kwargs
@@ -1100,7 +1100,7 @@ class Instrument:
 
             try:
                 if not self.to_instrument_class(base):
-                    print(f"skipping base {base} because of class")
+                    logger.debug(f"skipping base {base} because of class")
                     continue
 
             except Exception as e:
@@ -1253,7 +1253,7 @@ class AddInstruments:
         """Add the class with a method named `name`, its module, and the method
         `name` to the Default instrumentation walk filters."""
 
-        print("adding method", of_cls, name, of_cls.__module__)
+        logger.debug("adding method", of_cls, name, of_cls.__module__)
 
         Instrument.Default.MODULES.add(of_cls.__module__)
         Instrument.Default.CLASSES.add(of_cls)
@@ -1282,7 +1282,7 @@ class instrument(AddInstruments):
     # https://stackoverflow.com/questions/2366713/can-a-decorator-of-an-instance-method-access-the-class
 
     def __init__(self, func: Callable):
-        print("decorating", func)
+        logger.debug("decorating", func)
         self.func = func
 
     def __set_name__(self, cls: type, name: str):

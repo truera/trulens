@@ -145,13 +145,13 @@ Tests can also be run in two predetermined environments: `required` and `optiona
 The `required` environment installs only the required dependencies, while `optional` environment installs all optional dependencies (e.g LlamaIndex, OpenAI, etc).
 
 ```bash
-# Installs only required dependencies and runs unit tests
-make test-unit-required
+# Installs only required dependencies and runs basic unit tests
+make test-unit-basic
 ```
 
 ```bash
 # Installs optional dependencies and runs unit tests
-make test-unit-optional
+make test-unit-all
 ```
 
 To install a environment matching the dependencies required for a specific test, use the following commands:

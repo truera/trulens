@@ -1032,11 +1032,16 @@ class App(
         ):
             raise RuntimeError("OTEL Tracing is not enabled for this session.")
 
-        from trulens.core.otel.instrument import OTELRecordingContext as OTELApp
+        from trulens.core.otel.instrument import OTELRecordingContext
 
         # Pylance shows an error here, but it is likely a false positive. due to the overriden
         # model dump returning json instead of a dict.
-        return OTELApp(app=self, run_name=run_name, input_id=input_id)
+        return OTELRecordingContext(
+            app_name=self.app_name,
+            app_version=self.app_version,
+            run_name=run_name,
+            input_id=input_id,
+        )
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
@@ -1593,7 +1598,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
     def print_instrumented_methods(self) -> None:
         """Print instrumented methods."""
 
-        print(self.format_instrumented_methods())
+        logger.info(self.format_instrumented_methods())
 
     def print_instrumented_components(self) -> None:
         """Print instrumented components and their categories."""
@@ -1607,7 +1612,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 f"\t{type(obj).__name__} ({t[1].__class__.__name__}) at 0x{id(obj):x} with path {str(t[0])}"
             )
 
-        print("\n".join(object_strings))
+        logger.info("\n".join(object_strings))
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

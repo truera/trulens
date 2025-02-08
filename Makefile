@@ -12,6 +12,10 @@ POETRY_DIRS := $(shell find . \
 	-maxdepth 4 \
 	-name "*pyproject.toml" \
 	-exec dirname {} \;)
+CONDA_BUILD_DIRS := $(shell find . \
+	-maxdepth 4 \
+	-name "*meta.yaml" \
+	-exec dirname {} \;)
 LAST_TRULENS_EVAL_COMMIT := 4cadb05 # commit that includes the last pre-namespace trulens_eval package
 
 # Global setting: execute all commands of a target in a single shell session.
@@ -40,7 +44,7 @@ env-tests:
 		pytest-subtests \
 		ruff \
 
-env-tests-required:
+env-tests-basic:
 	poetry install --only required \
 		&& make env-tests
 
@@ -51,6 +55,9 @@ env-tests-optional: env env-tests
 		llama-index-embeddings-openai \
 		unstructured \
 		chromadb
+
+env-tests-snowflake: env-tests-optional
+	poetry install --with snowflake
 
 env-tests-db: env-tests
 	poetry run pip install \
@@ -69,6 +76,14 @@ lock: $(POETRY_DIRS)
 	for dir in $(POETRY_DIRS); do \
 		echo "Creating lockfile for $$dir/pyproject.toml"; \
 		poetry lock -C $$dir; \
+	done
+
+# Test build of conda packages against the Snowflake channel
+# This does not publish packages, only builds them locally.
+conda-build: $(CONDA_BUILD_DIRS)
+	for dir in $(CONDA_BUILD_DIRS); do \
+		echo "Testing conda build for $$dir/meta.yaml"; \
+		conda build $$dir -c https://conda.anaconda.org/sfe1ed40/; \
 	done
 
 # Run the ruff linter.
@@ -125,7 +140,7 @@ codespell:
 
 # Generates a coverage report.
 coverage:
-	ALLOW_OPTIONALS=true poetry run pytest --rootdir=. tests/* --cov src --cov-report html
+	poetry run pytest --rootdir=. tests/* --cov src --cov-report html
 
 # Run the static unit tests only, those in the static subfolder. They are run
 # for every tested python version while those outside of static are run only for
@@ -179,7 +194,7 @@ test-snowflake:
 		&& make zip-wheels \
 		&& make build \
 		&& make env \
-		&& TEST_OPTIONAL=1 ALLOW_OPTIONALS=1 $(PYTEST) \
+		&& TEST_OPTIONAL=1 $(PYTEST) \
 			./tests/e2e/test_context_variables.py \
 			./tests/e2e/test_snowflake_*
 
@@ -200,16 +215,19 @@ test-optional-file-%: tests/unit/static/%
 	TEST_OPTIONAL=true $(PYTEST) tests/unit/static/$*
 
 # Runs required tests
-test-%-required: env-tests-required
+test-%-basic: env-tests-basic
 	make test-$*
-
-# Runs required tests, but allows optional dependencies to be installed.
-test-%-allow-optional: env
-	ALLOW_OPTIONALS=true make test-$*
 
 # Requires the full optional environment to be set up.
 test-%-optional: env-tests-optional
-	TEST_OPTIONAL=true make test-$*
+	SKIP_BASIC_TESTS=1 TEST_OPTIONAL=true make test-$*
+
+# Requires the full optional environment to be set up, with Snowflake specific packages.
+test-unit-snowflake: env-tests-snowflake
+	SKIP_BASIC_TESTS=1 TEST_SNOWFLAKE=true make test-unit
+
+test-%-all: env-tests env-tests-optional env-tests-snowflake
+	TEST_OPTIONAL=true TEST_SNOWFLAKE=true make test-$*
 
 # Run the unit tests, those in the tests/unit. They are run in the CI pipeline
 # frequently.

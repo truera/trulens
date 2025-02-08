@@ -69,9 +69,15 @@ def convert_readable_span_to_proto(span: ReadableSpan) -> SpanProto:
         SpanProto: The converted span in SpanProto format.
     """
     span_proto = SpanProto(
-        trace_id=span.context.trace_id.to_bytes(16) if span.context else b"",
-        span_id=span.context.span_id.to_bytes(8) if span.context else b"",
-        parent_span_id=span.parent.span_id.to_bytes(8) if span.parent else b"",
+        trace_id=span.context.trace_id.to_bytes(16, "big")
+        if span.context
+        else b"",
+        span_id=span.context.span_id.to_bytes(8, "big")
+        if span.context
+        else b"",
+        parent_span_id=span.parent.span_id.to_bytes(8, "big")
+        if span.parent
+        else b"",
         name=span.name,
         kind=SpanProto.SpanKind.SPAN_KIND_INTERNAL,
         start_time_unix_nano=span.start_time if span.start_time else 0,
@@ -110,7 +116,7 @@ def check_if_trulens_span(span: ReadableSpan) -> bool:
     if not span.attributes:
         return False
 
-    return bool(span.attributes.get(SpanAttributes.RECORD_ID))
+    return bool(span.attributes.get(SpanAttributes.APP_NAME))
 
 
 def construct_event(span: ReadableSpan) -> event_schema.Event:

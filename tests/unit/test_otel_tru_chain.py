@@ -2,16 +2,13 @@
 Tests for OTEL TruChain app.
 """
 
-from unittest import main
-
+import pytest
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 
-from tests.test import optional_test
-from tests.test import run_optional_tests
 from tests.util.otel_app_test_case import OtelAppTestCase
 
-if run_optional_tests():
+try:
     # These imports require optional dependencies to be installed.
     from langchain import hub
     from langchain.schema import StrOutputParser
@@ -22,9 +19,11 @@ if run_optional_tests():
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from trulens.apps.langchain import TruChain
+except Exception:
+    pass
 
 
-@optional_test
+@pytest.mark.optional
 class TestOtelTruChain(OtelAppTestCase):
     @staticmethod
     def _create_simple_rag():
@@ -78,7 +77,3 @@ class TestOtelTruChain(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_chain__test_smoke.csv"
         )
-
-
-if __name__ == "__main__":
-    main()

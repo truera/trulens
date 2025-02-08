@@ -1,5 +1,4 @@
 from typing import List
-import unittest
 
 from trulens.apps.app import TruApp
 from trulens.core import Feedback
@@ -50,7 +49,7 @@ class TestOtelGuardrail(OtelAppTestCase):
             "4. This is a relevant comment.",
         ]
         self.assertListEqual(sorted(result), expected_result)
-        TruSession().experimental_force_flush()
+        TruSession().force_flush()
         # Check that the span only contains the relevant comments.
         seen = False
         for _, curr in self._get_events().iterrows():
@@ -64,7 +63,3 @@ class TestOtelGuardrail(OtelAppTestCase):
                 )
                 seen = True
         self.assertTrue(seen)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -416,7 +416,7 @@ class TruApp(core_app.App):
                         next(full_path.get(json))
 
                     except Exception:
-                        logger.warning(
+                        logger.debug(
                             f"App has no component owner of instrumented method {m} at path {full_path}. "
                             f"Specify the component with the `app_extra_json` argument to TruApp constructor. "
                             f"Creating a placeholder there for now."

@@ -3,8 +3,8 @@ Tests server-side feedback evaluations in Snowflake.
 """
 
 import time
-from unittest import main
 
+import pytest
 from trulens.apps.basic import TruBasicApp
 import trulens.connectors.snowflake.utils.server_side_evaluation_artifacts as ssea
 import trulens.connectors.snowflake.utils.server_side_evaluation_stored_procedure as ssesp
@@ -14,7 +14,6 @@ from trulens.core.schema import feedback as feedback_schema
 import trulens.providers.cortex.provider as cortex_provider
 from trulens.providers.openai import provider as openai_provider
 
-from tests import test as mod_test
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
@@ -61,7 +60,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             return_when_done=True,
         )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_local_deferred_mode(self) -> None:
         session = core_session.TruSession()
         session.reset_database()
@@ -90,7 +89,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.1,
         )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_snowflake_deferred_mode(self) -> None:
         session = self.get_session("test_snowflake_deferred_mode")
         self._suspend_task()
@@ -132,7 +131,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.8,
         )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_snowflake_feedback_is_always_deferred(self) -> None:
         session = self.get_session("test_snowflake_feedback_is_always_deferred")
         self._suspend_task()
@@ -170,7 +169,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             0.8,
         )
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_snowflake_feedback_setup(self) -> None:
         self.get_session("test_snowflake_feedback_setup")
         TruBasicApp(
@@ -209,7 +208,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(res[0].database_name, self._database.upper())
         self.assertEqual(res[0].schema_name, self._schema.upper())
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_snowflake_feedback_ran(self) -> None:
         session = self.get_session("test_snowflake_feedback_ran")
         f_snowflake = self._get_cortex_relevance_feedback_function()
@@ -239,7 +238,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         self.assertEqual(len(res[0]), 1)
         self.assertFalse(res[0][0])
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_snowflake_feedback_only_runs_cortex(self) -> None:
         self._get_cortex_relevance_feedback_function()  # no error
         with self.assertRaisesRegex(
@@ -248,7 +247,7 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
         ):
             core_feedback.SnowflakeFeedback(openai_provider.OpenAI().relevance)
 
-    @mod_test.optional_test
+    @pytest.mark.optional
     def test_stored_procedure(self) -> None:
         session = self.get_session("test_stored_procedure")
         self._suspend_task()
@@ -279,7 +278,3 @@ class TestSnowflakeFeedbackEvaluation(SnowflakeTestCase):
             records_and_feedback[0]["relevance"].iloc[0],
             0.8,
         )
-
-
-if __name__ == "__main__":
-    main()

@@ -2,8 +2,6 @@
 Tests for OTEL instrument decorator and custom app.
 """
 
-from unittest import main
-
 from trulens.apps.app import TruApp
 from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
@@ -65,7 +63,3 @@ class TestOtelTruCustom(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_custom__test_smoke.csv"
         )
-
-
-if __name__ == "__main__":
-    main()

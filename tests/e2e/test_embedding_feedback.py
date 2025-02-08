@@ -60,7 +60,3 @@ class TestEmbeddings(unittest.TestCase):
             self.embeddings.euclidean_distance("apple", "banana"),
             self.embeddings.euclidean_distance("apple", "apple"),
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

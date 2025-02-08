@@ -3,7 +3,6 @@ Tests for TruBasicApp.
 """
 
 from unittest import TestCase
-from unittest import main
 
 from trulens.core import session as core_session
 from trulens.core.schema import app as app_schema
@@ -57,7 +56,3 @@ class TestApp(TestCase):
                 root_class={"name": "App", "module": {"module_name": "app"}},
                 app={},
             )
-
-
-if __name__ == "__main__":
-    main()

@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from typing import Sequence
+from typing import List, Sequence
 import uuid
 
 from snowflake.snowpark import Session
@@ -12,9 +12,9 @@ from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import BASE_SCOPE
 
-from tests.unit.test_otel_tru_chain import TestOtelTruChain
-from tests.unit.test_otel_tru_custom import TestApp
-from tests.unit.test_otel_tru_llama import TestOtelTruLlama
+import tests.unit.test_otel_tru_chain
+import tests.unit.test_otel_tru_custom
+import tests.unit.test_otel_tru_llama
 from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
@@ -48,25 +48,28 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
     def _wait_for_num_results(
         self,
         q: str,
+        params: List[str],
         expected_num_results: int,
         num_retries: int = 15,
         retry_cooldown_in_seconds: int = 10,
     ) -> Sequence:
         for _ in range(num_retries):
-            results = self.run_query(q)
+            results = self.run_query(q, params)
+            if len(results) == expected_num_results:
+                return results
             self.logger.info(
                 f"Got {len(results)} results, expecting {expected_num_results}"
             )
-            if len(results) == expected_num_results:
-                return results
             time.sleep(retry_cooldown_in_seconds)
         raise ValueError(
             f"Did not get the expected number of results! Expected {expected_num_results} results, but last found: {len(results)}! The results:\n{results}"
         )
 
-    def _validate_results(self, run_name: str, num_expected_spans: int):
+    def _validate_results(
+        self, app_name: str, run_name: str, num_expected_spans: int
+    ):
         # Flush exporter and wait for data to be made to stage.
-        self._tru_session.experimental_force_flush()
+        self._tru_session.force_flush()
         # Check that there are no other tables in the schema.
         self.assertListEqual(
             self.run_query("SHOW TABLES"),
@@ -77,21 +80,32 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             f"""
             SELECT
                 *
-            FROM EVENT_DB.PUBLIC.EVENTS
+            FROM
+                table(snowflake.local.GET_AI_OBSERVABILITY_EVENTS(
+                    ?,
+                    ?,
+                    ?,
+                    'external agent'
+                ))
             WHERE
                 RECORD_TYPE = 'SPAN'
-                AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-28 00:00:00')
+                AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
                 AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
-        """,
+            """,
+            [
+                self._snowpark_session.get_current_database().lower(),
+                self._snowpark_session.get_current_schema().lower(),
+                app_name,
+            ],
             num_expected_spans,
         )
         # TODO(otel): call the feedback computation and check that it's fine.
 
     def test_tru_custom_app(self):
         # Create app.
-        app = TestApp()
+        app = tests.unit.test_otel_tru_custom.TestApp()
         tru_recorder = TruApp(
             app,
             app_name="custom app",
@@ -103,15 +117,17 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             app.respond_to_query("Kojikun")
         # Record and invoke again.
-        self._tru_session.experimental_force_flush()
+        self._tru_session.force_flush()
         with tru_recorder(run_name=run_name, input_id="21"):
             app.respond_to_query("Nolan")
         # Validate results.
-        self._validate_results(run_name, 10)
+        self._validate_results("custom app", run_name, 10)
 
     def test_tru_llama(self):
         # Create app.
-        rag = TestOtelTruLlama._create_simple_rag()
+        rag = (
+            tests.unit.test_otel_tru_llama.TestOtelTruLlama._create_simple_rag()
+        )
         tru_recorder = TruLlama(
             rag,
             app_name="llama-index app",
@@ -123,11 +139,13 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             rag.query("What is multi-headed attention?")
         # Validate results.
-        self._validate_results(run_name, 8)
+        self._validate_results("llama-index app", run_name, 8)
 
     def test_tru_chain(self):
         # Create app.
-        rag = TestOtelTruChain._create_simple_rag()
+        rag = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
         tru_recorder = TruChain(
             rag,
             app_name="langchain app",
@@ -139,4 +157,4 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             rag.invoke("What is multi-headed attention?")
         # Validate results.
-        self._validate_results(run_name, 10)
+        self._validate_results("langchain app", run_name, 10)
