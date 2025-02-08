@@ -55,6 +55,7 @@ def _create_span(span_name: str) -> Span:
     )
 
 
+# TODO(this_pr): Remove this function once Prudhvi/Tony's PRs are in.
 def set_snow_span_attributes(span: Span) -> None:
     import os
 
@@ -72,6 +73,14 @@ def set_snow_span_attributes(span: Span) -> None:
     span.set_attribute(
         "snow.ai.observability.object.name",
         str(get_baggage(SpanAttributes.APP_NAME)),
+    )
+    span.set_attribute(
+        "snow.ai.observability.object.version",
+        str(get_baggage(SpanAttributes.APP_VERSION)),
+    )
+    span.set_attribute(
+        "snow.ai.observability.run_name",
+        str(get_baggage(SpanAttributes.RUN_NAME)),
     )
     span.set_attribute("snow.ai.observability.object.type", "external agent")
 
