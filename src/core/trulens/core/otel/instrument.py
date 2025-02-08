@@ -481,17 +481,6 @@ class OTELRecordingContext(OTELBaseRecordingContext):
             root_span, SpanAttributes.SpanType.RECORD_ROOT
         )
 
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_NAME, self.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app_version
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
-        )
-
         return root_span
 
 
@@ -531,17 +520,5 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
             SpanAttributes.SpanType.EVAL_ROOT,
             include_record_id=False,
         )
-
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.EVAL_ROOT.APP_NAME, self.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.EVAL_ROOT.APP_VERSION, self.app_version
-        )
-        root_span.set_attribute(
-            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
-        )
-        root_span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, root_span_id)
 
         return root_span

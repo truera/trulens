@@ -200,9 +200,6 @@ class SpanAttributes:
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
 
-        RECORD_ID = base + ".record_id"
-        """Id of the record."""
-
         GROUND_TRUTH = base + ".ground_truth"
         """Ground truth of the record."""
 
@@ -291,17 +288,6 @@ class SpanAttributes:
         NUM_CORTEX_GUARDRAIL_TOKENS = base + ".num_cortex_guardrails_tokens"
         """Number of guardrails tokens generated. This is only available for
         requests instrumented by the Cortex endpoint."""
-
-    class RECORD:
-        """Attributes for spans traced as part of a recording."""
-
-        base = BASE_SCOPE + ".record"
-
-        APP_IDS = base + ".app_ids"
-        """Ids of apps that were tracing this span."""
-
-        RECORD_IDS = base + ".record_ids"
-        """Map of app id to record id."""
 
     class CALL:
         """Instrumented method call attributes."""
