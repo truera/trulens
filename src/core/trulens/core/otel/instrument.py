@@ -55,36 +55,6 @@ def _create_span(span_name: str) -> Span:
     )
 
 
-# TODO(this_pr): Remove this function once Prudhvi/Tony's PRs are in.
-def set_snow_span_attributes(span: Span) -> None:
-    import os
-
-    from trulens.core.session import TruSession
-
-    TruSession().connector
-    span.set_attribute(
-        "snow.ai.observability.database.name",
-        os.environ["SNOWFLAKE_DATABASE"].upper(),
-    )
-    span.set_attribute(
-        "snow.ai.observability.schema.name",
-        os.environ["SNOWFLAKE_SCHEMA"].upper(),
-    )
-    span.set_attribute(
-        "snow.ai.observability.object.name",
-        str(get_baggage(SpanAttributes.APP_NAME)),
-    )
-    span.set_attribute(
-        "snow.ai.observability.object.version",
-        str(get_baggage(SpanAttributes.APP_VERSION)),
-    )
-    span.set_attribute(
-        "snow.ai.observability.run_name",
-        str(get_baggage(SpanAttributes.RUN_NAME)),
-    )
-    span.set_attribute("snow.ai.observability.object.type", "external agent")
-
-
 def _resolve_attributes(
     attributes: Attributes,
     ret: Optional[Any],
@@ -115,7 +85,6 @@ def _set_span_attributes(
     # Set general span attributes.
     span.set_attribute("name", span_name)
     set_general_span_attributes(span, span_type)
-    set_snow_span_attributes(span)
     # Set main span attributes if necessary.
     if span_type == SpanAttributes.SpanType.MAIN:
         set_main_span_attributes(
@@ -498,7 +467,6 @@ class OTELRecordingContext(OTELBaseRecordingContext):
                 SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
                 self.ground_truth_output,
             )
-        set_snow_span_attributes(root_span)
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.RECORD_ROOT
         )
@@ -515,6 +483,9 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
     def __enter__(self):
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
+        self.attach_to_context(
+            SpanAttributes.RECORD_ID, self.target_record_id
+        )  # TODO(otel): Should we include this? It's automatically getting added to the span.
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
 
@@ -536,11 +507,8 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
 
         # Set general span attributes
         root_span.set_attribute("name", "eval_root")
-        set_snow_span_attributes(root_span)
         set_general_span_attributes(
-            root_span,
-            SpanAttributes.SpanType.EVAL_ROOT,
-            include_record_id=False,
+            root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
 
         return root_span

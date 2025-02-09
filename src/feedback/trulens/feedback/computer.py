@@ -5,6 +5,7 @@ from trulens.core.otel.instrument import OTELFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -70,9 +71,23 @@ def _compute_feedback(
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
-    app_name = record_root_attributes[SpanAttributes.APP_NAME]
-    app_version = record_root_attributes[SpanAttributes.APP_VERSION]
-    run_name = record_root_attributes[SpanAttributes.RUN_NAME]
+    if SpanAttributes.APP_NAME in record_root_attributes:
+        app_name = record_root_attributes[SpanAttributes.APP_NAME]
+        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
+        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
+    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
+        # TODO(otel, dhuang): need to use these when getting the object entity!
+        # database_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.database.name"
+        # ]
+        # schema_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.schema.name"
+        # ]
+        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
+        app_version = record_root_attributes[
+            f"snow.{BASE_SCOPE}.object.version.name"
+        ]
+        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     for curr in feedback_inputs:
