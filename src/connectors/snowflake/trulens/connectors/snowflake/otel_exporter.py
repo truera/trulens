@@ -150,14 +150,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 except Exception as e:
                     logger.error(f"Error setting trace level to ALWAYS: {e}!")
                     raise e
-            database = snowpark_session.get_current_database()
-            schema = snowpark_session.get_current_schema()
-            database = os.environ[
-                "SNOWFLAKE_DATABASE"
-            ]  # TODO(this_pr): remove once Prudhvi/Tony's changes are in!
-            schema = os.environ[
-                "SNOWFLAKE_SCHEMA"
-            ]  # TODO(this_pr): remove once Prudhvi/Tony's changes are in!
+            database = snowpark_session.get_current_database()[1:-1]
+            schema = snowpark_session.get_current_schema()[1:-1]
             sql_cmd = snowpark_session.sql(
                 f"""
                 CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(

@@ -58,13 +58,10 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
         with tru_recorder(run_name="test run", input_id="42"):
             rag_chain.invoke("What is multi-headed attention?")
         TruSession().force_flush()
-        # Get events.
+        # Compute feedback on record we just ingested.
         events = self._get_events()
-        # Convert events to list of `MinimalSpanInfo`.
         spans = _convert_events_to_MinimalSpanInfos(events)
-        # Build record graph.
         record_root = RecordGraphNode.build_graph(spans)
-        # Compute feedback.
         _compute_feedback(
             record_root, feedback_function, all_retrieval_span_attributes
         )

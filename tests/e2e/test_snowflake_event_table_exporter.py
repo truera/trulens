@@ -28,7 +28,7 @@ from tests.util.snowflake_test_case import SnowflakeTestCase
 
 
 def _convert_events_to_MinimalSpanInfos(
-    events: List[Row],  # TODO(this_pr): type!
+    events: List[Row],
 ) -> List[MinimalSpanInfo]:
     ret = []
     for row in events:
@@ -65,9 +65,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         super().setUp()
         self.create_and_use_schema(
             "TestSnowflakeEventTableExporter", append_uuid=True
-        )
-        os.environ["SNOWFLAKE_SCHEMA"] = (
-            self._snowpark_session.get_current_schema()[1:-1]  # TODO(this_pr): get rid of this once Prudhvi/Tony's changes are in.
         )
         db_connector = self._create_db_connector(self._snowpark_session)
         self._tru_session = TruSession(db_connector)
@@ -203,13 +200,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         with tru_recorder(run_name=run_name, input_id="42"):
             rag_chain.invoke("What is multi-headed attention?")
         TruSession().force_flush()
-        # Validate results.
+        # Compute feedback on record we just ingested.
         events = self._validate_results(app_name, run_name, 10)
-        # Convert events to list of `MinimalSpanInfo`.
         spans = _convert_events_to_MinimalSpanInfos(events)
-        # Build record graph.
         record_root = RecordGraphNode.build_graph(spans)
-        # Compute feedback.
         _compute_feedback(
             record_root, feedback_function, all_retrieval_span_attributes
         )

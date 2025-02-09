@@ -55,36 +55,6 @@ def _create_span(span_name: str) -> Span:
     )
 
 
-# TODO(this_pr): Remove this function once Prudhvi/Tony's PRs are in.
-def set_snow_span_attributes(span: Span) -> None:
-    import os
-
-    from trulens.core.session import TruSession
-
-    TruSession().connector
-    span.set_attribute(
-        "snow.ai.observability.database.name",
-        os.environ["SNOWFLAKE_DATABASE"].upper(),
-    )
-    span.set_attribute(
-        "snow.ai.observability.schema.name",
-        os.environ["SNOWFLAKE_SCHEMA"].upper(),
-    )
-    span.set_attribute(
-        "snow.ai.observability.object.name",
-        str(get_baggage(SpanAttributes.APP_NAME)),
-    )
-    span.set_attribute(
-        "snow.ai.observability.object.version",
-        str(get_baggage(SpanAttributes.APP_VERSION)),
-    )
-    span.set_attribute(
-        "snow.ai.observability.run_name",
-        str(get_baggage(SpanAttributes.RUN_NAME)),
-    )
-    span.set_attribute("snow.ai.observability.object.type", "external agent")
-
-
 def _resolve_attributes(
     attributes: Attributes,
     ret: Optional[Any],
@@ -115,7 +85,6 @@ def _set_span_attributes(
     # Set general span attributes.
     span.set_attribute("name", span_name)
     set_general_span_attributes(span, span_type)
-    set_snow_span_attributes(span)
     # Set main span attributes if necessary.
     if span_type == SpanAttributes.SpanType.MAIN:
         set_main_span_attributes(
@@ -476,7 +445,6 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 
         # Set general span attributes
         root_span.set_attribute("name", "root")
-        set_snow_span_attributes(root_span)
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.RECORD_ROOT
         )
@@ -525,7 +493,6 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
 
         # Set general span attributes
         root_span.set_attribute("name", "eval_root")
-        set_snow_span_attributes(root_span)
         set_general_span_attributes(
             root_span,
             SpanAttributes.SpanType.EVAL_ROOT,
