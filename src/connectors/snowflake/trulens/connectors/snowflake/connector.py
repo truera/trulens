@@ -377,6 +377,9 @@ class SnowflakeConnector(DBConnector):
             )
 
         if object_type == ObjectType.EXTERNAL_AGENT:
+            logger.info(
+                f"Initializing Snowflake External Agent DAO for app {app_name} version {app_version}"
+            )
             # side effect: create external agent if not exist
             snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
             snowflake_app_dao.create_agent_if_not_exist(

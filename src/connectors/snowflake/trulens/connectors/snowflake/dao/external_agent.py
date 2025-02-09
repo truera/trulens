@@ -103,14 +103,12 @@ class ExternalAgentDao:
 
         query = "SHOW VERSIONS IN EXTERNAL AGENT ?;"
         parameters = (name,)
-        result_df = sql_utils.execute_query(
+        return sql_utils.execute_query(
             self.session,
             query,
             parameters,
             f"Retrieved versions for External Agent {name}.",
         )
-
-        return result_df
 
     def check_agent_exists(self, name: str) -> bool:
         """Check if an External Agent exists."""

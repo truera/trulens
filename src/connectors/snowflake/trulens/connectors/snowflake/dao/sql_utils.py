@@ -21,7 +21,7 @@ def execute_query(
         logger.info(success_message)
         return result_df
     except Exception as e:
-        logger.error(
+        logger.exception(
             f"Error executing query: {query}\nParameters: {parameters}\nError: {e}"
         )
         raise RuntimeError(f"Failed to execute query: {query}") from e

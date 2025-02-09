@@ -2,7 +2,7 @@ import logging
 import os
 
 from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
 
@@ -42,22 +42,37 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         app = TestApp()
 
         with self.assertRaises(ValueError):
-            TruCustomApp(
+            TruApp(
                 app,
                 app_name="custom app",
                 app_version="v1",
                 object_type="RANDOM_UNSUPPORTED",
             )
 
+    def test_tru_app_otel_enabled_missing_main_method(self):
+        # Create app.
+        app = TestApp()
+
+        with self.assertRaises(ValueError):
+            TruApp(
+                app,
+                app_name="custom app",
+                app_version="v1",
+            )
+
     def test_tru_app_supported_object_type(self):
         # Create app.
         app = TestApp()
-        tru_recorder = TruCustomApp(
-            app,
-            app_name="custom_app",
-            app_version="v1",
-            # object_type default to EXTERNAL_AGENT when snowflake connector is used
-        )
+        try:
+            tru_recorder = TruApp(
+                app,
+                app_name="custom_app",
+                app_version="v1",
+                main_method=app.respond_to_query,
+                # object_type default to EXTERNAL_AGENT when snowflake connector is used
+            )
+        except Exception as e:
+            logging.exception(e)
 
         self.assertIsNotNone(tru_recorder.snowflake_app_dao)
 
@@ -75,10 +90,11 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
     def test_tru_app_multiple_versions(self):
         # Create app version 1.
         app_v1 = TestApp()
-        tru_recorder_v1 = TruCustomApp(
+        tru_recorder_v1 = TruApp(
             app_v1,
             app_name="custom_app",
             app_version="v1",
+            main_method=app_v1.respond_to_query,
         )
 
         self.assertIsNotNone(tru_recorder_v1.snowflake_app_dao)
@@ -87,10 +103,11 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         )
         # Create app version 2.
         app_v2 = TestApp()
-        tru_recorder_v2 = TruCustomApp(
+        tru_recorder_v2 = TruApp(
             app_v2,
             app_name="custom_app",
             app_version="v2",
+            main_method=app_v2.respond_to_query,
         )
 
         self.assertIsNotNone(tru_recorder_v2.snowflake_app_dao)
