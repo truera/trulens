@@ -109,7 +109,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                     ?,
                     ?,
                     ?,
-                    'external agent'
+                    'EXTERNAL AGENT'
                 ))
             WHERE
                 RECORD_TYPE = 'SPAN'

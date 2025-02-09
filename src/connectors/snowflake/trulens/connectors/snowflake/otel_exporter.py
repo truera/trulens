@@ -161,11 +161,15 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     ),
                     ?,
                     ?,
+                    ?,
+                    ?,
                     ?
                 )
                 """,
                 params=[
                     tmp_file_basename + ".gz",
+                    database,  # TODO(otel, dhuang): This should be the database of the object entity!
+                    schema,  # TODO(otel, dhuang): This should the schema of the object entity!
                     app_name or "",
                     app_version or "",
                     run_name or "",

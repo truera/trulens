@@ -472,6 +472,9 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
     def __enter__(self):
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
+        self.attach_to_context(
+            SpanAttributes.RECORD_ID, self.target_record_id
+        )  # TODO(otel): Should we include this? It's automatically getting added to the span.
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
 
@@ -494,9 +497,7 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         # Set general span attributes
         root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
-            root_span,
-            SpanAttributes.SpanType.EVAL_ROOT,
-            include_record_id=False,
+            root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
 
         # Set record root specific attributes
