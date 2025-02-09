@@ -125,7 +125,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             ],
             num_expected_spans,
         )
-        # TODO(otel): call the feedback computation and check that it's fine.
 
     def test_tru_custom_app(self):
         # Create app.
