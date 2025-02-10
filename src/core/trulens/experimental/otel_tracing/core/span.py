@@ -112,10 +112,7 @@ def validate_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def set_general_span_attributes(
-    span: Span,
-    /,
-    span_type: SpanAttributes.SpanType,
-    include_record_id: bool = True,
+    span: Span, /, span_type: SpanAttributes.SpanType
 ) -> None:
     span.set_attribute(SpanAttributes.SPAN_TYPE, span_type)
 
@@ -125,10 +122,9 @@ def set_general_span_attributes(
     span.set_attribute(
         SpanAttributes.APP_VERSION, str(get_baggage(SpanAttributes.APP_VERSION))
     )
-    if include_record_id:
-        span.set_attribute(
-            SpanAttributes.RECORD_ID, str(get_baggage(SpanAttributes.RECORD_ID))
-        )
+    record_id = get_baggage(SpanAttributes.RECORD_ID)
+    if record_id:
+        span.set_attribute(SpanAttributes.RECORD_ID, record_id)
     target_record_id = get_baggage(SpanAttributes.EVAL.TARGET_RECORD_ID)
     if target_record_id:
         span.set_attribute(
