@@ -66,7 +66,7 @@ class SpanAttributes:
     ROOT_SPAN_ID = BASE_SCOPE + ".root_span_id"
     """ID of the root span of the record that the span belongs to."""
 
-    RUN_NAME = BASE_SCOPE + ".run_name"
+    RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""
 
     INPUT_ID = BASE_SCOPE + ".input_id"

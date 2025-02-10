@@ -112,17 +112,13 @@ class TestOtelDistributed(OtelAppTestCase):
             actual.iloc[2]["record_attributes"]["process_id"],
         )
         for attribute in [
-            "app_name",
-            "app_version",
-            "record_id",
-            "run_name",
-            "input_id",
+            SpanAttributes.APP_NAME,
+            SpanAttributes.APP_VERSION,
+            SpanAttributes.RECORD_ID,
+            SpanAttributes.RUN_NAME,
+            SpanAttributes.INPUT_ID,
         ]:
             self.assertEqual(
-                actual.iloc[1]["record_attributes"][
-                    f"ai.observability.{attribute}"
-                ],
-                actual.iloc[2]["record_attributes"][
-                    f"ai.observability.{attribute}"
-                ],
+                actual.iloc[1]["record_attributes"][attribute],
+                actual.iloc[2]["record_attributes"][attribute],
             )
