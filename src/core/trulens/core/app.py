@@ -1686,10 +1686,11 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             List[Run]: List of Run instances
         """
         self._check_snowflake_dao()
-        run_metadata_json_lst = self.snowflake_run_dao.list_all_runs(
+        run_metadata_df = self.snowflake_run_dao.list_all_runs(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
         )
+        run_metadata_json_lst = run_metadata_df.to_dict(orient="records")
         return [
             Run.model_validate(run_metadata_json)
             for run_metadata_json in run_metadata_json_lst
