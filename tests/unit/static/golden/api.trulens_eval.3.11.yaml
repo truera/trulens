@@ -894,6 +894,7 @@ trulens_eval.TruApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -927,6 +928,7 @@ trulens_eval.TruApp:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -978,6 +980,7 @@ trulens_eval.TruApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -993,6 +996,7 @@ trulens_eval.TruBasicApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: trulens.apps.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1026,6 +1030,7 @@ trulens_eval.TruBasicApp:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1077,6 +1082,7 @@ trulens_eval.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1093,6 +1099,7 @@ trulens_eval.TruChain:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     acall_with_record: builtins.function
+    add_run: builtins.function
     app: langchain_core.runnables.base.Runnable
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1126,6 +1133,7 @@ trulens_eval.TruChain:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1177,6 +1185,7 @@ trulens_eval.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1192,6 +1201,7 @@ trulens_eval.TruCustomApp:
   - trulens.apps.app.TruApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1225,6 +1235,7 @@ trulens_eval.TruCustomApp:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1276,6 +1287,7 @@ trulens_eval.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1291,6 +1303,7 @@ trulens_eval.TruLlama:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1323,6 +1336,7 @@ trulens_eval.TruLlama:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1375,6 +1389,7 @@ trulens_eval.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1390,6 +1405,7 @@ trulens_eval.TruRails:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: nemoguardrails.rails.llm.llmrails.LLMRails
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1422,6 +1438,7 @@ trulens_eval.TruRails:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1473,6 +1490,7 @@ trulens_eval.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1490,6 +1508,7 @@ trulens_eval.TruVirtual:
   attributes:
     add_dataframe: builtins.function
     add_record: builtins.function
+    add_run: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1522,6 +1541,7 @@ trulens_eval.TruVirtual:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1573,6 +1593,7 @@ trulens_eval.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -1621,6 +1642,7 @@ trulens_eval.app.App:
   - typing.Generic
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -1653,6 +1675,7 @@ trulens_eval.app.App:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -1703,6 +1726,7 @@ trulens_eval.app.App:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7083,6 +7107,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: trulens.apps.basic.TruWrapperApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7116,6 +7141,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7167,6 +7193,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7227,6 +7254,7 @@ trulens_eval.tru_chain.TruChain:
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     acall_with_record: builtins.function
+    add_run: builtins.function
     app: langchain_core.runnables.base.Runnable
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7260,6 +7288,7 @@ trulens_eval.tru_chain.TruChain:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7311,6 +7340,7 @@ trulens_eval.tru_chain.TruChain:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7334,6 +7364,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
   - trulens.apps.app.TruApp
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Any
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7367,6 +7398,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7418,6 +7450,7 @@ trulens_eval.tru_custom_app.TruCustomApp:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7464,6 +7497,7 @@ trulens_eval.tru_llama.TruLlama:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: typing.Union[llama_index.core.base.base_query_engine.BaseQueryEngine, llama_index.core.chat_engine.types.BaseChatEngine]
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7496,6 +7530,7 @@ trulens_eval.tru_llama.TruLlama:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7548,6 +7583,7 @@ trulens_eval.tru_llama.TruLlama:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7629,6 +7665,7 @@ trulens_eval.tru_rails.TruRails:
   - trulens.core.app.App
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
+    add_run: builtins.function
     app: nemoguardrails.rails.llm.llmrails.LLMRails
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7661,6 +7698,7 @@ trulens_eval.tru_rails.TruRails:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7712,6 +7750,7 @@ trulens_eval.tru_rails.TruRails:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
@@ -7737,6 +7776,7 @@ trulens_eval.tru_virtual.TruVirtual:
   attributes:
     add_dataframe: builtins.function
     add_record: builtins.function
+    add_run: builtins.function
     app: trulens.apps.virtual.VirtualApp
     app_extra_json: typing.Union[builtins.str, builtins.int, builtins.float, builtins.bytes,
       builtins.NoneType, typing.Sequence[typing.Any], typing.Dict[builtins.str, typing.Any]]
@@ -7769,6 +7809,7 @@ trulens_eval.tru_virtual.TruVirtual:
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     json: builtins.function
     jsonify_extra: builtins.function
+    list_runs: builtins.function
     load: builtins.staticmethod
     main_acall: builtins.function
     main_call: builtins.function
@@ -7820,6 +7861,7 @@ trulens_eval.tru_virtual.TruVirtual:
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
     session: trulens.core.session.TruSession
+    snowflake_app_dao: typing.Optional[typing.Any, builtins.NoneType]
     tags: builtins.str
     tru: builtins.property
     tru_class_info: trulens.core.utils.pyschema.Class
