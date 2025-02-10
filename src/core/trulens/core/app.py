@@ -1652,8 +1652,8 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
             )
             logger.error(msg)
-            raise NotImplementedError(msg)
-    
+            raise ValueError(msg)
+
     def add_run(self, run_name: str, run_config: RunConfig) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
@@ -1697,14 +1697,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Delete the snowflake App (managing object) in snowflake, if applicable."""
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
-
-    def add_run(self):
-        self._check_snowflake_dao()
-        raise NotImplementedError("Not implemented yet.")
-
-    def list_runs(self):
-        self._check_snowflake_dao()
-        raise NotImplementedError("Not implemented yet.")
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

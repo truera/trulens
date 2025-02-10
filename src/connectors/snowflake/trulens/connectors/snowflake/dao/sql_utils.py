@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-import pandas
+from snowflake.snowpark import Row
 from snowflake.snowpark import Session
 
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ def execute_query(
     session: Session,
     query: str,
     parameters: Optional[tuple] = None,
-) -> pandas.DataFrame:
+) -> Row:
     """
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
