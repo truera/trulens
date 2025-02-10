@@ -125,7 +125,6 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             ],
             num_expected_spans,
         )
-        # TODO(otel): call the feedback computation and check that it's fine.
 
     def test_tru_custom_app(self):
         # Create app.
@@ -197,7 +196,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
         # Record and invoke.
         run_name = str(uuid.uuid4())
-        with tru_recorder(run_name=run_name, input_id="42"):
+        with tru_recorder(
+            run_name=run_name,
+            input_id="42",
+            ground_truth_output="Like attention but with more heads.",
+        ):
             rag_chain.invoke("What is multi-headed attention?")
         TruSession().force_flush()
         # Compute feedback on record we just ingested.
