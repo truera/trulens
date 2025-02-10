@@ -222,6 +222,7 @@ class TruSession(
             ]
         ] = None,
         _experimental_otel_exporter: Optional[SpanExporter] = None,
+        fail_on_otel_failures: bool = True,
         **kwargs,
     ):
         if python_utils.safe_hasattr(self, "connector"):
@@ -279,7 +280,10 @@ class TruSession(
             )
 
             _TruSession._set_up_otel_exporter(
-                self, connector, _experimental_otel_exporter
+                self,
+                connector,
+                _experimental_otel_exporter,
+                fail_on_otel_failures,
             )
 
             _TruSession._track_costs()
