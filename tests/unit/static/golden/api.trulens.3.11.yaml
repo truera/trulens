@@ -139,7 +139,6 @@ trulens.core.app.App:
     record_ingest_mode: trulens.core.schema.app.RecordIngestMode
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
-    require_snowpark_session: builtins.function
     root_class: trulens.core.utils.pyschema.Class
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
