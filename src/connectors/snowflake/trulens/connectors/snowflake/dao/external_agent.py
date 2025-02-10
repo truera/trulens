@@ -23,13 +23,19 @@ class ExternalAgentDao:
 
         logger.info(f"Created External Agent {name} with version {version}.")
 
-    def create_agent_if_not_exist(self, name: str, version: str) -> None:
+    def create_agent_if_not_exist(self, name: str, version: str) -> str:
         """
         Args:
             name (str): unique name of the external agent
             version (str): version is mandatory for now
+        Returns:
+            str: resolved name of the external agent
         """
         # Get the agent if it already exists, otherwise create it
+        if not (name.startswith('"') and name.endswith('"')):
+            resolved_name = name.upper()
+        else:
+            resolved_name = name
 
         if not self.check_agent_exists(name):
             self.create_new_agent(name, version)
@@ -50,6 +56,7 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
+        return resolved_name
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
