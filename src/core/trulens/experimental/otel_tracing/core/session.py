@@ -1,8 +1,13 @@
+import ctypes
 import logging
-from typing import Any, Callable, Dict, Optional
+import queue
+import threading
+import time
+from typing import Any, Callable, Dict, Optional, Sequence
 
 from opentelemetry import trace
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
 from trulens.core import session as core_session
@@ -38,6 +43,21 @@ def _can_import(to_import: str) -> bool:
         return False
 
 
+def ctype_async_raise(target_tid, exception):
+    ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+        ctypes.c_long(target_tid), ctypes.py_object(exception)
+    )
+    # ref: http://docs.python.org/c-api/init.html#PyThreadState_SetAsyncExc
+    if ret == 0:
+        raise ValueError("Invalid thread ID")
+    elif ret > 1:
+        # Huh? Why would we notify more than one threads?
+        # Because we punch a hole into C level interpreter.
+        # So it is better to clean up the mess.
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(target_tid, 0)
+        raise SystemError("PyThreadState_SetAsyncExc failed")
+
+
 class _TruSession(core_session.TruSession):
     def _validate_otel_exporter(
         self,
@@ -65,10 +85,31 @@ class _TruSession(core_session.TruSession):
         self._experimental_otel_exporter = exporter
         return exporter
 
+    def _wrap_exporter_export(
+        exporter_export_fn: Callable[
+            [Sequence[ReadableSpan]], otel_export_sdk.SpanExportResult
+        ],
+        otel_failure_queue: queue.Queue,
+    ):
+        def _export(
+            spans: Sequence[ReadableSpan],
+        ) -> otel_export_sdk.SpanExportResult:
+            try:
+                res = exporter_export_fn(spans)
+                if res == otel_export_sdk.SpanExportResult.FAILURE:
+                    raise ValueError("Exporter failed to export spans!")
+            except Exception as e:
+                otel_failure_queue.put(e)
+                return otel_export_sdk.SpanExportResult.FAILURE
+            return otel_export_sdk.SpanExportResult.SUCCESS
+
+        return _export
+
     def _set_up_otel_exporter(
         self,
         connector: DBConnector,
         exporter: Optional[otel_export_sdk.SpanExporter],
+        fail_on_otel_failures: bool,
     ):
         logger.info(
             f"{text_utils.UNICODE_CHECK} OpenTelemetry exporter set: {python_utils.class_name(exporter.__class__)}"
@@ -80,6 +121,25 @@ class _TruSession(core_session.TruSession):
 
         exporter = _TruSession._validate_otel_exporter(
             self, exporter, connector
+        )
+        self._otel_failure_queue = queue.Queue()
+        main_thread_id = threading.get_ident()
+
+        def monitor_queue():
+            while True:
+                time.sleep(10)
+                try:
+                    error = self._otel_failure_queue.get(block=False)
+                    # raise error
+                    ctype_async_raise(main_thread_id, type(error))
+                except queue.Empty:
+                    continue
+
+        if fail_on_otel_failures:
+            monitor_thread = threading.Thread(target=monitor_queue, daemon=True)
+            monitor_thread.start()
+        exporter.export = _TruSession._wrap_exporter_export(
+            exporter.export, self._otel_failure_queue
         )
 
         self._experimental_otel_span_processor = (
