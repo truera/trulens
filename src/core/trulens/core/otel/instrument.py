@@ -11,7 +11,6 @@ from opentelemetry.baggage import remove_baggage
 from opentelemetry.baggage import set_baggage
 import opentelemetry.context as context_api
 from opentelemetry.trace.span import Span
-from trulens.core import app as core_app
 from trulens.experimental.otel_tracing.core.session import TRULENS_SERVICE_NAME
 from trulens.experimental.otel_tracing.core.span import Attributes
 from trulens.experimental.otel_tracing.core.span import (
@@ -352,7 +351,7 @@ def instrument_method(
     setattr(cls, method_name, wrapper(getattr(cls, method_name)))
 
 
-class OTELRecordingContext:
+class OTELBaseRecordingContext:
     run_name: str
     """
     The name of the run that the recording context is currently processing.
@@ -374,8 +373,11 @@ class OTELRecordingContext:
     Keys added to the OTEL context.
     """
 
-    def __init__(self, *, app: core_app.App, run_name: str, input_id: str):
-        self.app = app
+    def __init__(
+        self, *, app_name: str, app_version: str, run_name: str, input_id: str
+    ):
+        self.app_name = app_name
+        self.app_version = app_version
         self.run_name = run_name
         self.input_id = input_id
         self.tokens = []
@@ -390,45 +392,6 @@ class OTELRecordingContext:
 
         self.tokens.append(context_api.attach(set_baggage(key, value)))
         self.context_keys_added.append(key)
-
-    # For use as a context manager.
-    def __enter__(self):
-        # Note: This is not the same as the record_id in the core app since the OTEL
-        # tracing is currently separate from the old records behavior
-        otel_record_id = str(uuid.uuid4())
-
-        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
-
-        self.attach_to_context(SpanAttributes.DOMAIN, "module")
-        self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
-        self.attach_to_context(SpanAttributes.APP_NAME, self.app.app_name)
-        self.attach_to_context(SpanAttributes.APP_VERSION, self.app.app_version)
-
-        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
-        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
-
-        # Use start_as_current_span as a context manager
-        self.span_context = tracer.start_as_current_span("root")
-        root_span = self.span_context.__enter__()
-
-        # Set general span attributes
-        root_span.set_attribute("name", "root")
-        set_general_span_attributes(
-            root_span, SpanAttributes.SpanType.RECORD_ROOT
-        )
-
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_NAME, self.app.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app.app_version
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
-        )
-
-        return root_span
 
     async def __aenter__(self):
         return self.__enter__()
@@ -458,3 +421,94 @@ class OTELRecordingContext:
         exc_tb: Optional[TracebackType],
     ) -> None:
         return self.__exit__(exc_type, exc_val, exc_tb)
+
+
+class OTELRecordingContext(OTELBaseRecordingContext):
+    # For use as a context manager.
+    def __enter__(self):
+        # Note: This is not the same as the record_id in the core app since the OTEL
+        # tracing is currently separate from the old records behavior
+        otel_record_id = str(uuid.uuid4())
+
+        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+
+        self.attach_to_context(SpanAttributes.RECORD_ID, otel_record_id)
+        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+
+        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
+        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+
+        # Use start_as_current_span as a context manager
+        self.span_context = tracer.start_as_current_span("root")
+        root_span = self.span_context.__enter__()
+
+        # Set general span attributes
+        root_span.set_attribute("name", "root")
+        set_general_span_attributes(
+            root_span, SpanAttributes.SpanType.RECORD_ROOT
+        )
+
+        # Set record root specific attributes
+        root_span.set_attribute(
+            SpanAttributes.RECORD_ROOT.APP_NAME, self.app_name
+        )
+        root_span.set_attribute(
+            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app_version
+        )
+        root_span.set_attribute(
+            SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
+        )
+
+        return root_span
+
+
+class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
+    def __init__(self, *args, **kwargs):
+        self.target_record_id = kwargs.pop("target_record_id")
+        super().__init__(*args, **kwargs)
+
+    # For use as a context manager.
+    def __enter__(self):
+        tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
+
+        self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
+        self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
+
+        self.attach_to_context(SpanAttributes.RUN_NAME, self.run_name)
+        self.attach_to_context(
+            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
+        )
+        self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+
+        # Use start_as_current_span as a context manager
+        self.span_context = tracer.start_as_current_span("eval_root")
+        root_span = self.span_context.__enter__()
+        root_span_id = str(root_span.get_span_context().span_id)
+
+        self.attach_to_context(
+            SpanAttributes.EVAL.EVAL_ROOT_ID,
+            root_span_id,
+        )
+
+        # Set general span attributes
+        root_span.set_attribute("name", "eval_root")
+        set_general_span_attributes(
+            root_span,
+            SpanAttributes.SpanType.EVAL_ROOT,
+            include_record_id=False,
+        )
+
+        # Set record root specific attributes
+        root_span.set_attribute(
+            SpanAttributes.EVAL_ROOT.APP_NAME, self.app_name
+        )
+        root_span.set_attribute(
+            SpanAttributes.EVAL_ROOT.APP_VERSION, self.app_version
+        )
+        root_span.set_attribute(
+            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
+        )
+        root_span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, root_span_id)
+
+        return root_span

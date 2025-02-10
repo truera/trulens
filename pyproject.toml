@@ -90,6 +90,9 @@ trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = tr
 [tool.poetry.group.snowflake.dependencies]
 trulens-connectors-snowflake = { path = "src/connectors/snowflake", develop = true, python = "<3.12" }
 
+[tool.poetry.group.hotspots.dependencies]
+trulens-hotspots = { path = "src/hotspots", develop = true }
+
 [tool.poetry.group.required.dependencies]
 trulens-core = { path = "src/core", develop = true }
 trulens-feedback = { path = "src/feedback", develop = true }

@@ -440,10 +440,10 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_dao: Optional[Any] = None
     snowflake_run_dao: Optional[Any] = None
     snowflake_object_type: Optional[str] = None
     snowflake_object_name: Optional[str] = None
+    snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
     def __init__(
         self,
@@ -459,17 +459,6 @@ class App(
         # for us:
         if connector:
             kwargs["connector"] = connector
-            if _can_import("trulens.connectors.snowflake"):
-                from trulens.connectors.snowflake import SnowflakeConnector
-
-                if isinstance(connector, SnowflakeConnector):
-                    self.snowflake_app_dao = (
-                        connector.initialize_snowflake_app_dao(
-                            object_type=kwargs["object_type"],
-                            app_name=kwargs["app_name"],
-                            app_version=kwargs["app_version"],
-                        )
-                    )
 
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
@@ -525,6 +514,18 @@ class App(
 
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
+
+        if connector and _can_import("trulens.connectors.snowflake"):
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if isinstance(connector, SnowflakeConnector):
+                self.snowflake_app_dao = connector.initialize_snowflake_app_dao(
+                    object_type=kwargs["object_type"]
+                    if "object_type" in kwargs
+                    else None,
+                    app_name=kwargs["app_name"],
+                    app_version=kwargs["app_version"],
+                )
 
         self.app = app
 
@@ -1059,11 +1060,16 @@ class App(
         ):
             raise RuntimeError("OTEL Tracing is not enabled for this session.")
 
-        from trulens.core.otel.instrument import OTELRecordingContext as OTELApp
+        from trulens.core.otel.instrument import OTELRecordingContext
 
         # Pylance shows an error here, but it is likely a false positive. due to the overriden
         # model dump returning json instead of a dict.
-        return OTELApp(app=self, run_name=run_name, input_id=input_id)
+        return OTELRecordingContext(
+            app_name=self.app_name,
+            app_version=self.app_version,
+            run_name=run_name,
+            input_id=input_id,
+        )
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
@@ -1691,6 +1697,14 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Delete the snowflake App (managing object) in snowflake, if applicable."""
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
+
+    def add_run(self):
+        self._check_snowflake_dao()
+        raise NotImplementedError("Not implemented yet.")
+
+    def list_runs(self):
+        self._check_snowflake_dao()
+        raise NotImplementedError("Not implemented yet.")
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession

@@ -2,7 +2,6 @@
 
 from inspect import signature
 from unittest import TestCase
-from unittest import main
 
 from pydantic import BaseModel
 from trulens.core.utils.signature import main_input
@@ -146,7 +145,3 @@ class TestSignatureUtils(TestCase):
 
             ret = func_dict()
             self.assertEqual(main_output(func_dict, ret), "value1")
-
-
-if __name__ == "__main__":
-    main()

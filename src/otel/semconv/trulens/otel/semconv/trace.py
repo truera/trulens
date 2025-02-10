@@ -72,9 +72,6 @@ class SpanAttributes:
     INPUT_ID = BASE_SCOPE + ".input_id"
     """ID of the input that the span belongs to."""
 
-    DOMAIN = BASE_SCOPE + ".domain"
-    """Domain of the app that the span belongs to. "module" for external apps."""
-
     class SpanType(str, Enum):
         """Span type attribute values.
 
@@ -113,7 +110,10 @@ class SpanAttributes:
         """The main span of a record."""
 
         EVAL_ROOT = "eval_root"
-        """Feedback function evaluation span."""
+        """Feedback function evaluation root span."""
+
+        EVAL = "eval"
+        """Feedback function evaluation span information."""
 
         # Non-semantic mixable types indicate presence of common sets of attributes.
 
@@ -217,11 +217,11 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
-        TARGET_RECORD_ID = base + ".target_record_id"
-        """Record id of the record being evaluated."""
+        APP_NAME = base + ".app_name"
+        """Name of the app for whom this is the root."""
 
-        TARGET_TRACE_ID = base + ".target_trace_id"
-        """Trace id of the root span of the record being evaluated."""
+        APP_VERSION = base + ".app_version"
+        """Version of the app for whom this is the root."""
 
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
@@ -246,6 +246,32 @@ class SpanAttributes:
 
         ERROR = base + ".error"
         """Error raised during evaluation."""
+
+        RESULT = base + ".result"
+        """Result of the evaluation."""
+
+        METADATA = base + ".metadata"
+        """Any metadata of the evaluation."""
+
+    class EVAL:
+        """Feedback function evaluation span information."""
+
+        base = BASE_SCOPE + ".eval"
+
+        TARGET_RECORD_ID = base + ".target_record_id"
+        """Record id of the record being evaluated."""
+
+        EVAL_ROOT_ID = base + ".eval_root_id"
+        """Span id for the EVAL_ROOT span this span is under."""
+
+        CRITERIA = base + ".criteria"
+        """Criteria for this sub-step."""
+
+        EVIDENCE = base + ".evidence"
+        """Evidence for the score for this sub-step."""
+
+        SCORE = base + ".score"
+        """Score for this sub-step."""
 
     class COST:
         """Attributes for spans with a cost."""

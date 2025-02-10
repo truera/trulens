@@ -2,7 +2,7 @@ import logging
 import os
 
 from snowflake.snowpark import Session
-from trulens.apps.custom import TruCustomApp
+from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
 
@@ -32,9 +32,10 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.create_and_use_schema(
-            "TestSnowflakeEventTableExporter", append_uuid=True
+            "TestSnowflakeExternalAgent", append_uuid=True
         )
         db_connector = self._create_db_connector(self._snowpark_session)
+        self.snowflake_connector = db_connector
         self._tru_session = TruSession(db_connector)
 
     def test_tru_app_unsupported_object_type(self):
@@ -42,20 +43,47 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         app = TestApp()
 
         with self.assertRaises(ValueError):
-            TruCustomApp(
+            TruApp(
                 app,
-                app_name="custom app",
+                app_name="custom_app",
                 app_version="v1",
                 object_type="RANDOM_UNSUPPORTED",
             )
 
-    def test_tru_app_supported_object_type(self):
+    def test_tru_app_otel_enabled_missing_main_method(self):
         # Create app.
         app = TestApp()
-        tru_recorder = TruCustomApp(
+
+        with self.assertRaises(ValueError):
+            TruApp(
+                app,
+                app_name="custom_app",
+                app_version="v1",
+            )
+
+    def test_tru_app_missing_connector(self):
+        # Create app.
+        app = TestApp()
+
+        tru_recorder = TruApp(
             app,
             app_name="custom_app",
             app_version="v1",
+            main_method=app.respond_to_query,
+        )
+
+        self.assertIsNone(tru_recorder.snowflake_app_dao)
+
+    def test_tru_app_supported_object_type(self):
+        # Create app.
+        app = TestApp()
+
+        tru_recorder = TruApp(
+            app,
+            app_name="custom_app",
+            app_version="v1",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
             # object_type default to EXTERNAL_AGENT when snowflake connector is used
         )
 
@@ -68,46 +96,55 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         versions_df = tru_recorder.snowflake_app_dao.list_agent_versions(
             "custom_app"
         )
+
         self.assertIn(
-            "V1", versions_df["name"].values.tolist()
-        )  # version is uppercased
+            "V1", versions_df["name"].values
+        )  # version is uppercased in snowflake
 
     def test_tru_app_multiple_versions(self):
         # Create app version 1.
-        app_v1 = TestApp()
-        tru_recorder_v1 = TruCustomApp(
-            app_v1,
-            app_name="custom_app",
+        app = TestApp()
+        tru_recorder_v1 = TruApp(
+            app,
+            app_name="custom_app_multi_ver",
             app_version="v1",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
         )
 
         self.assertIsNotNone(tru_recorder_v1.snowflake_app_dao)
         self.assertTrue(
-            tru_recorder_v1.snowflake_app_dao.check_agent_exists("custom_app")
+            tru_recorder_v1.snowflake_app_dao.check_agent_exists(
+                "custom_app_multi_ver"
+            )
         )
         # Create app version 2.
-        app_v2 = TestApp()
-        tru_recorder_v2 = TruCustomApp(
-            app_v2,
-            app_name="custom_app",
+        tru_recorder_v2 = TruApp(
+            app,
+            app_name="custom_app_multi_ver",
             app_version="v2",
+            connector=self.snowflake_connector,
+            main_method=app.respond_to_query,
         )
 
         self.assertIsNotNone(tru_recorder_v2.snowflake_app_dao)
+
         self.assertTrue(
-            tru_recorder_v1.snowflake_app_dao.check_agent_exists("custom_app")
+            tru_recorder_v2.snowflake_app_dao.check_agent_exists(
+                "custom_app_multi_ver"
+            )
         )
 
         versions_df_1 = tru_recorder_v1.snowflake_app_dao.list_agent_versions(
-            "custom_app"
+            "custom_app_multi_ver"
         )
 
-        # both versions should be present under the same agent, even created by 2 different truapp instances
-        self.assertIn("V1", versions_df_1["name"].values.tolist())
-        self.assertIn("V2", versions_df_1["name"].values.tolist())
+        # # both versions should be present under the same agent, even created by 2 different truapp instances
+        self.assertIn("V1", versions_df_1["name"].values)
+        self.assertIn("V2", versions_df_1["name"].values)
 
         versions_df_2 = tru_recorder_v2.snowflake_app_dao.list_agent_versions(
-            "custom_app"
+            "custom_app_multi_ver"
         )
-        self.assertIn("V1", versions_df_2["name"].values.tolist())
-        self.assertIn("V2", versions_df_2["name"].values.tolist())
+        self.assertIn("V1", versions_df_2["name"].values)
+        self.assertIn("V2", versions_df_2["name"].values)

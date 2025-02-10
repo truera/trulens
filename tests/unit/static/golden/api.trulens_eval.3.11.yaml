@@ -848,6 +848,7 @@ trulens_eval.Tru:
     delete_singleton_by_name: builtins.classmethod
     dict: builtins.function
     find_unused_port: builtins.function
+    force_flush: builtins.function
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
@@ -969,7 +970,6 @@ trulens_eval.TruApp:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     replace: builtins.function
-    require_snowpark_session: builtins.function
     root_callable: pydantic.fields.FieldInfo
     root_class: trulens.core.utils.pyschema.Class
     schema: builtins.classmethod
@@ -1035,6 +1035,7 @@ trulens_eval.TruBasicApp:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -1138,6 +1139,7 @@ trulens_eval.TruChain:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -1342,6 +1344,7 @@ trulens_eval.TruLlama:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -1444,6 +1447,7 @@ trulens_eval.TruRails:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -1547,6 +1551,7 @@ trulens_eval.TruVirtual:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -1681,6 +1686,7 @@ trulens_eval.app.App:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -6369,19 +6375,20 @@ trulens_eval.guardrails.langchain:
   __class__: builtins.module
   highs: {}
   lows:
-    WithFeedbackFilterDocuments: pydantic.v1.main.ModelMetaclass
+    WithFeedbackFilterDocuments: pydantic._internal._model_construction.ModelMetaclass
     deprecation_utils: builtins.module
 trulens_eval.guardrails.langchain.WithFeedbackFilterDocuments:
   __bases__:
   - langchain_core.vectorstores.base.VectorStoreRetriever
-  __class__: pydantic.v1.main.ModelMetaclass
+  __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
     feedback: trulens.core.feedback.feedback.Feedback
-    metadata: typing.Optional[typing.Dict[builtins.str, typing.Any], builtins.NoneType]
+    metadata: typing.Optional[builtins.dict[builtins.str, typing.Any], builtins.NoneType]
+    name: typing.Optional[builtins.str, builtins.NoneType]
     of_retriever: builtins.staticmethod
     search_kwargs: builtins.dict
     search_type: builtins.str
-    tags: typing.Optional[typing.List[builtins.str], builtins.NoneType]
+    tags: typing.Optional[builtins.list[builtins.str], builtins.NoneType]
     threshold: builtins.float
     vectorstore: langchain_core.vectorstores.base.VectorStore
 trulens_eval.guardrails.llama:
@@ -7053,6 +7060,7 @@ trulens_eval.tru.Tru:
     delete_singleton_by_name: builtins.classmethod
     dict: builtins.function
     find_unused_port: builtins.function
+    force_flush: builtins.function
     from_orm: builtins.classmethod
     get_app: builtins.function
     get_apps: builtins.function
@@ -7145,6 +7153,7 @@ trulens_eval.tru_basic_app.TruBasicApp:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -7292,6 +7301,7 @@ trulens_eval.tru_chain.TruChain:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -7535,6 +7545,7 @@ trulens_eval.tru_llama.TruLlama:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -7703,6 +7714,7 @@ trulens_eval.tru_rails.TruRails:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]
@@ -7814,6 +7826,7 @@ trulens_eval.tru_virtual.TruVirtual:
     main_acall: builtins.function
     main_call: builtins.function
     main_input: builtins.function
+    main_method_name: typing.Optional[builtins.str, builtins.NoneType]
     main_output: builtins.function
     manage_pending_feedback_results_thread: typing.Optional[trulens.core.utils.threading.Thread,
       builtins.NoneType]

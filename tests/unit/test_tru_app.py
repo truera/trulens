@@ -2,7 +2,6 @@
 Tests for TruApp.
 """
 
-from unittest import main
 import weakref
 
 from trulens.apps import app as app
@@ -120,7 +119,3 @@ class TestTruApp(TruTestCase):
         del app, recorder
         self.assertCollected(app_ref)
         self.assertCollected(recorder_ref)
-
-
-if __name__ == "__main__":
-    main()

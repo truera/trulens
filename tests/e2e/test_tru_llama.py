@@ -3,7 +3,6 @@
 import os
 from pathlib import Path
 from typing import Set
-from unittest import main
 from unittest import skip
 import weakref
 
@@ -241,7 +240,3 @@ class TestLlamaIndex(TruTestCase):
         await self._async_test(
             self._create_chat_engine, "achat", streaming=True
         )
-
-
-if __name__ == "__main__":
-    main()

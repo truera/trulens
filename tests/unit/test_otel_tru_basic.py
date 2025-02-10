@@ -2,8 +2,6 @@
 Tests for OTEL TruBasic app.
 """
 
-from unittest import main
-
 from trulens.apps.basic import TruBasicApp
 from trulens.core.session import TruSession
 
@@ -28,7 +26,3 @@ class TestOtelTruBasic(OtelAppTestCase):
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_basic__test_smoke.csv"
         )
-
-
-if __name__ == "__main__":
-    main()

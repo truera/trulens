@@ -6,7 +6,6 @@ issues that occur from merely importing trulens.
 import importlib
 import sys
 from unittest import TestCase
-from unittest import main
 from unittest import skipIf
 
 import pytest
@@ -197,7 +196,3 @@ class TestStatic(TestCase):
                     with self.subTest(mod=mod):
                         # Make sure we can import the module now.
                         importlib.import_module(mod)
-
-
-if __name__ == "__main__":
-    main()
