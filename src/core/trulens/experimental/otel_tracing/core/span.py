@@ -133,6 +133,9 @@ def set_general_span_attributes(
     eval_root_id = get_baggage(SpanAttributes.EVAL.EVAL_ROOT_ID)
     if eval_root_id:
         span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, eval_root_id)
+    feedback_name = get_baggage(SpanAttributes.EVAL.FEEDBACK_NAME)
+    if feedback_name:
+        span.set_attribute(SpanAttributes.EVAL.FEEDBACK_NAME, feedback_name)
 
     run_name_baggage = get_baggage(SpanAttributes.RUN_NAME)
     input_id_baggage = get_baggage(SpanAttributes.INPUT_ID)
