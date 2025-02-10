@@ -42,7 +42,6 @@ from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.run import Run
-from trulens.core.run import RunConfig
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -526,18 +525,22 @@ class App(
             from trulens.connectors.snowflake import SnowflakeConnector
 
             if isinstance(connector, SnowflakeConnector):
-                if "object_type" not in kwargs or kwargs["object_type"] is None:
-                    object_type = ObjectType.EXTERNAL_AGENT
-                ret = connector.initialize_snowflake_app_dao(
-                    object_type=object_type,
+                self.snowflake_object_type = (
+                    ObjectType.EXTERNAL_AGENT
+                    if "object_type" not in kwargs
+                    or kwargs["object_type"] is None
+                    else kwargs["object_type"]
+                )
+
+                ret = connector.initialize_snowflake_dao_fields(
+                    object_type=self.snowflake_object_type,
                     app_name=kwargs["app_name"],
                     app_version=kwargs["app_version"],
                 )
                 if ret is not None:
                     self.snowflake_app_dao = ret[0]
-                    self.snowflake_object_name = ret[1]
-
-                self.snowflake_object_type = object_type
+                    self.snowflake_run_dao = ret[1]
+                    self.snowflake_object_name = ret[2]
 
         self.app = app
 
@@ -1666,13 +1669,13 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             logger.error(msg)
             raise ValueError(msg)
 
-    def add_run(self, run_name: str, run_config: RunConfig) -> Run:
+    def add_run(self, run_name: str, run_config: Run.RunConfig) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
 
         Args:
             run_name (str): unique name of the run
-            run_config (RunConfig): optional run config
+            run_config (Run.RunConfig): optional run config
 
         Returns:
             Run: Run instance

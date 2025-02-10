@@ -74,7 +74,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
 
         self.assertIsNone(tru_recorder.snowflake_app_dao)
 
-    def test_tru_app_supported_object_type(self):
+    def test_tru_app_snowflake_agent_initialization(self):
         # Create app.
         app = TestApp()
 
@@ -84,12 +84,13 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             app_version="v1",
             connector=self.snowflake_connector,
             main_method=app.respond_to_query,
-            # object_type default to EXTERNAL_AGENT when snowflake connector is used
+            # object_type default to "EXTERNAL AGENT" when snowflake connector is used
         )
 
         self.assertIsNotNone(tru_recorder.snowflake_app_dao)
+        self.assertIsNotNone(tru_recorder.snowflake_run_dao)
 
-        self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL_AGENT")
+        self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL AGENT")
         self.assertEqual(tru_recorder.snowflake_object_name, "CUSTOM_APP")
 
         self.assertTrue(
