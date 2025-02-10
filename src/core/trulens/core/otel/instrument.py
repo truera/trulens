@@ -477,6 +477,7 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
+        self.feedback_name = kwargs.pop("feedback_name")
         super().__init__(*args, **kwargs)
 
     # For use as a context manager.
@@ -494,6 +495,9 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(
+            SpanAttributes.EVAL.FEEDBACK_NAME, self.feedback_name
+        )
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("eval_root")

@@ -54,6 +54,7 @@ def _compute_feedback(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    feedback_name: str,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
@@ -63,6 +64,7 @@ def _compute_feedback(
     Args:
         record: Record to compute feedback for.
         feedback_function: Function to compute feedback.
+        feedback_name: Name of feedback.
         selector_function:
             Function to select inputs for feedback computation. Given a record
             in graph form, it returns a list of inputs to the feedback
@@ -97,6 +99,7 @@ def _compute_feedback(
             run_name=run_name,
             input_id=input_id,
             target_record_id=target_record_id,
+            feedback_name=feedback_name,
         )
         with context_manager as eval_root_span:
             try:

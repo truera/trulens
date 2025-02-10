@@ -67,7 +67,10 @@ class TestOtelFeedbackComputation(OtelAppTestCase):
         spans = _convert_events_to_MinimalSpanInfos(events)
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
-            record_root, feedback_function, all_retrieval_span_attributes
+            record_root,
+            feedback_function,
+            "baby_grader",
+            all_retrieval_span_attributes,
         )
         TruSession().force_flush()
         # Compare results to expected.

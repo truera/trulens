@@ -15,7 +15,7 @@ from trulens.core.session import TruSession
 from trulens.feedback.computer import MinimalSpanInfo
 from trulens.feedback.computer import RecordGraphNode
 from trulens.feedback.computer import _compute_feedback
-from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.unit.test_otel_tru_chain
 import tests.unit.test_otel_tru_custom
@@ -114,7 +114,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             WHERE
                 RECORD_TYPE = 'SPAN'
                 AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
-                AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
+                AND RECORD_ATTRIBUTES['{SpanAttributes.RUN_NAME}'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
             """,
@@ -208,7 +208,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         spans = _convert_events_to_MinimalSpanInfos(events)
         record_root = RecordGraphNode.build_graph(spans)
         _compute_feedback(
-            record_root, feedback_function, all_retrieval_span_attributes
+            record_root,
+            feedback_function,
+            "baby_grader",
+            all_retrieval_span_attributes,
         )
         TruSession().force_flush()
         # Validate results.
