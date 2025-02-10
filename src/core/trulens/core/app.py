@@ -438,7 +438,7 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_app_dao: Optional[Any] = None
+    snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
     def __init__(
         self,
@@ -454,17 +454,6 @@ class App(
         # for us:
         if connector:
             kwargs["connector"] = connector
-            if _can_import("trulens.connectors.snowflake"):
-                from trulens.connectors.snowflake import SnowflakeConnector
-
-                if isinstance(connector, SnowflakeConnector):
-                    self.snowflake_app_dao = (
-                        connector.initialize_snowflake_app_dao(
-                            object_type=kwargs["object_type"],
-                            app_name=kwargs["app_name"],
-                            app_version=kwargs["app_version"],
-                        )
-                    )
 
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
@@ -520,6 +509,18 @@ class App(
 
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
+
+        if connector and _can_import("trulens.connectors.snowflake"):
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if isinstance(connector, SnowflakeConnector):
+                self.snowflake_app_dao = connector.initialize_snowflake_app_dao(
+                    object_type=kwargs["object_type"]
+                    if "object_type" in kwargs
+                    else None,
+                    app_name=kwargs["app_name"],
+                    app_version=kwargs["app_version"],
+                )
 
         self.app = app
 
