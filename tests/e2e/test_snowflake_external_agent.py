@@ -89,6 +89,9 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
 
         self.assertIsNotNone(tru_recorder.snowflake_app_dao)
 
+        self.assertEqual(tru_recorder.snowflake_object_type, "EXTERNAL_AGENT")
+        self.assertEqual(tru_recorder.snowflake_object_name, "CUSTOM_APP")
+
         self.assertTrue(
             tru_recorder.snowflake_app_dao.check_agent_exists("custom_app")
         )

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 AIML_RUN_OPS_SYS_FUNC_TEMPLATE = """
-SELECT SYSTEM$AIML_RUN_OPERATION('{method}', ?)
+SELECT SYSTEM$AIML_RUN_OPERATION('{method}', ?);
 """
 METHOD_CREATE = "CREATE"
 METHOD_GET = "GET"
@@ -83,7 +83,7 @@ class RunDao:
         Retrieve a run by its run_name (assumed unique) and object_name.
 
         Args:
-            object_name: The managing object's name (e.g. "EXTERNAL_AGENT").
+            object_name: The managing object's name (e.g. name of EXTERNAL AGENT).
             run_name: The unique name of the run.
 
         Returns:

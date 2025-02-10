@@ -9,6 +9,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
     Union,
 )
 
@@ -362,14 +363,11 @@ class SnowflakeConnector(DBConnector):
 
     def initialize_snowflake_app_dao(
         self,
-        object_type: Optional[str],
+        object_type: str,
         app_name: str,
         app_version: str,
-    ) -> Optional[ExternalAgentDao]:
+    ) -> Optional[Tuple[ExternalAgentDao, str]]:
         snowflake_app_dao = None
-
-        if object_type is None:
-            object_type = ObjectType.EXTERNAL_AGENT
 
         if object_type not in ObjectType:
             raise ValueError(
@@ -382,8 +380,8 @@ class SnowflakeConnector(DBConnector):
             )
             # side effect: create external agent if not exist
             snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
-            snowflake_app_dao.create_agent_if_not_exist(
+            agent_resolved_name = snowflake_app_dao.create_agent_if_not_exist(
                 name=app_name,
                 version=app_version,
             )
-        return snowflake_app_dao
+            return snowflake_app_dao, agent_resolved_name

@@ -31,6 +31,7 @@ from typing import (
 import weakref
 
 import pydantic
+from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -440,9 +441,15 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
-    snowflake_run_dao: Optional[Any] = None
-    snowflake_object_type: Optional[str] = None
-    snowflake_object_name: Optional[str] = None
+    snowflake_object_type: Optional[str] = pydantic.Field(
+        None,
+    )
+    snowflake_object_name: Optional[str] = pydantic.Field(
+        None,
+    )
+
+    snowflake_run_dao: Optional[Any] = pydantic.Field(None, exclude=True)
+
     snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
     def __init__(
@@ -519,13 +526,18 @@ class App(
             from trulens.connectors.snowflake import SnowflakeConnector
 
             if isinstance(connector, SnowflakeConnector):
-                self.snowflake_app_dao = connector.initialize_snowflake_app_dao(
-                    object_type=kwargs["object_type"]
-                    if "object_type" in kwargs
-                    else None,
+                if "object_type" not in kwargs or kwargs["object_type"] is None:
+                    object_type = ObjectType.EXTERNAL_AGENT
+                ret = connector.initialize_snowflake_app_dao(
+                    object_type=object_type,
                     app_name=kwargs["app_name"],
                     app_version=kwargs["app_version"],
                 )
+                if ret is not None:
+                    self.snowflake_app_dao = ret[0]
+                    self.snowflake_object_name = ret[1]
+
+                self.snowflake_object_type = object_type
 
         self.app = app
 
