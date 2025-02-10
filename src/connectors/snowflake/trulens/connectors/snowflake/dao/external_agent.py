@@ -70,7 +70,6 @@ class ExternalAgentDao:
 
         logger.info(f"Added version {version} to External Agent {name}.")
 
-
     def drop_version(self, name: str, version: str) -> None:
         """Drop a specific version from an External Agent."""
 
@@ -97,7 +96,6 @@ class ExternalAgentDao:
         logger.info(f"Checking if External Agent {name} exists.")
 
         return name.upper() in agents["name"].values
-
 
     def list_agent_versions(self, name: str) -> pandas.DataFrame:
         """Retrieve all versions of a specific External Agent."""

@@ -1,9 +1,11 @@
 import json
 import logging
-from typing import List
+from typing import List, Optional
 
+import pandas as pd
 from snowflake.snowpark import Session
-import trulens.connectors.snowflake.dao.sql_utils as sql_utils
+from snowflake.snowpark.row import Row
+from trulens.connectors.snowflake.dao.sql_utils import execute_query
 from trulens.core.run import RunConfig
 
 logger = logging.getLogger(__name__)
@@ -14,7 +16,7 @@ SELECT SYSTEM$AIML_RUN_OPERATION('{method}', ?)
 """
 METHOD_CREATE = "CREATE"
 METHOD_GET = "GET"
-METHOD_UPDATE = "UPDATE"  # TODO
+METHOD_UPDATE = "UPDATE"
 METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
 
@@ -61,20 +63,22 @@ class RunDao:
 
         # Format the query: the method is substituted, while the payload is passed as parameter.
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_CREATE)
-        success_message = (
-            f"Created new RunMetadata successfully for run '{run_name}'."
-        )
+
         logger.info("Executing query: %s", query)
 
         # Use sql_utils.execute_query with the JSON payload passed as a parameter tuple.
-        sql_utils.execute_query(
+        execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
-            success_message=success_message,
+        )
+        logger.info(
+            f"Created new RunMetadata successfully for run '{run_name}'."
         )
 
-    def get_run(self, object_name: str, run_name: str) -> dict:
+    def get_run(
+        self, object_name: str, run_name: str
+    ) -> Optional[pd.DataFrame]:
         """
         Retrieve a run by its run_name (assumed unique) and object_name.
 
@@ -91,21 +95,20 @@ class RunDao:
         }
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_GET)
-        success_message = f"Retrieved run '{run_name}'."
+
         logger.info("Executing query: %s", query)
-        df = sql_utils.fetch_query(
+        rows: List[Row] = execute_query(
             self.session,
             query,
-            success_message=success_message,
             parameters=(req_payload_json,),
         )
-        if df.empty:
+        if len(rows) == 0:
             return None
         else:
             # Assuming the first row contains our JSON result.
-            return df.iloc[0].to_dict()
+            return pd.DataFrame([rows[0].as_dict()])
 
-    def list_all_runs(self, object_name: str, object_type: str) -> List[dict]:
+    def list_all_runs(self, object_name: str, object_type: str) -> pd.DataFrame:
         """
         List all runs for a given object_name.
 
@@ -113,25 +116,21 @@ class RunDao:
             object_name: The name of the managing object (e.g. "EXTERNAL_AGENT").
 
         Returns:
-            A pandas DataFrame containing the run metadata.
+            A pandas DataFrame containing all run metadata.
         """
         req_payload = {"object_name": object_name, "object_type": object_type}
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_LIST)
-        success_message = f"Retrieved list of runs for object '{object_name}'."
+
         logger.info("Executing query: %s", query)
 
-        df = sql_utils.fetch_query(
+        rows = execute_query(
             self.session,
             query,
-            success_message=success_message,
             parameters=(req_payload_json,),
         )
-        if df.empty:
-            return []
-        else:
-            # df contains a list of JSON objects, so we convert each row to a dictionary and make it a list.
-            return df.apply(lambda row: row.to_dict(), axis=1).tolist()
+
+        return pd.DataFrame([row.as_dict() for row in rows])
 
     def create_run_if_not_exist(
         self,
@@ -139,7 +138,7 @@ class RunDao:
         object_type: str,
         run_name: str,
         run_config: RunConfig,
-    ) -> dict:
+    ) -> Optional[pd.DataFrame]:
         """
         Create a new run if one with the given run_name does not already exist.
 
@@ -148,8 +147,8 @@ class RunDao:
             run_name: The name of the run.
             run_config: The configuration for the run.
         """
-        run_result = self.get_run(object_name=object_name, run_name=run_name)
-        if run_result is None:
+        run_result_df = self.get_run(object_name=object_name, run_name=run_name)
+        if run_result_df is None:
             logger.info("Run '%s' does not exist; creating new run.", run_name)
             self.create_new_run(
                 object_name=object_name,
@@ -161,7 +160,11 @@ class RunDao:
         else:
             logger.info("Run '%s' already exists; skipping creation.", run_name)
 
-        return run_result
+            # Re-fetch the newly created run's metadata
+            run_result_df = self.get_run(
+                object_name=object_name, run_name=run_name
+            )
+        return run_result_df
 
     def delete_run(self, run_name: str, object_name: str, object_type: str):
         """
@@ -178,12 +181,11 @@ class RunDao:
         }
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_DELETE)
-        success_message = f"Deleted run '{run_name}'."
+
         logger.info("Executing query: %s", query)
-        sql_utils.execute_query(
+        execute_query(
             self.session,
             query,
             parameters=(req_payload_json,),
-            success_message=success_message,
         )
         logger.info("Deleted run '%s'.", run_name)

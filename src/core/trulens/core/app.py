@@ -1666,12 +1666,14 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             Run: Run instance
         """
         self._check_snowflake_dao()
-        run_metadata_json = self.snowflake_run_dao.create_run_if_not_exist(
+        run_metadata_df = self.snowflake_run_dao.create_run_if_not_exist(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
             run_name=run_name,
             run_config=run_config,
         )
+
+        run_metadata_json = run_metadata_df.to_dict(orient="records")[0]
         run_metadata_json["_app"] = self.app
         run_metadata_json["_main_method_name"] = self.main_method_name
 

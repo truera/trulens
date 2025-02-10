@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from snowflake.snowpark import Row
 from snowflake.snowpark import Session
@@ -11,7 +11,7 @@ def execute_query(
     session: Session,
     query: str,
     parameters: Optional[tuple] = None,
-) -> Row:
+) -> List[Row]:
     """
     Executes a query with optional parameters with qmark parameter binding (if applicable).
     """
