@@ -175,8 +175,14 @@ class Run(BaseModel):
             raise ValueError("No run metadata found.")
 
         # Assume the first cell of the first row contains the JSON string.
+
         metadata_str = metadata_df.iloc[0].values[0]
-        metadata = json.loads(metadata_str)
+        try:
+            metadata = json.loads(metadata_str)
+        except json.JSONDecodeError:
+            raise ValueError(
+                "The first cell of the first row does not contain a valid JSON string."
+            )
 
         metadata.update(extra)
 
