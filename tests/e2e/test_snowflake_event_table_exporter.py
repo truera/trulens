@@ -200,32 +200,42 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        run_name = "DKUROKAWA_RUN_7"
+        run_name = "DKUROKAWA_RUN_12"
         num_records = 1000
-        for i in range(num_records):
-            print(f"INGESTING {i}")
-            input_id = "input_" + str(i)
-            with tru_recorder(
-                run_name=run_name,
-                input_id=input_id,
-                ground_truth_output="Like attention but with more heads.",
-            ):
-                rag_chain.invoke("What is multi-headed attention?")
-            if i % 10 == 0:
+        print(f"SCHEMA: {self._schema}")
+        for start in range(0, num_records, 10):
+            for i in range(start, min(start + 10, num_records)):
+                print(f"INGESTING {i}")
+                input_id = "input_" + str(i)
+                with tru_recorder(
+                    run_name=run_name,
+                    input_id=input_id,
+                    ground_truth_output="Like attention but with more heads.",
+                ):
+                    rag_chain.invoke("What is multi-headed attention?")
                 TruSession().force_flush()
-        for i in range(num_records):
-            print(f"EVALUATING {i}")
-            input_id = "input_" + str(i)
-            # Compute feedback on record we just ingested.
-            events = self._validate_results(app_name, run_name, input_id, 10)
-            spans = _convert_events_to_MinimalSpanInfos(events)
-            record_root = RecordGraphNode.build_graph(spans)
-            _compute_feedback(
-                record_root,
-                feedback_function,
-                "baby_grader",
-                all_retrieval_span_attributes,
-            )
-            TruSession().force_flush()
-            events = self._validate_results(app_name, run_name, input_id, 13)
-        print("HI")
+            print(f"SCHEMA: {self._schema}")
+            for i in range(start, min(start + 10, num_records)):
+                print(f"EVALUATING {i}")
+                input_id = "input_" + str(i)
+                # Compute feedback on record we just ingested.
+                events = self._validate_results(
+                    app_name, run_name, input_id, 10
+                )
+                spans = _convert_events_to_MinimalSpanInfos(events)
+                record_root = RecordGraphNode.build_graph(spans)
+                _compute_feedback(
+                    record_root,
+                    feedback_function,
+                    "baby_grader",
+                    all_retrieval_span_attributes,
+                )
+                TruSession().force_flush()
+            print(f"SCHEMA: {self._schema}")
+            for i in range(start, min(start + 10, num_records)):
+                print(f"VALIDATING {i}")
+                input_id = "input_" + str(i)
+                events = self._validate_results(
+                    app_name, run_name, input_id, 13
+                )
+            print(f"SCHEMA: {self._schema}")

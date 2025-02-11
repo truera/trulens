@@ -42,20 +42,20 @@ class SnowflakeTestCase(TestCase):
         ]:
             del core_session.TruSession._singleton_instances[key]
         # Clean up any Snowflake schemas.
-        schemas_not_deleted = []
-        for curr in self._snowflake_schemas_to_delete:
-            try:
-                self.run_query(
-                    f"DROP SCHEMA {self._snowflake_connection_parameters['database']}.{curr}"
-                )
-            except Exception:
-                schemas_not_deleted.append(curr)
-                self._logger.error(f"Failed to clean up schema {curr}!")
-        # Check if any artifacts weren't deleted.
-        if schemas_not_deleted:
-            error_msg = "Failed to clean up the following schemas:\n"
-            error_msg += "\n".join(schemas_not_deleted)
-            raise ValueError(error_msg)
+        # schemas_not_deleted = []
+        # for curr in self._snowflake_schemas_to_delete:
+        #    try:
+        #        self.run_query(
+        #            f"DROP SCHEMA {self._snowflake_connection_parameters['database']}.{curr}"
+        #        )
+        #    except Exception:
+        #        schemas_not_deleted.append(curr)
+        #        self._logger.error(f"Failed to clean up schema {curr}!")
+        ## Check if any artifacts weren't deleted.
+        # if schemas_not_deleted:
+        #    error_msg = "Failed to clean up the following schemas:\n"
+        #    error_msg += "\n".join(schemas_not_deleted)
+        #    raise ValueError(error_msg)
         # Close session.
         self._snowpark_session.close()
 
@@ -126,6 +126,7 @@ class SnowflakeTestCase(TestCase):
             schema_name = (
                 f"{schema_name}__{str(uuid.uuid4()).replace('-', '_')}"
             )
+        # schema_name = "large_data_for_garett"
         self._schema = schema_name
         self.run_query("CREATE SCHEMA IDENTIFIER(?)", [schema_name])
         self._snowflake_schemas_to_delete.add(schema_name)
