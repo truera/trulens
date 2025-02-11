@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -5,17 +6,40 @@ from typing import List, Sequence
 import uuid
 
 from snowflake.snowpark import Session
+from snowflake.snowpark.row import Row
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
 from trulens.apps.llamaindex import TruLlama
 from trulens.connectors import snowflake as snowflake_connector
 from trulens.core.session import TruSession
-from trulens.otel.semconv.trace import BASE_SCOPE
+from trulens.feedback.computer import MinimalSpanInfo
+from trulens.feedback.computer import RecordGraphNode
+from trulens.feedback.computer import _compute_feedback
+from trulens.otel.semconv.trace import SpanAttributes
 
 import tests.unit.test_otel_tru_chain
 import tests.unit.test_otel_tru_custom
 import tests.unit.test_otel_tru_llama
+from tests.util.mock_otel_feedback_computation import (
+    all_retrieval_span_attributes,
+)
+from tests.util.mock_otel_feedback_computation import feedback_function
 from tests.util.snowflake_test_case import SnowflakeTestCase
+
+
+def _convert_events_to_MinimalSpanInfos(
+    events: List[Row],
+) -> List[MinimalSpanInfo]:
+    ret = []
+    for row in events:
+        span = MinimalSpanInfo()
+        span.span_id = json.loads(row.TRACE)["span_id"]
+        span.parent_span_id = json.loads(row.RECORD).get("parent_span_id", None)
+        if not span.parent_span_id:
+            span.parent_span_id = None
+        span.attributes = json.loads(row.RECORD_ATTRIBUTES)
+        ret.append(span)
+    return ret
 
 
 class TestSnowflakeEventTableExporter(SnowflakeTestCase):
@@ -76,7 +100,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             [],
         )
         # Check that the data is in the event table.
-        self._wait_for_num_results(
+        return self._wait_for_num_results(
             f"""
             SELECT
                 *
@@ -85,23 +109,22 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                     ?,
                     ?,
                     ?,
-                    'external agent'
+                    'EXTERNAL AGENT'
                 ))
             WHERE
                 RECORD_TYPE = 'SPAN'
                 AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
-                AND RECORD_ATTRIBUTES['{BASE_SCOPE}.run_name'] = '{run_name}'
+                AND RECORD_ATTRIBUTES['{SpanAttributes.RUN_NAME}'] = '{run_name}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
             """,
             [
-                self._snowpark_session.get_current_database().lower(),
-                self._snowpark_session.get_current_schema().lower(),
+                self._snowpark_session.get_current_database()[1:-1],
+                self._snowpark_session.get_current_schema()[1:-1],
                 app_name,
             ],
             num_expected_spans,
         )
-        # TODO(otel): call the feedback computation and check that it's fine.
 
     def test_tru_custom_app(self):
         # Create app.
@@ -158,3 +181,38 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             rag.invoke("What is multi-headed attention?")
         # Validate results.
         self._validate_results("langchain app", run_name, 10)
+
+    def test_feedback_computation(self) -> None:
+        # Create app.
+        rag_chain = (
+            tests.unit.test_otel_tru_chain.TestOtelTruChain._create_simple_rag()
+        )
+        app_name = "Simple RAG"
+        tru_recorder = TruChain(
+            rag_chain,
+            app_name=app_name,
+            app_version="v1",
+            main_method=rag_chain.invoke,
+        )
+        # Record and invoke.
+        run_name = str(uuid.uuid4())
+        with tru_recorder(
+            run_name=run_name,
+            input_id="42",
+            ground_truth_output="Like attention but with more heads.",
+        ):
+            rag_chain.invoke("What is multi-headed attention?")
+        TruSession().force_flush()
+        # Compute feedback on record we just ingested.
+        events = self._validate_results(app_name, run_name, 10)
+        spans = _convert_events_to_MinimalSpanInfos(events)
+        record_root = RecordGraphNode.build_graph(spans)
+        _compute_feedback(
+            record_root,
+            feedback_function,
+            "baby_grader",
+            all_retrieval_span_attributes,
+        )
+        TruSession().force_flush()
+        # Validate results.
+        events = self._validate_results(app_name, run_name, 13)

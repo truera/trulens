@@ -150,13 +150,17 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 except Exception as e:
                     logger.error(f"Error setting trace level to ALWAYS: {e}!")
                     raise e
+            database = snowpark_session.get_current_database()[1:-1]
+            schema = snowpark_session.get_current_schema()[1:-1]
             sql_cmd = snowpark_session.sql(
                 f"""
                 CALL SYSTEM$INGEST_AI_OBSERVABILITY_SPANS(
                     BUILD_SCOPED_FILE_URL(
-                        @{snowpark_session.get_current_database()}.{snowpark_session.get_current_schema()}.trulens_spans,
+                        @{database}.{schema}.trulens_spans,
                         ?
                     ),
+                    ?,
+                    ?,
                     ?,
                     ?,
                     ?
@@ -164,6 +168,8 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 """,
                 params=[
                     tmp_file_basename + ".gz",
+                    database,  # TODO(otel, dhuang): This should be the database of the object entity!
+                    schema,  # TODO(otel, dhuang): This should the schema of the object entity!
                     app_name or "",
                     app_version or "",
                     run_name or "",
