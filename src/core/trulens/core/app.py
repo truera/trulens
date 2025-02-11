@@ -308,6 +308,14 @@ def instrumented_component_views(
             yield q, ComponentView.of_json(json=o)
 
 
+def _can_import(to_import: str) -> bool:
+    try:
+        __import__(to_import)
+        return True
+    except ImportError:
+        return False
+
+
 class App(
     app_schema.AppDefinition,
     core_instruments.WithInstrumentCallbacks,
@@ -430,6 +438,8 @@ class App(
         pydantic.PrivateAttr(default_factory=dict)
     )
 
+    snowflake_app_dao: Optional[Any] = pydantic.Field(None, exclude=True)
+
     def __init__(
         self,
         connector: Optional[core_connector.DBConnector] = None,
@@ -444,6 +454,7 @@ class App(
         # for us:
         if connector:
             kwargs["connector"] = connector
+
         kwargs["feedbacks"] = feedbacks
         kwargs["recording_contexts"] = contextvars.ContextVar(
             "recording_contexts", default=None
@@ -498,6 +509,18 @@ class App(
 
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
+
+        if connector and _can_import("trulens.connectors.snowflake"):
+            from trulens.connectors.snowflake import SnowflakeConnector
+
+            if isinstance(connector, SnowflakeConnector):
+                self.snowflake_app_dao = connector.initialize_snowflake_app_dao(
+                    object_type=kwargs["object_type"]
+                    if "object_type" in kwargs
+                    else None,
+                    app_name=kwargs["app_name"],
+                    app_version=kwargs["app_version"],
+                )
 
         self.app = app
 
@@ -717,6 +740,7 @@ class App(
         otel_tracing_enabled = os.getenv(
             "TRULENS_OTEL_TRACING", ""
         ).lower() in ["1", "true"]
+
         if self.connector is not None and not otel_tracing_enabled:
             self.connector.add_app(app=self)
 
@@ -1619,6 +1643,26 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             )
 
         logger.info("\n".join(object_strings))
+
+    def _check_snowflake_dao(self):
+        if (
+            not hasattr(self, "snowflake_app_dao")
+            or self.snowflake_app_dao is None
+        ):
+            msg = (
+                "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
+                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+            )
+            logger.error(msg)
+            raise NotImplementedError(msg)
+
+    def add_run(self):
+        self._check_snowflake_dao()
+        raise NotImplementedError("Not implemented yet.")
+
+    def list_runs(self):
+        self._check_snowflake_dao()
+        raise NotImplementedError("Not implemented yet.")
 
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
