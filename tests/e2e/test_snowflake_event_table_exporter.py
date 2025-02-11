@@ -200,8 +200,8 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        run_name = "DKUROKAWA_RUN_4"
-        num_records = 1
+        run_name = "DKUROKAWA_RUN_5"
+        num_records = 2
         for i in range(num_records):
             input_id = "input_" + str(i)
             with tru_recorder(
@@ -210,8 +210,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 ground_truth_output="Like attention but with more heads.",
             ):
                 rag_chain.invoke("What is multi-headed attention?")
-            TruSession().force_flush()
+            if i % 10 == 0:
+                TruSession().force_flush()
         for i in range(num_records):
+            input_id = "input_" + str(i)
             # Compute feedback on record we just ingested.
             events = self._validate_results(app_name, run_name, input_id, 10)
             spans = _convert_events_to_MinimalSpanInfos(events)
