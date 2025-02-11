@@ -4,7 +4,6 @@ Tests for OTEL TruChain app.
 
 import pytest
 from trulens.core.otel.instrument import instrument
-from trulens.core.session import TruSession
 
 from tests.util.otel_app_test_case import OtelAppTestCase
 
@@ -18,6 +17,7 @@ try:
     from langchain_community.vectorstores import FAISS
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from opentelemetry.instrumentation.langchain import LangchainInstrumentor
     from trulens.apps.langchain import TruChain
 except Exception:
     pass
@@ -59,9 +59,8 @@ class TestOtelTruChain(OtelAppTestCase):
         )
 
     def test_smoke(self) -> None:
-        # Set up.
-        tru_session = TruSession()
-        tru_session.reset_database()
+        # Instrument langchain
+        LangchainInstrumentor().instrument()
         # Create app.
         rag_chain = self._create_simple_rag()
         tru_recorder = TruChain(

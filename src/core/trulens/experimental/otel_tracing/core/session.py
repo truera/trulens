@@ -2,15 +2,20 @@ import logging
 from typing import Any, Callable, Dict, Optional
 
 from opentelemetry import trace
+from opentelemetry.context import Context
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace import export as otel_export_sdk
+from opentelemetry.trace.span import Span
 from trulens.core import session as core_session
 from trulens.core.database.connector import DBConnector
 from trulens.core.utils import python as python_utils
 from trulens.core.utils import text as text_utils
 from trulens.experimental.otel_tracing.core.exporter.connector import (
     TruLensOTELSpanExporter,
+)
+from trulens.experimental.otel_tracing.core.span import (
+    set_general_span_attributes,
 )
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -36,6 +41,15 @@ def _can_import(to_import: str) -> bool:
         return True
     except ImportError:
         return False
+
+
+class TrulensOtelSpanProcessor(otel_export_sdk.BatchSpanProcessor):
+    def on_start(
+        self, span: Span, parent_context: Optional[Context] = None
+    ) -> None:
+        set_general_span_attributes(
+            span, span_type=SpanAttributes.SpanType.UNKNOWN
+        )
 
 
 class _TruSession(core_session.TruSession):
@@ -82,8 +96,8 @@ class _TruSession(core_session.TruSession):
             self, exporter, connector
         )
 
-        self._experimental_otel_span_processor = (
-            otel_export_sdk.BatchSpanProcessor(exporter)
+        self._experimental_otel_span_processor = TrulensOtelSpanProcessor(
+            exporter
         )
         tracer_provider.add_span_processor(
             self._experimental_otel_span_processor
