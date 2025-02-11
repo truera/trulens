@@ -134,10 +134,6 @@ def set_general_span_attributes(
     target_record_id = get_baggage(
         SpanAttributes.EVAL.TARGET_RECORD_ID, context
     )
-    record_id = get_baggage(SpanAttributes.RECORD_ID)
-    if record_id:
-        span.set_attribute(SpanAttributes.RECORD_ID, record_id)
-    target_record_id = get_baggage(SpanAttributes.EVAL.TARGET_RECORD_ID)
     if target_record_id:
         span.set_attribute(
             SpanAttributes.EVAL.TARGET_RECORD_ID, target_record_id
@@ -145,7 +141,7 @@ def set_general_span_attributes(
     eval_root_id = get_baggage(SpanAttributes.EVAL.EVAL_ROOT_ID, context)
     if eval_root_id:
         span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, eval_root_id)
-    feedback_name = get_baggage(SpanAttributes.EVAL.FEEDBACK_NAME)
+    feedback_name = get_baggage(SpanAttributes.EVAL.FEEDBACK_NAME, context)
     if feedback_name:
         span.set_attribute(SpanAttributes.EVAL.FEEDBACK_NAME, feedback_name)
 
