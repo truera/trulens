@@ -200,9 +200,10 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        run_name = "DKUROKAWA_RUN_5"
-        num_records = 2
+        run_name = "DKUROKAWA_RUN_7"
+        num_records = 1000
         for i in range(num_records):
+            print(f"INGESTING {i}")
             input_id = "input_" + str(i)
             with tru_recorder(
                 run_name=run_name,
@@ -213,6 +214,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             if i % 10 == 0:
                 TruSession().force_flush()
         for i in range(num_records):
+            print(f"EVALUATING {i}")
             input_id = "input_" + str(i)
             # Compute feedback on record we just ingested.
             events = self._validate_results(app_name, run_name, input_id, 10)
