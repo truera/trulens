@@ -34,7 +34,7 @@ class RunDao:
         object_type: str,
         run_name: str,
         run_config: Run.RunConfig,
-    ) -> None:
+    ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
 
@@ -71,6 +71,8 @@ class RunDao:
         logger.info(
             f"Created new RunMetadata successfully for run '{run_name}'."
         )
+        # Re-fetch the newly created run's metadata
+        return self.get_run(object_name=object_name, run_name=run_name)
 
     def get_run(self, object_name: str, run_name: str) -> pd.DataFrame:
         """
@@ -125,41 +127,11 @@ class RunDao:
             parameters=(req_payload_json,),
         )
 
-        return pd.DataFrame([row.as_dict() for row in rows])
+        return pd.DataFrame([rows[0].as_dict()])
 
-    def create_run_if_not_exist(
-        self,
-        object_name: str,
-        object_type: str,
-        run_name: str,
-        run_config: Run.RunConfig,
-    ) -> pd.DataFrame:
-        """
-        Create a new run if one with the given run_name does not already exist.
-
-        Args:
-            object_name: The name of the managing object (e.g. "EXTERNAL_AGENT").
-            run_name: The name of the run.
-            run_config: The configuration for the run.
-        """
-        run_result_df = self.get_run(object_name=object_name, run_name=run_name)
-        if run_result_df.empty:
-            logger.info("Run '%s' does not exist; creating new run.", run_name)
-            self.create_new_run(
-                object_name=object_name,
-                object_type=object_type,
-                run_name=run_name,
-                run_config=run_config,
-            )
-            logger.info("Created new run '%s' successfully.", run_name)
-
-            # Re-fetch the newly created run's metadata
-            run_result_df = self.get_run(
-                object_name=object_name, run_name=run_name
-            )
-        return run_result_df
-
-    def delete_run(self, run_name: str, object_name: str, object_type: str):
+    def delete_run(
+        self, run_name: str, object_name: str, object_type: str
+    ) -> None:
         """
         Delete a run by its run_name (assumed unique) and object_name.
 

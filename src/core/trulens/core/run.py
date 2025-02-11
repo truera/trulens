@@ -1,11 +1,11 @@
 from __future__ import annotations  # defers evaluation of annotations
 
+import json
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from pydantic import BaseModel
 from pydantic import Field
-from pydantic import model_validator
 
 
 class Run(BaseModel):
@@ -14,35 +14,18 @@ class Run(BaseModel):
             arbitrary_types_allowed = True
 
         description: Optional[str] = Field(
-            None, description="A description for the run."
+            default=None, description="A description for the run."
         )
         label: Optional[str] = Field(
-            None, description="A label categorizing the run."
+            default=None, description="A label categorizing the run."
         )
         dataset_fqn: Optional[str] = Field(
-            None,
+            default=None,
             description="The fully qualified name of the dataset (e.g. 'db.schema.user_table_name_1').",
         )
-        input_df: Optional[pd.DataFrame] = Field(
-            None,
-            description="The input dataset as a pandas DataFrame.",
-        )
-
-        @model_validator(mode="before")
-        def check_run_data_source(cls, values: dict) -> dict:
-            dataset_fqn = values.get("dataset_fqn")
-            input_df = values.get("input_df")
-            # Ensure that exactly one of dataset_fqn and input_df is provided.
-            if (dataset_fqn is None and input_df is None) or (
-                dataset_fqn is not None and input_df is not None
-            ):
-                raise ValueError(
-                    "Either 'dataset_fqn' or 'input_df' must be provided, but not both."
-                )
-            return values
 
         dataset_col_spec: Optional[Dict[str, str]] = Field(
-            None,
+            default=None,
             description="Optional column name mapping from reserved dataset fields to column names in user's table.",
         )
 
@@ -53,7 +36,7 @@ class Run(BaseModel):
     methods like describe() (which uses the underlying RunDao) to obtain the run metadata.
     """
 
-    run_dao: "RunDao" = Field(
+    run_dao: Any = Field(
         ..., description="DAO instance for run operations.", exclude=True
     )
 
@@ -67,19 +50,21 @@ class Run(BaseModel):
 
     run_name: str = Field(..., description="Unique name of the run.")
 
-    run_config: RunConfig = Field(
-        ...,
+    run_config: Optional[RunConfig] = Field(
+        default=None,
         description="Run configuration that maintains states needed for app invocation and metrics computation.",
     )
 
     run_type: Optional[str] = Field(
-        None, description="Type of the run. i.e. AI_EVALUATION"
+        default=None, description="Type of the run. i.e. AI_EVALUATION"
     )
 
     description: Optional[str] = Field(
-        None, description="Description of the run."
+        default=None, description="Description of the run."
     )
-    label: Optional[str] = Field(None, description="Label for grouping runs.")
+    label: Optional[str] = Field(
+        default=None, description="Label for grouping runs."
+    )
 
     object_name: str = Field(
         ...,
@@ -90,7 +75,9 @@ class Run(BaseModel):
         ..., description="Type of the managing object (e.g. 'EXTERNAL_AGENT')."
     )
 
-    run_status: Optional[str] = Field(None, description="Status of the run.")
+    run_status: Optional[str] = Field(
+        default=None, description="Status of the run."
+    )  # should default be INACTIVE?
 
     class Config:
         arbitrary_types_allowed = True
@@ -161,8 +148,36 @@ class Run(BaseModel):
         """
         raise NotImplementedError("update is not implemented yet.")
 
+    @classmethod
+    def from_metadata_df(
+        cls, metadata_df: pd.DataFrame, extra: Dict[str, Any]
+    ) -> Run:
+        """
+        Create a Run instance from a metadata DataFrame returned by the DAO,
+        and enrich it with additional fields (which are not persisted on the server).
 
-try:
-    from trulens.connectors.snowflake.dao.run import RunDao
-except ImportError:
-    RunDao = None
+        Args:
+            metadata_df: A pandas DataFrame containing run metadata.
+                We assume the first row contains a JSON string in its first cell.
+            extra: A dictionary of extra fields to add, such as:
+                {
+                    "app": <app instance>,
+                    "main_method_name": <method name>,
+                    "run_dao": <dao instance>,
+                    "object_name": <object name>,
+                    "object_type": <object type>
+                }
+
+        Returns:
+            A validated Run instance.
+        """
+        if metadata_df.empty:
+            raise ValueError("No run metadata found.")
+
+        # Assume the first cell of the first row contains the JSON string.
+        metadata_str = metadata_df.iloc[0].values[0]
+        metadata = json.loads(metadata_str)
+
+        metadata.update(extra)
+
+        return cls.model_validate(metadata)

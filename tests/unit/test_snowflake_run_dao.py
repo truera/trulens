@@ -65,11 +65,12 @@ class TestRunDao(unittest.TestCase):
         self.dao.create_new_run(
             object_name, object_type, run_name, self.run_config
         )
-        mock_execute_query.assert_called_once_with(
+        mock_execute_query.assert_any_call(
             self.sf_session,
             expected_query,
             parameters=(req_payload_json,),
         )
+        self.assertEqual(mock_execute_query.call_count, 2)
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_no_result(self, mock_execute_query):
@@ -99,39 +100,6 @@ class TestRunDao(unittest.TestCase):
         self.assertEqual(len(result_df), 2)
         self.assertIn("run1", result_df["run_name"].values)
         self.assertIn("run2", result_df["run_name"].values)
-
-    @patch("trulens.connectors.snowflake.dao.run.execute_query")
-    def test_create_run_if_not_exist_when_not_exist(self, mock_execute_query):
-        # Simulate that get_run initially returns empty (run doesn't exist)
-        # Then, create_new_run is called (simulate it returns an empty list)
-        # Finally, a subsequent get_run returns a DummyRow.
-        dummy = DummyRow({"run_name": "my_run", "run_status": "INACTIVE"})
-        mock_execute_query.side_effect = [
-            [],  # first get_run: no run exists
-            [],  # create_new_run call returns empty list
-            [dummy],  # second get_run: returns metadata
-        ]
-        result = self.dao.create_run_if_not_exist(
-            "MY_AGENT", "EXTERNAL AGENT", "my_run", self.run_config
-        )
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertEqual(result.iloc[0]["run_name"], "my_run")
-        self.assertEqual(result.iloc[0]["run_status"], "INACTIVE")
-        self.assertEqual(mock_execute_query.call_count, 3)
-
-    @patch("trulens.connectors.snowflake.dao.run.execute_query")
-    def test_create_run_if_not_exist_when_exists(self, mock_execute_query):
-        # Simulate that get_run returns a result immediately, meaning the run exists.
-        dummy = DummyRow({"run_name": "my_run", "run_status": "ACTIVE"})
-        mock_execute_query.return_value = [dummy]
-        result = self.dao.create_run_if_not_exist(
-            "MY_AGENT", "EXTERNAL AGENT", "my_run", self.run_config
-        )
-        self.assertIsInstance(result, pd.DataFrame)
-        self.assertEqual(result.iloc[0]["run_name"], "my_run")
-        self.assertEqual(result.iloc[0]["run_status"], "ACTIVE")
-        # In this case, only one call to get_run should have occurred.
-        self.assertEqual(mock_execute_query.call_count, 1)
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_delete_run(self, mock_execute_query):

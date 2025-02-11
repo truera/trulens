@@ -8,6 +8,7 @@ import datetime
 import inspect
 from inspect import BoundArguments
 from inspect import Signature
+import json
 import logging
 import os
 import threading
@@ -30,6 +31,7 @@ from typing import (
 )
 import weakref
 
+import pandas as pd
 import pydantic
 from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.core import experimental as core_experimental
@@ -1669,30 +1671,78 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             logger.error(msg)
             raise ValueError(msg)
 
-    def add_run(self, run_name: str, run_config: Run.RunConfig) -> Run:
+    def add_run(
+        self,
+        run_name: str,
+        run_config: Run.RunConfig,
+        input_df: Optional[pd.DataFrame] = None,
+    ) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
 
         Args:
             run_name (str): unique name of the run
             run_config (Run.RunConfig): optional run config
+            input_df (Optional[pd.DataFrame]): optional input dataset
 
         Returns:
             Run: Run instance
         """
+        if input_df is None or input_df.empty:
+            logger.info(
+                "No input dataframe provided by user, checking dataset FQN from config."
+            )
+            if not run_config.dataset_fqn:
+                raise ValueError(
+                    "No input dataframe or input dataset FQN provided."
+                )
+
         self._check_snowflake_dao()
-        run_metadata_df = self.snowflake_run_dao.create_run_if_not_exist(
+        run_metadata_df = self.snowflake_run_dao.create_new_run(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
             run_name=run_name,
             run_config=run_config,
         )
 
-        run_metadata_json = run_metadata_df.to_dict(orient="records")[0]
-        run_metadata_json["_app"] = self.app
-        run_metadata_json["_main_method_name"] = self.main_method_name
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self.app,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.snowflake_run_dao,
+                "object_name": self.snowflake_object_name,
+                "object_type": self.snowflake_object_type,
+            },
+        )
 
-        return Run.model_validate(run_metadata_json)
+    def get_run(self, run_name: str) -> Run:
+        """Retrieve a run by name.
+
+        Args:
+            run_name (str): unique name of the run
+
+        Returns:
+            Run: Run instance
+        """
+        self._check_snowflake_dao()
+        run_metadata_df = self.snowflake_run_dao.get_run(
+            object_name=self.snowflake_object_name,
+            run_name=run_name,
+        )
+        if run_metadata_df.empty:
+            raise ValueError(f"Run {run_name} not found.")
+
+        return Run.from_metadata_df(
+            run_metadata_df,
+            {
+                "app": self.app,
+                "main_method_name": self.main_method_name,
+                "run_dao": self.snowflake_run_dao,
+                "object_name": self.snowflake_object_name,
+                "object_type": self.snowflake_object_type,
+            },
+        )
 
     def list_runs(self) -> List[Run]:
         """Retrieve all runs belong to the snowflake App.
@@ -1705,11 +1755,27 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
         )
-        run_metadata_json_lst = run_metadata_df.to_dict(orient="records")
-        return [
-            Run.model_validate(run_metadata_json)
-            for run_metadata_json in run_metadata_json_lst
-        ]
+        runs = []
+
+        if run_metadata_df.empty:
+            return runs
+
+        all_runs_lst = json.loads(run_metadata_df.iloc[0].iloc[-1])
+
+        for run_dict in all_runs_lst:
+            runs.append(
+                Run.from_metadata_df(
+                    pd.DataFrame({"col": [json.dumps(run_dict)]}),
+                    {
+                        "app": self.app,
+                        "main_method_name": self.main_method_name,
+                        "run_dao": self.snowflake_run_dao,
+                        "object_name": self.snowflake_object_name,
+                        "object_type": self.snowflake_object_type,
+                    },
+                )
+            )
+        return runs
 
     def delete_snowflake_app(self) -> None:
         """Delete the snowflake App (managing object) in snowflake, if applicable."""
