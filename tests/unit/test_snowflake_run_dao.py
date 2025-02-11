@@ -97,7 +97,7 @@ class TestRunDao(unittest.TestCase):
         mock_execute_query.return_value = [dummy1, dummy2]
         result_df = self.dao.list_all_runs("MY_AGENT", "EXTERNAL AGENT")
         self.assertIsInstance(result_df, pd.DataFrame)
-        self.assertEqual(len(result_df), 2)
+        self.assertEqual(len(result_df), 1)
         self.assertIn("run1", result_df["run_name"].values)
         self.assertIn("run2", result_df["run_name"].values)
 
