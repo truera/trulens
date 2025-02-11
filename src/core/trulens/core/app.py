@@ -33,7 +33,6 @@ import weakref
 
 import pandas as pd
 import pydantic
-from trulens.connectors.snowflake.dao.enums import ObjectType
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -525,6 +524,7 @@ class App(
 
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
+            from trulens.connectors.snowflake.dao.enums import ObjectType
 
             if isinstance(connector, SnowflakeConnector):
                 self.snowflake_object_type = (
