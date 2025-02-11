@@ -229,8 +229,16 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             dataset_fqn="db.schema.table",
             dataset_col_spec=None,
         )
-        tru_recorder.add_run(run_name="test_run_2", run_config=run_config_2)
+        run_2 = tru_recorder.add_run(
+            run_name="test_run_2", run_config=run_config_2
+        )
 
         runs = tru_recorder.list_runs()
         self.assertIn("test_run_1", [run.run_name for run in runs])
         self.assertIn("test_run_2", [run.run_name for run in runs])
+
+        # test run deletion
+        run_2.delete()
+        runs = tru_recorder.list_runs()
+        self.assertIn("test_run_1", [run.run_name for run in runs])
+        self.assertNotIn("test_run_2", [run.run_name for run in runs])

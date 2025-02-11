@@ -7,6 +7,10 @@ import pandas as pd
 from pydantic import BaseModel
 from pydantic import Field
 
+DEFAULT_LLM_JUDGE_NAME = (
+    "mistral-large2"  # TODO: finalize / modify after benchmarking is completed
+)
+
 
 class Run(BaseModel):
     class RunConfig(BaseModel):
@@ -27,6 +31,10 @@ class Run(BaseModel):
         dataset_col_spec: Optional[Dict[str, str]] = Field(
             default=None,
             description="Optional column name mapping from reserved dataset fields to column names in user's table.",
+        )
+        llm_judge_name: Optional[str] = Field(
+            default=DEFAULT_LLM_JUDGE_NAME,
+            description="Name of the LLM judge to be used for the run.",
         )
 
     """

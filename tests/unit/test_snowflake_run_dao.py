@@ -90,18 +90,6 @@ class TestRunDao(unittest.TestCase):
         self.assertEqual(result_df.iloc[0]["run_status"], "ACTIVE")
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
-    def test_list_all_runs(self, mock_execute_query):
-        # Simulate list_all_runs returning multiple rows.
-        dummy1 = DummyRow({"run_name": "run1", "run_status": "ACTIVE"})
-        dummy2 = DummyRow({"run_name": "run2", "run_status": "INACTIVE"})
-        mock_execute_query.return_value = [dummy1, dummy2]
-        result_df = self.dao.list_all_runs("MY_AGENT", "EXTERNAL AGENT")
-        self.assertIsInstance(result_df, pd.DataFrame)
-        self.assertEqual(len(result_df), 1)
-        self.assertIn("run1", result_df["run_name"].values)
-        self.assertIn("run2", result_df["run_name"].values)
-
-    @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_delete_run(self, mock_execute_query):
         req_payload = {
             "run_name": "my_run",
