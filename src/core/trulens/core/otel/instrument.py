@@ -424,6 +424,23 @@ class OTELBaseRecordingContext:
 
 
 class OTELRecordingContext(OTELBaseRecordingContext):
+    def __init__(
+        self,
+        *,
+        app_name: str,
+        app_version: str,
+        run_name: str,
+        input_id: str,
+        ground_truth_output: Optional[str] = None,
+    ) -> None:
+        super().__init__(
+            app_name=app_name,
+            app_version=app_version,
+            run_name=run_name,
+            input_id=input_id,
+        )
+        self.ground_truth_output = ground_truth_output
+
     # For use as a context manager.
     def __enter__(self):
         # Note: This is not the same as the record_id in the core app since the OTEL
@@ -445,19 +462,13 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 
         # Set general span attributes
         root_span.set_attribute("name", "root")
+        if self.ground_truth_output is not None:
+            root_span.set_attribute(
+                SpanAttributes.RECORD_ROOT.GROUND_TRUTH_OUTPUT,
+                self.ground_truth_output,
+            )
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.RECORD_ROOT
-        )
-
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_NAME, self.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.APP_VERSION, self.app_version
-        )
-        root_span.set_attribute(
-            SpanAttributes.RECORD_ROOT.RECORD_ID, otel_record_id
         )
 
         return root_span
@@ -502,14 +513,6 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
             root_span, SpanAttributes.SpanType.EVAL_ROOT
-        )
-
-        # Set record root specific attributes
-        root_span.set_attribute(
-            SpanAttributes.EVAL_ROOT.APP_NAME, self.app_name
-        )
-        root_span.set_attribute(
-            SpanAttributes.EVAL_ROOT.APP_VERSION, self.app_version
         )
 
         return root_span

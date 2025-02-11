@@ -1049,7 +1049,13 @@ class App(
 
         return
 
-    def __call__(self, *, run_name: str = "", input_id: str = ""):
+    def __call__(
+        self,
+        *,
+        run_name: str = "",
+        input_id: str = "",
+        ground_truth_output: Optional[str] = None,
+    ):
         if not self.session.experimental_feature(
             core_experimental.Feature.OTEL_TRACING
         ):
@@ -1064,6 +1070,7 @@ class App(
             app_version=self.app_version,
             run_name=run_name,
             input_id=input_id,
+            ground_truth_output=ground_truth_output,
         )
 
     def _set_context_vars(self):
