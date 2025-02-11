@@ -90,7 +90,11 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
         )
 
     def _validate_results(
-        self, app_name: str, run_name: str, num_expected_spans: int
+        self,
+        app_name: str,
+        run_name: str,
+        input_id: str,
+        num_expected_spans: int,
     ):
         # Flush exporter and wait for data to be made to stage.
         self._tru_session.force_flush()
@@ -115,6 +119,7 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
                 RECORD_TYPE = 'SPAN'
                 AND TIMESTAMP >= TO_TIMESTAMP_LTZ('2025-01-31 20:42:00')
                 AND RECORD_ATTRIBUTES['{SpanAttributes.RUN_NAME}'] = '{run_name}'
+                AND RECORD_ATTRIBUTES['{SpanAttributes.INPUT_ID}'] = '{input_id}'
             ORDER BY TIMESTAMP DESC
             LIMIT 50
             """,
@@ -195,24 +200,28 @@ class TestSnowflakeEventTableExporter(SnowflakeTestCase):
             main_method=rag_chain.invoke,
         )
         # Record and invoke.
-        run_name = str(uuid.uuid4())
-        with tru_recorder(
-            run_name=run_name,
-            input_id="42",
-            ground_truth_output="Like attention but with more heads.",
-        ):
-            rag_chain.invoke("What is multi-headed attention?")
-        TruSession().force_flush()
-        # Compute feedback on record we just ingested.
-        events = self._validate_results(app_name, run_name, 10)
-        spans = _convert_events_to_MinimalSpanInfos(events)
-        record_root = RecordGraphNode.build_graph(spans)
-        _compute_feedback(
-            record_root,
-            feedback_function,
-            "baby_grader",
-            all_retrieval_span_attributes,
-        )
-        TruSession().force_flush()
-        # Validate results.
-        events = self._validate_results(app_name, run_name, 13)
+        run_name = "DKUROKAWA_RUN_4"
+        num_records = 1
+        for i in range(num_records):
+            input_id = "input_" + str(i)
+            with tru_recorder(
+                run_name=run_name,
+                input_id=input_id,
+                ground_truth_output="Like attention but with more heads.",
+            ):
+                rag_chain.invoke("What is multi-headed attention?")
+            TruSession().force_flush()
+        for i in range(num_records):
+            # Compute feedback on record we just ingested.
+            events = self._validate_results(app_name, run_name, input_id, 10)
+            spans = _convert_events_to_MinimalSpanInfos(events)
+            record_root = RecordGraphNode.build_graph(spans)
+            _compute_feedback(
+                record_root,
+                feedback_function,
+                "baby_grader",
+                all_retrieval_span_attributes,
+            )
+            TruSession().force_flush()
+            events = self._validate_results(app_name, run_name, input_id, 13)
+        print("HI")
