@@ -17,7 +17,6 @@ try:
     from langchain_community.vectorstores import FAISS
     from langchain_core.runnables import RunnablePassthrough
     from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from opentelemetry.instrumentation.langchain import LangchainInstrumentor
     from trulens.apps.langchain import TruChain
 except Exception:
     pass
@@ -59,8 +58,6 @@ class TestOtelTruChain(OtelAppTestCase):
         )
 
     def test_smoke(self) -> None:
-        # Instrument langchain
-        LangchainInstrumentor().instrument()
         # Create app.
         rag_chain = self._create_simple_rag()
         tru_recorder = TruChain(
