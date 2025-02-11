@@ -48,7 +48,9 @@ class TrulensOtelSpanProcessor(otel_export_sdk.BatchSpanProcessor):
         self, span: Span, parent_context: Optional[Context] = None
     ) -> None:
         set_general_span_attributes(
-            span, span_type=SpanAttributes.SpanType.UNKNOWN
+            span,
+            span_type=SpanAttributes.SpanType.UNKNOWN,
+            context=parent_context,
         )
 
 
