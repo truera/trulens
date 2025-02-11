@@ -5,6 +5,7 @@ from trulens.core.otel.instrument import OTELFeedbackComputationRecordingContext
 from trulens.experimental.otel_tracing.core.span import (
     set_span_attribute_safely,
 )
+from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 
 
@@ -53,6 +54,7 @@ def _compute_feedback(
     feedback_function: Callable[
         [Any], Union[float, Tuple[float, Dict[str, Any]]]
     ],
+    feedback_name: str,
     selector_function: Callable[[RecordGraphNode], List[Dict[str, Any]]],
 ) -> None:
     """
@@ -62,6 +64,7 @@ def _compute_feedback(
     Args:
         record: Record to compute feedback for.
         feedback_function: Function to compute feedback.
+        feedback_name: Name of feedback.
         selector_function:
             Function to select inputs for feedback computation. Given a record
             in graph form, it returns a list of inputs to the feedback
@@ -70,9 +73,23 @@ def _compute_feedback(
     """
     feedback_inputs = selector_function(record_root)
     record_root_attributes = record_root.current_span.attributes
-    app_name = record_root_attributes[SpanAttributes.APP_NAME]
-    app_version = record_root_attributes[SpanAttributes.APP_VERSION]
-    run_name = record_root_attributes[SpanAttributes.RUN_NAME]
+    if SpanAttributes.APP_NAME in record_root_attributes:
+        app_name = record_root_attributes[SpanAttributes.APP_NAME]
+        app_version = record_root_attributes[SpanAttributes.APP_VERSION]
+        run_name = record_root_attributes[SpanAttributes.RUN_NAME]
+    elif f"snow.{BASE_SCOPE}.object.name" in record_root_attributes:
+        # TODO(otel, dhuang): need to use these when getting the object entity!
+        # database_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.database.name"
+        # ]
+        # schema_name = record_root_attributes[
+        #    f"snow.{BASE_SCOPE}.schema.name"
+        # ]
+        app_name = record_root_attributes[f"snow.{BASE_SCOPE}.object.name"]
+        app_version = record_root_attributes[
+            f"snow.{BASE_SCOPE}.object.version.name"
+        ]
+        run_name = record_root_attributes[f"snow.{BASE_SCOPE}.run.name"]
     input_id = record_root_attributes[SpanAttributes.INPUT_ID]
     target_record_id = record_root_attributes[SpanAttributes.RECORD_ID]
     for curr in feedback_inputs:
@@ -82,6 +99,7 @@ def _compute_feedback(
             run_name=run_name,
             input_id=input_id,
             target_record_id=target_record_id,
+            feedback_name=feedback_name,
         )
         with context_manager as eval_root_span:
             try:

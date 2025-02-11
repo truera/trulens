@@ -66,7 +66,7 @@ class SpanAttributes:
     ROOT_SPAN_ID = BASE_SCOPE + ".root_span_id"
     """ID of the root span of the record that the span belongs to."""
 
-    RUN_NAME = BASE_SCOPE + ".run_name"
+    RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""
 
     INPUT_ID = BASE_SCOPE + ".input_id"
@@ -226,9 +226,6 @@ class SpanAttributes:
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
 
-        FEEDBACK_NAME = base + ".feedback_name"
-        """Name of the feedback definition being evaluated."""
-
         FEEDBACK_DEFINITION_ID = base + ".feedback_definition_id"
         """Id of the feedback definition being evaluated."""
 
@@ -263,6 +260,9 @@ class SpanAttributes:
 
         EVAL_ROOT_ID = base + ".eval_root_id"
         """Span id for the EVAL_ROOT span this span is under."""
+
+        FEEDBACK_NAME = base + ".feedback_name"
+        """Name of the feedback definition being evaluated."""
 
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""

@@ -466,12 +466,16 @@ class OTELRecordingContext(OTELBaseRecordingContext):
 class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
     def __init__(self, *args, **kwargs):
         self.target_record_id = kwargs.pop("target_record_id")
+        self.feedback_name = kwargs.pop("feedback_name")
         super().__init__(*args, **kwargs)
 
     # For use as a context manager.
     def __enter__(self):
         tracer = trace.get_tracer_provider().get_tracer(TRULENS_SERVICE_NAME)
 
+        self.attach_to_context(
+            SpanAttributes.RECORD_ID, self.target_record_id
+        )  # TODO(otel): Should we include this? It's automatically getting added to the span.
         self.attach_to_context(SpanAttributes.APP_NAME, self.app_name)
         self.attach_to_context(SpanAttributes.APP_VERSION, self.app_version)
 
@@ -480,6 +484,9 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
             SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
         )
         self.attach_to_context(SpanAttributes.INPUT_ID, self.input_id)
+        self.attach_to_context(
+            SpanAttributes.EVAL.FEEDBACK_NAME, self.feedback_name
+        )
 
         # Use start_as_current_span as a context manager
         self.span_context = tracer.start_as_current_span("eval_root")
@@ -494,9 +501,7 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         # Set general span attributes
         root_span.set_attribute("name", "eval_root")
         set_general_span_attributes(
-            root_span,
-            SpanAttributes.SpanType.EVAL_ROOT,
-            include_record_id=False,
+            root_span, SpanAttributes.SpanType.EVAL_ROOT
         )
 
         # Set record root specific attributes
@@ -506,9 +511,5 @@ class OTELFeedbackComputationRecordingContext(OTELBaseRecordingContext):
         root_span.set_attribute(
             SpanAttributes.EVAL_ROOT.APP_VERSION, self.app_version
         )
-        root_span.set_attribute(
-            SpanAttributes.EVAL.TARGET_RECORD_ID, self.target_record_id
-        )
-        root_span.set_attribute(SpanAttributes.EVAL.EVAL_ROOT_ID, root_span_id)
 
         return root_span
