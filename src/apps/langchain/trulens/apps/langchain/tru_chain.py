@@ -255,8 +255,7 @@ class TruChain(core_app.App):
             and main_method is None
         ):
             raise ValueError(
-                "main method is required for langchain apps. "
-                "Pass it in as the `main_method` argument"
+                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
             )
 
         kwargs["main_method"] = main_method
