@@ -31,8 +31,6 @@ from typing import (
 import weakref
 
 import pydantic
-from trulens.apps.langchain.tru_chain import TruChain
-from trulens.apps.llamaindex.tru_llama import TruLlama
 from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core import session as core_session
@@ -469,12 +467,19 @@ class App(
         main_method = None
 
         if otel_enabled:
-            if "main_method" not in kwargs and isinstance(
-                self, (TruLlama, TruChain)
-            ):
-                raise ValueError(
-                    "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
-                )
+            for module, cls_name in [
+                ("trulens.apps.langchain.tru_chain", "TruChain"),
+                ("trulens.apps.llamaindex.tru_llama", "TruLlama"),
+            ]:
+                if _can_import(module):
+                    cls = getattr(
+                        __import__(module, fromlist=[cls_name]), cls_name
+                    )
+                    if "main_method" not in kwargs and isinstance(self, cls):
+                        raise ValueError(
+                            "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+                        )
+
             if app is None:
                 raise ValueError(
                     "A valid app instance must be provided when specifying 'main_method'."
