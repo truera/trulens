@@ -58,6 +58,17 @@ class TestOtelTruChain(OtelAppTestCase):
             | StrOutputParser()
         )
 
+    def test_missing_main_method_raises_error(self):
+        # Attempt to create a TruLlama without specifying main_method.
+        tru_session = TruSession()
+        tru_session.reset_database()
+        # Create app.
+        rag_chain = self._create_simple_rag()
+        with self.assertRaises(ValueError) as context:
+            TruChain(rag_chain, app_name="Simple RAG", app_version="v1")
+
+        self.assertIn("main_method", str(context.exception))
+
     def test_smoke(self) -> None:
         # Set up.
         tru_session = TruSession()
