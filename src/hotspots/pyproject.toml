@@ -6,7 +6,7 @@ requires = [
 
 [tool.poetry]
 name = "trulens-hotspots"
-version = "1.3.5"
+version = "1.4.0a0"
 description = "Library and command-line tool to list features lowering your evaluation score."
 authors = [
   "Snowflake Inc. <ml-observability-wg-dl@snowflake.com>",
