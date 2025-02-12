@@ -510,6 +510,9 @@ class App(
         if main_method:
             self.main_method_name = main_method.__name__  # for serialization
 
+        self._current_context_manager_lock = threading.Lock()
+        self._current_context_manager = None
+
         if connector and _can_import("trulens.connectors.snowflake"):
             from trulens.connectors.snowflake import SnowflakeConnector
 
@@ -999,6 +1002,24 @@ class App(
 
     # For use as a context manager.
     def __enter__(self):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            with self._current_context_manager_lock:
+                if self._current_context_manager is not None:
+                    raise RuntimeError(
+                        "Already recording with a context manager, cannot nest!"
+                    )
+                self._current_context_manager = OTELRecordingContext(
+                    app_name=self.app_name,
+                    app_version=self.app_version,
+                    run_name="",
+                    input_id=None,
+                )
+            return self._current_context_manager.__enter__()
+
         if not core_instruments.Instrument._have_context():
             raise RuntimeError(core_endpoint._NO_CONTEXT_WARNING)
 
@@ -1012,6 +1033,15 @@ class App(
 
     # For use as a context manager.
     def __exit__(self, exc_type, exc_value, exc_tb):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            with self._current_context_manager_lock:
+                if self._current_context_manager is None:
+                    raise RuntimeError("Unknown recording context manager!")
+                context_manager = self._current_context_manager
+            return context_manager.__exit__(exc_type, exc_value, exc_tb)
+
         self._prevent_invalid_otel_syntax()
 
         ctx = self.recording_contexts.get()
@@ -1048,30 +1078,6 @@ class App(
             raise exc_value
 
         return
-
-    def __call__(
-        self,
-        *,
-        run_name: str = "",
-        input_id: str = "",
-        ground_truth_output: Optional[str] = None,
-    ):
-        if not self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            raise RuntimeError("OTEL Tracing is not enabled for this session.")
-
-        from trulens.core.otel.instrument import OTELRecordingContext
-
-        # Pylance shows an error here, but it is likely a false positive. due to the overriden
-        # model dump returning json instead of a dict.
-        return OTELRecordingContext(
-            app_name=self.app_name,
-            app_version=self.app_version,
-            run_name=run_name,
-            input_id=input_id,
-            ground_truth_output=ground_truth_output,
-        )
 
     def _set_context_vars(self):
         # HACK: For debugging purposes, try setting/resetting all context vars
@@ -1664,6 +1670,84 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         self._check_snowflake_dao()
         raise NotImplementedError("Not implemented yet.")
 
+    def run(self, run_name: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            return OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=None,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def input(self, input_id: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            return OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=None,
+                input_id=input_id,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def instrumented_invoke_main_method(
+        self,
+        run_name: str,
+        input_id: str,
+        ground_truth_output: Optional[str] = None,
+        main_method_args: Optional[Sequence[Any]] = None,
+        main_method_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            with OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=input_id,
+                ground_truth_output=ground_truth_output,
+            ):
+                f = getattr(self.app, self.main_method_name)
+                if main_method_args is None:
+                    main_method_args = ()
+                if main_method_kwargs is None:
+                    main_method_kwargs = {}
+                return f(*main_method_args, **main_method_kwargs)
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
 # and database.base.DB. Will rebuild each App subclass instead.
+
+# 1. Create a `run` function in `trulens.core.app.App` that uses the recording
+#    context without the input id.
+# 2. Create an `input` function in `trulens.core.app.App` that uses the
+#    recording context without the run_name, but checks that the app name and
+#    app version stuff is all correct.
+# 3. Remove the OTEL logic for `trulens.core.app.App`'s `__call__` function.
+# 4. Have `trulens.core.app.App`'s `__enter__` and `__exit__` methods use the
+#    run_name+input_id recording context with run_name="" and input_id=None.
+#    If we've already entered, then we raise an exception since we can only
+#    store state once.
+# 5. Create function `instrumented_invoke` in `trulens.core.app.App` that
+#    takes in `run_name`, `input_id`, `ground_truth`, and `args` and `kwargs`
+#    to the main method.
+#
+# Make sure to defer to outer context manager if there's ever a question.
