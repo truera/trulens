@@ -25,9 +25,11 @@ from langchain_core.runnables.base import RunnableSerializable
 from pydantic import Field
 from trulens.apps.langchain import guardrails as langchain_guardrails
 from trulens.core import app as core_app
+from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core.instruments import InstrumentedMethod
 from trulens.core.schema import select as select_schema
+from trulens.core.session import TruSession
 from trulens.core.utils import json as json_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -246,6 +248,17 @@ class TruChain(core_app.App):
     ):
         # TruChain specific:
         kwargs["app"] = app
+        if (
+            TruSession().experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            and main_method is None
+        ):
+            raise ValueError(
+                "main method is required for langchain apps. "
+                "Pass it in as the `main_method` argument"
+            )
+
         kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
