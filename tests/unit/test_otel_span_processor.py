@@ -48,7 +48,9 @@ class TestOtelSpanProcessor(OtelAppTestCase):
             SpanAttributes.RUN_NAME,
             SpanAttributes.INPUT_ID,
         ]:
-            self.assertEqual(
-                events.iloc[1]["record_attributes"][curr],
-                events.iloc[-1]["record_attributes"][curr],
-            )
+            self.assertTrue(bool(events.iloc[-1]["record_attributes"][curr]))
+            for i in range(1, len(events)):
+                self.assertEqual(
+                    events.iloc[0]["record_attributes"][curr],
+                    events.iloc[i]["record_attributes"][curr],
+                )
