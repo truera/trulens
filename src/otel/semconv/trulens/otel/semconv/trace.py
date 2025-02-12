@@ -66,7 +66,7 @@ class SpanAttributes:
     ROOT_SPAN_ID = BASE_SCOPE + ".root_span_id"
     """ID of the root span of the record that the span belongs to."""
 
-    RUN_NAME = BASE_SCOPE + ".run_name"
+    RUN_NAME = BASE_SCOPE + ".run.name"
     """Name of the run that the span belongs to."""
 
     INPUT_ID = BASE_SCOPE + ".input_id"
@@ -200,13 +200,8 @@ class SpanAttributes:
         SPAN_NAME_PREFIX = base + "."
         """Span name will end with app name."""
 
-        APP_NAME = base + ".app_name"
-        """Name of the app for whom this is the root."""
-
-        APP_VERSION = base + ".app_version"
-        """Version of the app for whom this is the root."""
-
-        RECORD_ID = base + ".record_id"
+        GROUND_TRUTH_OUTPUT = base + ".ground_truth_output"
+        """Ground truth of the record."""
 
     class EVAL_ROOT:
         """Attributes for the root span of a feedback evaluation.
@@ -217,17 +212,8 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".eval_root"
 
-        APP_NAME = base + ".app_name"
-        """Name of the app for whom this is the root."""
-
-        APP_VERSION = base + ".app_version"
-        """Version of the app for whom this is the root."""
-
         TARGET_SPAN_ID = base + ".target_span_id"
         """Span id of the root span of the record being evaluated."""
-
-        FEEDBACK_NAME = base + ".feedback_name"
-        """Name of the feedback definition being evaluated."""
 
         FEEDBACK_DEFINITION_ID = base + ".feedback_definition_id"
         """Id of the feedback definition being evaluated."""
@@ -264,6 +250,9 @@ class SpanAttributes:
         EVAL_ROOT_ID = base + ".eval_root_id"
         """Span id for the EVAL_ROOT span this span is under."""
 
+        FEEDBACK_NAME = base + ".feedback_name"
+        """Name of the feedback definition being evaluated."""
+
         CRITERIA = base + ".criteria"
         """Criteria for this sub-step."""
 
@@ -299,17 +288,6 @@ class SpanAttributes:
         NUM_CORTEX_GUARDRAIL_TOKENS = base + ".num_cortex_guardrails_tokens"
         """Number of guardrails tokens generated. This is only available for
         requests instrumented by the Cortex endpoint."""
-
-    class RECORD:
-        """Attributes for spans traced as part of a recording."""
-
-        base = BASE_SCOPE + ".record"
-
-        APP_IDS = base + ".app_ids"
-        """Ids of apps that were tracing this span."""
-
-        RECORD_IDS = base + ".record_ids"
-        """Map of app id to record id."""
 
     class CALL:
         """Instrumented method call attributes."""
