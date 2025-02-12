@@ -238,9 +238,15 @@ class TruChain(core_app.App):
 
     # Normally pydantic does not like positional args but chain here is
     # important enough to make an exception.
-    def __init__(self, app: Runnable, **kwargs: Dict[str, Any]):
+    def __init__(
+        self,
+        app: Runnable,
+        main_method: Optional[Callable] = None,
+        **kwargs: Dict[str, Any],
+    ):
         # TruChain specific:
         kwargs["app"] = app
+        kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(app)
         kwargs["instrument"] = LangChainInstrument(app=self)
 
