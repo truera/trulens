@@ -142,12 +142,15 @@ class TestOtelCosts(OtelAppTestCase):
             main_method=app.respond_to_query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            app.respond_to_query("How is baby Kojikun able to be so cute?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("How is baby Kojikun able to be so cute?",),
+        )
         # Compare results to expected.
         TruSession().force_flush()
         events = self._get_events()
-        self.assertEqual(len(events), 2 + len(cost_functions))
+        self.assertEqual(len(events), 1 + len(cost_functions))
         for i, cost_function in enumerate(cost_functions):
             record_attributes = events.iloc[-i - 1]["record_attributes"]
             self._check_costs(
@@ -172,8 +175,11 @@ class TestOtelCosts(OtelAppTestCase):
             cortex_function="complete",
         )
         tru_recorder = TruChain(app, app_name="testing", app_version="v1")
-        with tru_recorder(run_name="test run", input_id="42"):
-            app.invoke("How is baby Kojikun able to be so cute?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("How is baby Kojikun able to be so cute?",),
+        )
         tru_session.force_flush()
         events = self._get_events()
         self.assertEqual(len(events), 3)

@@ -1,6 +1,5 @@
 from opentelemetry import trace
 from trulens.apps.app import TruApp
-from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -8,7 +7,6 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 
 class _TestApp:
-    @instrument()
     def greet(self, name: str) -> str:
         ret = f"Hello, {name}!"
         ret = self.capitalize(ret)
@@ -32,14 +30,15 @@ class TestOtelSpanProcessor(OtelAppTestCase):
             main_method=app.greet,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            app.greet("Kojikun")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run", input_id="42", main_method_args=("Kojikun",)
+        )
         # Verify.
         TruSession().force_flush()
         events = self._get_events()
-        self.assertEqual(len(events), 3)
+        self.assertEqual(len(events), 2)
         self.assertEqual(
-            "Kojikun", events.iloc[-1]["record_attributes"]["best_baby"]
+            "Kojikun", events.iloc[1]["record_attributes"]["best_baby"]
         )
         for curr in [
             SpanAttributes.RECORD_ID,
@@ -48,9 +47,8 @@ class TestOtelSpanProcessor(OtelAppTestCase):
             SpanAttributes.RUN_NAME,
             SpanAttributes.INPUT_ID,
         ]:
-            self.assertTrue(bool(events.iloc[-1]["record_attributes"][curr]))
-            for i in range(1, len(events)):
-                self.assertEqual(
-                    events.iloc[0]["record_attributes"][curr],
-                    events.iloc[i]["record_attributes"][curr],
-                )
+            self.assertTrue(bool(events.iloc[1]["record_attributes"][curr]))
+            self.assertEqual(
+                events.iloc[0]["record_attributes"][curr],
+                events.iloc[1]["record_attributes"][curr],
+            )

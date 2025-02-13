@@ -18,7 +18,7 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 class _TestApp:
     @instrument(
-        span_type=SpanAttributes.SpanType.MAIN,
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
         full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
             "process_id": os.getpid()
         },
@@ -100,16 +100,16 @@ class TestOtelDistributed(OtelAppTestCase):
         # Create TruApp that makes a network call.
         test_app = _TestApp()
         custom_app = TruApp(test_app, main_method=test_app.greet)
-        recorder = custom_app(run_name="test run", input_id="789")
-        with recorder:
-            test_app.greet("test")
+        custom_app.instrumented_invoke_main_method(
+            run_name="test run", input_id="789", main_method_args=("test",)
+        )
         # Compare results to expected.
         TruSession().force_flush()
         actual = self._get_events()
-        self.assertEqual(len(actual), 3)
+        self.assertEqual(len(actual), 2)
         self.assertNotEqual(
+            actual.iloc[0]["record_attributes"]["process_id"],
             actual.iloc[1]["record_attributes"]["process_id"],
-            actual.iloc[2]["record_attributes"]["process_id"],
         )
         for attribute in [
             SpanAttributes.APP_NAME,
@@ -119,6 +119,6 @@ class TestOtelDistributed(OtelAppTestCase):
             SpanAttributes.INPUT_ID,
         ]:
             self.assertEqual(
+                actual.iloc[0]["record_attributes"][attribute],
                 actual.iloc[1]["record_attributes"][attribute],
-                actual.iloc[2]["record_attributes"][attribute],
             )
