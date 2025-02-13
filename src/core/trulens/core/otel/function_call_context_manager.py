@@ -45,6 +45,7 @@ class FunctionCallContextManager:
         try:
             if self.span_context_manager is not None:
                 self.span_context_manager.__exit__(exc_type, exc_val, exc_tb)
+                self.span_context_manager = None
         except Exception as e_span:
             e_ret = e_span
         # Clean up context.
@@ -52,6 +53,7 @@ class FunctionCallContextManager:
             if self.token is not None:
                 remove_baggage(SpanAttributes.RECORD_ID)
                 context_api.detach(self.token)
+                self.token = None
         except Exception as e_context:
             e_ret = e_context if e_ret is None else e_ret
         # Throw any errors we found.
