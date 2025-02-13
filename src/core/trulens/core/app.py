@@ -467,10 +467,6 @@ class App(
         main_method = None
 
         if otel_enabled:
-            if "main_method" not in kwargs:
-                raise ValueError(
-                    "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
-                )
             if app is None:
                 raise ValueError(
                     "A valid app instance must be provided when specifying 'main_method'."
