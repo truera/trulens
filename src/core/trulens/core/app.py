@@ -1754,3 +1754,4 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 #    to the main method.
 #
 # Make sure to defer to outer context manager if there's ever a question.
+# TODO(this_pr): Need to make sure that the `call` stuff isn't weird now for the record root.
