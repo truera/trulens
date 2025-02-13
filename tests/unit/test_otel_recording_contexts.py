@@ -1,4 +1,5 @@
 from trulens.apps.app import TruApp
+from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -7,7 +8,11 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 class _TestApp:
     def greet(self, *, name: str) -> str:
-        return f"Hello, {name}!"
+        return self.capitalize(f"Hello, {name}!")
+
+    @instrument()
+    def capitalize(self, s: str) -> str:
+        return s.upper()
 
 
 class TestOtelRecordingContexts(OtelAppTestCase):

@@ -493,7 +493,7 @@ class App(
                         f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                     )
 
-            # setattr(self, main_method.__name__, main_method)
+            self._wrap_main_function(app, main_method.__name__)
 
         super().__init__(**kwargs)
 
