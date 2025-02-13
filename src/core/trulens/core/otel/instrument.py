@@ -27,14 +27,15 @@ from trulens.experimental.otel_tracing.core.span import (
 from trulens.experimental.otel_tracing.core.span import (
     set_user_defined_attributes,
 )
+from trulens.otel.semconv.constants import TRULENS_INSTRUMENT_WRAPPER_FLAG
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 from trulens.otel.semconv.trace import BASE_SCOPE
 from trulens.otel.semconv.trace import SpanAttributes
 import wrapt
 
 logger = logging.getLogger(__name__)
-
-
-_TRULENS_INSTRUMENT_WRAPPER_FLAG = "__trulens_instrument_wrapper"
 
 
 def _get_func_name(func: Callable) -> str:
@@ -310,12 +311,12 @@ def instrument(
 
         # Check if already wrapped if not allowing multiple wrappers.
         if must_be_first_wrapper:
-            if hasattr(func, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+            if hasattr(func, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                 return func
             curr = func
             while hasattr(curr, "__wrapped__"):
                 curr = curr.__wrapped__
-                if hasattr(curr, _TRULENS_INSTRUMENT_WRAPPER_FLAG):
+                if hasattr(curr, TRULENS_INSTRUMENT_WRAPPER_FLAG):
                     return func
 
         # Wrap.
@@ -326,7 +327,9 @@ def instrument(
             ret = async_wrapper(func)
         else:
             ret = sync_wrapper(func)
-        ret.__dict__[_TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        ret.__dict__[TRULENS_INSTRUMENT_WRAPPER_FLAG] = True
+        if is_record_root:
+            ret.__dict__[TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG] = True
         return ret
 
     return inner_decorator

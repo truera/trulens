@@ -57,6 +57,9 @@ from trulens.core.utils import python as python_utils
 from trulens.core.utils import serial as serial_utils
 from trulens.core.utils import signature as signature_utils
 from trulens.core.utils import threading as threading_utils
+from trulens.otel.semconv.constants import (
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG,
+)
 from trulens.otel.semconv.trace import SpanAttributes
 
 logger = logging.getLogger(__name__)
@@ -555,6 +558,14 @@ class App(
             except Exception:
                 pass
 
+    @staticmethod
+    def _has_record_root_instrumentation(func: Callable) -> bool:
+        while hasattr(func, "__wrapped__"):
+            if hasattr(func, TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG):
+                return True
+            func = func.__wrapped__
+        return False
+
     def _wrap_main_function(self, app: Any, method_name: str) -> None:
         if TruSession().experimental_feature(
             core_experimental.Feature.OTEL_TRACING, freeze=True
@@ -564,6 +575,8 @@ class App(
             if not hasattr(app, method_name):
                 raise ValueError(f"App must have an `{method_name}` method!")
             func = getattr(app, method_name)
+            if self._has_record_root_instrumentation(func):
+                return
             sig = inspect.signature(func)
             wrapper = instrument(
                 span_type=SpanAttributes.SpanType.RECORD_ROOT,
