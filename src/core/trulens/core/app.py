@@ -1856,6 +1856,68 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             "This feature is not yet implemented for non-OTEL TruLens!"
         )
 
+    def run(self, run_name: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            return OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=None,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def input(self, input_id: str):
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            return OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=None,
+                input_id=input_id,
+            )
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
+    def instrumented_invoke_main_method(
+        self,
+        run_name: str,
+        input_id: str,
+        ground_truth_output: Optional[str] = None,
+        main_method_args: Optional[Sequence[Any]] = None,
+        main_method_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        if self.session.experimental_feature(
+            core_experimental.Feature.OTEL_TRACING
+        ):
+            from trulens.core.otel.instrument import OTELRecordingContext
+
+            with OTELRecordingContext(
+                app_name=self.app_name,
+                app_version=self.app_version,
+                run_name=run_name,
+                input_id=input_id,
+                ground_truth_output=ground_truth_output,
+            ):
+                f = getattr(self.app, self.main_method_name)
+                if main_method_args is None:
+                    main_method_args = ()
+                if main_method_kwargs is None:
+                    main_method_kwargs = {}
+                return f(*main_method_args, **main_method_kwargs)
+        raise NotImplementedError(
+            "This feature is not yet implemented for non-OTEL TruLens!"
+        )
+
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
 # and database.base.DB. Will rebuild each App subclass instead.
