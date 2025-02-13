@@ -1738,20 +1738,3 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
 # NOTE: Cannot App.model_rebuild here due to circular imports involving mod_session.TruSession
 # and database.base.DB. Will rebuild each App subclass instead.
-
-# 1. Create a `run` function in `trulens.core.app.App` that uses the recording
-#    context without the input id.
-# 2. Create an `input` function in `trulens.core.app.App` that uses the
-#    recording context without the run_name, but checks that the app name and
-#    app version stuff is all correct.
-# 3. Remove the OTEL logic for `trulens.core.app.App`'s `__call__` function.
-# 4. Have `trulens.core.app.App`'s `__enter__` and `__exit__` methods use the
-#    run_name+input_id recording context with run_name="" and input_id=None.
-#    If we've already entered, then we raise an exception since we can only
-#    store state once.
-# 5. Create function `instrumented_invoke` in `trulens.core.app.App` that
-#    takes in `run_name`, `input_id`, `ground_truth`, and `args` and `kwargs`
-#    to the main method.
-#
-# Make sure to defer to outer context manager if there's ever a question.
-# TODO(this_pr): Need to make sure that the `call` stuff isn't weird now for the record root.
