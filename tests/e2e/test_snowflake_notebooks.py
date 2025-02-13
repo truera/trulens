@@ -1,3 +1,4 @@
+import os
 import tempfile
 from typing import Sequence
 
@@ -6,6 +7,9 @@ from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import 
 )
 from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
     _TRULENS_PACKAGES_DEPENDENCIES,
+)
+from trulens.connectors.snowflake.utils.server_side_evaluation_artifacts import (
+    ServerSideEvaluationArtifacts,
 )
 
 from tests.util.snowflake_test_case import SnowflakeTestCase
@@ -26,10 +30,24 @@ class TestSnowflakeNotebooks(SnowflakeTestCase):
         )
 
     def test_staged_packages_with_otel(self) -> None:
-        self.get_session("test_staged_packages_with_otel")
+        self.create_and_use_schema(
+            "test_staged_packages_with_otel", append_uuid=True
+        )
+        self._set_up_stage()
         self._upload_and_run_notebook(
             "staged_packages_with_otel", _TRULENS_PACKAGES_DEPENDENCIES
         )
+
+    def _set_up_stage(self) -> None:
+        ssea = ServerSideEvaluationArtifacts(
+            self._snowpark_session,
+            self._database,
+            self._schema,
+            os.environ["SNOWFLAKE_WAREHOUSE"],
+            "trulens_",
+            True,
+        )
+        ssea._set_up_stage()
 
     def _upload_and_run_notebook(
         self,

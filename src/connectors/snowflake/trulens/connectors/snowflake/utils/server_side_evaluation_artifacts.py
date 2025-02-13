@@ -35,6 +35,7 @@ _TRULENS_PACKAGES_DEPENDENCIES = [
     "nltk",
     "numpy",
     "opentelemetry-api",
+    "opentelemetry-proto",
     "opentelemetry-sdk",
     "packaging",
     "pandas",
