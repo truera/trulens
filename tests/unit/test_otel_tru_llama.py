@@ -48,6 +48,17 @@ class TestOtelTruLlama(OtelAppTestCase):
         )
         return index.as_query_engine(similarity_top_k=3)
 
+    def test_missing_main_method_raises_error(self):
+        # Attempt to create a TruLlama without specifying main_method.
+        tru_session = TruSession()
+        tru_session.reset_database()
+        # Create app.
+        rag = self._create_simple_rag()
+        with self.assertRaises(ValueError) as context:
+            TruLlama(rag, app_name="Simple RAG", app_version="v1")
+
+        self.assertIn("main_method", str(context.exception))
+
     def test_smoke(self) -> None:
         # Set up.
         tru_session = TruSession()
@@ -61,8 +72,11 @@ class TestOtelTruLlama(OtelAppTestCase):
             main_method=rag.query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            rag.query("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
