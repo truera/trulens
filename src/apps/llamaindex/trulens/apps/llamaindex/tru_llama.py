@@ -21,6 +21,7 @@ import llama_index
 from pydantic import Field
 from trulens.apps.langchain import tru_chain as mod_tru_chain
 from trulens.core import app as core_app
+from trulens.core import experimental as core_experimental
 from trulens.core import instruments as core_instruments
 from trulens.core._utils.pycompat import EmptyType  # import style exception
 from trulens.core._utils.pycompat import (
@@ -29,6 +30,7 @@ from trulens.core._utils.pycompat import (
 from trulens.core.instruments import InstrumentedMethod
 
 # TODO: Do we need to depend on this?
+from trulens.core.session import TruSession
 from trulens.core.utils import imports as import_utils
 from trulens.core.utils import pyschema as pyschema_utils
 from trulens.core.utils import python as python_utils
@@ -401,10 +403,23 @@ class TruLlama(core_app.App):
     root_callable: ClassVar[pyschema_utils.FunctionOrMethod] = Field(None)
 
     def __init__(
-        self, app: Union[BaseQueryEngine, BaseChatEngine], **kwargs: dict
+        self,
+        app: Union[BaseQueryEngine, BaseChatEngine],
+        main_method: Optional[Callable] = None,
+        **kwargs: dict,
     ):
         # TruLlama specific:
         kwargs["app"] = app
+        if (
+            TruSession().experimental_feature(
+                core_experimental.Feature.OTEL_TRACING
+            )
+            and main_method is None
+        ):
+            raise ValueError(
+                "When OTEL_TRACING is enabled, 'main_method' must be provided in App constructor."
+            )
+        kwargs["main_method"] = main_method
         kwargs["root_class"] = pyschema_utils.Class.of_object(
             app
         )  # TODO: make class property
