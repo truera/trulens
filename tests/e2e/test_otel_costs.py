@@ -10,7 +10,6 @@ from snowflake.cortex import Complete
 from snowflake.snowpark import Session
 from trulens.apps.custom import TruCustomApp
 from trulens.apps.langchain import TruChain
-from trulens.core.otel.instrument import instrument
 from trulens.core.session import TruSession
 from trulens.otel.semconv.trace import SpanAttributes
 
@@ -32,7 +31,6 @@ class _TestCortexApp:
             self._connection_params
         ).create()
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return Complete(
             model="mistral-large2",
@@ -45,7 +43,6 @@ class _TestOpenAIApp:
     def __init__(self) -> None:
         self._openai_client = OpenAI()
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         return (
             self._openai_client.chat.completions.create(
@@ -67,7 +64,6 @@ class _TestLiteLLMApp:
     def __init__(self, model: str) -> None:
         self._model = model
 
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         completion = (
             litellm.completion(

@@ -18,7 +18,7 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 class _TestApp:
     @instrument(
-        span_type=SpanAttributes.SpanType.MAIN,
+        span_type=SpanAttributes.SpanType.RECORD_ROOT,
         full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
             "process_id": os.getpid()
         },

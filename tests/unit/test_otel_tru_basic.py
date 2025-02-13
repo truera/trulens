@@ -23,6 +23,7 @@ class TestOtelTruBasic(OtelAppTestCase):
         # Compare results to expected.
         # TODO(otel): once we have `main_method` functionality from Daniel, we
         #             should have the `text_to_text` function be a MAIN span.
+        # TODO(this_pr): do this now!
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_basic__test_smoke.csv"
         )

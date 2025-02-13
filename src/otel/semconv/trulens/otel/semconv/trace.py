@@ -106,9 +106,6 @@ class SpanAttributes:
         RECORD_ROOT = "record_root"
         """Spans as collected by tracing system."""
 
-        MAIN = "main"
-        """The main span of a record."""
-
         EVAL_ROOT = "eval_root"
         """Feedback function evaluation root span."""
 
@@ -169,12 +166,17 @@ class SpanAttributes:
 
         base = BASE_SCOPE + ".unknown"
 
-    class MAIN:
-        """Attributes for the main span of a record."""
+    class RECORD_ROOT:
+        """Attributes for the root span of a record.
 
-        base = BASE_SCOPE + ".main"
+        Includes most fields carried over from
+        [trulens.core.schema.base.Record][trulens.core.schema.base.Record].
+        """
+
+        base = BASE_SCOPE + ".record_root"
 
         SPAN_NAME_PREFIX = base + "."
+        """Span name will end with app name."""
 
         MAIN_INPUT = base + ".main_input"
         """Main input to the app."""
@@ -187,18 +189,6 @@ class SpanAttributes:
 
         Exclusive with main output.
         """
-
-    class RECORD_ROOT:
-        """Attributes for the root span of a record.
-
-        Includes most fields carried over from
-        [trulens.core.schema.base.Record][trulens.core.schema.base.Record].
-        """
-
-        base = BASE_SCOPE + ".record_root"
-
-        SPAN_NAME_PREFIX = base + "."
-        """Span name will end with app name."""
 
         GROUND_TRUTH_OUTPUT = base + ".ground_truth_output"
         """Ground truth of the record."""

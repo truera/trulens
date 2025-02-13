@@ -493,17 +493,7 @@ class App(
                         f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
                     )
 
-            cls = app.__class__
-            mod = cls.__module__
-
-            if "instrument" in kwargs:
-                kwargs["instrument"].include_modules.add(mod)
-                kwargs["instrument"].include_classes.add(cls)
-                kwargs["instrument"].include_methods.append(
-                    core_instruments.InstrumentedMethod(
-                        main_method.__name__, cls
-                    )
-                )
+            # setattr(self, main_method.__name__, main_method)
 
         super().__init__(**kwargs)
 
@@ -576,13 +566,13 @@ class App(
             func = getattr(app, method_name)
             sig = inspect.signature(func)
             wrapper = instrument(
-                span_type=SpanAttributes.SpanType.MAIN,
+                span_type=SpanAttributes.SpanType.RECORD_ROOT,
                 full_scoped_attributes=lambda ret, exception, *args, **kwargs: {
                     # langchain has specific main input/output logic.
-                    SpanAttributes.MAIN.MAIN_INPUT: self.main_input(
+                    SpanAttributes.RECORD_ROOT.MAIN_INPUT: self.main_input(
                         func, sig, sig.bind_partial(**kwargs)
                     ),
-                    SpanAttributes.MAIN.MAIN_OUTPUT: self.main_output(
+                    SpanAttributes.RECORD_ROOT.MAIN_OUTPUT: self.main_output(
                         func, sig, sig.bind_partial(**kwargs), ret
                     ),
                 },

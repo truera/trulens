@@ -15,7 +15,6 @@ from tests.util.otel_app_test_case import OtelAppTestCase
 
 
 class _TestApp:
-    @instrument(span_type=SpanAttributes.SpanType.MAIN)
     def respond_to_query(self, query: str) -> str:
         threads = []
         for _ in range(100):
@@ -64,13 +63,13 @@ class TestOtelMultiThreaded(OtelAppTestCase):
                 span_id = record_attributes[f"{BASE_SCOPE}.unknown.span_id"]
                 self.assertEqual(span_id, row["trace"]["span_id"])
                 seen_span_ids.add(span_id)
-            elif span_type == SpanAttributes.SpanType.MAIN:
+            elif span_type == SpanAttributes.SpanType.RECORD_ROOT:
                 self.assertEqual(
-                    record_attributes[f"{BASE_SCOPE}.main.main_input"],
+                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_INPUT],
                     "test",
                 )
                 self.assertEqual(
-                    record_attributes[f"{BASE_SCOPE}.main.main_output"],
+                    record_attributes[SpanAttributes.RECORD_ROOT.MAIN_OUTPUT],
                     "Kojikun",
                 )
         self.assertEqual(len(seen_span_ids), 100)
