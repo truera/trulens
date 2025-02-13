@@ -86,6 +86,7 @@ trulens.core.app:
     Memory: trulens.core.app.ComponentViewMeta
     Other: trulens.core.app.ComponentViewMeta
     Prompt: trulens.core.app.ComponentViewMeta
+    TRULENS_RECORD_ROOT_INSTRUMENT_WRAPPER_FLAG: builtins.str
     Tool: trulens.core.app.ComponentViewMeta
     TrulensComponent: trulens.core.app.ComponentViewMeta
     instrumented_component_views: builtins.function
@@ -121,8 +122,10 @@ trulens.core.app.App:
     format_instrumented_methods: builtins.function
     initial_app_loader_dump: typing.Optional[trulens.core.utils.serial.SerialBytes,
       builtins.NoneType]
+    input: builtins.function
     instrument: typing.Optional[trulens.core.instruments.Instrument, builtins.NoneType]
     instrumented: builtins.function
+    instrumented_invoke_main_method: builtins.function
     instrumented_methods: typing.Dict[builtins.int, typing.Dict[typing.Callable, trulens.core.utils.serial.Lens]]
     list_runs: builtins.function
     main_acall: builtins.function
@@ -140,6 +143,7 @@ trulens.core.app.App:
     recording_contexts: _contextvars.ContextVar[trulens.core.instruments._RecordingContext]
     records_with_pending_feedback_results: trulens.core.utils.containers.BlockingSet[trulens.core.schema.record.Record]
     root_class: trulens.core.utils.pyschema.Class
+    run: builtins.function
     select_context: builtins.classmethod
     selector_check_warning: builtins.bool
     selector_nocheck: builtins.bool
