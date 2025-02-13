@@ -72,8 +72,11 @@ class TestOtelTruLlama(OtelAppTestCase):
             main_method=rag.query,
         )
         # Record and invoke.
-        with tru_recorder(run_name="test run", input_id="42"):
-            rag.query("What is multi-headed attention?")
+        tru_recorder.instrumented_invoke_main_method(
+            run_name="test run",
+            input_id="42",
+            main_method_args=("What is multi-headed attention?",),
+        )
         # Compare results to expected.
         self._compare_events_to_golden_dataframe(
             "tests/unit/static/golden/test_otel_tru_llama__test_smoke.csv",
