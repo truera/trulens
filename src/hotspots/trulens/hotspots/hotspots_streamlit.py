@@ -192,9 +192,10 @@ def sample_main() -> None:
 
 
 if __name__ == "__main__":
-    from streamlit.web import cli as stcli
-    from streamlit import runtime
     import sys
+
+    from streamlit import runtime
+    from streamlit.web import cli as stcli
 
     if runtime.exists():
         sample_main()
