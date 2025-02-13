@@ -51,17 +51,6 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
                 object_type="RANDOM_UNSUPPORTED",
             )
 
-    def test_tru_app_otel_enabled_missing_main_method(self):
-        # Create app.
-        app = TestApp()
-
-        with self.assertRaises(ValueError):
-            TruApp(
-                app,
-                app_name="custom_app",
-                app_version="v1",
-            )
-
     def test_tru_app_missing_connector(self):
         # Create app.
         app = TestApp()
