@@ -91,6 +91,9 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             app_version,
             run_name,
         ), spans in app_and_run_info_to_spans.items():
+            logger.debug(
+                f"Logging {len(spans)} for app:{app_name} version:{app_version} run:{run_name}"
+            )
             res = self._export_to_snowflake_stage_for_app_and_run(
                 app_name, app_version, run_name, spans, dry_run
             )
