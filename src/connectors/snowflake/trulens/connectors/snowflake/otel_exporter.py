@@ -28,7 +28,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     Implementation of `SpanExporter` that flushes the spans in the TruLens session to a Snowflake Stage.
     """
 
-    connector: core_connector.DBConnector
+    connector: SnowflakeConnector
     """
     The database connector used to export the spans.
     """
@@ -38,12 +38,12 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         connector: core_connector.DBConnector,
         verify_via_dry_run: bool = True,
     ):
-        self.connector = connector
+        if not isinstance(connector, SnowflakeConnector):
+            raise ValueError("Provided connector is not a SnowflakeConnector")
+        self.connector = connector  # type: ignore
         # Try to verify that this exporter will work as much as possible since
         # afterwards it'll run in its own thread and thus is hard to tell when
         # it fails.
-        if not isinstance(self.connector, SnowflakeConnector):
-            raise ValueError("Provided connector is not a SnowflakeConnector")
         self.connector.snowpark_session.sql("SELECT 20240131").collect()
         if verify_via_dry_run:
             test_span = ReadableSpan(name="test_span")
@@ -54,7 +54,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                     "OTEL Exporter failed dry run during initialization!"
                 )
 
-    def _export_to_snowflake_stage(
+    def _export_to_snowflake(
         self, spans: Sequence[ReadableSpan], dry_run: bool
     ) -> SpanExportResult:
         """
@@ -119,13 +119,13 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
     def _upload_temp_file_to_stage(
         snowpark_session: Session, tmp_file_path: str
     ):
-        logger.debug("Uploading file to Snowflake stage")
+        stage_name = "trulens_spans"
         logger.debug("Creating Snowflake stage if it does not exist")
         snowpark_session.sql(
-            "CREATE TEMP STAGE IF NOT EXISTS trulens_spans"
+            f"CREATE TEMP STAGE IF NOT EXISTS {stage_name}"
         ).collect()
-        logger.debug("Uploading the protobuf file to the stage")
-        snowpark_session.file.put(tmp_file_path, "@trulens_spans")
+        logger.debug(f"Uploading file {tmp_file_path} to stage {stage_name}")
+        snowpark_session.file.put(tmp_file_path, f"@{stage_name}")
 
     @staticmethod
     def _ingest_spans_from_stage(
@@ -177,6 +177,10 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
             )
             if not dry_run:
                 sql_cmd.collect()
+                # job: AsyncJob = sql_cmd.collect_nowait()
+                # logger.debug(f"Uploading files in query: {job.query_id}")
+                # result = job.result()[0][0]
+                # logger.debug(f"Upload result: {result}")
         finally:
             if original_trace_level != "ALWAYS":
                 snowpark_session.sql(
@@ -198,7 +202,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 spans
             )
         except Exception as e:
-            logger.error(f"Error writing spans to the protobuf file: {e}")
+            logger.exception("Error writing spans to the protobuf file")
             if dry_run:
                 raise e
             return SpanExportResult.FAILURE
@@ -206,7 +210,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         try:
             self._upload_temp_file_to_stage(snowpark_session, tmp_file_path)
         except Exception as e:
-            logger.error(f"Error uploading the protobuf file to the stage: {e}")
+            logger.exception("Error uploading the protobuf file to the stage")
             if dry_run:
                 raise e
             return SpanExportResult.FAILURE
@@ -245,4 +249,4 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
         else:
             trulens_spans = list(filter(check_if_trulens_span, spans))
 
-        return self._export_to_snowflake_stage(trulens_spans, dry_run)
+        return self._export_to_snowflake(trulens_spans, dry_run)
