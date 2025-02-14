@@ -43,6 +43,7 @@ from trulens.core.database import connector as core_connector
 from trulens.core.feedback import endpoint as core_endpoint
 from trulens.core.feedback import feedback as core_feedback
 from trulens.core.run import Run
+from trulens.core.run import RunConfig
 from trulens.core.schema import app as app_schema
 from trulens.core.schema import base as base_schema
 from trulens.core.schema import feedback as feedback_schema
@@ -450,6 +451,9 @@ class App(
     snowflake_object_name: Optional[str] = pydantic.Field(
         None,
     )
+    snowflake_object_version: Optional[str] = pydantic.Field(
+        None,
+    )
 
     snowflake_run_dao: Optional[Any] = pydantic.Field(None, exclude=True)
 
@@ -535,6 +539,7 @@ class App(
                     self.snowflake_app_dao = ret[0]
                     self.snowflake_run_dao = ret[1]
                     self.snowflake_object_name = ret[2]
+                    self.snowflake_object_version = ret[3]
 
         self.app = app
 
@@ -1683,38 +1688,29 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             logger.error(msg)
             raise ValueError(msg)
 
-    def add_run(
-        self,
-        run_name: str,
-        run_config: Run.RunConfig,
-        input_df: Optional[pd.DataFrame] = None,
-    ) -> Run:
+    def add_run(self, run_config: RunConfig) -> Run:
         """add a new run to the snowflake App (if not already exists) or retrieve
         the run if it already exists.
 
         Args:
-            run_name (str): unique name of the run
-            run_config (Run.RunConfig): optional run config
+            run_config (RunConfig):  Run config
             input_df (Optional[pd.DataFrame]): optional input dataset
 
         Returns:
             Run: Run instance
         """
-        if input_df is None or input_df.empty:
-            logger.info(
-                "No input dataframe provided by user, checking dataset FQN from config."
-            )
-            if not run_config.dataset_fqn:
-                raise ValueError(
-                    "No input dataframe or input dataset FQN provided."
-                )
 
         self._check_snowflake_dao()
         run_metadata_df = self.snowflake_run_dao.create_new_run(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
-            run_name=run_name,
-            run_config=run_config,
+            object_version=self.snowflake_object_version,
+            run_name=run_config.run_name,
+            dataset_name=run_config.dataset_name,
+            dataset_col_specs=run_config.dataset_col_spec,
+            description=run_config.description,
+            labels=run_config.label,
+            llm_judge_name=run_config.llm_judge_name,
         )
 
         return Run.from_metadata_df(
@@ -1739,8 +1735,10 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
         self._check_snowflake_dao()
         run_metadata_df = self.snowflake_run_dao.get_run(
-            object_name=self.snowflake_object_name,
             run_name=run_name,
+            object_name=self.snowflake_object_name,
+            object_type=self.snowflake_object_type,
+            object_version=self.snowflake_object_version,
         )
         if run_metadata_df.empty:
             raise ValueError(f"Run {run_name} not found.")
@@ -1793,68 +1791,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """Delete the snowflake App (managing object) in snowflake, if applicable."""
         self._check_snowflake_dao()
         self.snowflake_app_dao.drop_agent(self.snowflake_object_name)
-
-    def run(self, run_name: str):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.core.otel.instrument import OTELRecordingContext
-
-            return OTELRecordingContext(
-                app_name=self.app_name,
-                app_version=self.app_version,
-                run_name=run_name,
-                input_id=None,
-            )
-        raise NotImplementedError(
-            "This feature is not yet implemented for non-OTEL TruLens!"
-        )
-
-    def input(self, input_id: str):
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.core.otel.instrument import OTELRecordingContext
-
-            return OTELRecordingContext(
-                app_name=self.app_name,
-                app_version=self.app_version,
-                run_name=None,
-                input_id=input_id,
-            )
-        raise NotImplementedError(
-            "This feature is not yet implemented for non-OTEL TruLens!"
-        )
-
-    def instrumented_invoke_main_method(
-        self,
-        run_name: str,
-        input_id: str,
-        ground_truth_output: Optional[str] = None,
-        main_method_args: Optional[Sequence[Any]] = None,
-        main_method_kwargs: Optional[Dict[str, Any]] = None,
-    ) -> Any:
-        if self.session.experimental_feature(
-            core_experimental.Feature.OTEL_TRACING
-        ):
-            from trulens.core.otel.instrument import OTELRecordingContext
-
-            with OTELRecordingContext(
-                app_name=self.app_name,
-                app_version=self.app_version,
-                run_name=run_name,
-                input_id=input_id,
-                ground_truth_output=ground_truth_output,
-            ):
-                f = getattr(self.app, self.main_method_name)
-                if main_method_args is None:
-                    main_method_args = ()
-                if main_method_kwargs is None:
-                    main_method_kwargs = {}
-                return f(*main_method_args, **main_method_kwargs)
-        raise NotImplementedError(
-            "This feature is not yet implemented for non-OTEL TruLens!"
-        )
 
     def run(self, run_name: str):
         if self.session.experimental_feature(

@@ -1,12 +1,11 @@
 import json
 import logging
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from snowflake.snowpark import Session
 from snowflake.snowpark.row import Row
 from trulens.connectors.snowflake.dao.sql_utils import execute_query
-from trulens.core.run import Run
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +18,9 @@ METHOD_GET = "GET"
 METHOD_UPDATE = "UPDATE"
 METHOD_DELETE = "DELETE"
 METHOD_LIST = "LIST"
+
+DEFAULT_LLM_JUDGE_NAME = "mistral-large2"
+DEFAULT_SOURCE_TYPE = "TABLE"
 
 
 class RunDao:
@@ -33,7 +35,12 @@ class RunDao:
         object_name: str,
         object_type: str,
         run_name: str,
-        run_config: Run.RunConfig,
+        dataset_name: str,
+        dataset_col_spec: dict,
+        object_version: Optional[str] = None,
+        description: Optional[str] = None,
+        label: Optional[str] = None,
+        llm_judge_name: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Create a new RunMetadata entity in Snowflake.
@@ -53,9 +60,30 @@ class RunDao:
             "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
-            "description": run_config.description,
-            "label": run_config.label,
         }
+
+        if object_version:
+            req_payload["object_version"] = object_version
+
+        run_metadata_dict = {}
+
+        run_metadata_dict["description"] = description
+        run_metadata_dict["labels"] = [label]  # single label for now
+        run_metadata_dict["llm_judge_name"] = (
+            llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
+        )
+        req_payload["run_metadata"] = json.dumps(
+            run_metadata_dict
+        )  # this needs to be there
+
+        source_info_dict = {}
+        source_info_dict["name"] = dataset_name
+        source_info_dict["column_spec"] = dataset_col_spec
+        source_info_dict["source_type"] = (
+            DEFAULT_SOURCE_TYPE  # currently only TABLE is supported
+        )
+
+        req_payload["source_info"] = json.dumps(source_info_dict)
 
         req_payload_json = json.dumps(req_payload)
 
@@ -72,9 +100,20 @@ class RunDao:
             f"Created new RunMetadata successfully for run '{run_name}'."
         )
         # Re-fetch the newly created run's metadata
-        return self.get_run(object_name=object_name, run_name=run_name)
+        return self.get_run(
+            run_name=run_name,
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+        )
 
-    def get_run(self, object_name: str, run_name: str) -> pd.DataFrame:
+    def get_run(
+        self,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
+    ) -> pd.DataFrame:
         """
         Retrieve a run by its run_name (assumed unique) and object_name.
 
@@ -87,8 +126,13 @@ class RunDao:
         """
         req_payload = {
             "object_name": object_name,
+            "object_type": object_type,
             "run_name": run_name,
         }
+
+        if object_version:
+            req_payload["object_version"] = object_version
+
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_GET)
 
@@ -130,7 +174,11 @@ class RunDao:
         return pd.DataFrame([rows[0].as_dict()])
 
     def delete_run(
-        self, run_name: str, object_name: str, object_type: str
+        self,
+        run_name: str,
+        object_name: str,
+        object_type: str,
+        object_version: Optional[str] = None,
     ) -> None:
         """
         Delete a run by its run_name (assumed unique) and object_name.
@@ -144,6 +192,9 @@ class RunDao:
             "object_name": object_name,
             "object_type": object_type,
         }
+        if object_version:
+            req_payload["object_version"] = object_version
+
         req_payload_json = json.dumps(req_payload)
         query = AIML_RUN_OPS_SYS_FUNC_TEMPLATE.format(method=METHOD_DELETE)
 

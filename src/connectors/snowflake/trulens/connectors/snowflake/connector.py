@@ -367,7 +367,7 @@ class SnowflakeConnector(DBConnector):
         object_type: str,
         app_name: str,
         app_version: str,
-    ) -> Optional[Tuple[ExternalAgentDao, RunDao, str]]:
+    ) -> Optional[Tuple[ExternalAgentDao, RunDao, str, str]]:
         snowflake_app_dao = None
 
         if object_type not in ObjectType:
@@ -382,8 +382,15 @@ class SnowflakeConnector(DBConnector):
             # side effect: create external agent if not exist
             snowflake_app_dao = ExternalAgentDao(self.snowpark_session)
             snowflake_run_dao = RunDao(self.snowpark_session)
-            agent_resolved_name = snowflake_app_dao.create_agent_if_not_exist(
-                name=app_name,
-                version=app_version,
+            agent_resolved_name, agent_resolved_version = (
+                snowflake_app_dao.create_agent_if_not_exist(
+                    name=app_name,
+                    version=app_version,
+                )
             )
-            return snowflake_app_dao, snowflake_run_dao, agent_resolved_name
+            return (
+                snowflake_app_dao,
+                snowflake_run_dao,
+                agent_resolved_name,
+                agent_resolved_version,
+            )

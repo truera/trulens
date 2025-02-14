@@ -178,7 +178,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
 
         run_config = Run.RunConfig(
             description="desc",
-            dataset_fqn="db.schema.table",
+            dataset_name="db.schema.table",
             dataset_col_spec=None,
         )  # type: ignore
         new_run = tru_recorder.add_run(
@@ -208,15 +208,15 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
 
         run_config_1 = Run.RunConfig(
             description="desc_1",
-            dataset_fqn="db.schema.table",
-            dataset_col_spec=None,
+            dataset_name="db.schema.table",
+            dataset_col_spec={"col1": "col1"},
         )
         tru_recorder.add_run(run_name="test_run_1", run_config=run_config_1)
 
         run_config_2 = Run.RunConfig(
             description="desc_2",
-            dataset_fqn="db.schema.table",
-            dataset_col_spec=None,
+            dataset_name="db.schema.table",
+            dataset_col_spec={"col1": "col1"},
         )
         run_2 = tru_recorder.add_run(
             run_name="test_run_2", run_config=run_config_2

@@ -7,36 +7,40 @@ import pandas as pd
 from pydantic import BaseModel
 from pydantic import Field
 
-DEFAULT_LLM_JUDGE_NAME = (
-    "mistral-large2"  # TODO: finalize / modify after benchmarking is completed
-)
+
+class RunConfig(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+
+    run_name: str = Field(
+        ...,
+        description="Unique name of the run. This name should be unique within the object.",
+    )
+    dataset_name: str = Field(
+        default=...,
+        description="Mandatory field. The fully qualified name of a user's Table / View  (e.g. 'db.schema.user_table_name_1'), or any user specified name of input dataframe.",
+    )
+
+    dataset_col_spec: Dict[str, str] = Field(
+        default=...,
+        description="Mandatory column name mapping from reserved dataset fields to column names in user's table.",
+    )
+
+    description: Optional[str] = Field(
+        default=None, description="A description for the run."
+    )
+    label: Optional[str] = Field(
+        default=None,
+        description="Text label to group the runs. Take a single label for now",
+    )
+
+    llm_judge_name: Optional[str] = Field(
+        default=None,
+        description="Name of the LLM judge to be used for the run.",
+    )
 
 
 class Run(BaseModel):
-    class RunConfig(BaseModel):
-        class Config:
-            arbitrary_types_allowed = True
-
-        description: Optional[str] = Field(
-            default=None, description="A description for the run."
-        )
-        label: Optional[str] = Field(
-            default=None, description="A label categorizing the run."
-        )
-        dataset_fqn: Optional[str] = Field(
-            default=None,
-            description="The fully qualified name of the dataset (e.g. 'db.schema.user_table_name_1').",
-        )
-
-        dataset_col_spec: Optional[Dict[str, str]] = Field(
-            default=None,
-            description="Optional column name mapping from reserved dataset fields to column names in user's table.",
-        )
-        llm_judge_name: Optional[str] = Field(
-            default=DEFAULT_LLM_JUDGE_NAME,
-            description="Name of the LLM judge to be used for the run.",
-        )
-
     """
     Run class for managing run state / attributes in the SDK client.
 
@@ -56,24 +60,6 @@ class Run(BaseModel):
         ..., description="Main method of the app.", exclude=True
     )
 
-    run_name: str = Field(..., description="Unique name of the run.")
-
-    run_config: Optional[RunConfig] = Field(
-        default=None,
-        description="Run configuration that maintains states needed for app invocation and metrics computation.",
-    )
-
-    run_type: Optional[str] = Field(
-        default=None, description="Type of the run. i.e. AI_EVALUATION"
-    )
-
-    description: Optional[str] = Field(
-        default=None, description="Description of the run."
-    )
-    label: Optional[str] = Field(
-        default=None, description="Label for grouping runs."
-    )
-
     object_name: str = Field(
         ...,
         description="Name of the managing object (e.g. name of 'EXTERNAL_AGENT').",
@@ -83,9 +69,14 @@ class Run(BaseModel):
         ..., description="Type of the managing object (e.g. 'EXTERNAL_AGENT')."
     )
 
-    run_status: Optional[str] = Field(
-        default=None, description="Status of the run."
-    )  # should default be INACTIVE?
+    object_version: Optional[str] = Field(
+        default=None, description="Version of the managing object."
+    )
+
+    run_metadata: Optional[dict] = Field(
+        default=None,
+        description="Run metadata that maintains states needed for app invocation and metrics computation.",
+    )
 
     class Config:
         arbitrary_types_allowed = True
@@ -123,20 +114,7 @@ class Run(BaseModel):
             object_type=self.object_type,
         )
 
-    def start(self, batch_size: Optional[int] = None):
-        # if self.run_config.input_df is not None:
-        #     input_df = self.run_config.input_df
-        # elif self.run_config.dataset_fqn is not None:
-        #     dataset_fqn = self.run_config.dataset_fqn
-        #     input_df = self.run_dao.session.sql(f"SELECT * FROM {dataset_fqn}").collect()
-
-        # for row in input_df:
-        #     input_id = input_df[col_spec .id_col]
-        #     input = input_df[col_spec.input_cols]
-        #     with custom_app as recording:
-        # # bound main_method specified by user to test_app
-        # return "run started, invocation done and ingestion in process"
-
+    def start(self, input_df: Optional[pd.DataFrame] = None):
         raise NotImplementedError("start is not implemented yet.")
 
     def get_status(self):

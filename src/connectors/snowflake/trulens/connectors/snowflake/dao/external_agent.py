@@ -1,4 +1,5 @@
 import logging
+from typing import Tuple
 
 import pandas
 from snowflake.snowpark import Session
@@ -23,13 +24,15 @@ class ExternalAgentDao:
 
         logger.info(f"Created External Agent {name} with version {version}.")
 
-    def create_agent_if_not_exist(self, name: str, version: str) -> str:
+    def create_agent_if_not_exist(
+        self, name: str, version: str
+    ) -> Tuple[str, str]:
         """
         Args:
             name (str): unique name of the external agent
             version (str): version is mandatory for now
         Returns:
-            str: resolved name of the external agent
+            Tuple[str, str]: resolved_name, version
         """
         # Get the agent if it already exists, otherwise create it
         if not (name.startswith('"') and name.endswith('"')):
@@ -56,7 +59,7 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
-        return resolved_name
+        return resolved_name, version.upper()
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""

@@ -41,8 +41,7 @@ class TestRunDao(unittest.TestCase):
         self.run_config = Run.RunConfig(
             description="desc",
             label="label",
-            dataset_fqn="db.schema.table",
-            input_df=None,
+            dataset_name="db.schema.table",
             dataset_col_spec=None,
         )
 
