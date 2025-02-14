@@ -179,11 +179,7 @@ class TruLensSnowflakeSpanExporter(SpanExporter):
                 ],
             )
             if not dry_run:
-                sql_cmd.collect()
-                # job: AsyncJob = sql_cmd.collect_nowait()
-                # logger.debug(f"Uploading files in query: {job.query_id}")
-                # result = job.result()[0][0]
-                # logger.debug(f"Upload result: {result}")
+                logger.debug(sql_cmd.collect()[0][0])
         finally:
             if original_trace_level != "ALWAYS":
                 snowpark_session.sql(
