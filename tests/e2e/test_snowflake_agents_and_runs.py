@@ -4,7 +4,7 @@ import os
 from snowflake.snowpark import Session
 from trulens.apps.app import TruApp
 from trulens.connectors import snowflake as snowflake_connector
-from trulens.core.run import Run
+from trulens.core.run import RunConfig
 from trulens.core.session import TruSession
 
 from tests.unit.test_otel_tru_custom import TestApp
@@ -48,6 +48,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
                 app,
                 app_name="custom_app",
                 app_version="v1",
+                connector=self.snowflake_connector,
                 object_type="RANDOM_UNSUPPORTED",
             )
 
@@ -176,14 +177,13 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             "V1", versions_df["name"].values
         )  # version is uppercased in snowflake
 
-        run_config = Run.RunConfig(
+        run_config = RunConfig(
+            run_name="test_run_1",
             description="desc",
             dataset_name="db.schema.table",
-            dataset_col_spec=None,
+            dataset_col_spec={"col1": "col1"},
         )  # type: ignore
-        new_run = tru_recorder.add_run(
-            run_name="test_run_1", run_config=run_config
-        )
+        new_run = tru_recorder.add_run(run_config=run_config)
         self.assertIsNotNone(new_run)
 
         run = tru_recorder.get_run("test_run_1")
@@ -191,7 +191,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         self.assertIsNotNone(run)
         self.assertEqual(new_run.run_name, "test_run_1")
 
-        self.assertEqual(new_run.description, "desc")
+        self.assertEqual(new_run.run_metadata.description, "desc")
 
         self.assertDictEqual(run.model_dump(), new_run.model_dump())
 
@@ -206,22 +206,21 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
             main_method=app.respond_to_query,
         )
 
-        run_config_1 = Run.RunConfig(
+        run_config_1 = RunConfig(
             run_name="test_run_1",
             description="desc_1",
             dataset_name="db.schema.table",
             dataset_col_spec={"col1": "col1"},
         )
-        tru_recorder.add_run(run_name="test_run_1", run_config=run_config_1)
+        tru_recorder.add_run(run_config=run_config_1)
 
-        run_config_2 = Run.RunConfig(
+        run_config_2 = RunConfig(
+            run_name="test_run_2",
             description="desc_2",
             dataset_name="db.schema.table",
             dataset_col_spec={"col1": "col1"},
         )
-        run_2 = tru_recorder.add_run(
-            run_name="test_run_2", run_config=run_config_2
-        )
+        run_2 = tru_recorder.add_run(run_config=run_config_2)
 
         runs = tru_recorder.list_runs()
         self.assertIn("test_run_1", [run.run_name for run in runs])
