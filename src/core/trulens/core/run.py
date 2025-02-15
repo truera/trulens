@@ -1,17 +1,15 @@
 from __future__ import annotations  # defers evaluation of annotations
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 import pandas as pd
+import pydantic
 from pydantic import BaseModel
 from pydantic import Field
 
 
 class RunConfig(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-
     run_name: str = Field(
         ...,
         description="Unique name of the run. This name should be unique within the object.",
@@ -40,6 +38,12 @@ class RunConfig(BaseModel):
 
 
 class Run(BaseModel):
+    model_config: ClassVar[pydantic.ConfigDict] = pydantic.ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="ignore",  # allow custom obj like RunDao to be passed as a parameter and more importantly, account for
+        # additional fields in Run metadata JSON response.
+    )
+
     """
     Run class for managing run state / attributes in the SDK client.
 
@@ -115,12 +119,6 @@ class Run(BaseModel):
         default=...,
         description="Source information for the run.",
     )
-
-    class Config:
-        arbitrary_types_allowed = True
-        extra = "ignore"
-        # allow custom obj like RunDao to be passed as a parameter and more importantly, account for
-        # additional fields in Run metadata JSON response.
 
     def describe(self) -> Dict:
         """
