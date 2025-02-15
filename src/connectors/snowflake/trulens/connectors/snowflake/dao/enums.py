@@ -7,4 +7,4 @@ class ObjectType(str, Enum):
 
     @classmethod
     def is_valid_object(cls, key):
-        return key in cls.__members__
+        return key in cls.__members__.values()

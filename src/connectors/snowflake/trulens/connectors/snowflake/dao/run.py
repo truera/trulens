@@ -47,8 +47,8 @@ class RunDao:
 
         Args:
             object_name: The name of the managing object for which the run is created under,
-                         e.g. name of 'EXTERNAL_AGENT'.
-            object_type: The type of the managing object. e.g. 'EXTERNAL_AGENT'.
+                         e.g. name of 'EXTERNAL AGENT'.
+            object_type: The type of the managing object. e.g. 'EXTERNAL AGENT'.
             run_name: The name of the run.
             run_config: The configuration for the run.
 
@@ -158,7 +158,7 @@ class RunDao:
         List all runs for a given object_name.
 
         Args:
-            object_name: The name of the managing object (e.g. "EXTERNAL_AGENT").
+            object_name: The name of the managing object (e.g. "EXTERNAL AGENT").
 
         Returns:
             A pandas DataFrame containing all run metadata.
@@ -189,7 +189,7 @@ class RunDao:
 
         Args:
             run_name: The unique name of the run.
-            object_name: The managing object's name (e.g. "EXTERNAL_AGENT").
+            object_name: The managing object's name (e.g. "EXTERNAL AGENT").
         """
         req_payload = {
             "run_name": run_name,

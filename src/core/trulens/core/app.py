@@ -525,7 +525,7 @@ class App(
 
             if isinstance(connector, SnowflakeConnector):
                 self.snowflake_object_type = (
-                    ObjectType.EXTERNAL_AGENT
+                    ObjectType.EXTERNAL_AGENT.value
                     if "object_type" not in kwargs
                     or kwargs["object_type"] is None
                     else kwargs["object_type"]
@@ -1684,7 +1684,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         ):
             msg = (
                 "This API requires a Snowpark session to initialize snowflake-specific DAO instance. Please initialize App with "
-                "object_type='EXTERNAL_AGENT' and a valid snowpark_session."
+                "object_type='EXTERNAL AGENT' and a valid snowpark_session."
             )
             logger.error(msg)
             raise ValueError(msg)

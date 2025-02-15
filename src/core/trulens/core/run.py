@@ -61,11 +61,11 @@ class Run(BaseModel):
 
     object_name: str = Field(
         ...,
-        description="Name of the managing object (e.g. name of 'EXTERNAL_AGENT').",
+        description="Name of the managing object (e.g. name of 'EXTERNAL AGENT').",
     )
 
     object_type: str = Field(
-        ..., description="Type of the managing object (e.g. 'EXTERNAL_AGENT')."
+        ..., description="Type of the managing object (e.g. 'EXTERNAL AGENT')."
     )
 
     object_version: Optional[str] = Field(
