@@ -491,24 +491,25 @@ class App(
                     "A valid app instance must be provided when specifying 'main_method'."
                 )
 
-            main_method = kwargs["main_method"]
+            if "main_method" in kwargs:
+                main_method = kwargs["main_method"]
 
-            # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
-            try:
-                from trulens.apps.basic import TruWrapperApp
-            except ImportError:
-                TruWrapperApp = None
+                # Instead of always checking for binding,  enforce it except when app is an instance of TruWrapperApp (tru basic app).
+                try:
+                    from trulens.apps.basic import TruWrapperApp
+                except ImportError:
+                    TruWrapperApp = None
 
-            if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
-                if (
-                    not hasattr(main_method, "__self__")
-                    or main_method.__self__ != app
-                ):
-                    raise ValueError(
-                        f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
-                    )
+                if TruWrapperApp is None or not isinstance(app, TruWrapperApp):
+                    if (
+                        not hasattr(main_method, "__self__")
+                        or main_method.__self__ != app
+                    ):
+                        raise ValueError(
+                            f"main_method `{main_method.__name__}` must be bound to the provided `app` instance."
+                        )
 
-            self._wrap_main_function(app, main_method.__name__)
+                self._wrap_main_function(app, main_method.__name__)
 
         super().__init__(**kwargs)
 
@@ -1707,9 +1708,9 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
             object_version=self.snowflake_object_version,
             run_name=run_config.run_name,
             dataset_name=run_config.dataset_name,
-            dataset_col_specs=run_config.dataset_col_spec,
+            dataset_col_spec=run_config.dataset_col_spec,
             description=run_config.description,
-            labels=run_config.label,
+            label=run_config.label,
             llm_judge_name=run_config.llm_judge_name,
         )
 
@@ -1719,8 +1720,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "app": self.app,
                 "main_method_name": self.main_method_name,
                 "run_dao": self.snowflake_run_dao,
-                "object_name": self.snowflake_object_name,
-                "object_type": self.snowflake_object_type,
             },
         )
 
@@ -1749,8 +1748,6 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "app": self.app,
                 "main_method_name": self.main_method_name,
                 "run_dao": self.snowflake_run_dao,
-                "object_name": self.snowflake_object_name,
-                "object_type": self.snowflake_object_type,
             },
         )
 
@@ -1772,6 +1769,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
 
         all_runs_lst = json.loads(run_metadata_df.iloc[0].iloc[-1])
 
+        # return all_runs_lst
         for run_dict in all_runs_lst:
             runs.append(
                 Run.from_metadata_df(

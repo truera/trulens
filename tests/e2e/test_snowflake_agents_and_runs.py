@@ -207,6 +207,7 @@ class TestSnowflakeExternalAgentDao(SnowflakeTestCase):
         )
 
         run_config_1 = Run.RunConfig(
+            run_name="test_run_1",
             description="desc_1",
             dataset_name="db.schema.table",
             dataset_col_spec={"col1": "col1"},

@@ -60,6 +60,8 @@ class RunDao:
             "object_name": object_name,
             "object_type": object_type,
             "run_name": run_name,
+            "run_metadata": {},
+            "source_info": {},
         }
 
         if object_version:
@@ -68,13 +70,17 @@ class RunDao:
         run_metadata_dict = {}
 
         run_metadata_dict["description"] = description
-        run_metadata_dict["labels"] = [label]  # single label for now
-        run_metadata_dict["llm_judge_name"] = (
+        run_metadata_dict["labels"] = [
+            label
+        ]  # only accepting a single label for now
+
+        # TODO: daniel - this needs to be udpated to `llm_judge_name`
+        run_metadata_dict["llmJudgeName"] = (
             llm_judge_name if llm_judge_name else DEFAULT_LLM_JUDGE_NAME
         )
-        req_payload["run_metadata"] = json.dumps(
-            run_metadata_dict
-        )  # this needs to be there
+        req_payload["run_metadata"] = run_metadata_dict
+
+        # this needs to be there
 
         source_info_dict = {}
         source_info_dict["name"] = dataset_name
@@ -83,7 +89,7 @@ class RunDao:
             DEFAULT_SOURCE_TYPE  # currently only TABLE is supported
         )
 
-        req_payload["source_info"] = json.dumps(source_info_dict)
+        req_payload["source_info"] = source_info_dict
 
         req_payload_json = json.dumps(req_payload)
 

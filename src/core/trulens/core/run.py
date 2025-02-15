@@ -33,7 +33,6 @@ class RunConfig(BaseModel):
         default=None,
         description="Text label to group the runs. Take a single label for now",
     )
-
     llm_judge_name: Optional[str] = Field(
         default=None,
         description="Name of the LLM judge to be used for the run.",
@@ -73,9 +72,48 @@ class Run(BaseModel):
         default=None, description="Version of the managing object."
     )
 
-    run_metadata: Optional[dict] = Field(
-        default=None,
+    run_name: str = Field(
+        ...,
+        description="Unique name of the run. This name should be unique within the object.",
+    )
+
+    class RunMetada(BaseModel):
+        description: Optional[str] = Field(
+            default=None, description="A description for the run."
+        )
+        labels: List[Optional[str]] = Field(
+            default=[],
+            description="Text label to group the runs. Take a single label for now",
+        )
+        llmJudgeName: Optional[str] = (
+            Field(  # TODO: daniel - this needs to be udpated to `llm_judge_name`
+                default=None,
+                description="Name of the LLM judge to be used for the run.",
+            )
+        )
+
+    run_metadata: RunMetada = Field(
+        default=...,
         description="Run metadata that maintains states needed for app invocation and metrics computation.",
+    )
+
+    class SourceInfo(BaseModel):
+        name: str = Field(
+            ...,
+            description="Name of the source (e.g. name of the table).",
+        )
+        column_spec: Dict[str, str] = Field(
+            default=...,
+            description="Column name mapping from reserved dataset fields to column names in user's table.",
+        )
+        source_type: str = Field(
+            default="TABLE",
+            description="Type of the source (e.g. 'TABLE').",
+        )
+
+    source_info: SourceInfo = Field(
+        default=...,
+        description="Source information for the run.",
     )
 
     class Config:

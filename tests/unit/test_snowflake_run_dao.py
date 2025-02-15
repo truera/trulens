@@ -8,7 +8,6 @@ import pytest
 
 try:
     from trulens.connectors.snowflake.dao.run import RunDao
-    from trulens.core.run import Run  # for Run.RunConfig
 except Exception:
     RunDao = None
 
@@ -37,45 +36,70 @@ class TestRunDao(unittest.TestCase):
         dummy_sql.collect.return_value = []
         self.sf_session.sql.return_value = dummy_sql
         self.dao = RunDao(snowpark_session=self.sf_session)
-        # Create a dummy RunConfig instance (fields used in create_new_run)
-        self.run_config = Run.RunConfig(
-            description="desc",
-            label="label",
-            dataset_name="db.schema.table",
-            dataset_col_spec=None,
-        )
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_create_new_run(self, mock_execute_query):
         object_name = "MY_AGENT"
         object_type = "EXTERNAL AGENT"
+        object_version = "V1"
         run_name = "my_run"
+        dataset_name = "db.schema.table"
+        dataset_col_spec = {"col1": "col1"}
 
         req_payload = {
             "object_name": object_name,
             "object_type": object_type,
+            "object_version": object_version,
             "run_name": run_name,
-            "description": self.run_config.description,
-            "label": self.run_config.label,
+            "run_metadata": {
+                "description": "desc",
+                "labels": ["label"],
+                "llmJudgeName": "mistral-large2",
+            },
+            "source_info": {
+                "name": dataset_name,
+                "column_spec": dataset_col_spec,
+                "source_type": "TABLE",
+            },
         }
         req_payload_json = json.dumps(req_payload)
-        expected_query = "SELECT SYSTEM$AIML_RUN_OPERATION('CREATE', ?);"
 
         self.dao.create_new_run(
-            object_name, object_type, run_name, self.run_config
+            object_name=object_name,
+            object_type=object_type,
+            object_version=object_version,
+            dataset_name=dataset_name,
+            dataset_col_spec=dataset_col_spec,
+            description="desc",
+            label="label",
+            llm_judge_name="mistral-large2",
+            run_name=run_name,
         )
-        mock_execute_query.assert_any_call(
-            self.sf_session,
-            expected_query,
-            parameters=(req_payload_json,),
-        )
+
         self.assertEqual(mock_execute_query.call_count, 2)
+
+        for call in mock_execute_query.call_args_list:
+            if call[0][1] == "SELECT SYSTEM$AIML_RUN_OPERATION('CREATE', ?);":
+                actual_parameters = call[1].get("parameters", [])
+                if actual_parameters:
+                    actual_payload = json.loads(actual_parameters[0])
+                    expected_payload = json.loads(req_payload_json)
+
+                    print("Expected Payload:", expected_payload)
+                    print("Actual Payload:", actual_payload)
+
+                    # Perform deep comparison of the dictionaries (ignoring order)
+                    self.assertEqual(actual_payload, expected_payload)
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
     def test_get_run_no_result(self, mock_execute_query):
         # Simulate that get_run returns an empty list (no run exists).
         mock_execute_query.return_value = []
-        result_df = self.dao.get_run("MY_AGENT", "nonexistent_run")
+        result_df = self.dao.get_run(
+            run_name="nonexistent_run",
+            object_name="MY_AGENT",
+            object_type="EXTERNAL AGENT",
+        )
         self.assertTrue(result_df.empty)
 
     @patch("trulens.connectors.snowflake.dao.run.execute_query")
@@ -83,7 +107,11 @@ class TestRunDao(unittest.TestCase):
         # Simulate that get_run returns a single row.
         dummy = DummyRow({"run_name": "my_run", "run_status": "ACTIVE"})
         mock_execute_query.return_value = [dummy]
-        result_df = self.dao.get_run("MY_AGENT", "my_run")
+        result_df = self.dao.get_run(
+            run_name="my_run",
+            object_name="MY_AGENT",
+            object_type="EXTERNAL AGENT",
+        )
         self.assertIsInstance(result_df, pd.DataFrame)
         self.assertEqual(result_df.iloc[0]["run_name"], "my_run")
         self.assertEqual(result_df.iloc[0]["run_status"], "ACTIVE")
