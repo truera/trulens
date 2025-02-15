@@ -132,7 +132,10 @@ class Run(BaseModel):
         # TODO/TBD:  should we just return Run instance instead?
 
         result = self.run_dao.get_run(
-            object_name=self.object_name, run_name=self.run_name
+            run_name=self.run_name,
+            object_name=self.object_name,
+            object_type=self.object_type,
+            object_version=self.object_version,
         )
         if isinstance(result, dict):
             return result
@@ -150,6 +153,7 @@ class Run(BaseModel):
             run_name=self.run_name,
             object_name=self.object_name,
             object_type=self.object_type,
+            object_version=self.object_version,
         )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):

@@ -80,8 +80,6 @@ class RunDao:
         )
         req_payload["run_metadata"] = run_metadata_dict
 
-        # this needs to be there
-
         source_info_dict = {}
         source_info_dict["name"] = dataset_name
         source_info_dict["column_spec"] = dataset_col_spec
