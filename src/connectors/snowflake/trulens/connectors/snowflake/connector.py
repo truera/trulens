@@ -370,7 +370,7 @@ class SnowflakeConnector(DBConnector):
     ) -> Optional[Tuple[ExternalAgentDao, RunDao, str, str]]:
         snowflake_app_dao = None
 
-        if object_type not in ObjectType:
+        if not ObjectType.is_valid_object(object_type):
             raise ValueError(
                 f"Invalid object_type to initialize Snowflake app: {object_type}"
             )
