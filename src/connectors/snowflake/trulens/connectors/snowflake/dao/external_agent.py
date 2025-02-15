@@ -40,6 +40,11 @@ class ExternalAgentDao:
         else:
             resolved_name = name
 
+        if not (version.startswith('"') and version.endswith('"')):
+            resolved_version = version.upper()
+        else:
+            resolved_version = version
+
         if not self.check_agent_exists(name):
             self.create_new_agent(name, version)
         else:
@@ -49,7 +54,7 @@ class ExternalAgentDao:
             if (
                 existing_versions.empty
                 or "name" not in existing_versions.columns
-                or version.upper() not in existing_versions["name"].values
+                or resolved_version not in existing_versions["name"].values
             ):
                 self.add_version(name, version)
                 logger.info(
@@ -59,7 +64,7 @@ class ExternalAgentDao:
                 logger.info(
                     f"External Agent {name} with version {version} already exists."
                 )
-        return resolved_name, version.upper()
+        return resolved_name, resolved_version
 
     def drop_agent(self, name: str) -> None:
         """Delete an External Agent."""
