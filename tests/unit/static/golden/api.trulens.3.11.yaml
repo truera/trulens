@@ -744,7 +744,6 @@ trulens.core.run.Run:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    Config: builtins.type
     RunMetada: pydantic._internal._model_construction.ModelMetaclass
     SourceInfo: pydantic._internal._model_construction.ModelMetaclass
     app: typing.Any
@@ -769,7 +768,6 @@ trulens.core.run.RunConfig:
   - pydantic.main.BaseModel
   __class__: pydantic._internal._model_construction.ModelMetaclass
   attributes:
-    Config: builtins.type
     dataset_col_spec: typing.Dict[builtins.str, builtins.str]
     dataset_name: builtins.str
     description: typing.Optional[builtins.str, builtins.NoneType]
