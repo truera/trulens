@@ -67,9 +67,6 @@ class SnowflakeConnector(DBConnector):
             "schema": schema,
             "warehouse": warehouse,
             "role": role,
-            "protocol": protocol,
-            "port": port,
-            "host": host,
         }
         if snowpark_session is None:
             snowpark_session = self._create_snowpark_session(

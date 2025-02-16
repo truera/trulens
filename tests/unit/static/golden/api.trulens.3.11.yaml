@@ -737,8 +737,10 @@ trulens.core.run:
   __class__: builtins.module
   highs: {}
   lows:
+    DATASET_RESERVED_FIELDS: builtins.set
     Run: pydantic._internal._model_construction.ModelMetaclass
     RunConfig: pydantic._internal._model_construction.ModelMetaclass
+    validate_dataset_col_spec: builtins.function
 trulens.core.run.Run:
   __bases__:
   - pydantic.main.BaseModel
@@ -762,6 +764,7 @@ trulens.core.run.Run:
     run_name: builtins.str
     source_info: trulens.core.run.Run.SourceInfo
     start: builtins.function
+    tru_session: typing.Any
     update: builtins.function
 trulens.core.run.RunConfig:
   __bases__:

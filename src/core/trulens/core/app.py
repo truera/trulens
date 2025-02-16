@@ -1703,6 +1703,22 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
         """
 
         self._check_snowflake_dao()
+        existing_run = None
+        try:
+            existing_run = self.get_run(run_config.run_name)
+        except ValueError as e:
+            if "not found" in str(e):
+                logger.info(
+                    f"Run {run_config.run_name} not found. Creating a new run."
+                )
+                pass
+            else:
+                raise e
+
+        if existing_run:
+            logger.info(f"Run {run_config.run_name} already exists.")
+            return existing_run
+
         run_metadata_df = self.snowflake_run_dao.create_new_run(
             object_name=self.snowflake_object_name,
             object_type=self.snowflake_object_type,
@@ -1723,6 +1739,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "app": self.app,
                 "main_method_name": self.main_method_name,
                 "run_dao": self.snowflake_run_dao,
+                "tru_session": self.session,
             },
         )
 
@@ -1751,6 +1768,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                 "app": self.app,
                 "main_method_name": self.main_method_name,
                 "run_dao": self.snowflake_run_dao,
+                "tru_session": self.session,
             },
         )
 
@@ -1781,6 +1799,7 @@ you use the `%s` wrapper to make sure `%s` does get instrumented. `%s` method
                         "app": self.app,
                         "main_method_name": self.main_method_name,
                         "run_dao": self.snowflake_run_dao,
+                        "tru_session": self.session,
                         "object_name": self.snowflake_object_name,
                         "object_type": self.snowflake_object_type,
                     },

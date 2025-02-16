@@ -53,8 +53,8 @@ def validate_dataset_col_spec(
             )
 
         # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
-        if "input" in normalized_key:
-            match = re.match(r"^input(?:_(\d+))?$", normalized_key)
+        if "input" in normalized_key and normalized_key != "input_id":
+            match = re.match(r"^input(?:_\d+)?$", normalized_key)
             if not match:
                 raise ValueError(
                     f"Invalid subscripted input field '{key}'. Expected 'input' or 'input_1', 'input_2', etc."
@@ -120,6 +120,9 @@ class Run(BaseModel):
         ..., description="Main method of the app.", exclude=True
     )
 
+    tru_session: Any = Field(
+        ..., description="TruSession instance.", exclude=True
+    )
     object_name: str = Field(
         ...,
         description="Name of the managing object (e.g. name of 'EXTERNAL AGENT').",
@@ -176,14 +179,6 @@ class Run(BaseModel):
         default=...,
         description="Source information for the run.",
     )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Validate and store the dataset_col_spec as a dictionary
-        if self.dataset_col_spec is not None:
-            self.dataset_col_spec = validate_dataset_col_spec(
-                self.dataset_col_spec
-            )
 
     def describe(self) -> Dict:
         """
@@ -248,7 +243,10 @@ class Run(BaseModel):
                 reserved_field.startswith("input")
                 or reserved_field.split("_")[1] == "input"
             ):
-                if "_" in reserved_field:
+                if (
+                    "_" in reserved_field
+                    and reserved_field.split("_")[-1].isdigit()
+                ):
                     subscript = int(reserved_field.split("_")[-1])
                     input_columns_by_subscripts[subscript] = user_column
                 else:
@@ -282,6 +280,7 @@ class Run(BaseModel):
                 main_method_kwargs=main_method_kwargs,  # Include only relevant kwargs
             )
 
+        self.tru_session.force_flush()
         logger.info("Run started, invocation done and ingestion in process.")
 
     def get_status(self):
