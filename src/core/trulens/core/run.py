@@ -220,6 +220,12 @@ class Run(BaseModel):
         )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
+        """
+        Start the run by invoking the main method of the user's app with the input data
+
+        Args:
+            input_df (Optional[pd.DataFrame], optional): user provided input dataframe.
+        """
         if input_df is None:
             logger.info(
                 "No input dataframe provided. Fetching input data from source."
