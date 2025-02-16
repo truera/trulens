@@ -1,12 +1,69 @@
 from __future__ import annotations  # defers evaluation of annotations
 
 import json
+import logging
+import re
 from typing import Any, ClassVar, Dict, List, Optional
 
 import pandas as pd
 import pydantic
 from pydantic import BaseModel
 from pydantic import Field
+
+logger = logging.getLogger(__name__)
+
+
+# Reserved fields (case-insensitive)
+DATASET_RESERVED_FIELDS = {
+    "input_id",  # Represents the unique identifier for the input.
+    "input",  # Represents the main input column, allow optional subscripts like input_1, input_2, etc.
+    "ground_truth_output",  # Represents the ground truth output, flexible in type (string or others)
+}
+
+
+def validate_dataset_col_spec(
+    dataset_col_spec: Dict[str, str],
+) -> Dict[str, str]:
+    """
+    Validates and normalizes the dataset column specification to ensure it contains only
+    valid fields and allows for subscripted fields like input_1, input_2, etc.
+
+    Args:
+        dataset_col_spec: The user-provided dictionary with column names.
+
+    Returns:
+        A validated and normalized dictionary.
+
+    Raises:
+        ValueError: If any invalid field is present.
+    """
+
+    normalized_spec = {}
+
+    for key, value in dataset_col_spec.items():
+        normalized_key = key.lower()
+
+        # Ensure that the key is one of the valid reserved fields or its subscripted form
+        if not any(
+            normalized_key.startswith(reserved_field)
+            for reserved_field in DATASET_RESERVED_FIELDS
+        ):
+            raise ValueError(
+                f"Invalid field '{key}' found in dataset_col_spec."
+            )
+
+        # currently only handle subscripted 'input' columns, e.g., 'input_1', 'input_2'
+        if "input" in normalized_key:
+            match = re.match(r"^input(?:_(\d+))?$", normalized_key)
+            if not match:
+                raise ValueError(
+                    f"Invalid subscripted input field '{key}'. Expected 'input' or 'input_1', 'input_2', etc."
+                )
+
+        # Add the normalized field to the dictionary
+        normalized_spec[normalized_key] = value
+
+    return normalized_spec
 
 
 class RunConfig(BaseModel):
@@ -120,6 +177,14 @@ class Run(BaseModel):
         description="Source information for the run.",
     )
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Validate and store the dataset_col_spec as a dictionary
+        if self.dataset_col_spec is not None:
+            self.dataset_col_spec = validate_dataset_col_spec(
+                self.dataset_col_spec
+            )
+
     def describe(self) -> Dict:
         """
         Retrieve the run metadata by querying the underlying DAO and return it as a dictionary.
@@ -155,7 +220,61 @@ class Run(BaseModel):
         )
 
     def start(self, input_df: Optional[pd.DataFrame] = None):
-        raise NotImplementedError("start is not implemented yet.")
+        if input_df is None:
+            logger.info(
+                "No input dataframe provided. Fetching input data from source."
+            )
+            rows = self.run_dao.session.sql(
+                f"SELECT * FROM {self.source_info.name}"
+            ).collect()
+            input_df = pd.DataFrame([row.as_dict() for row in rows])
+
+        dataset_column_spec = self.source_info.column_spec
+
+        # Dictionary to store input columns in the order based on their subscripts
+        input_columns_by_subscripts = {}
+
+        # Loop over the rows in input_df
+        for _, row in input_df.iterrows():
+            main_method_kwargs = {}
+
+            for reserved_field, user_column in dataset_column_spec.items():
+                if (
+                    reserved_field.startswith("input")
+                    or reserved_field.split("_")[1] == "input"
+                ):
+                    # Handle subscripting (e.g., input_1, input_2, ...)
+                    if "_" in reserved_field:
+                        subscript = int(reserved_field.split("_")[1])
+                        # Access the value from the user-provided column in the row
+                        input_columns_by_subscripts[subscript] = row[
+                            user_column
+                        ]
+                    else:
+                        input_columns_by_subscripts[0] = row[
+                            user_column
+                        ]  # Non-subscripted inputs
+
+                else:
+                    # Add other fields to main_method_kwargs
+                    if user_column in row:
+                        main_method_kwargs[reserved_field] = row[user_column]
+
+            # Ensure args are ordered by their subscripts
+            main_method_args = [
+                input_columns_by_subscripts[key]
+                for key in sorted(input_columns_by_subscripts.keys())
+            ]
+
+            # Call the instrumented main method with the arguments
+            self.app.instrumented_invoke_main_method(
+                run_name=self.run_name,
+                input_id=row[dataset_column_spec["input_id"]],
+                main_method_args=main_method_args,  # Ensure correct order
+                main_method_kwargs=main_method_kwargs,
+            )
+
+        logger.info("run started, invocation done and ingestion in process")
 
     def get_status(self):
         raise NotImplementedError("status is not implemented yet.")
