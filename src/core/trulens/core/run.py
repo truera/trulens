@@ -237,50 +237,52 @@ class Run(BaseModel):
 
         dataset_column_spec = self.source_info.column_spec
 
-        # Dictionary to store input columns in the order based on their subscripts
+        # Preprocess the dataset_column_spec to create mappings for input columns
+        # and map the inputs for reserved fields only once, before the iteration over rows.
         input_columns_by_subscripts = {}
+        reserved_field_column_mapping = {}
 
-        # Loop over the rows in input_df
-        for _, row in input_df.iterrows():
-            main_method_kwargs = {}
-
-            for reserved_field, user_column in dataset_column_spec.items():
-                if (
-                    reserved_field.startswith("input")
-                    or reserved_field.split("_")[1] == "input"
-                ):
-                    # Handle subscripting (e.g., input_1, input_2, ...)
-                    if "_" in reserved_field:
-                        subscript = int(reserved_field.split("_")[1])
-                        # Access the value from the user-provided column in the row
-                        input_columns_by_subscripts[subscript] = row[
-                            user_column
-                        ]
-                    else:
-                        input_columns_by_subscripts[0] = row[
-                            user_column
-                        ]  # Non-subscripted inputs
-
+        # Process dataset column spec to handle subscripting logic for input columns
+        for reserved_field, user_column in dataset_column_spec.items():
+            if (
+                reserved_field.startswith("input")
+                or reserved_field.split("_")[1] == "input"
+            ):
+                if "_" in reserved_field:
+                    subscript = int(reserved_field.split("_")[-1])
+                    input_columns_by_subscripts[subscript] = user_column
                 else:
-                    # Add other fields to main_method_kwargs
-                    if user_column in row:
-                        main_method_kwargs[reserved_field] = row[user_column]
+                    input_columns_by_subscripts[0] = user_column
+            else:
+                # Prepare the kwargs for the non-input fields
+                reserved_field_column_mapping[reserved_field] = user_column
 
-            # Ensure args are ordered by their subscripts
-            main_method_args = [
-                input_columns_by_subscripts[key]
-                for key in sorted(input_columns_by_subscripts.keys())
-            ]
+        for _, row in input_df.iterrows():
+            main_method_args = []
+
+            # For each input column, add the value to main_method_args in the correct order
+            for subscript in sorted(input_columns_by_subscripts.keys()):
+                user_column = input_columns_by_subscripts[subscript]
+                main_method_args.append(row[user_column])
+
+            # Ensure that main_method_kwargs uses the correct column values from the row
+            main_method_kwargs = {
+                key: row[value]
+                for key, value in reserved_field_column_mapping.items()
+                if value in row
+            }
 
             # Call the instrumented main method with the arguments
             self.app.instrumented_invoke_main_method(
                 run_name=self.run_name,
                 input_id=row[dataset_column_spec["input_id"]],
-                main_method_args=main_method_args,  # Ensure correct order
-                main_method_kwargs=main_method_kwargs,
+                main_method_args=tuple(
+                    main_method_args
+                ),  # Ensure correct order
+                main_method_kwargs=main_method_kwargs,  # Include only relevant kwargs
             )
 
-        logger.info("run started, invocation done and ingestion in process")
+        logger.info("Run started, invocation done and ingestion in process.")
 
     def get_status(self):
         raise NotImplementedError("status is not implemented yet.")
