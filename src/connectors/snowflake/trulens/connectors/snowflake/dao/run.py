@@ -50,7 +50,12 @@ class RunDao:
                          e.g. name of 'EXTERNAL AGENT'.
             object_type: The type of the managing object. e.g. 'EXTERNAL AGENT'.
             run_name: The name of the run.
-            run_config: The configuration for the run.
+            dataset_name: The name of the dataset or user provided dataframe.
+            dataset_col_spec: The column specification of the dataset.
+            object_version: The version of the managing object.
+            description: A description of the run.
+            label: A label for the run.
+            llm_judge_name: The name of the LLM judge to use for the evaluation, when applicable.
 
         Returns:
             The result of the Snowflake SQL execution - returning a success message but not the created entity.
@@ -122,8 +127,10 @@ class RunDao:
         Retrieve a run by its run_name (assumed unique) and object_name.
 
         Args:
-            object_name: The managing object's name (e.g. name of EXTERNAL AGENT).
             run_name: The unique name of the run.
+            object_name: The managing object's name (e.g. name of EXTERNAL AGENT).
+            object_type: The type of the managing object.
+            object_version: The version of the managing object.
 
         Returns:
             A pandas DataFrame containing the run metadata.
@@ -159,7 +166,7 @@ class RunDao:
 
         Args:
             object_name: The name of the managing object (e.g. "EXTERNAL AGENT").
-
+            object_type: The type of the managing object.
         Returns:
             A pandas DataFrame containing all run metadata.
         """
@@ -190,6 +197,8 @@ class RunDao:
         Args:
             run_name: The unique name of the run.
             object_name: The managing object's name (e.g. "EXTERNAL AGENT").
+            object_type: The type of the managing object.
+            object_version: The version of the managing object.
         """
         req_payload = {
             "run_name": run_name,
